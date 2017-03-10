@@ -23,12 +23,13 @@ Osloerstrasse 16/17
 Berlin 13359, Germany
 */
 
-import java.text.SimpleDateFormat
+import java.text.{DateFormat, SimpleDateFormat}
 import java.util.{Date, Locale, UUID}
 
 import code.accountholder.AccountHolders
+import code.api.util.APIUtil.{KafkaMessageDocs, ResourceDoc}
 import code.api.util.ErrorMessages
-import code.api.v2_1_0.{BranchJsonPost, BranchJsonPut, TransactionRequestCommonBodyJSON}
+import code.api.v2_1_0._
 import code.branches.Branches.{Branch, BranchId}
 import code.branches.MappedBranch
 import code.fx.{FXRate, fx}
@@ -55,9 +56,11 @@ import net.liftweb.json._
 import net.liftweb.common._
 import code.products.MappedProduct
 import code.products.Products.{Product, ProductCode}
-import code.products.MappedProduct
-import code.products.Products.{Product, ProductCode}
-import code.users.Users
+import net.liftweb.json.Extraction
+import net.liftweb.json.JsonAST.JValue
+
+import scala.collection.immutable.Nil
+import scala.collection.mutable.ArrayBuffer
 
 object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
 
@@ -90,12 +93,13 @@ object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
   //
 
   val formatVersion: String  = "Mar2017"
-
+  val emptyObjectJson: JValue = Extraction.decompose(Nil)
+  val kafkaMessageDocs = ArrayBuffer[KafkaMessageDocs]()
+  val exampleDateString: String = "22/08/2013"
+  val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
+  val exampleDate = simpleDateFormat.parse(exampleDateString)
+  
   implicit val formats = net.liftweb.json.DefaultFormats
-
-
-  // TODO Create and use a case class for each Map so we can document each structure.
-
 
   def getUser( username: String, password: String ): Box[InboundUser] = {
     for {
@@ -546,11 +550,23 @@ object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
       Full(new KafkaCounterparty(r))
     }
   }
+  
+  kafkaMessageDocs += KafkaMessageDocs(
+    "getCounterpartyByIban(iban: String): Box[CounterpartyTrait]",
+    formatVersion,
+    "getCounterpartyByIban from kafka ",
+    Extraction.decompose(InboundCounterpartyByIban(
+      action = "obp.get.CounterpartyByIban",
+      version = formatVersion,
+      userId = "",
+      username = "",
+      otherAccountRoutingAddress = "",
+      otherAccountRoutingScheme = "")),
+    emptyObjectJson,
+    emptyObjectJson :: Nil
+   )
 
-
-
-
-
+  
   override def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] = {
 
     if (Props.getBool("get_counterparties_from_OBP_DB", true)) {
@@ -559,16 +575,15 @@ object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
         By(MappedCounterparty.mOtherAccountRoutingScheme, "IBAN")
       )
     } else {
-      val req = Map(
-        "action" -> "obp.get.CounterpartyByIban",
-        "version" -> formatVersion,
-        "userId" -> AuthUser.getCurrentResourceUserUserId,
-        "username" -> AuthUser.getCurrentUserUsername,
-        "otherAccountRoutingAddress" -> iban,
-        "otherAccountRoutingScheme" -> "IBAN"
-      )
+      val req = InboundCounterpartyByIban(
+                                           action = "obp.get.CounterpartyByIban",
+                                           version = formatVersion,
+                                           userId = "",
+                                           username = "",
+                                           otherAccountRoutingAddress = "",
+                                           otherAccountRoutingScheme = "")
 
-      val r = process(req).extract[KafkaInboundCounterparty]
+      val r = processNew(req).extract[KafkaInboundCounterparty]
 
       Full(new KafkaCounterparty(r))
     }
@@ -1258,20 +1273,6 @@ object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
     def effectiveDate : Date= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH).parse(kafkaInboundFxRate.effective_date)
   }
 
-  case class KafkaCounterparty(counterparty: KafkaInboundCounterparty) extends CounterpartyTrait {
-    def createdByUserId: String = counterparty.created_by_user_id
-    def name: String = counterparty.name
-    def thisBankId: String = counterparty.this_bank_id
-    def thisAccountId: String = counterparty.this_account_id
-    def thisViewId: String = counterparty.this_view_id
-    def counterpartyId: String = counterparty.counterparty_id
-    def otherAccountRoutingScheme: String = counterparty.other_account_routing_scheme
-    def otherAccountRoutingAddress: String = counterparty.other_account_routing_address
-    def otherBankRoutingScheme: String = counterparty.other_bank_routing_scheme
-    def otherBankRoutingAddress: String = counterparty.other_bank_routing_address
-    def isBeneficiary : Boolean = counterparty.is_beneficiary
-  }
-
   case class KafkaTransactionRequestTypeCharge(kafkaInboundTransactionRequestTypeCharge: KafkaInboundTransactionRequestTypeCharge) extends TransactionRequestTypeCharge{
     def transactionRequestTypeId: String = kafkaInboundTransactionRequestTypeCharge.transaction_request_type_id
     def bankId: String = kafkaInboundTransactionRequestTypeCharge.bank_id
@@ -1484,20 +1485,6 @@ object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
                                  effective_date: String
                                )
 
-  case class KafkaInboundCounterparty(
-                                       name: String,
-                                       created_by_user_id: String,
-                                       this_bank_id: String,
-                                       this_account_id: String,
-                                       this_view_id: String,
-                                       counterparty_id: String,
-                                       other_bank_routing_scheme: String,
-                                       other_account_routing_scheme: String,
-                                       other_bank_routing_address: String,
-                                       other_account_routing_address: String,
-                                       is_beneficiary: Boolean
-                                     )
-
 
   case class KafkaInboundTransactionRequestTypeCharge(
                                 transaction_request_type_id: String,
@@ -1516,6 +1503,30 @@ object KafkaMappedConnector_vMar2017 extends Connector with Loggable {
     }
     return json.parse("""{"error":"could not send message to kafka"}""")
   }
+  
+  def processNew(request: scala.Product): json.JValue = {
+    val reqId = UUID.randomUUID().toString
+    val requestToMap= stransferCaseClassToMap(request)
+    if (producer.send(reqId, requestToMap, "1")) {
+      // Request sent, now we wait for response with the same reqId
+      val res = consumer.getResponse(reqId)
+      return res
+    }
+    return json.parse("""{"error":"could not send message to kafka"}""")
+  }
+  
+  /**
+    * Have this function just to keep compatibility for KafkaMappedConnector_vMar2017 and  KafkaMappedConnector.scala
+    * In KafkaMappedConnector.scala, we use Map[String, String]. Now we change to case class
+    * eg: case class Company(name: String, address: String) -->
+    * Company("TESOBE","Berlin")
+    * Map(name->"TESOBE", address->"2")
+    *
+    * @param caseClassObject
+    * @return Map[String, String]
+    */
+  def stransferCaseClassToMap(caseClassObject: scala.Product) = caseClassObject.getClass.getDeclaredFields.map(_.getName) // all field names
+    .zip(caseClassObject.productIterator.to).toMap.asInstanceOf[Map[String, String]] // zipped with all values
 
 }
 

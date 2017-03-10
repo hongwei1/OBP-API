@@ -611,7 +611,17 @@ object APIUtil extends Loggable {
     catalogs: Catalogs,
     tags: List[ResourceDocTag]
   )
-
+  
+  // Used to document the KafkaMessage calls
+  case class KafkaMessageDocs(
+    apiFunction: String, // The partial function that implements this resource. Could use it to link to the source code that implements the call
+    apiVersion: String, // TODO: Constrain to certain strings?
+    description: String, // Longer description (originally taken from github wiki)
+    exampleRequestBody: JValue, // GET, POST etc. TODO: Constrain to GET, POST etc.
+    successResponseBody: JValue, // The URL (not including /obp/vX.X). Starts with / No trailing slash. TODO Constrain the string?
+    errorResponseBodies: List[JValue] // A summary of the call (originally taken from code comment) SHOULD be under 120 chars to be inline with Swagger
+  )
+  
   // Define relations between API end points. Used to create _links in the JSON and maybe later for API Explorer browsing
   case class ApiRelation(
     fromPF : PartialFunction[Req, Box[User] => Box[JsonResponse]],
