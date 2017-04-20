@@ -75,7 +75,7 @@ trait User {
 
   def views: List[View]
   def permittedView(v: View, b: BankAccount): Boolean =
-    views.contains(v)
+    views.par.exists(_ == v)
 
   def ownerAccess(bankAccount: BankAccount): Boolean =
     permittedViews(bankAccount).exists(v => v.viewId==ViewId("owner"))
