@@ -8,7 +8,7 @@ import net.liftweb.json.JsonAST._
 import net.liftweb.json.Serialization.write
 
 
-class AccountTest extends V300ServerSetup with DefaultUsers {
+class AccountTest extends V300ServerSetup{
   feature("Assuring that Get all accounts at all banks works as expected - v3.0.0") {
 
     scenario("We create an account and get accounts as anonymous and then as authenticated user - allAccountsAllBanks") {

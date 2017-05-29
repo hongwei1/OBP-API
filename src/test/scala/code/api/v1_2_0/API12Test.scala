@@ -49,7 +49,7 @@ import org.scalatest._
 import scala.util.Random._
 
 
-class API1_2Test extends V120ServerSetup{
+class API12Test extends V120ServerSetup{
 
   feature("base line URL works"){
     scenario("we get the api information", API1_2, APIInfo) {

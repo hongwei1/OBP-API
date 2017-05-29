@@ -9,7 +9,7 @@ import code.setup.{APIResponse, DefaultUsers, PrivateUser2Accounts, User1AllPriv
 import net.liftweb.common.Empty
 import org.scalatest.Tag
 
-class AccountsAPITest extends API1_2_1Test with User1AllPrivileges with DefaultUsers with PrivateUser2Accounts {
+class AccountsAPITest extends API121Test with User1AllPrivileges with DefaultUsers with PrivateUser2Accounts {
 
   //define Tags
   object Management extends Tag("Management")
