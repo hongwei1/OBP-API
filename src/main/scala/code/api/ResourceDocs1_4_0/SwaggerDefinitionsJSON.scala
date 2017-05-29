@@ -1367,7 +1367,7 @@ object SwaggerDefinitionsJSON {
     PostCustomerJsonV210(
       user_id = "user_id to attach this customer to e.g. 123213",
       customer_number = "new customer number 687687678",
-      legal_name = "NONE",
+      legal_name = "{}",
       mobile_phone_number = "+44 07972 444 876",
       email = "person@example.com",
       face_image = customerFaceImageJson,
