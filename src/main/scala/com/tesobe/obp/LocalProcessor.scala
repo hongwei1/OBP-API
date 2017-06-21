@@ -55,6 +55,25 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     Future(msg, r)
   }
 
+  def userFn: Business = {msg =>
+    /* call Decoder for extracting data from source file */
+    val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.jun2017.Decoder.getUser(q) }
+    val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
+
+  def bankAccountsFn: Business = {msg =>
+    /* call Decoder for extracting data from source file */
+    val response: (GetUserBankAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.Decoder.getBankAccounts(q) }
+    val r = decode[GetUserBankAccounts](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
 
   private def getResponse(msg: CommittableMessage[String, String]): String = {
     decode[Request](msg.record.value()) match {
