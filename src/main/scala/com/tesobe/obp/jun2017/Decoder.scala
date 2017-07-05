@@ -17,7 +17,7 @@ trait Decoder extends MappedDecoder {
     println("Enter getBanks")
     decodeLocalFile match {
       case Left(_) => Banks(request.authInfo, List.empty[InboundBank])
-      case Right(x)  => Banks(request.authInfo, List(InboundBank("Bank","Bank","Bank","Bank","Bank")))
+      case Right(x)  => Banks(AuthInfo("kurt","b9dfdd22-6e21-43b4-a0c7-fb3bd24f1298"), List(InboundBank("noerror","obp-bank-x-gh","The Bank of X","https://static.openbankproject.com/images/sandbox/bank_x.png","https://www.example.com")))
       //case Right(x) => Banks(request.authInfo, x.banks.map(mapBankN))
     }
   }

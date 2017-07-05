@@ -21,7 +21,7 @@ case class AuthInfo(userId: String, username: String)
 case class GetBanks(authInfo: AuthInfo, criteria: String)
 case class GetBank(authInfo: AuthInfo, bankId: String)
 case class GetAdapterInfo(date: String)
-ase class GetAccounts(authInfo: AuthInfo, bankId: String, accountId: String)
+case class GetAccounts(authInfo: AuthInfo, bankId: String)
 
 /**
   * Payloads for response topic

@@ -96,12 +96,8 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
     */
   private def buildAllPartitionsForOneTopic(requestTopic: String): Set[TopicPartition] = {
     ((0 to (kafkaPartitions - 1)) map (new TopicPartition(requestTopic, _))).toSet
-
-  private def buildPartitions(topic: Topic) = {
-    println(kafkaPartitions.toString)
-    ((0 to (kafkaPartitions - 1)) map (new TopicPartition(topic.request, _))).toSet
   }
-
+  
   /**
     * Message contains topics and business logic that will be applied on message are defined in message.
     *

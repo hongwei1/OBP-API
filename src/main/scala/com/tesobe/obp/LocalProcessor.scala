@@ -58,7 +58,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
   
   def accountsFn: Business = { msg =>
-    println("Enter accountsFN")
+    logger.info(s"Processing accountsFn ${msg.record.value}")
     val response: (GetAccounts => AccountsWrapper) ={ q => com.tesobe.obp.jun2017.Decoder.getAccounts(q)}
     val r = decode[GetAccounts](msg.record.value()) match {
       case Left(e) => 
