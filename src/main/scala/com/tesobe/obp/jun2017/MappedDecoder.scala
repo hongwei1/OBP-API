@@ -35,7 +35,7 @@ trait MappedDecoder {
           case Some("obp.get.User") =>
             example.users.filter(_.displayName == request.username).filter(_.password == request.password).headOption match {
               case Some(x) => Map("data" -> mapUserN(x)).asJson.noSpaces
-              case None => Map("data" -> UserN(Some(BankNotFound), None, None)).asJson.noSpaces
+              case None => Map("data" -> InboundUser(Some(BankNotFound), None, None)).asJson.noSpaces
             }
           case _ =>
             Map("data" -> "Error, unrecognised request").asJson.noSpaces
@@ -48,7 +48,7 @@ trait MappedDecoder {
   }
 
   private def mapUserN(x: User) = {
-    UserN(None, x.email, x.displayName)
+    InboundUser(None, x.email, x.displayName)
   }
 
   private def extractQuery(request: Request): Option[String] = {

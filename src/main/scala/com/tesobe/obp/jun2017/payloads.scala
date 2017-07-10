@@ -22,6 +22,7 @@ case class GetBanks(authInfo: AuthInfo, criteria: String)
 case class GetBank(authInfo: AuthInfo, bankId: String)
 case class GetAdapterInfo(date: String)
 case class GetAccounts(authInfo: AuthInfo, bankId: String)
+case class GetUserByUsernamePassword(username: String, password: String)
 
 /**
   * Payloads for response topic
@@ -43,7 +44,7 @@ case class InboundBank(
                         logo: String,
                         url: String
                       )
-case class UserN(
+case class InboundUser(
                   errorCode: Option[String],
                   email: Option[String],
                   displayName: Option[String]

@@ -44,6 +44,10 @@ trait Decoder extends MappedDecoder {
   def getAdapter(request: GetAdapterInfo) = {
     AdapterInfo(data = Some(InboundAdapterInfo("", "OBP-Scala-South", "June2017", Util.gitCommit, (new Date()).toString)))
   }
+  
+  def getUserByUsernamePassword(request: GetUserByUsernamePassword) = {
+    InboundUser(Some("errorgubup"), Some("anil.x.0.gh@example.com"),Some("Anil_X.0.GH"))
+  }
 
 
   /*
