@@ -23,8 +23,7 @@ trait MappedDecoder {
       case Right(example) =>
         extractQuery(request) match {
           case Some("obp.get.Bank") =>
-            val bankId = if (request.bankId == Some("1")) Some("obp-bank-x-gh") else if (request.bankId == Some("2")) Some("obp-bank-y-gh") else None
-            example.banks.filter(_.id == bankId).headOption match {
+            example.banks.filter(_.id == Some(request.bankId)).headOption match {
               case Some(x) => Map("data" -> mapBankN(x)).asJson.noSpaces
               case None => Map("data" -> InboundBank(BankNotFound, "", "", "", "")).asJson.noSpaces
             }
@@ -35,20 +34,40 @@ trait MappedDecoder {
           case Some("obp.get.User") =>
             example.users.filter(_.displayName == request.username).filter(_.password == request.password).headOption match {
               case Some(x) => Map("data" -> mapUserN(x)).asJson.noSpaces
-              case None => Map("data" -> InboundUser(Some(BankNotFound), None, None)).asJson.noSpaces
+              case None => Map("data" -> InboundValidatedUser(Some(BankNotFound), None, None)).asJson.noSpaces
             }
           case _ =>
+            println
             Map("data" -> "Error, unrecognised request").asJson.noSpaces
-      }
+        }
     }
+  }
+
+  def mapBankAccountN(x: Account) = {
+    InboundAccount("",
+      x.id.getOrElse(""),
+      x.bank.getOrElse(""),
+      x.label.getOrElse(""),
+      x.number.getOrElse(""),
+      x.`type`.getOrElse(""),
+      x.balance.amount.getOrElse(""),
+      x.balance.currency.getOrElse(""),
+      x.IBAN.getOrElse(""),
+      x.owners,
+      x.generatePublicView,
+      x.generateAccountantsView,
+      x.generateAuditorsView,
+      x.accountRoutingAddress.getOrElse(""),
+      x.accountRoutingAddress.getOrElse(""),
+      x.branchId.getOrElse(""))
   }
 
   def mapBankN(x: Bank) = {
     InboundBank("", x.id.getOrElse(""), x.fullName.getOrElse(""), x.logo.getOrElse(""), x.website.getOrElse(""))
   }
 
-  private def mapUserN(x: User) = {
-    InboundUser(None, x.email, x.displayName)
+  def mapUserN(x: User) = {
+    InboundValidatedUser(None, x.email, x.displayName)
   }
 
   private def extractQuery(request: Request): Option[String] = {
