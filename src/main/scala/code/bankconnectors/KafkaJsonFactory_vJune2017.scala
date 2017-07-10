@@ -27,6 +27,7 @@ case class InboundAccountJune2017(
                                    accountRoutingAddress:String
                                  ) extends InboundMessageBase
 
+
 case class BankAccountJune2017(r: InboundAccountJune2017) extends BankAccount {
 
   def accountId: AccountId = AccountId(r.accountId)

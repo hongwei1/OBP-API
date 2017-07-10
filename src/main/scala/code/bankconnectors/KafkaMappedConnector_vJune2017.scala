@@ -216,25 +216,30 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
   )
 
   def updateUserAccountViews(user: ResourceUser) = {
-    val accounts: List[InboundAccountJune2017] = getBanks.get.flatMap { bank => {
+      println("ENTER updateUserAccountViewsNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN \n\n\n\n\n\n\n\n\n\n\n" )
+      val accounts: List[InboundAccountJune2017] = getBanks.get.flatMap { bank => {
       val bankId = bank.bankId.value
       logger.info(s"ObpJvm updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
-      for {
+     for {
         username <- tryo(user.name)
-        req <- Full(OutboundUserAccountViewsBase(
-          messageFormat = messageFormat,
-          action = "obp.get.Accounts",
-          username = user.name,
-          userId = user.name,
-          bankId = bankId))
-
-      // Generate random uuid to be used as request-response match id
       } yield {
-        cachedUserAccounts.getOrElseUpdate(req.toString, () => process(req).extract[List[InboundAccountJune2017]])
+       println("ENTER GetAccountsNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN \n\n\n\n\n\n\n\n\n\n\n" )
+       val req  = code.bankconnectors.GetAccounts(AuthInfo(username, user.userId),"1")
+       cachedUserAccounts.getOrElseUpdate(req.toString , () => process[GetAccounts](req).extract[List[InboundAccountJune2017]])
+/*       val rr = process[code.bankconnectors.GetAccounts](req)
+       val r = rr.extract[InboundAccountJune2017]
+       Full(r)*/
       }
     }
-    }.flatten
 
+    }.flatten
+    
+    
+
+
+      
+
+   
     val views = for {
       acc <- accounts
       username <- tryo {
