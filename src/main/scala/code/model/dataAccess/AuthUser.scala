@@ -37,6 +37,9 @@ import code.api.util.APIUtil.isValidStrongPassword
 import code.api.util.{APIUtil, ErrorMessages}
 import code.api.{DirectLogin, OAuthHandshake}
 import code.bankconnectors.{Connector, InboundUser}
+import code.loginattempts.LoginAttempt
+import code.users.Users
+import code.util.Helper
 import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.mapper._
@@ -44,10 +47,6 @@ import net.liftweb.util.Mailer.{BCC, From, Subject, To}
 import net.liftweb.util._
 
 import scala.xml.{NodeSeq, Text}
-import code.loginattempts.LoginAttempt
-import code.users.Users
-import code.util.Helper
-import net.liftweb.util
 
 
 /**
@@ -485,6 +484,8 @@ import net.liftweb.util.Helpers._
 
 
   def getResourceUserId(username: String, password: String): Box[Long] = {
+    println("ENTER getResourceUserIdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n\n\n\n\n\n\n\n\n\n")
+    println("username:" + username + "\n" + "password: " + password)
     findUserByUsername(username) match {
       case Full(user) if (user.getProvider() == Props.get("hostname","")) =>
         if (
@@ -495,6 +496,7 @@ import net.liftweb.util.Helpers._
             {
               // We logged in correctly, so reset badLoginAttempts counter (if it exists)
               LoginAttempt.resetBadLoginAttempts(username)
+              println(Full(user.user))
               Full(user.user) // Return the user.
             }
         // User is unlocked AND password is bad

@@ -218,18 +218,19 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
   def updateUserAccountViews(user: ResourceUser) = {
       println("ENTER updateUserAccountViewsNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN \n\n\n\n\n\n\n\n\n\n\n" )
       val accounts: List[InboundAccountJune2017] = getBanks.get.flatMap { bank => {
-      val bankId = bank.bankId.value
-      logger.info(s"ObpJvm updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
-     for {
-        username <- tryo(user.name)
-      } yield {
-       println("ENTER GetAccountsNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN \n\n\n\n\n\n\n\n\n\n\n" )
-       val req  = code.bankconnectors.GetAccounts(AuthInfo(username, user.userId),"1")
-       cachedUserAccounts.getOrElseUpdate(req.toString , () => process[GetAccounts](req).extract[List[InboundAccountJune2017]])
-/*       val rr = process[code.bankconnectors.GetAccounts](req)
-       val r = rr.extract[InboundAccountJune2017]
-       Full(r)*/
-      }
+        val bankId = bank.bankId.value
+        
+        logger.info(s"ObpJvm updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
+        for {
+          username <- tryo(user.name)
+        } yield {
+         println("ENTER GetAccountsNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN \n\n\n\n\n\n\n\n\n\n\n" )
+         val req  = code.bankconnectors.GetAccounts(AuthInfo(username, user.userId),"1")
+         cachedUserAccounts.getOrElseUpdate(req.toString , () => process[GetAccounts](req).extract[List[InboundAccountJune2017]])
+  /*       val rr = process[code.bankconnectors.GetAccounts](req)
+         val r = rr.extract[InboundAccountJune2017]
+         Full(r)*/
+        }
     }
 
     }.flatten
@@ -255,10 +256,12 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
           acc.generateViews.contains("Auditor")
         )
       }
+      //TODO: return views on creation
       existing_views <- tryo {
         Views.views.vend.views(BankAccountUID(BankId(acc.bankId), AccountId(acc.accountId)))
       }
     } yield {
+      //TODO: setAccountOwner should run once per account
       setAccountOwner(username, BankId(acc.bankId), AccountId(acc.accountId), acc.owners)
       views.foreach(v => {
         Views.views.vend.addPermission(v.uid, user)
@@ -303,6 +306,7 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
   )
 
   //gets banks handled by this connector
+  //TODO: refactor pass Authinfo from parameters
   override def getBanks(): Box[List[Bank]] = saveConnectorMetric {{
     val req = GetBanks(
       AuthInfo(username = currentResourceUserId, userId = AuthUser.getCurrentUserUsername),
@@ -313,7 +317,7 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
     logger.debug(s"Kafka getBanks says res is $res")
     Full(res)
   }}("getBanks")
-
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------
   messageDocs += MessageDoc(
     process = "obp.get.ChallengeThreshold",
     messageFormat = messageFormat,

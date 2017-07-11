@@ -452,7 +452,7 @@
           <artifactId>jetty-maven-plugin</artifactId>
           <version>9.4.6.v20170531</version>
           <configuration>
-           <scanIntervalSeconds>5</scanIntervalSeconds>
+            external user authenticated<scanIntervalSeconds>5</scanIntervalSeconds>
             <jvmArgs>-Xmx512m -Xms512m</jvmArgs>
           </configuration>
         </plugin>
