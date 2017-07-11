@@ -45,6 +45,7 @@ import net.liftweb.util._
 
 import scala.xml.{NodeSeq, Text}
 import code.loginattempts.LoginAttempt
+import code.model.User
 import code.users.Users
 import code.util.Helper
 
@@ -271,42 +272,32 @@ import net.liftweb.util.Helpers._
 
     <div>{loginXml getOrElse NodeSeq.Empty}</div>
   }
-
+  
+  //This is refactoring the code, the error handling is not clear.
+  //Need double check the return box. when it is empty or when it is full.
+  def getCurrentUser: Box[User] = {
+    for {
+      resourceUser <- if (isThereAnOAuthHeader)
+        OAuthHandshake.getUser
+      else if (isThereDirectLoginHeader)
+        DirectLogin.getUser
+      else if (AuthUser.currentUser.isEmpty) {
+        AuthUser.currentUser.get.user.foreign
+      } else {
+        Full(new ResourceUser())
+      }
+    } yield {
+      resourceUser
+    }
+  }
   /**
    * Find current user
    */
   def getCurrentUserUsername: String = {
-    for {
-      current <- AuthUser.currentUser
-      username <- tryo{current.username.get}
-      if (username.nonEmpty)
-    } yield {
-      return username
-    }
-
-    for {
-      current <- if(isThereAnOAuthHeader) 
-        OAuthHandshake.getUser 
-    else
-      Full(new ResourceUser())
-      username <- tryo{current.name}
-      if (username.nonEmpty)
-    } yield {
-      return username
-    }
-
-    for {
-      current <- if (isThereDirectLoginHeader)
-        DirectLogin.getUser
-      else
-        Full(new ResourceUser())
-      username <- tryo{current.name}
-      if (username.nonEmpty)
-    } yield {
-      return username
-    }
-
-    return ""
+     getCurrentUser.get.name match{
+       case name: String => name
+       case _ => ""
+     }
   }
   /**
     * Find current ResourceUser_UserId from AuthUser, reference the @getCurrentUserUsername
@@ -320,37 +311,12 @@ import net.liftweb.util.Helpers._
     * This method return userid_(String).
     */
   def getCurrentResourceUserUserId: String = {
-    for {
-      current <- AuthUser.currentUser
-      user <- Users.users.vend.getUserByResourceUserId(current.user.get)
-    } yield {
-      return user.userId
-    }
-
-    for {
-      current <- if (isThereAnOAuthHeader)
-        OAuthHandshake.getUser
-      else
-        Full(new ResourceUser())
-      userId <- tryo{current.userId}
-      if (userId.nonEmpty)
-    } yield {
-      return userId
-    }
-
-    for {
-      current <- if (isThereDirectLoginHeader)
-        DirectLogin.getUser
-      else
-        Full(new ResourceUser())
-      userId <- tryo{current.userId}
-      if (userId.nonEmpty)
-    } yield {
-      return userId
-    }
-
-     return ""
-   }
+    val userId = getCurrentUser.get.userId
+    if(userId.isEmpty)
+      ""
+    else
+      userId
+  }
 
   /**
     * The string that's generated when the user name is not found.  By
