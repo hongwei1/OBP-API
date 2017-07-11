@@ -49,7 +49,6 @@ case class InboundBank(
                         url: String
                       )
 
-case class InboundValidatedUser(
 case class InboundUser(
                   errorCode: Option[String],
                   email: Option[String],
@@ -75,21 +74,7 @@ case class InboundAccount(
                            branchId: String  = "None"
                          )
 
-case class InboundAccount(
-                          errorCode: String,
-                          accountId: String,
-                          bankId: String,
-                          label: String,
-                          number: String,
-                          `type`: String,
-                          balanceAmount: String,
-                          balanceCurrency: String,
-                          iban: String,
-                          owners: String,
-                          generatePublicView: String,
-                          generateAccountantsView: String,
-                          generateAuditorsView: String
-                          )
+
 
 abstract class InboundMessageBase(optionalFields: String*) {
                                   def errorCode: String
@@ -120,3 +105,10 @@ case class InboundAdapterInfo(errorCode: String,
                               git_commit: String,
                               date: String
                              )
+
+
+case class InboundValidatedUser(
+                                 errorCode: Option[String],
+                                 email: Option[String],
+                                 displayName: Option[String]
+                               )
