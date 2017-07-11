@@ -1,0 +1,70 @@
+{
+  "TA1TSHUVATAVLAIT1": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff5823049305",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": {}
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": {}
+    },
+    "TA1_PIRTEI_CHESHBON": {
+      "TA1_SNIF": "616",
+      "TA1_SUG": "330",
+      "TA1_CHESHBON": "50180963"
+    },
+    "TA1_SHETACH_LE_SEND_NOSAF": {
+      "TA1_COUNTER": "4",
+      "TA1_TNUOT": {
+        "TA1_PIRTEY_TNUA": [{
+          "TA1_TNUA_BODEDET": {
+            "TA1_IND_KARTIS_ASHRAI": "0",
+            "TA1_IND_HOR_KEVA": "1",
+            "TA1_MAKOR_TNUA": "310",
+            "TA1_TEUR_TNUA": "   י עבק תארוה",
+            "TA1_TA_TNUA": "20170601",
+            "TA1_SCHUM_TNUA": "-1351.03",
+            "TA1_TA_ERECH": "20170501",
+            "TA1_ASMACHTA": "3786259"
+          }
+        }, {
+          "TA1_TNUA_BODEDET": {
+            "TA1_IND_KARTIS_ASHRAI": "1",
+            "TA1_IND_HOR_KEVA": "0",
+            "TA1_MAKOR_TNUA": "22675",
+            "TA1_TEUR_TNUA": "  י הזיו ימואל",
+            "TA1_TA_TNUA": "20170602",
+            "TA1_SCHUM_TNUA": "-1925.66",
+            "TA1_TA_ERECH": "20170523",
+            "TA1_ASMACHTA": "9308125"
+          }
+        }, {
+          "TA1_TNUA_BODEDET": {
+            "TA1_IND_KARTIS_ASHRAI": "1",
+            "TA1_IND_HOR_KEVA": "0",
+            "TA1_MAKOR_TNUA": "23512",
+            "TA1_TEUR_TNUA": "ידראקרטסמ.ל",
+            "TA1_TA_TNUA": "20170602",
+            "TA1_SCHUM_TNUA": "-3062.68",
+            "TA1_TA_ERECH": "20170523",
+            "TA1_ASMACHTA": "9554127"
+          }
+        }, {
+          "TA1_TNUA_BODEDET": {
+            "TA1_IND_KARTIS_ASHRAI": "0",
+            "TA1_IND_HOR_KEVA": "1",
+            "TA1_MAKOR_TNUA": "41",
+            "TA1_TEUR_TNUA": "     ןוכסח.ק.ה",
+            "TA1_TA_TNUA": "20170620",
+            "TA1_SCHUM_TNUA": "-262.73",
+            "TA1_TA_ERECH": "20170521",
+            "TA1_ASMACHTA": "9023401"
+          }
+        }]
+      }
+    }
+  }
+}

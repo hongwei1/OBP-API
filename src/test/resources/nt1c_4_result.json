@@ -1,0 +1,124 @@
+{
+  "TNATSHUVATAVLAIT1":
+  {
+    "esbHeaderResponse":
+    {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff5823779d02",
+      "responseStatus":
+      {
+        "callStatus": "Success",
+        "errorDesc":
+        {
+        }
+      }
+    },
+    "MFAdminResponse":
+    {
+      "returnCode": "0",
+      "messageText":
+      {
+      }
+    },
+    "TNA_PIRTEI_CHESHBON":
+    {
+      "TNA_SNIF": "616",
+      "TNA_SUG": "330",
+      "TNA_CHESHBON": "50180963"
+    },
+    "TNA_SHETACH_LE_SEND_NOSAF":
+    {
+      "TNA_COUNTER": "6",
+      "TNA_TNUOT":
+      {
+        "TNA_PIRTEY_TNUA":
+        [
+          {
+            "TNA_TNUA_BODEDET":
+            {
+              "TNA_HOR_BIZ_IND": "0",
+              "TNA_TEUR_PEULA": "הע. אינטרנט י",
+              "TNA_TA_ERECH": "20170405",
+              "TNA_TA_BITZUA": "20170405",
+              "TNA_ASMACHTA": "699001163",
+              "TNA_SCHUM": "-440.00",
+              "TNA_ITRA": "6438.96",
+              "TNA_SEM_MAKOR": "22517",
+              "TNA_AMF_OR_NAFA": "1"
+            }
+          },
+          {
+            "TNA_TNUA_BODEDET":
+            {
+              "TNA_HOR_BIZ_IND": "0",
+              "TNA_TEUR_PEULA": "הע. אינטרנט י",
+              "TNA_TA_ERECH": "20170405",
+              "TNA_TA_BITZUA": "20170405",
+              "TNA_ASMACHTA": "699001164",
+              "TNA_SCHUM": "-1.00",
+              "TNA_ITRA": "6437.96",
+              "TNA_SEM_MAKOR": "22517",
+              "TNA_AMF_OR_NAFA": "1"
+            }
+          },
+          {
+            "TNA_TNUA_BODEDET":
+            {
+              "TNA_HOR_BIZ_IND": "0",
+              "TNA_TEUR_PEULA": "הע. אינטרנט י",
+              "TNA_TA_ERECH": "20170405",
+              "TNA_TA_BITZUA": "20170405",
+              "TNA_ASMACHTA": "699001172",
+              "TNA_SCHUM": "-2.00",
+              "TNA_ITRA": "6435.96",
+              "TNA_SEM_MAKOR": "22517",
+              "TNA_AMF_OR_NAFA": "1"
+            }
+          },
+          {
+            "TNA_TNUA_BODEDET":
+            {
+              "TNA_HOR_BIZ_IND": "0",
+              "TNA_TEUR_PEULA": "הע. אינטרנט י",
+              "TNA_TA_ERECH": "20170517",
+              "TNA_TA_BITZUA": "20170517",
+              "TNA_ASMACHTA": "699001203",
+              "TNA_SCHUM": "-100.00",
+              "TNA_ITRA": "6335.96",
+              "TNA_SEM_MAKOR": "22517",
+              "TNA_AMF_OR_NAFA": "1"
+            }
+          },
+          {
+            "TNA_TNUA_BODEDET":
+            {
+              "TNA_HOR_BIZ_IND": "0",
+              "TNA_TEUR_PEULA": "חשמל עצמי י",
+              "TNA_TA_ERECH": "20170518",
+              "TNA_TA_BITZUA": "20170518",
+              "TNA_ASMACHTA": "699001179",
+              "TNA_SCHUM": "-667.83",
+              "TNA_ITRA": "5668.13",
+              "TNA_SEM_MAKOR": "20695",
+              "TNA_AMF_OR_NAFA": "1"
+            }
+          },
+          {
+            "TNA_TNUA_BODEDET":
+            {
+              "TNA_HOR_BIZ_IND": "0",
+              "TNA_TEUR_PEULA": "בזק עצמי",
+              "TNA_TA_ERECH": "20170529",
+              "TNA_TA_BITZUA": "20170529",
+              "TNA_ASMACHTA": "699001141",
+              "TNA_SCHUM": "-126.85",
+              "TNA_ITRA": "5541.28",
+              "TNA_SEM_MAKOR": "20411",
+              "TNA_AMF_OR_NAFA": "1"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+
