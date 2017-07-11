@@ -47,8 +47,29 @@ trait MappedDecoder {
     InboundBank("", x.id.getOrElse(""), x.fullName.getOrElse(""), x.logo.getOrElse(""), x.website.getOrElse(""))
   }
 
-  private def mapUserN(x: User) = {
+  def mapUserN(x: User) = {
     UserN(None, x.email, x.displayName)
+  }
+  
+  def mapAccountN(x: Account) = {
+    InboundAccountJune2017(
+      errorCode = "",
+      bankId = x.bank.get,
+      branchId = x.branchId.get,
+      accountId = x.branchId.get,
+      number = x.branchId.get,
+      accountType = x.branchId.get,
+      balanceAmount = x.branchId.get,
+      balanceCurrency = x.branchId.get,
+      owners = x.owners,
+      generateViews = x.owners,
+      bankRoutingScheme = x.bank.get,
+      bankRoutingAddress = x.bank.get,
+      branchRoutingScheme = x.bank.get,
+      branchRoutingAddress = x.bank.get,
+      accountRoutingScheme = x.bank.get,
+      accountRoutingAddress = x.bank.get
+    )
   }
 
   private def extractQuery(request: Request): Option[String] = {

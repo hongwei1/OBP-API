@@ -37,7 +37,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     */
   def banksFn: Business = { msg =>
     /* call Decoder for extracting data from source file */
-    logger.info(s"Processing banksFn ${msg.record.value}")
+    logger.debug(s"Processing banksFn ${msg.record.value}")
     val response: (GetBanks => Banks) = { q => com.tesobe.obp.jun2017.Decoder.getBanks(q) }
     val r = decode[GetBanks](msg.record.value()) match {
       case Left(e) => ""
@@ -47,7 +47,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
 
   def bankFn: Business = { msg =>
-    logger.info(s"Processing bankFn ${msg.record.value}")
+    logger.debug(s"Processing bankFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.jun2017.Decoder.getBank(q) }
     val r = decode[GetBank](msg.record.value()) match {
@@ -56,8 +56,31 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
     Future(msg, r)
   }
+  
+  def userFn: Business = { msg =>
+    logger.debug(s"Processing userFn ${msg.record.value}")
+    /* call Decoder for extracting data from source file */
+    val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.jun2017.Decoder.getUser(q) }
+    val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
+  
+  def accountsFn: Business = { msg =>
+    logger.debug(s"Processing accountsFn ${msg.record.value}")
+    /* call Decoder for extracting data from source file */
+    val response: (UpdateUserAccountViews => OutboundUserAccountViewsBaseWapper) = { q => com.tesobe.obp.jun2017.Decoder.getAccounts(q) }
+    val r = decode[UpdateUserAccountViews](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
+  
   def adapterFn: Business = { msg =>
-    logger.info(s"Processing adapterFn ${msg.record.value}")
+    logger.debug(s"Processing adapterFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.jun2017.Decoder.getAdapter(q) }
     val r = decode[GetAdapterInfo](msg.record.value()) match {
