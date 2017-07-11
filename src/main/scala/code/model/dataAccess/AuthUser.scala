@@ -273,49 +273,57 @@ import net.liftweb.util.Helpers._
     <div>{loginXml getOrElse NodeSeq.Empty}</div>
   }
   
-  //This is refactoring the code, the error handling is not clear.
-  //Need double check the return box. when it is empty or when it is full.
+  /**
+    * Find current ResourceUser from the server. 
+    * This method has no parameters, it depends on different login types:
+    *  AuthUser:  AuthUser.currentUser
+    *  OAuthHandshake: OAuthHandshake.getUser
+    *  DirectLogin: DirectLogin.getUser
+    * to get the current Resourceuser .
+    *
+    */
   def getCurrentUser: Box[User] = {
     for {
-      resourceUser <- if (isThereAnOAuthHeader)
-        OAuthHandshake.getUser
+      resourceUser <- if (AuthUser.currentUser.isDefined)
+        AuthUser.currentUser.get.user.foreign
       else if (isThereDirectLoginHeader)
         DirectLogin.getUser
-      else if (AuthUser.currentUser.isEmpty) {
-        AuthUser.currentUser.get.user.foreign
+      else if (isThereAnOAuthHeader) {
+        OAuthHandshake.getUser
       } else {
-        Full(new ResourceUser())
+        debug(ErrorMessages.CurrentUserNotFoundException)
+        Failure(ErrorMessages.CurrentUserNotFoundException)
+        //This is a big problem, if there is no current user from here.
+        throw new RuntimeException(ErrorMessages.CurrentUserNotFoundException)
       }
     } yield {
       resourceUser
     }
   }
   /**
-   * Find current user
+   * get current user.
+    * Note: 1. it will call getCurrentUser, it will throw Exception, 
+    *          so no need for error handling 
    */
   def getCurrentUserUsername: String = {
-     getCurrentUser.get.name match{
-       case name: String => name
+     getCurrentUser match{
+       case Full(user) => user.name
        case _ => ""
      }
   }
+  
   /**
-    * Find current ResourceUser_UserId from AuthUser, reference the @getCurrentUserUsername
-    * This method has no parameters, it depends on different login types:
-    *  AuthUser:  AuthUser.currentUser
-    *  OAuthHandshake: OAuthHandshake.getUser
-    *  DirectLogin: DirectLogin.getUser
-    * to get the current Resourceuser.userId feild.
-    * 
-    * Note: resourceuser has two ids: id(Long) and userid_(String),
-    * This method return userid_(String).
+    *  get current user.userId
+    *  Note: 1.resourceuser has two ids: id(Long) and userid_(String),
+    *        2. it will call getCurrentUser, it will throw Exception, 
+    *        so no need for error handling 
+    * @return return userid_(String).
     */
   def getCurrentResourceUserUserId: String = {
-    val userId = getCurrentUser.get.userId
-    if(userId.isEmpty)
-      ""
-    else
-      userId
+    getCurrentUser match{
+      case Full(user) => user.userId
+      case _ => ""
+    }
   }
 
   /**
