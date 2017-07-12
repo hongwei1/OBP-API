@@ -23,7 +23,9 @@ trait ProcessorFactory {
         BusinessTopic(createTopicByClassName(GetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
         BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
         BusinessTopic(createTopicByClassName(UpdateUserAccountViews.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).accountsFn),
-        BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn )
+        BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn ),
+        BusinessTopic(createTopicByClassName(GetAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountsFn)
+
       )
       case "mockedSopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)
       case "sopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)

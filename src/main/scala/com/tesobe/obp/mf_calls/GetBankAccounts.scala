@@ -16,10 +16,14 @@ object GetBankAccounts {
   def getBasicBankAccountsForUser(UserId: String): List[BasicBankAccount] = {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
+    //Creating JSON AST
     val jsonAst: JValue = getJoni(UserId)
+    //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
-    
+    //By specification 
     val allowedAccountTypes = List("330", "430", "110")
+    //now extract values from JoniMFUser object into List of BasicBankAccount
+    // (will be changed to inboundBankAccount 2017 objects 
     var result = new ListBuffer[BasicBankAccount]()
     val leading_account = BasicBankAccount(
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
@@ -47,9 +51,9 @@ object GetBankAccounts {
     val basicAccounts = getBasicBankAccountsForUser(UserId)
     var result = new ListBuffer[FullBankAccount]
     for (i <- basicAccounts) {
-      val balance = getBalance("./src/main/resources/nt1c_result.json")
-      val limit = getLimit("./src/main/resources/nt1c_result.json")
-      result += FullBankAccount(i,getIban("./src/main/resources/ntib_result.json"), balance, limit)
+      val balance = getBalance("./src/test/resources/nt1c_result.json")
+      val limit = getLimit("./src/test/resources/nt1c_result.json")
+      result += FullBankAccount(i,getIban("./src/test/resources/ntib_result.json"), balance, limit)
     }
     result.toList
   }

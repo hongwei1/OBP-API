@@ -92,8 +92,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
   def bankAccountsFn: Business = {msg =>
     /* call Decoder for extracting data from source file */
-    val response: (GetUserBankAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.Decoder.getBankAccounts(q) }
-    val r = decode[GetUserBankAccounts](msg.record.value()) match {
+    val response: (GetAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.Decoder.getBankAccounts(q) }
+    val r = decode[GetAccounts](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
     }
