@@ -1,7 +1,8 @@
 package com.tesobe.obp
+
 import com.tesobe.obp.Main.{executionContext, materializer}
 import com.tesobe.obp.SouthKafkaStreamsActor.BusinessTopic
-import com.tesobe.obp.jun2017.{GetAccounts, GetAdapterInfo, GetBank, GetBanks}
+import com.tesobe.obp.jun2017._
 
 /**
   * Defines kafka topics which will be used and functions that will be applied on received message
@@ -18,10 +19,13 @@ trait ProcessorFactory {
     processorName match {
       case "localFile" => Seq(
         BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic),
-        BusinessTopic(caseClassToTopic(GetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
-        BusinessTopic(caseClassToTopic(GetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
-        BusinessTopic(caseClassToTopic(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn),
-        BusinessTopic(caseClassToTopic(GetAccounts.getClass.getSimpleName),LocalProcessor()(executionContext, materializer).accountsFn)
+        BusinessTopic(createTopicByClassName(GetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
+        BusinessTopic(createTopicByClassName(GetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
+        BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
+        BusinessTopic(createTopicByClassName(UpdateUserAccountViews.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).accountsFn),
+        BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn ),
+        BusinessTopic(createTopicByClassName(GetAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountsFn)
+
       )
       case "mockedSopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)
       case "sopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)

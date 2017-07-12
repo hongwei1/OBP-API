@@ -1,6 +1,9 @@
 package com.tesobe.obp.jun2017
 
+import java.util.Date
+
 import com.tesobe.obp.Util
+import io.circe.Error
 import io.circe.generic.auto._
 import io.circe.parser.decode
 
@@ -12,11 +15,9 @@ import io.circe.parser.decode
 trait Decoder extends MappedDecoder {
 
   def getBanks(request: GetBanks) = {
-    println("Enter getBanks")
     decodeLocalFile match {
       case Left(_) => Banks(request.authInfo, List.empty[InboundBank])
-      case Right(x)  => Banks(request.authInfo, List(InboundBank("Bank","Bank","Bank","Bank","Bank")))
-      //case Right(x) => Banks(request.authInfo, x.banks.map(mapBankN))
+      case Right(x) => Banks(request.authInfo, x.banks.map(mapBankN))
     }
   }
 
@@ -24,30 +25,50 @@ trait Decoder extends MappedDecoder {
     decodeLocalFile match {
       case Left(_) => BankWrapper(request.authInfo, None)
       case Right(x) =>
-        val bankId = if (request.bankId == "1") Some("obp-bank-x-gh") else if (request.bankId == "2") Some("obp-bank-y-gh") else None
-        x.banks.filter(_.id == bankId).headOption match {
+        x.banks.filter(_.id == Some(request.bankId)).headOption match {
           case Some(x) => BankWrapper(request.authInfo, Some(mapBankN(x)))
           case None => BankWrapper(request.authInfo, None)
         }
+    }
+  }
 
+  def getUser(request: GetUserByUsernamePassword) = {
+    decodeLocalFile match {
+      case Left(_) => UserWrapper(None)
+      case Right(x) =>
+        val userName = Some(request.username)
+        val userPassword = Some(request.password)
+        x.users.filter(user => user.displayName == userName && user.password == userPassword).headOption match {
+          case Some(x) => UserWrapper(Some(mapUserN(x)))
+          case None => UserWrapper(None)
+        }
     }
   }
   
-  def getAccounts(request: GetAccounts) = {
-      println("Enter getAccounts")
-       AccountsWrapper(request.authInfo,List(InboundAccountJune2017("hitest","hitest","hitest","hitest","hitest","hitest",
-      "hitest","hitest",List("hitest"),List("hitest"),"hitest","hitest","hitest","hitest","hitest","hitest")))
+  def getAccounts(request: UpdateUserAccountViews) = {
+    decodeLocalFile match {
+      case Left(_) => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJune2017])
+      case Right(x) =>
+        val userName = request.username
+        x.accounts.filter(account => account.owners.head == userName).headOption match {
+          case Some(x) => OutboundUserAccountViewsBaseWapper(List(mapAccountN(x)))
+          case None => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJune2017])
+        }
+    }
   }
-
+  
   def getAdapter(request: GetAdapterInfo) = {
-    AdapterInfo(data = Some(InboundAdapterInfo("", "OBP-Scala-South", "June2017", Util.gitCommit, System.currentTimeMillis().toString)))
+    AdapterInfo(data = Some(InboundAdapterInfo("", "OBP-Scala-South", "June2017", Util.gitCommit, (new Date()).toString)))
   }
 
-
+  def getBankAccounts(request: GetAccounts) = {
+    List(InboundAccountJune2017("stub","stub","stub","stub","stub","stub",
+      "stub","stub",List("stub"),List("stub"),"stub","stub","stub","stub","stub","stub"))
+  }
   /*
-   * Decodes example_import_jun2017.json file
+   * Decodes example_import_jun2017.json file to com.tesobe.obp.jun2017.Example
    */
-  private val decodeLocalFile = {
+  private val decodeLocalFile: Either[Error, Example] = {
     val resource = scala.io.Source.fromResource("example_import_jun2017.json")
     val lines = resource.getLines()
     val json = lines.mkString

@@ -23,8 +23,7 @@ trait MappedDecoder {
       case Right(example) =>
         extractQuery(request) match {
           case Some("obp.get.Bank") =>
-            val bankId = if (request.bankId == Some("1")) Some("obp-bank-x-gh") else if (request.bankId == Some("2")) Some("obp-bank-y-gh") else None
-            example.banks.filter(_.id == bankId).headOption match {
+            example.banks.filter(_.id == Some(request.bankId)).headOption match {
               case Some(x) => Map("data" -> mapBankN(x)).asJson.noSpaces
               case None => Map("data" -> InboundBank(BankNotFound, "", "", "", "")).asJson.noSpaces
             }
@@ -47,8 +46,29 @@ trait MappedDecoder {
     InboundBank("", x.id.getOrElse(""), x.fullName.getOrElse(""), x.logo.getOrElse(""), x.website.getOrElse(""))
   }
 
-  private def mapUserN(x: User) = {
+  def mapUserN(x: User) = {
     UserN(None, x.email, x.displayName)
+  }
+  
+  def mapAccountN(x: Account) = {
+    InboundAccountJune2017(
+      errorCode = "",
+      bankId = x.bank.get,
+      branchId = x.branchId.get,
+      accountId = x.branchId.get,
+      number = x.branchId.get,
+      accountType = x.branchId.get,
+      balanceAmount = x.branchId.get,
+      balanceCurrency = x.branchId.get,
+      owners = x.owners,
+      generateViews = x.owners,
+      bankRoutingScheme = x.bank.get,
+      bankRoutingAddress = x.bank.get,
+      branchRoutingScheme = x.bank.get,
+      branchRoutingAddress = x.bank.get,
+      accountRoutingScheme = x.bank.get,
+      accountRoutingAddress = x.bank.get
+    )
   }
 
   private def extractQuery(request: Request): Option[String] = {
