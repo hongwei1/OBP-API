@@ -225,7 +225,7 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
           username <- tryo(user.name)
         } yield {
          println("ENTER GetAccountsNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN \n\n\n\n\n\n\n\n\n\n\n" )
-         val req  = code.bankconnectors.GetAccounts(AuthInfo(username, user.userId),"1")
+         val req  = code.bankconnectors.GetAccounts(AuthInfo(username, user.userId))
          cachedUserAccounts.getOrElseUpdate(req.toString , () => process[GetAccounts](req).extract[List[InboundAccountJune2017]])
   /*       val rr = process[code.bankconnectors.GetAccounts](req)
          val r = rr.extract[InboundAccountJune2017]
@@ -812,7 +812,17 @@ object KafkaMappedConnector_vJun2017 extends Connector with KafkaHelper with Mdc
       ) :: Nil
     )
   )
-
+   def getBankAccounts(): Box[List[BankAccountJune2017]] = saveConnectorMetric {{
+    val req = GetAccounts(
+      AuthInfo(userId = currentResourceUserId,username = AuthUser.getCurrentUserUsername))
+      
+    logger.debug(s"Kafka getBankAccounts says: req is: $req")
+    val rList = cachedAccounts.getOrElseUpdate(req.toString, () => process[GetAccounts](req).extract[List[InboundAccountJune2017]])
+    val res = rList map (new BankAccountJune2017(_))
+    logger.debug(s"Kafka getBankAccounts says res is $res")
+    Full(res)
+  }}("getBankAccounts")
+  
   override def getBankAccounts(accts: List[(BankId, AccountId)]): List[BankAccountJune2017] = {
     val primaryUserIdentifier = AuthUser.getCurrentUserUsername
 

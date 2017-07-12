@@ -14,7 +14,7 @@ case class GetBank(authInfo: AuthInfo, bankId: String) extends TopicCaseClass
 case class GetUserByUsernamePassword(username: String, password: String) extends TopicCaseClass
 case class UpdateUserAccountViews(username: String, password: String) extends TopicCaseClass
 case class GetAdapterInfo(date: String) extends TopicCaseClass
-case class GetAccounts(authInfo: AuthInfo, bankId: String) extends TopicCaseClass
+case class GetAccounts(authInfo: AuthInfo) extends TopicCaseClass
 
 
 /**

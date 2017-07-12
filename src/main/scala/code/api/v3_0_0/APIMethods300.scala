@@ -656,7 +656,7 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "adapter" :: Nil JsonGet _ => {
         user =>
           for {
-            // _ <- user ?~! ErrorMessages.UserNotLoggedIn
+            _ <- user ?~! ErrorMessages.UserNotLoggedIn
             _ <- Bank(bankId) ?~! BankNotFound
             ai: InboundAdapterInfo <- Connector.connector.vend.getAdapterInfo() ?~ "Not implemented"
           }
