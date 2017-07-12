@@ -21,11 +21,9 @@ trait ProcessorFactory {
         BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic),
         BusinessTopic(createTopicByClassName(GetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
         BusinessTopic(createTopicByClassName(GetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
-        BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn),
         BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
-        //BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userByUsernameFn),
-        //BusinessTopic(caseClassToTopic(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
-        BusinessTopic(createTopicByClassName(GetUserBankAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountsFn)
+        BusinessTopic(createTopicByClassName(UpdateUserAccountViews.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).accountsFn),
+        BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn )
       )
       case "mockedSopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)
       case "sopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)

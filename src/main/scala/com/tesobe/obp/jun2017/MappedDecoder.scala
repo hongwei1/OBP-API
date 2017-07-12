@@ -34,32 +34,12 @@ trait MappedDecoder {
           case Some("obp.get.User") =>
             example.users.filter(_.displayName == request.username).filter(_.password == request.password).headOption match {
               case Some(x) => Map("data" -> mapUserN(x)).asJson.noSpaces
-              case None => Map("data" -> InboundValidatedUser(Some(BankNotFound), None, None)).asJson.noSpaces
+              case None => Map("data" -> UserN(Some(BankNotFound), None, None)).asJson.noSpaces
             }
           case _ =>
-            println
             Map("data" -> "Error, unrecognised request").asJson.noSpaces
-        }
+      }
     }
-  }
-
-  def mapBankAccountN(x: Account) = {
-    InboundAccount("",
-      x.id.getOrElse(""),
-      x.bank.getOrElse(""),
-      x.label.getOrElse(""),
-      x.number.getOrElse(""),
-      x.`type`.getOrElse(""),
-      x.balance.amount.getOrElse(""),
-      x.balance.currency.getOrElse(""),
-      x.IBAN.getOrElse(""),
-      x.owners,
-      x.generatePublicView,
-      x.generateAccountantsView,
-      x.generateAuditorsView,
-      x.accountRoutingAddress.getOrElse(""),
-      x.accountRoutingAddress.getOrElse(""),
-      x.branchId.getOrElse(""))
   }
 
   def mapBankN(x: Bank) = {
@@ -67,7 +47,28 @@ trait MappedDecoder {
   }
 
   def mapUserN(x: User) = {
-    InboundValidatedUser(None, x.email, x.displayName)
+    UserN(None, x.email, x.displayName)
+  }
+  
+  def mapAccountN(x: Account) = {
+    InboundAccountJune2017(
+      errorCode = "",
+      bankId = x.bank.get,
+      branchId = x.branchId.get,
+      accountId = x.branchId.get,
+      number = x.branchId.get,
+      accountType = x.branchId.get,
+      balanceAmount = x.branchId.get,
+      balanceCurrency = x.branchId.get,
+      owners = x.owners,
+      generateViews = x.owners,
+      bankRoutingScheme = x.bank.get,
+      bankRoutingAddress = x.bank.get,
+      branchRoutingScheme = x.bank.get,
+      branchRoutingAddress = x.bank.get,
+      accountRoutingScheme = x.bank.get,
+      accountRoutingAddress = x.bank.get
+    )
   }
 
   private def extractQuery(request: Request): Option[String] = {
