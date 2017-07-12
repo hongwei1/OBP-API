@@ -39,8 +39,12 @@ object GetBankAccounts {
           u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
           u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
           AccountPermissions(
+            //TODO: Check that the permission management is o.k.
+            //User with MEIDA right will get Accountant View
             u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA,
+            //User with PEULOT right will get Owner View
             u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT,
+            //User with TZAD_G right will get Owner View
             u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G)
         ) 
       }}
