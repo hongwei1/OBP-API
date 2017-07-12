@@ -62,8 +62,8 @@ trait Decoder extends MappedDecoder {
   }
 
   def getBankAccounts(request: GetAccounts) = {
-    List(InboundAccountJune2017("stub","stub","stub","stub","stub","stub",
-      "stub","stub",List("stub"),List("stub"),"stub","stub","stub","stub","stub","stub"))
+    BankAccounts(AuthInfo("stub","stub"), List(InboundAccountJune2017("stub","stub","stub","stub","stub","stub",
+      "stub","stub",List("stub"),List("stub"),"stub","stub","stub","stub","stub","stub")))
   }
   /*
    * Decodes example_import_jun2017.json file to com.tesobe.obp.jun2017.Example
