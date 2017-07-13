@@ -5,7 +5,6 @@ import akka.stream.Materializer
 import com.tesobe.obp.SouthKafkaStreamsActor.Business
 import com.tesobe.obp.jun2017._
 import com.typesafe.scalalogging.StrictLogging
-
 import scala.concurrent.{ExecutionContext, Future}
 import io.circe.parser.decode
 import io.circe.generic.auto._
@@ -38,7 +37,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def banksFn: Business = { msg =>
     /* call Decoder for extracting data from source file */
     logger.debug(s"Processing banksFn ${msg.record.value}")
-    val response: (GetBanks => Banks) = { q => com.tesobe.obp.jun2017.Decoder.getBanks(q) }
+    val response: (GetBanks => Banks) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBanks(q) }
     val r = decode[GetBanks](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -49,7 +48,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def bankFn: Business = { msg =>
     logger.debug(s"Processing bankFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
-    val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.jun2017.Decoder.getBank(q) }
+    val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBank(q) }
     val r = decode[GetBank](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -60,7 +59,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def userFn: Business = { msg =>
     logger.debug(s"Processing userFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
-    val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.jun2017.Decoder.getUser(q) }
+    val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getUser(q) }
     val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -71,7 +70,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def accountsFn: Business = { msg =>
     logger.debug(s"Processing accountsFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
-    val response: (UpdateUserAccountViews => OutboundUserAccountViewsBaseWapper) = { q => com.tesobe.obp.jun2017.Decoder.getAccounts(q) }
+    val response: (UpdateUserAccountViews => OutboundUserAccountViewsBaseWapper) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getAccounts(q) }
     val r = decode[UpdateUserAccountViews](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -82,7 +81,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def adapterFn: Business = { msg =>
     logger.debug(s"Processing adapterFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
-    val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.jun2017.Decoder.getAdapter(q) }
+    val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getAdapter(q) }
     val r = decode[GetAdapterInfo](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -92,7 +91,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
   def bankAccountsFn: Business = {msg =>
     /* call Decoder for extracting data from source file */
-    val response: (GetAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.Decoder.getBankAccounts(q) }
+    val response: (GetAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccounts(q) }
     val r = decode[GetAccounts](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -111,7 +110,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         rr.version match {
           case Some("Nov2016") => com.tesobe.obp.nov2016.Decoder.response(rr)
           case Some("Mar2017") => com.tesobe.obp.mar2017.Decoder.response(rr)
-          case Some("Jun2017") => com.tesobe.obp.jun2017.Decoder.response(rr)
+          case Some("Jun2017") => com.tesobe.obp.jun2017.LeumiDecoder.response(rr)
           case _ => com.tesobe.obp.nov2016.Decoder.response(rr)
         }
     }

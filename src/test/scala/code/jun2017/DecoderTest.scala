@@ -1,7 +1,7 @@
 package com.tesobe.obp.jun2017
 
 import org.scalatest.{FunSuite, Matchers}
-import com.tesobe.obp.jun2017.Decoder._
+import com.tesobe.obp.jun2017.LeumiDecoder._
 
 /**
   * Created by work on 6/12/17.
