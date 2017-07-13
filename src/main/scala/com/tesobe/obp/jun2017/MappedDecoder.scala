@@ -61,7 +61,7 @@ trait MappedDecoder {
       balanceAmount = x.branchId.get,
       balanceCurrency = x.branchId.get,
       owners = x.owners,
-      generateViews = x.owners,
+      viewsToGenerate = x.owners,
       bankRoutingScheme = x.bank.get,
       bankRoutingAddress = x.bank.get,
       branchRoutingScheme = x.bank.get,
