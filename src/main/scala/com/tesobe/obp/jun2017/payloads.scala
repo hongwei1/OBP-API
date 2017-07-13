@@ -72,7 +72,7 @@ case class InboundAccountJune2017(
   balanceAmount: String,
   balanceCurrency: String,
   owners: List[String],
-  generateViews: List[String],
+  viewsToGenerate: List[String],
   bankRoutingScheme: String,
   bankRoutingAddress: String,
   branchRoutingScheme: String,
