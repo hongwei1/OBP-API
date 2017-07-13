@@ -20,7 +20,8 @@ object GetBankAccounts {
     val jsonAst: JValue = getJoni(UserId)
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
-    //By specification 
+    //By specification
+    //TODO: Should this be in the props?
     val allowedAccountTypes = List("330", "430", "110")
     //now extract values from JoniMFUser object into List of BasicBankAccount
     // (will be changed to inboundBankAccount 2017 objects 
@@ -29,24 +30,27 @@ object GetBankAccounts {
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
-      AccountPermissions("0","1","1") //TODO: Identify and extract leading account permissions
+      AccountPermissions(true,false,false) //TODO: Identify and extract leading account permissions
     )
     for ( i <- jsonExtract.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
       for (u <- i.SDR_CHN) {
-        if (allowedAccountTypes.contains(u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG)) 
-        result += BasicBankAccount(
-          u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
-          u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
-          u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
-          AccountPermissions(
-            //TODO: Check that the permission management is o.k.
-            //User with MEIDA right will get Accountant View
-            u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA,
-            //User with PEULOT right will get Owner View
-            u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT,
-            //User with TZAD_G right will get Owner View
-            u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G)
-        ) 
+        if (allowedAccountTypes.contains(u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG)) {
+          val mursheMeida = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA == "0"
+          val murshePeulot = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT == "0"
+          val mursheTzadG = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G == "0"
+          result += BasicBankAccount(
+            u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
+            u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
+            u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
+            AccountPermissions(
+              //TODO: Check that the permission management is o.k. 
+              //User with MEIDA right will get Accountant View
+              mursheMeida,
+              //User with PEULOT right will get Owner View
+              murshePeulot,
+              //User with TZAD_G right will get Owner View
+              mursheTzadG)
+        ) }
       }}
     if (!result.contains(leading_account)) result += leading_account //TODO: Broken by assuming leading account permissions
     result.toList

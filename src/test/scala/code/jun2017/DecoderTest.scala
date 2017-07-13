@@ -8,10 +8,17 @@ import com.tesobe.obp.jun2017.Decoder._
   */
 class DecoderTest extends FunSuite with Matchers{
   
-  test("print getBankAccounts"){
+  test("getBankAccounts works for Stub"){
     val result = getBankAccounts(GetAccounts(AuthInfo("karlsid","karl")))
-    println(result)
-      
+    //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
+    result should be (BankAccounts(AuthInfo("karlsid","karl"),
+      List(InboundAccountJune2017("","10","616","3565953","","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""),
+        InboundAccountJune2017("","10","616","50180983","","430","5668.13","ILS",List("./src/test/resources/joni_result.json")
+          ,List("Owner"),"","","","","",""), 
+        InboundAccountJune2017("","10","616","50180963","","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""),
+        InboundAccountJune2017("","10","814","20102612","","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""),
+        InboundAccountJune2017("","10","814","20105505","","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""))))
+
   }
   
  
