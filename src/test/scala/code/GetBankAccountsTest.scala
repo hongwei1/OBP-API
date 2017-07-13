@@ -19,7 +19,7 @@ class GetBankAccountsTest extends FunSuite with Matchers {
     }
 
    test("hex256(string) is really sha256 hash of string") {
-    hex256("fred") should be ("d0cfc2e5319b82cdc71a33873e826c93d7ee11363f8ac91c4fa3a2cfcd2286e5")
+    hexEncodedSha256("fred") should be ("d0cfc2e5319b82cdc71a33873e826c93d7ee11363f8ac91c4fa3a2cfcd2286e5")
   }
   
   test("getModeratedCoreAccountJson gives correct account data") {

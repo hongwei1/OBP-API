@@ -80,9 +80,9 @@ case class SdrJoni(
 case class JoniMfUser(SDR_JONI: SdrJoni)
 
 case class AccountPermissions(
-                            canSee: Boolean, 
-                            internalTransactions: Boolean,
-                            externalTransactions: Boolean
+                               canSee: Boolean,
+                               canMakeInternalPayments: Boolean,
+                               canMakeExternalPayments: Boolean
                             )
 
 case class BasicBankAccount(

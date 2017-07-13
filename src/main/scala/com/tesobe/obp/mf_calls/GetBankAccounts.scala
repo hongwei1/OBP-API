@@ -66,7 +66,7 @@ object GetBankAccounts {
     result.toList
   }
   
-  def hex256(in : String): String = {
+  def hexEncodedSha256(in : String): String = {
     hexEncode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
   }
   //Create OBP Style ModeratedCoreAccountJSON
@@ -77,7 +77,7 @@ object GetBankAccounts {
     val routing = AccountRoutingJsonV121("IBAN", account.iban)
     val balance = AmountOfMoneyJsonV121("ILS", account.balance) 
     ModeratedCoreAccountJSON(
-      hex256(account.basicBankAccount.accountNr + account.basicBankAccount.branchNr + account.basicBankAccount.accountType + "globalsalt"), //TODO: get global salt from props
+      hexEncodedSha256(account.basicBankAccount.accountNr + account.basicBankAccount.branchNr + account.basicBankAccount.accountType + "globalsalt"), //TODO: get global salt from props
        "leumi001", "label", account.basicBankAccount.accountNr, 
       owners, views, account.basicBankAccount.accountType,balance, routing)
   }
