@@ -24,6 +24,7 @@ trait ProcessorFactory {
         BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
         BusinessTopic(createTopicByClassName(UpdateUserAccountViews.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).accountsFn),
         BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn ),
+        BusinessTopic(createTopicByClassName(GetAccount.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountFn),
         BusinessTopic(createTopicByClassName(GetAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountsFn)
 
       )

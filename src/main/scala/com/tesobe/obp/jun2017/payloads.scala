@@ -22,6 +22,7 @@ case class GetBanks(authInfo: AuthInfo, criteria: String)
 case class GetBank(authInfo: AuthInfo, bankId: String)
 case class GetAdapterInfo(date: String)
 case class GetAccounts(authInfo: AuthInfo)
+case class GetAccount(authInfo: AuthInfo, bankId: String, accountId: String)
 case class GetUserByUsernamePassword(username: String, password: String)
 case class UpdateUserAccountViews(username: String, password: String)
 
@@ -33,9 +34,10 @@ case class UpdateUserAccountViews(username: String, password: String)
 case class Banks(authInfo: AuthInfo, data: List[InboundBank])
 case class BankWrapper(authInfo: AuthInfo, data: Option[InboundBank])
 case class AdapterInfo(data: Option[InboundAdapterInfo])
-case class UserWrapper(data: Option[UserN])
+case class UserWrapper(data: Option[InboundValidatedUser])
 case class OutboundUserAccountViewsBaseWapper(data: List[InboundAccountJune2017])
 case class BankAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
+case class BankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -48,7 +50,7 @@ case class InboundBank(
                         logo: String,
                         url: String
                       )
-case class UserN(
+case class InboundValidatedUser(
                   errorCode: Option[String],
                   email: Option[String],
                   displayName: Option[String]
@@ -63,20 +65,20 @@ case class InboundAdapterInfo(
 )
 
 case class InboundAccountJune2017(
-  errorCode: String,
-  bankId: String,
-  branchId: String,
-  accountId: String,
-  number: String,
-  accountType: String,
-  balanceAmount: String,
-  balanceCurrency: String,
-  owners: List[String],
-  viewsToGenerate: List[String],
-  bankRoutingScheme: String,
-  bankRoutingAddress: String,
-  branchRoutingScheme: String,
-  branchRoutingAddress: String,
-  accountRoutingScheme: String,
-  accountRoutingAddress: String
+                                   errorCode: String,
+                                   bankId: String,
+                                   branchId: String,
+                                   accountId: String,
+                                   accountNr: String,
+                                   accountType: String,
+                                   balanceAmount: String,
+                                   balanceCurrency: String,
+                                   owners: List[String],
+                                   viewsToGenerate: List[String],
+                                   bankRoutingScheme: String,
+                                   bankRoutingAddress: String,
+                                   branchRoutingScheme: String,
+                                   branchRoutingAddress: String,
+                                   accountRoutingScheme: String,
+                                   accountRoutingAddress: String
 )

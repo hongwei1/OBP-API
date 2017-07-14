@@ -17,7 +17,7 @@ trait Decoder extends MappedDecoder {
   def getBanks(getBanks: GetBanks) = {
     decodeLocalFile match {
       case Left(_) => Banks(getBanks.authInfo, List.empty[InboundBank])
-      case Right(x) => Banks(getBanks.authInfo, x.banks.map(mapBankN))
+      case Right(x) => Banks(getBanks.authInfo, x.banks.map(mapBankToInboundBank))
     }
   }
 
@@ -26,7 +26,7 @@ trait Decoder extends MappedDecoder {
       case Left(_) => BankWrapper(getBank.authInfo, None)
       case Right(x) =>
         x.banks.filter(_.id == Some(getBank.bankId)).headOption match {
-          case Some(x) => BankWrapper(getBank.authInfo, Some(mapBankN(x)))
+          case Some(x) => BankWrapper(getBank.authInfo, Some(mapBankToInboundBank(x)))
           case None => BankWrapper(getBank.authInfo, None)
         }
     }
@@ -39,7 +39,7 @@ trait Decoder extends MappedDecoder {
         val userName = Some(getUserbyUsernamePassword.username)
         val userPassword = Some(getUserbyUsernamePassword.password)
         x.users.filter(user => user.displayName == userName && user.password == userPassword).headOption match {
-          case Some(x) => UserWrapper(Some(mapUserN(x)))
+          case Some(x) => UserWrapper(Some(mapUserToInboundValidatedUser(x)))
           case None => UserWrapper(None)
         }
     }
@@ -51,7 +51,7 @@ trait Decoder extends MappedDecoder {
       case Right(x) =>
         val userName = updateUserAccountViews.username
         x.accounts.filter(account => account.owners.head == userName).headOption match {
-          case Some(x) => OutboundUserAccountViewsBaseWapper(List(mapAccountN(x)))
+          case Some(x) => OutboundUserAccountViewsBaseWapper(List(mapAdapterAccountToInboundAccountJune2017(x)))
           case None => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJune2017])
         }
     }

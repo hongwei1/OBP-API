@@ -88,7 +88,17 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
     Future(msg, r)
   }
-
+  
+  def bankAccountFn: Business = {msg =>
+    /* call Decoder for extracting data from source file */
+    val response: (GetAccount => BankAccount) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccount(q) }
+    val r = decode[GetAccount](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
+  
   def bankAccountsFn: Business = {msg =>
     /* call Decoder for extracting data from source file */
     val response: (GetAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccounts(q) }

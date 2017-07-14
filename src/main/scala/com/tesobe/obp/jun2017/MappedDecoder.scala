@@ -24,17 +24,17 @@ trait MappedDecoder {
         extractQuery(request) match {
           case Some("obp.get.Bank") =>
             example.banks.filter(_.id == Some(request.bankId)).headOption match {
-              case Some(x) => Map("data" -> mapBankN(x)).asJson.noSpaces
+              case Some(x) => Map("data" -> mapBankToInboundBank(x)).asJson.noSpaces
               case None => Map("data" -> InboundBank(BankNotFound, "", "", "", "")).asJson.noSpaces
             }
           case Some("obp.get.Banks") =>
-            val data = example.banks.map(mapBankN)
+            val data = example.banks.map(mapBankToInboundBank)
             Map("data" -> data).asJson.noSpaces
 
           case Some("obp.get.User") =>
             example.users.filter(_.displayName == request.username).filter(_.password == request.password).headOption match {
-              case Some(x) => Map("data" -> mapUserN(x)).asJson.noSpaces
-              case None => Map("data" -> UserN(Some(BankNotFound), None, None)).asJson.noSpaces
+              case Some(x) => Map("data" -> mapUserToInboundValidatedUser(x)).asJson.noSpaces
+              case None => Map("data" -> InboundValidatedUser(Some(BankNotFound), None, None)).asJson.noSpaces
             }
           case _ =>
             Map("data" -> "Error, unrecognised request").asJson.noSpaces
@@ -42,21 +42,21 @@ trait MappedDecoder {
     }
   }
 
-  def mapBankN(x: Bank) = {
+  def mapBankToInboundBank(x: Bank) = {
     InboundBank("", x.id.getOrElse(""), x.fullName.getOrElse(""), x.logo.getOrElse(""), x.website.getOrElse(""))
   }
 
-  def mapUserN(x: User) = {
-    UserN(None, x.email, x.displayName)
+  def mapUserToInboundValidatedUser(x: User) = {
+    InboundValidatedUser(None, x.email, x.displayName)
   }
   
-  def mapAccountN(x: Account) = {
+  def mapAdapterAccountToInboundAccountJune2017(x: Account) = {
     InboundAccountJune2017(
       errorCode = "",
       bankId = x.bank.get,
       branchId = x.branchId.get,
       accountId = x.branchId.get,
-      number = x.branchId.get,
+      accountNr = x.branchId.get,
       accountType = x.branchId.get,
       balanceAmount = x.branchId.get,
       balanceCurrency = x.branchId.get,
