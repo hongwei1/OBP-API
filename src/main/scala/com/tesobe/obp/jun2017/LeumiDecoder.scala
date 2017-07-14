@@ -45,7 +45,7 @@ object LeumiDecoder extends Decoder {
       bankId = "10",
       branchId = x.branchNr,
       accountId = getOrCreateAccountId(x.accountNr),
-      accountNr = x.accountNr,
+      accountNumber = x.accountNr,
       accountType = x.accountType,
       balanceAmount = getBalance("./src/test/resources/nt1c_result.json"),
       balanceCurrency = "ILS",

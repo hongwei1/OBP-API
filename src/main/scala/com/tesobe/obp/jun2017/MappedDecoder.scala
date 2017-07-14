@@ -56,7 +56,7 @@ trait MappedDecoder {
       bankId = x.bank.get,
       branchId = x.branchId.get,
       accountId = x.branchId.get,
-      accountNr = x.branchId.get,
+      accountNumber = x.branchId.get,
       accountType = x.branchId.get,
       balanceAmount = x.branchId.get,
       balanceCurrency = x.branchId.get,

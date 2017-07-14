@@ -69,7 +69,7 @@ case class InboundAccountJune2017(
                                    bankId: String,
                                    branchId: String,
                                    accountId: String,
-                                   accountNr: String,
+                                   accountNumber: String,
                                    accountType: String,
                                    balanceAmount: String,
                                    balanceCurrency: String,
