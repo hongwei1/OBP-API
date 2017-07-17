@@ -20,24 +20,24 @@ class LeumiDecoderTest extends FunSuite with Matchers{
 
     //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
     result should be (BankAccounts(AuthInfo("karlsid","karl"),
-      List(InboundAccountJune2017("errorcode","10","616",accountId1,"3565953","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""),
+      List(InboundAccountJune2017("errorcode","10","616",accountId1,"3565953","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""),
         InboundAccountJune2017("errorcode","10","616",accountId2,"50180983","430","5668.13","ILS",List("./src/test/resources/joni_result.json")
           ,List("Owner"),"","","","","",""), 
-        InboundAccountJune2017("errorcode","10","616",accountId3,"50180963","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""),
-        InboundAccountJune2017("errorcode","10","814",accountId4,"20102612","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""),
-        InboundAccountJune2017("errorcode","10","814",accountId5,"20105505","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""))))
+        InboundAccountJune2017("errorcode","10","616",accountId3,"50180963","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""),
+        InboundAccountJune2017("errorcode","10","814",accountId4,"20102612","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""),
+        InboundAccountJune2017("errorcode","10","814",accountId5,"20105505","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""))))
   }
   
   test("getBankAccountbyAccountId works for Stub"){
     val result = getBankAccountbyAccountId(GetAccountbyAccountID(AuthInfo("karlsid","karl"),"10",accountId1))
     result should be (BankAccount(AuthInfo("karlsid","karl"),(InboundAccountJune2017("errorcode","10","616",accountId1,
-      "3565953","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""))))
+      "3565953","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""))))
   }
 
   test("getBankAccountbyAccountNumber works for Stub"){
     val result = getBankAccountByAccountNumber(GetAccountbyAccountNumber(AuthInfo("karlsid","karl"),"10","3565953"))
     result should be (BankAccount(AuthInfo("karlsid","karl"),(InboundAccountJune2017("errorcode","10","616",accountId1,
-      "3565953","330","5668.13","ILS",List(""),List("Accountant"),"","","","","",""))))
+      "3565953","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""))))
   }
   
   test("getTransactions works for Stubs first transaction"){

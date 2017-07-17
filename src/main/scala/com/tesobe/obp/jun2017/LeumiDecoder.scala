@@ -40,7 +40,7 @@ object LeumiDecoder extends Decoder {
     val hasViewerRights: Boolean = x.accountPermissions.canSee
     val  viewsToGenerate  = {
       if (hasOwnerRights) {List("Owner")}
-      else if (hasViewerRights) {List("Accountant")}
+      else if (hasViewerRights) {List("Auditor")}
       else {List("")}
     }
     //Create Owner for result InboundAccount2017 creation
