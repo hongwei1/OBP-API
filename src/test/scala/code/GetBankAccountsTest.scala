@@ -20,7 +20,7 @@ class GetBankAccountsTest extends FunSuite with Matchers {
    test("base64encoded256(string) is really sha256 hash of string") {
      val res1 = base64EncodedSha256("fred")
      val res2 = base64EncodedSha256("karl")
-     res1 should be ("0M/C5TGbgs3HGjOHPoJsk9fuETY/iskcT6Oiz80ihuU")
+     res1 should be ("0M_C5TGbgs3HGjOHPoJsk9fuETY_iskcT6Oiz80ihuU")
      res2 should be ("wxppC1KLgaxxCoDWE3KF28ltJHLOBNMfREcXrHLTgYM")
   } 
 

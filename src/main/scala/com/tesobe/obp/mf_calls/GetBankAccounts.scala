@@ -71,7 +71,7 @@ object GetBankAccounts {
   }
   
   def base64EncodedSha256(in: String): String = {
-    base64Encode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8"))).stripSuffix("=")
+    base64EncodeURLSafe(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8"))).stripSuffix("=")
   }
 
 }
