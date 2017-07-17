@@ -69,16 +69,9 @@ object GetBankAccounts {
   def hexEncodedSha256(in : String): String = {
     hexEncode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
   }
-  //Create OBP Style ModeratedCoreAccountJSON
-  def getModeratedCoreAccountJSON(account: FullBankAccount): ModeratedCoreAccountJSON = {
-    //TODO: check if User is Account Owner
-    val owners = List(UserJSONV121("63c7ddc1196587195580c2d89647e3f0642582827d8612a911ca905f2ae9a55f", "provider", "name"))
-    val views = if (owners.nonEmpty) List(AccountView ("owner", "Owner View", false:Boolean) ) else List(AccountView("","",false))
-    val routing = AccountRoutingJsonV121("IBAN", account.iban)
-    val balance = AmountOfMoneyJsonV121("ILS", account.balance) 
-    ModeratedCoreAccountJSON(
-      hexEncodedSha256(account.basicBankAccount.accountNr + account.basicBankAccount.branchNr + account.basicBankAccount.accountType + "globalsalt"), //TODO: get global salt from props
-       "leumi001", "label", account.basicBankAccount.accountNr, 
-      owners, views, account.basicBankAccount.accountType,balance, routing)
+  
+  def base64EncodedSha256(in: String): String = {
+    base64Encode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8"))).stripSuffix("=")
   }
+
 }

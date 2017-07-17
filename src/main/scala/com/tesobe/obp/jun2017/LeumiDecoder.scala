@@ -3,7 +3,7 @@ package com.tesobe.obp.jun2017
 import com.tesobe.obp.BasicBankAccount
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.Nt1cMf.getBalance
-import com.tesobe.obp.GetBankAccounts.hexEncodedSha256
+import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 
 import scala.collection.mutable.{ListBuffer, Map}
 
@@ -20,7 +20,7 @@ object LeumiDecoder extends Decoder {
   def getOrCreateAccountId(accountNr: String): String = {
     if (mapAccountNrToAccountId.contains(accountNr)) { mapAccountNrToAccountId(accountNr) }
     else {
-      val accountId = hexEncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
+      val accountId = base64EncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
       mapAccountIdToAccountNr += (accountId -> accountNr)
       mapAccountNrToAccountId += (accountNr -> accountId)
       accountId
