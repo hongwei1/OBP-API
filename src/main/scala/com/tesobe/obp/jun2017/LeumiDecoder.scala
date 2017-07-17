@@ -1,21 +1,26 @@
 package com.tesobe.obp.jun2017
 
-import com.tesobe.obp.BasicBankAccount
+import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.Nt1cMf.getBalance
+import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 
 import scala.collection.mutable.{ListBuffer, Map}
 
 
 /**
-  * Responsible for processing requests based on local example_import_jun2017.json file.
+  * Responsible for processing requests based on local example json files.
   *
   */
 object LeumiDecoder extends Decoder {
   
+  val defaultCurrency = "ILS"
+  
   var mapAccountIdToAccountNumber = Map[String, String]()
   var mapAccountNumberToAccountId= Map[String, String]()
+  
+  //Helper functions start here:---------------------------------------------------------------------------------------
 
   def getOrCreateAccountId(accountNr: String): String = {
     if (mapAccountNumberToAccountId.contains(accountNr)) { mapAccountNumberToAccountId(accountNr) }
@@ -48,7 +53,7 @@ object LeumiDecoder extends Decoder {
       accountNumber = x.accountNr,
       accountType = x.accountType,
       balanceAmount = getBalance("./src/test/resources/nt1c_result.json"),
-      balanceCurrency = "ILS",
+      balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
       bankRoutingScheme = "",
@@ -59,6 +64,33 @@ object LeumiDecoder extends Decoder {
       accountRoutingAddress = ""
     )
   }
+  def mapAdapterTransactionToInternalTransaction(userId: String, 
+                                                 bankId: String,
+                                                 accountId: String,
+                                                 adapterTransaction: Tn2TnuaBodedet): InternalTransaction = {
+    InternalTransaction(
+      //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
+      errorCode = "errorcode",
+      transactionId = "transactionId", // Find some
+      accountId = accountId, //accountId
+      amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM, //:"TN2_SCHUM"
+      bankId = "10", // 10 for now (Joni)
+      completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH, //"TN2_TA_ERECH": // Date of value for
+      counterpartyId = "counterpartyId",
+      counterpartyName = "counterpartyName",
+      currency = defaultCurrency, //ILS 
+      description = adapterTransaction.TN2_TNUA_BODEDET.TN2_TEUR_PEULA, //"TN2_TEUR_PEULA":
+      newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA,  //"TN2_ITRA":
+      newBalanceCurrency = defaultCurrency, //ILS
+      postedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD, //"TN2_TA_IBUD": // Date of transaction
+      `type` = adapterTransaction.TN2_TNUA_BODEDET.TN2_SUG_PEULA, //"TN2_SUG_PEULA"
+      userId = userId //userId
+    )
+  }
+  //Helperfunctions end here--------------------------------------------------------------------------------------------
+  
+  //Processorfunctions start here---------------------------------------------------------------------------------------
+  
   
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): BankAccount = {
     val username = "./src/test/resources/joni_result.json"
@@ -84,6 +116,21 @@ object LeumiDecoder extends Decoder {
       result += mapAdapterAccountToInboundAccountJune2017(userid, i)
       }
     BankAccounts(getAccounts.authInfo, result.toList)
+  }
+  
+  def getTransactions(transactions: GetTransactions): Transcations = {
+    val userid = "./src/test/resources/nt1c_T_result.json"
+    val mfTransactions = getCompletedTransactions(userid)
+    var result = new ListBuffer[InternalTransaction]
+    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA) {
+      result += mapAdapterTransactionToInternalTransaction(
+        transactions.authInfo.userId,
+        "10",
+        transactions.accountId,
+        i
+      )
+    }
+      Transcations(transactions.authInfo, result.toList)
   }
   
 

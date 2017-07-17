@@ -40,6 +40,7 @@ case class UserWrapper(data: Option[InboundValidatedUser])
 case class OutboundUserAccountViewsBaseWapper(data: List[InboundAccountJune2017])
 case class BankAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
 case class BankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
+case class Transcations(authInfo: AuthInfo, data: List[InternalTransaction])
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
