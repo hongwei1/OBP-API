@@ -14,15 +14,15 @@ import scala.collection.mutable.{ListBuffer, Map}
   */
 object LeumiDecoder extends Decoder {
   
-  var mapAccountIdToAccountNr = Map[String, String]()
-  var mapAccountNrToAccountId= Map[String, String]()
+  var mapAccountIdToAccountNumber = Map[String, String]()
+  var mapAccountNumberToAccountId= Map[String, String]()
 
   def getOrCreateAccountId(accountNr: String): String = {
-    if (mapAccountNrToAccountId.contains(accountNr)) { mapAccountNrToAccountId(accountNr) }
+    if (mapAccountNumberToAccountId.contains(accountNr)) { mapAccountNumberToAccountId(accountNr) }
     else {
       val accountId = base64EncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
-      mapAccountIdToAccountNr += (accountId -> accountNr)
-      mapAccountNrToAccountId += (accountNr -> accountId)
+      mapAccountIdToAccountNumber += (accountId -> accountNr)
+      mapAccountNumberToAccountId += (accountNr -> accountId)
       accountId
     }
   }
@@ -60,11 +60,18 @@ object LeumiDecoder extends Decoder {
     )
   }
   
-  def getBankAccount(getAccount: GetAccount): BankAccount = {
+  def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): BankAccount = {
     val username = "./src/test/resources/joni_result.json"
-    val accountNr = mapAccountIdToAccountNr(getAccount.accountId)
+    val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
     val mfAccounts = getBasicBankAccountsForUser(username)
     BankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)) 
+  }
+  
+  def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): BankAccount = {
+    val username = "./src/test/resources/joni_result.json"
+    val mfAccounts = getBasicBankAccountsForUser(username)
+    BankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => 
+      x.accountNr == getAccount.accountNumber).head))
   }
 
   override def getBankAccounts(getAccounts: GetAccounts): BankAccounts = {

@@ -22,9 +22,11 @@ case class GetBanks(authInfo: AuthInfo, criteria: String)
 case class GetBank(authInfo: AuthInfo, bankId: String)
 case class GetAdapterInfo(date: String)
 case class GetAccounts(authInfo: AuthInfo)
-case class GetAccount(authInfo: AuthInfo, bankId: String, accountId: String)
+case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String)
+case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String)
 case class GetUserByUsernamePassword(username: String, password: String)
 case class UpdateUserAccountViews(username: String, password: String)
+case class GetTransactions(authInfo: AuthInfo,bankId: String, accountId: String, queryParams: String)
 
 
 /**
@@ -82,3 +84,26 @@ case class InboundAccountJune2017(
                                    accountRoutingScheme: String,
                                    accountRoutingAddress: String
 )
+
+abstract class InboundMessageBase(optionalFields: String*) {
+  def errorCode: String
+}
+
+case class InternalTransaction(
+//Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
+                                errorCode: String,
+                                transactionId: String, // Find some
+                                accountId: String, //accountId
+                                amount: String, //:"TN2_SCHUM"
+                                bankId: String, // 10 for now (Joni)
+                                completedDate: String,//"TN2_TA_ERECH": // Date of value for
+                                counterpartyId: String,
+                                counterpartyName: String,
+                                currency: String, //ILS 
+                                description: String, //"TN2_TEUR_PEULA":
+                                newBalanceAmount: String, //"TN2_ITRA":
+                                newBalanceCurrency: String, //ILS
+                                postedDate: String,//"TN2_TA_IBUD": // Date of transaction
+                                `type`: String, //"TN2_SUG_PEULA"
+                                userId: String //userId
+                              ) extends InboundMessageBase
