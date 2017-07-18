@@ -35,9 +35,9 @@ object GetBankAccounts {
     for ( i <- jsonExtract.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
       for (u <- i.SDR_CHN) {
         if (allowedAccountTypes.contains(u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG)) {
-          val mursheMeida = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA == "0"
-          val murshePeulot = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT == "0"
-          val mursheTzadG = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G == "0"
+          val hasMursheMeida = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA == "0"
+          val hasMurshePeulot = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT == "0"
+          val hasmursheTzadG = u.SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G == "0"
           result += BasicBankAccount(
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
@@ -45,11 +45,11 @@ object GetBankAccounts {
             AccountPermissions(
               //TODO: Check that the permission management is o.k. 
               //User with MEIDA right will get Accountant View
-              mursheMeida,
+              hasMursheMeida,
               //User with PEULOT right will get Owner View
-              murshePeulot,
+              hasMurshePeulot,
               //User with TZAD_G right will get Owner View
-              mursheTzadG)
+              hasmursheTzadG)
         ) }
       }}
     if (!result.contains(leading_account)) result += leading_account //TODO: Broken by assuming leading account permissions

@@ -90,8 +90,14 @@ object LeumiDecoder extends Decoder {
   //Helperfunctions end here--------------------------------------------------------------------------------------------
   
   //Processorfunctions start here---------------------------------------------------------------------------------------
-  
-  
+
+  override def getBanks(getBanks: GetBanks) = {
+      Banks(getBanks.authInfo, List(InboundBank("errorcode", "10", "leumi","leumilogo","leumiurl")))
+    }
+
+  override def getBank(getBank: GetBank) = {
+    BankWrapper(getBank.authInfo, Some(InboundBank("errorcode", "10", "leumi","leumilogo","leumiurl")))
+  }
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): BankAccount = {
     val username = "./src/test/resources/joni_result.json"
     val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
