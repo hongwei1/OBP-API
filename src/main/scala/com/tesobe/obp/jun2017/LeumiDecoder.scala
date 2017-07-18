@@ -20,6 +20,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   var mapAccountIdToAccountNumber = Map[String, String]()
   var mapAccountNumberToAccountId= Map[String, String]()
+  //TODO: Look for better mapping function
+  case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
+  var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
+  var mapTransactionValuesToTransactionId = Map[TransactionIdValues, String]()
   
   //Helper functions start here:---------------------------------------------------------------------------------------
 
@@ -27,14 +31,28 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"getOrCreateAccountId-accountNr($accountNr)")
     if (mapAccountNumberToAccountId.contains(accountNr)) { mapAccountNumberToAccountId(accountNr) }
     else {
+      //TODO: Do random salting for production
       val accountId = base64EncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
       mapAccountIdToAccountNumber += (accountId -> accountNr)
       mapAccountNumberToAccountId += (accountNr -> accountId)
       accountId
     }
   }
+  
+  def getOrCreateTransactionId(amount: String, completedDate: String,newBalanceAmount: String): String = {
+    logger.debug(s"getOrCreateTransactionId for ($amount)($completedDate)($newBalanceAmount)")
+    val transactionIdValues = TransactionIdValues(amount,completedDate, newBalanceAmount)
+    if (mapTransactionValuesToTransactionId.contains(transactionIdValues)) {
+      mapTransactionValuesToTransactionId(transactionIdValues)
+    } else {
+      val transactionId = base64EncodedSha256(amount + completedDate + newBalanceAmount)
+      mapTransactionValuesToTransactionId += (transactionIdValues -> transactionId)
+      mapTransactionIdToTransactionValues += (transactionId -> transactionIdValues)
+      transactionId
+    }
+  } 
 
-    def mapAdapterAccountToInboundAccountJune2017(userid: String, x: BasicBankAccount): InboundAccountJune2017 = {
+  def mapAdapterAccountToInboundAccountJune2017(userid: String, x: BasicBankAccount): InboundAccountJune2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
@@ -70,19 +88,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
                                                  bankId: String,
                                                  accountId: String,
                                                  adapterTransaction: Tn2TnuaBodedet): InternalTransaction = {
+    val amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM
+    val completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH
+    val newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA
     InternalTransaction(
       //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
       errorCode = "errorcode",
-      transactionId = "transactionId", // Find some
+      transactionId = getOrCreateTransactionId(amount,completedDate,newBalanceAmount), // Find some
       accountId = accountId, //accountId
-      amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM, //:"TN2_SCHUM"
+      amount = amount, //:"TN2_SCHUM"
       bankId = "10", // 10 for now (Joni)
-      completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH, //"TN2_TA_ERECH": // Date of value for
+      completedDate = completedDate, //"TN2_TA_ERECH": // Date of value for
       counterpartyId = "counterpartyId",
       counterpartyName = "counterpartyName",
       currency = defaultCurrency, //ILS 
       description = adapterTransaction.TN2_TNUA_BODEDET.TN2_TEUR_PEULA, //"TN2_TEUR_PEULA":
-      newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA,  //"TN2_ITRA":
+      newBalanceAmount = newBalanceAmount,  //"TN2_ITRA":
       newBalanceCurrency = defaultCurrency, //ILS
       postedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD, //"TN2_TA_IBUD": // Date of transaction
       `type` = adapterTransaction.TN2_TNUA_BODEDET.TN2_SUG_PEULA, //"TN2_SUG_PEULA"
@@ -105,7 +126,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
     //TODO 1, if there is no account, it will throw the exception 
-    val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
+    val accountNr = try {mapAccountIdToAccountNumber(getAccount.accountId)} catch {case x: NoSuchFieldError
+    => logger.error("AccountId: " + getAccount.accountId + "not found.")}
     val mfAccounts = getBasicBankAccountsForUser(username)
     InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)) 
   }
@@ -129,20 +151,35 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundBankAccounts(getAccountsInput.authInfo, result.toList)
   }
   
-  def getTransactions(transactions: GetTransactions): InboundTransactions = {
+  def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
     val userid = "./src/test/resources/nt1c_T_result.json"
     val mfTransactions = getCompletedTransactions(userid)
     var result = new ListBuffer[InternalTransaction]
     for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
-        transactions.authInfo.userId,
+        getTransactionsRequest.authInfo.userId,
         "10",
-        transactions.accountId,
+        getTransactionsRequest.accountId,
         i
       )
     }
-      InboundTransactions(transactions.authInfo, result.toList)
+      InboundTransactions(getTransactionsRequest.authInfo, result.toList)
   }
+  
+  def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
+    val userid = "./src/test/resources/nt1c_T_result.json"
+    val mfTransactions = getCompletedTransactions(userid)
+    val transactionIdValues = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId)
+    InboundTransaction(getTransactionRequest.authInfo,  mapAdapterTransactionToInternalTransaction(
+      getTransactionRequest.authInfo.userId,
+      getTransactionRequest.bankId,
+      getTransactionRequest.accountId,
+      mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA.filter(x =>
+        x.TN2_TNUA_BODEDET.TN2_SCHUM == transactionIdValues.amount &&
+          x.TN2_TNUA_BODEDET.TN2_TA_ERECH == transactionIdValues.completedDate &&
+          x.TN2_TNUA_BODEDET.TN2_ITRA == transactionIdValues.newBalanceAmount ).head))
+    }
+
 
 }
 
