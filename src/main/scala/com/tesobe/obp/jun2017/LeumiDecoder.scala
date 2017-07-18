@@ -5,6 +5,7 @@ import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.Nt1cMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.mutable.{ListBuffer, Map}
 
@@ -13,7 +14,7 @@ import scala.collection.mutable.{ListBuffer, Map}
   * Responsible for processing requests based on local example json files.
   *
   */
-object LeumiDecoder extends Decoder {
+object LeumiDecoder extends Decoder with StrictLogging {
   
   val defaultCurrency = "ILS"
   
@@ -23,6 +24,7 @@ object LeumiDecoder extends Decoder {
   //Helper functions start here:---------------------------------------------------------------------------------------
 
   def getOrCreateAccountId(accountNr: String): String = {
+    logger.debug(s"getOrCreateAccountId-accountNr($accountNr)")
     if (mapAccountNumberToAccountId.contains(accountNr)) { mapAccountNumberToAccountId(accountNr) }
     else {
       val accountId = base64EncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
@@ -92,21 +94,22 @@ object LeumiDecoder extends Decoder {
   //Processorfunctions start here---------------------------------------------------------------------------------------
   
   
-  def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): BankAccount = {
+  def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
+    //TODO 1, if there is no account, it will throw the exception 
     val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
     val mfAccounts = getBasicBankAccountsForUser(username)
-    BankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)) 
+    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)) 
   }
   
-  def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): BankAccount = {
+  def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(username)
-    BankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => 
+    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => 
       x.accountNr == getAccount.accountNumber).head))
   }
 
-  override def getBankAccounts(getAccounts: GetAccounts): BankAccounts = {
+   def getBankAccounts(getAccountsInput: GetAccounts): InboundBankAccounts = {
     // userid is path to test json file
     val userid = "./src/test/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(userid)
@@ -115,10 +118,10 @@ object LeumiDecoder extends Decoder {
       
       result += mapAdapterAccountToInboundAccountJune2017(userid, i)
       }
-    BankAccounts(getAccounts.authInfo, result.toList)
+    InboundBankAccounts(getAccountsInput.authInfo, result.toList)
   }
   
-  def getTransactions(transactions: GetTransactions): Transcations = {
+  def getTransactions(transactions: GetTransactions): InboundTransactions = {
     val userid = "./src/test/resources/nt1c_T_result.json"
     val mfTransactions = getCompletedTransactions(userid)
     var result = new ListBuffer[InternalTransaction]
@@ -130,9 +133,8 @@ object LeumiDecoder extends Decoder {
         i
       )
     }
-      Transcations(transactions.authInfo, result.toList)
+      InboundTransactions(transactions.authInfo, result.toList)
   }
-  
 
 }
 

@@ -19,7 +19,7 @@ class LeumiDecoderTest extends FunSuite with Matchers{
     val result = getBankAccounts(GetAccounts(AuthInfo("karlsid","karl")))
 
     //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
-    result should be (BankAccounts(AuthInfo("karlsid","karl"),
+    result should be (InboundBankAccounts(AuthInfo("karlsid","karl"),
       List(InboundAccountJune2017("errorcode","10","616",accountId1,"3565953","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""),
         InboundAccountJune2017("errorcode","10","616",accountId2,"50180983","430","5668.13","ILS",List("./src/test/resources/joni_result.json")
           ,List("Owner"),"","","","","",""), 
@@ -30,13 +30,13 @@ class LeumiDecoderTest extends FunSuite with Matchers{
   
   test("getBankAccountbyAccountId works for Stub"){
     val result = getBankAccountbyAccountId(GetAccountbyAccountID(AuthInfo("karlsid","karl"),"10",accountId1))
-    result should be (BankAccount(AuthInfo("karlsid","karl"),(InboundAccountJune2017("errorcode","10","616",accountId1,
+    result should be (InboundBankAccount(AuthInfo("karlsid","karl"),(InboundAccountJune2017("errorcode","10","616",accountId1,
       "3565953","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""))))
   }
 
   test("getBankAccountbyAccountNumber works for Stub"){
     val result = getBankAccountByAccountNumber(GetAccountbyAccountNumber(AuthInfo("karlsid","karl"),"10","3565953"))
-    result should be (BankAccount(AuthInfo("karlsid","karl"),(InboundAccountJune2017("errorcode","10","616",accountId1,
+    result should be (InboundBankAccount(AuthInfo("karlsid","karl"),(InboundAccountJune2017("errorcode","10","616",accountId1,
       "3565953","330","5668.13","ILS",List(""),List("Auditor"),"","","","","",""))))
   }
   

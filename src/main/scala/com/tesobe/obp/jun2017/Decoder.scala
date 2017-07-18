@@ -61,7 +61,7 @@ trait Decoder extends MappedDecoder {
     AdapterInfo(data = Some(InboundAdapterInfo("", "OBP-Scala-South", "June2017", Util.gitCommit, (new Date()).toString)))
   }
 
-  def getBankAccounts(getAccounts: GetAccounts): BankAccounts
+  def getBankAccounts(getAccounts: GetAccounts): InboundBankAccounts
   /*
    * Decodes example_import_jun2017.json file to com.tesobe.obp.jun2017.Example
    */

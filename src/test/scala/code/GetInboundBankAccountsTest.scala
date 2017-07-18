@@ -2,7 +2,7 @@ package com.tesobe.obp
 import com.tesobe.obp.GetBankAccounts._
 import org.scalatest.{FunSuite, Matchers}
 
-class GetBankAccountsTest extends FunSuite with Matchers {
+class GetInboundBankAccountsTest extends FunSuite with Matchers {
 
   test("getFullBankAccounts extracts FullBankAccounts" ) {
     val accounts = getFullBankAccountsforUser("./src/test/resources/joni_result.json")

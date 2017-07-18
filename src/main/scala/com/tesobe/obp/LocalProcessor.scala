@@ -91,7 +91,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   
   def bankAccountIdFn: Business = { msg =>
     /* call Decoder for extracting data from source file */
-    val response: (GetAccountbyAccountID => BankAccount) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccountbyAccountId(q) }
+    val response: (GetAccountbyAccountID => InboundBankAccount) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccountbyAccountId(q) }
     val r = decode[GetAccountbyAccountID](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -101,7 +101,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
   def bankAccountNumberFn: Business = { msg =>
     /* call Decoder for extracting data from source file */
-    val response: (GetAccountbyAccountNumber => BankAccount) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
+    val response: (GetAccountbyAccountNumber => InboundBankAccount) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
     val r = decode[GetAccountbyAccountNumber](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
@@ -111,7 +111,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   
   def bankAccountsFn: Business = {msg =>
     /* call Decoder for extracting data from source file */
-    val response: (GetAccounts => BankAccounts) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccounts(q) }
+    val response: (GetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getBankAccounts(q) }
     val r = decode[GetAccounts](msg.record.value()) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
