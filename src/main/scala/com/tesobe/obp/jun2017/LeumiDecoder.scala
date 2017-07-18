@@ -100,8 +100,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   override def getBank(getBank: GetBank) = {
     BankWrapper(getBank.authInfo, Some(InboundBank("errorcode", "10", "leumi","leumilogo","leumiurl")))
   }
-  def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): BankAccount = {
-  
+
   
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
