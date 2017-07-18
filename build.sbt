@@ -43,7 +43,8 @@ libraryDependencies ++= {
     "net.liftweb"                         %% "lift-util"                  % "3.1.0-M3", 
     "co.fs2" %% "fs2-core" % "0.9.6",
     "co.fs2" %% "fs2-io" % "0.9.6",
-    "com.typesafe.scala-logging"           % "scala-logging_2.12"         % scalaLoggingVersion
+    "com.typesafe.scala-logging"           % "scala-logging_2.12"         % scalaLoggingVersion,
+    "org.apache.httpcomponents"            % "httpclient"                 % "4.5.3"
   )
 }
 
