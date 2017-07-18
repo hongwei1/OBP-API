@@ -74,6 +74,7 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
       )
       .mapAsync(3) { consumerMessage =>
         val future = business(consumerMessage)
+        logger.debug(s"Kafka-get-message : ${topicRequest}: ${consumerMessage.record.value()}")
         future.recover {
           case e: Throwable => {
             logger.error(e.getMessage)
@@ -82,7 +83,7 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
         }
       }
       .mapAsync(3) { consumerMessageBusiness =>
-        logger.debug(s"Response - ${topicResponse}: ${consumerMessageBusiness._2}")
+        logger.debug(s"Kafka-send-message : ${topicResponse}: ${consumerMessageBusiness._2}")
         eventualAuditedMessage(topicResponse, consumerMessageBusiness._1, consumerMessageBusiness._2)
       }
   }
