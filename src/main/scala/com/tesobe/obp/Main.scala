@@ -20,7 +20,7 @@ object Main extends App with StrictLogging with Config with ProcessorFactory {
     */
   val decider: Supervision.Decider = {
     case e: Throwable =>
-      logger.error("Exception occurred, stopping..." + e)
+      logger.error("Exception occurred, stopping...", e)
       Supervision.Restart
     case _ =>
       logger.error("Unknown problem, stopping...")

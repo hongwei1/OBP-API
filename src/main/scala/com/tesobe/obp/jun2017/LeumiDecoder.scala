@@ -126,8 +126,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
     //TODO 1, if there is no account, it will throw the exception 
-    val accountNr = try {mapAccountIdToAccountNumber(getAccount.accountId)} catch {case x: NoSuchFieldError
-    => logger.error("AccountId: " + getAccount.accountId + "not found.")}
+    val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
     val mfAccounts = getBasicBankAccountsForUser(username)
     InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)) 
   }
