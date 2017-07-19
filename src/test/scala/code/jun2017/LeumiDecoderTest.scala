@@ -43,9 +43,10 @@ class LeumiDecoderTest extends FunSuite with Matchers{
   test("getTransactions works for Stubs first transaction"){
     val first = getNt1cTMf("./src/test/resources/nt1c_T_result.json")
     val result = getTransactions(GetTransactions(AuthInfo("karlsid","karl"),"10", accountId1,"parameters"))
+    val transactionId = base64EncodedSha256(result.data.head.amount + result.data.head.completedDate + result.data.head.newBalanceAmount)
     result.data.head should be (InternalTransaction(
       "errorcode",
-      "transactionId",
+      transactionId,
       accountId1,
       "-1312.21",
       "10",
@@ -60,6 +61,11 @@ class LeumiDecoderTest extends FunSuite with Matchers{
       "12",
       "karlsid"
     ))
+  }
+  
+  test("getToken gives correct token") {
+    val result = getToken(GetToken("N7jut8d"))
+    result should be (InboundToken("N7jut8d","<M/          81433020102612"))
   }
   
  

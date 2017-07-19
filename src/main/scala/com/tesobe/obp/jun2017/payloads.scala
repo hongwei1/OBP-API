@@ -28,6 +28,7 @@ case class GetUserByUsernamePassword(username: String, password: String)
 case class UpdateUserAccountViews(username: String, password: String)
 case class GetTransactions(authInfo: AuthInfo,bankId: String, accountId: String, queryParams: String)
 case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String)
+case class GetToken(username: String)
 
 
 /**
@@ -43,6 +44,7 @@ case class InboundBankAccounts(authInfo: AuthInfo, data: List[InboundAccountJune
 case class InboundBankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
 case class InboundTransaction(authInfo: AuthInfo, data: InternalTransaction)
+case class InboundToken(username: String, token: String)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side

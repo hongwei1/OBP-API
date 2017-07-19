@@ -138,6 +138,17 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
     Future(msg, r)
   }
+  
+  def tokenFn: Business = {msg =>
+    /* call Decoder for extracting data from source file */
+    val response: (GetToken => InboundToken) = { q => com.tesobe.obp.jun2017.LeumiDecoder.getToken(q) }
+    val r = decode[GetToken](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
+  
   private def getResponse(msg: CommittableMessage[String, String]): String = {
     decode[Request](msg.record.value()) match {
       case Left(e) => e.getLocalizedMessage

@@ -2,7 +2,7 @@ package com.tesobe.obp.jun2017
 
 import java.util.Date
 
-import com.tesobe.obp.Util
+import com.tesobe.obp.{Config, Util}
 import io.circe.Error
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -12,7 +12,7 @@ import io.circe.parser.decode
   * Responsible for processing requests based on local example_import_jun2017.json file.
   *
   */
-trait Decoder extends MappedDecoder {
+trait Decoder extends MappedDecoder with Config{
 
   def getBanks(getBanks: GetBanks) = {
     decodeLocalFile match {

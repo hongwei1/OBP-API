@@ -5,6 +5,7 @@ import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.Nt1cMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
+import com.tesobe.obp.JoniMf.getMFToken
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.mutable.{ListBuffer, Map}
@@ -181,6 +182,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
           x.TN2_TNUA_BODEDET.TN2_TA_ERECH == transactionIdValues.completedDate &&
           x.TN2_TNUA_BODEDET.TN2_ITRA == transactionIdValues.newBalanceAmount ).head))
     }
+  
+  def getToken(getTokenRequest: GetToken): InboundToken = {
+    InboundToken(getTokenRequest.username, getMFToken("./src/test/resources/joni_result.json"))
+  }
 
 
 }
