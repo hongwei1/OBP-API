@@ -31,7 +31,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"getOrCreateAccountId-accountNr($accountNr)")
     if (mapAccountNumberToAccountId.contains(accountNr)) { mapAccountNumberToAccountId(accountNr) }
     else {
-      //TODO: Do random salting for production
+      //TODO: Do random salting for production? Will lead to expired accountIds becoming invalid.
       val accountId = base64EncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
       mapAccountIdToAccountNumber += (accountId -> accountNr)
       mapAccountNumberToAccountId += (accountNr -> accountId)
@@ -125,10 +125,13 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
-    //TODO 1, if there is no account, it will throw the exception 
+    //Not cached or invalid AccountId
+    if (!mapAccountIdToAccountNumber.contains(getAccount.accountId)) {
+      getBankAccounts(GetAccounts(getAccount.authInfo))
+    }
     val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
     val mfAccounts = getBasicBankAccountsForUser(username)
-    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)) 
+    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head))
   }
   
   def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
