@@ -10,8 +10,9 @@ import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 
-import scala.concurrent.Future
-
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 object JoniMf extends Config{
   // mainframe result is local .json for now
@@ -37,8 +38,18 @@ object JoniMf extends Config{
        uri = "http://localhost:7800/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01",
        entity = HttpEntity.apply(contentType, data.getBytes())
       ))
-   
-    "finished"
+   val responsePromise = Promise[HttpResponse]
+
+   responseFuture.onComplete {
+     case Success(e) => responsePromise.success(e)
+     case Failure(e) => responsePromise.failure(e)
+   }
+   responsePromise.future.onComplete {
+     case Success(e)  => e.entity.toString()
+     case Failure(e)  => e.toString
+   }
+   "finished"
+
   }
   
   
