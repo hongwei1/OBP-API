@@ -28,6 +28,8 @@ libraryDependencies ++= {
   Seq(
     "com.typesafe.akka"                   %% "akka-slf4j"             % akkaV,
     "com.typesafe.akka"                   %% "akka-stream-kafka"          % akkaKafkaV,
+    "com.typesafe.akka"                   %% "akka-http"                  % "10.0.9",
+    "com.typesafe.akka"                   %% "akka-http-testkit"          % "10.0.9" % Test,
     "com.sksamuel.avro4s"                 %% "avro4s-core"                % avro4sV,
     "org.apache.avro"                      % "avro"                       % avroV,
     "ch.qos.logback"                       % "logback-classic"            % logbackVersion,

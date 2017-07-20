@@ -67,4 +67,8 @@ class JoniMfTest extends FunSuite with Matchers{
     val mftoken = getMFToken("./src/test/resources/joni_result.json")
     mftoken should be ("<M/          81433020102612")
   }
+  
+  test("getJoniMfHttp does useful things"){
+    getJoniMfHttp("N7jut8d")
+  }
 }
