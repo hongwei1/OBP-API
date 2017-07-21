@@ -66,8 +66,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
-    InboundAccountJun2017(
-      errorCode = "errorcode",
+    InboundAccountJun2017(errorCode = "errorcode",
+      x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
       accountId = getOrCreateAccountId(x.accountNr),
@@ -77,13 +77,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
       balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
-      bankRoutingScheme = "",
+      bankRoutingScheme = "", 
       bankRoutingAddress = "",
       branchRoutingScheme = "",
       branchRoutingAddress = "",
       accountRoutingScheme = "",
-      accountRoutingAddress = ""
-    )
+      accountRoutingAddress = "")
   }
   def mapAdapterTransactionToInternalTransaction(userId: String, 
                                                  bankId: String,
