@@ -14,9 +14,11 @@ class Nt1cMfTest extends FunSuite with Matchers{
     result should be ("15000")
 
   }
+/*
  test("getLimitJsonAst gets credit limit of account") {
    val result = getLimitJsonAst("./src/test/resources/nt1c_result.json")
    result should be("15000")
  }
+*/
 
 }

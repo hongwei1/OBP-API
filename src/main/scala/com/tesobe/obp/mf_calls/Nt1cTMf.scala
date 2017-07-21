@@ -12,6 +12,7 @@ object Nt1cTMf {
     val lines = try source.mkString finally source.close()
     lines
   }
+  
   //@param: Filepath for json result stub
   def getCompletedTransactions(mainframe: String): Nt1cT = {
     val json = replaceEmptyObjects(getNt1cTMf(mainframe))

@@ -53,7 +53,6 @@ trait MappedDecoder {
   def mapAdapterAccountToInboundAccountJun2017(x: Account) = {
     InboundAccountJun2017(
       errorCode = "",
-      cbsAuthToken = "",
       bankId = x.bank.get,
       branchId = x.branchId.get,
       accountId = x.branchId.get,

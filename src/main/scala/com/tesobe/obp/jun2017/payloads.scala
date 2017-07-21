@@ -12,7 +12,7 @@ package com.tesobe.obp.jun2017
   * @param userId
   * @param username
   */
-case class AuthInfo(userId: String, username: String)
+case class AuthInfo(userId: String, username: String, cbsToken: String)
 
 /**
   * Payloads for request topic
@@ -73,7 +73,6 @@ case class InboundAdapterInfo(
 
 case class InboundAccountJun2017(
   errorCode: String,
-  cbsAuthToken: String,
   bankId: String,
   branchId: String,
   accountId: String,

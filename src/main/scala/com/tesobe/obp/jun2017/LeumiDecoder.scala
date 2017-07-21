@@ -68,7 +68,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
     InboundAccountJun2017(
       errorCode = "errorcode",
-      cbsAuthToken ="cbsAuthToken",
       bankId = "10",
       branchId = x.branchNr,
       accountId = getOrCreateAccountId(x.accountNr),
@@ -133,13 +132,20 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
     val mfAccounts = getBasicBankAccountsForUser(username)
-    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head))
+    InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
+      getAccount.authInfo.username,
+      mfAccounts.head.cbsToken),
+      mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)
+    )
   }
   
   def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(username)
-    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => 
+    InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
+      getAccount.authInfo.username,
+      mfAccounts.head.cbsToken),
+      mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => 
       x.accountNr == getAccount.accountNumber).head))
   }
 
@@ -152,7 +158,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
       
       result += mapAdapterAccountToInboundAccountJun2017(userid, i)
       }
-    InboundBankAccounts(getAccountsInput.authInfo, result.toList)
+    InboundBankAccounts(AuthInfo(getAccountsInput.authInfo.userId,
+      getAccountsInput.authInfo.username,
+      mfAccounts.head.cbsToken), result.toList)
   }
   
   def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
