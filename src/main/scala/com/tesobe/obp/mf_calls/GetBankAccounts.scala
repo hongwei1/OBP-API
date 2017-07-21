@@ -30,7 +30,7 @@ object GetBankAccounts {
         jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
         jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
         jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
-        jsonExtract.SDR_JONI.MFTOKEN,
+        encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
         AccountPermissions(true,false,false)
     )
     for ( i <- jsonExtract.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
@@ -43,7 +43,7 @@ object GetBankAccounts {
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
-            jsonExtract.SDR_JONI.MFTOKEN,
+            encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
             AccountPermissions(
                         //TODO: Check that the permission management is o.k. 
                         //User with MEIDA right will get Accountant View
