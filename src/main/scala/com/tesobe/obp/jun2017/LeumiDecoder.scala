@@ -53,7 +53,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   } 
 
-  def mapAdapterAccountToInboundAccountJune2017(userid: String, x: BasicBankAccount): InboundAccountJune2017 = {
+  def mapAdapterAccountToInboundAccountJun2017(userid: String, x: BasicBankAccount): InboundAccountJun2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
@@ -66,7 +66,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
-    InboundAccountJune2017(
+    InboundAccountJun2017(
       errorCode = "errorcode",
       bankId = "10",
       branchId = x.branchNr,
@@ -132,13 +132,13 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
     val mfAccounts = getBasicBankAccountsForUser(username)
-    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head))
+    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head))
   }
   
   def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
     val username = "./src/test/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(username)
-    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => 
+    InboundBankAccount(getAccount.authInfo,  mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => 
       x.accountNr == getAccount.accountNumber).head))
   }
 
@@ -146,10 +146,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     // userid is path to test json file
     val userid = "./src/test/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(userid)
-    var result = new ListBuffer[InboundAccountJune2017]()
+    var result = new ListBuffer[InboundAccountJun2017]()
     for (i <- mfAccounts) {
       
-      result += mapAdapterAccountToInboundAccountJune2017(userid, i)
+      result += mapAdapterAccountToInboundAccountJun2017(userid, i)
       }
     InboundBankAccounts(getAccountsInput.authInfo, result.toList)
   }
