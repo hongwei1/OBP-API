@@ -5,8 +5,10 @@ import java.security.MessageDigest
 import com.tesobe.obp.JoniMf.getJoni
 import com.tesobe.obp.Nt1cMf._
 import com.tesobe.obp.NtibMf.getIban
+import com.tesobe.obp.Encryption.encryptToken
 import net.liftweb.json.JValue
 import net.liftweb.util.SecurityHelpers._
+
 
 import scala.collection.mutable.ListBuffer
 
@@ -30,7 +32,7 @@ object GetBankAccounts {
         jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
         jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
         jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
-        jsonExtract.SDR_JONI.MFTOKEN,
+        encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
         AccountPermissions(true,false,false)
     )
     for ( i <- jsonExtract.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
@@ -43,7 +45,7 @@ object GetBankAccounts {
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
-            jsonExtract.SDR_JONI.MFTOKEN,
+            encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
             AccountPermissions(
                         //TODO: Check that the permission management is o.k. 
                         //User with MEIDA right will get Accountant View
