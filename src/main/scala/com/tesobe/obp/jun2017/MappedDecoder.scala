@@ -50,8 +50,8 @@ trait MappedDecoder {
     InboundValidatedUser(None, x.email, x.displayName)
   }
   
-  def mapAdapterAccountToInboundAccountJune2017(x: Account) = {
-    InboundAccountJune2017(
+  def mapAdapterAccountToInboundAccountJun2017(x: Account) = {
+    InboundAccountJun2017(
       errorCode = "",
       bankId = x.bank.get,
       branchId = x.branchId.get,

@@ -85,13 +85,11 @@ case class AccountPermissions(
                                canMakeExternalPayments: Boolean
                             )
 
-case class BasicBankAccount(
-                           cbs_auth
-                            accountNr: String,
+case class BasicBankAccount(accountNr: String,
                             branchNr: String,
-                            accountType: String, 
-                            accountPermissions: AccountPermissions
-                           )
+                            accountType: String,
+                            cbsToken: String,
+                            accountPermissions: AccountPermissions)
 
 case class FullBankAccount(
                             basicBankAccount: BasicBankAccount,

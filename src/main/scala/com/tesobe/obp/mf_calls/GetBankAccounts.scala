@@ -27,10 +27,11 @@ object GetBankAccounts {
     // (will be changed to inboundBankAccount 2017 objects 
     var result = new ListBuffer[BasicBankAccount]()
     val leading_account = BasicBankAccount(
-      jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
-      jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
-      jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
-      AccountPermissions(true,false,false) //TODO: Identify and extract leading account permissions
+        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
+        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
+        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
+        jsonExtract.SDR_JONI.MFTOKEN,
+        AccountPermissions(true,false,false)
     )
     for ( i <- jsonExtract.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
       for (u <- i.SDR_CHN) {
@@ -42,15 +43,17 @@ object GetBankAccounts {
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
+            jsonExtract.SDR_JONI.MFTOKEN,
             AccountPermissions(
-              //TODO: Check that the permission management is o.k. 
-              //User with MEIDA right will get Accountant View
-              hasMursheMeida,
-              //User with PEULOT right will get Owner View
-              hasMurshePeulot,
-              //User with TZAD_G right will get Owner View
-              hasmursheTzadG)
-        ) }
+                        //TODO: Check that the permission management is o.k. 
+                        //User with MEIDA right will get Accountant View
+                        hasMursheMeida,
+                        //User with PEULOT right will get Owner View
+                        hasMurshePeulot,
+                        //User with TZAD_G right will get Owner View
+                        hasmursheTzadG
+            )
+          ) }
       }}
     if (!result.contains(leading_account)) result += leading_account //TODO: Broken by assuming leading account permissions
     result.toList
