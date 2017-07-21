@@ -36,7 +36,7 @@ trait Decoder extends MappedDecoder with Config{
     decodeLocalFile match {
       case Left(_) => UserWrapper(None)
       case Right(x) =>
-        val userName = Some(getUserbyUsernamePassword.username)
+        val userName = Some(getUserbyUsernamePassword.authInfo.username)
         val userPassword = Some(getUserbyUsernamePassword.password)
         x.users.filter(user => user.displayName == userName && user.password == userPassword).headOption match {
           case Some(x) => UserWrapper(Some(mapUserToInboundValidatedUser(x)))
@@ -49,7 +49,7 @@ trait Decoder extends MappedDecoder with Config{
     decodeLocalFile match {
       case Left(_) => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJun2017])
       case Right(x) =>
-        val userName = updateUserAccountViews.username
+        val userName = updateUserAccountViews.authInfo.username
         x.accounts.filter(account => account.owners.head == userName).headOption match {
           case Some(x) => OutboundUserAccountViewsBaseWapper(List(mapAdapterAccountToInboundAccountJun2017(x)))
           case None => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJun2017])
