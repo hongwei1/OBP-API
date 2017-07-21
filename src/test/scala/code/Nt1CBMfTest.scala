@@ -1,7 +1,7 @@
 package com.tesobe.obp
-import com.tesobe.obp.Nt1cMf._
+import com.tesobe.obp.Nt1cBMf._
 import org.scalatest.{FunSuite, Matchers}
-class Nt1cMfTest extends FunSuite with Matchers{
+class Nt1CBMfTest extends FunSuite with Matchers{
   
   test("getBalance gets balance of account"){
     val result = getBalance("./src/test/resources/nt1c_result.json")

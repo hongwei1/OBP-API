@@ -86,6 +86,7 @@ case class AccountPermissions(
                             )
 
 case class BasicBankAccount(
+                           cbs_auth
                             accountNr: String,
                             branchNr: String,
                             accountType: String, 

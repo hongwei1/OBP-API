@@ -1,16 +1,16 @@
 package com.tesobe.obp  
 
-import com.tesobe.obp.NtibMf._
+import com.tesobe.obp.Ntib2Mf._
 import org.scalatest.{FunSuite, Matchers}
 
 
 /**
   * Created by work on 6/12/17.
   */
-class NtibMfTest extends FunSuite with Matchers{
+class Ntib2MfTest extends FunSuite with Matchers{
   
   test("getNtibMf gets response from the mainframe"){
-    val mfresult = getNtibMf("./src/test/resources/ntib_result.json")
+    val mfresult = getNtib2Mf("./src/test/resources/ntib_result.json")
     assert(mfresult.contains("SHETACHTCHUVA"))
   }
   

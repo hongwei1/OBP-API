@@ -3,8 +3,8 @@ package com.tesobe.obp
 import java.security.MessageDigest
 
 import com.tesobe.obp.JoniMf.getJoni
-import com.tesobe.obp.Nt1cMf._
-import com.tesobe.obp.NtibMf.getIban
+import com.tesobe.obp.Nt1cBMf._
+import com.tesobe.obp.Ntib2Mf.getIban
 import net.liftweb.json.JValue
 import net.liftweb.util.SecurityHelpers._
 

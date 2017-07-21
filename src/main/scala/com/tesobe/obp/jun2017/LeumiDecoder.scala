@@ -2,7 +2,7 @@ package com.tesobe.obp.jun2017
 
 import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
-import com.tesobe.obp.Nt1cMf.getBalance
+import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken

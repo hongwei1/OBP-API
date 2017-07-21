@@ -25,7 +25,6 @@ class JoniMfTest extends FunSuite with Matchers{
 
   test("extact case class from Json AST"){
     val jsonAst: JValue = getJoni("./src/test/resources/joni_result.json")
-    println(jsonAst)
     val JoniCall: JoniMfUser = jsonAst.extract[JoniMfUser]
     assert(JoniCall.SDR_JONI.esbHeaderResponse.responseStatus.callStatus == "Success")
     assert(JoniCall.SDR_JONI.MFAdminResponse.returnCode == "0")
@@ -69,6 +68,12 @@ class JoniMfTest extends FunSuite with Matchers{
   }
   
   test("getJoniMfHttp does useful things"){
-    getJoniMfHttp("N7jut8d")
+    val result = getJoniMfHttp("N7jut8d")
+    println(result)
+  }
+  
+  test("getJoniMfHttpApache does something useful"){
+    val result = getJoniMfHttpApache("N7jut8d")
+    println(result)
   }
 }
