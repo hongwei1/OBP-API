@@ -68,6 +68,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
     InboundAccountJun2017(
       errorCode = "errorcode",
+      cbsAuthToken ="cbsAuthToken",
       bankId = "10",
       branchId = x.branchNr,
       accountId = getOrCreateAccountId(x.accountNr),
