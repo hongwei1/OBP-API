@@ -181,6 +181,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
     val userid = "./src/test/resources/nt1c_T_result.json"
     val mfTransactions = getCompletedTransactions(userid)
+    if (!mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId)) {
+      getTransactions(GetTransactions(
+        getTransactionRequest.authInfo,
+        getTransactionRequest.bankId,
+        getTransactionRequest.accountId,
+        ""
+      ))
+    }
     val transactionIdValues = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId)
     InboundTransaction(getTransactionRequest.authInfo,  mapAdapterTransactionToInternalTransaction(
       getTransactionRequest.authInfo.userId,
