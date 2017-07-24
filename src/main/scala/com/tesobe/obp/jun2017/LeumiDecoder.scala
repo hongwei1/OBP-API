@@ -53,7 +53,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   } 
 
-  def mapAdapterAccountToInboundAccountJun2017(userid: String, x: BasicBankAccount): InboundAccountJun2017 = {
+  def mapAdapterAccountToInboundAccountJune2017(userid: String, x: BasicBankAccount): InboundAccountJune2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
@@ -66,7 +66,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
-    InboundAccountJun2017(errorCode = "",
+    InboundAccountJune2017(errorCode = "",
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
@@ -134,7 +134,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)
+      mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)
     )
   }
   
@@ -144,7 +144,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapAdapterAccountToInboundAccountJun2017(username,mfAccounts.filter(x => 
+      mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => 
       x.accountNr == getAccount.accountNumber).head))
   }
 
@@ -152,10 +152,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     // userid is path to test json file
     val userid = "./src/test/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(userid)
-    var result = new ListBuffer[InboundAccountJun2017]()
+    var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
       
-      result += mapAdapterAccountToInboundAccountJun2017(userid, i)
+      result += mapAdapterAccountToInboundAccountJune2017(userid, i)
       }
     InboundBankAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       getAccountsInput.authInfo.username,

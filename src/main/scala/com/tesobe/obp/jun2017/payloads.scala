@@ -39,9 +39,9 @@ case class Banks(authInfo: AuthInfo, data: List[InboundBank])
 case class BankWrapper(authInfo: AuthInfo, data: Option[InboundBank])
 case class AdapterInfo(data: Option[InboundAdapterInfo])
 case class UserWrapper(data: Option[InboundValidatedUser])
-case class OutboundUserAccountViewsBaseWapper(data: List[InboundAccountJun2017])
-case class InboundBankAccounts(authInfo: AuthInfo, data: List[InboundAccountJun2017])
-case class InboundBankAccount(authInfo: AuthInfo, data: InboundAccountJun2017)
+case class OutboundUserAccountViewsBaseWapper(data: List[InboundAccountJune2017])
+case class InboundBankAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
+case class InboundBankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
 case class InboundTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundToken(username: String, token: String)
@@ -71,7 +71,7 @@ case class InboundAdapterInfo(
   date: String
 )
 
-case class InboundAccountJun2017(errorCode: String, cbsToken: String, bankId: String, branchId: String, accountId: String, accountNumber: String, accountType: String, balanceAmount: String, balanceCurrency: String, owners: List[String], viewsToGenerate: List[String], bankRoutingScheme: String, bankRoutingAddress: String, branchRoutingScheme: String, branchRoutingAddress: String, accountRoutingScheme: String, accountRoutingAddress: String)
+case class InboundAccountJune2017(errorCode: String, cbsToken: String, bankId: String, branchId: String, accountId: String, accountNumber: String, accountType: String, balanceAmount: String, balanceCurrency: String, owners: List[String], viewsToGenerate: List[String], bankRoutingScheme: String, bankRoutingAddress: String, branchRoutingScheme: String, branchRoutingAddress: String, accountRoutingScheme: String, accountRoutingAddress: String)
 
 abstract class InboundMessageBase(optionalFields: String*) {
   def errorCode: String
