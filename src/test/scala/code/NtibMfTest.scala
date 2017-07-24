@@ -10,12 +10,12 @@ import org.scalatest.{FunSuite, Matchers}
 class NtibMfTest extends FunSuite with Matchers{
   
   test("getNtibMf gets response from the mainframe"){
-    val mfresult = getNtibMf("./src/test/resources/ntib_result.json")
+    val mfresult = getNtibMf("ntib_result.json")
     assert(mfresult.contains("SHETACHTCHUVA"))
   }
   
   test("getIban gets the IBAN"){
-    val iban = getIban("./src/test/resources/ntib_result.json")
+    val iban = getIban("ntib_result.json")
     iban should be ("""IL230106160000050180963""")
   }
 

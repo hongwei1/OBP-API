@@ -11,7 +11,7 @@ import net.liftweb.json.JsonParser._
 object Nt1cMf {
   //Read file To Simulate Mainframe Call
   def getNt1cMf(mainframe: String): String = {
-    val source = scala.io.Source.fromFile(mainframe)
+    val source = scala.io.Source.fromResource(mainframe)
     val lines = try source.mkString finally source.close()
     lines
   }

@@ -8,7 +8,7 @@ import net.liftweb.json.JsonParser._
 object NtibMf {
   
   def getNtibMf(mainframe: String): String = {
-    val source = scala.io.Source.fromFile(mainframe)
+    val source = scala.io.Source.fromResource(mainframe)
     val lines = try source.mkString finally source.close()
     lines
   }

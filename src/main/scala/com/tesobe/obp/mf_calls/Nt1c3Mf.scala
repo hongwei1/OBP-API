@@ -8,7 +8,7 @@ object Nt1c3Mf {
   //Read file To Simulate Mainframe Call
   implicit val formats = net.liftweb.json.DefaultFormats
   def getNt1c3Mf(mainframe: String): String = {
-    val source = scala.io.Source.fromFile(mainframe)
+    val source = scala.io.Source.fromResource(mainframe)
     val lines = try source.mkString finally source.close()
     lines
   }
