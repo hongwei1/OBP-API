@@ -15,7 +15,7 @@ class Ntib2MfTest extends FunSuite with Matchers{
   }
   
   test("getIban gets the IBAN"){
-    val iban = getIban("./src/test/resources/ntib_result.json")
+    val iban = getIban("","","","","")
     iban should be ("""IL230106160000050180963""")
   }
 

@@ -29,14 +29,14 @@ object JoniMf extends Config{
     lines
   }
   
- def getJoniMfHttp(username: String): String = {
+ def getJoniMfHttp(username: String) = {
 
    implicit val system = ActorSystem()
    implicit val materializer = ActorMaterializer()
 
-   val json: JValue = ("JONI_0_000" ->  ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
-   val data: String  = compactRender(json)
-   var contentType: ContentType = ContentType(MediaType.applicationWithFixedCharset("application/json",HttpCharsets.`UTF-8`))
+   val json: JValue = ("JONI_0_000" -> ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
+   val data: String = compactRender(json)
+   var contentType: ContentType = ContentType(MediaType.applicationWithFixedCharset("application/json", HttpCharsets.`UTF-8`))
 
 
    val responseFuture: Future[HttpResponse] =
@@ -45,7 +45,7 @@ object JoniMf extends Config{
        //uri = "http://localhost:7800/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01",
        uri = "http://localhost",
        entity = HttpEntity.apply(contentType, data.getBytes())
-      ))
+     ))
    val responsePromise = Promise[HttpResponse]
 
    responseFuture.onComplete {
@@ -53,75 +53,78 @@ object JoniMf extends Config{
      case Failure(e) => responsePromise.failure(e)
    }
    responsePromise.future.onComplete {
-     case Success(e)  => e.entity.toString()
-     case Failure(e)  => e.toString
-   }
-   "finished"
+     case Success(e) => e.entity
+     case Failure(e) => e
 
-  }
- 
+
+   }
+
    def getJoniMfHttpApache(username: String): String = {
 
-    val url = "http://localhost"
-    
+     val url = "http://localhost"
 
-    val post = new HttpPost(url + "/V1.0/JONI/0/000/01.01")
-    println(post)
-    post.addHeader("application/json;charset=utf-8","application/json;charset=utf-8")
 
-    val client = new DefaultHttpClient()
+     val post = new HttpPost(url + "/V1.0/JONI/0/000/01.01")
+     println(post)
+     post.addHeader("application/json;charset=utf-8", "application/json;charset=utf-8")
 
-    val json: JValue = ("JONI_0_000" ->  ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
-    println(compactRender(json))
+     val client = new DefaultHttpClient()
 
-    // send the post request
-    val response = client.execute(post)
-    val inputStream = response.getEntity.getContent
-    val result = scala.io.Source.fromInputStream(inputStream).mkString
-    response.close()
-    result
-  }
-  
-  
-  // libweb-json parses the empty object to JObject(List()), but we need JString to extract to String
-  // alternative: transform {case JObject(List()) => JString("") } will replace the JValues at json ast level
-  def replaceEmptyObjects(string: String): String  = string.replaceAll("\\{\\}", "\"\"")
+     val json: JValue = ("JONI_0_000" -> ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
+     println(compactRender(json))
 
-  // Arrays with single element are not represented as Arrays in the MF json
-  def correctArrayWithSingleElement(jsonAst: JValue): JValue = {
+     // send the post request
+     val response = client.execute(post)
+     val inputStream = response.getEntity.getContent
+     val result = scala.io.Source.fromInputStream(inputStream).mkString
+     response.close()
+     println(result)
+     result
+   }
+
+
+   // libweb-json parses the empty object to JObject(List()), but we need JString to extract to String
+   // alternative: transform {case JObject(List()) => JString("") } will replace the JValues at json ast level
+   def replaceEmptyObjects(string: String): String = string.replaceAll("\\{\\}", "\"\"")
+
+   // Arrays with single element are not represented as Arrays in the MF json
+   def correctArrayWithSingleElement(jsonAst: JValue): JValue = {
      jsonAst transformField {
-      case JField("SDR_CHN", JObject(x)) => JField("SDR_CHN",JArray(List(JObject(x))))
-      //case JField("SDRC_LINE", JObject(x)) => JField("SDRC_LINE",JArray(List(JObject(x)))) 
-      case JField("SDRL_LINE", JObject(x)) => JField("SDRL_LINE",JArray(List(JObject(x))))
-         
-    }
-  }
-  //
-  def getJoni(mainframe: String): JValue = {
-  correctArrayWithSingleElement(parse(replaceEmptyObjects(getJoniMf(mainframe))))
-  }
-  //userid is path to json file right now, only secondary accounts
+       case JField("SDR_CHN", JObject(x)) => JField("SDR_CHN", JArray(List(JObject(x))))
+       //case JField("SDRC_LINE", JObject(x)) => JField("SDRC_LINE",JArray(List(JObject(x)))) 
+       case JField("SDRL_LINE", JObject(x)) => JField("SDRL_LINE", JArray(List(JObject(x))))
 
-  
-  //getting just the MFToken without parsing the whole json and creating jsonAST
+     }
+   }
 
- 
-  def getMFToken(Username: String): String = {
+   //
+   def getJoni(username: String): JValue = {
+     correctArrayWithSingleElement(parse(replaceEmptyObjects(getJoniMfHttpApache(username))))
+   }
 
-    val parser = (p: Parser) => {
-      def parse: String = p.nextToken match {
-        case FieldStart("MFTOKEN") => p.nextToken match {
-          case StringVal(token) => token
-          case _ => p.fail("expected string")
-        }
-        case End => p.fail("no field named 'MFToken'")
-        case _ => parse
-      }
+   //userid is path to json file right now, only secondary accounts
 
-      parse
-    } 
-    
-    parse(getJoniMf(Username), parser)
-  }
 
+   //getting just the MFToken without parsing the whole json and creating jsonAST
+
+
+   def getMFToken(Username: String): String = {
+
+     val parser = (p: Parser) => {
+       def parse: String = p.nextToken match {
+         case FieldStart("MFTOKEN") => p.nextToken match {
+           case StringVal(token) => token
+           case _ => p.fail("expected string")
+         }
+         case End => p.fail("no field named 'MFToken'")
+         case _ => parse
+       }
+
+       parse
+     }
+
+     parse(getJoniMfHttpApache(Username), parser)
+   }
+ }
 }
+  

@@ -15,10 +15,10 @@ class LeumiDecoderTest extends FunSuite with Matchers{
   val accountId4 = base64EncodedSha256("20102612" + "fjdsaFDSAefwfsalfid")
   val accountId5 = base64EncodedSha256("20105505" + "fjdsaFDSAefwfsalfid")
   
-  test("getBankAccounts works for Stub"){
+  test("getBankAccounts works for HttpStub"){
     val result = getBankAccounts(GetAccounts(AuthInfo("karlsid", "karl", "")))
 
-    //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
+    //Balance is from nt1c call, all accounts use the same json HttpStub => all accounts have the same balance
     result should be (InboundBankAccounts(AuthInfo("karlsid", "karl", "<M/          81433020102612"),
       List(InboundAccountJun2017("errorcode", "<M/          81433020102612", "10", "616", accountId1, "3565953", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
         InboundAccountJun2017("errorcode", "<M/          81433020102612", "10", "616", accountId2, "50180983", "430", "5668.13", "ILS", List("./src/test/resources/joni_result.json"), List("Owner"), "", "", "", "", "", ""), 
@@ -27,17 +27,17 @@ class LeumiDecoderTest extends FunSuite with Matchers{
         InboundAccountJun2017("errorcode", "<M/          81433020102612", "10", "814", accountId5, "20105505", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
-  test("getBankAccountbyAccountId works for Stub"){
+  test("getBankAccountbyAccountId works for HttpStub"){
     val result = getBankAccountbyAccountId(GetAccountbyAccountID(AuthInfo("karlsid", "karl", ""),"10",accountId1))
     result should be (InboundBankAccount(AuthInfo("karlsid", "karl", "<M/          81433020102612"),(InboundAccountJun2017("errorcode", "<M/          81433020102612", "10", "616", accountId1, "3565953", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
 
-  test("getBankAccountbyAccountNumber works for Stub"){
+  test("getBankAccountbyAccountNumber works for HttpStub"){
     val result = getBankAccountByAccountNumber(GetAccountbyAccountNumber(AuthInfo("karlsid", "karl", ""),"10","3565953"))
     result should be (InboundBankAccount(AuthInfo("karlsid", "karl", "<M/          81433020102612"),(InboundAccountJun2017("errorcode", "<M/          81433020102612", "10", "616", accountId1, "3565953", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
-  test("getTransactions works for Stubs first transaction"){
+  test("getTransactions works for HttpStubs first transaction"){
     val first = getNt1cTMf("./src/test/resources/nt1c_T_result.json")
     val result = getTransactions(GetTransactions(AuthInfo("karlsid", "karl", ""),"10", accountId1,"parameters"))
     val transactionId = base64EncodedSha256(result.data.head.amount + result.data.head.completedDate + result.data.head.newBalanceAmount)

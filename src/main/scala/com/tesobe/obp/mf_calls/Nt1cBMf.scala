@@ -20,7 +20,7 @@ object Nt1cBMf {
     lines
   }
 
-  def getNt1cBMfHttpApache(branch: String, accountType: String, accountNumber: String, mfToken: String): String = {
+  def getNt1cBMfHttpApache(branch: String, accountType: String, accountNumber: String, cbsToken: String): String = {
 
     val url = "http://localhost"
 
@@ -32,7 +32,7 @@ object Nt1cBMf {
     val client = new DefaultHttpClient()
 
     val json: JValue = "NT1C_B_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("AccountType" ->
-    accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" -> ("MFToken" -> mfToken)))
+    accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" -> ("MFToken" -> cbsToken)))
     println(compactRender(json))
 
     // send the post request
@@ -43,8 +43,8 @@ object Nt1cBMf {
     result
   }
 
-  def getBalance(json: String): (String) = {
-    val call = (getNtib2Mf(json)) 
+  def getBalance(branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
+    val call = (getNt1cBMfHttpApache(branch, accountType, accountNumber, cbsToken)) 
     val parser = (p: Parser) => {
       def parse: (String) = p.nextToken match {
         case FieldStart("HH_ITRA_NOCHECHIT") => p.nextToken match {
@@ -59,8 +59,8 @@ object Nt1cBMf {
     }
     parse(call, parser)
   }
-  def getLimit(json: String): (String) = {
-    val call = (getNtib2Mf(json))
+  def getLimit(branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
+    val call = (getNt1cBMfHttpApache(branch, accountType, accountNumber, cbsToken))
     val parser = (p: Parser) => {
       
       def parse: (String) = p.nextToken match {

@@ -19,7 +19,7 @@ object Ntib2Mf {
     lines
   }
 
-  def getNtib2MfHttpApache(branch: String, accountType: String, accountNumber: String, username: String, mfToken: String): String = {
+  def getNtib2MfHttpApache(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): String = {
 
     val url = "http://localhost"
 
@@ -31,7 +31,7 @@ object Ntib2Mf {
     val client = new DefaultHttpClient()
 
     val json: JValue = "NTIB_2_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("AccountType" ->
-      accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->( ("User" -> username) ~ ("MFToken" -> mfToken))))
+      accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->( ("User" -> username) ~ ("MFToken" -> cbsToken))))
     println(compactRender(json))
 
     // send the post request
@@ -44,7 +44,7 @@ object Ntib2Mf {
   
   
   
-  def getIban(mainframe: String) = {
+  def getIban(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String) = {
     val parser = (p: Parser) => {
       def parse: String = p.nextToken match {
         case FieldStart("TS00_IBAN") => p.nextToken match {
@@ -57,6 +57,6 @@ object Ntib2Mf {
 
       parse
     }
-    parse(getNtib2Mf(mainframe), parser)
+    parse(getNtib2MfHttpApache(branch,  accountType,  accountNumber, username, cbsToken), parser)
   }
 }

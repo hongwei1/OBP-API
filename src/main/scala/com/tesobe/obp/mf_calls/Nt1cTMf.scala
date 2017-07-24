@@ -19,13 +19,7 @@ object Nt1cTMf {
     lines
   }
 
-  def getNt1cTMfHttpApache(branch: String,
-                           accountType: String,
-                           accountNumber: String, 
-                           mfToken: String,
-                           startDate: List[String],
-                           endDate: List[String],
-                           maxNumberOfTransactions: String): String = {
+  def getNt1cTMfHttpApache(branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): String = {
 
     val url = "http://localhost"
 
@@ -36,8 +30,8 @@ object Nt1cTMf {
 
     val client = new DefaultHttpClient()
 
-    val json: JValue = "NT1C_T_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("AccountType" ->
-      accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->("MFToken" -> mfToken))) ~ ("KELET_TAARICHIM" ->
+    val json: JValue = "NT1C_T_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branchId) ~ ("AccountType" ->
+      accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->("MFToken" -> cbsToken))) ~ ("KELET_TAARICHIM" ->
       ("KELET_ME_TAAR" -> ("KELET_ME_YYYY" -> startDate(0)) ~ ("KELET_ME_MM" -> startDate(1)) ~ ("KELET_ME_DD" -> startDate(2))) ~
         ("KELET_AD_TAAR" -> ("KELET_AD_YYYY" -> endDate(0)) ~ ("KELET_AD_MM" -> endDate(1)) ~ ("KELET_AD_DD" -> endDate(2))) ~
         ("KELET_TN_MIS_TNUOT" -> maxNumberOfTransactions))
@@ -52,8 +46,8 @@ object Nt1cTMf {
     result
   }
   //@param: Filepath for json result stub
-  def getCompletedTransactions(mainframe: String): Nt1cT = {
-    val json = replaceEmptyObjects(getNt1cTMf(mainframe))
+  def getCompletedTransactions(branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): Nt1cT = {
+    val json = replaceEmptyObjects(getNt1cTMfHttpApache(branchId, accountType, accountNumber, cbsToken, startDate, endDate, maxNumberOfTransactions))
     val jsonAst = parse(json)
     println(jsonAst)
     jsonAst.extract[Nt1cT]

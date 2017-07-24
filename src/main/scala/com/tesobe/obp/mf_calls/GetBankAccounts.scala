@@ -2,10 +2,12 @@ package com.tesobe.obp
 
 import java.security.MessageDigest
 
-import com.tesobe.obp.JoniMf.getJoni
+import com.tesobe.obp.JoniMf.getJoniMfHttpApache
 import com.tesobe.obp.Nt1cBMf._
 import com.tesobe.obp.Ntib2Mf.getIban
+import com.tesobe.obp.Encryption.encryptToken
 import net.liftweb.json.JValue
+import net.liftweb.json.parse
 import net.liftweb.util.SecurityHelpers._
 
 import scala.collection.mutable.ListBuffer
@@ -17,7 +19,7 @@ object GetBankAccounts {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
-    val jsonAst: JValue = getJoni(UserId)
+    val jsonAst: JValue = parse(getJoniMfHttpApache(UserId)
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification
@@ -58,16 +60,7 @@ object GetBankAccounts {
     if (!result.contains(leading_account)) result += leading_account //TODO: Broken by assuming leading account permissions
     result.toList
   }
-  def getFullBankAccountsforUser(UserId: String): List[FullBankAccount] ={
-    val basicAccounts = getBasicBankAccountsForUser(UserId)
-    var result = new ListBuffer[FullBankAccount]
-    for (i <- basicAccounts) {
-      val balance = getBalance("./src/test/resources/nt1c_result.json")
-      val limit = getLimit("./src/test/resources/nt1c_result.json")
-      result += FullBankAccount(i,getIban("./src/test/resources/ntib_result.json"), balance, limit)
-    }
-    result.toList
-  }
+
   
   def hexEncodedSha256(in : String): String = {
     hexEncode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
