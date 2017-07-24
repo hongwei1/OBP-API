@@ -64,9 +64,9 @@ object GetBankAccounts {
     val basicAccounts = getBasicBankAccountsForUser(UserId)
     var result = new ListBuffer[FullBankAccount]
     for (i <- basicAccounts) {
-      val balance = getBalance("./src/test/resources/nt1c_result.json")
-      val limit = getLimit("./src/test/resources/nt1c_result.json")
-      result += FullBankAccount(i,getIban("./src/test/resources/ntib_result.json"), balance, limit)
+      val balance = getBalance("./src/main/resources/nt1c_result.json")
+      val limit = getLimit("./src/main/resources/nt1c_result.json")
+      result += FullBankAccount(i,getIban("./src/main/resources/ntib_result.json"), balance, limit)
     }
     result.toList
   }

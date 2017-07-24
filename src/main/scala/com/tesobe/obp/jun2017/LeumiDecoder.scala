@@ -73,7 +73,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       accountId = getOrCreateAccountId(x.accountNr),
       accountNumber = x.accountNr,
       accountType = x.accountType,
-      balanceAmount = getBalance("./src/test/resources/nt1c_result.json"),
+      balanceAmount = getBalance("./src/main/resources/nt1c_result.json"),
       balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
@@ -124,7 +124,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
-    val username = "./src/test/resources/joni_result.json"
+    val username = "./src/main/resources/joni_result.json"
     //Not cached or invalid AccountId
     if (!mapAccountIdToAccountNumber.contains(getAccount.accountId)) {
       getBankAccounts(GetAccounts(getAccount.authInfo))
@@ -139,7 +139,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
-    val username = "./src/test/resources/joni_result.json"
+    val username = "./src/main/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(username)
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
@@ -150,7 +150,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
    def getBankAccounts(getAccountsInput: GetAccounts): InboundBankAccounts = {
     // userid is path to test json file
-    val userid = "./src/test/resources/joni_result.json"
+    val userid = "./src/main/resources/joni_result.json"
     val mfAccounts = getBasicBankAccountsForUser(userid)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
@@ -163,7 +163,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
-    val userid = "./src/test/resources/nt1c_T_result.json"
+    val userid = "./src/main/resources/nt1c_T_result.json"
     val mfTransactions = getCompletedTransactions(userid)
     var result = new ListBuffer[InternalTransaction]
     for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA) {
@@ -178,7 +178,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
-    val userid = "./src/test/resources/nt1c_T_result.json"
+    val userid = "./src/main/resources/nt1c_T_result.json"
     val mfTransactions = getCompletedTransactions(userid)
     if (!mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId)) {
       getTransactions(GetTransactions(
@@ -200,7 +200,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   
   def getToken(getTokenRequest: GetToken): InboundToken = {
-    InboundToken(getTokenRequest.username, getMFToken("./src/test/resources/joni_result.json"))
+    InboundToken(getTokenRequest.username, getMFToken("./src/main/resources/joni_result.json"))
   }
 
 
