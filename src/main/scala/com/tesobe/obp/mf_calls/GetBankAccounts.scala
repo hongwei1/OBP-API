@@ -19,7 +19,7 @@ object GetBankAccounts {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
-    val jsonAst: JValue = parse(getJoniMfHttpApache(UserId)
+    val jsonAst: JValue = parse(getJoniMfHttpApache(UserId))
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification

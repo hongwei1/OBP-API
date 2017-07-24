@@ -58,7 +58,7 @@ object JoniMf extends Config{
 
 
    }
-
+ }
    def getJoniMfHttpApache(username: String): String = {
 
      val url = "http://localhost"
@@ -125,6 +125,6 @@ object JoniMf extends Config{
 
      parse(getJoniMfHttpApache(Username), parser)
    }
- }
+
 }
   
