@@ -2,7 +2,7 @@ package com.tesobe.obp
 
 import java.security.MessageDigest
 
-import com.tesobe.obp.JoniMf.getJoniMfHttpApache
+import com.tesobe.obp.JoniMf.getJoni
 import com.tesobe.obp.Nt1cBMf._
 import com.tesobe.obp.Ntib2Mf.getIban
 import com.tesobe.obp.Encryption.encryptToken
@@ -19,7 +19,7 @@ object GetBankAccounts {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
-    val jsonAst: JValue = parse(getJoniMfHttpApache(UserId))
+    val jsonAst: JValue = getJoni(UserId)
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification

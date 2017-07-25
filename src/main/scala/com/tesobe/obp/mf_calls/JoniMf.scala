@@ -6,7 +6,7 @@ import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
-import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.DefaultHttpClient
 
 //For akka-http
@@ -76,6 +76,7 @@ object JoniMf extends Config{
 
      // send the post request
      val response = client.execute(post)
+     //val response = client.execute(new HttpGet("http://localhost/V1.0/JONI/0/000/01.01"))
      val inputStream = response.getEntity.getContent
      val result = scala.io.Source.fromInputStream(inputStream).mkString
      response.close()
