@@ -11,7 +11,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 /**
   * Created by work on 6/12/17.
   */
-object Ntib2Mf {
+object Ntib2Mf extends Config{
   
   def getNtib2Mf(mainframe: String): String = {
     val source = scala.io.Source.fromFile(mainframe)
@@ -21,7 +21,7 @@ object Ntib2Mf {
 
   def getNtib2MfHttpApache(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): String = {
 
-    val url = "http://localhost"
+    val url = config.getString("bankserver.url")
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01")

@@ -10,7 +10,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import java.util.Date
 
 
-object Nt1cTMf {
+object Nt1cTMf extends Config{
   //Read file To Simulate Mainframe Call
   implicit val formats = net.liftweb.json.DefaultFormats
   def getNt1cTMf(mainframe: String): String = {
@@ -21,7 +21,7 @@ object Nt1cTMf {
 
   def getNt1cTMfHttpApache(branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): String = {
 
-    val url = "http://localhost"
+    val url = config.getString("bankserver.url")
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/4/000/01.03")

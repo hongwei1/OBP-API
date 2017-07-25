@@ -43,7 +43,7 @@ object JoniMf extends Config{
      Http().singleRequest(HttpRequest(
        method = HttpMethods.POST,
        //uri = "http://localhost:7800/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01",
-       uri = "http://localhost",
+       uri = config.getString("bankserver.url"),
        entity = HttpEntity.apply(contentType, data.getBytes())
      ))
    val responsePromise = Promise[HttpResponse]
@@ -61,8 +61,9 @@ object JoniMf extends Config{
  }
    def getJoniMfHttpApache(username: String): String = {
 
-     val url = "http://localhost"
-
+     //val url = "http://localhost"
+     val url = config.getString("bankserver.url")
+     println(url)
 
      val post = new HttpPost(url + "/V1.0/JONI/0/000/01.01")
      println(post)

@@ -9,7 +9,7 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.DefaultHttpClient
 
 
-object Nt1c4Mf {
+object Nt1c4Mf extends Config{
   //Read file To Simulate Mainframe Call
   implicit val formats = net.liftweb.json.DefaultFormats
   def getNt1c4Mf(mainframe: String): String = {
@@ -20,7 +20,7 @@ object Nt1c4Mf {
   
   def getNt1c4MfHttpApache(branch: String, accountType: String, accountNumber: String, username: String, mfToken: String): String = {
 
-    val url = "http://localhost"
+    val url = config.getString("bankserver.url")
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/4/000/01.03")
