@@ -93,7 +93,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA
     InternalTransaction(
       //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
-      errorCode = "errorcode",
+      errorCode = "",
       transactionId = getOrCreateTransactionId(amount,completedDate,newBalanceAmount), // Find some
       accountId = accountId, //accountId
       amount = amount, //:"TN2_SCHUM"
@@ -115,11 +115,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
   //Processorfunctions start here---------------------------------------------------------------------------------------
 
   override def getBanks(getBanks: GetBanks) = {
-      Banks(getBanks.authInfo, List(InboundBank("errorcode", "10", "leumi","leumilogo","leumiurl")))
+      Banks(getBanks.authInfo, List(InboundBank("", "10", "leumi","leumilogo","leumiurl")))
     }
 
   override def getBank(getBank: GetBank) = {
-    BankWrapper(getBank.authInfo, Some(InboundBank("errorcode", "10", "leumi","leumilogo","leumiurl")))
+    BankWrapper(getBank.authInfo, Some(InboundBank("", "10", "leumi","leumilogo","leumiurl")))
   }
 
   

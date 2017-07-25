@@ -7,7 +7,7 @@ import org.scalatest.{FunSuite, Matchers}
 class JoniMfTest extends FunSuite with Matchers{
   
 
-  val mfresult: String = getJoniMf("./src/test/resources/joni_result.json")
+  val mfresult: String = getJoniMf("joni_result.json")
   val sane_result: String = replaceEmptyObjects(mfresult)
   implicit val formats = net.liftweb.json.DefaultFormats
   
@@ -20,11 +20,12 @@ class JoniMfTest extends FunSuite with Matchers{
   }
   
   test("getJoni creates Json AST"){
-    val jsonAst: JValue = getJoni("./src/test/resources/joni_result.json")
+    val jsonAst: JValue = getJoni("joni_result.json")
   }
 
   test("extact case class from Json AST"){
-    val jsonAst: JValue = getJoni("./src/test/resources/joni_result.json")
+    val jsonAst: JValue = getJoni("joni_result.json")
+    println(jsonAst)
     val JoniCall: JoniMfUser = jsonAst.extract[JoniMfUser]
     assert(JoniCall.SDR_JONI.esbHeaderResponse.responseStatus.callStatus == "Success")
     assert(JoniCall.SDR_JONI.MFAdminResponse.returnCode == "0")
@@ -36,7 +37,7 @@ class JoniMfTest extends FunSuite with Matchers{
 
   }
    test("getBasicBankAccountsForUser"){
-    val accounts = getBasicBankAccountsForUser("./src/test/resources/joni_result.json")
+    val accounts = getBasicBankAccountsForUser("joni_result.json")
    accounts should be (List(
      BasicBankAccount("3565953", "616", "330", "<M/          81433020102612", AccountPermissions(true,false,false)), 
      BasicBankAccount("50180983", "616", "430", "<M/          81433020102612", AccountPermissions(true,false,true)),
@@ -49,7 +50,7 @@ class JoniMfTest extends FunSuite with Matchers{
    
   }
   test("getBankAccountsForUser without leading account"){
-    val accounts = getBasicBankAccountsForUser("./src/test/resources/joni_result_no_lead.json")
+    val accounts = getBasicBankAccountsForUser("joni_result_no_lead.json")
     accounts should be (List(
       BasicBankAccount("3565953", "616", "330", "<M/          81433020102612", AccountPermissions(true,false,false)),
       BasicBankAccount("50180983", "616", "430", "<M/          81433020102612", AccountPermissions(true,false,true)),
@@ -63,7 +64,7 @@ class JoniMfTest extends FunSuite with Matchers{
   }
 
   test("getMFToken gets the MFTOKEN, assuming / will be  escaped later"){
-    val mftoken = getMFToken("./src/test/resources/joni_result.json")
+    val mftoken = getMFToken("joni_result.json")
     mftoken should be ("<M/          81433020102612")
   }
   

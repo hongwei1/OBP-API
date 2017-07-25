@@ -10,7 +10,7 @@ import org.scalatest.{FunSuite, Matchers}
 class Ntib2MfTest extends FunSuite with Matchers{
   
   test("getNtibMf gets response from the mainframe"){
-    val mfresult = getNtib2Mf("./src/test/resources/ntib_result.json")
+    val mfresult = getNtib2Mf("ntib_result.json")
     assert(mfresult.contains("SHETACHTCHUVA"))
   }
   
