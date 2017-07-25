@@ -10,6 +10,32 @@
     <organization>
         <name>com.tesobe</name>
     </organization>
+    <repositories>
+    <repository>
+        <id>ArtimaMavenRepository</id>
+        <name>Artima Maven Repository</name>
+        <url>http://repo.artima.com/releases/</url>
+        <layout>default</layout>
+    </repository>
+    <repository>
+        <id>bintrayhseebergermaven</id>
+        <name>bintray-hseeberger-maven</name>
+        <url>https://dl.bintray.com/hseeberger/maven/</url>
+        <layout>default</layout>
+    </repository>
+    <repository>
+        <id>sonatypepublic</id>
+        <name>sonatype-public</name>
+        <url>https://oss.sonatype.org/content/repositories/public/</url>
+        <layout>default</layout>
+    </repository>
+    <repository>
+        <id>sonatypesnapshots</id>
+        <name>sonatype-snapshots</name>
+        <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        <layout>default</layout>
+    </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -112,30 +138,4 @@
             <version>4.5.3</version>
         </dependency>
     </dependencies>
-    <repositories>
-        <repository>
-            <id>ArtimaMavenRepository</id>
-            <name>Artima Maven Repository</name>
-            <url>http://repo.artima.com/releases/</url>
-            <layout>default</layout>
-        </repository>
-        <repository>
-            <id>bintrayhseebergermaven</id>
-            <name>bintray-hseeberger-maven</name>
-            <url>https://dl.bintray.com/hseeberger/maven/</url>
-            <layout>default</layout>
-        </repository>
-        <repository>
-            <id>sonatypepublic</id>
-            <name>sonatype-public</name>
-            <url>https://oss.sonatype.org/content/repositories/public/</url>
-            <layout>default</layout>
-        </repository>
-        <repository>
-            <id>sonatypesnapshots</id>
-            <name>sonatype-snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-            <layout>default</layout>
-        </repository>
-    </repositories>
 </project>
