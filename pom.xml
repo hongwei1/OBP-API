@@ -35,7 +35,48 @@
         <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         <layout>default</layout>
     </repository>
+    <repository>
+        <snapshots>
+        <enabled>false</enabled>
+        </snapshots>
+        <id>bintray-unisay-maven</id>
+        <name>bintray</name>
+        <url>http://dl.bintray.com/unisay/maven</url>
+    </repository>
     </repositories>
+    <build>
+        <plugins>
+        <plugin>
+        <groupId>org.mock-server</groupId>
+        <artifactId>mockserver-maven-plugin</artifactId>
+        <version>3.10.8</version>
+        <configuration>
+            <serverPort>1080</serverPort>
+            <proxyPort>1090</proxyPort>
+            <logLevel>DEBUG</logLevel>
+            <initializationClass>org.mockserver.maven.ExampleInitializationClass</initializationClass>
+        </configuration>
+        <executions>
+            <execution>
+                <id>process-test-classes</id>
+                <phase>process-test-classes</phase>
+                <goals>
+                    <goal>start</goal>
+                </goals>
+            </execution>
+            <execution>
+                <id>verify</id>
+                <phase>verify</phase>
+                <goals>
+                    <goal>stop</goal>
+                </goals>
+            </execution>
+        </executions>
+        </plugin>
+        </plugins>
+    </build>
+        
+
     <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -136,6 +177,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.unisay</groupId>
+            <artifactId>mockserver-client-scala_2.11</artifactId>
+            <version>0.2.0</version>
+            <type>pom</type>
         </dependency>
     </dependencies>
 </project>
