@@ -179,7 +179,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val userid = "nt1c_T_result.json"
     val mfTransactions = getCompletedTransactions(userid)
     var result = new ListBuffer[InternalTransaction]
-    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA) {
+    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
         getTransactionsRequest.authInfo.userId,
         "10",
@@ -206,7 +206,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       getTransactionRequest.authInfo.userId,
       getTransactionRequest.bankId,
       getTransactionRequest.accountId,
-      mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA.filter(x =>
+      mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA.filter(x =>
         x.TN2_TNUA_BODEDET.TN2_SCHUM == transactionIdValues.amount &&
           x.TN2_TNUA_BODEDET.TN2_TA_ERECH == transactionIdValues.completedDate &&
           x.TN2_TNUA_BODEDET.TN2_ITRA == transactionIdValues.newBalanceAmount ).head))

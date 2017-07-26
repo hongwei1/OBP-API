@@ -5,7 +5,7 @@ class Nt1cMfTest extends FunSuite with Matchers{
   
   test("getBalance gets balance of account"){
     val result = getBalance("nt1c_result.json")
-    result should be ("5668.13")
+    result should be ("5541.28")
       
   }
 

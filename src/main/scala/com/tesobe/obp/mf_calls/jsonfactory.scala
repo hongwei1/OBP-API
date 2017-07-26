@@ -228,7 +228,7 @@ case class N2TshuvaTavlaitContent(TN2_COUNTER: String,
                            TN2_TNUOT: Tn2Tnuot
                           )
 
-case class N2TshuvaTavlait(N2TshuvaTavlait: N2TshuvaTavlaitContent)                       
+case class N2TshuvaTavlait(TN2_SHETACH_LE_SEND_NOSAF: N2TshuvaTavlaitContent)                       
                           
 
 case class Nt1cT(TN2_TSHUVA_TAVLAIT: N2TshuvaTavlait)

@@ -19,22 +19,22 @@ class LeumiDecoderTest extends FunSuite with Matchers{
     val result = getBankAccounts(GetAccounts(AuthInfo("karlsid", "karl", "")))
 
     //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
-    result should be (InboundBankAccounts(AuthInfo("karlsid", "karl", "<M/          81433020102612"),
-      List(InboundAccountJune2017("", "<M/          81433020102612", "10", "616", accountId1, "3565953", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", "<M/          81433020102612", "10", "616", accountId2, "50180983", "430", "5668.13", "ILS", List("joni_result.json"), List("Owner"), "", "", "", "", "", ""), 
-        InboundAccountJune2017("", "<M/          81433020102612", "10", "616", accountId3, "50180963", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", "<M/          81433020102612", "10", "814", accountId4, "20102612", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", "<M/          81433020102612", "10", "814", accountId5, "20105505", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+    result should be (InboundBankAccounts(AuthInfo("karlsid", "karl", ">,?          81433020102612"),
+      List(InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId2, "50180983", "430", "5541.28", "ILS", List("joni_result.json"), List("Owner"), "", "", "", "", "", ""), 
+        InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId3, "50180963", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", ">,?          81433020102612", "10", "814", accountId4, "20102612", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", ">,?          81433020102612", "10", "814", accountId5, "20105505", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
   test("getBankAccountbyAccountId works for Stub"){
     val result = getBankAccountbyAccountId(GetAccountbyAccountID(AuthInfo("karlsid", "karl", ""),"10",accountId1))
-    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", "<M/          81433020102612"),(InboundAccountJune2017("", "<M/          81433020102612", "10", "616", accountId1, "3565953", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", ">,?          81433020102612"),(InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
 
   test("getBankAccountbyAccountNumber works for Stub"){
     val result = getBankAccountByAccountNumber(GetAccountbyAccountNumber(AuthInfo("karlsid", "karl", ""),"10","3565953"))
-    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", "<M/          81433020102612"),(InboundAccountJune2017("", "<M/          81433020102612", "10", "616", accountId1, "3565953", "330", "5668.13", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", ">,?          81433020102612"),(InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
   test("getTransactions works for Stubs first transaction"){
@@ -62,7 +62,7 @@ class LeumiDecoderTest extends FunSuite with Matchers{
   
   test("getToken gives correct token") {
     val result = getToken(GetToken("N7jut8d"))
-    result should be (InboundToken("N7jut8d","<M/          81433020102612"))
+    result should be (InboundToken("N7jut8d",">,?          81433020102612"))
   }
   
  

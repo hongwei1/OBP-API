@@ -15,9 +15,8 @@ object Nt1cTMf {
   
   //@param: Filepath for json result stub
   def getCompletedTransactions(mainframe: String): Nt1cT = {
-    val json = replaceEmptyObjects(getNt1cTMf(mainframe))
+    val json = getNt1cTMf(mainframe)
     val jsonAst = parse(json)
-    println(jsonAst)
     jsonAst.extract[Nt1cT]
   }
   

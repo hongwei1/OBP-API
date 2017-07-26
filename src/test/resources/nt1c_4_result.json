@@ -1,54 +1,39 @@
 {
-  "TNATSHUVATAVLAIT1":
-  {
-    "esbHeaderResponse":
-    {
-      "esbRequestId": "414d5120544c44423120202020202020be7cff5823779d02",
-      "responseStatus":
-      {
+  "TNATSHUVATAVLAIT1": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff582498bf02",
+      "responseStatus": {
         "callStatus": "Success",
-        "errorDesc":
-        {
-        }
+        "errorDesc": ""
       }
     },
-    "MFAdminResponse":
-    {
+    "MFAdminResponse": {
       "returnCode": "0",
-      "messageText":
-      {
-      }
+      "messageText": ""
     },
-    "TNA_PIRTEI_CHESHBON":
-    {
+    "TNA_PIRTEI_CHESHBON": {
       "TNA_SNIF": "616",
       "TNA_SUG": "330",
       "TNA_CHESHBON": "50180963"
     },
-    "TNA_SHETACH_LE_SEND_NOSAF":
-    {
+    "TNA_SHETACH_LE_SEND_NOSAF": {
       "TNA_COUNTER": "6",
-      "TNA_TNUOT":
-      {
-        "TNA_PIRTEY_TNUA":
-        [
+      "TNA_TNUOT": {
+        "TNA_PIRTEY_TNUA": [{
+          "TNA_TNUA_BODEDET": {
+            "TNA_HOR_BIZ_IND": "0",
+            "TNA_TEUR_PEULA": "הע. אינטרנט י",
+            "TNA_TA_ERECH": "20170405",
+            "TNA_TA_BITZUA": "20170405",
+            "TNA_ASMACHTA": "699001163",
+            "TNA_SCHUM": "-440.00",
+            "TNA_ITRA": "6438.96",
+            "TNA_SEM_MAKOR": "22517",
+            "TNA_AMF_OR_NAFA": "1"
+          }
+        },
           {
-            "TNA_TNUA_BODEDET":
-            {
-              "TNA_HOR_BIZ_IND": "0",
-              "TNA_TEUR_PEULA": "הע. אינטרנט י",
-              "TNA_TA_ERECH": "20170405",
-              "TNA_TA_BITZUA": "20170405",
-              "TNA_ASMACHTA": "699001163",
-              "TNA_SCHUM": "-440.00",
-              "TNA_ITRA": "6438.96",
-              "TNA_SEM_MAKOR": "22517",
-              "TNA_AMF_OR_NAFA": "1"
-            }
-          },
-          {
-            "TNA_TNUA_BODEDET":
-            {
+            "TNA_TNUA_BODEDET": {
               "TNA_HOR_BIZ_IND": "0",
               "TNA_TEUR_PEULA": "הע. אינטרנט י",
               "TNA_TA_ERECH": "20170405",
@@ -61,8 +46,7 @@
             }
           },
           {
-            "TNA_TNUA_BODEDET":
-            {
+            "TNA_TNUA_BODEDET": {
               "TNA_HOR_BIZ_IND": "0",
               "TNA_TEUR_PEULA": "הע. אינטרנט י",
               "TNA_TA_ERECH": "20170405",
@@ -75,8 +59,7 @@
             }
           },
           {
-            "TNA_TNUA_BODEDET":
-            {
+            "TNA_TNUA_BODEDET": {
               "TNA_HOR_BIZ_IND": "0",
               "TNA_TEUR_PEULA": "הע. אינטרנט י",
               "TNA_TA_ERECH": "20170517",
@@ -89,8 +72,7 @@
             }
           },
           {
-            "TNA_TNUA_BODEDET":
-            {
+            "TNA_TNUA_BODEDET": {
               "TNA_HOR_BIZ_IND": "0",
               "TNA_TEUR_PEULA": "חשמל עצמי י",
               "TNA_TA_ERECH": "20170518",
@@ -103,8 +85,7 @@
             }
           },
           {
-            "TNA_TNUA_BODEDET":
-            {
+            "TNA_TNUA_BODEDET": {
               "TNA_HOR_BIZ_IND": "0",
               "TNA_TEUR_PEULA": "בזק עצמי",
               "TNA_TA_ERECH": "20170529",
@@ -121,4 +102,3 @@
     }
   }
 }
-
