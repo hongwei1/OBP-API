@@ -1,22 +1,22 @@
 {
   "TN2_TSHUVA_TAVLAIT": {
     "esbHeaderResponse": {
-      "esbRequestId": "414d5120544c44423120202020202020be7cff5823e58604",
+      "esbRequestId": "414d5120544c44423120202020202020be7cff58249eca03",
       "responseStatus": {
         "callStatus": "Success",
-        "errorDesc": {}
+        "errorDesc": ""
       }
     },
     "MFAdminResponse": {
       "returnCode": "0",
-      "messageText": {}
+      "messageText": ""
     },
     "TN2_PIRTEI_CHESHBON": {
       "TN2_SNIF": "814",
       "TN2_SUG": "330",
       "TN2_MIS_CHN": "20102612"
     },
-    "N2TshuvaTavlait": {
+    "TN2_SHETACH_LE_SEND_NOSAF": {
       "TN2_COUNTER": "15",
       "TN2_TNUOT": {
         "TN2_PIRTEY_TNUA": [{
@@ -37,7 +37,7 @@
             "TN2_SUG_ARCHAVA": "0",
             "TN2_SUG_PEULA": "12",
             "TN2_TA_IBUD": "20160201",
-            "TN2_SADE_ARCHAVA": {},
+            "TN2_SADE_ARCHAVA": "",
             "TN2_MIS_SIDURI": "1063771",
             "TN2_IND_CM": "0",
             "TN2_KOD_ARCHAVA": "0"
@@ -61,7 +61,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "11",
               "TN2_TA_IBUD": "20160202",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "666214",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"
@@ -85,7 +85,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "12",
               "TN2_TA_IBUD": "20160202",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "666218",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"
@@ -109,7 +109,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "12",
               "TN2_TA_IBUD": "20160202",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "666216",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"
@@ -133,7 +133,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "12",
               "TN2_TA_IBUD": "20160202",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "666217",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"
@@ -181,7 +181,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "12",
               "TN2_TA_IBUD": "20160203",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "301243",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"
@@ -229,7 +229,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "12",
               "TN2_TA_IBUD": "20160205",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "324735",
               "TN2_IND_CM": "1",
               "TN2_KOD_ARCHAVA": "0"
@@ -301,7 +301,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "42",
               "TN2_TA_IBUD": "20160222",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "339885",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"
@@ -325,7 +325,7 @@
               "TN2_SUG_ARCHAVA": "0",
               "TN2_SUG_PEULA": "12",
               "TN2_TA_IBUD": "20160315",
-              "TN2_SADE_ARCHAVA": {},
+              "TN2_SADE_ARCHAVA": "",
               "TN2_MIS_SIDURI": "677073",
               "TN2_IND_CM": "0",
               "TN2_KOD_ARCHAVA": "0"

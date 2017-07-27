@@ -5,7 +5,7 @@ class Nt1CBMfTest extends FunSuite with Matchers{
   
   test("getBalance gets balance of account"){
     val result = getBalance("616","330","50180963","/G>          81433020102612")
-    result should be ("5668.13")
+    result should be ("5541.28")
       
   }
 
