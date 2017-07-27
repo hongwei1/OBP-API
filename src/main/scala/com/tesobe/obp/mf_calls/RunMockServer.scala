@@ -24,7 +24,7 @@ package object RunMockServer {
         response()
           .withStatusCode(401)
           .withHeaders(
-            new Header("Content-Type", "application/json; charset=utf-8"),
+            new Header("Content-Type", "application/json; charset=utf-8")
           )
           .withBody(getJoniMf("joni_result.json"))
       )
@@ -41,7 +41,7 @@ package object RunMockServer {
         response()
           .withStatusCode(401)
           .withHeaders(
-            new Header("Content-Type", "application/json; charset=utf-8"),
+            new Header("Content-Type", "application/json; charset=utf-8")
           )
           .withBody(getJoniMf("nt1c_B_result.json"))
       )
