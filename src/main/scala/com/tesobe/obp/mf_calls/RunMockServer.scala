@@ -34,7 +34,7 @@ package object RunMockServer {
         request()
           .withMethod("POST")
           //.withHeader("Content-Type","application/json;charset=utf-8")
-          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02")
         //.withBody("body")
       )
       .respond(
