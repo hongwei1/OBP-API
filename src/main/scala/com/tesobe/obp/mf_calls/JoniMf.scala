@@ -9,14 +9,14 @@ import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.DefaultHttpClient
 
-//For akka-http
+/*//For akka-http
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import akka.stream.ActorMaterializer
+import akka.stream.ActorMaterializer*/
 
 //For apache client
 
@@ -28,7 +28,7 @@ object JoniMf extends Config{
     val lines = try source.mkString finally source.close()
     lines
   }
-  
+/*  
  def getJoniMfHttp(username: String) = {
 
    implicit val system = ActorSystem()
@@ -58,7 +58,7 @@ object JoniMf extends Config{
 
 
    }
- }
+ }*/
    def getJoniMfHttpApache(username: String): String = {
 
      //val url = "http://localhost"
