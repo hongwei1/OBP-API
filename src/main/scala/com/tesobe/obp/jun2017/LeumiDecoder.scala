@@ -184,7 +184,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       //TODO: Get hardcoded parameters from North Side
       getTransactionsRequest.authInfo.cbsToken, List("2016","01","01"), List("2017","06","01"), "15")
     var result = new ListBuffer[InternalTransaction]
-    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA) {
+    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
         getTransactionsRequest.authInfo.userId,
         "10",

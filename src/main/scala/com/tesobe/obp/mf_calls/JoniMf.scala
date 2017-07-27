@@ -65,9 +65,9 @@ object JoniMf extends Config{
      val url = config.getString("bankserver.url")
      println(url)
 
-     val post = new HttpPost(url + "/V1.0/JONI/0/000/01.01")
+     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
      println(post)
-     post.addHeader("application/json;charset=utf-8", "application/json;charset=utf-8")
+     post.addHeader("Content-Type", "application/json;charset=utf-8")
 
      val client = new DefaultHttpClient()
 

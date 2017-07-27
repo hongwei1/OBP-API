@@ -28,7 +28,7 @@ import com.tesobe.obp.RunMockServer.startMockServer
 object Main extends App with StrictLogging with Config with ProcessorFactory {
 
   val systemName = config.getString("system-name")
-  if (config.getString("bankserver.url") == "localhost:1080") {
+  if (config.getBoolean("mockserver.run")) {
     startMockServer
   }
   val whatever: String = "fred"

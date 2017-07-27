@@ -4,16 +4,14 @@ import org.scalatest.{FunSuite, Matchers}
 
 class GetInboundBankAccountsTest extends FunSuite with Matchers {
 
-  test("getFullBankAccounts extracts FullBankAccounts" ) {
-    val accounts = getFullBankAccountsforUser("joni_result.json")
+  test("getBasicBankAccounts extracts BasicBankAccounts" ) {
+    val accounts = getBasicBankAccountsForUser("./src/test/resources/joni_result.json")
     accounts should be(List(
-      FullBankAccount(BasicBankAccount("3565953", "616", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),"IL230106160000050180963","5541.28", "15000"),
-      FullBankAccount(BasicBankAccount("50180983", "616", "430", ">,?          81433020102612", AccountPermissions(true,false,true)),"IL230106160000050180963","5541.28", "15000"),
-      FullBankAccount(BasicBankAccount("50180963", "616", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),"IL230106160000050180963","5541.28", "15000"),
-      //FullBankAccount(BasicBankAccount("20102642", "814", "0", AccountPermissions(true,false,false)),"IL230106160000050180963","5541.28", "15000"),
-      FullBankAccount(BasicBankAccount("20102612", "814", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),"IL230106160000050180963","5541.28", "15000"),
-      //FullBankAccount(BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),"IL230106160000050180963","5541.28", "15000"),
-      FullBankAccount(BasicBankAccount("20105505", "814", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),"IL230106160000050180963","5541.28", "15000")
+      BasicBankAccount("3565953", "616", "330", "<M/          81433020102612", AccountPermissions(true,false,false)),
+      BasicBankAccount("50180983", "616", "430", "<M/          81433020102612", AccountPermissions(true,false,true)),
+      BasicBankAccount("50180963", "616", "330", "<M/          81433020102612", AccountPermissions(true,false,false)),
+      BasicBankAccount("20102612", "814", "330", "<M/          81433020102612", AccountPermissions(true,false,false)),
+      BasicBankAccount("20105505", "814", "330", "<M/          81433020102612", AccountPermissions(true,false,false))
     ))
     }
 
