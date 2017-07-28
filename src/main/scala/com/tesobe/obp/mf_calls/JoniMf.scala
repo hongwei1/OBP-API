@@ -6,8 +6,11 @@ import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.DefaultHttpClient
+
+import scala.concurrent.{Await}
+import scala.concurrent.duration._
 
 /*//For akka-http
 import scala.concurrent._
@@ -83,8 +86,45 @@ object JoniMf extends Config{
      println(result)
      result
    }
-
-
+  
+  import akka.actor.ActorSystem
+  import akka.stream.ActorMaterializer
+  import play.api.libs.ws._
+  import play.api.libs.ws.ahc._
+  
+  import scala.concurrent.Future
+  import scala.concurrent.ExecutionContext.Implicits._
+  // Create Akka system for thread and streaming management
+  implicit val system = ActorSystem("PlayWs")
+  system.registerOnTermination {
+    System.exit(0)
+  }
+  implicit val materializer = ActorMaterializer()
+  // Create the standalone WS client
+  // no argument defaults to a AhcWSClientConfig created from
+  // "AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader)"
+  val wsClient = StandaloneAhcWSClient()
+  
+  def getJoniMfPlayWS(username: String): String = {
+  
+  def call(wsClient: StandaloneWSClient, url: String, bodyString: String): Future[String] = {
+    wsClient
+      .url(url)
+      .post(bodyString)
+      .map { response ⇒
+      val statusText: String = response.statusText
+      response.body
+    }
+  }
+    val then1: Future[String] = call(wsClient,"http://localhost:1080/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01","")
+      .andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate()}
+  
+    val TIMEOUT = (10 seconds)
+    Await.result(then1, TIMEOUT).asInstanceOf[String]
+  
+  }
+  
    // libweb-json parses the empty object to JObject(List()), but we need JString to extract to String
    // alternative: transform {case JObject(List()) => JString("") } will replace the JValues at json ast level
    def replaceEmptyObjects(string: String): String = string.replaceAll("\\{\\}", "\"\"")

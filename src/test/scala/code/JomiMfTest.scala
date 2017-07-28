@@ -81,6 +81,12 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
     val result = getJoniMfHttpApache("N7jut8d")
     println(result)
   }
+  
+  
+  test("getJoniMfPlayWS does something useful"){
+    val result = getJoniMfPlayWS("N7jut8d")
+    println(result)
+  }
 
   override def afterAll() {
     com.tesobe.obp.RunMockServer.mockServer.stop()
