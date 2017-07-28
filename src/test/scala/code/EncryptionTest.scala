@@ -1,4 +1,4 @@
-package code
+package com.tesobe.obp
 
 import com.tesobe.obp.Encryption.{encryptToken, decryptToken}
 import org.scalatest.{FunSuite, Matchers}

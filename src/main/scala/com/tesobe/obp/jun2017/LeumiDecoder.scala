@@ -139,14 +139,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     //Not cached or invalid AccountId
     if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
+      println("not mapped")
       getBankAccounts(GetAccounts(getAccount.authInfo))
     }
-    val accountNr = mapAccountIdToAccountValues(getAccount.accountId)
+    val accountNr = mapAccountIdToAccountValues(getAccount.accountId).accountNumber
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username,mfAccounts.filter(x => x.accountNr == accountNr).head)
+      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username,mfAccounts.filter(x => x.accountNr == accountNr ).head)
     )
   }
   
@@ -161,7 +162,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
    def getBankAccounts(getAccountsInput: GetAccounts): InboundBankAccounts = {
-    // userid is path to test json file
     val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {

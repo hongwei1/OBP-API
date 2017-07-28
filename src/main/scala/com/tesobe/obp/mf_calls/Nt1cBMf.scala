@@ -13,12 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient
   * Created by work on 6/12/17.
   */
 object Nt1cBMf extends Config{
-  //Read file To Simulate Mainframe Call
-  def getNt1cMf(mainframe: String): String = {
-    val source = scala.io.Source.fromFile(mainframe)
-    val lines = try source.mkString finally source.close()
-    lines
-  }
+
 
   def getNt1cBMfHttpApache(branch: String, accountType: String, accountNumber: String, cbsToken: String): String = {
 

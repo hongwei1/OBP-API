@@ -22,12 +22,7 @@ import akka.stream.ActorMaterializer*/
 
 
 object JoniMf extends Config{
-  // mainframe result is local .json for now
-  def getJoniMf(mainframe: String): String = {
-    val source = scala.io.Source.fromResource(mainframe)
-    val lines = try source.mkString finally source.close()
-    lines
-  }
+
 /*  
  def getJoniMfHttp(username: String) = {
 

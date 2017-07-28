@@ -1,4 +1,5 @@
 package com.tesobe.obp
+
 import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.GetBankAccounts._
 import com.tesobe.obp.RunMockServer.startMockServer
@@ -11,7 +12,7 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
   override def beforeAll() {
     startMockServer
   }
-  val mfresult: String = getJoniMf("joni_result.json")
+  val mfresult: String = jsonToString("joni_result.json")
   val sane_result: String = replaceEmptyObjects(mfresult)
   implicit val formats = net.liftweb.json.DefaultFormats
   
@@ -53,7 +54,7 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
    ))
    
   }
-  test("getBankAccountsForUser without leading account"){
+/*  test("getBankAccountsForUser without leading account"){
     val accounts = getBasicBankAccountsForUser("joni_result_no_lead.json")
     accounts should be (List(
       BasicBankAccount("3565953", "616", "330", "<M/          81433020102612", AccountPermissions(true,false,false)),
@@ -65,7 +66,7 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
       BasicBankAccount("20102612", "814", "330", "<M/          81433020102612", AccountPermissions(true,false,false))
     ))
 
-  }
+  }*/
 
   test("getMFToken gets the MFTOKEN, assuming / will be  escaped later"){
     val mftoken = getMFToken("joni_result.json")

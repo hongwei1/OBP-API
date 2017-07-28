@@ -24,9 +24,9 @@ object Nt1cTMf extends Config{
     val url = config.getString("bankserver.url")
 
 
-    val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/4/000/01.03")
+    val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02")
     println(post)
-    post.addHeader("application/json;charset=utf-8","application/json;charset=utf-8")
+    post.addHeader("Content-Type","application/json;charset=utf-8")
 
     val client = new DefaultHttpClient()
 

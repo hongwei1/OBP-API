@@ -1,8 +1,14 @@
 package com.tesobe.obp  
 import com.tesobe.obp.Nt1c3Mf._
-import org.scalatest.{FunSuite, Matchers}
+import com.tesobe.obp.RunMockServer.startMockServer
+import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class Nt1c3MfTest extends FunSuite with Matchers{
+class Nt1c3MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
+
+  override def beforeAll() {
+    startMockServer
+  }
+
 
   implicit val formats = net.liftweb.json.DefaultFormats
   
@@ -15,6 +21,10 @@ class Nt1c3MfTest extends FunSuite with Matchers{
     val result = getFutureTransactions("nt1c_3_result.json")
     result.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_COUNTER should be ("4")
     result.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA(2).TA1_TNUA_BODEDET.TA1_TA_ERECH should be ("20170611")
+  }
+
+  override def afterAll() {
+    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 
 

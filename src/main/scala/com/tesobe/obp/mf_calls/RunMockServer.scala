@@ -4,12 +4,18 @@ import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.{Cookie, Header, Parameter}
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
-import com.tesobe.obp.JoniMf.getJoniMf
 
 
 
 package object RunMockServer {
   val mockServer = startClientAndServer(1080)
+  
+  def jsonToString(filename: String): String = {
+    val source = scala.io.Source.fromResource(filename)
+    val lines = try source.mkString finally source.close()
+    lines
+  }
+  
   def startMockServer = {
     //val mockServer = startClientAndServer(1080)
     mockServer
@@ -24,9 +30,9 @@ package object RunMockServer {
         response()
           .withStatusCode(401)
           .withHeaders(
-            new Header("Content-Type", "application/json; charset=utf-8"),
+            new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(getJoniMf("joni_result.json"))
+          .withBody(jsonToString("joni_result.json"))
       )
 
     mockServer
@@ -41,9 +47,77 @@ package object RunMockServer {
         response()
           .withStatusCode(401)
           .withHeaders(
-            new Header("Content-Type", "application/json; charset=utf-8"),
+            new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(getJoniMf("nt1c_B_result.json"))
+          .withBody(jsonToString("nt1c_B_result.json"))
+      )
+
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("nt1c_T_result.json"))
+      )
+
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/3/000/01.02")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("nt1c_3_result.json"))
+      )
+
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/4/000/01.03")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("nt1c_4_result.json"))
+      )
+
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("ntib_result.json"))
       )
 
 
