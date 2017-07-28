@@ -150,5 +150,15 @@
             <artifactId>mockserver-netty</artifactId>
             <version>3.10.8</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.typesafe.play/play-ahc-ws-standalone_2.12 -->
+        <dependency>
+            <groupId>com.typesafe.play</groupId>
+            <artifactId>play-ahc-ws-standalone_2.12</artifactId>
+            <version>1.0.0-M10</version>
+        </dependency>
+        
+        
+
     </dependencies>
 </project>
