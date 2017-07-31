@@ -2,7 +2,7 @@ package com.tesobe.obp.jun2017
 
 import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
-import com.tesobe.obp.Nt1cBMf.getBalance
+import com.tesobe.obp.Nt1cMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
@@ -31,24 +31,24 @@ import scala.collection.mutable.{ListBuffer, Map}
 object LeumiDecoder extends Decoder with StrictLogging {
   
   val defaultCurrency = "ILS"
-  //TODO: Replace with caching solution for production
-  case class AccountValues (branchId: String,accountType: String, accountNumber:String)
-  var mapAccountIdToAccountValues = Map[String, AccountValues]()
+  
+  var mapAccountIdToAccountNumber = Map[String, String]()
   var mapAccountNumberToAccountId= Map[String, String]()
+  //TODO: Look for better mapping function
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
   var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
   var mapTransactionValuesToTransactionId = Map[TransactionIdValues, String]()
   
   //Helper functions start here:---------------------------------------------------------------------------------------
 
-  def getOrCreateAccountId(branchId: String, accountType: String, accountNumber: String): String = {
-    logger.debug(s"getOrCreateAccountId-accountNr($accountNumber)")
-    if (mapAccountNumberToAccountId.contains(accountNumber)) { mapAccountNumberToAccountId(accountNumber) }
+  def getOrCreateAccountId(accountNr: String): String = {
+    logger.debug(s"getOrCreateAccountId-accountNr($accountNr)")
+    if (mapAccountNumberToAccountId.contains(accountNr)) { mapAccountNumberToAccountId(accountNr) }
     else {
       //TODO: Do random salting for production? Will lead to expired accountIds becoming invalid.
-      val accountId = base64EncodedSha256(accountNumber + "fjdsaFDSAefwfsalfid")
-      mapAccountIdToAccountValues += (accountId -> AccountValues(branchId, accountType, accountNumber))
-      mapAccountNumberToAccountId += (accountNumber -> accountId)
+      val accountId = base64EncodedSha256(accountNr + "fjdsaFDSAefwfsalfid")
+      mapAccountIdToAccountNumber += (accountId -> accountNr)
+      mapAccountNumberToAccountId += (accountNr -> accountId)
       accountId
     }
   }
@@ -79,14 +79,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
-    InboundAccountJune2017(errorCode = "errorcode",
+    InboundAccountJune2017(errorCode = "",
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
-      accountId = getOrCreateAccountId(x.branchNr, x.accountType, x.accountNr),
+      accountId = getOrCreateAccountId(x.accountNr),
       accountNumber = x.accountNr,
       accountType = x.accountType,
-      balanceAmount = getBalance(x.branchNr, x.accountType, x.accountNr, x.cbsToken),
+      balanceAmount = getBalance("nt1c_result.json"),
       balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
@@ -137,54 +137,49 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
+    val username = "joni_result.json"
     //Not cached or invalid AccountId
-    if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
+    if (!mapAccountIdToAccountNumber.contains(getAccount.accountId)) {
       getBankAccounts(GetAccounts(getAccount.authInfo))
     }
-    val accountNr = mapAccountIdToAccountValues(getAccount.accountId)
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
+    val accountNr = mapAccountIdToAccountNumber(getAccount.accountId)
+    val mfAccounts = getBasicBankAccountsForUser(username)
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username,mfAccounts.filter(x => x.accountNr == accountNr).head)
+      mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => x.accountNr == accountNr).head)
     )
   }
   
   def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
+    val username = "joni_result.json"
+    val mfAccounts = getBasicBankAccountsForUser(username)
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      //TODO: Error handling
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username,mfAccounts.filter(x => 
+      mapAdapterAccountToInboundAccountJune2017(username,mfAccounts.filter(x => 
       x.accountNr == getAccount.accountNumber).head))
   }
 
    def getBankAccounts(getAccountsInput: GetAccounts): InboundBankAccounts = {
     // userid is path to test json file
-    val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username)
+    val userid = "joni_result.json"
+    val mfAccounts = getBasicBankAccountsForUser(userid)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
       
-      result += mapAdapterAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i)
+      result += mapAdapterAccountToInboundAccountJune2017(userid, i)
       }
     InboundBankAccounts(AuthInfo(getAccountsInput.authInfo.userId,
-      //TODO: Error handling
       getAccountsInput.authInfo.username,
       mfAccounts.head.cbsToken), result.toList)
   }
   
   def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
-    //TODO: Error handling
-    val accountValues = mapAccountIdToAccountValues(getTransactionsRequest.accountId)
-    val mfTransactions = getCompletedTransactions(
-      accountValues.branchId,
-      accountValues.accountType,
-      accountValues.accountNumber,
-      //TODO: Get hardcoded parameters from North Side
-      getTransactionsRequest.authInfo.cbsToken, List("2016","01","01"), List("2017","06","01"), "15")
+    val userid = "nt1c_T_result.json"
+    val mfTransactions = getCompletedTransactions(userid)
     var result = new ListBuffer[InternalTransaction]
-    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.N2TshuvaTavlait.TN2_TNUOT.TN2_PIRTEY_TNUA) {
+    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
         getTransactionsRequest.authInfo.userId,
         "10",
@@ -196,19 +191,29 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
-    val allTransactions: List[InternalTransaction] = getTransactions(GetTransactions(
-    getTransactionRequest.authInfo,
-    getTransactionRequest.bankId, getTransactionRequest.accountId,
-    ""
-    )).data
-    //TODO: Error handling
-    val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
-    InboundTransaction(getTransactionRequest.authInfo, resultTransaction)
-    
-  }
+    val userid = "nt1c_T_result.json"
+    val mfTransactions = getCompletedTransactions(userid)
+    if (!mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId)) {
+      getTransactions(GetTransactions(
+        getTransactionRequest.authInfo,
+        getTransactionRequest.bankId,
+        getTransactionRequest.accountId,
+        ""
+      ))
+    }
+    val transactionIdValues = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId)
+    InboundTransaction(getTransactionRequest.authInfo,  mapAdapterTransactionToInternalTransaction(
+      getTransactionRequest.authInfo.userId,
+      getTransactionRequest.bankId,
+      getTransactionRequest.accountId,
+      mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA.filter(x =>
+        x.TN2_TNUA_BODEDET.TN2_SCHUM == transactionIdValues.amount &&
+          x.TN2_TNUA_BODEDET.TN2_TA_ERECH == transactionIdValues.completedDate &&
+          x.TN2_TNUA_BODEDET.TN2_ITRA == transactionIdValues.newBalanceAmount ).head))
+    }
   
   def getToken(getTokenRequest: GetToken): InboundToken = {
-    InboundToken(getTokenRequest.username, getMFToken(getTokenRequest.username))
+    InboundToken(getTokenRequest.username, getMFToken("joni_result.json"))
   }
 
 

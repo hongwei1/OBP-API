@@ -1,17 +1,17 @@
 {
 	"SDR_JONI": {
 		"esbHeaderResponse": {
-			"esbRequestId": "414d5120544c44423120202020202020be7cff582301db02",
+			"esbRequestId": "414d5120544c44423120202020202020be7cff582479f102",
 			"responseStatus": {
 				"callStatus": "Success",
-				"errorDesc": {}
+				"errorDesc": ""
 			}
 		},
 		"MFAdminResponse": {
 			"returnCode": "0",
-			"messageText": {}
+			"messageText": ""
 		},
-		"MFTOKEN": "<M\/          81433020102612",
+		"MFTOKEN": ">,?          81433020102612",
 		"SDR_MANUI": {
 			"SDRM_N_LAK": "5",
 			"SDRM_N_CHN": "24",
@@ -31,18 +31,18 @@
 				"SDRM_MOVIL_RASHI_CHN": "20102612",
 				"SDRM_MOVIL_RASHI_SUG": "330"
 			},
-			"SDRM_DATE_LAST": "20170524",
-			"SDRM_TIME_LAST": "101834",
+			"SDRM_DATE_LAST": "20170611",
+			"SDRM_TIME_LAST": "120257",
 			"SDRM_NO_NISYONT_KOSHLIM": "0",
 			"SDRM_TA_PTICHA": "20061207",
 			"SDRM_ZEHUT": "4051769",
 			"SDRM_SUG_ZIHUY": "1",
 			"SDRM_ERETZ_DARKON": "2121",
-			"SDRM_OPERID": "<M\/",
+			"SDRM_OPERID": ">,?",
 			"SDRM_RAMAT_AVTACHA": "1",
 			"SDRM_MIMUSH_AVTACHA": "1",
 			"SDRM_MIGZAR": "1",
-			"SDRM_ATAR": "90",
+			"SDRM_ATAR": "1",
 			"SDRM_SIVUG": {
 				"SDRM_SIVUG_PRATI": "0",
 				"SDRM_SIVUG_AMIDIM": "1",
@@ -91,15 +91,15 @@
 				}
 			},
 			"SDRM_CHASIMA_ZAD_G": "0",
-			"SDRM_TIMESTAMP": "20170521131330",
+			"SDRM_TIMESTAMP": "20170604200026",
 			"SDRM_SHEELOT_SAVTA": "1",
-			"SDRM_SHEM_PRATI_ENG": {},
-			"SDRM_SHEM_MISHPACHA_ENG": {},
+			"SDRM_SHEM_PRATI_ENG": "",
+			"SDRM_SHEM_MISHPACHA_ENG": "",
 			"SDRM_MUTZARIM2_TV": {
 				"SDRM_MUTZAR2_KARTIS_DEBIT": "1"
 			},
 			"SDRM_USERS_PROPERTIES": {
-				"SDRM_UP_HATIVA": {},
+				"SDRM_UP_HATIVA": "",
 				"SDRM_UP_OFI_MANUI": "0",
 				"SDRM_UP_HALVAOT_ON_KOL": "0"
 			}
@@ -131,8 +131,8 @@
 					"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
 				},
 				"SDRL_SEGMENT": "0",
-				"SDRL_SHEM_TAAGID": {},
-				"SDRL_SHEM_LOAZI": {},
+				"SDRL_SHEM_TAAGID": "",
+				"SDRL_SHEM_LOAZI": "",
 				"SDRL_MUTZARIM2_TV": {
 					"SDRL_MUTZAR2_KARTIS_DEBIT": "0"
 				},
@@ -140,7 +140,7 @@
 				"SDRL_TAAGID": "0",
 				"SDRL_ERETZ_TAAGID": "0",
 				"SDRL_SUG_ZIHUY_TAAGID": "0",
-				"SDR_CHN": {
+				"SDR_CHN": [{
 					"SDRC_LINE": {
 						"SDRC_MOVIL": {
 							"SDRC_MOVIL_BANK": "10",
@@ -191,422 +191,431 @@
 							"SDRC_CP_FUSHE": "0"
 						}
 					}
-				}
-			}, {
-				"SDRL_BANK_LAK": "10",
-				"SDRL_MIS_LAK": "50180983",
-				"SDRL_SNIF_LAK": "616",
-				"SDRL_SEMEL_HATIVA": "833",
-				"SDRL_OFI_SHIUCHI": "43",
-				"SDRL_DOAR_LEUMI_MAIL": "1",
-				"SDRL_DOAR_HABAITA": "0",
-				"SDRL_MUTZARIM_TV": {
-					"SDRL_MUTZAR_OSH_MTI": "1",
-					"SDRL_MUTZAR_SHOTEF_MTH": "1",
-					"SDRL_MUTZAR_PIKDONOT_MTI": "1",
-					"SDRL_MUTZAR_PIKDONOT_MTH": "1",
-					"SDRL_MUTZAR_TIHON": "1",
-					"SDRL_MUTZAR_HALVAOT_MTI": "1",
-					"SDRL_MUTZAR_MASHKANTAOT": "1",
-					"SDRL_MUTZAR_HALVAOT_MTH": "1",
-					"SDRL_MUTZAR_KAHAL": "1",
-					"SDRL_MUTZAR_KARTISEY_ASH": "1",
-					"SDRL_MUTZAR_KUPOT_GEMEL": "1",
-					"SDRL_MUTZAR_NIAROT_EREH": "1",
-					"SDRL_MUTZAR_HORAA_TEL": "0",
-					"SDRL_MUTZAR_SACHBAL": "0",
-					"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
-				},
-				"SDRL_SEGMENT": "0",
-				"SDRL_SHEM_TAAGID": {},
-				"SDRL_SHEM_LOAZI": {},
-				"SDRL_MUTZARIM2_TV": {
-					"SDRL_MUTZAR2_KARTIS_DEBIT": "1"
-				},
-				"SDRL_CASH_MANAGM": "0",
-				"SDRL_TAAGID": "0",
-				"SDRL_ERETZ_TAAGID": "0",
-				"SDRL_SUG_ZIHUY_TAAGID": "0",
-				"SDR_CHN": [{
-					"SDRC_LINE": {
-						"SDRC_MOVIL": {
-							"SDRC_MOVIL_BANK": "10",
-							"SDRC_MOVIL_SNIF": "814",
-							"SDRC_MOVIL_CHN": "20102612",
-							"SDRC_MOVIL_SUG": "330"
-						},
-						"SDRC_CHN": {
-							"SDRC_CHN_BANK": "10",
-							"SDRC_CHN_SNIF": "616",
-							"SDRC_CHN_CHN": "50180983",
-							"SDRC_CHN_SUG": "430"
-						},
-						"SDRC_SNIF_LAKOACH": "616",
-						"SDRC_MIS_LAKOACH": "50180983",
-						"SDRC_SIVUG": {
-							"SDRC_SIVUG_PRATI": "1",
-							"SDRC_SIVUG_AMIDIM": "0",
-							"SDRC_SIVUG_TZAIRIM": "0",
-							"SDRC_SIVUG_STUDENT": "0",
-							"SDRC_SIVUG_ISKI": "0",
-							"SDRC_SIVUG_MISHARI": "0",
-							"SDRC_SIVUG_IPB": "0",
-							"SDRC_SIVUG_SAHBAL": "0",
-							"SDRC_SIVUG_PAKID": "0",
-							"SDRC_SIVUG_YAHALOMIM": "0",
-							"SDRC_SIVUG_YASHIR": "0",
-							"SDRC_SIVUG_DOCHOT_PB": "0",
-							"SDRC_SIVUG_LEUMI_LABS": "0",
-							"SDRC_SIVUG_TAHALICH": "0",
-							"SDRC_SIVUG_NIK_HOVAV": "0",
-							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
-						},
-						"SDRC_SIVUG_FUSE": "000000000000",
-						"SDRC_HARSHAOT": {
-							"SDRC_MURSHE_MEIDA": "0",
-							"SDRC_MURSHE_PEULOT": "1",
-							"SDRC_MURSHE_TZAD_G": "0"
-						},
-						"SDRC_SW_MOVIL": "1",
-						"SDRC_TAAGID": "0",
-						"SDRC_CP_GR": {
-							"SDRC_CP_KARTIS_ASHRAY": "0",
-							"SDRC_CP_KARTIS_ASHRAY_20": "0",
-							"SDRC_CP_SHEKIM_HOZRIM": "1",
-							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
-							"SDRC_CP_MEMADIM": "0",
-							"SDRC_CP_FUSHE": "0"
-						}
-					}
-				}, {
-					"SDRC_LINE": {
-						"SDRC_MOVIL": {
-							"SDRC_MOVIL_BANK": "10",
-							"SDRC_MOVIL_SNIF": "814",
-							"SDRC_MOVIL_CHN": "20102612",
-							"SDRC_MOVIL_SUG": "330"
-						},
-						"SDRC_CHN": {
-							"SDRC_CHN_BANK": "10",
-							"SDRC_CHN_SNIF": "616",
-							"SDRC_CHN_CHN": "50180963",
-							"SDRC_CHN_SUG": "330"
-						},
-						"SDRC_SNIF_LAKOACH": "616",
-						"SDRC_MIS_LAKOACH": "50180983",
-						"SDRC_SIVUG": {
-							"SDRC_SIVUG_PRATI": "1",
-							"SDRC_SIVUG_AMIDIM": "0",
-							"SDRC_SIVUG_TZAIRIM": "0",
-							"SDRC_SIVUG_STUDENT": "0",
-							"SDRC_SIVUG_ISKI": "0",
-							"SDRC_SIVUG_MISHARI": "0",
-							"SDRC_SIVUG_IPB": "0",
-							"SDRC_SIVUG_SAHBAL": "0",
-							"SDRC_SIVUG_PAKID": "0",
-							"SDRC_SIVUG_YAHALOMIM": "0",
-							"SDRC_SIVUG_YASHIR": "0",
-							"SDRC_SIVUG_DOCHOT_PB": "0",
-							"SDRC_SIVUG_LEUMI_LABS": "0",
-							"SDRC_SIVUG_TAHALICH": "0",
-							"SDRC_SIVUG_NIK_HOVAV": "0",
-							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
-						},
-						"SDRC_SIVUG_FUSE": "000000000000",
-						"SDRC_HARSHAOT": {
-							"SDRC_MURSHE_MEIDA": "0",
-							"SDRC_MURSHE_PEULOT": "1",
-							"SDRC_MURSHE_TZAD_G": "1"
-						},
-						"SDRC_SW_MOVIL": "1",
-						"SDRC_TAAGID": "0",
-						"SDRC_CP_GR": {
-							"SDRC_CP_KARTIS_ASHRAY": "0",
-							"SDRC_CP_KARTIS_ASHRAY_20": "0",
-							"SDRC_CP_SHEKIM_HOZRIM": "1",
-							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
-							"SDRC_CP_MEMADIM": "0",
-							"SDRC_CP_FUSHE": "0"
-						}
-					}
 				}]
-			}, {
-				"SDRL_BANK_LAK": "10",
-				"SDRL_MIS_LAK": "20102632",
-				"SDRL_SNIF_LAK": "814",
-				"SDRL_SEMEL_HATIVA": "833",
-				"SDRL_OFI_SHIUCHI": "40",
-				"SDRL_DOAR_LEUMI_MAIL": "1",
-				"SDRL_DOAR_HABAITA": "2",
-				"SDRL_MUTZARIM_TV": {
-					"SDRL_MUTZAR_OSH_MTI": "1",
-					"SDRL_MUTZAR_SHOTEF_MTH": "1",
-					"SDRL_MUTZAR_PIKDONOT_MTI": "0",
-					"SDRL_MUTZAR_PIKDONOT_MTH": "0",
-					"SDRL_MUTZAR_TIHON": "1",
-					"SDRL_MUTZAR_HALVAOT_MTI": "1",
-					"SDRL_MUTZAR_MASHKANTAOT": "0",
-					"SDRL_MUTZAR_HALVAOT_MTH": "0",
-					"SDRL_MUTZAR_KAHAL": "0",
-					"SDRL_MUTZAR_KARTISEY_ASH": "1",
-					"SDRL_MUTZAR_KUPOT_GEMEL": "0",
-					"SDRL_MUTZAR_NIAROT_EREH": "1",
-					"SDRL_MUTZAR_HORAA_TEL": "5",
-					"SDRL_MUTZAR_SACHBAL": "1",
-					"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
-				},
-				"SDRL_SEGMENT": "0",
-				"SDRL_SHEM_TAAGID": {},
-				"SDRL_SHEM_LOAZI": {},
-				"SDRL_MUTZARIM2_TV": {
-					"SDRL_MUTZAR2_KARTIS_DEBIT": "1"
-				},
-				"SDRL_CASH_MANAGM": "0",
-				"SDRL_TAAGID": "0",
-				"SDRL_ERETZ_TAAGID": "0",
-				"SDRL_SUG_ZIHUY_TAAGID": "0",
-				"SDR_CHN": [{
-					"SDRC_LINE": {
-						"SDRC_MOVIL": {
-							"SDRC_MOVIL_BANK": "10",
-							"SDRC_MOVIL_SNIF": "814",
-							"SDRC_MOVIL_CHN": "20102612",
-							"SDRC_MOVIL_SUG": "330"
-						},
-						"SDRC_CHN": {
-							"SDRC_CHN_BANK": "10",
-							"SDRC_CHN_SNIF": "814",
-							"SDRC_CHN_CHN": "20102642",
-							"SDRC_CHN_SUG": "0"
-						},
-						"SDRC_SNIF_LAKOACH": "814",
-						"SDRC_MIS_LAKOACH": "20102632",
-						"SDRC_SIVUG": {
-							"SDRC_SIVUG_PRATI": "0",
-							"SDRC_SIVUG_AMIDIM": "1",
-							"SDRC_SIVUG_TZAIRIM": "0",
-							"SDRC_SIVUG_STUDENT": "0",
-							"SDRC_SIVUG_ISKI": "0",
-							"SDRC_SIVUG_MISHARI": "0",
-							"SDRC_SIVUG_IPB": "0",
-							"SDRC_SIVUG_SAHBAL": "0",
-							"SDRC_SIVUG_PAKID": "0",
-							"SDRC_SIVUG_YAHALOMIM": "0",
-							"SDRC_SIVUG_YASHIR": "0",
-							"SDRC_SIVUG_DOCHOT_PB": "0",
-							"SDRC_SIVUG_LEUMI_LABS": "0",
-							"SDRC_SIVUG_TAHALICH": "0",
-							"SDRC_SIVUG_NIK_HOVAV": "0",
-							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
-						},
-						"SDRC_SIVUG_FUSE": "000000000000",
-						"SDRC_HARSHAOT": {
-							"SDRC_MURSHE_MEIDA": "0",
-							"SDRC_MURSHE_PEULOT": "1",
-							"SDRC_MURSHE_TZAD_G": "1"
-						},
-						"SDRC_SW_MOVIL": "1",
-						"SDRC_TAAGID": "0",
-						"SDRC_CP_GR": {
-							"SDRC_CP_KARTIS_ASHRAY": "0",
-							"SDRC_CP_KARTIS_ASHRAY_20": "0",
-							"SDRC_CP_SHEKIM_HOZRIM": "0",
-							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
-							"SDRC_CP_MEMADIM": "0",
-							"SDRC_CP_FUSHE": "0"
+			},
+				{
+					"SDRL_BANK_LAK": "10",
+					"SDRL_MIS_LAK": "50180983",
+					"SDRL_SNIF_LAK": "616",
+					"SDRL_SEMEL_HATIVA": "833",
+					"SDRL_OFI_SHIUCHI": "43",
+					"SDRL_DOAR_LEUMI_MAIL": "1",
+					"SDRL_DOAR_HABAITA": "0",
+					"SDRL_MUTZARIM_TV": {
+						"SDRL_MUTZAR_OSH_MTI": "1",
+						"SDRL_MUTZAR_SHOTEF_MTH": "1",
+						"SDRL_MUTZAR_PIKDONOT_MTI": "1",
+						"SDRL_MUTZAR_PIKDONOT_MTH": "1",
+						"SDRL_MUTZAR_TIHON": "1",
+						"SDRL_MUTZAR_HALVAOT_MTI": "1",
+						"SDRL_MUTZAR_MASHKANTAOT": "1",
+						"SDRL_MUTZAR_HALVAOT_MTH": "1",
+						"SDRL_MUTZAR_KAHAL": "1",
+						"SDRL_MUTZAR_KARTISEY_ASH": "1",
+						"SDRL_MUTZAR_KUPOT_GEMEL": "1",
+						"SDRL_MUTZAR_NIAROT_EREH": "1",
+						"SDRL_MUTZAR_HORAA_TEL": "0",
+						"SDRL_MUTZAR_SACHBAL": "0",
+						"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
+					},
+					"SDRL_SEGMENT": "0",
+					"SDRL_SHEM_TAAGID": "",
+					"SDRL_SHEM_LOAZI": "",
+					"SDRL_MUTZARIM2_TV": {
+						"SDRL_MUTZAR2_KARTIS_DEBIT": "1"
+					},
+					"SDRL_CASH_MANAGM": "0",
+					"SDRL_TAAGID": "0",
+					"SDRL_ERETZ_TAAGID": "0",
+					"SDRL_SUG_ZIHUY_TAAGID": "0",
+					"SDR_CHN": [{
+						"SDRC_LINE": {
+							"SDRC_MOVIL": {
+								"SDRC_MOVIL_BANK": "10",
+								"SDRC_MOVIL_SNIF": "814",
+								"SDRC_MOVIL_CHN": "20102612",
+								"SDRC_MOVIL_SUG": "330"
+							},
+							"SDRC_CHN": {
+								"SDRC_CHN_BANK": "10",
+								"SDRC_CHN_SNIF": "616",
+								"SDRC_CHN_CHN": "50180983",
+								"SDRC_CHN_SUG": "430"
+							},
+							"SDRC_SNIF_LAKOACH": "616",
+							"SDRC_MIS_LAKOACH": "50180983",
+							"SDRC_SIVUG": {
+								"SDRC_SIVUG_PRATI": "1",
+								"SDRC_SIVUG_AMIDIM": "0",
+								"SDRC_SIVUG_TZAIRIM": "0",
+								"SDRC_SIVUG_STUDENT": "0",
+								"SDRC_SIVUG_ISKI": "0",
+								"SDRC_SIVUG_MISHARI": "0",
+								"SDRC_SIVUG_IPB": "0",
+								"SDRC_SIVUG_SAHBAL": "0",
+								"SDRC_SIVUG_PAKID": "0",
+								"SDRC_SIVUG_YAHALOMIM": "0",
+								"SDRC_SIVUG_YASHIR": "0",
+								"SDRC_SIVUG_DOCHOT_PB": "0",
+								"SDRC_SIVUG_LEUMI_LABS": "0",
+								"SDRC_SIVUG_TAHALICH": "0",
+								"SDRC_SIVUG_NIK_HOVAV": "0",
+								"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+							},
+							"SDRC_SIVUG_FUSE": "000000000000",
+							"SDRC_HARSHAOT": {
+								"SDRC_MURSHE_MEIDA": "0",
+								"SDRC_MURSHE_PEULOT": "1",
+								"SDRC_MURSHE_TZAD_G": "0"
+							},
+							"SDRC_SW_MOVIL": "1",
+							"SDRC_TAAGID": "0",
+							"SDRC_CP_GR": {
+								"SDRC_CP_KARTIS_ASHRAY": "0",
+								"SDRC_CP_KARTIS_ASHRAY_20": "0",
+								"SDRC_CP_SHEKIM_HOZRIM": "0",
+								"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+								"SDRC_CP_MEMADIM": "0",
+								"SDRC_CP_FUSHE": "0"
+							}
 						}
-					}
-				}, {
-					"SDRC_LINE": {
-						"SDRC_MOVIL": {
-							"SDRC_MOVIL_BANK": "10",
-							"SDRC_MOVIL_SNIF": "814",
-							"SDRC_MOVIL_CHN": "20102612",
-							"SDRC_MOVIL_SUG": "330"
-						},
-						"SDRC_CHN": {
-							"SDRC_CHN_BANK": "10",
-							"SDRC_CHN_SNIF": "814",
-							"SDRC_CHN_CHN": "20102612",
-							"SDRC_CHN_SUG": "330"
-						},
-						"SDRC_SNIF_LAKOACH": "814",
-						"SDRC_MIS_LAKOACH": "20102632",
-						"SDRC_SIVUG": {
-							"SDRC_SIVUG_PRATI": "0",
-							"SDRC_SIVUG_AMIDIM": "1",
-							"SDRC_SIVUG_TZAIRIM": "0",
-							"SDRC_SIVUG_STUDENT": "0",
-							"SDRC_SIVUG_ISKI": "0",
-							"SDRC_SIVUG_MISHARI": "0",
-							"SDRC_SIVUG_IPB": "0",
-							"SDRC_SIVUG_SAHBAL": "0",
-							"SDRC_SIVUG_PAKID": "0",
-							"SDRC_SIVUG_YAHALOMIM": "0",
-							"SDRC_SIVUG_YASHIR": "0",
-							"SDRC_SIVUG_DOCHOT_PB": "0",
-							"SDRC_SIVUG_LEUMI_LABS": "0",
-							"SDRC_SIVUG_TAHALICH": "0",
-							"SDRC_SIVUG_NIK_HOVAV": "0",
-							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
-						},
-						"SDRC_SIVUG_FUSE": "000000000000",
-						"SDRC_HARSHAOT": {
-							"SDRC_MURSHE_MEIDA": "0",
-							"SDRC_MURSHE_PEULOT": "1",
-							"SDRC_MURSHE_TZAD_G": "1"
-						},
-						"SDRC_SW_MOVIL": "1",
-						"SDRC_TAAGID": "0",
-						"SDRC_CP_GR": {
-							"SDRC_CP_KARTIS_ASHRAY": "0",
-							"SDRC_CP_KARTIS_ASHRAY_20": "0",
-							"SDRC_CP_SHEKIM_HOZRIM": "0",
-							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
-							"SDRC_CP_MEMADIM": "0",
-							"SDRC_CP_FUSHE": "0"
+					},
+						{
+							"SDRC_LINE": {
+								"SDRC_MOVIL": {
+									"SDRC_MOVIL_BANK": "10",
+									"SDRC_MOVIL_SNIF": "814",
+									"SDRC_MOVIL_CHN": "20102612",
+									"SDRC_MOVIL_SUG": "330"
+								},
+								"SDRC_CHN": {
+									"SDRC_CHN_BANK": "10",
+									"SDRC_CHN_SNIF": "616",
+									"SDRC_CHN_CHN": "50180963",
+									"SDRC_CHN_SUG": "330"
+								},
+								"SDRC_SNIF_LAKOACH": "616",
+								"SDRC_MIS_LAKOACH": "50180983",
+								"SDRC_SIVUG": {
+									"SDRC_SIVUG_PRATI": "1",
+									"SDRC_SIVUG_AMIDIM": "0",
+									"SDRC_SIVUG_TZAIRIM": "0",
+									"SDRC_SIVUG_STUDENT": "0",
+									"SDRC_SIVUG_ISKI": "0",
+									"SDRC_SIVUG_MISHARI": "0",
+									"SDRC_SIVUG_IPB": "0",
+									"SDRC_SIVUG_SAHBAL": "0",
+									"SDRC_SIVUG_PAKID": "0",
+									"SDRC_SIVUG_YAHALOMIM": "0",
+									"SDRC_SIVUG_YASHIR": "0",
+									"SDRC_SIVUG_DOCHOT_PB": "0",
+									"SDRC_SIVUG_LEUMI_LABS": "0",
+									"SDRC_SIVUG_TAHALICH": "0",
+									"SDRC_SIVUG_NIK_HOVAV": "0",
+									"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+								},
+								"SDRC_SIVUG_FUSE": "000000000000",
+								"SDRC_HARSHAOT": {
+									"SDRC_MURSHE_MEIDA": "0",
+									"SDRC_MURSHE_PEULOT": "1",
+									"SDRC_MURSHE_TZAD_G": "1"
+								},
+								"SDRC_SW_MOVIL": "1",
+								"SDRC_TAAGID": "0",
+								"SDRC_CP_GR": {
+									"SDRC_CP_KARTIS_ASHRAY": "0",
+									"SDRC_CP_KARTIS_ASHRAY_20": "0",
+									"SDRC_CP_SHEKIM_HOZRIM": "0",
+									"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+									"SDRC_CP_MEMADIM": "0",
+									"SDRC_CP_FUSHE": "0"
+								}
+							}
 						}
-					}
-				}, {
-					"SDRC_LINE": {
-						"SDRC_MOVIL": {
-							"SDRC_MOVIL_BANK": "10",
-							"SDRC_MOVIL_SNIF": "814",
-							"SDRC_MOVIL_CHN": "20102612",
-							"SDRC_MOVIL_SUG": "330"
-						},
-						"SDRC_CHN": {
-							"SDRC_CHN_BANK": "10",
-							"SDRC_CHN_SNIF": "814",
-							"SDRC_CHN_CHN": "20102632",
-							"SDRC_CHN_SUG": "999"
-						},
-						"SDRC_SNIF_LAKOACH": "814",
-						"SDRC_MIS_LAKOACH": "20102632",
-						"SDRC_SIVUG": {
-							"SDRC_SIVUG_PRATI": "0",
-							"SDRC_SIVUG_AMIDIM": "1",
-							"SDRC_SIVUG_TZAIRIM": "0",
-							"SDRC_SIVUG_STUDENT": "0",
-							"SDRC_SIVUG_ISKI": "0",
-							"SDRC_SIVUG_MISHARI": "0",
-							"SDRC_SIVUG_IPB": "0",
-							"SDRC_SIVUG_SAHBAL": "0",
-							"SDRC_SIVUG_PAKID": "0",
-							"SDRC_SIVUG_YAHALOMIM": "0",
-							"SDRC_SIVUG_YASHIR": "0",
-							"SDRC_SIVUG_DOCHOT_PB": "0",
-							"SDRC_SIVUG_LEUMI_LABS": "0",
-							"SDRC_SIVUG_TAHALICH": "0",
-							"SDRC_SIVUG_NIK_HOVAV": "0",
-							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
-						},
-						"SDRC_SIVUG_FUSE": "000000000000",
-						"SDRC_HARSHAOT": {
-							"SDRC_MURSHE_MEIDA": "0",
-							"SDRC_MURSHE_PEULOT": "1",
-							"SDRC_MURSHE_TZAD_G": "1"
-						},
-						"SDRC_SW_MOVIL": "1",
-						"SDRC_TAAGID": "0",
-						"SDRC_CP_GR": {
-							"SDRC_CP_KARTIS_ASHRAY": "0",
-							"SDRC_CP_KARTIS_ASHRAY_20": "0",
-							"SDRC_CP_SHEKIM_HOZRIM": "0",
-							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
-							"SDRC_CP_MEMADIM": "0",
-							"SDRC_CP_FUSHE": "0"
-						}
-					}
-				}]
-			}, {
-				"SDRL_BANK_LAK": "10",
-				"SDRL_MIS_LAK": "20105525",
-				"SDRL_SNIF_LAK": "814",
-				"SDRL_SEMEL_HATIVA": "833",
-				"SDRL_OFI_SHIUCHI": "43",
-				"SDRL_DOAR_LEUMI_MAIL": "1",
-				"SDRL_DOAR_HABAITA": "1",
-				"SDRL_MUTZARIM_TV": {
-					"SDRL_MUTZAR_OSH_MTI": "1",
-					"SDRL_MUTZAR_SHOTEF_MTH": "0",
-					"SDRL_MUTZAR_PIKDONOT_MTI": "1",
-					"SDRL_MUTZAR_PIKDONOT_MTH": "0",
-					"SDRL_MUTZAR_TIHON": "0",
-					"SDRL_MUTZAR_HALVAOT_MTI": "0",
-					"SDRL_MUTZAR_MASHKANTAOT": "0",
-					"SDRL_MUTZAR_HALVAOT_MTH": "0",
-					"SDRL_MUTZAR_KAHAL": "0",
-					"SDRL_MUTZAR_KARTISEY_ASH": "1",
-					"SDRL_MUTZAR_KUPOT_GEMEL": "0",
-					"SDRL_MUTZAR_NIAROT_EREH": "0",
-					"SDRL_MUTZAR_HORAA_TEL": "5",
-					"SDRL_MUTZAR_SACHBAL": "0",
-					"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
+					]
 				},
-				"SDRL_SEGMENT": "0",
-				"SDRL_SHEM_TAAGID": {},
-				"SDRL_SHEM_LOAZI": {},
-				"SDRL_MUTZARIM2_TV": {
-					"SDRL_MUTZAR2_KARTIS_DEBIT": "0"
-				},
-				"SDRL_CASH_MANAGM": "0",
-				"SDRL_TAAGID": "0",
-				"SDRL_ERETZ_TAAGID": "0",
-				"SDRL_SUG_ZIHUY_TAAGID": "0",
-				"SDR_CHN": {
-					"SDRC_LINE": {
-						"SDRC_MOVIL": {
-							"SDRC_MOVIL_BANK": "10",
-							"SDRC_MOVIL_SNIF": "814",
-							"SDRC_MOVIL_CHN": "20102612",
-							"SDRC_MOVIL_SUG": "330"
-						},
-						"SDRC_CHN": {
-							"SDRC_CHN_BANK": "10",
-							"SDRC_CHN_SNIF": "814",
-							"SDRC_CHN_CHN": "20105505",
-							"SDRC_CHN_SUG": "330"
-						},
-						"SDRC_SNIF_LAKOACH": "814",
-						"SDRC_MIS_LAKOACH": "20105525",
-						"SDRC_SIVUG": {
-							"SDRC_SIVUG_PRATI": "1",
-							"SDRC_SIVUG_AMIDIM": "0",
-							"SDRC_SIVUG_TZAIRIM": "0",
-							"SDRC_SIVUG_STUDENT": "0",
-							"SDRC_SIVUG_ISKI": "0",
-							"SDRC_SIVUG_MISHARI": "0",
-							"SDRC_SIVUG_IPB": "0",
-							"SDRC_SIVUG_SAHBAL": "0",
-							"SDRC_SIVUG_PAKID": "0",
-							"SDRC_SIVUG_YAHALOMIM": "0",
-							"SDRC_SIVUG_YASHIR": "0",
-							"SDRC_SIVUG_DOCHOT_PB": "0",
-							"SDRC_SIVUG_LEUMI_LABS": "0",
-							"SDRC_SIVUG_TAHALICH": "0",
-							"SDRC_SIVUG_NIK_HOVAV": "0",
-							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
-						},
-						"SDRC_SIVUG_FUSE": "000000000000",
-						"SDRC_HARSHAOT": {
-							"SDRC_MURSHE_MEIDA": "0",
-							"SDRC_MURSHE_PEULOT": "1",
-							"SDRC_MURSHE_TZAD_G": "1"
-						},
-						"SDRC_SW_MOVIL": "1",
-						"SDRC_TAAGID": "0",
-						"SDRC_CP_GR": {
-							"SDRC_CP_KARTIS_ASHRAY": "0",
-							"SDRC_CP_KARTIS_ASHRAY_20": "0",
-							"SDRC_CP_SHEKIM_HOZRIM": "0",
-							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
-							"SDRC_CP_MEMADIM": "0",
-							"SDRC_CP_FUSHE": "0"
+				{
+					"SDRL_BANK_LAK": "10",
+					"SDRL_MIS_LAK": "20102632",
+					"SDRL_SNIF_LAK": "814",
+					"SDRL_SEMEL_HATIVA": "833",
+					"SDRL_OFI_SHIUCHI": "43",
+					"SDRL_DOAR_LEUMI_MAIL": "1",
+					"SDRL_DOAR_HABAITA": "2",
+					"SDRL_MUTZARIM_TV": {
+						"SDRL_MUTZAR_OSH_MTI": "1",
+						"SDRL_MUTZAR_SHOTEF_MTH": "1",
+						"SDRL_MUTZAR_PIKDONOT_MTI": "0",
+						"SDRL_MUTZAR_PIKDONOT_MTH": "0",
+						"SDRL_MUTZAR_TIHON": "1",
+						"SDRL_MUTZAR_HALVAOT_MTI": "1",
+						"SDRL_MUTZAR_MASHKANTAOT": "0",
+						"SDRL_MUTZAR_HALVAOT_MTH": "0",
+						"SDRL_MUTZAR_KAHAL": "0",
+						"SDRL_MUTZAR_KARTISEY_ASH": "1",
+						"SDRL_MUTZAR_KUPOT_GEMEL": "0",
+						"SDRL_MUTZAR_NIAROT_EREH": "1",
+						"SDRL_MUTZAR_HORAA_TEL": "5",
+						"SDRL_MUTZAR_SACHBAL": "1",
+						"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
+					},
+					"SDRL_SEGMENT": "0",
+					"SDRL_SHEM_TAAGID": "",
+					"SDRL_SHEM_LOAZI": "",
+					"SDRL_MUTZARIM2_TV": {
+						"SDRL_MUTZAR2_KARTIS_DEBIT": "1"
+					},
+					"SDRL_CASH_MANAGM": "0",
+					"SDRL_TAAGID": "0",
+					"SDRL_ERETZ_TAAGID": "0",
+					"SDRL_SUG_ZIHUY_TAAGID": "0",
+					"SDR_CHN": [{
+						"SDRC_LINE": {
+							"SDRC_MOVIL": {
+								"SDRC_MOVIL_BANK": "10",
+								"SDRC_MOVIL_SNIF": "814",
+								"SDRC_MOVIL_CHN": "20102612",
+								"SDRC_MOVIL_SUG": "330"
+							},
+							"SDRC_CHN": {
+								"SDRC_CHN_BANK": "10",
+								"SDRC_CHN_SNIF": "814",
+								"SDRC_CHN_CHN": "20102642",
+								"SDRC_CHN_SUG": "0"
+							},
+							"SDRC_SNIF_LAKOACH": "814",
+							"SDRC_MIS_LAKOACH": "20102632",
+							"SDRC_SIVUG": {
+								"SDRC_SIVUG_PRATI": "0",
+								"SDRC_SIVUG_AMIDIM": "1",
+								"SDRC_SIVUG_TZAIRIM": "0",
+								"SDRC_SIVUG_STUDENT": "0",
+								"SDRC_SIVUG_ISKI": "0",
+								"SDRC_SIVUG_MISHARI": "0",
+								"SDRC_SIVUG_IPB": "0",
+								"SDRC_SIVUG_SAHBAL": "0",
+								"SDRC_SIVUG_PAKID": "0",
+								"SDRC_SIVUG_YAHALOMIM": "0",
+								"SDRC_SIVUG_YASHIR": "0",
+								"SDRC_SIVUG_DOCHOT_PB": "0",
+								"SDRC_SIVUG_LEUMI_LABS": "0",
+								"SDRC_SIVUG_TAHALICH": "0",
+								"SDRC_SIVUG_NIK_HOVAV": "0",
+								"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+							},
+							"SDRC_SIVUG_FUSE": "000000000000",
+							"SDRC_HARSHAOT": {
+								"SDRC_MURSHE_MEIDA": "0",
+								"SDRC_MURSHE_PEULOT": "1",
+								"SDRC_MURSHE_TZAD_G": "1"
+							},
+							"SDRC_SW_MOVIL": "1",
+							"SDRC_TAAGID": "0",
+							"SDRC_CP_GR": {
+								"SDRC_CP_KARTIS_ASHRAY": "0",
+								"SDRC_CP_KARTIS_ASHRAY_20": "0",
+								"SDRC_CP_SHEKIM_HOZRIM": "0",
+								"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+								"SDRC_CP_MEMADIM": "0",
+								"SDRC_CP_FUSHE": "0"
+							}
 						}
-					}
+					},
+						{
+							"SDRC_LINE": {
+								"SDRC_MOVIL": {
+									"SDRC_MOVIL_BANK": "10",
+									"SDRC_MOVIL_SNIF": "814",
+									"SDRC_MOVIL_CHN": "20102612",
+									"SDRC_MOVIL_SUG": "330"
+								},
+								"SDRC_CHN": {
+									"SDRC_CHN_BANK": "10",
+									"SDRC_CHN_SNIF": "814",
+									"SDRC_CHN_CHN": "20102612",
+									"SDRC_CHN_SUG": "330"
+								},
+								"SDRC_SNIF_LAKOACH": "814",
+								"SDRC_MIS_LAKOACH": "20102632",
+								"SDRC_SIVUG": {
+									"SDRC_SIVUG_PRATI": "0",
+									"SDRC_SIVUG_AMIDIM": "1",
+									"SDRC_SIVUG_TZAIRIM": "0",
+									"SDRC_SIVUG_STUDENT": "0",
+									"SDRC_SIVUG_ISKI": "0",
+									"SDRC_SIVUG_MISHARI": "0",
+									"SDRC_SIVUG_IPB": "0",
+									"SDRC_SIVUG_SAHBAL": "0",
+									"SDRC_SIVUG_PAKID": "0",
+									"SDRC_SIVUG_YAHALOMIM": "0",
+									"SDRC_SIVUG_YASHIR": "0",
+									"SDRC_SIVUG_DOCHOT_PB": "0",
+									"SDRC_SIVUG_LEUMI_LABS": "0",
+									"SDRC_SIVUG_TAHALICH": "0",
+									"SDRC_SIVUG_NIK_HOVAV": "0",
+									"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+								},
+								"SDRC_SIVUG_FUSE": "000000000000",
+								"SDRC_HARSHAOT": {
+									"SDRC_MURSHE_MEIDA": "0",
+									"SDRC_MURSHE_PEULOT": "1",
+									"SDRC_MURSHE_TZAD_G": "1"
+								},
+								"SDRC_SW_MOVIL": "1",
+								"SDRC_TAAGID": "0",
+								"SDRC_CP_GR": {
+									"SDRC_CP_KARTIS_ASHRAY": "0",
+									"SDRC_CP_KARTIS_ASHRAY_20": "0",
+									"SDRC_CP_SHEKIM_HOZRIM": "0",
+									"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+									"SDRC_CP_MEMADIM": "0",
+									"SDRC_CP_FUSHE": "0"
+								}
+							}
+						},
+						{
+							"SDRC_LINE": {
+								"SDRC_MOVIL": {
+									"SDRC_MOVIL_BANK": "10",
+									"SDRC_MOVIL_SNIF": "814",
+									"SDRC_MOVIL_CHN": "20102612",
+									"SDRC_MOVIL_SUG": "330"
+								},
+								"SDRC_CHN": {
+									"SDRC_CHN_BANK": "10",
+									"SDRC_CHN_SNIF": "814",
+									"SDRC_CHN_CHN": "20102632",
+									"SDRC_CHN_SUG": "999"
+								},
+								"SDRC_SNIF_LAKOACH": "814",
+								"SDRC_MIS_LAKOACH": "20102632",
+								"SDRC_SIVUG": {
+									"SDRC_SIVUG_PRATI": "0",
+									"SDRC_SIVUG_AMIDIM": "1",
+									"SDRC_SIVUG_TZAIRIM": "0",
+									"SDRC_SIVUG_STUDENT": "0",
+									"SDRC_SIVUG_ISKI": "0",
+									"SDRC_SIVUG_MISHARI": "0",
+									"SDRC_SIVUG_IPB": "0",
+									"SDRC_SIVUG_SAHBAL": "0",
+									"SDRC_SIVUG_PAKID": "0",
+									"SDRC_SIVUG_YAHALOMIM": "0",
+									"SDRC_SIVUG_YASHIR": "0",
+									"SDRC_SIVUG_DOCHOT_PB": "0",
+									"SDRC_SIVUG_LEUMI_LABS": "0",
+									"SDRC_SIVUG_TAHALICH": "0",
+									"SDRC_SIVUG_NIK_HOVAV": "0",
+									"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+								},
+								"SDRC_SIVUG_FUSE": "000000000000",
+								"SDRC_HARSHAOT": {
+									"SDRC_MURSHE_MEIDA": "0",
+									"SDRC_MURSHE_PEULOT": "1",
+									"SDRC_MURSHE_TZAD_G": "1"
+								},
+								"SDRC_SW_MOVIL": "1",
+								"SDRC_TAAGID": "0",
+								"SDRC_CP_GR": {
+									"SDRC_CP_KARTIS_ASHRAY": "0",
+									"SDRC_CP_KARTIS_ASHRAY_20": "0",
+									"SDRC_CP_SHEKIM_HOZRIM": "0",
+									"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+									"SDRC_CP_MEMADIM": "0",
+									"SDRC_CP_FUSHE": "0"
+								}
+							}
+						}
+					]
+				},
+				{
+					"SDRL_BANK_LAK": "10",
+					"SDRL_MIS_LAK": "20105525",
+					"SDRL_SNIF_LAK": "814",
+					"SDRL_SEMEL_HATIVA": "833",
+					"SDRL_OFI_SHIUCHI": "43",
+					"SDRL_DOAR_LEUMI_MAIL": "1",
+					"SDRL_DOAR_HABAITA": "1",
+					"SDRL_MUTZARIM_TV": {
+						"SDRL_MUTZAR_OSH_MTI": "1",
+						"SDRL_MUTZAR_SHOTEF_MTH": "0",
+						"SDRL_MUTZAR_PIKDONOT_MTI": "1",
+						"SDRL_MUTZAR_PIKDONOT_MTH": "0",
+						"SDRL_MUTZAR_TIHON": "0",
+						"SDRL_MUTZAR_HALVAOT_MTI": "0",
+						"SDRL_MUTZAR_MASHKANTAOT": "0",
+						"SDRL_MUTZAR_HALVAOT_MTH": "0",
+						"SDRL_MUTZAR_KAHAL": "0",
+						"SDRL_MUTZAR_KARTISEY_ASH": "1",
+						"SDRL_MUTZAR_KUPOT_GEMEL": "0",
+						"SDRL_MUTZAR_NIAROT_EREH": "0",
+						"SDRL_MUTZAR_HORAA_TEL": "5",
+						"SDRL_MUTZAR_SACHBAL": "0",
+						"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
+					},
+					"SDRL_SEGMENT": "0",
+					"SDRL_SHEM_TAAGID": "",
+					"SDRL_SHEM_LOAZI": "",
+					"SDRL_MUTZARIM2_TV": {
+						"SDRL_MUTZAR2_KARTIS_DEBIT": "0"
+					},
+					"SDRL_CASH_MANAGM": "0",
+					"SDRL_TAAGID": "0",
+					"SDRL_ERETZ_TAAGID": "0",
+					"SDRL_SUG_ZIHUY_TAAGID": "0",
+					"SDR_CHN": [{
+						"SDRC_LINE": {
+							"SDRC_MOVIL": {
+								"SDRC_MOVIL_BANK": "10",
+								"SDRC_MOVIL_SNIF": "814",
+								"SDRC_MOVIL_CHN": "20102612",
+								"SDRC_MOVIL_SUG": "330"
+							},
+							"SDRC_CHN": {
+								"SDRC_CHN_BANK": "10",
+								"SDRC_CHN_SNIF": "814",
+								"SDRC_CHN_CHN": "20105505",
+								"SDRC_CHN_SUG": "330"
+							},
+							"SDRC_SNIF_LAKOACH": "814",
+							"SDRC_MIS_LAKOACH": "20105525",
+							"SDRC_SIVUG": {
+								"SDRC_SIVUG_PRATI": "1",
+								"SDRC_SIVUG_AMIDIM": "0",
+								"SDRC_SIVUG_TZAIRIM": "0",
+								"SDRC_SIVUG_STUDENT": "0",
+								"SDRC_SIVUG_ISKI": "0",
+								"SDRC_SIVUG_MISHARI": "0",
+								"SDRC_SIVUG_IPB": "0",
+								"SDRC_SIVUG_SAHBAL": "0",
+								"SDRC_SIVUG_PAKID": "0",
+								"SDRC_SIVUG_YAHALOMIM": "0",
+								"SDRC_SIVUG_YASHIR": "0",
+								"SDRC_SIVUG_DOCHOT_PB": "0",
+								"SDRC_SIVUG_LEUMI_LABS": "0",
+								"SDRC_SIVUG_TAHALICH": "0",
+								"SDRC_SIVUG_NIK_HOVAV": "0",
+								"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+							},
+							"SDRC_SIVUG_FUSE": "000000000000",
+							"SDRC_HARSHAOT": {
+								"SDRC_MURSHE_MEIDA": "0",
+								"SDRC_MURSHE_PEULOT": "1",
+								"SDRC_MURSHE_TZAD_G": "1"
+							},
+							"SDRC_SW_MOVIL": "1",
+							"SDRC_TAAGID": "0",
+							"SDRC_CP_GR": {
+								"SDRC_CP_KARTIS_ASHRAY": "0",
+								"SDRC_CP_KARTIS_ASHRAY_20": "0",
+								"SDRC_CP_SHEKIM_HOZRIM": "0",
+								"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+								"SDRC_CP_MEMADIM": "0",
+								"SDRC_CP_FUSHE": "0"
+							}
+						}
+					}]
 				}
-			}]
+			]
 		}
 	}
 }

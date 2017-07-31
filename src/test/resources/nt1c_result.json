@@ -1,19 +1,19 @@
 {
   "TSHUVATAVLAIT": {
     "esbHeaderResponse": {
-      "esbRequestId": "414d5120544c44423120202020202020be7cff5823027c02",
+      "esbRequestId": "414d5120544c44423120202020202020be7cff58249ab302",
       "responseStatus": {
         "callStatus": "Success",
-        "errorDesc": {}
+        "errorDesc": ""
       }
     },
     "MFAdminResponse": {
       "returnCode": "0",
-      "messageText": {}
+      "messageText": ""
     },
     "HH_MISGAROT_ASHRAI": {
       "HH_COUNTER": "1",
-      "HH_PIRTEY_CHESHBON": {
+      "HH_PIRTEY_CHESHBON": [{
         "HH_MATI": {
           "HH_SNIF": "616",
           "HH_SUG": "330",
@@ -25,14 +25,14 @@
             "HH_TA_NECH_MM": "3",
             "HH_TA_NECH_DD": "26"
           },
-          "HH_ITRA_NOCHECHIT": "5668.13",
+          "HH_ITRA_NOCHECHIT": "5541.28",
           "HH_ITRA_HATCHALATIT": "6878.96",
           "HH_MISGERET_ASHRAI": "15000",
           "HH_ITRAT_PIGUR": "0.00",
-          "HH_ITRA_KOLEL_PIGUR": "5668.13",
+          "HH_ITRA_KOLEL_PIGUR": "5541.28",
           "HH_TNUOT_HAYOM": "1"
         }
-      }
+      }]
     }
   }
 }
