@@ -1,13 +1,13 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.Encryption.{encryptToken, decryptToken}
-import org.scalatest.{FunSuite, Matchers}
+import com.tesobe.obp.Encryption.{decryptToken, encryptToken}
+import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 
 /**
   * Created by work on 6/12/17.
   */
-class EncryptionTest extends FunSuite with Matchers{
+class EncryptionTest extends FunSuite with Matchers with BeforeAndAfterAll{
   
   test("encryptToken works"){
     val encryptedToken = encryptToken(">,?          81433020102612")

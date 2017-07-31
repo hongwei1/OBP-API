@@ -6,6 +6,7 @@ import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import com.tesobe.obp.RunMockServer.startMockServer
 
 /**
   * Initialize actor system and as final step sends message to ActorOrchestration to initialize all actors that will be used.
@@ -27,7 +28,10 @@ import scala.concurrent.duration.Duration
 object Main extends App with StrictLogging with Config with ProcessorFactory {
 
   val systemName = config.getString("system-name")
-
+  if (config.getBoolean("mockserver.run")) {
+    startMockServer
+  }
+  val whatever: String = "fred"
   /**
     * Reaction on unexpected events
     */

@@ -13,19 +13,14 @@ import org.apache.http.impl.client.DefaultHttpClient
   * Created by work on 6/12/17.
   */
 object Nt1cBMf extends Config{
-  //Read file To Simulate Mainframe Call
-  def getNt1cMf(mainframe: String): String = {
-    val source = scala.io.Source.fromFile(mainframe)
-    val lines = try source.mkString finally source.close()
-    lines
-  }
+
 
   def getNt1cBMfHttpApache(branch: String, accountType: String, accountNumber: String, cbsToken: String): String = {
 
     val url = config.getString("bankserver.url")
 
 
-    val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01")
+    val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02")
     println(post)
     post.addHeader("application/json;charset=utf-8","application/json;charset=utf-8")
 

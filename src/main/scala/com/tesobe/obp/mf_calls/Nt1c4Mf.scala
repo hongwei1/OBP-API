@@ -42,7 +42,7 @@ object Nt1c4Mf extends Config{
   }
   //@param: Filepath for json result stub
   def getIntraDayTransactions(mainframe: String) = {
-    val json = replaceEmptyObjects(getNt1c4Mf(mainframe))
+    val json = getNt1c4MfHttpApache("","","","","")
     val jsonAst = parse(json)
     println(jsonAst)
     val nt1c4Call: Nt1c4 = jsonAst.extract[Nt1c4]

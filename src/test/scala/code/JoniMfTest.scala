@@ -1,13 +1,18 @@
 package com.tesobe.obp
+
 import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.GetBankAccounts._
+import com.tesobe.obp.RunMockServer.startMockServer
+import com.tesobe.obp.RunMockServer._
 import net.liftweb.json.JsonAST.JValue
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class JoniMfTest extends FunSuite with Matchers{
-  
+class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
-  val mfresult: String = getJoniMf("joni_result.json")
+  override def beforeAll() {
+    startMockServer
+  }
+  val mfresult: String = jsonToString("joni_result.json")
   val sane_result: String = replaceEmptyObjects(mfresult)
   implicit val formats = net.liftweb.json.DefaultFormats
   
@@ -49,7 +54,7 @@ class JoniMfTest extends FunSuite with Matchers{
    ))
    
   }
-  test("getBankAccountsForUser without leading account"){
+/*  test("getBankAccountsForUser without leading account"){
     val accounts = getBasicBankAccountsForUser("joni_result_no_lead.json")
     accounts should be (List(
       BasicBankAccount("3565953", "616", "330", "<M/          81433020102612", AccountPermissions(true,false,false)),
@@ -61,20 +66,30 @@ class JoniMfTest extends FunSuite with Matchers{
       BasicBankAccount("20102612", "814", "330", "<M/          81433020102612", AccountPermissions(true,false,false))
     ))
 
-  }
+  }*/
 
   test("getMFToken gets the MFTOKEN, assuming / will be  escaped later"){
     val mftoken = getMFToken("joni_result.json")
     mftoken should be (">,?          81433020102612")
   }
   
-  test("getJoniMfHttp does useful things"){
+/*  test("getJoniMfHttp does useful things"){
     val result = getJoniMfHttp("N7jut8d")
     println(result)
-  }
+  }*/
   
   test("getJoniMfHttpApache does something useful"){
     val result = getJoniMfHttpApache("N7jut8d")
     println(result)
+  }
+  
+  
+  test("getJoniMfPlayWS does something useful"){
+    val result = getJoniMfPlayWS("N7jut8d")
+    println(result)
+  }
+
+  override def afterAll() {
+    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 }

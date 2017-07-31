@@ -15,11 +15,11 @@ import scala.collection.mutable.ListBuffer
 
 object GetBankAccounts {
 
-  def getBasicBankAccountsForUser(UserId: String): List[BasicBankAccount] = {
+  def getBasicBankAccountsForUser(userName: String): List[BasicBankAccount] = {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
-    val jsonAst: JValue = getJoni(UserId)
+    val jsonAst: JValue = getJoni(userName)
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification
