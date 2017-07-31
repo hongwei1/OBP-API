@@ -232,6 +232,41 @@ case class N2TshuvaTavlait(TN2_SHETACH_LE_SEND_NOSAF: N2TshuvaTavlaitContent)
                           
 
 case class Nt1cT(TN2_TSHUVA_TAVLAIT: N2TshuvaTavlait)
+
+case class O1recId(O1_REC_ID_I: String, O1_REC_ID_V: String)
+case class O1contactRec(
+                         O1_REC_ID: O1recId,
+                         O1_STATE_CODE: String,
+                         O1_STATE_NAME: String,
+                         O1_REC_TYPE: String,
+                         O1_MAIL_ADDRESS: String,
+                         O1_TEL_NUM: String,
+                         O1_TEL_AREA: String,
+                         O1_TEL_COUNTRY: String,
+                         O1_TEL_USE_TYPE_CODE: String,
+                         O1_TEL_USE_TYPE_DESC: String,
+                         O1_ORIG_SYSTEM_CODE: String,
+                         O1_ORIG_SYSTEM_DESC: String,
+                         O1_REC_MAIN: String,
+                         O1_GET_MSG_FLAG: String,
+                         O1_VERIFIED_FLAG: String,
+                         O1_LINK_TO_SERVICE: String,
+                         O1_CONFIRM_DATE: String
+                       )
+case class O1out1area1(
+                        esbHeaderResponse: EsbHeaderResponse,
+                        MFAdminResponse: MfAdminResponse,
+                        O1_COUNT_REC_TEL: String,
+                        O1_COUNT_REC_MAIL: String,
+                        O1_CONTACT_STATUS: String,
+                        O1_CONTACT_REC: List[O1contactRec]
+)
+
+
+
+
+
+case class Ntlv1(O1OUT1AREA_1:  O1out1area1)
 //From OBP-Scala-South-----------------------------------------------------
 
 case class CounterPartySimple(name: Option[String],

@@ -17,7 +17,7 @@ package object RunMockServer {
   }
   
   def startMockServer = {
-    //val mockServer = startClientAndServer(1080)
+    // JONI
     mockServer
       .when(
         request()
@@ -34,7 +34,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("joni_result.json"))
       )
-
+    //Nt1cB
     mockServer
       .when(
         request()
@@ -51,7 +51,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_B_result.json"))
       )
-
+    Nt1cT
     mockServer
       .when(
         request()
@@ -68,7 +68,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_T_result.json"))
       )
-
+    //Nt1c3
     mockServer
       .when(
         request()
@@ -85,7 +85,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_3_result.json"))
       )
-
+    //Nt1c4
     mockServer
       .when(
         request()
@@ -102,7 +102,8 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_4_result.json"))
       )
-
+    
+    //NtIb2
     mockServer
       .when(
         request()
@@ -118,6 +119,24 @@ package object RunMockServer {
             new Header("Content-Type", "application/json; charset=utf-8")
           )
           .withBody(jsonToString("ntib_result.json"))
+      )
+    
+    //Ntlv1
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("ntlv_1_result.json")) 
       )
 
 
