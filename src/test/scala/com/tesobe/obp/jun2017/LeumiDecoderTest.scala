@@ -1,7 +1,7 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
-import com.tesobe.obp.jun2017.LeumiDecoder._
+import com.tesobe.obp.june2017.LeumiDecoder._
 import com.tesobe.obp.Nt1cTMf.getNt1cTMf
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}

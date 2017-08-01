@@ -1,7 +1,7 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 /**
-  * Model based on example_import_jun2017.json
+  * Model based on example_import_june2017.json
   * 
   * Open Bank Project - Leumi Adapter
   * Copyright (C) 2016-2017, TESOBE Ltd.This program is free software: you can redistribute it and/or modify

@@ -1,4 +1,4 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 import java.util.Date
 
@@ -9,7 +9,7 @@ import io.circe.parser.decode
 
 
 /**
-  * Responsible for processing requests based on local example_import_jun2017.json file.
+  * Responsible for processing requests based on local example_import_june2017.json file.
   *
   * Open Bank Project - Leumi Adapter
   * Copyright (C) 2016-2017, TESOBE Ltd.This program is free software: you can redistribute it and/or modify
@@ -76,13 +76,13 @@ trait Decoder extends MappedDecoder with Config{
 
   def getBankAccounts(getAccounts: GetAccounts): InboundBankAccounts
   /*
-   * Decodes example_import_jun2017.json file to com.tesobe.obp.jun2017.Example
+   * Decodes example_import_june2017.json file to com.tesobe.obp.june2017.Example
    */
   private val decodeLocalFile: Either[Error, Example] = {
-    val resource = scala.io.Source.fromResource("example_import_jun2017.json")
+    val resource = scala.io.Source.fromResource("example_import_june2017.json")
     val lines = resource.getLines()
     val json = lines.mkString
-    decode[com.tesobe.obp.jun2017.Example](json)
+    decode[com.tesobe.obp.june2017.Example](json)
   }
 
 }

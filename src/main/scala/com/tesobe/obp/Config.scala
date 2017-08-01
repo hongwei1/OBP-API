@@ -56,8 +56,8 @@ trait Config {
   def createTopicByClassName(className: String): TopicPair =
   /**
     *  eg: 
-    *  obp.Jun2017.N.GetBank
-    *  obp.Jun2017.S.GetBank
+    *  obp.June2017.N.GetBank
+    *  obp.June2017.S.GetBank
     */
     TopicPair(
       s"obp.${version}.N." + className.replace("$", ""),

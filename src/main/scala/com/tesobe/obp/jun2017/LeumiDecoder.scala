@@ -1,4 +1,4 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
