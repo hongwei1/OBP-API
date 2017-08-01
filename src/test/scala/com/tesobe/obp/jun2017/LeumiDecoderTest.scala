@@ -44,7 +44,7 @@ class LeumiDecoderTest extends FunSuite with Matchers with BeforeAndAfterAll{
   }
   
   test("getTransactions works for Stubs first transaction"){
-    val result = getTransactions(GetTransactions(AuthInfo("karlsid", "karl", ""),"10", accountId1,"parameters"))
+    val result = getTransactions(GetTransactions(AuthInfo("karlsid", "karl", ""), "10", accountId1, 15, "", ""))
     val transactionId = base64EncodedSha256(result.data.head.amount + result.data.head.completedDate + result.data.head.newBalanceAmount)
     result.data.head should be (InternalTransaction(
       "",

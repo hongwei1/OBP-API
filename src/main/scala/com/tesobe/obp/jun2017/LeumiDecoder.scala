@@ -196,11 +196,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
-    val allTransactions: List[InternalTransaction] = getTransactions(GetTransactions(
-    getTransactionRequest.authInfo,
-    getTransactionRequest.bankId, getTransactionRequest.accountId,
-    ""
-    )).data
+    val allTransactions: List[InternalTransaction] = getTransactions(GetTransactions(getTransactionRequest.authInfo, getTransactionRequest.bankId, getTransactionRequest.accountId, 15, "", "")).data
     //TODO: Error handling
     val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
     InboundTransaction(getTransactionRequest.authInfo, resultTransaction)
