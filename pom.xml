@@ -150,6 +150,12 @@
             <artifactId>mockserver-netty</artifactId>
             <version>3.10.8</version>
         </dependency>
+        <!-- net.manub:scalatest-embedded-kafka-streams_2.12:0.15.02 -->
+        <dependency>
+            <groupId>net.manub</groupId>
+            <artifactId>scalatest-embedded-kafka-streams_2.12</artifactId>
+            <version>0.14.0</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.typesafe.play/play-ahc-ws-standalone_2.12 -->
         <dependency>
@@ -162,3 +168,4 @@
 
     </dependencies>
 </project>
+
