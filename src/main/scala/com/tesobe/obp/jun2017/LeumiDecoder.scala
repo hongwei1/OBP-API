@@ -79,7 +79,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
-    InboundAccountJune2017(errorCode = "errorcode",
+    InboundAccountJune2017(errorCode = "",
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
