@@ -1,4 +1,4 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 import com.tesobe.obp.Request
 import io.circe.generic.auto._
@@ -27,10 +27,10 @@ trait MappedDecoder {
   val BankNotFound = "OBP-30001: Bank not found. Please specify a valid value for BANK_ID."
 
   def response(request: Request): String = {
-    val resource = scala.io.Source.fromResource("example_import_jun2017.json")
+    val resource = scala.io.Source.fromResource("example_import_june2017.json")
     val lines = resource.getLines()
     val json = lines.mkString
-    val d = decode[com.tesobe.obp.jun2017.Example](json)
+    val d = decode[com.tesobe.obp.june2017.Example](json)
     d match {
       case Left(err) => Map("data" -> err.getMessage).asJson.noSpaces
       case Right(example) =>

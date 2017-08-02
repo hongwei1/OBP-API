@@ -1,4 +1,4 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 
 /**
@@ -40,7 +40,8 @@ case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: 
 case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String)
 case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String)
 case class UpdateUserAccountViews(authInfo: AuthInfo, password: String)
-case class GetTransactions(authInfo: AuthInfo,bankId: String, accountId: String, queryParams: String)
+case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String)
+case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String)
 case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String)
 case class GetToken(username: String)
 

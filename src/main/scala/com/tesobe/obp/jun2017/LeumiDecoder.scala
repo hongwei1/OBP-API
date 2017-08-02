@@ -1,4 +1,4 @@
-package com.tesobe.obp.jun2017
+package com.tesobe.obp.june2017
 
 import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
@@ -79,7 +79,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
-    InboundAccountJune2017(errorCode = "errorcode",
+    InboundAccountJune2017(errorCode = "",
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
@@ -196,11 +196,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
-    val allTransactions: List[InternalTransaction] = getTransactions(GetTransactions(
-    getTransactionRequest.authInfo,
-    getTransactionRequest.bankId, getTransactionRequest.accountId,
-    ""
-    )).data
+    val allTransactions: List[InternalTransaction] = getTransactions(GetTransactions(getTransactionRequest.authInfo, getTransactionRequest.bankId, getTransactionRequest.accountId, 15, "", "")).data
     //TODO: Error handling
     val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
     InboundTransaction(getTransactionRequest.authInfo, resultTransaction)

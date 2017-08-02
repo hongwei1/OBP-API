@@ -2,7 +2,7 @@ package com.tesobe.obp
 
 import com.tesobe.obp.Main.{executionContext, materializer}
 import com.tesobe.obp.SouthKafkaStreamsActor.BusinessTopic
-import com.tesobe.obp.jun2017._
+import com.tesobe.obp.june2017._
 
 /**
   * Defines kafka topics which will be used and functions that will be applied on received message

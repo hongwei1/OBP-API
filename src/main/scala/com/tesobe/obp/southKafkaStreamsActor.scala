@@ -173,8 +173,8 @@ object SouthKafkaStreamsActor {
   /**
     * This case class design a pair of Topic, for both North and South side.
     * They are a pair
-    * @param request  eg: obp.Jun2017.N.GetBanks
-    * @param response eg: obp.Jun2017.S.GetBanks
+    * @param request  eg: obp.June2017.N.GetBanks
+    * @param response eg: obp.June2017.S.GetBanks
     */
   case class TopicPair(request: String, response: String)
 
