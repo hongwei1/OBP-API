@@ -46,7 +46,10 @@ libraryDependencies ++= {
     "co.fs2" %% "fs2-core" % "0.9.6",
     "co.fs2" %% "fs2-io" % "0.9.6",
     "com.typesafe.scala-logging"           % "scala-logging_2.12"         % scalaLoggingVersion,
-    "org.apache.httpcomponents"            % "httpclient"                 % "4.5.3"
+    "org.apache.httpcomponents"            % "httpclient"                 % "4.5.3",
+    "org.mock-server"                      % "mockserver-netty"           % "3.10.8",
+    "net.manub"                           %% "scalatest-embedded-kafka-streams" % "0.14.0",
+    "com.typesafe.play"                   %% "play-ahc-ws-standalone"     % "1.0.0-M10"
   )
 }
 
