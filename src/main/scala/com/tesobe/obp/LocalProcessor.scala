@@ -152,6 +152,16 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     Future(msg, r)
   }
   
+  def createTransactionFn: Business = {msg =>
+    /* call Decoder for extracting data from source file */
+    val response: (CreateTransaction => InboundCreateTransactionId) = { q => com.tesobe.obp.june2017.LeumiDecoder.createTransaction(q) }
+    val r = decode[CreateTransaction](msg.record.value()) match {
+      case Left(e) => ""
+      case Right(x) => response(x).asJson.noSpaces
+    }
+    Future(msg, r)
+  }
+  
   def tokenFn: Business = {msg =>
     /* call Decoder for extracting data from source file */
     val response: (GetToken => InboundToken) = { q => com.tesobe.obp.june2017.LeumiDecoder.getToken(q) }

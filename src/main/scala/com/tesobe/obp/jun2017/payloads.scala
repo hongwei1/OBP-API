@@ -44,7 +44,26 @@ case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: Stri
 case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String)
 case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String)
 case class GetToken(username: String)
-
+case class CreateTransaction(
+  authInfo: AuthInfo,
+  
+  // fromAccount
+  fromAccountBankId : String,
+  fromAccountId : String,
+  
+  // transaction details
+  transactionRequestType: String,
+  transactionChargePolicy: String,
+  
+  // toAccount or toCounterparty
+  toCounterpartyId: String,
+  toCounterpartyName: String,
+  toCounterpartyCurrency: String,
+  toCounterpartyRoutingAddress: String,
+  toCounterpartyRoutingScheme: String,
+  toCounterpartyBankRoutingAddress: String,
+  toCounterpartyBankRoutingScheme: String
+)
 
 /**
   * Payloads for response topic
@@ -60,6 +79,7 @@ case class InboundBankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
 case class InboundTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundToken(username: String, token: String)
+case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -126,3 +146,7 @@ case class InternalTransaction(
   `type`: String, //"TN2_SUG_PEULA"
   userId: String //userId
 ) extends InboundMessageBase
+
+case class InternalTransactionId(
+  id : String
+)

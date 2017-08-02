@@ -1,5 +1,7 @@
 package com.tesobe.obp.june2017
 
+import java.util.UUID
+
 import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.Nt1cBMf.getBalance
@@ -201,6 +203,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
     InboundTransaction(getTransactionRequest.authInfo, resultTransaction)
     
+  }
+  
+  def createTransaction(getTransactionRequest: CreateTransaction): InboundCreateTransactionId = {
+    //TODO, need the HTTP server .
+    InboundCreateTransactionId(getTransactionRequest.authInfo, InternalTransactionId(UUID.randomUUID().toString))
   }
   
   def getToken(getTokenRequest: GetToken): InboundToken = {
