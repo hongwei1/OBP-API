@@ -209,10 +209,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
     // OBP-API will provide: four values:
-    val senderPhoneNumber = createTransactionRequest.senderPhoneNumber
-    val receiverPhoneNumber = createTransactionRequest.receiverPhoneNumber
-    val transactionDescription = createTransactionRequest.transactionDescription
-    val transactionAmount = createTransactionRequest.transactionAmount
+//    val senderPhoneNumber = createTransactionRequest.senderPhoneNumber
+//    val receiverPhoneNumber = createTransactionRequest.receiverPhoneNumber
+//    val transactionDescription = createTransactionRequest.transactionDescription
+//    val transactionAmount = createTransactionRequest.transactionAmount
     //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
     
     //TODO 2, repalce the value of  transactionNewId.
@@ -224,8 +224,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getToken(getTokenRequest: GetToken): InboundToken = {
     InboundToken(getTokenRequest.username, getMFToken(getTokenRequest.username))
   }
-
-
+  
+  def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
+    logger.debug(s"LeumiDecoder-createTransaction input: ($createChallenge)")
+    
+    val phoneNumber = createChallenge.phoneNumber
+    //TODO, added NTLV_7_000 Login here.
+    
+    val answer = "183823"
+    InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(answer))
+  }
+  
+  
 }
 
 

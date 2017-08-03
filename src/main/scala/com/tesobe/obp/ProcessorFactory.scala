@@ -32,6 +32,7 @@ trait ProcessorFactory {
     processorName match {
       case "localFile" => Seq(
         BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic),
+        BusinessTopic(createTopicByClassName(GetToken.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).tokenFn),
         BusinessTopic(createTopicByClassName(GetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
         BusinessTopic(createTopicByClassName(GetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
         BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
@@ -43,9 +44,7 @@ trait ProcessorFactory {
         BusinessTopic(createTopicByClassName(GetTransactions.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionsFn),
         BusinessTopic(createTopicByClassName(GetTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionFn),
         BusinessTopic(createTopicByClassName(CreateTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createTransactionFn),
-        BusinessTopic(createTopicByClassName(GetToken.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).tokenFn)
-
-
+        BusinessTopic(createTopicByClassName(OutboundCreateChallengeJune2017.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createChallengeFn)
 
       )
       case "mockedSopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)

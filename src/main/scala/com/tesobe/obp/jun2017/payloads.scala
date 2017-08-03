@@ -21,29 +21,25 @@ package com.tesobe.obp.june2017
   */
 
 /**
-  * Carries data related to auth
-  *
-  * @param userId
-  * @param username
+  * case classes used to define topics
   */
-case class AuthInfo(userId: String, username: String, cbsToken: String)
-
+sealed trait TopicCaseClass
 /**
   * Payloads for request topic
   *
   */
-case class GetBanks(authInfo: AuthInfo, criteria: String)
-case class GetBank(authInfo: AuthInfo, bankId: String)
-case class GetAdapterInfo(date: String)
-case class GetAccounts(authInfo: AuthInfo)
-case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String)
-case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String)
-case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String)
-case class UpdateUserAccountViews(authInfo: AuthInfo, password: String)
-case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String)
-case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String)
-case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String)
-case class GetToken(username: String)
+case class GetBanks(authInfo: AuthInfo, criteria: String) extends TopicCaseClass
+case class GetBank(authInfo: AuthInfo, bankId: String) extends TopicCaseClass
+case class GetAdapterInfo(date: String) extends TopicCaseClass
+case class GetAccounts(authInfo: AuthInfo) extends TopicCaseClass
+case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicCaseClass
+case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicCaseClass
+case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicCaseClass
+case class UpdateUserAccountViews(authInfo: AuthInfo, password: String) extends TopicCaseClass
+case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
+case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
+case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicCaseClass
+case class GetToken(username: String) extends TopicCaseClass
 case class CreateTransaction(
   authInfo: AuthInfo,
   
@@ -54,8 +50,6 @@ case class CreateTransaction(
   // transaction details
   transactionRequestType: String,
   transactionChargePolicy: String,
-  transactionAmount: String,      //Amount to transfer - has to be decidable by 100
-  transactionDescription: String, //Transaction description (purpose of the transfer)
   
   // toAccount or toCounterparty
   toCounterpartyId: String,
@@ -64,13 +58,20 @@ case class CreateTransaction(
   toCounterpartyRoutingAddress: String,
   toCounterpartyRoutingScheme: String,
   toCounterpartyBankRoutingAddress: String,
-  toCounterpartyBankRoutingScheme: String,
-  
-  //fields only for  PHONE-TO_PHONE 
-  senderPhoneNumber: String, //Mobile number of the money sender (10 digits)?
-  receiverPhoneNumber: String //Mobile number of the money receiver (10 digits)?
-  
-)
+  toCounterpartyBankRoutingScheme: String
+
+) extends TopicCaseClass
+
+case class OutboundCreateChallengeJune2017(
+  authInfo: AuthInfo,
+  bankId: String,
+  accountId: String,
+  userId: String,
+  username: String,
+  transactionRequestType: String,
+  transactionRequestId: String,
+  phoneNumber: String
+) extends TopicCaseClass
 
 /**
   * Payloads for response topic
@@ -87,11 +88,14 @@ case class InboundTransactions(authInfo: AuthInfo, data: List[InternalTransactio
 case class InboundTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
+case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
   *
   */
+case class AuthInfo(userId: String, username: String, cbsToken: String)
+
 case class InboundBank(
                         errorCode: String,
                         bankId: String,
@@ -156,4 +160,8 @@ case class InternalTransaction(
 
 case class InternalTransactionId(
   id : String
+)
+
+case class InternalCreateChallengeJune2017(
+  answer : String
 )
