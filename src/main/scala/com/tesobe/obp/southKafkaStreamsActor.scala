@@ -86,8 +86,8 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
         Subscriptions.assignment(topicAndItsPartitions)//The consumer need subscribe all the partitions for one topic
       )
       .mapAsync(3) { consumerMessage =>
+        logger.debug(s"Kafka-get-message : TopicRequest(${topicRequest}): ${consumerMessage.record.value()}")
         val future = business(consumerMessage)
-        logger.debug(s"Kafka-get-message : ${topicRequest}: ${consumerMessage.record.value()}")
         future.recover {
           case e: Throwable => {
             logger.error(e.getMessage)
@@ -96,7 +96,14 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
         }
       }
       .mapAsync(3) { consumerMessageBusiness =>
-        logger.debug(s"Kafka-send-message : ${topicResponse}: ${consumerMessageBusiness._2}")
+        if(consumerMessageBusiness._2 ==""){
+          val errorMessage = s"Kafka-send-message :topicResponse(${topicResponse }): is empty, please compare your case class fields for both sides !"
+          logger.error(errorMessage)
+          //For Debug, when it is stable, just uncomment this Exception
+          throw new RuntimeException(errorMessage)
+        }
+        else
+          logger.debug(s"Kafka-send-message : ${topicResponse}: ${consumerMessageBusiness._2}")
         eventualAuditedMessage(topicResponse, consumerMessageBusiness._1, consumerMessageBusiness._2)
       }
   }
