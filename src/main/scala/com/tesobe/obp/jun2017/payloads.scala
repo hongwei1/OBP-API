@@ -54,6 +54,8 @@ case class CreateTransaction(
   // transaction details
   transactionRequestType: String,
   transactionChargePolicy: String,
+  transactionAmount: String,      //Amount to transfer - has to be decidable by 100
+  transactionDescription: String, //Transaction description (purpose of the transfer)
   
   // toAccount or toCounterparty
   toCounterpartyId: String,
@@ -62,7 +64,12 @@ case class CreateTransaction(
   toCounterpartyRoutingAddress: String,
   toCounterpartyRoutingScheme: String,
   toCounterpartyBankRoutingAddress: String,
-  toCounterpartyBankRoutingScheme: String
+  toCounterpartyBankRoutingScheme: String,
+  
+  //fields only for  PHONE-TO_PHONE 
+  senderPhoneNumber: String, //Mobile number of the money sender (10 digits)?
+  receiverPhoneNumber: String //Mobile number of the money receiver (10 digits)?
+  
 )
 
 /**

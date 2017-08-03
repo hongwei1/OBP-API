@@ -205,9 +205,20 @@ object LeumiDecoder extends Decoder with StrictLogging {
     
   }
   
-  def createTransaction(getTransactionRequest: CreateTransaction): InboundCreateTransactionId = {
-    //TODO, need the HTTP server .
-    InboundCreateTransactionId(getTransactionRequest.authInfo, InternalTransactionId(UUID.randomUUID().toString))
+  def createTransaction(createTransactionRequest: CreateTransaction): InboundCreateTransactionId = {
+    logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
+    // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
+    // OBP-API will provide: four values:
+    val senderPhoneNumber = createTransactionRequest.senderPhoneNumber
+    val receiverPhoneNumber = createTransactionRequest.receiverPhoneNumber
+    val transactionDescription = createTransactionRequest.transactionDescription
+    val transactionAmount = createTransactionRequest.transactionAmount
+    //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
+    
+    //TODO 2, repalce the value of  transactionNewId.
+    val transactionNewId = UUID.randomUUID().toString
+    InboundCreateTransactionId(createTransactionRequest.authInfo, InternalTransactionId(transactionNewId))
+    
   }
   
   def getToken(getTokenRequest: GetToken): InboundToken = {
