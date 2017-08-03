@@ -1,0 +1,417 @@
+﻿POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02
+Content-Type	application/json;charset=utf-8
+{ 
+ "NT1C_T_000": {
+    "NtdriveCommonHeader": {
+      "KeyArguments": {
+        "Branch": "814",
+        "AccountType": "330",
+        "AccountNumber": "20102612"
+      },
+      "AuthArguments": {
+	"User": "N7jut8d"
+        "MFToken":"<~9          81433020102612"
+      }
+    },
+  "KELET_TAARICHIM": {
+    "KELET_ME_TAAR": {
+      "KELET_ME_YYYY": "2016",
+      "KELET_ME_MM": "01",
+      "KELET_ME_DD": "01"
+    },
+    "KELET_AD_TAAR": {
+      "KELET_AD_YYYY": "2017",
+      "KELET_AD_MM": "06",
+      "KELET_AD_DD": "01"
+    },
+    "KELET_TN_MIS_TNUOT": "15"
+  }
+}
+}
+===========================================================
+{
+	"TN2_TSHUVA_TAVLAIT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff5823e58604",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": {}
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": {}
+		},
+		"TN2_PIRTEI_CHESHBON": {
+			"TN2_SNIF": "814",
+			"TN2_SUG": "330",
+			"TN2_MIS_CHN": "20102612"
+		},
+		"TN2_SHETACH_LE_SEND_NOSAF": {
+			"TN2_COUNTER": "15",
+			"TN2_TNUOT": {
+				"TN2_PIRTEY_TNUA": [{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "פרעון הלוואה",
+							"TN2_SCHUM": "-1312.21",
+							"TN2_TA_RIKUZ": "20160201",
+							"TN2_ASMACTA": "5611001",
+							"TN2_ITRA": "-7192.83",
+							"TN2_TA_ERECH": "20160201",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "10",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "19",
+							"TN2_MIKUM_ZIKARON": "326",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160201",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "1063771",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "קופת גמל עצמה",
+							"TN2_SCHUM": "9618.36",
+							"TN2_TA_RIKUZ": "20160201",
+							"TN2_ASMACTA": "999535",
+							"TN2_ITRA": "2425.53",
+							"TN2_TA_ERECH": "20160201",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "13",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "20",
+							"TN2_MIKUM_ZIKARON": "304",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "11",
+							"TN2_TA_IBUD": "20160202",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "666214",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "לאומי ויזה י",
+							"TN2_SCHUM": "-4135.41",
+							"TN2_TA_RIKUZ": "20160202",
+							"TN2_ASMACTA": "271523",
+							"TN2_ITRA": "-1709.88",
+							"TN2_TA_ERECH": "20160202",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "3",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "21",
+							"TN2_MIKUM_ZIKARON": "22675",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160202",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "666218",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "הק בורסה קנ.",
+							"TN2_SCHUM": "-496.35",
+							"TN2_TA_RIKUZ": "20160202",
+							"TN2_ASMACTA": "51459",
+							"TN2_ITRA": "-2206.23",
+							"TN2_TA_ERECH": "20160202",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "5",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "22",
+							"TN2_MIKUM_ZIKARON": "308",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160202",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "666216",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "הק בורסה קנ.",
+							"TN2_SCHUM": "-496.71",
+							"TN2_TA_RIKUZ": "20160202",
+							"TN2_ASMACTA": "53176",
+							"TN2_ITRA": "-2702.94",
+							"TN2_TA_ERECH": "20160202",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "5",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "23",
+							"TN2_MIKUM_ZIKARON": "308",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160202",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "666217",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "1",
+							"TN2_TEUR_PEULA": "הע. אינטרנט700",
+							"TN2_SCHUM": "1300.00",
+							"TN2_TA_RIKUZ": "20160202",
+							"TN2_ASMACTA": "42126",
+							"TN2_ITRA": "-1402.94",
+							"TN2_TA_ERECH": "20160202",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "15",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "24",
+							"TN2_MIKUM_ZIKARON": "22517",
+							"TN2_SUG_ARCHAVA": "13",
+							"TN2_SUG_PEULA": "11",
+							"TN2_TA_IBUD": "20160202",
+							"TN2_SADE_ARCHAVA": "העברה מאת: איבגי עידית ומשה 10-800-040663393 הלוואה",
+							"TN2_MIS_SIDURI": "666215",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "העברה/הפק80040",
+							"TN2_SCHUM": "-18.41",
+							"TN2_TA_RIKUZ": "20160203",
+							"TN2_ASMACTA": "78055",
+							"TN2_ITRA": "-1421.35",
+							"TN2_TA_ERECH": "20160203",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "15",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "25",
+							"TN2_MIKUM_ZIKARON": "56473",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160203",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "301243",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "מפעל הפיס-זכ-י",
+							"TN2_SCHUM": "11.00",
+							"TN2_TA_RIKUZ": "20160203",
+							"TN2_ASMACTA": "13951",
+							"TN2_ITRA": "-1410.35",
+							"TN2_TA_ERECH": "20160203",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "4",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "26",
+							"TN2_MIKUM_ZIKARON": "482",
+							"TN2_SUG_ARCHAVA": "8",
+							"TN2_SUG_PEULA": "11",
+							"TN2_TA_IBUD": "20160203",
+							"TN2_SADE_ARCHAVA": "העברה מאת: מפעל הפיס 12-600-000493018 זכיה בפיס",
+							"TN2_MIS_SIDURI": "301242",
+							"TN2_IND_CM": "1",
+							"TN2_KOD_ARCHAVA": "10"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "מכבי-י",
+							"TN2_SCHUM": "-269.37",
+							"TN2_TA_RIKUZ": "20160205",
+							"TN2_ASMACTA": "25300",
+							"TN2_ITRA": "-1679.72",
+							"TN2_TA_ERECH": "20160205",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "6",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "27",
+							"TN2_MIKUM_ZIKARON": "7986",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160205",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "324735",
+							"TN2_IND_CM": "1",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "1",
+							"TN2_HOR_BIZ_IND": "1",
+							"TN2_TEUR_PEULA": "העברה עצמית700",
+							"TN2_SCHUM": "-4000.00",
+							"TN2_TA_RIKUZ": "20160205",
+							"TN2_ASMACTA": "19297",
+							"TN2_ITRA": "-5679.72",
+							"TN2_TA_ERECH": "20160205",
+							"TN2_DAF": "2",
+							"TN2_NOSE_RASHI": "15",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "28",
+							"TN2_MIKUM_ZIKARON": "2142",
+							"TN2_SUG_ARCHAVA": "13",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160205",
+							"TN2_SADE_ARCHAVA": "העברה עבור:               סניור  אליהו 10-800-040606014 קרוב משפחה",
+							"TN2_MIS_SIDURI": "324736",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "0",
+							"TN2_HOR_BIZ_IND": "1",
+							"TN2_TEUR_PEULA": "הע. אינטרנט700",
+							"TN2_SCHUM": "-300.00",
+							"TN2_TA_RIKUZ": "20160214",
+							"TN2_ASMACTA": "53579",
+							"TN2_ITRA": "-5979.72",
+							"TN2_TA_ERECH": "20160214",
+							"TN2_DAF": "1",
+							"TN2_NOSE_RASHI": "15",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "1",
+							"TN2_MIKUM_ZIKARON": "22517",
+							"TN2_SUG_ARCHAVA": "13",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160214",
+							"TN2_SADE_ARCHAVA": "העברה אל: רחל קארו 12-170-000046656 עבור קרם פנים",
+							"TN2_MIS_SIDURI": "271673",
+							"TN2_IND_CM": "1",
+							"TN2_KOD_ARCHAVA": "80"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "0",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "שיק      31188",
+							"TN2_SCHUM": "-50.00",
+							"TN2_TA_RIKUZ": "20160222",
+							"TN2_ASMACTA": "5550438",
+							"TN2_ITRA": "-6029.72",
+							"TN2_TA_ERECH": "20160222",
+							"TN2_DAF": "1",
+							"TN2_NOSE_RASHI": "2",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "2",
+							"TN2_MIKUM_ZIKARON": "125",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "42",
+							"TN2_TA_IBUD": "20160222",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "339885",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "0",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "כספומט י",
+							"TN2_SCHUM": "-1000.00",
+							"TN2_TA_RIKUZ": "20160315",
+							"TN2_ASMACTA": "150312",
+							"TN2_ITRA": "-5563.54",
+							"TN2_TA_ERECH": "20160315",
+							"TN2_DAF": "1",
+							"TN2_NOSE_RASHI": "7",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "25",
+							"TN2_MIKUM_ZIKARON": "150",
+							"TN2_SUG_ARCHAVA": "0",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20160315",
+							"TN2_SADE_ARCHAVA": {},
+							"TN2_MIS_SIDURI": "677073",
+							"TN2_IND_CM": "0",
+							"TN2_KOD_ARCHAVA": "0"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "0",
+							"TN2_HOR_BIZ_IND": "0",
+							"TN2_TEUR_PEULA": "מכבי-י",
+							"TN2_SCHUM": "293.00",
+							"TN2_TA_RIKUZ": "20160720",
+							"TN2_ASMACTA": "14219",
+							"TN2_ITRA": "-13883.10",
+							"TN2_TA_ERECH": "20160720",
+							"TN2_DAF": "3",
+							"TN2_NOSE_RASHI": "4",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "29",
+							"TN2_MIKUM_ZIKARON": "3376",
+							"TN2_SUG_ARCHAVA": "8",
+							"TN2_SUG_PEULA": "11",
+							"TN2_TA_IBUD": "20160720",
+							"TN2_SADE_ARCHAVA": "העברה מאת: קרן מכבי 10-800-023528297 החזר גביה",
+							"TN2_MIS_SIDURI": "427757",
+							"TN2_IND_CM": "1",
+							"TN2_KOD_ARCHAVA": "10"
+						}
+					},
+					{
+						"TN2_TNUA_BODEDET": {
+							"TN2_IND_SEGMENT": "0",
+							"TN2_HOR_BIZ_IND": "1",
+							"TN2_TEUR_PEULA": "הע. אינטרנט700",
+							"TN2_SCHUM": "-1000.00",
+							"TN2_TA_RIKUZ": "20161025",
+							"TN2_ASMACTA": "11253",
+							"TN2_ITRA": "22734.62",
+							"TN2_TA_ERECH": "20161025",
+							"TN2_DAF": "5",
+							"TN2_NOSE_RASHI": "15",
+							"TN2_SHNAT_DAF": "2016",
+							"TN2_SHURA": "21",
+							"TN2_MIKUM_ZIKARON": "22517",
+							"TN2_SUG_ARCHAVA": "13",
+							"TN2_SUG_PEULA": "12",
+							"TN2_TA_IBUD": "20161025",
+							"TN2_SADE_ARCHAVA": "העברה אל: ארגז שרון 20-571-000153413 קרוב משפחה",
+							"TN2_MIS_SIDURI": "346926",
+							"TN2_IND_CM": "1",
+							"TN2_KOD_ARCHAVA": "80"
+						}
+					}
+				]
+			}
+		}
+	}
+}

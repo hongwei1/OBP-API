@@ -1,0 +1,89 @@
+﻿NTG6 MF transaction (request D; action 000) - MF transaction deletes Other Bank counterparty on specific account
+================================================================================================================
+Other Bank counterparty means that the counterparty account is not located in Bank Leumi
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/D/000/01.02
+Content-Type	application/json;charset=utf-8
+{
+	"NTG6_D_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": "<בל          81433020102612"
+			}
+		},
+		"KMUT_IDKUNIN": {
+			"KMUT_OLD": {
+				"KMUT_ERETZ_MUTAV": "2121",
+				"KMUT_BANK_MUTAV": "12",
+				"KMUT_SNIF_MUTAV": "204",
+				"KMUT_SUG_CHEN_MUTAV": "330",
+				"KMUT_CHEN_MUTAV": "50430963",
+				"KMUT_SHEM_MUTAV": " ",
+				"KMUT_SUG_MUTAV": "0",
+				"KMUT_TEUR_MUTAV": " ",
+				"KMUT_IBAN": " ",
+				"KMUT_SHEM_MUTAV_ANGLIT": " ",
+				"KMUT_TEUR_MUTAV_ANGLIT": " "
+			},
+			"KMUT_TOSEFET": {
+				"KMUT_ZIHUI_MUTAV1": "0",
+				"KMUT_ZIHUI_MUTAV2": "0",
+				"KMUT_SHEM_MUTAV2": " ",
+				"KMUT_SHEM_MUTAV2_E": " "
+			}
+		}
+	}
+}
+
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+   - (there is no need to provide the bank code because it's always 10)
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Counterparty details:
+   - KMUT_ERETZ_MUTAV[4] - Always 2121
+   - KMUT_BANK_MUTAV[2] - Counterparty bank code
+   - KMUT_SNIF_MUTAV[3] - Counterparty branch number
+   - KMUT_SUG_CHEN_MUTAV[3] - Always 0
+   - KMUT_CHEN_MUTAV[10] - Counterparty account number
+   - KMUT_SHEM_MUTAV[16] - Counterparty name
+   - KMUT_SUG_MUTAV[3] - Always 0
+   - KMUT_TEUR_MUTAV[28] - Counterparty description
+   - KMUT-IBAN[23] - Counterparty IBAN 
+   - KMUT_SHEM_MUTAV_ANGLIT[16] - Counterparty name in english
+   - KMUT_TEUR_MUTAV_ANGLIT[28] - Counterparty description in english
+   - KMUT_ZIHUI_MUTAV1[9] - Always 0
+   - KMUT_ZIHUI_MUTAV2[9] - Always 0
+   - KMUT_SHEM_MUTAV2[16] - Always " "
+   - KMUT_SHEM_MUTAV2_E[16] - Always " "
+
+Actually, to delete a counterparty it's enough to provide KMUT_BANK_MUTAV, KMUT_SNIF_MUTAV, KMUT_SUG_CHEN_MUTAV, KMUT_CHEN_MUTAV
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"NTDriveNoResp": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca11",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "1",							// error code
+			"messageText": "העדכון בוצע בהצלחה !"					// error description
+		}
+	}
+}

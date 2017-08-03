@@ -1,0 +1,58 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/105/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_1_105": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": ">U(          81433020102612"
+			}
+		},
+		"KELET_1351": {
+			"K135_MISPAR_KARTIS": "4580000045673214",
+			"K135_TOKEF_KARTIS": "",
+			"K135_TIKRAT_KARTIS": "",
+			"K135_NAYAD_BAAL_CHESHBON": "0532225455",
+			"K135_SCHUM": "100",
+			"K135_MATRAT_HAAVARA": "cool",
+			"K135_MISPAR_ZIHUY_MUTAV": "204778591",
+			"K135_SUG_ZIHUY_MUTAV": "1",
+			"K135_ERETZ_MUTAV": "2121",
+			"K135_SHEM_MUTAV": "kium",
+			"K135_TARICH_LEDA_MUTAV": "930708",
+			"K135_NAYAD_MUTAV": "0506724131",
+			"K135_SCHUM_HADASH": ""
+		}
+	}
+}
+===========================================================
+{
+	"P135_BDIKAOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb08",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": ""
+		},
+		"P135_TOKEN": "3639283",
+		"P135_AMALOT": {
+			"P135_TEUR_AMALA": "",
+			"P135_SCHUM_AMALA": "0.00",
+			"P135_SCHUM_STANDART_BANK": "0.00",
+			"P135_SCHUM_STANDART_MIGZAR": "0.00",
+			"P135_OFEN_CHISHUV_AMALA": "0",
+			"P135_SUG_HATAVA": "0",
+			"P135_KOD_HATAVA_BE_SHEUR": "0",
+			"P135_ACHUZ_TARIF": "0.0000",
+			"P135_ACHUZ_ATZMI": "0.0000",
+			"P135_YOM_GVIA": "20170612",
+			"P135_MIS_AMALA": "0"

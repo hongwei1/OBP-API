@@ -1,0 +1,56 @@
+POST http://ntas107703t55:7803/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02
+Content-Type	application/json;charset=utf-8
+{
+	"NT1C_B_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"User": "N7jut8d"
+				"MFToken": "\/G>          81433020102612"
+			}
+		}
+	}
+}
+===========================================================
+{
+	"TSHUVATAVLAIT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff5823027c02",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": {}
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": {}
+		},
+		"HH_MISGAROT_ASHRAI": {
+			"HH_COUNTER": "1",
+			"HH_PIRTEY_CHESHBON": {
+				"HH_MATI": {
+					"HH_SNIF": "616",
+					"HH_SUG": "330",
+					"HH_CHESHBON": "50180963",
+					"HH_LAKOACH": "50180963",
+					"HH_TA_NECHONUT": {
+						"HH_TA_NECH_YY1": "20",
+						"HH_TA_NECH_YY2": "17",
+						"HH_TA_NECH_MM": "3",
+						"HH_TA_NECH_DD": "26"
+					},
+					"HH_ITRA_NOCHECHIT": "5668.13",
+					"HH_ITRA_HATCHALATIT": "6878.96",
+					"HH_MISGERET_ASHRAI": "15000",
+					"HH_ITRAT_PIGUR": "0.00",
+					"HH_ITRA_KOLEL_PIGUR": "5668.13",
+					"HH_TNUOT_HAYOM": "1"
+				}
+			}
+		}
+	}
+}

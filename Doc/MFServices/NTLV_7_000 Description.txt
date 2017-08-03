@@ -1,0 +1,76 @@
+﻿NTLV MF transaction (request 7; action 000)
+===========================================
+Sends OTP to defined mobile number
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/7/000/01.01
+Content-Type	application/json;charset=utf-8
+
+with the following JSON in body:
+
+{ 
+	"NTLV_7_000":
+	{
+		"NtdriveCommonHeader":
+		{
+			"KeyArguments":
+			{
+				"Branch": "814",
+				"AccountType": "330",
+				"AccountNumber": "20102612"
+			},
+			"AuthArguments":
+			{
+				"User": "N7jut8d"
+				"MFToken":"<בל          81433020102612"
+			}
+		},
+		"DFH_KLT":
+		{
+			"DFH_TEL_KID": "054",
+			"DFH_TEL_MIS": "2501665"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+   - (there is no need to provide the bank code because it's always 10)
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Target mobile number (comes from NTLV 1):
+   - DFH_TEL_KID - prefix
+   - DFH_TEL_MIS - number
+
+
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+
+    {
+        "DFHPLT_1":
+        {
+            "esbHeaderResponse":
+            {
+                "esbRequestId": "414d5120544c44423120202020202020be7cff5823f1d303",
+                "responseStatus":							// IIB (ESB) status:
+                {
+                    "callStatus": "Success",						// status
+                    "errorDesc": {}							// error description
+                }
+            },
+            "MFAdminResponse":								// Mainframe status:
+            {
+                "returnCode": "0",							// error code
+                "messageText": {}							// error description
+            },
+            "DFH_OPT": "183823"								// Generated OTP code
+        }
+    }
+

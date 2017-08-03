@@ -1,0 +1,45 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/I/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_I_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "03565953"
+			},
+			"AuthArguments": {
+				"MFToken": "<)V          81433020102612"
+			}
+		},
+		"K050_SIYUMMUTAVIM": {
+			"K050_TOKEN_S": "3639292",
+			"K050_SCUM_MIZTABER_S": "15302",
+			"K050_SHLAV_PEULA_S": "",
+			"K050_MISPAR_MUTAVIM_S": "1"
+		}
+	}
+}
+===========================================================
+{
+	"P050_BDIKAZCHUTOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb10",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": ""
+		},
+		"P050_MAHADURA_101": {
+			"P050_KOD_ISHUR": "",
+			"P050_KOD_SIBA_LE_ISHUR_PAKID": ""
+		},
+		"P050_TOSEFET_MAHADURA_102": {
+			"P050_SEMEL_HAVTACHA": ""
+		}
+	}
+}

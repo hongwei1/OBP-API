@@ -1,0 +1,42 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_A_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": "<)V          81433020102612"
+			}
+		},
+		"K050_BDIKACHOVAIN": {
+			"K050_OFEN_HAVARA": "1",
+			"K050_OFI_DISKET": "0",
+			"K050_ID_HORAA": "0",
+			"K050_SW_ATIDI": "1",
+			"K050_TA_ATIDI": "20170705"
+		}
+	}
+}
+===========================================================
+{
+	"P050_BDIKACHOVAOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca0d",
+			"responseStatus": {
+				"statusCode": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": ""
+		},
+		"P050_TOKEN_OUT": "3639292",
+		"P050_SCUM_MAX_LE_HAVARA": "10000.00",
+		"P050_SHEM_HOVA_ANGLIT": ""
+	}
+}

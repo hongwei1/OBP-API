@@ -1,0 +1,85 @@
+NT1C MF transaction (request B; action 000) - MF transaction returns the following account information:
+=======================================================================================================
+1. Balance of the account
+2. Credit limit of the account
+
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7803/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02
+Content-Type	application/json;charset=utf-8
+
+
+with the following JSON in body:
+{
+	"NT1C_B_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"User": "N7jut8d"
+				"MFToken": "\/G>          81433020102612"
+			}
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+   - (there is no need to provide the bank code because it's always 10)
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+
+
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+
+{
+	"TSHUVATAVLAIT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff5823027c02",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": {}							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": {}							// error description
+		},
+		"HH_MISGAROT_ASHRAI": {
+			"HH_COUNTER": "1",
+			["HH_PIRTEY_CHESHBON": {						// Account details defined as array but use only the 1st 
+												// instance
+				"HH_MATI": {
+					"HH_SNIF": "616",
+					"HH_SUG": "330",
+					"HH_CHESHBON": "50180963",
+					"HH_LAKOACH": "50180963",
+					"HH_TA_NECHONUT": {					// Date of the data validity:
+						"HH_TA_NECH_YY1": "20",				// 2 first digits of the year
+						"HH_TA_NECH_YY2": "17",				// 2 last digits of the year
+						"HH_TA_NECH_MM": "3",				// month
+						"HH_TA_NECH_DD": "26"				// day
+					},
+					"HH_ITRA_NOCHECHIT": "5668.13",				// Current balance of the account
+					"HH_ITRA_HATCHALATIT": "6878.96",
+					"HH_MISGERET_ASHRAI": "15000",				// Credit limit for the account
+					"HH_ITRAT_PIGUR": "0.00",
+					"HH_ITRA_KOLEL_PIGUR": "5668.13",
+					"HH_TNUOT_HAYOM": "1"
+				}
+			}
+			]
+		}
+	}
+}

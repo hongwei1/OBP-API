@@ -1,0 +1,78 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTTF_W_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "814",
+				"AccountType": "330",
+				"AccountNumber": "20102612"
+			},
+			"AuthArguments": {
+				"MFToken": ";-V          81433020102612"
+			}
+		}
+	}
+}
+===========================================================
+{
+	"PELET_NTTF_W": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c444231202020202020200b434659205b3202",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": ""
+		},
+		"P_HEADER": {
+			"P_PIRTEY_CHESHBON": {
+				"P_SNIF": "814",
+				"P_SUG": "330",
+				"P_CHESHBON": "20102612"
+			},
+			"P_TIKRA_MAX_MUTAV": "2500",
+			"P_SHAOT": "2400"
+		},
+		"P_MONE_KARTISIM": "3",
+		"P_PRATIM": {
+			"P_PIRTEY_KARTIS": [{
+					"P_MISPAR_KARTIS": "1063157422",
+					"P_SUG_KARTIS": "6",
+					"P_TEUR_SUG_KARTIS": "כספומט שליח",
+					"P_CHEVRA": "0010",
+					"P_SHEM_CHEVRA": "כספומט",
+					"P_SUG_SHIMUSH": "1",
+					"P_TEUR_SUG_SHIMUSH": "כספומט",
+					"P_TOKEF_KARTIS": "0",
+					"P_TIKRAT_KARTIS": "10019"
+				},
+				{
+					"P_MISPAR_KARTIS": "4580470004230640",
+					"P_SUG_KARTIS": "1",
+					"P_TEUR_SUG_KARTIS": "מקומי",
+					"P_CHEVRA": "4580",
+					"P_SHEM_CHEVRA": "לאומיקארד",
+					"P_SUG_SHIMUSH": "5",
+					"P_TEUR_SUG_SHIMUSH": "אשראי",
+					"P_TOKEF_KARTIS": "0",
+					"P_TIKRAT_KARTIS": "20519"
+				},
+				{
+					"P_MISPAR_KARTIS": "4580470004049040",
+					"P_SUG_KARTIS": "1",
+					"P_TEUR_SUG_KARTIS": "מקומי",
+					"P_CHEVRA": "4580",
+					"P_SHEM_CHEVRA": "לאומיקארד",
+					"P_SUG_SHIMUSH": "5",
+					"P_TEUR_SUG_SHIMUSH": "אשראי",
+					"P_TOKEF_KARTIS": "0",
+					"P_TIKRAT_KARTIS": "20519"
+				}
+			]
+		}
+	}
+}

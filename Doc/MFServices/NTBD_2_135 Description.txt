@@ -1,0 +1,69 @@
+NTBD MF transaction (request 2; action 135) - Transfer money from specific account to a party defined by its mobile number - part 2
+===================================================================================================================================
+There are 2 requests exist 1 and 2.
+They have to be executed sequentially in order to transfer money to mobile number.
+This request (2) is completing the sequence.
+It uses the token which has been created by NTBD (request 2; action 135)
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/135/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_2_135": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"User": "N7jut8d"
+				"MFToken": ">U(          81433020102612"
+			}
+		},
+		"KELET_1352": {
+			"K135_TOKEN_ISHUR": "3635791",
+			"K135_BAKASH_TASHL": "1",
+			"K135_KINUY_MAVIR": "mike",
+			"K135_MELEL_LE_MUTAV": "walla"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters:
+   - K135_TOKEN_ISHUR - comes from request 1
+   - K135_BAKASH_TASHL - always "1"
+   - K135_KINUY_MAVIR - Nickname of the money sender (20 symbols)
+   - K135_MELEL_LE_MUTAV - Message text to the money receiver (50 symbols)
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+
+{
+	"P135_BDIKAOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff582410af10",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": {}							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": {}							// error description
+		},
+		"P135_SHAA_RISHUM": "14:39",							// Hour of transaction execution
+		"P135_TARICH_BITZUA": "20170607",						// Date of transaction execution YYYYMMDD
+		"P135_TOKEN_ISHUR": "3635791",
+		"P135_ASMACHTA": "1109"
+	}
+}

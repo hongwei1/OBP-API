@@ -1,0 +1,104 @@
+﻿NTG6 MF transaction (request I; action 000) - MF transaction returns Leumi counterparty list on specific account
+================================================================================================================
+Leumi counterparty means the counterparty account located in Bank Leumi
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/I/000/01.04
+Content-Type	application/json;charset=utf-8
+{
+	"NTG6_I_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "814",
+				"AccountType": "330",
+				"AccountNumber": "20102612"
+			},
+			"AuthArguments": {
+				"MFToken": "<7/          81433020102612"
+			}
+		}
+	}
+}
+
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+   - (there is no need to provide the bank code because it's always 10)
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"PMUTSHLIFA_OUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb1e",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": ""							// error description
+		},
+		"PMUT_MONE": "2",								// Number of counterparties in the list
+		"PMUT_RESHIMAT_MUTAVIM": [{							// Counterparty list (array)
+				"PMUT_PIRTEY_MUTAV": {						// Counterparty details:
+					"PMUT_ERETZ_MUTAV": "2121",				// Country - always 2121
+					"PMUT_BANK_MUTAV": "10",				// Bank code - always 10
+					"PMUT_SNIF_MUTAV": "601",				// Branch number
+					"PMUT_SUG_CHEN_MUTAV": "330",				// Account type
+					"PMUT_CHEN_MUTAV": "7571",				// Account number
+					"PMUT_SHEM_MUTAV": "         יעכטגאט",			// Counterparty name
+					"PMUT_SUG_MUTAV": "9",					
+					"PMUT_TEUR_MUTAV": "                     יעכטגאט",	// Description
+					"PMUT_STATUS": "1",
+					"PMUT_IBAN": "",					// IBAN
+					"PMUT_SHEM_MUTAV_ANGLIT": "",				// Counterparty name in english
+					"PMUT_TEUR_MUTAV_ANGLIT": "",				// Description in english
+					"PMUT_ZIHUI_MUTAV1": "0",
+					"PMUT_ZIHUI_MUTAV2": "0",
+					"PMUT_SHEM_MUTAV2": "",
+					"PMUT_SHEM_MUTAV2_ANGLIT": "",
+					"PMUT_TIKRA": "0.00",					
+					"PMUT_TAR_HATCHALAT_TOKEF": "0",
+					"PMUT_TAR_TOM_TOKEF": "0",
+					"PMUT_SIMUN_TIKRA_BE_TOKEF": "1",
+					"PMUT_TAR_IDKUN": "20160502",
+					"PMUT_S_SEGMENT": "0"
+				}
+			},
+			{
+				"PMUT_PIRTEY_MUTAV": {
+					"PMUT_ERETZ_MUTAV": "2121",
+					"PMUT_BANK_MUTAV": "10",
+					"PMUT_SNIF_MUTAV": "601",
+					"PMUT_SUG_CHEN_MUTAV": "330",
+					"PMUT_CHEN_MUTAV": "122573",
+					"PMUT_SHEM_MUTAV": "    חבש ןר לאיחי",
+					"PMUT_SUG_MUTAV": "9",
+					"PMUT_TEUR_MUTAV": "                 ךורא רצק םש",
+					"PMUT_STATUS": "1",
+					"PMUT_IBAN": "",
+					"PMUT_SHEM_MUTAV_ANGLIT": "",
+					"PMUT_TEUR_MUTAV_ANGLIT": "",
+					"PMUT_ZIHUI_MUTAV1": "0",
+					"PMUT_ZIHUI_MUTAV2": "0",
+					"PMUT_SHEM_MUTAV2": "",
+					"PMUT_SHEM_MUTAV2_ANGLIT": "",
+					"PMUT_TIKRA": "0.00",
+					"PMUT_TAR_HATCHALAT_TOKEF": "0",
+					"PMUT_TAR_TOM_TOKEF": "0",
+					"PMUT_SIMUN_TIKRA_BE_TOKEF": "1",
+					"PMUT_TAR_IDKUN": "20160502",
+					"PMUT_S_SEGMENT": "0"
+				}
+			}
+		]
+	}
+}

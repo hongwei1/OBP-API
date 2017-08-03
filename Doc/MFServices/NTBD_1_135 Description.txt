@@ -1,0 +1,92 @@
+NTBD MF transaction (request 1; action 135) - Transfer money from specific account to a party defined by its mobile number - part 1
+===================================================================================================================================
+There are 2 requests exist 1 and 2.
+They have to be executed sequentially in order to transfer money to mobile number.
+This request (1) is starting the sequence and returns a token which is used later for the second part.
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_1_135": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"User": "N7jut8d"
+				"MFToken": ">M8          81433020102612"
+			}
+		},
+		"KELET_1351": {
+			"K135_MISPAR_KARTIS": "0000000000000000",
+			"K135_TOKEF_KARTIS": "",
+			"K135_TIKRAT_KARTIS": "",
+			"K135_NAYAD_BAAL_CHESHBON": "0526684745",
+			"K135_SCHUM": "",
+			"K135_MATRAT_HAAVARA": "Rent payment",
+			"K135_MISPAR_ZIHUY_MUTAV": "",
+			"K135_SUG_ZIHUY_MUTAV": "",
+			"K135_ERETZ_MUTAV": "",
+			"K135_SHEM_MUTAV": "",
+			"K135_TARICH_LEDA_MUTAV": "",
+			"K135_NAYAD_MUTAV": "0532221234",
+			"K135_SCHUM_HADASH": "575.36"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters (all empty except the following 5):
+   - K135_MISPAR_KARTIS - 16 zeros always
+   - K135_NAYAD_BAAL_CHESHBON - Mobile number of the money sender (10 digits)
+   - K135_MATRAT_HAAVARA - Transaction description/purpose (20 symbols)
+   - K135_NAYAD_MUTAV - Mobile number of the money receiver (10 digits)
+   - K135_SCHUM_HADASH - Transfer amount
+
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+
+{
+	"P135_BDIKAOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff582410af10",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": {}							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": {}							// error description
+		},
+		"P135_TOKEN": "3635791",							// Token which has to be used
+												// in NTBD request 2; action 135 
+												// which complete the transfer
+		"P135_AMALOT": {
+			"P135_TEUR_AMALA": {},
+			"P135_SCHUM_AMALA": "0.00",						// transaction fee
+			"P135_SCHUM_STANDART_BANK": "0.00",
+			"P135_SCHUM_STANDART_MIGZAR": "0.00",
+			"P135_OFEN_CHISHUV_AMALA": "0",
+			"P135_SUG_HATAVA": "0",
+			"P135_KOD_HATAVA_BE_SHEUR": "0",
+			"P135_ACHUZ_TARIF": "0.0000",
+			"P135_ACHUZ_ATZMI": "0.0000",
+			"P135_YOM_GVIA": "20170607",
+			"P135_MIS_AMALA": "0",
+			"P135_SCHUM_HISAHON_AMLA": "0.00"
+		}
+	}
+}

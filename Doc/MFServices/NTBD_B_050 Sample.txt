@@ -1,0 +1,45 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/B/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_B_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "03565953"
+			},
+			"AuthArguments": {
+				"MFToken": "<)V          81433020102612"
+			}
+		},
+		"K050_BDIKAZCHUTIN": {
+			"K050_TOKEN_ZCHUT": "3639292",
+			"K050_BANK_ZCUT": "10",
+			"K050_SNIF_ZCUT": "914",
+			"K050_SUG_ZCUT": "330",
+			"K050_CHN_ZCUT": "1696441",
+			"K050_IBAN_ZCUT": "0",
+			"K050_SCUM": "000000015302",
+			"K050_MATRAT_HAVARA": "Cause ",
+			"K050_SHEM_MUTAV": "recipient Name",
+			"K050_SHLAV_PEULA": "0",
+			"K050_MISPAR_SIDURI": "0000"
+		}
+	}
+}
+===========================================================
+{
+    "NTDriveNoResp": {
+        "esbHeaderResponse": {
+            "esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb0e",
+            "responseStatus": {
+                "callStatus": "Success",
+                "errorDesc": ""
+            }
+        },
+        "MFAdminResponse": {
+            "returnCode": "1",
+            "messageText": "העדכון בוצע בהצלחה !"
+        }
+    }
+}

@@ -1,0 +1,109 @@
+﻿NTTF MF transaction (request W; action 000) is used as ahelper for NTBD 105 and returns the following information:
+==================================================================================================================
+1. Max. amount permitted to transfer from specific account to a person via ATM
+2. List of cards (credit, debit and other) linked to specific account 
+
+There are 2 types of cards in Israel: 
+   - banking cards are linked to an account (even the account nuber is engraved on the card)
+   - credit company card which is not directly linked to an account
+NTTW W only returns the list of the banking card.
+Sending money via ATM is possible only with the banking card.
+
+
+
+To run the transaction use the following POST command:
+======================================================
+
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTTF_W_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "814",
+				"AccountType": "330",
+				"AccountNumber": "20102612"
+			},
+			"AuthArguments": {
+				"MFToken": ";-V          81433020102612"
+			}
+		}
+	}
+}
+
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+   - (there is no need to provide the bank code because it's always 10)
+2. MFToken - also comes from JONI output
+
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"PELET_NTTF_W": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c444231202020202020200b434659205b3202",
+			"responseStatus": {							// IIB (ESB) status:
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status:
+			"returnCode": "0",							// error code
+			"messageText": ""							// error description
+		},
+		"P_HEADER": {
+			"P_PIRTEY_CHESHBON": {
+				"P_SNIF": "814",
+				"P_SUG": "330",
+				"P_CHESHBON": "20102612"
+			},
+			"P_TIKRA_MAX_MUTAV": "2500",						// Max. amount permitted to transfer
+			"P_SHAOT": "2400"
+		},
+		"P_MONE_KARTISIM": "3",								// Number of cards linked to the account
+												// (number of instances in the following array)
+		"P_PRATIM": {
+			"P_PIRTEY_KARTIS": [{							// Array of card details 
+					"P_MISPAR_KARTIS": "1063157422",			// Card number
+					"P_SUG_KARTIS": "6",					
+					"P_TEUR_SUG_KARTIS": "כספומט שליח",
+					"P_CHEVRA": "0010",
+					"P_SHEM_CHEVRA": "כספומט",
+					"P_SUG_SHIMUSH": "1",
+					"P_TEUR_SUG_SHIMUSH": "כספומט",
+					"P_TOKEF_KARTIS": "0",					// Card Expiration Date
+					"P_TIKRAT_KARTIS": "10019"				// Current limit to withdrawal from the card
+				},
+				{
+					"P_MISPAR_KARTIS": "4580470004230640",
+					"P_SUG_KARTIS": "1",
+					"P_TEUR_SUG_KARTIS": "מקומי",
+					"P_CHEVRA": "4580",
+					"P_SHEM_CHEVRA": "לאומיקארד",
+					"P_SUG_SHIMUSH": "5",
+					"P_TEUR_SUG_SHIMUSH": "אשראי",
+					"P_TOKEF_KARTIS": "0",
+					"P_TIKRAT_KARTIS": "20519"
+				},
+				{
+					"P_MISPAR_KARTIS": "4580470004049040",
+					"P_SUG_KARTIS": "1",
+					"P_TEUR_SUG_KARTIS": "מקומי",
+					"P_CHEVRA": "4580",
+					"P_SHEM_CHEVRA": "לאומיקארד",
+					"P_SUG_SHIMUSH": "5",
+					"P_TEUR_SUG_SHIMUSH": "אשראי",
+					"P_TOKEF_KARTIS": "0",
+					"P_TIKRAT_KARTIS": "20519"
+				}
+			]
+		}
+	}
+}

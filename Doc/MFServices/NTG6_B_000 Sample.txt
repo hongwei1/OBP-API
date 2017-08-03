@@ -1,0 +1,69 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/B/000/01.02
+Content-Type	application/json;charset=utf-8
+{
+	"NTG6_B_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": "<בל          81433020102612"
+			}
+		},
+		"KMUT_IDKUNIN": {
+			"KMUT_OLD": {
+				"KMUT_ERETZ_MUTAV": "2121",
+				"KMUT_BANK_MUTAV": "10",
+				"KMUT_SNIF_MUTAV": "914",
+				"KMUT_SUG_CHEN_MUTAV": "330",
+				"KMUT_CHEN_MUTAV": "1696441",
+				"KMUT_SHEM_MUTAV": "lois",
+				"KMUT_SUG_MUTAV": "0",
+				"KMUT_TEUR_MUTAV": " ",
+				"KMUT_IBAN": " ",
+				"KMUT_SHEM_MUTAV_ANGLIT": "asd ",
+				"KMUT_TEUR_MUTAV_ANGLIT": " sdf"
+			},
+			"KMUT_TOSEFET": {
+				"KMUT_ZIHUI_MUTAV1": "2",
+				"KMUT_ZIHUI_MUTAV2": "2",
+				"KMUT_SHEM_MUTAV2": "ertuy",
+				"KMUT_SHEM_MUTAV2_E": "hnmd"
+			}
+		}
+	}
+}
+===========================================================
+{
+	"NTDriveNoResp": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff582405ab0c",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "1",
+			"messageText": "העדכון בוצע בהצלחה !"
+		}
+	}
+}
+===========================================================
+{
+	"PAPIErrorResponse": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb16",
+			"responseStatus": {
+				"callStatus": "ProviderError",
+				"errorDesc": "Provider Error - NTDRIVE returned 762: מספר החשבון הוחלף"
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "762",
+			"messageText": "מספר החשבון הוחלף"
+		}
+	}
+}

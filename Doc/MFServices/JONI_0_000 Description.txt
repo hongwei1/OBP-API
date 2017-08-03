@@ -1,0 +1,264 @@
+JONI MF (request 0; actyion 000) transaction returns the following user information:
+====================================================================================
+1. User details (first/last name, passport or national id number, date of birth and other)
+2. List of accounts with permissions
+3. MFTOKEN which includes operid and should be used in almost all other transactions as a key
+
+MFTOKEN is a composition of operid and leading account parameters (see below).
+(Use it as a whole entity)
+
+There are 4 fields describing account in Leumi bank:
+-Bank code - for Leumi is alwais 10
+-Branch number - account numbers are not unique and may be the same in different branches
+-Account number - the number itself
+-Account type - there are alot of account types in Leumi like check, foreign currency, stock and other but you only deal with 3 of them:
+	330, 340, 110 all other type accounts should be ignored.
+
+
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01
+Content-Type	application/json;charset=utf-8
+
+with the following JSON in body:
+{
+  "JONI_0_000": {
+    "NtdriveCommonHeader": {
+      "AuthArguments": {
+        "UserName": "N7jut8d"
+      }
+    }
+  }
+}
+
+The only parameter to provide is UserName
+(which will come to OBP as a part of JWT)
+
+
+
+
+Following is a valid transaction output.
+(Don't use it as a stub. It is provided for parameters description only)
+
+Use only parameters which are described by comments on the right.
+=================================================================
+
+
+	"SDR_JONI": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c444231202020202001db02",
+			"responseStatus": {					// IIB (ESB) status
+				"callStatus": "Success",			// status 
+				"errorDesc": {}					// error description
+			}
+		},
+		"MFAdminResponse": {						// Mainframe status
+			"returnCode": "0",					// error code
+			"messageText": {}					// error description
+		},
+
+
+		"MFTOKEN": "\/VV          81433020102612",			// MFTOKEN is a composition of operid and leading account parameters
+		"SDR_MANUI": {
+			"SDRM_N_LAK": "5",
+			"SDRM_N_CHN": "25",
+			"SDRM_USERID": "N7JUT8D",				// Bank UserID
+			"SDRM_SHEM_PRATI": "??????????????",			// First Name
+			"SDRM_SHEM_MISHPACHA": "????????????????????",		// Last Name
+			"SDRM_TAR_LEIDA": "19481231",				// Date of birth
+			"SDRM_AML": {
+				"SDRM_AML_BANK": "10",
+				"SDRM_AML_SNIF": "814",
+				"SDRM_AML_CHN": "20102612",
+				"SDRM_AML_SUG": "330"
+			},
+			"SDRM_MOVIL_RASHI": {					// User's Leading account parameters:
+				"SDRM_MOVIL_RASHI_BANK": "10",			// Bank code
+				"SDRM_MOVIL_RASHI_SNIF": "814",			// Branch code
+				"SDRM_MOVIL_RASHI_CHN": "20102612",		// Account number
+				"SDRM_MOVIL_RASHI_SUG": "330"			// Account type code
+			},
+			"SDRM_DATE_LAST": "20170503",				// Last login date
+			"SDRM_TIME_LAST": "130040",				// Last login time
+			"SDRM_NO_NISYONT_KOSHLIM": "0",	
+			"SDRM_TA_PTICHA": "20061207",				// Bank UserID creation date
+			"SDRM_ZEHUT": "4051769",				// User's Passport or National ID number
+			"SDRM_SUG_ZIHUY": "1",					// User's ID type: 1 - National; 5- Passport
+			"SDRM_ERETZ_DARKON": "2121",
+			"SDRM_OPERID": "\/VV",
+			"SDRM_RAMAT_AVTACHA": "1",
+			"SDRM_MIMUSH_AVTACHA": "1",
+			"SDRM_MIGZAR": "1",
+			"SDRM_ATAR": "1",
+			"SDRM_SIVUG": {
+				"SDRM_SIVUG_PRATI": "0",
+				"SDRM_SIVUG_AMIDIM": "1",
+				"SDRM_SIVUG_TZAIRIM": "0",
+				"SDRM_SIVUG_STUDENT": "0",
+				"SDRM_SIVUG_ISKI": "0",
+				"SDRM_SIVUG_MISHARI": "0",
+				"SDRM_SIVUG_IPB": "0",
+				"SDRM_SIVUG_SAHBAL": "0",				
+				"SDRM_SIVUG_PAKID": "0",
+				"SDRM_SIVUG_YAHALOMIM": "0",
+				"SDRM_SIVUG_YASHIR": "0",
+				"SDRM_SIVUG_DOCHOT_PB": "0",
+				"SDRM_SIVUG_LEUMI_LABS": "0",
+				"SDRM_SIVUG_TAHALICH": "0",
+				"SDRM_SIVUG_CASH_MANAGM": "0",
+				"SDRM_SIVUG_CFF": "0",
+				"SDRM_SIVUG_NIK_HOVAV": "0",
+				"SDRM_SIVUG_HALVAOT_ON_KOL": "0",
+				"SDRM_SIVUG_TIUV": "3",
+				"SDRM_SIVUG_FUSE": "000000",
+				"SDRM_SIVUG_CEL_ATM": "0",
+				"SDRM_SIVUG_SOFT_TOKEN": "0",
+				"SDRM_SIVUG_OSHER_FINANSI": "1"
+			},
+			"SDRM_MURSHE_PEULOT": "1",
+			"SDRM_MURSHE_TZAD_G": "1",
+			"SDRM_MUTZARIM": {
+				"SDRM_MUTZAR_HATRAOT": "0",
+				"SDRM_MUTZARIM_TV": {
+					"SDRM_MUTZAR_OSH_MTI": "1",
+					"SDRM_MUTZAR_SHOTEF_MTH": "1",
+					"SDRM_MUTZAR_PIKDONOT_MTI": "1",
+					"SDRM_MUTZAR_PIKDONOT_MTH": "1",
+					"SDRM_MUTZAR_TIHON": "1",
+					"SDRM_MUTZAR_HALVAOT_MTI": "1",
+					"SDRM_MUTZAR_MASHKANTAOT": "1",
+					"SDRM_MUTZAR_HALVAOT_MTH": "1",
+					"SDRM_MUTZAR_KAHAL": "1",
+					"SDRM_MUTZAR_KARTISEY_ASH": "1",
+					"SDRM_MUTZAR_KUPOT_GEMEL": "1",
+					"SDRM_MUTZAR_NIAROT_EREH": "1",
+					"SDRM_MUTZAR_HORAA_TEL": "5",
+					"SDRM_MUTZAR_SACHBAL": "1",
+					"SDRM_MUTZAR_ASHRAY_CHUTZ": "0"
+				}
+			},
+			"SDRM_CHASIMA_ZAD_G": "0",				// Blocked for transactions with others
+			"SDRM_TIMESTAMP": "20170329115556",
+			"SDRM_SHEELOT_SAVTA": "1",
+			"SDRM_SHEM_PRATI_ENG": {},				// English First name (may be empty)
+			"SDRM_SHEM_MISHPACHA_ENG": {},				// English Last name (may be empty)
+			"SDRM_MUTZARIM2_TV": {
+				"SDRM_MUTZAR2_KARTIS_DEBIT": "1"
+			},
+			"SDRM_USERS_PROPERTIES": {
+				"SDRM_UP_HATIVA": {},
+				"SDRM_UP_OFI_MANUI": "0",
+				"SDRM_UP_HALVAOT_ON_KOL": "0"
+			}
+		},
+		"SDR_LAK_SHEDER": {
+			"SDRL_LINE": [{						// Each SDRL_LINE object represents Leumi Customer concept.
+										// There may be a number of objects - array.
+										// The concept says that user can have a number of customer numbers.
+										// Each number represents a combination the user with other participants
+										// (e.g. user alone, user with his wife, user with his son)
+										// Each combination (customer number) may have a number of accounts under it
+										// You should ignore this "customer" level and create one unified flat 
+										// account list.
+
+				"SDRL_BANK_LAK": "10",
+				"SDRL_MIS_LAK": "3565973",
+				"SDRL_SNIF_LAK": "616",
+				"SDRL_SEMEL_HATIVA": "833",
+				"SDRL_OFI_SHIUCHI": "43",
+				"SDRL_DOAR_LEUMI_MAIL": "0",
+				"SDRL_DOAR_HABAITA": "0",
+				"SDRL_MUTZARIM_TV": {
+					"SDRL_MUTZAR_OSH_MTI": "1",
+					"SDRL_MUTZAR_SHOTEF_MTH": "0",
+					"SDRL_MUTZAR_PIKDONOT_MTI": "0",
+					"SDRL_MUTZAR_PIKDONOT_MTH": "0",
+					"SDRL_MUTZAR_TIHON": "0",
+					"SDRL_MUTZAR_HALVAOT_MTI": "0",
+					"SDRL_MUTZAR_MASHKANTAOT": "0",
+					"SDRL_MUTZAR_HALVAOT_MTH": "0",
+					"SDRL_MUTZAR_KAHAL": "0",
+					"SDRL_MUTZAR_KARTISEY_ASH": "1",
+					"SDRL_MUTZAR_KUPOT_GEMEL": "0",
+					"SDRL_MUTZAR_NIAROT_EREH": "0",
+					"SDRL_MUTZAR_HORAA_TEL": "5",
+					"SDRL_MUTZAR_SACHBAL": "0",
+					"SDRL_MUTZAR_ASHRAY_CHUTZ": "0"
+				},
+				"SDRL_SEGMENT": "0",
+				"SDRL_SHEM_TAAGID": {},
+				"SDRL_SHEM_LOAZI": {},
+				"SDRL_MUTZARIM2_TV": {
+					"SDRL_MUTZAR2_KARTIS_DEBIT": "0"
+				},
+				"SDRL_CASH_MANAGM": "0",
+				"SDRL_TAAGID": "0",
+				"SDRL_ERETZ_TAAGID": "0",
+				"SDRL_SUG_ZIHUY_TAAGID": "0",
+				"SDR_CHN": [{					// An object representing all the customer accounts
+					"SDRC_LINE": {				// Each SDRC_LINE object represents one account of the customer
+						"SDRC_MOVIL": {
+							"SDRC_MOVIL_BANK": "10",
+							"SDRC_MOVIL_SNIF": "814",
+							"SDRC_MOVIL_CHN": "20102612",
+							"SDRC_MOVIL_SUG": "330"
+						},
+						"SDRC_CHN": {				// Account parameters:
+							"SDRC_CHN_BANK": "10",		// Bank code
+							"SDRC_CHN_SNIF": "616",		// Branch number
+							"SDRC_CHN_CHN": "3565953",	// Account number
+							"SDRC_CHN_SUG": "330"		// Account type
+											//
+											// ATTENTION!!! There may be cases (seldom) when the Leading account
+											// iself (see SDRM_MOVIL_RASHI above) doesn't appear in this list
+											// of accounts. In this case you should add it artificially to 
+											// the account list you manage.
+						},
+						"SDRC_SNIF_LAKOACH": "616",
+						"SDRC_MIS_LAKOACH": "3565973",
+						"SDRC_SIVUG": {
+							"SDRC_SIVUG_PRATI": "1",
+							"SDRC_SIVUG_AMIDIM": "0",
+							"SDRC_SIVUG_TZAIRIM": "0",
+							"SDRC_SIVUG_STUDENT": "0",
+							"SDRC_SIVUG_ISKI": "0",
+							"SDRC_SIVUG_MISHARI": "0",
+							"SDRC_SIVUG_IPB": "0",
+							"SDRC_SIVUG_SAHBAL": "0",
+							"SDRC_SIVUG_PAKID": "0",
+							"SDRC_SIVUG_YAHALOMIM": "0",
+							"SDRC_SIVUG_YASHIR": "0",
+							"SDRC_SIVUG_DOCHOT_PB": "0",
+							"SDRC_SIVUG_LEUMI_LABS": "0",
+							"SDRC_SIVUG_TAHALICH": "0",
+							"SDRC_SIVUG_NIK_HOVAV": "0",
+							"SDRC_SIVUG_HALVAOT_ON_KOL": "0"
+						},
+						"SDRC_SIVUG_FUSE": "000000000000",
+						"SDRC_HARSHAOT": {			// User's permissions for the account:
+							"SDRC_MURSHE_MEIDA": "0",	// Can see the account data 1/0
+							"SDRC_MURSHE_PEULOT": "1",	// Can execute transactions (maybe only between his own accounts) 1/0
+							"SDRC_MURSHE_TZAD_G": "1"	// Can execute transactions with other parties 1/0
+						},
+						"SDRC_SW_MOVIL": "1",
+						"SDRC_TAAGID": "0",
+						"SDRC_CP_GR": {
+							"SDRC_CP_KARTIS_ASHRAY": "0",
+							"SDRC_CP_KARTIS_ASHRAY_20": "0",
+							"SDRC_CP_SHEKIM_HOZRIM": "0",
+							"SDRC_CP_SHEKIM_NIMSHEHU": "0",
+							"SDRC_CP_MEMADIM": "0",
+							"SDRC_CP_FUSHE": "0"
+						}
+					}
+
+				}]
+			}]
+		}
+	}
+
+
+
+

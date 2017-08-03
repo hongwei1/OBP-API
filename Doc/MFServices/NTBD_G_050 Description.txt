@@ -1,0 +1,75 @@
+NTBD MF transaction (request G; action 050) - Transfer money from specific account to other specified account - part 4
+======================================================================================================================
+There are 5 requests needed to fulfill the transfer: A, B, I, G, 2.
+They have to be executed sequentially in the above order.
+This request (G) is the forth one in the sequence and designated to calculate the transaction fee.
+You can return the fee amount at the end of Create Transaction Request execution.
+If it doesn't match the definition of Create Transaction Request - doesn't execute request G at all (exclude it from the sequence).
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_G_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": ">JT          81433020102612"
+			}
+		},
+		"K050_AMALOTIN": {
+			"K050_TOKEN": "3639292",
+			"K050_SUG_BANK_YAAD": "001",
+			"K050_SEMEL_KVUTZA": "1"
+		}
+	}
+}
+
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters:
+   - K050_TOKEN[11] - comes from request A
+   - K050_SUG_BANK_YAAD[3] - Target bank type: 0-Leumi; 1-other bank
+   - K050_SEMEL_KVUTZA[2] - Always 0
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"P050_AMALOTOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca0f",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": ""							// error description
+		},
+		"P050_AMALOT_OUT_OLD": {
+			"P050_SCUM_AMLAT_HAVARA": "1.65",					// The transaction fee
+			"P050_TARICH_GVIYA": "20170613",
+			"P050_SHIUR_HATAVA_ARUTZ": "70.0000",
+			"P050_SHIUR_HATAVA_TARIF": "0.0000",
+			"P050_KOD_HATAVA": "0",
+			"P050_MONE_LO_PTURIM": "0",
+			"P050_AMALA_HISACHON": "3.85",
+			"P050_ACHUZ_AML_HISACHON": "70.0000"
+		},
+		"P050_MONE_PTURIM": ""
+	}
+}

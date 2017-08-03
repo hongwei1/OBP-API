@@ -1,0 +1,53 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/D/000/01.02
+Content-Type	application/json;charset=utf-8
+{
+	"NTG6_D_000": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": "<בל          81433020102612"
+			}
+		},
+		"KMUT_IDKUNIN": {
+			"KMUT_OLD": {
+				"KMUT_ERETZ_MUTAV": "2121",
+				"KMUT_BANK_MUTAV": "12",
+				"KMUT_SNIF_MUTAV": "204",
+				"KMUT_SUG_CHEN_MUTAV": "330",
+				"KMUT_CHEN_MUTAV": "50430963",
+				"KMUT_SHEM_MUTAV": " ",
+				"KMUT_SUG_MUTAV": "0",
+				"KMUT_TEUR_MUTAV": " ",
+				"KMUT_IBAN": " ",
+				"KMUT_SHEM_MUTAV_ANGLIT": " ",
+				"KMUT_TEUR_MUTAV_ANGLIT": " "
+			},
+			"KMUT_TOSEFET": {
+				"KMUT_ZIHUI_MUTAV1": "0",
+				"KMUT_ZIHUI_MUTAV2": "0",
+				"KMUT_SHEM_MUTAV2": " ",
+				"KMUT_SHEM_MUTAV2_E": " "
+			}
+		}
+	}
+}
+===========================================================
+{
+	"NTDriveNoResp": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca1f",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "1",
+			"messageText": "העדכון בוצע בהצלחה !"
+		}
+	}
+}

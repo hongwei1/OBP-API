@@ -1,0 +1,42 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/105/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_2_105": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": ">U(          81433020102612"
+			}
+		},
+		"KELET_1352": {
+			"K135_TOKEN_ISHUR": "3639283",
+			"K135_BAKASH_TASHL": "1",
+			"K135_KINUY_MAVIR": "mike",
+			"K135_MELEL_LE_MUTAV": "walla"
+		}
+	}
+}
+===========================================================
+{
+	"PELET_1352": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca09",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": ""
+		},
+		"P135_SHAA_RISHUM": "18:21",
+		"P135_TARICH_BITZUA": "20170612",
+		"P135_TOKEN_ISHUR": "3639283",
+		"P135_ASMACHTA": "1455"
+	}
+}

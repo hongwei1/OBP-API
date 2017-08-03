@@ -1,0 +1,51 @@
+﻿POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/7/000/01.01
+Content-Type	application/json;charset=utf-8
+
+{ 
+ "NTLV_7_000": {
+    "NtdriveCommonHeader": {
+      "KeyArguments": {
+        "Branch": "814",
+        "AccountType": "330",
+        "AccountNumber": "20102612"
+      },
+      "AuthArguments": {
+	"User": "N7jut8d"
+        "MFToken":"<בל          81433020102612"
+      }
+    },
+  "DFH_KLT": {
+     "DFH_TEL_KID": "054",
+     "DFH_TEL_MIS": "2501665"
+  }
+}
+}
+================================================
+
+
+
+    {
+        "DFHPLT_1":
+        {
+            "esbHeaderResponse":
+            {
+                "esbRequestId": "414d5120544c44423120202020202020be7cff5823f1d303",
+                "responseStatus":
+                {
+                    "callStatus": "Success",
+                    "errorDesc":
+                    {
+                    }
+                }
+            },
+            "MFAdminResponse":
+            {
+                "returnCode": "0",
+                "messageText":
+                {
+                }
+            },
+            "DFH_OPT": "183823"
+        }
+    }
+

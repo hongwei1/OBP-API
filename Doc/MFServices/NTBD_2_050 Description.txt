@@ -1,0 +1,69 @@
+NTBD MF transaction (request 2; action 050) - Transfer money from specific account to other specified account - part 5
+======================================================================================================================
+There are 5 requests needed to fulfill the transfer: A, B, I, G, 2.
+They have to be executed sequentially in the above order.
+This request (2) is the fifth (and the last) one in the sequence and designated to the final processing of the transfer.
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_2_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": ";,T          81433020102612",
+				"User": "N7jut8d"
+			}
+		},
+		"K050_ISHURIN": {
+			"K050_TOKEN_ISHUR": "3647867",
+			"K050_KOD_NOSE": "0",
+			"K050_SHEM_LAK_MEUDKAN": "recipient Name"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters:
+   - K050_TOKEN_ISHUR[11] - comes from request A
+   - K050_KOD_NOSE[5] - Always 0
+   - K050_SHEM_LAK_MEUDKAN[20] - Debit(source) account owner name in english
+					generally comes from NTBD request A; action 050, value of output field P050_SHEM_HOVA_ANGLIT
+					But the request A may return an empty string or all spaces.
+					If it is empty or blanks and the transfer type is RTGS (see request A) - provide some generic name like "Customer"
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"P050_ISHUROUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c444231202020202020200b43465920365318",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": ""							// error description
+		},
+		"P050_SHAA_BITZUA": "14:48",							// Transaction execution time HH:MM
+		"P050_TARICH_BITZUA": "20170620",						// Transaction execution date YYYYMMDD
+		"P050_TOKEN_ISHUR": "3647867",							// Transaction token - the same as on input
+		"P050_ASMACHTA": "0"
+	}
+}

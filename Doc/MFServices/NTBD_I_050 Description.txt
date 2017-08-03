@@ -1,0 +1,72 @@
+NTBD MF transaction (request I; action 050) - Transfer money from specific account to other specified account - part 3
+======================================================================================================================
+There are 5 requests needed to fulfill the transfer: A, B, I, G, 2.
+They have to be executed sequentially in the above order.
+This request (I) is the third one in the sequence and designated to conclude all the target accounts
+(in our case there is only one but multiple transfer is generally supported)
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/I/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_I_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "03565953"
+			},
+			"AuthArguments": {
+				"MFToken": "<)V          81433020102612"
+			}
+		},
+		"K050_SIYUMMUTAVIM": {
+			"K050_TOKEN_S": "3639292",
+			"K050_SCUM_MIZTABER_S": "15302",
+			"K050_SHLAV_PEULA_S": "",
+			"K050_MISPAR_MUTAVIM_S": "1"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters:
+   - K050_TOKEN_S[11] - comes from request A
+   - K050_SCUM_MIZTABER_S[15] - Amount to transfer. Format num(13).num(2)
+   - K050_SHLAV_PEULA_S[1] - Always 2
+   - K050_MISPAR_MUTAVIM_S[1] - Always 1
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"P050_BDIKAZCHUTOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb10",
+			"responseStatus": {							// IIB (ESB) status
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code 
+			"messageText": ""							// error description
+		},
+		"P050_MAHADURA_101": {
+			"P050_KOD_ISHUR": "",							// Permit type: 1-Automatic; 2,4-Banker permit required
+												//		3-Not permitted;
+			"P050_KOD_SIBA_LE_ISHUR_PAKID": ""					// Reason code for the banker permit:
+		},
+		"P050_TOSEFET_MAHADURA_102": {
+			"P050_SEMEL_HAVTACHA": ""
+		}
+	}
+}

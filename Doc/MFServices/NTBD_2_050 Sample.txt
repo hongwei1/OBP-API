@@ -1,0 +1,42 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_2_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": ";,T          81433020102612",
+				"User": "N7jut8d"
+			}
+		},
+		"K050_ISHURIN": {
+			"K050_TOKEN_ISHUR": "3647867",
+			"K050_KOD_NOSE": "0",
+			"K050_SHEM_LAK_MEUDKAN": "recipient Name"
+		}
+	}
+}
+===========================================================
+{
+	"P050_ISHUROUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c444231202020202020200b43465920365318",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": ""
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": ""
+		},
+		"P050_SHAA_BITZUA": "14:48",
+		"P050_TARICH_BITZUA": "20170620",
+		"P050_TOKEN_ISHUR": "3647867",
+		"P050_ASMACHTA": "0"
+	}
+}

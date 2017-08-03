@@ -1,0 +1,82 @@
+﻿NTBD MF transaction (request B; action 050) - Transfer money from specific account to other specified account - part 2
+======================================================================================================================
+There are 5 requests needed to fulfill the transfer: A, B, I, G, 2.
+They have to be executed sequentially in the above order.
+This request (B) is the second one in the sequence and designated to examine the credit(target) account
+(whether the target account is valid and is allowed to transfer to)
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/B/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_B_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "03565953"
+			},
+			"AuthArguments": {
+				"MFToken": "<)V          81433020102612"
+			}
+		},
+		"K050_BDIKAZCHUTIN": {
+			"K050_TOKEN_ZCHUT": "3639292",
+			"K050_BANK_ZCUT": "10",
+			"K050_SNIF_ZCUT": "914",
+			"K050_SUG_ZCUT": "000",
+			"K050_CHN_ZCUT": "1696441",
+			"K050_IBAN_ZCUT": "0",
+			"K050_SCUM": "000000015302",
+			"K050_MATRAT_HAVARA": "Cause ",
+			"K050_SHEM_MUTAV": "recipient Name",
+			"K050_SHLAV_PEULA": "0",
+			"K050_MISPAR_SIDURI": "0000"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters:
+   - K050_TOKEN_ZCHUT[11] - comes from request A
+   - K050_BANK_ZCUT[3] - Bank code of the target account
+   - K050_SNIF_ZCUT[3] - Branch number of the target account
+   - K050_SUG_ZCUT[3] - Account type of the target account - use always 000
+   - K050_CHN_ZCUT[10] - Account number of the target account
+   - K050_IBAN_ZCUT[23] - IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored
+   - K050_SCUM[15] - Amount to transfer. Format num(13).num(2)
+   - K050_MATRAT_HAVARA[28] - Transfer description (text)
+   - K050_SHEM_MUTAV[16] - Counterparty name. Don't confuse with counterparties managed by the core system!
+				The name is only used for reference and may be any but empty
+				If the calling application provides an empty name you can return error and terminate 
+				or substitute to some generic name like "Target Account" and continue.
+				In the case of RTGS transfer the name must be in english.
+   - K050_SHLAV_PEULA - Always 0
+   - K050_MISPAR_SIDURI - Always 1
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+    "NTDriveNoResp": {
+        "esbHeaderResponse": {
+            "esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb0e",
+            "responseStatus": {								// IIB (ESB) status
+                "callStatus": "Success",						// status
+                "errorDesc": ""								// error description
+            }
+        },
+        "MFAdminResponse": {								// Mainframe status
+            "returnCode": "1",								// error code 
+            "messageText": "העדכון בוצע בהצלחה !"					// error description
+        }
+    }
+}

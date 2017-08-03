@@ -1,0 +1,110 @@
+NTBD MF transaction (request 1; action 105) - Send money from specific account to a person via ATM - part 1
+===========================================================================================================
+There are 2 requests exist 1 and 2.
+They have to be executed sequentially in order to send money.
+This request (1) is starting the sequence and returns a token which is used later for the second part.
+
+This service is based on ATM cash withdrawal using credit card.
+Before using it the OBP adapter has to call another service (NTTF request W; action 000).
+NTTF service returns a list of card numbers connected to specific account.
+Usually there is only one card connected to account but not always, there may be more than one or even no one.
+When there is no card connected to the account - the operation is impossible and the a corresponding error code has to be returned.
+If there are more than one - the adapter  has to select one.
+The selection rule is simple: choose the first card having enough daily limit.
+(See also NTTF request W; action 000 description).
+Put attention: the OBP transaction request doesn't need to expose the card details as parameters.
+
+
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/105/01.01
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_1_105": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": ">U(          81433020102612"
+			}
+		},
+		"KELET_1351": {
+			"K135_MISPAR_KARTIS": "4580000045673214",
+			"K135_TOKEF_KARTIS": "",
+			"K135_TIKRAT_KARTIS": "",
+			"K135_NAYAD_BAAL_CHESHBON": "0532225455",
+			"K135_SCHUM": "100",
+			"K135_MATRAT_HAAVARA": "cool",
+			"K135_MISPAR_ZIHUY_MUTAV": "204778591",
+			"K135_SUG_ZIHUY_MUTAV": "1",
+			"K135_ERETZ_MUTAV": "2121",
+			"K135_SHEM_MUTAV": "kium",
+			"K135_TARICH_LEDA_MUTAV": "930708",
+			"K135_NAYAD_MUTAV": "0506724131",
+			"K135_SCHUM_HADASH": ""
+		}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+   - (there is no need to provide the bank code because it's always 10)
+2. MFToken - also comes from JONI output
+3. Transfer parameters:
+   - K135_MISPAR_KARTIS[16] - Card Number - comes from NTTF W
+   - K135_TOKEF_KARTIS[4]  - Card Expiration Date - comes from NTTF W
+   - K135_TIKRAT_KARTIS[7] - Current limit to withdrawal from the card - comes from NTTF W
+   - K135_NAYAD_BAAL_CHESHBON[10] - Mobile number of the money sender (user - owner of the "AccountNumber")
+   - K135_SCHUM[5] - Amount to transfer - has to be devisible by 100
+   - K135_MATRAT_HAAVARA[20] - Transaction description (purpose of the transfer)
+   - K135_MISPAR_ZIHUY_MUTAV[9] - Passport or National ID number of the money receiver
+   - K135_SUG_ZIHUY_MUTAV[1] - ID Type of the money receiver: 1 - National; 5- Passport
+   - K135_ERETZ_MUTAV[4] - 2121 always
+   - K135_SHEM_MUTAV[30] - Name of the money receiver
+   - K135_TARICH_LEDA_MUTAV[6] - Birth date of the money receiver
+   - K135_NAYAD_MUTAV[10] - Mobile number of the money receiver
+   - K135_SCHUM_HADASH[16] - Leave it empty
+
+
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"P135_BDIKAOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb08",
+			"responseStatus": {							// IIB (ESB) status:
+				"callStatus": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status:
+			"returnCode": "0",							// error code
+			"messageText": ""							// error description
+		},
+		"P135_TOKEN": "3639283",							// Token which should be used in the complementary 
+												// transaction NTBD request 2; action 105 (see below) 
+		"P135_AMALOT": {
+			"P135_TEUR_AMALA": "",
+			"P135_SCHUM_AMALA": "0.00",						// Transaction Fee
+			"P135_SCHUM_STANDART_BANK": "0.00",
+			"P135_SCHUM_STANDART_MIGZAR": "0.00",
+			"P135_OFEN_CHISHUV_AMALA": "0",
+			"P135_SUG_HATAVA": "0",
+			"P135_KOD_HATAVA_BE_SHEUR": "0",
+			"P135_ACHUZ_TARIF": "0.0000",
+			"P135_ACHUZ_ATZMI": "0.0000",
+			"P135_YOM_GVIA": "20170612",
+			"P135_MIS_AMALA": "0",
+			"P135_SCHUM_HISAHON_AMLA": "0.00"
+		}
+	}
+}

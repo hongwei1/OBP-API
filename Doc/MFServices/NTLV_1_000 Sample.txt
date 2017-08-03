@@ -1,0 +1,245 @@
+﻿POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01
+Content-Type	application/json;charset=utf-8
+
+{
+  "NTLV_1_000": {
+    "NtdriveCommonHeader": {
+      "KeyArguments": {
+        "Branch": "616",
+        "IDNumber": "4051769",
+        "IDType": "1",
+        "IDCounty": "2121"
+      },
+      "AuthArguments": {
+	"User": "N7jut8d"
+        "MFToken":"<&+          81433020102612"
+      }
+    }
+  }
+}
+
+================================================
+
+
+
+    {
+        "O1OUT1AREA_1":
+        {
+            "esbHeaderResponse":
+            {
+                "esbRequestId": "414d5120544c44423120202020202020be7cff5823e1180a",
+                "responseStatus":
+                {
+                    "callStatus": "Success",
+                    "errorDesc":
+                    {
+                    }
+                }
+            },
+            "MFAdminResponse":
+            {
+                "returnCode": "0",
+                "messageText":
+                {
+                }
+            },
+            "O1_COUNT_REC_TEL": "2",
+            "O1_COUNT_REC_MAIL": "0",
+            "O1_CONTACT_STATUS": "1",
+            "O1_CONTACT_REC":
+            [
+                {
+                    "O1_REC_ID":
+                    {
+                        "O1_REC_ID_I": "1163",
+                        "O1_REC_ID_V": "3202766816"
+                    },
+                    "O1_STATE_CODE": "2121",
+                    "O1_STATE_NAME": "          לארשי",
+                    "O1_REC_TYPE": "1",
+                    "O1_MAIL_ADDRESS":
+                    {
+                    },
+                    "O1_TEL_NUM": "5410377",
+                    "O1_TEL_AREA": "50",
+                    "O1_TEL_COUNTRY": "972",
+                    "O1_TEL_USE_TYPE_CODE": "10",
+                    "O1_TEL_USE_TYPE_DESC": "                                    דיינ",
+                    "O1_ORIG_SYSTEM_CODE": "3",
+                    "O1_ORIG_SYSTEM_DESC": "                                           טנרטניא",
+                    "O1_REC_MAIN": "0",
+                    "O1_GET_MSG_FLAG": "0",
+                    "O1_VERIFIED_FLAG": "1",
+                    "O1_LINK_TO_SERVICE": "0",
+                    "O1_CONFIRM_DATE": "20161215"
+                },
+                {
+                    "O1_REC_ID":
+                    {
+                        "O1_REC_ID_I": "1163",
+                        "O1_REC_ID_V": "155025232"
+                    },
+                    "O1_STATE_CODE": "2121",
+                    "O1_STATE_NAME": "          לארשי",
+                    "O1_REC_TYPE": "1",
+                    "O1_MAIL_ADDRESS":
+                    {
+                    },
+                    "O1_TEL_NUM": "5624954",
+                    "O1_TEL_AREA": "3",
+                    "O1_TEL_COUNTRY": "972",
+                    "O1_TEL_USE_TYPE_CODE": "5",
+                    "O1_TEL_USE_TYPE_DESC": "                              תיבב ןופלט",
+                    "O1_ORIG_SYSTEM_CODE": "20",
+                    "O1_ORIG_SYSTEM_DESC": "                                             תכרעמ",
+                    "O1_REC_MAIN": "0",
+                    "O1_GET_MSG_FLAG": "0",
+                    "O1_VERIFIED_FLAG": "0",
+                    "O1_LINK_TO_SERVICE": "0",
+                    "O1_CONFIRM_DATE": "20161215"
+                },
+                {
+                    "O1_REC_ID":
+                    {
+                        "O1_REC_ID_I": "0",
+                        "O1_REC_ID_V": "0"
+                    },
+                    "O1_STATE_CODE": "0",
+                    "O1_STATE_NAME":
+                    {
+                    },
+                    "O1_REC_TYPE": "0",
+                    "O1_MAIL_ADDRESS":
+                    {
+                    },
+                    "O1_TEL_NUM":
+                    {
+                    },
+                    "O1_TEL_AREA": "0",
+                    "O1_TEL_COUNTRY": "0",
+                    "O1_TEL_USE_TYPE_CODE": "0",
+                    "O1_TEL_USE_TYPE_DESC":
+                    {
+                    },
+                    "O1_ORIG_SYSTEM_CODE": "0",
+                    "O1_ORIG_SYSTEM_DESC":
+                    {
+                    },
+                    "O1_REC_MAIN": "0",
+                    "O1_GET_MSG_FLAG": "0",
+                    "O1_VERIFIED_FLAG": "0",
+                    "O1_LINK_TO_SERVICE": "0",
+                    "O1_CONFIRM_DATE":
+                    {
+                    }
+                },
+                {
+                    "O1_REC_ID":
+                    {
+                        "O1_REC_ID_I": "0",
+                        "O1_REC_ID_V": "0"
+                    },
+                    "O1_STATE_CODE": "0",
+                    "O1_STATE_NAME":
+                    {
+                    },
+                    "O1_REC_TYPE": "0",
+                    "O1_MAIL_ADDRESS":
+                    {
+                    },
+                    "O1_TEL_NUM":
+                    {
+                    },
+                    "O1_TEL_AREA": "0",
+                    "O1_TEL_COUNTRY": "0",
+                    "O1_TEL_USE_TYPE_CODE": "0",
+                    "O1_TEL_USE_TYPE_DESC":
+                    {
+                    },
+                    "O1_ORIG_SYSTEM_CODE": "0",
+                    "O1_ORIG_SYSTEM_DESC":
+                    {
+                    },
+                    "O1_REC_MAIN": "0",
+                    "O1_GET_MSG_FLAG": "0",
+                    "O1_VERIFIED_FLAG": "0",
+                    "O1_LINK_TO_SERVICE": "0",
+                    "O1_CONFIRM_DATE":
+                    {
+                    }
+                },
+                {
+                    "O1_REC_ID":
+                    {
+                        "O1_REC_ID_I": "0",
+                        "O1_REC_ID_V": "0"
+                    },
+                    "O1_STATE_CODE": "0",
+                    "O1_STATE_NAME":
+                    {
+                    },
+                    "O1_REC_TYPE": "0",
+                    "O1_MAIL_ADDRESS":
+                    {
+                    },
+                    "O1_TEL_NUM":
+                    {
+                    },
+                    "O1_TEL_AREA": "0",
+                    "O1_TEL_COUNTRY": "0",
+                    "O1_TEL_USE_TYPE_CODE": "0",
+                    "O1_TEL_USE_TYPE_DESC":
+                    {
+                    },
+                    "O1_ORIG_SYSTEM_CODE": "0",
+                    "O1_ORIG_SYSTEM_DESC":
+                    {
+                    },
+                    "O1_REC_MAIN": "0",
+                    "O1_GET_MSG_FLAG": "0",
+                    "O1_VERIFIED_FLAG": "0",
+                    "O1_LINK_TO_SERVICE": "0",
+                    "O1_CONFIRM_DATE":
+                    {
+                    }
+                },
+                {
+                    "O1_REC_ID":
+                    {
+                        "O1_REC_ID_I": "0",
+                        "O1_REC_ID_V": "0"
+                    },
+                    "O1_STATE_CODE": "0",
+                    "O1_STATE_NAME":
+                    {
+                    },
+                    "O1_REC_TYPE": "0",
+                    "O1_MAIL_ADDRESS":
+                    {
+                    },
+                    "O1_TEL_NUM":
+                    {
+                    },
+                    "O1_TEL_AREA": "0",
+                    "O1_TEL_COUNTRY": "0",
+                    "O1_TEL_USE_TYPE_CODE": "0",
+                    "O1_TEL_USE_TYPE_DESC":
+                    {
+                    },
+                    "O1_ORIG_SYSTEM_CODE": "0",
+                    "O1_ORIG_SYSTEM_DESC":
+                    {
+                    },
+                    "O1_REC_MAIN": "0",
+                    "O1_GET_MSG_FLAG": "0",
+                    "O1_VERIFIED_FLAG": "0",
+                    "O1_LINK_TO_SERVICE": "0",
+                    "O1_CONFIRM_DATE":
+                    {
+                    }
+                }
+            ]
+        }
+    }
+
+

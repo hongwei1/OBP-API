@@ -1,0 +1,44 @@
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01
+Content-Type	application/json;charset=utf-8
+{
+  "NTIB_2_000": {
+    "NtdriveCommonHeader": {
+      "KeyArguments": {
+        "Branch": "616",
+        "AccountType": "330",
+        "AccountNumber": "50180963"
+      },
+      "AuthArguments": {
+	"User": "N7jut8d"
+        "MFToken":"\/G>          81433020102612"
+      }
+    }
+  }
+}
+===========================================================
+{
+	"SHETACHTCHUVA": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff582302e602",
+			"responseStatus": {
+				"callStatus": "Success",
+				"errorDesc": {}
+			}
+		},
+		"MFAdminResponse": {
+			"returnCode": "0",
+			"messageText": {}
+		},
+		"TS00_MONE_NIGREROT": "1",
+		"TS00_PIRTEY_TCHUVA": {
+			"TS00_TV_TCHUVA": {
+				"TS00_NIGRERET_TCHUVA": {
+					"TS00_SNIF": "616",
+					"TS00_SUG": "330",
+					"TS00_MIS_CHN": "50180963",
+					"TS00_IBAN": "IL230106160000050180963"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,72 @@
+NTBD MF transaction (request A; action 050) - Transfer money from specific account to other specified account - part 1
+======================================================================================================================
+There are 5 requests needed to fulfill the transfer: A, B, I, G, 2.
+They have to be executed sequentially in the above order.
+This request (A) is starting the sequence and returns:
+ - a token which is used later for all subsequent requests.
+ - the maximum amount allowed for transferring from the account
+ - debit(source) account owner name in english
+This request is designated to examine the debit(source) account - whether is allowed to transfer from it and how much.
+
+To run the transaction use the following POST command:
+======================================================
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03
+Content-Type	application/json;charset=utf-8
+{
+	"NTBD_A_050": {
+		"NtdriveCommonHeader": {
+			"KeyArguments": {
+				"Branch": "616",
+				"AccountType": "330",
+				"AccountNumber": "50180963"
+			},
+			"AuthArguments": {
+				"MFToken": "<)V          81433020102612"
+			}
+		},
+		"K050_BDIKACHOVAIN": {
+			"K050_OFEN_HAVARA": "1",
+			"K050_OFI_DISKET": "0",
+			"K050_ID_HORAA": "0",
+			"K050_SW_ATIDI": "1",
+			"K050_TA_ATIDI": "20170705"
+		}
+	}
+}
+
+Input parameters description:
+1. Account parameters - all the account parameters come from JONI:
+   - Branch number of the account
+   - AccountType.
+   - AccountNumber
+2. MFToken - also comes from JONI output; User - the same as in JONI input
+3. Transfer parameters:
+   - K050_OFEN_HAVARA - Transfer type: 1=regular; 2=RTGS - real time
+   - K050_OFI_DISKET - always 0
+   - K050_ID_HORAA - always 0
+   - K050_SW_ATIDI - if the transfer is scheduled to a future date then 1 otherwise 0
+   - K050_TA_ATIDI[8] - The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD
+
+
+Following is a valid transaction output.
+Use only parameters which are described by comments on the right.
+=================================================================
+{
+	"P050_BDIKACHOVAOUT": {
+		"esbHeaderResponse": {
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca0d",
+			"responseStatus": {							// IIB (ESB) status
+				"statusCode": "Success",					// status
+				"errorDesc": ""							// error description
+			}
+		},
+		"MFAdminResponse": {								// Mainframe status
+			"returnCode": "0",							// error code
+			"messageText": ""							// error description
+		},
+		"P050_TOKEN_OUT": "3639292",							// Token which has to be used
+												// in all the following requests
+		"P050_SCUM_MAX_LE_HAVARA": "10000.00",						// The maximum amount allowed to transfer from the account
+		"P050_SHEM_HOVA_ANGLIT": ""							// Debit(source) account owner name in english
+	}
+}
