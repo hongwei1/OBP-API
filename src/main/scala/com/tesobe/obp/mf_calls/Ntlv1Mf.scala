@@ -22,14 +22,11 @@ package object Ntlv1Mf {
 
     val client = new DefaultHttpClient()
 
-    //val json: JValue = ("JONI_0_000" -> ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
     val json: JValue = "NTLV_1_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("IDNumber" -> 
       idNumber) ~ ("IDType" -> idType) ~ ("IDCounty" -> idCounty)) ~ ("AuthArguments" -> ("MFToken" -> cbsToken)))
     println(compactRender(json))
 
-    // send the post request
     val response = client.execute(post)
-    //val response = client.execute(new HttpGet("http://localhost/V1.0/JONI/0/000/01.01"))
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
