@@ -222,7 +222,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
-          simpleTransactionDate, simpleTransactionDate,
+          simpleTransactionDate, simpleTransactionDate
         )).data
       } else if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
         !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)){
@@ -233,14 +233,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
-          simpleTransactionDate, simpleTransactionDate,
+          simpleTransactionDate, simpleTransactionDate
         )).data
       } else {
         getTransactions(GetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
-          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000",
+          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000"
         )).data
       }
     }
