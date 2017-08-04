@@ -12,11 +12,26 @@ class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
   implicit val formats = net.liftweb.json.DefaultFormats
   
-  test("Nt1cTMf gets a result"){
+/*  test("Nt1cTMf gets a result"){
     val result = getNt1cTMfHttpApache("","","","",List("","",""),List("","",""),"")
     println(result)
+  }*/
+  
+  test("getCompletedTransactions works") {
+    val result = getCompletedTransactions(
+      "814",
+      "330",
+      "20102612",
+      "<~9          81433020102612",
+      List("2016",
+        "01",
+        "01"),
+      List("2017", "06", "01"),
+      "15"
+    )
+    println(result)
   }
-
+    
   override def afterAll() {
     com.tesobe.obp.RunMockServer.mockServer.stop()
   }

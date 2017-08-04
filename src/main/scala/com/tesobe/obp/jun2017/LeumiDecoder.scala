@@ -1,5 +1,6 @@
 package com.tesobe.obp.june2017
 
+import java.text.SimpleDateFormat
 import java.util.UUID
 
 import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
@@ -33,6 +34,13 @@ import scala.collection.mutable.{ListBuffer, Map}
 object LeumiDecoder extends Decoder with StrictLogging {
   
   val defaultCurrency = "ILS"
+  val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
+  val simpleTransactionDateFormat = new SimpleDateFormat("yyyymmdd")
+  val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
+  val simpleDayFormat: SimpleDateFormat = new SimpleDateFormat("dd")
+  val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("mm")
+  val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
+
   //TODO: Replace with caching solution for production
   case class AccountValues (branchId: String,accountType: String, accountNumber:String)
   var mapAccountIdToAccountValues = Map[String, AccountValues]()
@@ -179,12 +187,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
     //TODO: Error handling
     val accountValues = mapAccountIdToAccountValues(getTransactionsRequest.accountId)
+    val fromDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
+    val fromMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
+    val fromYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
+    val toDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
+    val toMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
+    val toYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
+
     val mfTransactions = getCompletedTransactions(
       accountValues.branchId,
       accountValues.accountType,
       accountValues.accountNumber,
-      //TODO: Get hardcoded parameters from North Side
-      getTransactionsRequest.authInfo.cbsToken, List("2016","01","01"), List("2017","06","01"), "15")
+      getTransactionsRequest.authInfo.cbsToken, List(fromYear,fromMonth,fromDay), List(toYear,toMonth,toDay), getTransactionsRequest.limit.toString)
     var result = new ListBuffer[InternalTransaction]
     for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
@@ -198,7 +212,39 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
-    val allTransactions: List[InternalTransaction] = getTransactions(GetTransactions(getTransactionRequest.authInfo, getTransactionRequest.bankId, getTransactionRequest.accountId, 15, "", "")).data
+    logger.debug(s"get Transaction for ($getTransactionRequest)")
+    val allTransactions: List[InternalTransaction] = {
+      if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) && 
+          mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
+        val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
+        val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
+        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+          getTransactionRequest.bankId,
+          getTransactionRequest.accountId,
+          50,
+          simpleTransactionDate, simpleTransactionDate,
+        )).data
+      } else if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
+        !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)){
+        getBankAccounts(GetAccounts(getTransactionRequest.authInfo))
+        val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
+        val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
+        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+          getTransactionRequest.bankId,
+          getTransactionRequest.accountId,
+          50,
+          simpleTransactionDate, simpleTransactionDate,
+        )).data
+      } else {
+        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+          getTransactionRequest.bankId,
+          getTransactionRequest.accountId,
+          50,
+          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000",
+        )).data
+      }
+    }
+    
     //TODO: Error handling
     val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
     InboundTransaction(getTransactionRequest.authInfo, resultTransaction)
