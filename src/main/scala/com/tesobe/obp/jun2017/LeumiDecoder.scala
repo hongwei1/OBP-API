@@ -207,16 +207,36 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def createTransaction(createTransactionRequest: CreateTransaction): InboundCreateTransactionId = {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
-    // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
-    // OBP-API will provide: four values:
-//    val senderPhoneNumber = createTransactionRequest.senderPhoneNumber
-//    val receiverPhoneNumber = createTransactionRequest.receiverPhoneNumber
-//    val transactionDescription = createTransactionRequest.transactionDescription
-//    val transactionAmount = createTransactionRequest.transactionAmount
-    //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
+  
+    val transactionNewId =
+      if (createTransactionRequest.transactionRequestType == ("PHONE_TO_PHONE")) {
+        //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
+        val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyPhoneToPhoneJson]
+        val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from_account_phone_number
+        val receiverPhoneNumber = transactionRequestBodyPhoneToPhoneJson.couterparty.other_account_phone_number
+        val transactionDescription = transactionRequestBodyPhoneToPhoneJson.description
+        val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
+        //TODO 2, repalce the value of  transactionNewId.
+        UUID.randomUUID().toString
+      } else if (createTransactionRequest.transactionRequestType == ("COUNTERPARTY")) {
+        val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJson]
+  
+        UUID.randomUUID().toString
+      } else if (createTransactionRequest.transactionRequestType == ("SEPA")) {
+        val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodySEPAJSON]
+  
+        UUID.randomUUID().toString
+      } else if (createTransactionRequest.transactionRequestType == ("ATM")) {
+        val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyATMJson]
+  
+        UUID.randomUUID().toString
+      } else if (createTransactionRequest.transactionRequestType == ("ACCOUNT_TO_ACCOUNT")) {
+        val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyAccountToAccount]
+        
+        UUID.randomUUID().toString
+      } else
+        throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
     
-    //TODO 2, repalce the value of  transactionNewId.
-    val transactionNewId = UUID.randomUUID().toString
     InboundCreateTransactionId(createTransactionRequest.authInfo, InternalTransactionId(transactionNewId))
     
   }
@@ -226,7 +246,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
-    logger.debug(s"LeumiDecoder-createTransaction input: ($createChallenge)")
+    logger.debug(s"LeumiDecoder-createChallenge input: ($createChallenge)")
     
     val phoneNumber = createChallenge.phoneNumber
     //TODO, added NTLV_7_000 Login here.

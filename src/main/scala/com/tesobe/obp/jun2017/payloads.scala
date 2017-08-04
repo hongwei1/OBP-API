@@ -50,6 +50,7 @@ case class CreateTransaction(
   // transaction details
   transactionRequestType: String,
   transactionChargePolicy: String,
+  transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
   
   // toAccount or toCounterparty
   toCounterpartyId: String,
@@ -97,17 +98,17 @@ case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCrea
 case class AuthInfo(userId: String, username: String, cbsToken: String)
 
 case class InboundBank(
-                        errorCode: String,
-                        bankId: String,
-                        name: String,
-                        logo: String,
-                        url: String
-                      )
+  errorCode: String,
+  bankId: String,
+  name: String,
+  logo: String,
+  url: String
+)
 case class InboundValidatedUser(
-                  errorCode: Option[String],
-                  email: Option[String],
-                  displayName: Option[String]
-                )
+  errorCode: Option[String],
+  email: Option[String],
+  displayName: Option[String]
+)
 
 case class InboundAdapterInfo(
   errorCode: String,
@@ -117,23 +118,25 @@ case class InboundAdapterInfo(
   date: String
 )
 
-case class InboundAccountJune2017(errorCode: String,
-                                  cbsToken: String, 
-                                  bankId: String,
-                                  branchId: String,
-                                  accountId: String, 
-                                  accountNumber: String,
-                                  accountType: String, 
-                                  balanceAmount: String,
-                                  balanceCurrency: String,
-                                  owners: List[String], 
-                                  viewsToGenerate: List[String],
-                                  bankRoutingScheme: String,
-                                  bankRoutingAddress: String,
-                                  branchRoutingScheme: String,
-                                  branchRoutingAddress: String, 
-                                  accountRoutingScheme: String, 
-                                  accountRoutingAddress: String)
+case class InboundAccountJune2017(
+  errorCode: String,
+  cbsToken: String,
+  bankId: String,
+  branchId: String,
+  accountId: String,
+  accountNumber: String,
+  accountType: String,
+  balanceAmount: String,
+  balanceCurrency: String,
+  owners: List[String],
+  viewsToGenerate: List[String],
+  bankRoutingScheme: String,
+  bankRoutingAddress: String,
+  branchRoutingScheme: String,
+  branchRoutingAddress: String,
+  accountRoutingScheme: String,
+  accountRoutingAddress: String
+)
 
 abstract class InboundMessageBase(optionalFields: String*) {
   def errorCode: String
@@ -157,6 +160,110 @@ case class InternalTransaction(
   `type`: String, //"TN2_SUG_PEULA"
   userId: String //userId
 ) extends InboundMessageBase
+
+
+// these are for create transactions
+case class AmountOfMoneyJsonV121(
+  currency: String,
+  amount: String
+)
+
+case class TransactionRequestAccountJsonV140(
+  bank_id: String,
+  account_id: String
+)
+
+//For SEPA, it need the iban to find the toCounterpaty--> toBankAccount
+case class IbanJson(val iban: String)
+
+//For COUNTERPATY, it need the counterparty_id to find the toCounterpaty--> toBankAccount
+case class CounterpartyIdJson(val counterparty_id: String)
+
+//high level of four different kinds of transaction request types: FREE_FROM, SANDBOXTAN, COUNTERPATY and SEPA.
+//They share the same AmountOfMoney and description fields
+//Note : in scala case-to-case inheritance is prohibited, so used trait instead
+sealed trait TransactionRequestCommonBodyJSON {
+  val value: AmountOfMoneyJsonV121
+  val description: String
+}
+// the common parts of four types
+// note: there is TransactionRequestCommonBodyJSON trait, so this case class call TransactionRequestBodyCommonJSON
+case class TransactionRequestBodyCommonJSON(
+  value: AmountOfMoneyJsonV121,
+  description: String
+) extends TransactionRequestCommonBodyJSON
+
+// the data from endpoint, extract as valid JSON
+case class TransactionRequestBodySandBoxTanJSON(
+  to: TransactionRequestAccountJsonV140,
+  value: AmountOfMoneyJsonV121,
+  description: String
+) extends TransactionRequestCommonBodyJSON
+
+// the data from endpoint, extract as valid JSON
+case class TransactionRequestBodyCounterpartyJson(
+  value: AmountOfMoneyJsonV121,
+  description: String,
+  charge_policy: String
+) extends TransactionRequestCommonBodyJSON
+
+// the data from endpoint, extract as valid JSON
+case class TransactionRequestBodySEPAJSON(
+  value: AmountOfMoneyJsonV121,
+  to: IbanJson,
+  description: String,
+  charge_policy: String
+) extends TransactionRequestCommonBodyJSON
+
+case class TransactionRequestBodyPhoneToPhoneJson(
+  from_account_phone_number: String,
+  value: AmountOfMoneyJsonV121,  // "K135_SCHUM": "", //- Amount to transfer - has to be divisible by 100
+  description: String, // "K135_MATRAT_HAAVARA": "Rent payment",   //- Transaction description (purpose of the transfer)
+  charge_policy: String,
+  couterparty: CounterpartyPhoneToPhoneJson
+) extends TransactionRequestCommonBodyJSON
+
+case class TransactionRequestBodyAccountToAccount(
+  from_account_phone_number: String,
+  override val value: AmountOfMoneyJsonV121,  // "K135_SCHUM": "", //- Amount to transfer - has to be divisible by 100
+  override val description: String, // "K135_MATRAT_HAAVARA": "Rent payment",   //- Transaction description (purpose of the transfer)
+  charge_policy: String,
+  couterparty: CounterpartyPhoneToPhoneJson
+) extends TransactionRequestCommonBodyJSON
+
+case class TransactionRequestBodyATMJson(
+  from_account_phone_number: String,
+  value: AmountOfMoneyJsonV121,  // "K135_SCHUM": "", //- Amount to transfer - has to be divisible by 100
+  description: String, // "K135_MATRAT_HAAVARA": "Rent payment",   //- Transaction description (purpose of the transfer)
+  charge_policy: String,
+  couterparty: CounterpartyPhoneToPhoneJson
+) extends TransactionRequestCommonBodyJSON
+
+case class CounterpartyPhoneToPhoneJson(
+  other_account_owner: String,
+  other_account_owner_birthday: String,
+  other_account_phone_number: String
+)
+
+//Mapper means this part will be stored into mapper.mdetails
+//And when call the "answerTransactionRequestChallenge" endpoint, it will use this mapper.mdetails to process further step
+// code : detailsJsonExtract = details.extract[TransactionRequestDetailsMapperJSON]
+case class TransactionRequestDetailsMapperJSON(
+  to: TransactionRequestAccountJsonV140,
+  value: AmountOfMoneyJsonV121,
+  description: String
+) extends TransactionRequestCommonBodyJSON
+
+//Mapper means this part will be stored into mapper.mdetails
+//And when call the "answerTransactionRequestChallenge" endpoint, it will use this mapper.mdetails to process further step
+// code : detailsJsonExtract = details.extract[TransactionRequestDetailsMapperJSON]
+case class TransactionRequestDetailsMapperCounterpartyJSON(
+  counterparty_id: String,
+  to: TransactionRequestAccountJsonV140,
+  value: AmountOfMoneyJsonV121,
+  description: String,
+  charge_policy: String
+) extends TransactionRequestCommonBodyJSON
 
 case class InternalTransactionId(
   id : String

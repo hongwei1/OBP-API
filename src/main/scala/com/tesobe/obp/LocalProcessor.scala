@@ -155,7 +155,26 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def createTransactionFn: Business = {msg =>
     /* call Decoder for extracting data from source file */
     val response: (CreateTransaction => InboundCreateTransactionId) = { q => com.tesobe.obp.june2017.LeumiDecoder.createTransaction(q) }
-    val r = decode[CreateTransaction](msg.record.value()) match {
+    val valueFromKafka: String = msg.record.value()
+    //Because the CreateTransaction case class, contain the "sealed trait TransactionRequestCommonBodyJSON"
+    //So, we need map the trait explicitly.
+    def mapTraitFieldExplicitly(string: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${string }": {""").replace("""}},""","""}}},""")
+    
+    val changeValue = 
+      if(valueFromKafka.contains("PHONE_TO_PHONE")) 
+        mapTraitFieldExplicitly("TransactionRequestBodyPhoneToPhoneJson")
+      else if(valueFromKafka.contains("COUNTERPARTY"))
+        mapTraitFieldExplicitly("TransactionRequestBodyCounterpartyJSON")
+      else if(valueFromKafka.contains("SEPA"))
+        mapTraitFieldExplicitly("TransactionRequestBodySEPAJSON")
+      else if(valueFromKafka.contains("ATM"))
+        mapTraitFieldExplicitly("TransactionRequestBodyATMJson")
+      else if(valueFromKafka.contains("ACCOUNT_TO_ACCOUNT"))
+        mapTraitFieldExplicitly("TransactionRequestBodyAccountToAccount")
+      else
+        throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
+    
+    val r = decode[CreateTransaction](changeValue) match {
       case Left(e) => ""
       case Right(x) => response(x).asJson.noSpaces
     }
