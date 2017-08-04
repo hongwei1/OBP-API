@@ -103,6 +103,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
   
   def bankAccountIdFn: Business = { msg =>
+    logger.debug(s"Processing bankAccountIdFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetAccountbyAccountID => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountbyAccountId(q) }
     val r = decode[GetAccountbyAccountID](msg.record.value()) match {
@@ -113,6 +114,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
 
   def bankAccountNumberFn: Business = { msg =>
+    logger.debug(s"Processing bankAccountNumberFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetAccountbyAccountNumber => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
     val r = decode[GetAccountbyAccountNumber](msg.record.value()) match {
@@ -123,6 +125,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
   
   def bankAccountsFn: Business = {msg =>
+    logger.debug(s"Processing bankAccountsFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccounts(q) }
     val r = decode[GetAccounts](msg.record.value()) match {
@@ -133,6 +136,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
 
   def transactionsFn: Business = {msg =>
+    logger.debug(s"Processing transactionsFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetTransactions => InboundTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactions(q) }
     val r = decode[GetTransactions](msg.record.value()) match {
@@ -143,6 +147,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   } 
   
   def transactionFn: Business = {msg =>
+    logger.debug(s"Processing transactionFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetTransaction => InboundTransaction) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransaction(q) }
     val r = decode[GetTransaction](msg.record.value()) match {
@@ -153,6 +158,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
   
   def createTransactionFn: Business = {msg =>
+    logger.debug(s"Processing createTransactionFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (CreateTransaction => InboundCreateTransactionId) = { q => com.tesobe.obp.june2017.LeumiDecoder.createTransaction(q) }
     val valueFromKafka: String = msg.record.value()
@@ -182,6 +188,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
   
   def tokenFn: Business = {msg =>
+    logger.debug(s"Processing tokenFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (GetToken => InboundToken) = { q => com.tesobe.obp.june2017.LeumiDecoder.getToken(q) }
     val r = decode[GetToken](msg.record.value()) match {
@@ -192,6 +199,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   }
   
   def createChallengeFn: Business = {msg =>
+    logger.debug(s"Processing createChallengeFn ${msg.record.value}")
     /* call Decoder for extracting data from source file */
     val response: (OutboundCreateChallengeJune2017 => InboundCreateChallengeJune2017) = { q => com.tesobe.obp.june2017.LeumiDecoder.createChallenge(q)}
     val r = decode[OutboundCreateChallengeJune2017](msg.record.value()) match {

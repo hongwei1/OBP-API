@@ -25,19 +25,16 @@ object Nt1cTMf extends Config{
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02")
-    println(post)
     post.addHeader("Content-Type","application/json;charset=utf-8")
-
     val client = new DefaultHttpClient()
-
     val json: JValue = "NT1C_T_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branchId) ~ ("AccountType" ->
       accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->("MFToken" -> cbsToken))) ~ ("KELET_TAARICHIM" ->
       ("KELET_ME_TAAR" -> ("KELET_ME_YYYY" -> startDate(0)) ~ ("KELET_ME_MM" -> startDate(1)) ~ ("KELET_ME_DD" -> startDate(2))) ~
         ("KELET_AD_TAAR" -> ("KELET_AD_YYYY" -> endDate(0)) ~ ("KELET_AD_MM" -> endDate(1)) ~ ("KELET_AD_DD" -> endDate(2))) ~
         ("KELET_TN_MIS_TNUOT" -> maxNumberOfTransactions))
-        
+    println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")   
     println(compactRender(json))
-
+    println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     // send the post request
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
