@@ -14,7 +14,7 @@ Content-Type	application/json;charset=utf-8
 			"KeyArguments": {
 				"Branch": "616",
 				"AccountType": "330",
-				"AccountNumber": "50180963"
+				"AccountType": "50180963"
 			},
 			"AuthArguments": {
 				"User": "N7jut8d"

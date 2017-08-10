@@ -26,37 +26,7 @@ import akka.stream.ActorMaterializer*/
 
 object JoniMf extends Config{
 
-/*  
- def getJoniMfHttp(username: String) = {
 
-   implicit val system = ActorSystem()
-   implicit val materializer = ActorMaterializer()
-
-   val json: JValue = ("JONI_0_000" -> ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
-   val data: String = compactRender(json)
-   var contentType: ContentType = ContentType(MediaType.applicationWithFixedCharset("application/json", HttpCharsets.`UTF-8`))
-
-
-   val responseFuture: Future[HttpResponse] =
-     Http().singleRequest(HttpRequest(
-       method = HttpMethods.POST,
-       //uri = "http://localhost:7800/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01",
-       uri = config.getString("bankserver.url"),
-       entity = HttpEntity.apply(contentType, data.getBytes())
-     ))
-   val responsePromise = Promise[HttpResponse]
-
-   responseFuture.onComplete {
-     case Success(e) => responsePromise.success(e)
-     case Failure(e) => responsePromise.failure(e)
-   }
-   responsePromise.future.onComplete {
-     case Success(e) => e.entity
-     case Failure(e) => e
-
-
-   }
- }*/
    def getJoniMfHttpApache(username: String): String = {
 
      //val url = "http://localhost"
@@ -82,46 +52,8 @@ object JoniMf extends Config{
      result
    }
   
-  import akka.actor.ActorSystem
-  import akka.stream.ActorMaterializer
-  import play.api.libs.ws._
-  import play.api.libs.ws.ahc._
-  
-  import scala.concurrent.Future
-  import scala.concurrent.ExecutionContext.Implicits._
-  // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem("PlayWs")
-  system.registerOnTermination {
-    System.exit(0)
-  }
-  implicit val materializer = ActorMaterializer()
-  // Create the standalone WS client
-  // no argument defaults to a AhcWSClientConfig created from
-  // "AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader)"
-  val wsClient = StandaloneAhcWSClient()
-  
-  def getJoniMfPlayWS(username: String): String = {
-  
-  def call(wsClient: StandaloneWSClient, url: String, bodyString: String): Future[String] = {
-    wsClient
-      .url(url)
-      .post(bodyString)
-      .map { response ⇒
-      val statusText: String = response.statusText
-      response.body
-    }
-  }
-    val then1: Future[String] = call(wsClient,"http://localhost:1080/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01","")
-      .andThen { case _ => wsClient.close() }
-      .andThen { case _ => system.terminate()}
-  
-    val TIMEOUT = (10 seconds)
-    Await.result(then1, TIMEOUT).asInstanceOf[String]
-  
-  }
-  
+    
    // libweb-json parses the empty object to JObject(List()), but we need JString to extract to String
-   // alternative: transform {case JObject(List()) => JString("") } will replace the JValues at json ast level
    def replaceEmptyObjects(string: String): String = string.replaceAll("\\{\\}", "\"\"")
 
    // Arrays with single element are not represented as Arrays in the MF json

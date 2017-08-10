@@ -267,6 +267,29 @@ case class O1out1area1(
 
 
 case class Ntlv1(O1OUT1AREA_1:  O1out1area1)
+
+case class P135Amalot(
+                      P135_TEUR_AMALA: String,
+                      P135_SCHUM_AMALA: String,
+                      P135_SCHUM_STANDART_BANK: String,
+                      P135_SCHUM_STANDART_MIGZAR: String,
+                      P135_OFEN_CHISHUV_AMALA: String,
+                      P135_SUG_HATAVA: String,
+                      P135_KOD_HATAVA_BE_SHEUR: String,
+                      P135_ACHUZ_TARIF: String,
+                      P135_ACHUZ_ATZMI: String,
+                      P135_YOM_GVIA: String,
+                      P135_MIS_AMALA: String,
+                      P135_SCHUM_HISAHON_AMLA: String
+                     )
+
+case class P135Bdikaout(esbHeaderResponse: EsbHeaderResponse,
+                        mfAdminResponse: MfAdminResponse,
+                        P135_TOKEN: String,
+                        P135_AMALOT: P135Amalot
+                       )
+
+case class Ntbd1v135(P135_BDIKAOUT: P135Bdikaout)
 //From OBP-Scala-South-----------------------------------------------------
 
 case class CounterPartySimple(name: Option[String],

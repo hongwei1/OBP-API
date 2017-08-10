@@ -138,6 +138,24 @@ package object RunMockServer {
           )
           .withBody(jsonToString("ntlv_1_result.json")) 
       )
+    
+    //Ntbd1v135
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("ntbd1_135_result.json"))
+      )
 
 
   }
