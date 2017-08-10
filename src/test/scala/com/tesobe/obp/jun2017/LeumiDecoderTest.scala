@@ -22,7 +22,7 @@ class LeumiDecoderTest extends FunSuite with Matchers with BeforeAndAfterAll{
   val accountId5 = base64EncodedSha256("20105505" + "fjdsaFDSAefwfsalfid")
   
   test("getBankAccounts works for Stub"){
-    val result = getBankAccounts(GetAccounts(AuthInfo("karlsid", "karl", "")))
+    val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", "karl", ""), null)) //TODO ,need fix
 
     //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
     result should be (InboundBankAccounts(AuthInfo("karlsid", "karl", ">,?          81433020102612"),

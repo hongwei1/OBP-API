@@ -52,7 +52,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     logger.debug(s"Processing banksFn ${msg.record.value}")
     val response: (GetBanks => Banks) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBanks(q) }
     val r = decode[GetBanks](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -63,7 +63,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBank(q) }
     val r = decode[GetBank](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -74,7 +74,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getUser(q) }
     val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -85,7 +85,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (UpdateUserAccountViews => OutboundUserAccountViewsBaseWapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getAccounts(q) }
     val r = decode[UpdateUserAccountViews](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -96,7 +96,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.june2017.LeumiDecoder.getAdapter(q) }
     val r = decode[GetAdapterInfo](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -107,7 +107,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetAccountbyAccountID => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountbyAccountId(q) }
     val r = decode[GetAccountbyAccountID](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -118,7 +118,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetAccountbyAccountNumber => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
     val r = decode[GetAccountbyAccountNumber](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -126,10 +126,10 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   
   def bankAccountsFn: Business = {msg =>
     logger.debug(s"Processing bankAccountsFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccounts(q) }
-    val r = decode[GetAccounts](msg.record.value()) match {
-      case Left(e) => ""
+//    /* call Decoder for extracting data from source file */
+    val response: (OutboundGetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccounts(q) }
+    val r = decode[OutboundGetAccounts](msg.record.value()) match {
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -140,7 +140,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetTransactions => InboundTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactions(q) }
     val r = decode[GetTransactions](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -151,7 +151,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetTransaction => InboundTransaction) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransaction(q) }
     val r = decode[GetTransaction](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -181,7 +181,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
     
     val r = decode[CreateTransaction](changeValue) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -192,7 +192,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetToken => InboundToken) = { q => com.tesobe.obp.june2017.LeumiDecoder.getToken(q) }
     val r = decode[GetToken](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -203,7 +203,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (OutboundCreateChallengeJune2017 => InboundCreateChallengeJune2017) = { q => com.tesobe.obp.june2017.LeumiDecoder.createChallenge(q)}
     val r = decode[OutboundCreateChallengeJune2017](msg.record.value()) match {
-      case Left(e) => ""
+      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debuging ");
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)

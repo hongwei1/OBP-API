@@ -150,7 +150,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     //Not cached or invalid AccountId
     if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
       println("not mapped")
-      getBankAccounts(GetAccounts(getAccount.authInfo))
+      getBankAccounts(OutboundGetAccounts(getAccount.authInfo,null)) //TODO need add the data here.
     }
     val accountNr = mapAccountIdToAccountValues(getAccount.accountId).accountNumber
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
@@ -171,7 +171,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       x.accountNr == getAccount.accountNumber).head))
   }
 
-   def getBankAccounts(getAccountsInput: GetAccounts): InboundBankAccounts = {
+   def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundBankAccounts = {
     val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
@@ -226,7 +226,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         )).data
       } else if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
         !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)){
-        getBankAccounts(GetAccounts(getTransactionRequest.authInfo))
+        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null))  //TODO , need fix
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
         getTransactions(GetTransactions(getTransactionRequest.authInfo,

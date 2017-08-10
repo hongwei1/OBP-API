@@ -1,5 +1,7 @@
 package com.tesobe.obp.june2017
 
+import java.util.Date
+
 
 /**
   * Here are defined all the things that go through kafka
@@ -31,7 +33,7 @@ sealed trait TopicCaseClass
 case class GetBanks(authInfo: AuthInfo, criteria: String) extends TopicCaseClass
 case class GetBank(authInfo: AuthInfo, bankId: String) extends TopicCaseClass
 case class GetAdapterInfo(date: String) extends TopicCaseClass
-case class GetAccounts(authInfo: AuthInfo) extends TopicCaseClass
+case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalCustomers)  extends TopicCaseClass
 case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicCaseClass
 case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicCaseClass
 case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicCaseClass
@@ -272,3 +274,23 @@ case class InternalTransactionId(
 case class InternalCreateChallengeJune2017(
   answer : String
 )
+
+case class CustomerFaceImageJson(
+  url: String,
+  date: String
+)
+
+case class CustomerCreditRatingJSON(
+  rating: String,
+  source: String
+)
+
+case class InternalCustomer(
+  bankId:String,
+  customerId: String,
+  customerNumber: String,
+  legalName: String,
+  dateOfBirth: String
+)
+
+case class InternalCustomers(customers: List[InternalCustomer])
