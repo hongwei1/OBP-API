@@ -167,7 +167,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     def mapTraitFieldExplicitly(string: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${string }": {""").replace("""}},""","""}}},""")
     
     val changeValue = 
-      if(valueFromKafka.contains("PHONE_TO_PHONE")) 
+      if(valueFromKafka.contains("TRANSFER_TO_PHONE")) 
         mapTraitFieldExplicitly("TransactionRequestBodyPhoneToPhoneJson")
       else if(valueFromKafka.contains("COUNTERPARTY"))
         mapTraitFieldExplicitly("TransactionRequestBodyCounterpartyJSON")

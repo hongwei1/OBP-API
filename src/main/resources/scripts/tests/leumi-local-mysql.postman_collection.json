@@ -799,7 +799,7 @@
 				}
 			],
 			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/PHONE_TO_PHONE/transaction-requests",
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests",
 				"method": "POST",
 				"header": [
 					{

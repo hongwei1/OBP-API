@@ -265,7 +265,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
     // OBP-API will provide: four values:
     val transactionNewId =
-    if (createTransactionRequest.transactionRequestType == ("PHONE_TO_PHONE")) {
+    if (createTransactionRequest.transactionRequestType == ("TRANSFER_TO_PHONE")) {
       //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyPhoneToPhoneJson]
       val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from_account_phone_number
