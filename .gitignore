@@ -10,3 +10,4 @@ target/
 /.ensime
 /.ensime_cache.d/
 out/
+src/main/resources/git.properties
