@@ -202,8 +202,8 @@ case class TransactionRequestBodySandBoxTanJSON(
   description: String
 ) extends TransactionRequestCommonBodyJSON
 
-// the data from endpoint, extract as valid JSON
-case class TransactionRequestBodyCounterpartyJson(
+case class TransactionRequestBodyCounterpartyJSON(
+  to: CounterpartyIdJson,
   value: AmountOfMoneyJsonV121,
   description: String,
   charge_policy: String
@@ -217,54 +217,52 @@ case class TransactionRequestBodySEPAJSON(
   charge_policy: String
 ) extends TransactionRequestCommonBodyJSON
 
-case class TransactionRequestBodyPhoneToPhoneJson(
-  from_account_phone_number: String,
-  value: AmountOfMoneyJsonV121,  // "K135_SCHUM": "", //- Amount to transfer - has to be divisible by 100
-  description: String, // "K135_MATRAT_HAAVARA": "Rent payment",   //- Transaction description (purpose of the transfer)
-  charge_policy: String,
-  couterparty: CounterpartyPhoneToPhoneJson
-) extends TransactionRequestCommonBodyJSON
-
-case class TransactionRequestBodyAccountToAccount(
-  from_account_phone_number: String,
-  override val value: AmountOfMoneyJsonV121,  // "K135_SCHUM": "", //- Amount to transfer - has to be divisible by 100
-  override val description: String, // "K135_MATRAT_HAAVARA": "Rent payment",   //- Transaction description (purpose of the transfer)
-  charge_policy: String,
-  couterparty: CounterpartyPhoneToPhoneJson
-) extends TransactionRequestCommonBodyJSON
-
-case class TransactionRequestBodyATMJson(
-  from_account_phone_number: String,
-  value: AmountOfMoneyJsonV121,  // "K135_SCHUM": "", //- Amount to transfer - has to be divisible by 100
-  description: String, // "K135_MATRAT_HAAVARA": "Rent payment",   //- Transaction description (purpose of the transfer)
-  charge_policy: String,
-  couterparty: CounterpartyPhoneToPhoneJson
-) extends TransactionRequestCommonBodyJSON
-
-case class CounterpartyPhoneToPhoneJson(
+case class CounterpartyTransferToPhoneJson(
   other_account_owner: String,
   other_account_owner_birthday: String,
   other_account_phone_number: String
 )
 
-//Mapper means this part will be stored into mapper.mdetails
-//And when call the "answerTransactionRequestChallenge" endpoint, it will use this mapper.mdetails to process further step
-// code : detailsJsonExtract = details.extract[TransactionRequestDetailsMapperJSON]
-case class TransactionRequestDetailsMapperJSON(
-  to: TransactionRequestAccountJsonV140,
-  value: AmountOfMoneyJsonV121,
-  description: String
+case class TransactionRequestBodyTransferToPhoneJson(
+  from_account_phone_number: String,
+  value: AmountOfMoneyJsonV121,  
+  description: String, 
+  charge_policy: String,
+  couterparty: CounterpartyTransferToPhoneJson
 ) extends TransactionRequestCommonBodyJSON
 
-//Mapper means this part will be stored into mapper.mdetails
-//And when call the "answerTransactionRequestChallenge" endpoint, it will use this mapper.mdetails to process further step
-// code : detailsJsonExtract = details.extract[TransactionRequestDetailsMapperJSON]
-case class TransactionRequestDetailsMapperCounterpartyJSON(
-  counterparty_id: String,
-  to: TransactionRequestAccountJsonV140,
+case class CounterpartyTransferToAtmJson(
+  other_account_owner: String,
+  other_account_owner_passport_id_or_national_id: String,
+  other_account_owner_id_type: String,
+  other_account_owner_birthday: String,
+  other_account_phone_number: String
+)
+
+case class TransactionRequestBodyTransferToAtmJson(
+  from_account_phone_number: String,
   value: AmountOfMoneyJsonV121,
   description: String,
-  charge_policy: String
+  charge_policy: String,
+  couterparty: CounterpartyTransferToAtmJson
+) extends TransactionRequestCommonBodyJSON
+
+case class CounterpartyTransferToAccount(
+  transfer_type: String,
+  transfer_is_scheduled : String,
+  future_date : String,
+  bank_code:String,
+  branch_number: String,
+  account_number: String,
+  iban: String,
+  bank_type: String
+)
+
+case class TransactionRequestBodyTransferToAccount(
+  value: AmountOfMoneyJsonV121,
+  description: String,
+  charge_policy: String,
+  couterparty: CounterpartyTransferToAccount
 ) extends TransactionRequestCommonBodyJSON
 
 case class InternalTransactionId(

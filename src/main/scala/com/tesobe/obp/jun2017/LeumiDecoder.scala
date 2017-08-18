@@ -3,12 +3,13 @@ package com.tesobe.obp.june2017
 import java.text.SimpleDateFormat
 import java.util.UUID
 
-import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet}
+import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet, Util}
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
+import com.tesobe.obp.Util.TransactionRequestTypes
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.mutable.{ListBuffer, Map}
@@ -265,29 +266,29 @@ object LeumiDecoder extends Decoder with StrictLogging {
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
     // OBP-API will provide: four values:
     val transactionNewId =
-    if (createTransactionRequest.transactionRequestType == ("TRANSFER_TO_PHONE")) {
+    if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) {
       //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
-      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyPhoneToPhoneJson]
+      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToPhoneJson]
       val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from_account_phone_number
       val receiverPhoneNumber = transactionRequestBodyPhoneToPhoneJson.couterparty.other_account_phone_number
       val transactionDescription = transactionRequestBodyPhoneToPhoneJson.description
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
       //TODO 2, repalce the value of  transactionNewId.
       UUID.randomUUID().toString
-    } else if (createTransactionRequest.transactionRequestType == ("COUNTERPARTY")) {
-      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJson]
+    }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
+      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAtmJson]
   
       UUID.randomUUID().toString
-    } else if (createTransactionRequest.transactionRequestType == ("SEPA")) {
+    } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
+      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]
+  
+      UUID.randomUUID().toString
+    } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.COUNTERPARTY.toString)) {
+      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJSON]
+  
+      UUID.randomUUID().toString
+    } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.SEPA.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodySEPAJSON]
-  
-      UUID.randomUUID().toString
-    } else if (createTransactionRequest.transactionRequestType == ("ATM")) {
-      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyATMJson]
-  
-      UUID.randomUUID().toString
-    } else if (createTransactionRequest.transactionRequestType == ("ACCOUNT_TO_ACCOUNT")) {
-      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyAccountToAccount]
   
       UUID.randomUUID().toString
     } else

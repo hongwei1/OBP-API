@@ -5,6 +5,7 @@ import akka.stream.Materializer
 import com.tesobe.obp.SouthKafkaStreamsActor.Business
 import com.tesobe.obp.june2017._
 import com.typesafe.scalalogging.StrictLogging
+
 import scala.concurrent.{ExecutionContext, Future}
 import io.circe.parser.decode
 import io.circe.generic.auto._
@@ -167,16 +168,16 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     def mapTraitFieldExplicitly(string: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${string }": {""").replace("""}},""","""}}},""")
     
     val changeValue = 
-      if(valueFromKafka.contains("TRANSFER_TO_PHONE")) 
-        mapTraitFieldExplicitly("TransactionRequestBodyPhoneToPhoneJson")
-      else if(valueFromKafka.contains("COUNTERPARTY"))
-        mapTraitFieldExplicitly("TransactionRequestBodyCounterpartyJSON")
-      else if(valueFromKafka.contains("SEPA"))
-        mapTraitFieldExplicitly("TransactionRequestBodySEPAJSON")
-      else if(valueFromKafka.contains("ATM"))
-        mapTraitFieldExplicitly("TransactionRequestBodyATMJson")
-      else if(valueFromKafka.contains("ACCOUNT_TO_ACCOUNT"))
-        mapTraitFieldExplicitly("TransactionRequestBodyAccountToAccount")
+      if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) 
+        mapTraitFieldExplicitly(TransactionRequestBodyTransferToPhoneJson.toString())
+      else if(valueFromKafka.contains(Util.TransactionRequestTypes.COUNTERPARTY.toString))
+        mapTraitFieldExplicitly(TransactionRequestBodyCounterpartyJSON.toString())
+      else if(valueFromKafka.contains(Util.TransactionRequestTypes.SEPA.toString))
+        mapTraitFieldExplicitly(TransactionRequestBodySEPAJSON.toString())
+      else if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_ATM.toString))
+        mapTraitFieldExplicitly(TransactionRequestBodyTransferToAtmJson.toString())
+      else if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString))
+        mapTraitFieldExplicitly(TransactionRequestBodyTransferToAccount.toString())
       else
         throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
     

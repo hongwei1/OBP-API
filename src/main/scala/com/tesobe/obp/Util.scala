@@ -39,4 +39,10 @@ object Util extends StrictLogging {
     }
     commit
   }
+  
+  object TransactionRequestTypes extends Enumeration {
+    type TransactionRequestTypes = Value
+    val SANDBOX_TAN, COUNTERPARTY, SEPA, FREE_FORM, TRANSFER_TO_PHONE, TRANSFER_TO_ATM, TRANSFER_TO_ACCOUNT = Value
+  }
+  
 }
