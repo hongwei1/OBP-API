@@ -9,6 +9,8 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.DefaultHttpClient
 import java.util.Date
 
+import org.apache.http.entity.StringEntity
+
 
 object Nt1cTMf extends Config{
   //Read file To Simulate Mainframe Call
@@ -32,10 +34,8 @@ object Nt1cTMf extends Config{
       ("KELET_ME_TAAR" -> ("KELET_ME_YYYY" -> startDate(0)) ~ ("KELET_ME_MM" -> startDate(1)) ~ ("KELET_ME_DD" -> startDate(2))) ~
         ("KELET_AD_TAAR" -> ("KELET_AD_YYYY" -> endDate(0)) ~ ("KELET_AD_MM" -> endDate(1)) ~ ("KELET_AD_DD" -> endDate(2))) ~
         ("KELET_TN_MIS_TNUOT" -> maxNumberOfTransactions))
-    println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")   
-    println(compactRender(json))
-    println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-    // send the post request
+    val jsonBody = new StringEntity(compactRender(json))
+    post.setEntity(jsonBody)
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString

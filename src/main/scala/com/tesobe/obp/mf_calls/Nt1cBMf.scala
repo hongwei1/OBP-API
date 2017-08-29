@@ -6,6 +6,7 @@ import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
 
@@ -21,18 +22,16 @@ object Nt1cBMf extends Config{
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02")
-    println(post)
     post.addHeader("application/json;charset=utf-8","application/json;charset=utf-8")
 
     val client = new DefaultHttpClient()
 
     val json: JValue = "NT1C_B_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("AccountType" ->
     accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" -> ("MFToken" -> cbsToken)))
-    println(compactRender(json))
+    val jsonBody = new StringEntity(compactRender(json))
+    post.setEntity(jsonBody)
 
-    // send the post request
     val response = client.execute(post)
-    //val response = client.execute(new HttpGet("http://localhost/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01"))
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()

@@ -7,6 +7,7 @@ import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
 package object Ntbd1v135Mf {
@@ -37,8 +38,8 @@ package object Ntbd1v135Mf {
         ("K135_SUG_ZIHUY_MUTAV" -> "") ~ ("K135_ERETZ_MUTAV" -> "") ~ ("K135_SHEM_MUTAV" -> "") ~
         ("K135_TARICH_LEDA_MUTAV" -> "") ~ ("K135_NAYAD_MUTAV" -> mobileNumberOfMoneyReceiver) ~
         ("K135_SCHUM_HADASH" -> transferAmount)))
-      
-    println(compactRender(json))
+    val jsonBody = new StringEntity(compactRender(json))
+    post.setEntity(jsonBody)
 
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent

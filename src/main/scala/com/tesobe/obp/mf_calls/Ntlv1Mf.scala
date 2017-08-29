@@ -6,6 +6,7 @@ import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
 package object Ntlv1Mf {
@@ -24,7 +25,8 @@ package object Ntlv1Mf {
 
     val json: JValue = "NTLV_1_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("IDNumber" -> 
       idNumber) ~ ("IDType" -> idType) ~ ("IDCounty" -> idCounty)) ~ ("AuthArguments" -> ("MFToken" -> cbsToken)))
-    println(compactRender(json))
+    val jsonBody = new StringEntity(compactRender(json))
+    post.setEntity(jsonBody)
 
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent

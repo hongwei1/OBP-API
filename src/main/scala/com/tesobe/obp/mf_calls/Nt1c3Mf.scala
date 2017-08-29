@@ -16,7 +16,6 @@ object Nt1c3Mf {
   def getFutureTransactions(mainframe: String) = {
     val json = replaceEmptyObjects(getNt1c3Mf(mainframe))
     val jsonAst = parse(json)
-    println(jsonAst)
     val nt1c3Call: Nt1c3 = jsonAst.extract[Nt1c3]
     nt1c3Call
   }

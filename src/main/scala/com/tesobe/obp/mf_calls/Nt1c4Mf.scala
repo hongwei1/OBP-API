@@ -6,6 +6,7 @@ import net.liftweb.json.{JValue, parse}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
 
@@ -24,16 +25,14 @@ object Nt1c4Mf extends Config{
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/4/000/01.03")
-    println(post)
     post.addHeader("application/json;charset=utf-8","application/json;charset=utf-8")
 
     val client = new DefaultHttpClient()
 
     val json: JValue = "NT1C_4_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("AccountType" ->
       accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->( ("User" -> username) ~ ("MFToken" -> mfToken))))
-    println(compactRender(json))
-
-    // send the post request
+    val jsonBody = new StringEntity(compactRender(json))
+    post.setEntity(jsonBody)
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
@@ -44,7 +43,6 @@ object Nt1c4Mf extends Config{
   def getIntraDayTransactions(mainframe: String) = {
     val json = getNt1c4MfHttpApache("","","","","")
     val jsonAst = parse(json)
-    println(jsonAst)
     val nt1c4Call: Nt1c4 = jsonAst.extract[Nt1c4]
     nt1c4Call
   }

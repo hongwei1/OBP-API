@@ -7,9 +7,10 @@ import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
-import scala.concurrent.{Await}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 /*//For akka-http
@@ -34,21 +35,19 @@ object JoniMf extends Config{
      println(url)
 
      val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-     println(post)
      post.addHeader("Content-Type", "application/json;charset=utf-8")
 
      val client = new DefaultHttpClient()
 
      val json: JValue = ("JONI_0_000" -> ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
-     println(compactRender(json))
-
-     // send the post request
+     val jsonBody = new StringEntity(compactRender(json))
+     post.setEntity(jsonBody)
+  
      val response = client.execute(post)
      //val response = client.execute(new HttpGet("http://localhost/V1.0/JONI/0/000/01.01"))
      val inputStream = response.getEntity.getContent
      val result = scala.io.Source.fromInputStream(inputStream).mkString
      response.close()
-     println(result)
      result
    }
   

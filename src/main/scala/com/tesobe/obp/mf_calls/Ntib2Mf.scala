@@ -4,8 +4,9 @@ import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonParser._
 import net.liftweb.json.JsonDSL._
-import net.liftweb.json.JsonParser._  
+import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
 /**
@@ -32,9 +33,8 @@ object Ntib2Mf extends Config{
 
     val json: JValue = "NTIB_2_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("AccountType" ->
       accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->( ("User" -> username) ~ ("MFToken" -> cbsToken))))
-    println(compactRender(json))
-
-    // send the post request
+    val jsonBody = new StringEntity(compactRender(json))
+    post.setEntity(jsonBody)
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
