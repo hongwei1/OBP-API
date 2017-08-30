@@ -789,6 +789,22 @@
         }
       }
     },
+    "ErrorGatewayLoginJwtTokenIsNotValid": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20040: The JWT is corrupted/changed during a transport."
+        }
+      }
+    },
+    "ErrorGatewayLoginCannotExtractJwtToken": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20040: Header, Payload and Signature cannot be extracted from the JWT."
+        }
+      }
+    },
     "ErrorBankNotFound": {
       "properties": {
         "message": {
@@ -1841,7 +1857,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "is_beneficiary": {
           "type": "boolean",
@@ -1860,7 +1876,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "status": {
           "type": "string",
@@ -2174,7 +2190,7 @@
         },
         "currency": {
           "type": "string",
-          "example": "ILS"
+          "example": "EUR"
         }
       }
     },
@@ -2799,7 +2815,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "longitude": {
           "type": "number",
@@ -2920,7 +2936,7 @@
         "completed": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "type": {
           "type": "string",
@@ -2932,7 +2948,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -2960,7 +2976,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "user": {
           "$ref": "#/definitions/UserJSONV121"
@@ -2994,7 +3010,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "value": {
           "type": "string",
@@ -3020,7 +3036,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "value": {
           "type": "string",
@@ -3304,7 +3320,7 @@
         "requested_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -3321,7 +3337,7 @@
         "requested_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -3356,7 +3372,7 @@
         "expires_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "networks": {
           "type": "array",
@@ -3378,7 +3394,7 @@
         "collected": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "technology": {
           "type": "string",
@@ -3408,7 +3424,7 @@
         "valid_from_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "bank_card_number": {
           "type": "string",
@@ -3421,7 +3437,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "on_hot_list": {
           "type": "boolean",
@@ -3472,7 +3488,7 @@
         "expires_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "networks": {
           "type": "array",
@@ -3494,7 +3510,7 @@
         "collected": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "technology": {
           "type": "string",
@@ -3521,7 +3537,7 @@
         "valid_from_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "bank_card_number": {
           "type": "string",
@@ -3534,7 +3550,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "on_hot_list": {
           "type": "boolean",
@@ -3551,7 +3567,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "url": {
           "type": "string",
@@ -3790,12 +3806,12 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "employment_status": {
           "type": "string",
@@ -3871,12 +3887,12 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "employment_status": {
           "type": "string",
@@ -3937,7 +3953,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "from_department": {
           "type": "string",
@@ -4240,7 +4256,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "longitude": {
           "type": "number",
@@ -4746,7 +4762,7 @@
         "scheduled_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "category": {
           "type": "string",
@@ -4759,7 +4775,7 @@
         "actual_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -4923,7 +4939,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "id": {
           "type": "string",
@@ -4932,7 +4948,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "status": {
           "type": "string",
@@ -5136,7 +5152,7 @@
         "issue_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "bank_id": {
           "type": "string",
@@ -5157,7 +5173,7 @@
         "expiry_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -5210,7 +5226,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "relates_to_kyc_document_id": {
           "type": "string",
@@ -5276,7 +5292,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "satisfied": {
           "type": "boolean",
@@ -5320,7 +5336,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "ok": {
           "type": "boolean",
@@ -5361,7 +5377,7 @@
         "date_activated": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "customer_number": {
           "type": "string",
@@ -5370,7 +5386,7 @@
         "date_added": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "type": {
           "type": "string",
@@ -5484,7 +5500,7 @@
         "completed": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "type": {
           "type": "string",
@@ -5496,7 +5512,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -5637,7 +5653,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "id": {
           "type": "string",
@@ -5646,7 +5662,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "status": {
           "type": "string",
@@ -5913,7 +5929,7 @@
         "when": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "meeting_id": {
           "type": "string",
@@ -5961,7 +5977,7 @@
         "date_inserted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "user_customer_link_id": {
           "type": "string",
@@ -6044,7 +6060,7 @@
         "issue_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "type": {
           "type": "string",
@@ -6057,7 +6073,7 @@
         "expiry_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -6082,7 +6098,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "relates_to_kyc_document_id": {
           "type": "string",
@@ -6120,7 +6136,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "satisfied": {
           "type": "boolean",
@@ -6150,7 +6166,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "ok": {
           "type": "boolean",
@@ -6210,12 +6226,12 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "employment_status": {
           "type": "string",
@@ -6265,7 +6281,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "id": {
           "type": "string",
@@ -6274,7 +6290,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "status": {
           "type": "string",
@@ -6391,7 +6407,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "consumer_id": {
           "type": "string",
@@ -6599,7 +6615,7 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "credit_rating": {
           "$ref": "#/definitions/CustomerCreditRatingJSON"
@@ -6607,7 +6623,7 @@
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "employment_status": {
           "type": "string",
@@ -6673,7 +6689,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "longitude": {
           "type": "number",
@@ -6737,7 +6753,7 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "credit_rating": {
           "$ref": "#/definitions/CustomerCreditRatingJSON"
@@ -6745,7 +6761,7 @@
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "employment_status": {
           "type": "string",
@@ -6796,7 +6812,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "id": {
           "type": "string",
@@ -6805,7 +6821,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "status": {
           "type": "string",
@@ -6912,7 +6928,7 @@
         "created": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         }
       }
     },
@@ -7526,7 +7542,7 @@
         "effective_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "conversion_value": {
           "type": "number",
@@ -7988,7 +8004,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 CET 2013"
+          "example": "Tue Jan 22 00:08:00 UTC 2013"
         },
         "obp_api_request_id": {
           "type": "string",
