@@ -218,16 +218,15 @@ case class TransactionRequestBodySEPAJSON(
 ) extends TransactionRequestCommonBodyJSON
 
 case class CounterpartyTransferToPhoneJson(
-  other_account_owner: String,
-  other_account_owner_birthday: String,
+  other_account_message: String,
   other_account_phone_number: String
 )
 
 case class TransactionRequestBodyTransferToPhoneJson(
+  value: AmountOfMoneyJsonV121,
+  description: String,
   from_account_phone_number: String,
-  value: AmountOfMoneyJsonV121,  
-  description: String, 
-  charge_policy: String,
+  from_account_owner_nickname: String,
   couterparty: CounterpartyTransferToPhoneJson
 ) extends TransactionRequestCommonBodyJSON
 
@@ -236,26 +235,28 @@ case class CounterpartyTransferToAtmJson(
   other_account_owner_passport_id_or_national_id: String,
   other_account_owner_id_type: String,
   other_account_owner_birthday: String,
+  other_account_message: String,
   other_account_phone_number: String
 )
 
 case class TransactionRequestBodyTransferToAtmJson(
-  from_account_phone_number: String,
   value: AmountOfMoneyJsonV121,
   description: String,
+  from_account_phone_number: String,
+  from_account_owner_nickname: String,
   charge_policy: String,
   couterparty: CounterpartyTransferToAtmJson
 ) extends TransactionRequestCommonBodyJSON
 
 case class CounterpartyTransferToAccount(
+  other_account_owner: String,
   transfer_type: String,
   transfer_is_scheduled : String,
   future_date : String,
   bank_code:String,
   branch_number: String,
   account_number: String,
-  iban: String,
-  bank_type: String
+  iban: String
 )
 
 case class TransactionRequestBodyTransferToAccount(
