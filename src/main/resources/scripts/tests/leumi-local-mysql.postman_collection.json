@@ -267,7 +267,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
 						"description": ""
 					}
 				],
@@ -909,7 +909,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"from_account_phone_number\": \"+9722398746\",\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\":\"TOM\",\n    \"other_account_owner_birthday\" :\"19900810\",\n    \"other_account_phone_number\":\"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"from_account_phone_number\": \"+9722398746\",\n  \"from_account_owner_nickname\":\"Tom\",\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"ABC\",\n  \"couterparty\":{\n  \t\"other_account_message\":\"Good Luck\",\n    \"other_account_phone_number\":\"+9722398746\"\n  }\n}"
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -931,7 +931,7 @@
 				}
 			],
 			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/4fa97189-e4a8-4534-9dc2-dae0f95949f0/challenge",
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/67a04a47-94e5-4c82-b5e8-1becec210ec5/challenge",
 				"method": "POST",
 				"header": [
 					{
@@ -947,7 +947,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"0496e587-f6b1-43eb-97ba-f466389ef285\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"61a8bfbe-63b9-4fb5-bfaf-79cf300df852\",  \"answer\":\"183823\"}"
 				},
 				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
 			},
@@ -984,7 +984,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"from_account_phone_number\": \"+9722398746\",\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1111\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\":\"TOM\",\n    \"other_account_owner_passport_id_or_national_id\" :\"19900810\",\n    \"other_account_owner_id_type\":\"1\",\n    \"other_account_owner_birthday\":\"19900810\",\n    \"other_account_phone_number\":\"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"from_account_phone_number\": \"+9722398746\",\n   \"from_account_owner_nickname\":\"Tom\",\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1111\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\":\"TOM\",\n  \t\"other_account_message\":\"Good Luck\",\n    \"other_account_owner_passport_id_or_national_id\" :\"19900810\",\n    \"other_account_owner_id_type\":\"1\",\n    \"other_account_owner_birthday\":\"19900810\",\n    \"other_account_phone_number\":\"+9722398746\"\n  }\n}\n\n\n\n"
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -1006,7 +1006,7 @@
 				}
 			],
 			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/9be2609a-3b7d-4c94-83d0-37dcf73a6833/challenge",
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/9a22fbc0-00ae-4d73-9982-c0df98e89d85/challenge",
 				"method": "POST",
 				"header": [
 					{
@@ -1022,7 +1022,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"e84daa14-9ab5-44b8-9b63-176ed5683c37\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"4b5712dc-4c07-4b20-923e-cfc12423e053\",  \"answer\":\"183823\"}"
 				},
 				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
 			},
@@ -1060,7 +1060,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1001\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"transfer_type\" : \"Transfer type: 1=regular; 2=RTGS - real time\",\n    \"transfer_is_scheduled\": \"if the transfer is scheduled to a future date then 1 otherwise 0\",\n    \"future_date\" : \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n    \"bank_code\" :  \"Bank code of the target account\",\n    \"branch_number\" : \"Branch number of the target account\",\n    \"account_number\" : \"Account number of the target account\",\n    \"iban\" : \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\",\n    \"bank_type\" : \"Target bank type: 0-Leumi; 1-other bank\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1001\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\" : \"Tom\",\n  \t\"transfer_type\" : \"Transfer type: 1=regular; 2=RTGS - real time\",\n    \"transfer_is_scheduled\": \"if the transfer is scheduled to a future date then 1 otherwise 0\",\n    \"future_date\" : \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n    \"bank_code\" :  \"Bank code of the target account\",\n    \"branch_number\" : \"Branch number of the target account\",\n    \"account_number\" : \"Account number of the target account\",\n    \"iban\" : \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n  }\n}"
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -1082,7 +1082,7 @@
 				}
 			],
 			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/324d2517-88e8-4710-a016-3c415070b1f0/challenge",
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/b92a10d0-5d69-4994-b9a8-03865663b04d/challenge",
 				"method": "POST",
 				"header": [
 					{
@@ -1098,7 +1098,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"ab3f15c5-4b79-469c-8272-245dd01ff9fa\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"a31f5a7b-9913-42b6-944f-2fea3700174b\",  \"answer\":\"183823\"}"
 				},
 				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
 			},
