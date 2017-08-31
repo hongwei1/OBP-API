@@ -273,6 +273,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val receiverPhoneNumber = transactionRequestBodyPhoneToPhoneJson.couterparty.other_account_phone_number
       val transactionDescription = transactionRequestBodyPhoneToPhoneJson.description
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
+      
       //TODO 2, repalce the value of  transactionNewId.
       UUID.randomUUID().toString
     }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {

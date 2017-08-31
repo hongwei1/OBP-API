@@ -1,0 +1,24 @@
+{
+  "DFHPLT_1":
+  {
+    "esbHeaderResponse":
+    {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff5823f1d303",
+      "responseStatus":
+      {
+        "callStatus": "Success",
+        "errorDesc":
+        {
+        }
+      }
+    },
+    "MFAdminResponse":
+    {
+      "returnCode": "0",
+      "messageText":
+      {
+      }
+    },
+    "DFH_OPT": "183823"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "P135_BDIKAOUT": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff582410af10",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": {}	
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": {}	
+    },
+    "P135_SHAA_RISHUM": "14:39",
+    "P135_TARICH_BITZUA": "20170607",
+    "P135_TOKEN_ISHUR": "3635791",
+    "P135_ASMACHTA": "1109"
+  }
+}

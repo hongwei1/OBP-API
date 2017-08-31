@@ -1,6 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.JoniMf.config
+import com.tesobe.obp.JoniMf.{config, replaceEmptyObjects}
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonDSL._
@@ -9,9 +9,9 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
-package object Ntlv1Mf {
+package object Ntlv1Mf{
 
-  def getNtlv1MfHttpApache(branch: String, idNumber: String, idType: String, idCounty: String, cbsToken: String): String = {
+  def getNtlv1MfHttpApache(branch: String, idNumber: String, idType: String, idCounty: String, cbsToken: String): Ntlv1  = {
 
     //val url = "http://localhost"
     val url = config.getString("bankserver.url")
@@ -32,8 +32,8 @@ package object Ntlv1Mf {
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
-    println(result)
-    result
+    implicit val formats = net.liftweb.json.DefaultFormats
+    parse(replaceEmptyObjects(result)).extract[Ntlv1]
   }
 
 }

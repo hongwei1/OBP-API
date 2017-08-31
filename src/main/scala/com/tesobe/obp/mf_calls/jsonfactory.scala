@@ -284,7 +284,7 @@ case class P135Amalot(
                      )
 
 case class P135Bdikaout(esbHeaderResponse: EsbHeaderResponse,
-                        mfAdminResponse: MfAdminResponse,
+                        MFAdminResponse: MfAdminResponse,
                         P135_TOKEN: String,
                         P135_AMALOT: P135Amalot
                        )
@@ -292,12 +292,19 @@ case class P135Bdikaout(esbHeaderResponse: EsbHeaderResponse,
 case class Ntbd1v135(P135_BDIKAOUT: P135Bdikaout)
 
 case class P135Bdikaout2(esbHeaderResponse: EsbHeaderResponse,
-                         mfAdminResponse: MfAdminResponse,
+                         MFAdminResponse: MfAdminResponse,
                          P135_SHAA_RISHUM: String, //Hour of transaction execution
                          P135_TARICH_BITZUA: String //Date of transaction execution YYYYMMDD
                          )
 
 case class Ntbd2v135(P135_BDIKAOUT: P135Bdikaout2 )
+
+case class Dfhplt1(esbHeaderResponse: EsbHeaderResponse,
+                   MFAdminResponse: MfAdminResponse,
+                  DFH_OPT: String)
+
+case class Ntlv7(DFHPLT_1: Dfhplt1)
+
 //From OBP-Scala-South-----------------------------------------------------
 
 case class CounterPartySimple(name: Option[String],

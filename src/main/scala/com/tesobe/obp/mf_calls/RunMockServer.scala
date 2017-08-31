@@ -156,7 +156,42 @@ package object RunMockServer {
           )
           .withBody(jsonToString("ntbd1_135_result.json"))
       )
+    
+    //Ntbd2v135
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/135/01.01")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("ntbd2_135_result.json"))
+      )
 
+    //Ntlv7
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/7/000/01.01")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("ntlv7_result.json"))
+      )
 
   }
   
