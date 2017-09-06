@@ -13,26 +13,42 @@ import org.apache.http.impl.client.DefaultHttpClient
 object Ntlv1Mf extends StrictLogging{
 
   def getNtlv1MfHttpApache(branch: String, idNumber: String, idType: String, idCounty: String, cbsToken: String): Ntlv1  = {
-
-    //val url = "http://localhost"
-    val url = config.getString("bankserver.url")
-    logger.debug(url)
-
-    val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01")
-    logger.debug(post.toString)
-    post.addHeader("Content-Type", "application/json;charset=utf-8")
-
+  
+    val username= "" //TODO 1 "User": "N7jut8d" should be a parameter 
+    
     val client = new DefaultHttpClient()
-
-    val json: JValue = "NTLV_1_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branch) ~ ("IDNumber" -> 
-      idNumber) ~ ("IDType" -> idType) ~ ("IDCounty" -> idCounty)) ~ ("AuthArguments" -> ("MFToken" -> cbsToken)))
+    val url = config.getString("bankserver.url")
+    
+    //OBP-Adapter_Leumi/Doc/MFServices/NTLV_1_000 Sample.txt
+    val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01")
+    post.addHeader("Content-Type", "application/json;charset=utf-8")
+    val json: JValue = parse(s"""
+    {
+      "NTLV_1_000": {
+        "NtdriveCommonHeader": {
+          "KeyArguments": {
+            "Branch": "$branch",
+            "IDNumber": "$idNumber",
+            "IDType": "$idType",
+            "IDCounty": "$idCounty"
+          },
+          "AuthArguments": {
+            "User": "$username"
+            "MFToken":"$cbsToken"
+          }
+        }
+      }
+    }
+    """)
+    
     val jsonBody = new StringEntity(compactRender(json))
     post.setEntity(jsonBody)
-
+    logger.debug("NTLV_1_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
+    logger.debug("NTLV_1_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
     implicit val formats = net.liftweb.json.DefaultFormats
     parse(replaceEmptyObjects(result)).extract[Ntlv1]
   }

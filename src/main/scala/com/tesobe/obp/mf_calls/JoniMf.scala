@@ -5,7 +5,6 @@ package com.tesobe.obp
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
-import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
@@ -31,23 +30,31 @@ object JoniMf extends Config with StrictLogging{
 
    def getJoniMfHttpApache(username: String): String = {
 
-     //val url = "http://localhost"
-     val url = config.getString("bankserver.url")
-     logger.debug(url)
-
-     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-     post.addHeader("Content-Type", "application/json;charset=utf-8")
-
      val client = new DefaultHttpClient()
+     val url = config.getString("bankserver.url")
 
-     val json: JValue = ("JONI_0_000" -> ("NtdriveCommonHeader" -> ("AuthArguments" -> ("UserName" -> username))))
+     //OBP-Adapter_Leumi/Doc/MFServices/JONI_0_000 Sample.txt
+     val post = new HttpPost(url + "/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01")
+     post.addHeader("Content-Type", "application/json;charset=utf-8")
+     val json: JValue =parse(s"""
+     {
+       "JONI_0_000": {
+         "NtdriveCommonHeader": {
+           "AuthArguments": {
+             "UserName": "$username"
+           }
+         }
+       }
+     }""")
+       
      val jsonBody = new StringEntity(compactRender(json))
      post.setEntity(jsonBody)
   
+     logger.debug("JONI_0_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
      val response = client.execute(post)
-     //val response = client.execute(new HttpGet("http://localhost/V1.0/JONI/0/000/01.01"))
      val inputStream = response.getEntity.getContent
      val result = scala.io.Source.fromInputStream(inputStream).mkString
+     logger.debug("JONI_0_000--Response : "+response.toString+ "\n Body is :"+result)
      response.close()
      result
    }

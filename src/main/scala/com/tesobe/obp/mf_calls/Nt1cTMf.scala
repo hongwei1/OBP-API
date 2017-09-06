@@ -9,6 +9,8 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.DefaultHttpClient
 import java.util.Date
 
+import com.tesobe.obp.Nt1c4Mf.logger
+import com.tesobe.obp.Nt1cBMf.logger
 import com.typesafe.scalalogging.StrictLogging
 import org.apache.http.entity.StringEntity
 
@@ -22,25 +24,54 @@ object Nt1cTMf extends Config with StrictLogging{
     lines
   }
 
-  def getNt1cTMfHttpApache(branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): String = {
-
+  def getNt1cTMfHttpApache(branch: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): String = {
+  
+    val username= "" //TODO 1 "User": "N7jut8d" should be a parameter   
+    
+    val client = new DefaultHttpClient()
     val url = config.getString("bankserver.url")
 
-
+    //OBP-Adapter_Leumi/Doc/MFServices/NT1C_T_000 Sample.txt
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02")
     post.addHeader("Content-Type","application/json;charset=utf-8")
-    val client = new DefaultHttpClient()
-    val json: JValue = "NT1C_T_000" -> ("NtdriveCommonHeader" -> ("KeyArguments" -> ("Branch" -> branchId) ~ ("AccountType" ->
-      accountType) ~ ("AccountNumber" -> accountNumber)) ~ ("AuthArguments" ->("MFToken" -> cbsToken))) ~ ("KELET_TAARICHIM" ->
-      ("KELET_ME_TAAR" -> ("KELET_ME_YYYY" -> startDate(0)) ~ ("KELET_ME_MM" -> startDate(1)) ~ ("KELET_ME_DD" -> startDate(2))) ~
-        ("KELET_AD_TAAR" -> ("KELET_AD_YYYY" -> endDate(0)) ~ ("KELET_AD_MM" -> endDate(1)) ~ ("KELET_AD_DD" -> endDate(2))) ~
-        ("KELET_TN_MIS_TNUOT" -> maxNumberOfTransactions))
+    val json: JValue =parse(s"""
+    { 
+       "NT1C_T_000": {
+          "NtdriveCommonHeader": {
+            "KeyArguments": {
+              "Branch": "$branch",
+              "AccountType": "$accountType",
+              "AccountNumber": "$accountNumber"
+            },
+            "AuthArguments": {
+              "User": "$username"
+              "MFToken":"$cbsToken"
+            }
+          },
+        "KELET_TAARICHIM": {
+          "KELET_ME_TAAR": {
+            "KELET_ME_YYYY": "${startDate(0)}",
+            "KELET_ME_MM"  : "${startDate(1)}",
+            "KELET_ME_DD"  : "${startDate(2)}"
+          },
+          "KELET_AD_TAAR": {
+            "KELET_AD_YYYY": "${endDate(0)}",
+            "KELET_AD_MM": "${endDate(1)}",
+            "KELET_AD_DD": "${endDate(2)}"
+          },
+          "KELET_TN_MIS_TNUOT": "$maxNumberOfTransactions"
+        }
+      }
+    }""")
+    
     val jsonBody = new StringEntity(compactRender(json))
     post.setEntity(jsonBody)
+    logger.debug("NT1C_T_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
+    logger.debug("NT1C_T_000--Response : "+response.toString+ "\n Body is :"+result)
     result
   }
   //@param: Filepath for json result stub

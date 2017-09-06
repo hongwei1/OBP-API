@@ -1,5 +1,6 @@
 package com.tesobe.obp
 
+import com.typesafe.scalalogging.StrictLogging
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.{Cookie, Header, Parameter}
 import org.mockserver.model.HttpRequest.request
@@ -7,7 +8,7 @@ import org.mockserver.model.HttpResponse.response
 
 
 
-package object RunMockServer {
+object RunMockServer extends StrictLogging{
   val mockServer = startClientAndServer(1080)
   
   def jsonToString(filename: String): String = {
@@ -17,13 +18,13 @@ package object RunMockServer {
   }
   
   def startMockServer = {
-    // JONI
+    //1 JONI
     mockServer
       .when(
         request()
           .withMethod("POST")
           //.withHeader("Content-Type","application/json;charset=utf-8")
-          .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
+          .withPath("/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01")
           //.withBody("body")
       )
       .respond(
@@ -34,7 +35,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("joni_result.json"))
       )
-    //Nt1cB
+    //2 Nt1cB
     mockServer
       .when(
         request()
@@ -51,7 +52,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_B_result.json"))
       )
-    Nt1cT
+    //3 Nt1cT
     mockServer
       .when(
         request()
@@ -68,7 +69,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_T_result.json"))
       )
-    //Nt1c3
+    //4 Nt1c3
     mockServer
       .when(
         request()
@@ -85,7 +86,7 @@ package object RunMockServer {
           )
           .withBody(jsonToString("nt1c_3_result.json"))
       )
-    //Nt1c4
+    //5 Nt1c4
     mockServer
       .when(
         request()
@@ -103,7 +104,7 @@ package object RunMockServer {
           .withBody(jsonToString("nt1c_4_result.json"))
       )
     
-    //NtIb2
+    //6 NtIb2
     mockServer
       .when(
         request()
@@ -121,7 +122,7 @@ package object RunMockServer {
           .withBody(jsonToString("ntib_result.json"))
       )
     
-    //Ntlv1
+    //7 Ntlv1
     mockServer
       .when(
         request()
@@ -139,7 +140,7 @@ package object RunMockServer {
           .withBody(jsonToString("ntlv_1_result.json")) 
       )
     
-    //Ntbd1v135
+    //8 Ntbd1v135
     mockServer
       .when(
         request()
@@ -157,7 +158,7 @@ package object RunMockServer {
           .withBody(jsonToString("ntbd1_135_result.json"))
       )
     
-    //Ntbd2v135
+    //9 Ntbd2v135
     mockServer
       .when(
         request()
@@ -175,7 +176,7 @@ package object RunMockServer {
           .withBody(jsonToString("ntbd2_135_result.json"))
       )
 
-    //Ntlv7
+    //10 Ntlv7
     mockServer
       .when(
         request()
