@@ -2,6 +2,7 @@ package com.tesobe.obp
 
 
 
+import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
 import net.liftweb.json.JsonDSL._
@@ -25,14 +26,14 @@ import akka.stream.ActorMaterializer*/
 //For apache client
 
 
-object JoniMf extends Config{
+object JoniMf extends Config with StrictLogging{
 
 
    def getJoniMfHttpApache(username: String): String = {
 
      //val url = "http://localhost"
      val url = config.getString("bankserver.url")
-     println(url)
+     logger.debug(url)
 
      val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
      post.addHeader("Content-Type", "application/json;charset=utf-8")

@@ -1,5 +1,6 @@
 package com.tesobe.obp
 
+import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonParser._
@@ -12,7 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 /**
   * Created by work on 6/12/17.
   */
-object Ntib2Mf extends Config{
+object Ntib2Mf extends Config with StrictLogging{
   
   def getNtib2Mf(mainframe: String): String = {
     val source = scala.io.Source.fromResource(mainframe)
@@ -26,7 +27,7 @@ object Ntib2Mf extends Config{
 
 
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01")
-    println(post)
+    logger.debug(post.toString)
     post.addHeader("application/json;charset=utf-8","application/json;charset=utf-8")
 
     val client = new DefaultHttpClient()

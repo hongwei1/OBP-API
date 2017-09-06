@@ -4,10 +4,11 @@ import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.GetBankAccounts._
 import com.tesobe.obp.RunMockServer.startMockServer
 import com.tesobe.obp.RunMockServer._
+import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JsonAST.JValue
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
+class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll with StrictLogging{
 
   override def beforeAll() {
     startMockServer
@@ -30,7 +31,7 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
   test("extact case class from Json AST"){
     val jsonAst: JValue = getJoni("joni_result.json")
-    println(jsonAst)
+    logger.debug(jsonAst.toString)
     val JoniCall: JoniMfUser = jsonAst.extract[JoniMfUser]
     assert(JoniCall.SDR_JONI.esbHeaderResponse.responseStatus.callStatus == "Success")
     assert(JoniCall.SDR_JONI.MFAdminResponse.returnCode == "0")
@@ -75,12 +76,12 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
   
 /*  test("getJoniMfHttp does useful things"){
     val result = getJoniMfHttp("N7jut8d")
-    println(result)
+    logger.debug(result)
   }*/
   
   test("getJoniMfHttpApache does something useful"){
     val result = getJoniMfHttpApache("N7jut8d")
-    println(result)
+    logger.debug(result.toString)
   }
 
   override def afterAll() {

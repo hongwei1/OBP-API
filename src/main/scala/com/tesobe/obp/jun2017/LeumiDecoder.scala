@@ -150,7 +150,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     //Not cached or invalid AccountId
     if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
-      println("not mapped")
+      logger.debug("not mapped")
       getBankAccounts(OutboundGetAccounts(getAccount.authInfo,null)) //TODO need add the data here.
     }
     val accountNr = mapAccountIdToAccountValues(getAccount.accountId).accountNumber

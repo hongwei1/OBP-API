@@ -2,6 +2,7 @@ package com.tesobe.obp
 
 import com.tesobe.obp.JoniMf.config
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
+import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonDSL._
@@ -10,7 +11,7 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
-package object Ntbd1v135Mf {
+object Ntbd1v135Mf extends StrictLogging{
 
   def getNtbd1v135MfHttpApache(branch: String,
                                accountType: String, 
@@ -23,7 +24,7 @@ package object Ntbd1v135Mf {
                                transferAmount: String): Ntbd1v135 = {
 
     val url = config.getString("bankserver.url")
-    println(url)
+    logger.debug(url)
     implicit val formats = net.liftweb.json.DefaultFormats
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01")
     post.addHeader("Content-Type", "application/json;charset=utf-8")
@@ -46,7 +47,7 @@ package object Ntbd1v135Mf {
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
-    print(result)
+    logger.debug(result)
     parse(replaceEmptyObjects(result)).extract[Ntbd1v135]
   }
 

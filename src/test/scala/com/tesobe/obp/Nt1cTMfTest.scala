@@ -2,9 +2,10 @@ package com.tesobe.obp
 
 import com.tesobe.obp.Nt1cTMf._
 import com.tesobe.obp.RunMockServer.startMockServer
+import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
+class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll with StrictLogging{
 
   override def beforeAll() {
     startMockServer
@@ -14,7 +15,7 @@ class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
   
 /*  test("Nt1cTMf gets a result"){
     val result = getNt1cTMfHttpApache("","","","",List("","",""),List("","",""),"")
-    println(result)
+    logger.debug(result)
   }*/
   
   test("getCompletedTransactions works") {
@@ -29,7 +30,7 @@ class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
       List("2017", "06", "01"),
       "15"
     )
-    println(result)
+    logger.debug(result.toString)
   }
     
   override def afterAll() {

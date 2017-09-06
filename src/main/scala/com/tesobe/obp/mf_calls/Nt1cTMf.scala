@@ -9,10 +9,11 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.DefaultHttpClient
 import java.util.Date
 
+import com.typesafe.scalalogging.StrictLogging
 import org.apache.http.entity.StringEntity
 
 
-object Nt1cTMf extends Config{
+object Nt1cTMf extends Config with StrictLogging{
   //Read file To Simulate Mainframe Call
   implicit val formats = net.liftweb.json.DefaultFormats
   def getNt1cTMf(mainframe: String): String = {
@@ -46,7 +47,7 @@ object Nt1cTMf extends Config{
   def getCompletedTransactions(branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): Nt1cT = {
     val json = replaceEmptyObjects(getNt1cTMfHttpApache(branchId, accountType, accountNumber, cbsToken, startDate, endDate, maxNumberOfTransactions))
     val jsonAst = parse(json)
-    println(jsonAst)
+    logger.debug(jsonAst.toString)
     jsonAst.extract[Nt1cT]
   }
   
