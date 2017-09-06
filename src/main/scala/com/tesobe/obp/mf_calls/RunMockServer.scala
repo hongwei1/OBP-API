@@ -23,7 +23,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01")
           //.withBody("body")
       )
@@ -40,7 +40,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02")
         //.withBody("body")
       )
@@ -57,7 +57,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02")
         //.withBody("body")
       )
@@ -74,7 +74,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/3/000/01.02")
         //.withBody("body")
       )
@@ -91,7 +91,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/4/000/01.03")
         //.withBody("body")
       )
@@ -109,7 +109,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01")
         //.withBody("body")
       )
@@ -127,7 +127,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01")
         //.withBody("body")
       )
@@ -145,7 +145,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01")
         //.withBody("body")
       )
@@ -163,7 +163,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/135/01.01")
         //.withBody("body")
       )
@@ -181,7 +181,7 @@ object RunMockServer extends StrictLogging{
       .when(
         request()
           .withMethod("POST")
-          //.withHeader("Content-Type","application/json;charset=utf-8")
+          .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/7/000/01.01")
         //.withBody("body")
       )
