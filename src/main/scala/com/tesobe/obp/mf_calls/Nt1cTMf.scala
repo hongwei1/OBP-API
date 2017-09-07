@@ -24,10 +24,8 @@ object Nt1cTMf extends Config with StrictLogging{
     lines
   }
 
-  def getNt1cTMfHttpApache(branch: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): String = {
+  def getNt1cTMfHttpApache(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): String = {
   
-    val username= "" //TODO 1 "User": "N7jut8d" should be a parameter   
-    
     val client = new DefaultHttpClient()
     val url = config.getString("bankserver.url")
 
@@ -75,8 +73,8 @@ object Nt1cTMf extends Config with StrictLogging{
     result
   }
   //@param: Filepath for json result stub
-  def getCompletedTransactions(branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): Nt1cT = {
-    val json = replaceEmptyObjects(getNt1cTMfHttpApache(branchId, accountType, accountNumber, cbsToken, startDate, endDate, maxNumberOfTransactions))
+  def getCompletedTransactions(username: String, branchId: String, accountType: String, accountNumber: String, cbsToken: String, startDate: List[String], endDate: List[String], maxNumberOfTransactions: String): Nt1cT = {
+    val json = replaceEmptyObjects(getNt1cTMfHttpApache(username, branchId, accountType, accountNumber, cbsToken, startDate, endDate, maxNumberOfTransactions))
     val jsonAst = parse(json)
     logger.debug(jsonAst.toString)
     jsonAst.extract[Nt1cT]

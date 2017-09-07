@@ -20,6 +20,7 @@ class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll with Str
   
   test("getCompletedTransactions works") {
     val result = getCompletedTransactions(
+      "N7jut8d",
       "814",
       "330",
       "20102612",

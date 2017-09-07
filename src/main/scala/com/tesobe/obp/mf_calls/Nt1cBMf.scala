@@ -18,11 +18,10 @@ import org.apache.http.impl.client.DefaultHttpClient
 object Nt1cBMf extends Config with StrictLogging{
 
 
-  def getNt1cBMfHttpApache(branch: String, accountType: String, accountNumber: String, cbsToken: String): String = {
+  def getNt1cBMfHttpApache(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): String = {
 
     val client = new DefaultHttpClient()
     val url = config.getString("bankserver.url")
-    val username= "" //TODO 1 "User": "N7jut8d" should be a parameter 
 
     //OBP-Adapter_Leumi/Doc/MFServices/NT1C_B_000 Sample.txt
     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02")
@@ -54,8 +53,8 @@ object Nt1cBMf extends Config with StrictLogging{
     result
   }
 
-  def getBalance(branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
-    val call = (getNt1cBMfHttpApache(branch, accountType, accountNumber, cbsToken)) 
+  def getBalance(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
+    val call = (getNt1cBMfHttpApache(username, branch, accountType, accountNumber, cbsToken)) 
     val parser = (p: Parser) => {
       def parse: (String) = p.nextToken match {
         case FieldStart("HH_ITRA_NOCHECHIT") => p.nextToken match {
@@ -70,8 +69,8 @@ object Nt1cBMf extends Config with StrictLogging{
     }
     parse(call, parser)
   }
-  def getLimit(branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
-    val call = (getNt1cBMfHttpApache(branch, accountType, accountNumber, cbsToken))
+  def getLimit(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
+    val call = (getNt1cBMfHttpApache(username, branch, accountType, accountNumber, cbsToken))
     val parser = (p: Parser) => {
       
       def parse: (String) = p.nextToken match {

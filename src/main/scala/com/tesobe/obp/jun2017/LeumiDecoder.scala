@@ -77,7 +77,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   } 
 
-  def mapAdapterAccountToInboundAccountJune2017(userid: String, x: BasicBankAccount): InboundAccountJune2017 = {
+  def mapAdapterAccountToInboundAccountJune2017(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
@@ -89,7 +89,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       else {List("")}
     }
     //Create Owner for result InboundAccount2017 creation
-    val accountOwner = if (hasOwnerRights) {List(userid)} else {List("")}
+    val accountOwner = if (hasOwnerRights) {List(username)} else {List("")}
     InboundAccountJune2017(errorCode = "",
       x.cbsToken,
       bankId = "10",
@@ -97,7 +97,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       accountId = getOrCreateAccountId(x.branchNr, x.accountType, x.accountNr),
       accountNumber = x.accountNr,
       accountType = x.accountType,
-      balanceAmount = getBalance(x.branchNr, x.accountType, x.accountNr, x.cbsToken),
+      balanceAmount = getBalance(username, x.branchNr, x.accountType, x.accountNr, x.cbsToken),
       balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
@@ -196,6 +196,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val toYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
 
     val mfTransactions = getCompletedTransactions(
+      getTransactionsRequest.authInfo.username,
       accountValues.branchId,
       accountValues.accountType,
       accountValues.accountNumber,
