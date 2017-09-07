@@ -88,23 +88,16 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
       .mapAsync(3) { consumerMessage =>
         logger.debug(s"Kafka-get-message : TopicRequest(${topicRequest}): ${consumerMessage.record.value()}")
         val future = business(consumerMessage)
-        future.recover {
+        future.recover { //TODO need to know when this will be hit ? read more about Future error handling
           case e: Throwable => {
-            logger.error(e.getMessage)
+            logger.error("future.recover error : "+e.getMessage)
             (consumerMessage, "")
           }
         }
       }
       .mapAsync(3) { consumerMessageBusiness =>
-        if(consumerMessageBusiness._2 ==""){
-          val errorMessage = s"Kafka-send-message :topicResponse(${topicResponse }): is empty, please compare your case class fields for both sides !"
-          logger.error(errorMessage)
-          //For Debug, when it is stable, just uncomment this Exception
-          throw new RuntimeException(errorMessage)
-        }
-        else
           logger.debug(s"Kafka-send-message : ${topicResponse}: ${consumerMessageBusiness._2}")
-        eventualAuditedMessage(topicResponse, consumerMessageBusiness._1, consumerMessageBusiness._2)
+          eventualAuditedMessage(topicResponse, consumerMessageBusiness._1, consumerMessageBusiness._2)
       }
   }
   

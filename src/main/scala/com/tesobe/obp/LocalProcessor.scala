@@ -10,6 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import io.circe.parser.decode
 import io.circe.generic.auto._
 import io.circe.syntax._
+import net.liftweb.common.Failure
 
 /**
   * Responsible for processing requests from North Side using local json files as data sources.
@@ -51,12 +52,24 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   def banksFn: Business = { msg =>
     /* call Decoder for extracting data from source file */
     logger.debug(s"Processing banksFn ${msg.record.value}")
-    val response: (GetBanks => Banks) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBanks(q) }
-    val r = decode[GetBanks](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    
+    try {
+      val response: (GetBanks => Banks) = {q => com.tesobe.obp.june2017.LeumiDecoder.getBanks(q)}
+      val r = decode[GetBanks](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ")
+        case Right(x) =>  throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ")
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        Future(msg, Banks(AuthInfo("","",""),
+          List(InboundBank(
+            List(BackendMessage("ESB","Success", "0", "OK")),
+            m.getMessage, "", "","",""))
+        ).asJson.noSpaces)
     }
-    Future(msg, r)
+   
   }
 
   def bankFn: Business = { msg =>

@@ -100,12 +100,21 @@ case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCrea
 case class AuthInfo(userId: String, username: String, cbsToken: String)
 
 case class InboundBank(
+  backendMessages: List[BackendMessage],
   errorCode: String,
   bankId: String,
   name: String,
   logo: String,
   url: String
 )
+
+case class BackendMessage(
+  source: String,
+  status: String,
+  errorCode: String,
+  text: String
+)
+
 case class InboundValidatedUser(
   errorCode: Option[String],
   email: Option[String],

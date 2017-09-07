@@ -139,11 +139,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
   //Processorfunctions start here---------------------------------------------------------------------------------------
 
   override def getBanks(getBanks: GetBanks) = {
-      Banks(getBanks.authInfo, List(InboundBank("", "10", "leumi","leumilogo","leumiurl")))
+      Banks(getBanks.authInfo, List(InboundBank(
+        List(BackendMessage("ESB","Success", "0", "OK")),
+        "", "10", "leumi","leumilogo","leumiurl")))
     }
 
   override def getBank(getBank: GetBank) = {
-    BankWrapper(getBank.authInfo, Some(InboundBank("", "10", "leumi","leumilogo","leumiurl")))
+    BankWrapper(getBank.authInfo, Some(InboundBank(
+      List(BackendMessage("ESB","Success", "0", "OK")), 
+      "", "10", "leumi","leumilogo","leumiurl")))
   }
 
   
