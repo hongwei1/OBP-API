@@ -30,9 +30,9 @@ object Main extends App with StrictLogging with Config with ProcessorFactory {
   logger.info("The Adapter's current commit is : "+Util.gitCommit)
   logger.info("The Adapter's complete props is : "+config)
   val systemName = config.getString("system-name")
-//  if (config.getBoolean("mockserver.run")) {
-//    startMockServer
-//  }
+  if (config.getBoolean("mockserver.run")) {
+    startMockServer
+  }
   val whatever: String = "fred"
   /**
     * Reaction on unexpected events

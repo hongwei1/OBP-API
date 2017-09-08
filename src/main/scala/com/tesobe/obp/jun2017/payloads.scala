@@ -30,14 +30,13 @@ sealed trait TopicCaseClass
   * Payloads for request topic
   *
   */
-case class GetBanks(authInfo: AuthInfo, criteria: String) extends TopicCaseClass
+case class GetBanks(authInfo: AuthInfo) extends TopicCaseClass
 case class GetBank(authInfo: AuthInfo, bankId: String) extends TopicCaseClass
 case class GetAdapterInfo(date: String) extends TopicCaseClass
 case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalCustomers)  extends TopicCaseClass
 case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicCaseClass
 case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicCaseClass
 case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicCaseClass
-case class UpdateUserAccountViews(authInfo: AuthInfo, password: String) extends TopicCaseClass
 case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
 case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
 case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicCaseClass
@@ -81,10 +80,9 @@ case class OutboundCreateChallengeJune2017(
   *
   */
 case class Banks(authInfo: AuthInfo, data: List[InboundBank])
-case class BankWrapper(authInfo: AuthInfo, data: Option[InboundBank])
-case class AdapterInfo(data: Option[InboundAdapterInfo])
-case class UserWrapper(data: Option[InboundValidatedUser])
-case class OutboundUserAccountViewsBaseWapper(data: List[InboundAccountJune2017])
+case class BankWrapper(authInfo: AuthInfo, data: InboundBank)
+case class AdapterInfo(data: InboundAdapterInfo)
+case class UserWrapper(authInfo: AuthInfo, data: InboundValidatedUser)
 case class InboundBankAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
 case class InboundBankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
@@ -100,15 +98,15 @@ case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCrea
 case class AuthInfo(userId: String, username: String, cbsToken: String)
 
 case class InboundBank(
-  backendMessages: List[BackendMessage],
   errorCode: String,
+  backendMessages: List[InboundStatusMessage],
   bankId: String,
   name: String,
   logo: String,
   url: String
 )
 
-case class BackendMessage(
+case class InboundStatusMessage(
   source: String,
   status: String,
   errorCode: String,
@@ -116,13 +114,15 @@ case class BackendMessage(
 )
 
 case class InboundValidatedUser(
-  errorCode: Option[String],
-  email: Option[String],
-  displayName: Option[String]
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  email: String,
+  displayName: String
 )
 
 case class InboundAdapterInfo(
   errorCode: String,
+  backendMessages: List[InboundStatusMessage],
   name: String,
   version: String,
   git_commit: String,
@@ -131,6 +131,7 @@ case class InboundAdapterInfo(
 
 case class InboundAccountJune2017(
   errorCode: String,
+  backendMessages: List[InboundStatusMessage],
   cbsToken: String,
   bankId: String,
   branchId: String,
@@ -156,6 +157,7 @@ abstract class InboundMessageBase(optionalFields: String*) {
 case class InternalTransaction(
   //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
   errorCode: String,
+  backendMessages: List[InboundStatusMessage],
   transactionId: String, // Find some
   accountId: String, //accountId
   amount: String, //:"TN2_SCHUM"
@@ -276,10 +278,14 @@ case class TransactionRequestBodyTransferToAccount(
 ) extends TransactionRequestCommonBodyJSON
 
 case class InternalTransactionId(
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
   id : String
 )
 
 case class InternalCreateChallengeJune2017(
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
   answer : String
 )
 

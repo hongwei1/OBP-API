@@ -90,7 +90,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {List(username)} else {List("")}
-    InboundAccountJune2017(errorCode = "",
+    InboundAccountJune2017(
+      errorCode = "",
+      List(InboundStatusMessage("ESB","Success", "0", "OK")), ////TODO, need to fill the coreBanking error
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
@@ -118,6 +120,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InternalTransaction(
       //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
       errorCode = "",
+      List(
+        InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+      ),
       transactionId = getOrCreateTransactionId(amount,completedDate,newBalanceAmount), // Find some
       accountId = accountId, //accountId
       amount = amount, //:"TN2_SCHUM"
@@ -134,20 +140,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
       userId = userId //userId
     )
   }
-  //Helperfunctions end here--------------------------------------------------------------------------------------------
+  //Helper functions end here--------------------------------------------------------------------------------------------
   
-  //Processorfunctions start here---------------------------------------------------------------------------------------
+  //Processor functions start here---------------------------------------------------------------------------------------
 
   override def getBanks(getBanks: GetBanks) = {
       Banks(getBanks.authInfo, List(InboundBank(
-        List(BackendMessage("ESB","Success", "0", "OK")),
-        "", "10", "leumi","leumilogo","leumiurl")))
+        "",
+        List(InboundStatusMessage("ESB","Success", "0", "OK")),
+         "10", "leumi","leumilogo","leumiurl")))
     }
 
   override def getBank(getBank: GetBank) = {
-    BankWrapper(getBank.authInfo, Some(InboundBank(
-      List(BackendMessage("ESB","Success", "0", "OK")), 
-      "", "10", "leumi","leumilogo","leumiurl")))
+    BankWrapper(getBank.authInfo, InboundBank(
+      "",
+      List(InboundStatusMessage("ESB","Success", "0", "OK")), 
+       "10", "leumi","leumilogo","leumiurl"))
   }
 
   
@@ -300,7 +308,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     } else
       throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
   
-    InboundCreateTransactionId(createTransactionRequest.authInfo, InternalTransactionId(transactionNewId))
+    InboundCreateTransactionId(createTransactionRequest.authInfo, 
+      InternalTransactionId("",List(InboundStatusMessage("ESB","Success", "0", "OK")),
+        transactionNewId))
     
   }
   
@@ -315,7 +325,13 @@ object LeumiDecoder extends Decoder with StrictLogging {
     //TODO, added NTLV_7_000 Login here.
     
     val answer = "183823"
-    InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(answer))
+    InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
+      "",
+      List(
+        InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+      ),
+        answer))
   }
   
   

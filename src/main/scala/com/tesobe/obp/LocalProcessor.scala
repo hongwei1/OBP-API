@@ -54,151 +54,297 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     logger.debug(s"Processing banksFn ${msg.record.value}")
     
     try {
+      //This may throw exception:
       val response: (GetBanks => Banks) = {q => com.tesobe.obp.june2017.LeumiDecoder.getBanks(q)}
+      //This also maybe throw exception, map the error to Exception 
       val r = decode[GetBanks](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ")
-        case Right(x) =>  throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ")
+        case Left(e) => throw new RuntimeException(s"Please check `$GetBanks` case class for OBP-API and Adapter sides : "+e)
+        case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
     } catch {
       case m: Throwable =>
         logger.error("banksFn-unknown error", m)
-        Future(msg, Banks(AuthInfo("","",""),
-          List(InboundBank(
-            List(BackendMessage("ESB","Success", "0", "OK")),
-            m.getMessage, "", "","",""))
-        ).asJson.noSpaces)
+        val errorBody = Banks(
+          AuthInfo("","",""),
+          List(
+            InboundBank(
+              m.getMessage,
+              List(
+                InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+                InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+            ),
+             "", "","","")
+          )
+        )
+        
+        Future(msg, errorBody.asJson.noSpaces)
     }
    
   }
 
   def bankFn: Business = { msg =>
     logger.debug(s"Processing bankFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBank(q) }
-    val r = decode[GetBank](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBank(q) }
+      val r = decode[GetBank](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetBank` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = BankWrapper(
+          AuthInfo("","",""),
+            InboundBank(
+              m.getMessage,
+              List(
+                InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+                InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+              ),
+              "", "","","")
+        )
+      
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
   
   def userFn: Business = { msg =>
     logger.debug(s"Processing userFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getUser(q) }
-    val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getUser(q) }
+      val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetUserByUsernamePassword` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = UserWrapper(
+          AuthInfo("","",""),
+          InboundValidatedUser(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+            ),
+            "", "")
+        )
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
-  }
-  
-  def accountsFn: Business = { msg =>
-    logger.debug(s"Processing accountsFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (UpdateUserAccountViews => OutboundUserAccountViewsBaseWapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getAccounts(q) }
-    val r = decode[UpdateUserAccountViews](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
-    }
-    Future(msg, r)
   }
   
   def adapterFn: Business = { msg =>
     logger.debug(s"Processing adapterFn ${msg.record.value}")
+    try {
     /* call Decoder for extracting data from source file */
-    val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.june2017.LeumiDecoder.getAdapter(q) }
-    val r = decode[GetAdapterInfo](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+      val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.june2017.LeumiDecoder.getAdapter(q) }
+      val r = decode[GetAdapterInfo](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetAdapterInfo` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = AdapterInfo(
+          InboundAdapterInfo(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+            ),
+            "", "","", "")
+        )
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
   
   def bankAccountIdFn: Business = { msg =>
-    logger.debug(s"Processing bankAccountIdFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetAccountbyAccountID => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountbyAccountId(q) }
-    val r = decode[GetAccountbyAccountID](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    try {
+      logger.debug(s"Processing bankAccountIdFn ${msg.record.value}")
+      /* call Decoder for extracting data from source file */
+      val response: (GetAccountbyAccountID => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountbyAccountId(q) }
+      val r = decode[GetAccountbyAccountID](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetAccountbyAccountID` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = InboundBankAccount(
+            AuthInfo("","",""),
+            InboundAccountJune2017(
+              m.getMessage,
+              List(
+                InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+                InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              ),
+              "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+        )
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
 
   def bankAccountNumberFn: Business = { msg =>
     logger.debug(s"Processing bankAccountNumberFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetAccountbyAccountNumber => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
-    val r = decode[GetAccountbyAccountNumber](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (GetAccountbyAccountNumber => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
+      val r = decode[GetAccountbyAccountNumber](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetAccountbyAccountNumber` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = InboundBankAccount(
+          AuthInfo("","",""),
+          InboundAccountJune2017(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+        )
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
   
   def bankAccountsFn: Business = {msg =>
     logger.debug(s"Processing bankAccountsFn ${msg.record.value}")
+    try {
 //    /* call Decoder for extracting data from source file */
-    val response: (OutboundGetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccounts(q) }
-    val r = decode[OutboundGetAccounts](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+      val response: (OutboundGetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccounts(q) }
+      val r = decode[OutboundGetAccounts](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetAccounts` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = InboundBankAccounts(
+          AuthInfo("","",""),
+          List(InboundAccountJune2017(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+        ))
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
 
   def transactionsFn: Business = {msg =>
     logger.debug(s"Processing transactionsFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetTransactions => InboundTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactions(q) }
-    val r = decode[GetTransactions](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (GetTransactions => InboundTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactions(q) }
+      val r = decode[GetTransactions](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetTransactions` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = InboundTransactions(
+          AuthInfo("","",""),
+          List(InternalTransaction(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            "", "","", "","", "","","","","","", "","", "")
+          ))
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   } 
   
   def transactionFn: Business = {msg =>
     logger.debug(s"Processing transactionFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (GetTransaction => InboundTransaction) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransaction(q) }
-    val r = decode[GetTransaction](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (GetTransaction => InboundTransaction) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransaction(q) }
+      val r = decode[GetTransaction](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetTransaction` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        
+        val errorBody = InboundTransaction(
+          AuthInfo("","",""),
+          InternalTransaction(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            "", "","", "","", "","","","","","", "","", ""))
+      
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
   
   def createTransactionFn: Business = {msg =>
     logger.debug(s"Processing createTransactionFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (CreateTransaction => InboundCreateTransactionId) = { q => com.tesobe.obp.june2017.LeumiDecoder.createTransaction(q) }
-    val valueFromKafka: String = msg.record.value()
-    //Because the CreateTransaction case class, contain the "sealed trait TransactionRequestCommonBodyJSON"
-    //So, we need map the trait explicitly.
-    def mapTraitFieldExplicitly(string: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${string }": {""").replace("""}},""","""}}},""")
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (CreateTransaction => InboundCreateTransactionId) = { q => com.tesobe.obp.june2017.LeumiDecoder.createTransaction(q) }
+      val valueFromKafka: String = msg.record.value()
+      //Because the CreateTransaction case class, contain the "sealed trait TransactionRequestCommonBodyJSON"
+      //So, we need map the trait explicitly.
+      def mapTraitFieldExplicitly(string: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${string }": {""").replace("""}},""","""}}},""")
+      
+      val changeValue = 
+        if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) 
+          mapTraitFieldExplicitly(TransactionRequestBodyTransferToPhoneJson.toString())
+        else if(valueFromKafka.contains(Util.TransactionRequestTypes.COUNTERPARTY.toString))
+          mapTraitFieldExplicitly(TransactionRequestBodyCounterpartyJSON.toString())
+        else if(valueFromKafka.contains(Util.TransactionRequestTypes.SEPA.toString))
+          mapTraitFieldExplicitly(TransactionRequestBodySEPAJSON.toString())
+        else if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_ATM.toString))
+          mapTraitFieldExplicitly(TransactionRequestBodyTransferToAtmJson.toString())
+        else if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString))
+          mapTraitFieldExplicitly(TransactionRequestBodyTransferToAccount.toString())
+        else
+          throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
+      
+      val r = decode[CreateTransaction](changeValue) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$CreateTransaction` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
     
-    val changeValue = 
-      if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) 
-        mapTraitFieldExplicitly(TransactionRequestBodyTransferToPhoneJson.toString())
-      else if(valueFromKafka.contains(Util.TransactionRequestTypes.COUNTERPARTY.toString))
-        mapTraitFieldExplicitly(TransactionRequestBodyCounterpartyJSON.toString())
-      else if(valueFromKafka.contains(Util.TransactionRequestTypes.SEPA.toString))
-        mapTraitFieldExplicitly(TransactionRequestBodySEPAJSON.toString())
-      else if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_ATM.toString))
-        mapTraitFieldExplicitly(TransactionRequestBodyTransferToAtmJson.toString())
-      else if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString))
-        mapTraitFieldExplicitly(TransactionRequestBodyTransferToAccount.toString())
-      else
-        throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
+        val errorBody = InboundCreateTransactionId(
+          AuthInfo("","",""),
+          InternalTransactionId(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            ""))
     
-    val r = decode[CreateTransaction](changeValue) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
+        Future(msg, errorBody.asJson.noSpaces)
     }
-    Future(msg, r)
   }
   
   def tokenFn: Business = {msg =>
@@ -206,7 +352,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetToken => InboundToken) = { q => com.tesobe.obp.june2017.LeumiDecoder.getToken(q) }
     val r = decode[GetToken](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
+      case Left(e) => throw new RuntimeException(s"Please check `$GetToken` case class for OBP-API and Adapter sides : "+e);
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -214,13 +360,30 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   
   def createChallengeFn: Business = {msg =>
     logger.debug(s"Processing createChallengeFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (OutboundCreateChallengeJune2017 => InboundCreateChallengeJune2017) = { q => com.tesobe.obp.june2017.LeumiDecoder.createChallenge(q)}
-    val r = decode[OutboundCreateChallengeJune2017](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(" !!! --- This can not be empty, please compare the case class for both sides, only for debugging ");
-      case Right(x) => response(x).asJson.noSpaces
-    }
-    Future(msg, r)
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (OutboundCreateChallengeJune2017 => InboundCreateChallengeJune2017) = { q => com.tesobe.obp.june2017.LeumiDecoder.createChallenge(q)}
+      val r = decode[OutboundCreateChallengeJune2017](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundCreateChallengeJune2017` case class for OBP-API and Adapter sides : "+e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+  } catch {
+    case m: Throwable =>
+      logger.error("banksFn-unknown error", m)
+    
+      val errorBody = InboundCreateChallengeJune2017(
+        AuthInfo("","",""),
+        InternalCreateChallengeJune2017(
+          m.getMessage,
+          List(
+            InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+            InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+          ),
+          ""))
+    
+      Future(msg, errorBody.asJson.noSpaces)
+  }
   }
   
   private def getResponse(msg: CommittableMessage[String, String]): String = {

@@ -26,21 +26,21 @@ class LeumiDecoderTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
     //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
     result should be (InboundBankAccounts(AuthInfo("karlsid", "karl", ">,?          81433020102612"),
-      List(InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId2, "50180983", "430", "5541.28", "ILS", List("karl"), List("Owner"), "", "", "", "", "", ""), 
-        InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId3, "50180963", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", ">,?          81433020102612", "10", "814", accountId4, "20102612", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", ">,?          81433020102612", "10", "814", accountId5, "20105505", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+      List(InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), ">,?          81433020102612", "10", "616", accountId2, "50180983", "430", "5541.28", "ILS", List("karl"), List("Owner"), "", "", "", "", "", ""), 
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), ">,?          81433020102612", "10", "616", accountId3, "50180963", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), ">,?          81433020102612", "10", "814", accountId4, "20102612", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), ">,?          81433020102612", "10", "814", accountId5, "20105505", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
   test("getBankAccountbyAccountId works for Stub"){
     val result = getBankAccountbyAccountId(GetAccountbyAccountID(AuthInfo("karlsid", "karl", ">,?          81433020102612"),"10",accountId1))
-    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", ">,?          81433020102612"),(InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", ">,?          81433020102612"),(InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success", "0", "OK")),  ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
 
   test("getBankAccountbyAccountNumber works for Stub"){
     val result = getBankAccountByAccountNumber(GetAccountbyAccountNumber(AuthInfo("karlsid", "karl", ">,?          81433020102612"),"10","3565953"))
-    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", ">,?          81433020102612"),(InboundAccountJune2017("", ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+    result should be (InboundBankAccount(AuthInfo("karlsid", "karl", ">,?          81433020102612"),(InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success", "0", "OK")),  ">,?          81433020102612", "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
   test("getTransactions works for Stubs first transaction"){
@@ -48,6 +48,10 @@ class LeumiDecoderTest extends FunSuite with Matchers with BeforeAndAfterAll{
     val transactionId = base64EncodedSha256(result.data.head.amount + result.data.head.completedDate + result.data.head.newBalanceAmount)
     result.data.head should be (InternalTransaction(
       "",
+      List(
+        InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+      ),
       transactionId,
       accountId1,
       "-1312.21",

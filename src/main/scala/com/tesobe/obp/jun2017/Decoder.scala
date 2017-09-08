@@ -36,42 +36,48 @@ trait Decoder extends MappedDecoder with Config{
 
   def getBank(getBank: GetBank) = {
     decodeLocalFile match {
-      case Left(_) => BankWrapper(getBank.authInfo, None)
+      case Left(_) => BankWrapper(getBank.authInfo, InboundBank(
+        "",
+        List(
+          InboundStatusMessage("","", "", ""), 
+          InboundStatusMessage("","", "", "")  
+        ),
+        "", "","",""))
       case Right(x) =>
         x.banks.filter(_.id == Some(getBank.bankId)).headOption match {
-          case Some(x) => BankWrapper(getBank.authInfo, Some(mapBankToInboundBank(x)))
-          case None => BankWrapper(getBank.authInfo, None)
+          case Some(x) => BankWrapper(getBank.authInfo, InboundBank(
+            "",
+            List(
+              InboundStatusMessage("","", "", ""),
+              InboundStatusMessage("","", "", "")
+            ),
+            "", "","",""))
+          case None => BankWrapper(getBank.authInfo, InboundBank(
+            "",
+            List(
+              InboundStatusMessage("","", "", ""),
+              InboundStatusMessage("","", "", "")
+            ),
+            "", "","",""))
         }
     }
   }
 
   def getUser(getUserbyUsernamePassword: GetUserByUsernamePassword) = {
     decodeLocalFile match {
-      case Left(_) => UserWrapper(None)
+      case Left(_) => UserWrapper(getUserbyUsernamePassword.authInfo,InboundValidatedUser("",List(InboundStatusMessage("","","","")), "", ""))
       case Right(x) =>
         val userName = Some(getUserbyUsernamePassword.authInfo.username)
         val userPassword = Some(getUserbyUsernamePassword.password)
         x.users.filter(user => user.displayName == userName && user.password == userPassword).headOption match {
-          case Some(x) => UserWrapper(Some(mapUserToInboundValidatedUser(x)))
-          case None => UserWrapper(None)
-        }
-    }
-  }
-  
-  def getAccounts(updateUserAccountViews: UpdateUserAccountViews) = {
-    decodeLocalFile match {
-      case Left(_) => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJune2017])
-      case Right(x) =>
-        val userName = updateUserAccountViews.authInfo.username
-        x.accounts.filter(account => account.owners.head == userName).headOption match {
-          case Some(x) => OutboundUserAccountViewsBaseWapper(List(mapAdapterAccountToInboundAccountJune2017(x)))
-          case None => OutboundUserAccountViewsBaseWapper(List.empty[InboundAccountJune2017])
+          case Some(x) => UserWrapper(getUserbyUsernamePassword.authInfo, mapUserToInboundValidatedUser(x))
+          case None => UserWrapper(getUserbyUsernamePassword.authInfo, InboundValidatedUser("",List(InboundStatusMessage("","","","")), "", ""))
         }
     }
   }
   
   def getAdapter(getAdapterInfo: GetAdapterInfo) = {
-    AdapterInfo(data = Some(InboundAdapterInfo("", "OBP-Scala-South", "June2017", Util.gitCommit, (new Date()).toString)))
+    AdapterInfo(InboundAdapterInfo("",  List(InboundStatusMessage("ESB","Success", "0", "OK")),"OBP-Scala-South", "June2017", Util.gitCommit, (new Date()).toString))
   }
 
   def getBankAccounts(getAccounts: OutboundGetAccounts): InboundBankAccounts
