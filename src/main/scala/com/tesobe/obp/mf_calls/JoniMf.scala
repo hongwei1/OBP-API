@@ -34,7 +34,7 @@ object JoniMf extends Config with StrictLogging{
      val url = config.getString("bankserver.url")
 
      //OBP-Adapter_Leumi/Doc/MFServices/JONI_0_000 Sample.txt
-     val post = new HttpPost(url + "/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01")
+     val post = new HttpPost(url + "/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
      post.addHeader("Content-Type", "application/json;charset=utf-8")
      val json: JValue =parse(s"""
      {

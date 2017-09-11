@@ -1,4 +1,4 @@
-POST http://ntas107703t55:7800/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01
+POST http://ntas107703t55:7800/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01
 Content-Type	application/json;charset=utf-8
 {
   "JONI_0_000": {

@@ -24,7 +24,7 @@ object RunMockServer extends StrictLogging{
         request()
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
-          .withPath("/ESBLeumiDigitalBank/POC/V1.0/JONI/0/000/01.01")
+          .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
           //.withBody("body")
       )
       .respond(
