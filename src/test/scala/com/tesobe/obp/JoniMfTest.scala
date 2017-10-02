@@ -13,6 +13,8 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll with Stri
   override def beforeAll() {
     startMockServer
   }
+  val username = "N7jut8d"
+  val mfToken = "?+1         81433020102612"
   val mfresult: String = jsonToString("joni_result.json")
   val sane_result: String = replaceEmptyObjects(mfresult)
   implicit val formats = net.liftweb.json.DefaultFormats
@@ -38,20 +40,20 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll with Stri
     assert(JoniCall.SDR_JONI.esbHeaderResponse.responseStatus.errorDesc
       == Some(""))
     JoniCall.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE(2).SDR_CHN(0).SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN should be ("20102642")
-    JoniCall.SDR_JONI.MFTOKEN should be (""">,?          81433020102612""")
+    JoniCall.SDR_JONI.MFTOKEN should be ("""?+1         81433020102612""")
 
 
   }
    test("getBasicBankAccountsForUser"){
     val accounts = getBasicBankAccountsForUser("joni_result.json")
    accounts should be (List(
-     BasicBankAccount("3565953", "616", "330", ">,?          81433020102612", AccountPermissions(true,false,false)), 
-     BasicBankAccount("50180983", "616", "430", ">,?          81433020102612", AccountPermissions(true,false,true)),
-     BasicBankAccount("50180963", "616", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),
+     BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(true,false,false)), 
+     BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(true,false,true)),
+     BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(true,false,false)),
      //BasicBankAccount("20102642","814","0", AccountPermissions(true,false,false)),
-     BasicBankAccount("20102612", "814", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),
+     BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(true,false,false)),
      //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
-     BasicBankAccount("20105505", "814", "330", ">,?          81433020102612", AccountPermissions(true,false,false))
+     BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(true,false,false))
    ))
    
   }
@@ -71,7 +73,7 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll with Stri
 
   test("getMFToken gets the MFTOKEN, assuming / will be  escaped later"){
     val mftoken = getMFToken("joni_result.json")
-    mftoken should be (">,?          81433020102612")
+    mftoken should be (mfToken)
   }
   
 /*  test("getJoniMfHttp does useful things"){
