@@ -11,7 +11,7 @@ class Ntlv7MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
   }
 
 
-  test("Ntlv7 gives proper mobile number and prefix"){
+  test("Ntlv7 gives proper OTP"){
     val result = getNtlv7MfHttpApache(
       branch = "616",
       accountType = "330",

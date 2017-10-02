@@ -7,17 +7,13 @@
       "responseStatus":
       {
         "callStatus": "Success",
-        "errorDesc":
-        {
-        }
+        "errorDesc": ""
       }
     },
     "MFAdminResponse":
     {
       "returnCode": "0",
-      "messageText":
-      {
-      }
+      "messageText": ""
     },
     "DFH_OPT": "183823"
   }
