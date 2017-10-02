@@ -3,14 +3,20 @@ package com.tesobe.obp.june2017
 import java.text.SimpleDateFormat
 import java.util.UUID
 
-import com.tesobe.obp.{BasicBankAccount, Tn2TnuaBodedet, Util}
+import com.tesobe.obp._
 import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
+import com.tesobe.obp.JoniMf.getJoni
 import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
+import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135MfHttpApache
+import com.tesobe.obp.Ntbd2v135Mf.getNtbd2v135MfHttpApache
+import com.tesobe.obp.Ntlv1Mf.getNtlv1MfHttpApache
+import com.tesobe.obp.Ntlv7Mf.getNtlv7MfHttpApache
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.typesafe.scalalogging.StrictLogging
+import net.liftweb.json.JValue
 
 import scala.collection.mutable.{ListBuffer, Map}
 
@@ -278,33 +284,58 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
     // OBP-API will provide: four values:
-    val transactionNewId =
+    val accountValues = mapAccountIdToAccountValues(createTransactionRequest.fromAccountId)
+    val branchId = accountValues.branchId
+    val accountNumber = accountValues.accountNumber
+    val accountType = accountValues.accountType
+    val username =  createTransactionRequest.authInfo.username
+    val cbsToken = createTransactionRequest.authInfo.cbsToken
+
+ 
+    val transactionNewId = ""  //as we cannot determine the transactionid at creation, this will always be empty
     if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) {
-      //TODO 1, need Adapter to continue NTBD_1_135 and NTBD_2_135
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToPhoneJson]
       val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from_account_phone_number
       val receiverPhoneNumber = transactionRequestBodyPhoneToPhoneJson.couterparty.other_account_phone_number
       val transactionDescription = transactionRequestBodyPhoneToPhoneJson.description
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
+
       
-      //TODO 2, repalce the value of  transactionNewId.
-      UUID.randomUUID().toString
-    }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
+      val callNtbd1_135 = getNtbd1v135MfHttpApache(branch = branchId,
+        accountType,
+        accountNumber,
+        username,
+        cbsToken,
+        mobileNumberOfMoneySender = senderPhoneNumber,
+        mobileNumberOfMoneyReceiver = receiverPhoneNumber,
+        description = transactionDescription,
+        transferAmount = transactionAmount)
+      
+      val callNtbd2_135 = getNtbd2v135MfHttpApache(branchId,
+        accountType,
+        accountNumber,
+        username,
+        cbsToken,
+        ntbd1v135_Token = callNtbd1_135.P135_BDIKAOUT.P135_TOKEN,
+        nicknameOfMoneySender = transactionRequestBodyPhoneToPhoneJson.from_account_owner_nickname,
+        //TODO: Check with api if the description is intended to be the message to the money receiver
+        messageToMoneyReceiver =  transactionDescription)
+
+
+      
+
+      }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAtmJson]
   
-      UUID.randomUUID().toString
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]
   
-      UUID.randomUUID().toString
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.COUNTERPARTY.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJSON]
   
-      UUID.randomUUID().toString
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.SEPA.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodySEPAJSON]
   
-      UUID.randomUUID().toString
     } else
       throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
   
@@ -320,14 +351,44 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createChallenge)")
+
+    implicit val formats = net.liftweb.json.DefaultFormats
+    //Creating JSON AST
+    val jsonAst: JValue = getJoni(createChallenge.authInfo.username)
+    //Create case class object JoniMfUser
+    val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
+    val accountValues = mapAccountIdToAccountValues(createChallenge.accountId)
+    val branchId = accountValues.branchId
+    val accountNumber = accountValues.accountNumber
+    val accountType = accountValues.accountType
+    val username = createChallenge.authInfo.username 
+    val cbsToken = jsonExtract.SDR_JONI.MFTOKEN
+    //todo: never used, plz check.
+    val phoneNumber = createChallenge.phoneNumber 
+    val callNtlv1 = getNtlv1MfHttpApache(username,
+      jsonExtract.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
+      jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
+      cbsToken
+    )
+    //TODO: will use the first mobile phone contact available. Check.
+    val mobilePhoneData  = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10" ).getOrElse(
+      O1contactRec(O1recId("",""),"","","","","","","","","","","","","","","",""))
+
+
+    val callNtlv7 = getNtlv7MfHttpApache(branchId,
+      accountType,
+      accountNumber,
+      username,
+      cbsToken,
+      mobilePhoneData.O1_TEL_AREA,
+      mobilePhoneData.O1_TEL_NUM
+    )
     
-    val phoneNumber = createChallenge.phoneNumber
-    //TODO, added NTLV_7_000 Login here.
-    
-    val answer = "183823"
+    val answer = callNtlv7.DFHPLT_1.DFH_OPT
     InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
       "",
       List(
+        //Todo: We did 3 MfCalls so far. Shall they all go in?
         InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
         InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
       ),

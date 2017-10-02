@@ -21,9 +21,8 @@ class Ntlv1MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
   test("getNt1l1MfHttpApache gets proper target mobilenumber with prefix"){
     val result = getNtlv1MfHttpApache(
       username ="N7jut8d",
-      branch = "000",
       idNumber = "4051769",
-      idType = "1",idCounty = "2121",
+      idType = "1",
       cbsToken = "<&+          81433020102612")
     result.O1OUT1AREA_1.O1_CONTACT_REC.head.O1_TEL_AREA should be("50")
     result.O1OUT1AREA_1.O1_CONTACT_REC.head.O1_TEL_NUM should be("5410377")

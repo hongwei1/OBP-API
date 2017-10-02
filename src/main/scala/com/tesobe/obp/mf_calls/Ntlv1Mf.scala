@@ -12,7 +12,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 
 object Ntlv1Mf extends StrictLogging{
 
-  def getNtlv1MfHttpApache(username: String, branch: String, idNumber: String, idType: String, idCounty: String, cbsToken: String): Ntlv1  = {
+  def getNtlv1MfHttpApache(username: String, idNumber: String, idType: String, cbsToken: String): Ntlv1  = {
   
     val client = new DefaultHttpClient()
     val url = config.getString("bankserver.url")
@@ -25,10 +25,10 @@ object Ntlv1Mf extends StrictLogging{
       "NTLV_1_000": {
         "NtdriveCommonHeader": {
           "KeyArguments": {
-            "Branch": "$branch",
+            "Branch": "000",
             "IDNumber": "$idNumber",
             "IDType": "$idType",
-            "IDCounty": "$idCounty"
+            "IDCounty": "2121" 
           },
           "AuthArguments": {
             "User": "$username"

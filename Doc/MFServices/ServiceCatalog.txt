@@ -1,0 +1,19 @@
+MF Services catalog:
+JONI_0_000 - Account list
+NT1C_3_000 - Future transactions list
+NT1C_4_000 - Intraday transactions list
+NT1C_T_000 - Completed transactions list
+NT1C_B_000 - Balance and credit limit
+NTBD_1_105 + NTBD_2_105 - Send money to a person via ATM
+NTTF_W_000 - Helper service for NTBD_1_105  - returns card list
+NTBD_1_135 + NTBD_2_135 - Transfer money to a party defined by its mobile number
+NTBD_A_050 + NTBD_B_050 + NTBD_G_050 + NTBD_I_050 + NTBD_2_050 - Transfer money to other account
+NTG6_A_000 - Create counterparty - account belongs to Leumi
+NTG6_B_000 - Create counterparty - account doesn't belong to Leumi
+NTG6_C_000 - Delete counterparty - account belongs to Leumi
+NTG6_D_000 - Delete counterparty - account doesn't belong to Leumi
+NTG6_I_000 - Counterparty list - accounts belong to Leumi
+NTG6_K_000 - Counterparty list - accounts don't belong to Leumi
+NTIB_2_000 - IBAN
+NTLV_1_000 - Customer contact details including a mobile number
+NTLV_7_000 - Create, return and send OTP to specified mobile number

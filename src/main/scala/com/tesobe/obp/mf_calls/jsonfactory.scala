@@ -303,7 +303,29 @@ case class Dfhplt1(esbHeaderResponse: EsbHeaderResponse,
                    MFAdminResponse: MfAdminResponse,
                   DFH_OPT: String)
 
+
 case class Ntlv7(DFHPLT_1: Dfhplt1)
+
+case class PPirteyKartis(P_MISPAR_KARTIS: String, // Card number
+                         P_TOKEF_KARTIS: String, //Card Expiration Date
+                         P_TIKRAT_KARTIS: String // Current limit to withdrawal from the card
+                        )
+
+case class PPratim(P_PIRTEY_KARTIS: List[PPirteyKartis])
+
+case class PHeader(P_TIKRA_MAX_MUTAV: String) // Max. amount permitted to transfer
+
+case class PeletNttfW(esbHeaderResponse: EsbHeaderResponse,
+                      MFAdminResponse: MfAdminResponse,
+                      P_HEADER: PHeader,
+                      P_MONE_KARTISIM: String, // Number of cards linked to the account
+                      P_PRATIM: PPratim
+                     
+                     )
+
+case class NttfW(PELET_NTTF_W: PeletNttfW)
+
+
 
 //From OBP-Scala-South-----------------------------------------------------
 
