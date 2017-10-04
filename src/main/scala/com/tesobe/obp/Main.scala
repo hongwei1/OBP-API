@@ -27,13 +27,12 @@ import com.tesobe.obp.RunMockServer.startMockServer
   */
 object Main extends App with StrictLogging with Config with ProcessorFactory {
 
-  logger.info("The Adapter's current commit is : "+Util.gitCommit)
-  logger.info("The Adapter's complete props is : "+config)
-  val systemName = config.getString("system-name")
+  logger.debug("The Adapter's current commit is : "+Util.gitCommit)
+  logger.debug("The Adapter's complete props is : "+config)
+  
   if (config.getBoolean("mockserver.run")) {
     startMockServer
   }
-  val whatever: String = "fred"
   /**
     * Reaction on unexpected events
     */

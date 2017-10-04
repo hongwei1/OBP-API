@@ -77,7 +77,7 @@ trait Decoder extends MappedDecoder with Config{
   }
   
   def getAdapter(getAdapterInfo: GetAdapterInfo) = {
-    AdapterInfo(InboundAdapterInfo("",  List(InboundStatusMessage("ESB","Success", "0", "OK")),"OBP-Scala-South", "June2017", Util.gitCommit, (new Date()).toString))
+    AdapterInfo(InboundAdapterInfo("",  List(InboundStatusMessage("ESB","Success", "0", "OK")),systemName, version, Util.gitCommit, (new Date()).toString))
   }
 
   def getBankAccounts(getAccounts: OutboundGetAccounts): InboundBankAccounts
