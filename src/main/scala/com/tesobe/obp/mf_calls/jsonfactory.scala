@@ -325,7 +325,15 @@ case class PeletNttfW(esbHeaderResponse: EsbHeaderResponse,
 
 case class NttfW(PELET_NTTF_W: PeletNttfW)
 
+case class HhMati(HH_ITRA_NOCHECHIT: String,
+                  HH_MISGERET_ASHRAI: String)
+case class HhPirteyCheshbon(HH_MATI: HhMati)
+case class HhMisgarotAshrai(HH_PIRTEY_CHESHBON: HhPirteyCheshbon)
 
+case class Tshuvatavlait(esbHeaderResponse: EsbHeaderResponse,
+                         MFAdminResponse: MfAdminResponse,
+                         HH_MISGAROT_ASHRAI: HhMisgarotAshrai)
+case class Nt1cB(TSHUVATAVLAIT: Tshuvatavlait)
 
 //From OBP-Scala-South-----------------------------------------------------
 

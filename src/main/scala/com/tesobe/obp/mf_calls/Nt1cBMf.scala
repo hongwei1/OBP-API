@@ -1,5 +1,6 @@
 package com.tesobe.obp
 
+import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.tesobe.obp.Nt1c4Mf.logger
 import com.tesobe.obp.Ntib2Mf.getNtib2Mf
 import com.typesafe.scalalogging.StrictLogging
@@ -18,7 +19,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 object Nt1cBMf extends Config with StrictLogging{
 
 
-  def getNt1cBMfHttpApache(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): String = {
+  def getNt1cBMfHttpApache(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): Nt1cB = {
 
     val client = new DefaultHttpClient()
     val url = config.getString("bankserver.url")
@@ -50,48 +51,20 @@ object Nt1cBMf extends Config with StrictLogging{
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
     logger.debug("NT1C_B_000--Response : "+response.toString+ "\n Body is :"+result)
-    result
+    implicit val formats = net.liftweb.json.DefaultFormats
+    parse(replaceEmptyObjects(result)).extract[Nt1cB]
   }
 
   def getBalance(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
     val call = (getNt1cBMfHttpApache(username, branch, accountType, accountNumber, cbsToken)) 
-    val parser = (p: Parser) => {
-      def parse: (String) = p.nextToken match {
-        case FieldStart("HH_ITRA_NOCHECHIT") => p.nextToken match {
-          case StringVal(token) => token
-          case _ => p.fail("expected string")
-        }
-        case End => p.fail("no field named 'HH_ITRA_NOCHECHIT'")
-        case _ => parse
-      }
-
-      parse
-    }
-    parse(call, parser)
+    call.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_ITRA_NOCHECHIT
   }
   def getLimit(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): (String) = {
     val call = (getNt1cBMfHttpApache(username, branch, accountType, accountNumber, cbsToken))
-    val parser = (p: Parser) => {
-      
-      def parse: (String) = p.nextToken match {
-        case FieldStart("HH_MISGERET_ASHRAI") => p.nextToken match {
-          case StringVal(token) => token
-          case _ => p.fail("expected string")
-        }
-        case End => p.fail("no field named 'HH_MISGERET_ASHRAI'")
-        case _ => parse
-      }
+    call.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI
 
-      parse
-    }
-    parse(call, parser)
   }
 
-
-  def getLimitJsonAst(json: String): (String) = {
-    val call = (getNtib2Mf(json))
-    (call \\ "HH_MISGERET_ASHRAI").toString
-  }
 
   
 }
