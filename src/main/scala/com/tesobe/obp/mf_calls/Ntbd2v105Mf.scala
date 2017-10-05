@@ -14,7 +14,10 @@ object Ntbd2v105Mf extends StrictLogging{
                      accountType: String,
                      accountNumber: String,
                      cbsToken: String,
-                     ntbd1v105Token: String): Ntbd2v105 = {
+                     ntbd1v105Token: String,
+                     nicknameOfSender: String,
+                     messageToReceiver: String
+                    ): Ntbd2v105 = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/105/01.01"
 
@@ -34,8 +37,8 @@ object Ntbd2v105Mf extends StrictLogging{
           "KELET_1352": {
           "K135_TOKEN_ISHUR": "$ntbd1v105Token",
           "K135_BAKASH_TASHL": "1",
-          "K135_KINUY_MAVIR": "",
-          "K135_MELEL_LE_MUTAV": ""
+          "K135_KINUY_MAVIR": "$nicknameOfSender",
+          "K135_MELEL_LE_MUTAV": "$messageToReceiver"
         }
         }
       }""")

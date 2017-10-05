@@ -18,6 +18,7 @@ import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105Mf
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
+import com.tesobe.obp.ErrorMessages.NoCreditCard
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 
@@ -332,7 +333,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val transactionAmount = transactionRequestBodyTransferToAtmJson.value.amount
       val callNttfW = getNttfWMf(branchId,accountType,accountNumber, cbsToken)
       val cardData = callNttfW.PELET_NTTF_W.P_PRATIM.P_PIRTEY_KARTIS.find(x => x.P_TIKRAT_KARTIS >= transactionAmount).getOrElse(
-        PPirteyKartis("","","")
+        throw new RuntimeException(NoCreditCard)
       )
       val callNtbd1v105 = getNtbd1v105Mf(
         branch = branchId,
@@ -356,7 +357,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
         accountType,
         accountNumber,
         cbsToken,
-        ntbd1v105Token = callNtbd1v105.P135_BDIKAOUT.P135_TOKEN)
+        ntbd1v105Token = callNtbd1v105.P135_BDIKAOUT.P135_TOKEN,
+        nicknameOfSender = transactionRequestBodyTransferToAtmJson.from_account_owner_nickname,
+        messageToReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_message)
       
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]

@@ -262,6 +262,7 @@ object ErrorMessages {
   
   // Adapter Exceptions (OBP-6XXXX)
   // Reserved for adapter (south of Kafka) messages
+  val NoCreditCard = "OBP-60000: No valid credit card or no credit card with sufficient withdrawal limit found"
   
   
   
