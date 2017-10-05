@@ -2,7 +2,7 @@ package com.tesobe.obp
 
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
-import com.tesobe.obp.Ntlv1Mf.getNtlv1MfHttpApache
+import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 
 class Ntlv1MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
@@ -19,7 +19,7 @@ class Ntlv1MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 	"User": "N7jut8d"
         "MFToken":"<&+          81433020102612"*/
   test("getNt1l1MfHttpApache gets proper target mobilenumber with prefix"){
-    val result = getNtlv1MfHttpApache(
+    val result = getNtlv1Mf(
       username ="N7jut8d",
       idNumber = "4051769",
       idType = "1",

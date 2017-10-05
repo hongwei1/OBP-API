@@ -1,6 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.NttfWMf.getNttfWMMfHttpApache
+import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
@@ -15,7 +15,7 @@ class NttfWMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
   test("getNttfWMMfHttpApache returns proper values"){
     println("XXXXXXXXXXXXXXXXXXXXtestnttfw")
-    val result = getNttfWMMfHttpApache(branch = "814",
+    val result = getNttfWMf(branch = "814",
       accountType = "330",
       accountNumber = "20102612",
       cbsToken = ";-V          81433020102612")

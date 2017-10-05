@@ -1,6 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.Ntlv7Mf.getNtlv7MfHttpApache
+import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
@@ -12,7 +12,7 @@ class Ntlv7MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
 
   test("Ntlv7 gives proper OTP"){
-    val result = getNtlv7MfHttpApache(
+    val result = getNtlv7Mf(
       branch = "616",
       accountType = "330",
       accountNumber = "50180963",

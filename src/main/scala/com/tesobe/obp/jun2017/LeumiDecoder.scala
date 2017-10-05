@@ -8,13 +8,13 @@ import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
 import com.tesobe.obp.JoniMf.getJoni
 import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
-import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135MfHttpApache
-import com.tesobe.obp.Ntbd2v135Mf.getNtbd2v135MfHttpApache
-import com.tesobe.obp.Ntlv1Mf.getNtlv1MfHttpApache
-import com.tesobe.obp.Ntlv7Mf.getNtlv7MfHttpApache
-import com.tesobe.obp.NttfWMf.getNttfWMMfHttpApache
-import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105MfHttpApache
-import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105MfHttpApache
+import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
+import com.tesobe.obp.Ntbd2v135Mf.getNtbd2v135Mf
+import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
+import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
+import com.tesobe.obp.NttfWMf.getNttfWMf
+import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
+import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105Mf
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -304,7 +304,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
 
       
-      val callNtbd1_135 = getNtbd1v135MfHttpApache(branch = branchId,
+      val callNtbd1_135 = getNtbd1v135Mf(branch = branchId,
         accountType,
         accountNumber,
         username,
@@ -314,7 +314,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         description = transactionDescription,
         transferAmount = transactionAmount)
       
-      val callNtbd2_135 = getNtbd2v135MfHttpApache(branchId,
+      val callNtbd2_135 = getNtbd2v135Mf(branchId,
         accountType,
         accountNumber,
         username,
@@ -330,11 +330,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
       }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
       val transactionRequestBodyTransferToAtmJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAtmJson]
       val transactionAmount = transactionRequestBodyTransferToAtmJson.value.amount
-      val callNttfW = getNttfWMMfHttpApache(branchId,accountType,accountNumber, cbsToken)
+      val callNttfW = getNttfWMf(branchId,accountType,accountNumber, cbsToken)
       val cardData = callNttfW.PELET_NTTF_W.P_PRATIM.P_PIRTEY_KARTIS.find(x => x.P_TIKRAT_KARTIS >= transactionAmount).getOrElse(
         PPirteyKartis("","","")
       )
-      val callNtbd1v105 = getNtbd1v105MfHttpApache(
+      val callNtbd1v105 = getNtbd1v105Mf(
         branch = branchId,
         accountType = accountType,
         accountNumber = accountNumber,
@@ -351,7 +351,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         birthDateOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_birthday,
         mobileNumberOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_phone_number)
       
-      val callNtbd2v105 = getNtbd2v105MfHttpApache(
+      val callNtbd2v105 = getNtbd2v105Mf(
         branchId,
         accountType,
         accountNumber,
@@ -396,7 +396,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val cbsToken = jsonExtract.SDR_JONI.MFTOKEN
     //todo: never used, plz check.
     val phoneNumber = createChallenge.phoneNumber 
-    val callNtlv1 = getNtlv1MfHttpApache(username,
+    val callNtlv1 = getNtlv1Mf(username,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
       cbsToken
@@ -406,7 +406,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       O1contactRec(O1recId("",""),"","","","","","","","","","","","","","","",""))
 
 
-    val callNtlv7 = getNtlv7MfHttpApache(branchId,
+    val callNtlv7 = getNtlv7Mf(branchId,
       accountType,
       accountNumber,
       username,

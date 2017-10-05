@@ -1,6 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105MfHttpApache
+import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105Mf
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
@@ -14,7 +14,7 @@ class Ntbd2v105MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
 
   test("getNtbd2v105HttpApache returns proper values"){
-    val result = getNtbd2v105MfHttpApache(branch = "616",
+    val result = getNtbd2v105Mf(branch = "616",
       accountType = "330",
       accountNumber = "50180963",
       cbsToken = ">U(          81433020102612",

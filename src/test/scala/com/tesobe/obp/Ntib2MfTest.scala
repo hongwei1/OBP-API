@@ -15,7 +15,7 @@ class Ntib2MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
   }
   
   test("getNtibMf gets response from the mainframe"){
-    val mfresult = getNtib2MfHttpApache("","","","","")
+    val mfresult = getNtib2Mf("","","","","")
     assert(mfresult.contains("SHETACHTCHUVA"))
   }
   
