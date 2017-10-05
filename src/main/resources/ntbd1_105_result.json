@@ -1,0 +1,30 @@
+{
+  "P135_BDIKAOUT": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff582410af10",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": {}
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": {}
+    },
+    "P135_TOKEN": "3635791",
+    "P135_AMALOT": {
+      "P135_TEUR_AMALA": {},
+      "P135_SCHUM_AMALA": "0.00",
+      "P135_SCHUM_STANDART_BANK": "0.00",
+      "P135_SCHUM_STANDART_MIGZAR": "0.00",
+      "P135_OFEN_CHISHUV_AMALA": "0",
+      "P135_SUG_HATAVA": "0",
+      "P135_KOD_HATAVA_BE_SHEUR": "0",
+      "P135_ACHUZ_TARIF": "0.0000",
+      "P135_ACHUZ_ATZMI": "0.0000",
+      "P135_YOM_GVIA": "20170607",
+      "P135_MIS_AMALA": "0",
+      "P135_SCHUM_HISAHON_AMLA": "0.00"
+    }
+  }
+}

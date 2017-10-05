@@ -15,10 +15,7 @@ object NttfWMf extends StrictLogging{
   def getNttfWMMfHttpApache(branch: String,
                            accountType: String,
                            accountNumber: String,
-                           username: String,
                            cbsToken: String,
-                           ntlv1TargetMobileNumberPrefix: String,
-                           ntlv1TargetMobileNumber: String
                           ) = {
 
     val client = new DefaultHttpClient()

@@ -42,8 +42,7 @@ Input parameters description:
 3. Transfer parameters:
    - K135_TOKEN_ISHUR[11] - comes from NTBD request 1; action 105
    - K135_BAKASH_TASHL[1]  - always 1
-   - K135_KINUY_MAVIR[20] - Nickname of the money sender
-   - K135_MELEL_LE_MUTAV[50] - Message to the money receiver
+ 
 
 
 Following is a valid transaction output.
