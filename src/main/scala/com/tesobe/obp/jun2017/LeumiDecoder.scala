@@ -45,10 +45,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   val defaultCurrency = "ILS"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
-  val simpleTransactionDateFormat = new SimpleDateFormat("yyyymmdd")
-  val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
+  val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
+  val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy")
   val simpleDayFormat: SimpleDateFormat = new SimpleDateFormat("dd")
-  val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("mm")
+  val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("MM")
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
 
   //TODO: Replace with caching solution for production
