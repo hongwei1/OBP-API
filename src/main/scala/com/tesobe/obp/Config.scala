@@ -52,6 +52,7 @@ trait Config {
   val topic = TopicPair(requestTopic, responseTopic)
 
   val version = config.getString("kafka.version")
+  val systemName = config.getString("system-name")
 
   def createTopicByClassName(className: String): TopicPair =
   /**
