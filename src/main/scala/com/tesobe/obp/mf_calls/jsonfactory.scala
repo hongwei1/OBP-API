@@ -4,7 +4,10 @@ package com.tesobe.obp
 
 case class MfAdminResponse(returnCode: String, messageText: Option[String])
 case class ResponseStatus(callStatus: String, errorDesc: Option[String])
+case class ResponseStatus2(statusCode: String, errorDesc: Option[String])
+
 case class EsbHeaderResponse(esbRequestId: String, responseStatus: ResponseStatus)
+case class EsbHeaderResponse2(esbRequestId: String, responseStatus: ResponseStatus2)
 
 case class SdrcMovil(
                      SDRC_MOVIL_BANK: String,
@@ -328,6 +331,44 @@ case class Pelet1352(esbHeaderResponse: EsbHeaderResponse,
                      MFAdminResponse: MfAdminResponse
                     )
 case class Ntbd2v105(PELET_1352: Pelet1352)
+
+case class P050bdikachovaout(esbHeaderResponse: EsbHeaderResponse2,
+                             MFAdminResponse: MfAdminResponse,
+                             P050_TOKEN_OUT: String,
+                             P050_SCUM_MAX_LE_HAVARA: String, // The maximum amount allowed to transfer from the account
+                             P050_SHEM_HOVA_ANGLIT: String // Debit(source) account owner name in english
+                            )
+
+case class NtbdAv050(P050_BDIKACHOVAOUT: P050bdikachovaout)
+
+case class NtdriveNoResp(esbHeaderResponse: EsbHeaderResponse,
+                         MFAdminResponse: MfAdminResponse)
+case class NtbdBv050(NTDriveNoResp: NtdriveNoResp)
+
+case class P050mahadura101(P050_KOD_ISHUR: String, P050_KOD_SIBA_LE_ISHUR_PAKID: String)
+
+case class P050bdikazchutout(esbHeaderResponse: EsbHeaderResponse,
+                             MFAdminResponse: MfAdminResponse,
+                             P050_MAHADURA_101: P050mahadura101
+                            )
+
+case class NtbdIv050(P050_BDIKAZCHUTOUT: P050bdikazchutout)
+
+case class P050amalotOutOld(P050_SCUM_AMLAT_HAVARA: String) // The transaction fee)
+
+case class P050amalotout(esbHeaderResponse: EsbHeaderResponse,
+                         MFAdminResponse: MfAdminResponse,
+                         P050_AMALOT_OUT_OLD: P050amalotOutOld
+                        )
+case class NtbdGv050(P050_AMALOTOUT: P050amalotout)
+
+case class P050ishurout(esbHeaderResponse: EsbHeaderResponse,
+                        MFAdminResponse: MfAdminResponse,
+                        P050_SHAA_BITZUA: String, // Transaction execution time HH:MM
+                        P050_TARICH_BITZUA: String //Transaction execution date YYYYMMDD
+                       )
+
+case class Ntbd2v050(P050_ISHUROUT: P050ishurout)
 
 //From OBP-Scala-South-----------------------------------------------------
 

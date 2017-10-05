@@ -14,7 +14,6 @@ class NttfWMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
 
 
   test("getNttfWMMfHttpApache returns proper values"){
-    println("XXXXXXXXXXXXXXXXXXXXtestnttfw")
     val result = getNttfWMf(branch = "814",
       accountType = "330",
       accountNumber = "20102612",

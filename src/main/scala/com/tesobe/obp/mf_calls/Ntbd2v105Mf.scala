@@ -2,11 +2,8 @@ package com.tesobe.obp
 import com.tesobe.obp.JoniMf.{config, replaceEmptyObjects}
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.typesafe.scalalogging.StrictLogging
-import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.{JValue, parse}
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.DefaultHttpClient
+
 
 object Ntbd2v105Mf extends StrictLogging{
 

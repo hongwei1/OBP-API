@@ -18,7 +18,8 @@ class Ntbd2v105MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
       accountType = "330",
       accountNumber = "50180963",
       cbsToken = ">U(          81433020102612",
-      ntbd1v105Token = "3639283")
+      ntbd1v105Token = "3639283",
+    "","")
     result.PELET_1352.esbHeaderResponse.responseStatus.callStatus should be ("Success")
     result.PELET_1352.MFAdminResponse.returnCode should be ("0")
 
