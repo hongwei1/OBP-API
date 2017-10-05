@@ -1,6 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.mf_calls.Ntbd1v105Mf.getNtbd1v105MfHttpApache
+import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105MfHttpApache
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 

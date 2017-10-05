@@ -324,7 +324,10 @@ case class Nt1cB(TSHUVATAVLAIT: Tshuvatavlait)
 
 case class Ntbd1v105(P135_BDIKAOUT: P135Bdikaout)
 
-case class Ntbd2v105()
+case class Pelet1352(esbHeaderResponse: EsbHeaderResponse,
+                     MFAdminResponse: MfAdminResponse
+                    )
+case class Ntbd2v105(PELET_1352: Pelet1352)
 
 //From OBP-Scala-South-----------------------------------------------------
 

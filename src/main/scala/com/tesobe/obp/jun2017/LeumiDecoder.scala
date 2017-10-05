@@ -12,6 +12,9 @@ import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135MfHttpApache
 import com.tesobe.obp.Ntbd2v135Mf.getNtbd2v135MfHttpApache
 import com.tesobe.obp.Ntlv1Mf.getNtlv1MfHttpApache
 import com.tesobe.obp.Ntlv7Mf.getNtlv7MfHttpApache
+import com.tesobe.obp.NttfWMf.getNttfWMMfHttpApache
+import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105MfHttpApache
+import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105MfHttpApache
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -325,7 +328,35 @@ object LeumiDecoder extends Decoder with StrictLogging {
       
 
       }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
-      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAtmJson]
+      val transactionRequestBodyTransferToAtmJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAtmJson]
+      val transactionAmount = transactionRequestBodyTransferToAtmJson.value.amount
+      val callNttfW = getNttfWMMfHttpApache(branchId,accountType,accountNumber, cbsToken)
+      val cardData = callNttfW.PELET_NTTF_W.P_PRATIM.P_PIRTEY_KARTIS.find(x => x.P_TIKRAT_KARTIS >= transactionAmount).getOrElse(
+        PPirteyKartis("","","")
+      )
+      val callNtbd1v105 = getNtbd1v105MfHttpApache(
+        branch = branchId,
+        accountType = accountType,
+        accountNumber = accountNumber,
+        cbsToken = cbsToken,
+        cardNumber = cardData.P_MISPAR_KARTIS,
+        cardExpirationDate = cardData.P_TOKEF_KARTIS,
+        cardWithdrawalLimit = cardData.P_TIKRAT_KARTIS,
+        mobileNumberOfMoneySender = transactionRequestBodyTransferToAtmJson.from_account_phone_number,
+        amount = transactionAmount,
+        description = transactionRequestBodyTransferToAtmJson.description,
+        idNumber = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_passport_id_or_national_id,
+        idType = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_id_type,
+        nameOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner,
+        birthDateOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_birthday,
+        mobileNumberOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_phone_number)
+      
+      val callNtbd2v105 = getNtbd2v105MfHttpApache(
+        branchId,
+        accountType,
+        accountNumber,
+        cbsToken,
+        ntbd1v105Token = callNtbd1v105.P135_BDIKAOUT.P135_TOKEN)
       
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]

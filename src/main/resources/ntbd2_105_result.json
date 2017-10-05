@@ -1,0 +1,19 @@
+{
+  "PELET_1352": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff58249eca09",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": ""
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": ""
+    },
+    "P135_SHAA_RISHUM": "18:21",
+    "P135_TARICH_BITZUA": "20170612",
+    "P135_TOKEN_ISHUR": "3639283",
+    "P135_ASMACHTA": "1455"
+  }
+}

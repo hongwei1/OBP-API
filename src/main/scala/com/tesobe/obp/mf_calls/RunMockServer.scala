@@ -228,6 +228,24 @@ object RunMockServer extends StrictLogging{
           )
           .withBody(jsonToString("ntbd1_105_result.json"))
       )
+    
+    //13 Ntbd2v105
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          .withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/105/01.01")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("ntbd2_105_result.json"))
+      )
 
   }
   
