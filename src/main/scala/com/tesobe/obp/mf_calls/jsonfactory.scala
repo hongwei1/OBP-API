@@ -4,6 +4,7 @@ package com.tesobe.obp
 
 case class MfAdminResponse(returnCode: String, messageText: Option[String])
 case class ResponseStatus(callStatus: String, errorDesc: Option[String])
+//TODO: check with leumi if this really differs, or is resulting from a global change or even false.
 case class ResponseStatus2(statusCode: String, errorDesc: Option[String])
 
 case class EsbHeaderResponse(esbRequestId: String, responseStatus: ResponseStatus)
