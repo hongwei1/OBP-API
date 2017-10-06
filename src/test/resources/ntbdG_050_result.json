@@ -1,0 +1,26 @@
+{
+  "P050_AMALOTOUT": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff58249eca0f",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": ""
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": ""
+    },
+    "P050_AMALOT_OUT_OLD": {
+      "P050_SCUM_AMLAT_HAVARA": "1.65",
+      "P050_TARICH_GVIYA": "20170613",
+      "P050_SHIUR_HATAVA_ARUTZ": "70.0000",
+      "P050_SHIUR_HATAVA_TARIF": "0.0000",
+      "P050_KOD_HATAVA": "0",
+      "P050_MONE_LO_PTURIM": "0",
+      "P050_AMALA_HISACHON": "3.85",
+      "P050_ACHUZ_AML_HISACHON": "70.0000"
+    },
+    "P050_MONE_PTURIM": ""
+  }
+}
