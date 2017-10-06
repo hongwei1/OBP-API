@@ -299,9 +299,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val transactionNewId = ""  //as we cannot determine the transactionid at creation, this will always be empty
     if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToPhoneJson]
-      val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from_account_phone_number
-      val receiverPhoneNumber = transactionRequestBodyPhoneToPhoneJson.couterparty.other_account_phone_number
+      val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from.mobile_phone_number
+      val receiverPhoneNumber = transactionRequestBodyPhoneToPhoneJson.to.mobile_phone_number
       val transactionDescription = transactionRequestBodyPhoneToPhoneJson.description
+      val transactionMessage = transactionRequestBodyPhoneToPhoneJson.message
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
 
       
@@ -321,9 +322,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         username,
         cbsToken,
         ntbd1v135_Token = callNtbd1_135.P135_BDIKAOUT.P135_TOKEN,
-        nicknameOfMoneySender = transactionRequestBodyPhoneToPhoneJson.from_account_owner_nickname,
-        //TODO: Check with api if the description is intended to be the message to the money receiver
-        messageToMoneyReceiver =  transactionDescription)
+        nicknameOfMoneySender = transactionRequestBodyPhoneToPhoneJson.from.nickname,
+        messageToMoneyReceiver =  transactionMessage)
 
 
       
@@ -343,14 +343,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
         cardNumber = cardData.P_MISPAR_KARTIS,
         cardExpirationDate = cardData.P_TOKEF_KARTIS,
         cardWithdrawalLimit = cardData.P_TIKRAT_KARTIS,
-        mobileNumberOfMoneySender = transactionRequestBodyTransferToAtmJson.from_account_phone_number,
+        mobileNumberOfMoneySender = transactionRequestBodyTransferToAtmJson.from.mobile_phone_number,
         amount = transactionAmount,
         description = transactionRequestBodyTransferToAtmJson.description,
-        idNumber = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_passport_id_or_national_id,
-        idType = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_id_type,
-        nameOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner,
-        birthDateOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_owner_birthday,
-        mobileNumberOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_phone_number)
+        idNumber = transactionRequestBodyTransferToAtmJson.to.kyc_document.number,
+        idType = transactionRequestBodyTransferToAtmJson.to.kyc_document.`type`,
+        nameOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.legal_name,
+        birthDateOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.date_of_birth,
+        mobileNumberOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.mobile_phone_number)
       
       val callNtbd2v105 = getNtbd2v105Mf(
         branchId,
@@ -358,8 +358,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         accountNumber,
         cbsToken,
         ntbd1v105Token = callNtbd1v105.P135_BDIKAOUT.P135_TOKEN,
-        nicknameOfSender = transactionRequestBodyTransferToAtmJson.from_account_owner_nickname,
-        messageToReceiver = transactionRequestBodyTransferToAtmJson.couterparty.other_account_message)
+        nicknameOfSender = transactionRequestBodyTransferToAtmJson.from.nickname,
+        messageToReceiver = transactionRequestBodyTransferToAtmJson.message)
       
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]

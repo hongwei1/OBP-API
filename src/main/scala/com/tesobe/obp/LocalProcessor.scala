@@ -58,7 +58,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       val response: (GetBanks => Banks) = {q => com.tesobe.obp.june2017.LeumiDecoder.getBanks(q)}
       //This also maybe throw exception, map the error to Exception 
       val r = decode[GetBanks](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetBanks` case class for OBP-API and Adapter sides : "+e)
+        case Left(e) => throw new RuntimeException(s"Please check `$GetBanks` case class for OBP-API and Adapter sides : ", e)
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -89,7 +89,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (GetBank => BankWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBank(q) }
       val r = decode[GetBank](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetBank` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetBank` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -117,7 +117,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (GetUserByUsernamePassword => UserWrapper) = { q => com.tesobe.obp.june2017.LeumiDecoder.getUser(q) }
       val r = decode[GetUserByUsernamePassword](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetUserByUsernamePassword` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetUserByUsernamePassword` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -144,7 +144,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
       val response: (GetAdapterInfo => AdapterInfo) = { q => com.tesobe.obp.june2017.LeumiDecoder.getAdapter(q) }
       val r = decode[GetAdapterInfo](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetAdapterInfo` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetAdapterInfo` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -170,7 +170,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (GetAccountbyAccountID => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountbyAccountId(q) }
       val r = decode[GetAccountbyAccountID](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetAccountbyAccountID` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetAccountbyAccountID` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -197,7 +197,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (GetAccountbyAccountNumber => InboundBankAccount) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
       val r = decode[GetAccountbyAccountNumber](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetAccountbyAccountNumber` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetAccountbyAccountNumber` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -224,7 +224,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 //    /* call Decoder for extracting data from source file */
       val response: (OutboundGetAccounts => InboundBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccounts(q) }
       val r = decode[OutboundGetAccounts](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetAccounts` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetAccounts` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -251,7 +251,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (GetTransactions => InboundTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactions(q) }
       val r = decode[GetTransactions](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetTransactions` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetTransactions` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -278,7 +278,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (GetTransaction => InboundTransaction) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransaction(q) }
       val r = decode[GetTransaction](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$GetTransaction` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$GetTransaction` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -325,7 +325,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
       
       val r = decode[CreateTransaction](changeValue) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$CreateTransaction` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$CreateTransaction` case class for OBP-API and Adapter sides : ",e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)
@@ -352,7 +352,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     /* call Decoder for extracting data from source file */
     val response: (GetToken => InboundToken) = { q => com.tesobe.obp.june2017.LeumiDecoder.getToken(q) }
     val r = decode[GetToken](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(s"Please check `$GetToken` case class for OBP-API and Adapter sides : "+e);
+      case Left(e) => throw new RuntimeException(s"Please check `$GetToken` case class for OBP-API and Adapter sides : ", e);
       case Right(x) => response(x).asJson.noSpaces
     }
     Future(msg, r)
@@ -364,7 +364,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (OutboundCreateChallengeJune2017 => InboundCreateChallengeJune2017) = { q => com.tesobe.obp.june2017.LeumiDecoder.createChallenge(q)}
       val r = decode[OutboundCreateChallengeJune2017](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundCreateChallengeJune2017` case class for OBP-API and Adapter sides : "+e);
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundCreateChallengeJune2017` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)

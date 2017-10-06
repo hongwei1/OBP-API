@@ -228,35 +228,41 @@ case class TransactionRequestBodySEPAJSON(
   charge_policy: String
 ) extends TransactionRequestCommonBodyJSON
 
-case class CounterpartyTransferToPhoneJson(
-  other_account_message: String,
-  other_account_phone_number: String
+case class ToAccountTransferToPhoneJson(
+  mobile_phone_number: String
+)
+
+case class FromAccountTransfer (
+  mobile_phone_number: String,
+  nickname: String
 )
 
 case class TransactionRequestBodyTransferToPhoneJson(
   value: AmountOfMoneyJsonV121,
   description: String,
-  from_account_phone_number: String,
-  from_account_owner_nickname: String,
-  couterparty: CounterpartyTransferToPhoneJson
+  message: String,
+  from: FromAccountTransfer,
+  to: ToAccountTransferToPhoneJson
 ) extends TransactionRequestCommonBodyJSON
 
-case class CounterpartyTransferToAtmJson(
-  other_account_owner: String,
-  other_account_owner_passport_id_or_national_id: String,
-  other_account_owner_id_type: String,
-  other_account_owner_birthday: String,
-  other_account_message: String,
-  other_account_phone_number: String
+case class ToAccountTransferToAtmKycDocumentJson(
+  `type`: String,
+  number: String
+)
+
+case class ToAccountTransferToAtmJson(
+  legal_name: String,
+  date_of_birth: String,
+  mobile_phone_number: String,
+  kyc_document: ToAccountTransferToAtmKycDocumentJson
 )
 
 case class TransactionRequestBodyTransferToAtmJson(
   value: AmountOfMoneyJsonV121,
   description: String,
-  from_account_phone_number: String,
-  from_account_owner_nickname: String,
-  charge_policy: String,
-  couterparty: CounterpartyTransferToAtmJson
+  message: String,
+  from: FromAccountTransfer,
+  to: ToAccountTransferToAtmJson
 ) extends TransactionRequestCommonBodyJSON
 
 case class CounterpartyTransferToAccount(
