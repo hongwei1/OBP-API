@@ -45,6 +45,43 @@
 			"response": []
 		},
 		{
+			"name": "Get Account by Id (Full)-KOa4",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/account\n\n",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
 			"name": "getResourceDocsSwagger",
 			"event": [
 				{
@@ -99,7 +136,7 @@
 			"response": []
 		},
 		{
-			"name": "Get User (Current) -gateway-isfirstture",
+			"name": "Get User (Current) -gateway-isfirstTure",
 			"event": [
 				{
 					"listen": "test",
@@ -117,7 +154,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -130,21 +167,20 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Core)-tKWS -gateway-token",
+			"name": "Get User (Current) -gateway-isfirstFalse",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
 			],
 			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/users/current",
 				"method": "GET",
 				"header": [
 					{
@@ -157,7 +193,7 @@
 					"mode": "raw",
 					"raw": ""
 				},
-				"description": "{\n  \"username\": \"simonr\",\n  \"is_first\": true,\n  \"CBS_auth_token\": \"geehtbdsfbdg\",\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
+				"description": "{\n  \"username\": \"simon2\",\n  \"is_first\": true,\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
 			},
 			"response": []
 		},
@@ -243,6 +279,43 @@
 			"response": []
 		},
 		{
+			"name": "Get Account by Id (Core)-tKWS -test errors",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 400\"] = responseCode.code === 400;",
+							"tests[\"Body matches string\"] = responseBody.has(\"error\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/my/banks/10/accounts/xx/account",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
 			"name": "Get Account by Id (Core)-tKWS",
 			"event": [
 				{
@@ -267,44 +340,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
-						"description": ""
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
-			},
-			"response": []
-		},
-		{
-			"name": "Get Account by Id (Full)-KOa4",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
-						]
-					}
-				}
-			],
-			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/account\n\n",
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -341,7 +377,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -378,7 +414,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -415,7 +451,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -452,7 +488,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -477,7 +513,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -514,7 +550,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -551,7 +587,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -593,7 +629,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
@@ -655,7 +691,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -692,7 +728,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -729,7 +765,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -766,7 +802,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -803,7 +839,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					}
 				],
@@ -842,43 +878,6 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Core)-tKWS -test errors",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 500\"] = responseCode.code === 500;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
-						]
-					}
-				}
-			],
-			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/my/banks/10/accounts/xx/account",
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
-						"description": ""
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
-			},
-			"response": []
-		},
-		{
 			"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 			"event": [
 				{
@@ -898,7 +897,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
@@ -909,7 +908,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"from_account_phone_number\": \"+9722398746\",\n  \"from_account_owner_nickname\":\"Tom\",\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"ABC\",\n  \"couterparty\":{\n  \t\"other_account_message\":\"Good Luck\",\n    \"other_account_phone_number\":\"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"This is a TRANSFER_TO_PHONE Transaction Request\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -931,12 +930,12 @@
 				}
 			],
 			"request": {
-				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/67a04a47-94e5-4c82-b5e8-1becec210ec5/challenge",
+				"url": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/04f02e23-f452-44e4-904c-060ee2f9d421/challenge",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
@@ -947,7 +946,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"61a8bfbe-63b9-4fb5-bfaf-79cf300df852\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"e082d750-e2f2-4721-99b0-11dac1f2074c\",  \"answer\":\"183823\"}"
 				},
 				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
 			},
@@ -973,7 +972,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
@@ -984,7 +983,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"from_account_phone_number\": \"+9722398746\",\n   \"from_account_owner_nickname\":\"Tom\",\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1111\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\":\"TOM\",\n  \t\"other_account_message\":\"Good Luck\",\n    \"other_account_owner_passport_id_or_national_id\" :\"19900810\",\n    \"other_account_owner_id_type\":\"1\",\n    \"other_account_owner_birthday\":\"19900810\",\n    \"other_account_phone_number\":\"+9722398746\"\n  }\n}\n\n\n\n"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -1011,7 +1010,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
@@ -1049,7 +1048,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
@@ -1087,7 +1086,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
 						"description": ""
 					},
 					{
