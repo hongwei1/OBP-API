@@ -11,7 +11,7 @@ object NtbdBv050Mf {
                    accountType: String,
                    accountNumber: String,
                    cbsToken: String,
-                   ntbdAv50Token: String,
+                   ntbdAv050Token: String,
                    toAccountBankId: String,
                    toAccountBranchId: String,
                    toAccountAccountNumber: String,
@@ -40,7 +40,7 @@ object NtbdBv050Mf {
       }
       },
         "K050_BDIKAZCHUTIN": {
-        "K050_TOKEN_ZCHUT": "$ntbdAv50Token",
+        "K050_TOKEN_ZCHUT": "$ntbdAv050Token",
         "K050_BANK_ZCUT": "$toAccountBankId",
         "K050_SNIF_ZCUT": "$toAccountBranchId",
         "K050_SUG_ZCUT": "000",

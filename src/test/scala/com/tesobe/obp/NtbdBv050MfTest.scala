@@ -18,7 +18,7 @@ class NtbdBv050MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
       accountType = "330",
       accountNumber = "03565953",
       cbsToken = "<)V          81433020102612",
-      ntbdAv50Token = "3639292",
+      ntbdAv050Token = "3639292",
       toAccountBankId = "10",
       toAccountBranchId = "914",
       toAccountAccountNumber = "1696441",
