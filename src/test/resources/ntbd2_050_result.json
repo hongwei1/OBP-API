@@ -1,0 +1,19 @@
+{
+  "P050_ISHUROUT": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c444231202020202020200b43465920365318",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": ""
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": ""
+    },
+    "P050_SHAA_BITZUA": "14:48",
+    "P050_TARICH_BITZUA": "20170620",
+    "P050_TOKEN_ISHUR": "3647867",
+    "P050_ASMACHTA": "0"
+  }
+}
