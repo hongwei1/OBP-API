@@ -4,12 +4,7 @@ import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class NtbdIv050MfTest extends FunSuite with Matchers with BeforeAndAfterAll {
-
-  override def beforeAll() {
-    startMockServer
-  }
-
+class NtbdIv050MfTest extends ServerSetup {
 
   test("getNtbdIv050 returns proper values") {
     val result = getNtbdIv050(branch = "616",
@@ -25,8 +20,4 @@ class NtbdIv050MfTest extends FunSuite with Matchers with BeforeAndAfterAll {
 
   }
 
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
 }

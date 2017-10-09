@@ -5,11 +5,7 @@ import com.tesobe.obp.RunMockServer.startMockServer
 import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll with StrictLogging{
-
-  override def beforeAll() {
-    startMockServer
-  }
+class Nt1cTMfTest extends ServerSetup {
 
   implicit val formats = net.liftweb.json.DefaultFormats
   
@@ -32,10 +28,6 @@ class Nt1cTMfTest extends FunSuite with Matchers with BeforeAndAfterAll with Str
       "15"
     )
     logger.debug(result.toString)
-  }
-    
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 
 }

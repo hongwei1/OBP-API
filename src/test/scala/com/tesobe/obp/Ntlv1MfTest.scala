@@ -1,14 +1,9 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 
-class Ntlv1MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
+class Ntlv1MfTest extends ServerSetup{
 
-  override def beforeAll() {
-    startMockServer
-  }
 /*        "KeyArguments": {
         "Branch": "000",
         "IDNumber": "4051769",
@@ -27,9 +22,6 @@ class Ntlv1MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
     result.O1OUT1AREA_1.O1_CONTACT_REC.head.O1_TEL_AREA should be("50")
     result.O1OUT1AREA_1.O1_CONTACT_REC.head.O1_TEL_NUM should be("5410377")
     
-  }
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 
 }

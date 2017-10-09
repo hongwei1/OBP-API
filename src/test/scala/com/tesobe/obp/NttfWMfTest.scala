@@ -1,18 +1,9 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.NttfWMf.getNttfWMf
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class NttfWMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
-
-  override def beforeAll() {
-    startMockServer
-  }
+class NttfWMfTest extends ServerSetup{
   
-
-
-
   test("getNttfWMMfHttpApache returns proper values"){
     val result = getNttfWMf(branch = "814",
       accountType = "330",
@@ -24,13 +15,5 @@ class NttfWMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
     result.PELET_NTTF_W.P_PRATIM.P_PIRTEY_KARTIS.head.P_TIKRAT_KARTIS should be ("10019")
     
   }
-
-
-
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
-
 
 }

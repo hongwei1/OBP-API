@@ -3,13 +3,8 @@ import com.tesobe.obp.GetBankAccounts._
 import com.tesobe.obp.RunMockServer.startMockServer
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class GetInboundBankAccountsTest extends FunSuite with Matchers  with BeforeAndAfterAll{
+class GetInboundBankAccountsTest extends ServerSetup {
   
-  override def beforeAll() {
-    startMockServer
-  }
-
-
   test("getBasicBankAccounts extracts BasicBankAccounts" ) {
     val accounts = getBasicBankAccountsForUser("./src/test/resources/joni_result.json")
     accounts should be(List(
@@ -26,10 +21,6 @@ class GetInboundBankAccountsTest extends FunSuite with Matchers  with BeforeAndA
      val res2 = base64EncodedSha256("karl")
      res1 should be ("0M_C5TGbgs3HGjOHPoJsk9fuETY_iskcT6Oiz80ihuU")
      res2 should be ("wxppC1KLgaxxCoDWE3KF28ltJHLOBNMfREcXrHLTgYM")
-  }
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 
 }

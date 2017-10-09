@@ -8,11 +8,8 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 /**
   * Created by work on 6/12/17.
   */
-class Ntib2MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
+class Ntib2MfTest extends ServerSetup {
 
-  override def beforeAll() {
-    startMockServer
-  }
   
   test("getNtibMf gets response from the mainframe"){
     val mfresult = getNtib2Mf("","","","","")
@@ -24,7 +21,5 @@ class Ntib2MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
     iban should be ("""IL230106160000050180963""")
   }
 
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
+  
 }
