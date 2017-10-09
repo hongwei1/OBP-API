@@ -1,23 +1,41 @@
 package com.tesobe.obp
 
+import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
-import net.liftweb.json.parse
+import com.typesafe.scalalogging.StrictLogging
+import net.liftweb.json.{JValue, parse}
 
 
-object Nt1c3Mf {
-  //Read file To Simulate Mainframe Call
-  implicit val formats = net.liftweb.json.DefaultFormats
-  def getNt1c3Mf(mainframe: String): String = {
-    val source = scala.io.Source.fromResource(mainframe)
-    val lines = try source.mkString finally source.close()
-    lines
+object Nt1c3Mf extends Config with StrictLogging {
+
+
+  def getNt1c3(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Nt1c3 = {
+
+
+    //OBP-Adapter_Leumi/Doc/MFServices/NT1C_4_000 Sample.txt
+    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/3/000/01.02"
+
+    val json: JValue = parse(s"""
+    {
+      "NT1C_3_000": {
+        "NtdriveCommonHeader": {
+        "KeyArguments": {
+        "Branch": "$branch",
+        "AccountType": "$accountType",
+        "AccountNumber": "$accountNumber"
+      },
+        "AuthArguments": {
+        "User": "$username"
+        "MFToken": "$cbsToken"
+      }
+      }
+      }
+    }""")
+    val result = makePostRequest(json, path)
+
+    implicit val formats = net.liftweb.json.DefaultFormats
+    parse(replaceEmptyObjects(result)).extract[Nt1c3]
   }
-  //@param: Filepath for json result stub
-  def getFutureTransactions(mainframe: String) = {
-    val json = replaceEmptyObjects(getNt1c3Mf(mainframe))
-    val jsonAst = parse(json)
-    val nt1c3Call: Nt1c3 = jsonAst.extract[Nt1c3]
-    nt1c3Call
-  }
-  
+
+
 }

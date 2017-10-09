@@ -40,6 +40,7 @@ case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String) exten
 case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
 case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
 case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicCaseClass
+case class GetTransactionRequests(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicCaseClass
 case class GetToken(username: String) extends TopicCaseClass
 case class CreateTransaction(
   authInfo: AuthInfo,

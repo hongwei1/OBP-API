@@ -14,10 +14,12 @@ object Ntbd2v050Mf {
                      cbsToken: String,
                      username: String,
                      ntbdAv050Token: String,
-                     fromAccountOwnerName: String,
+                     ntbdAv050fromAccountOwnerName: String,
                     ) = {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01"
+      
+      val finalFromAccountOwnerName = if (ntbdAv050fromAccountOwnerName.trim == "") "CustomerName" else ntbdAv050fromAccountOwnerName
 
       val json: JValue = parse(s"""
       {
@@ -36,7 +38,7 @@ object Ntbd2v050Mf {
           "K050_ISHURIN": {
           "K050_TOKEN_ISHUR": "$ntbdAv050Token",
           "K050_KOD_NOSE": "0",
-          "K050_SHEM_LAK_MEUDKAN": "$fromAccountOwnerName"
+          "K050_SHEM_LAK_MEUDKAN": "$finalFromAccountOwnerName"
         }
         }
       }""")

@@ -385,6 +385,34 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, errorBody.asJson.noSpaces)
   }
   }
+
+  def getTransactionRequestsFn: Business = {msg =>
+    logger.debug(s"Processing getTransactionRequestsFn ${msg.record.value}")
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (GetTransactionRequests => InboundTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactionRequests(q)}
+      val r = decode[GetTransactionRequests](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$GetTransactionRequests` case class for OBP-API and Adapter sides : ", e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("getTransactionRequestsFn-unknown error", m)
+
+        val errorBody = InboundCreateChallengeJune2017(
+          AuthInfo("","",""),
+          InternalCreateChallengeJune2017(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            ""))
+
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
   
   private def getResponse(msg: CommittableMessage[String, String]): String = {
     decode[Request](msg.record.value()) match {

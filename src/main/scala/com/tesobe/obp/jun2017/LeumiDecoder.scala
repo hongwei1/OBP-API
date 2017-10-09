@@ -14,7 +14,12 @@ import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
+import com.tesobe.obp.Ntbd2v050Mf.getNtbd2v050
 import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105Mf
+import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
+import com.tesobe.obp.NtbdBv050Mf.getNtbdBv050
+import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
+import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -362,7 +367,59 @@ object LeumiDecoder extends Decoder with StrictLogging {
         messageToReceiver = transactionRequestBodyTransferToAtmJson.message)
       
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
-      val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]
+      val transactionRequestBodyTransferToAccountJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]
+      
+      val callNtbdAv050 = getNtbdAv050(branchId,
+        accountType,
+        accountNumber,
+        cbsToken,
+        transactionRequestBodyTransferToAccountJson.couterparty.transfer_type: String,
+        transferDateInFuture = transactionRequestBodyTransferToAccountJson.couterparty.future_date
+      ) 
+      val transferToAccountToken = callNtbdAv050.P050_BDIKACHOVAOUT.P050_TOKEN_OUT
+      
+      val callNtdBv050 = getNtbdBv050(branchId,
+        accountType,
+        accountNumber,
+        cbsToken,
+        ntbdAv050Token = transferToAccountToken,
+        toAccountBankId = transactionRequestBodyTransferToAccountJson.couterparty.bank_code ,
+        toAccountBranchId = transactionRequestBodyTransferToAccountJson.couterparty.branch_number,
+        toAccountAccountNumber = transactionRequestBodyTransferToAccountJson.couterparty.account_number,
+        toAccountIban = transactionRequestBodyTransferToAccountJson.couterparty.iban,
+        transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount,
+        description = transactionRequestBodyTransferToAccountJson.description,
+        referenceNameOfTo = transactionRequestBodyTransferToAccountJson.couterparty.other_account_owner,
+      )
+      
+      val callNtbdIv050 = getNtbdIv050(
+        branchId,
+        accountType,
+        accountNumber,
+        cbsToken,
+        ntbdAv050Token = transferToAccountToken,
+        transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount
+      )
+      
+      val callNtbdGv050 = getNtbdGv050(
+        branchId,
+        accountType,
+        accountNumber,
+        cbsToken,
+        ntbdAv050Token =  transferToAccountToken,
+        //TODO: check with leumi if bankID 10 implies leumi code 1 here
+        bankTypeOfTo = if (transactionRequestBodyTransferToAccountJson.couterparty.bank_code == "10") "0" else "1"
+      )
+      
+      val callNtbd2v050 = getNtbd2v050(
+        branchId,
+        accountType,
+        accountNumber,
+        cbsToken,
+        username,
+        ntbdAv050Token = transferToAccountToken,
+        ntbdAv050fromAccountOwnerName = callNtbdAv050.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT
+      )
   
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.COUNTERPARTY.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJSON]
@@ -427,6 +484,23 @@ object LeumiDecoder extends Decoder with StrictLogging {
         InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
       ),
         answer))
+  }
+  
+  def getTransactionRequests(getTransactionRequests: GetTransactionRequests): InboundTransactions = {
+
+    val accountValues = mapAccountIdToAccountValues(getTransactionRequests.accountId)
+    val branchId = accountValues.branchId
+    val accountNumber = accountValues.accountNumber
+    val accountType = accountValues.accountType
+    val username =  getTransactionRequests.authInfo.username
+    val cbsToken = getTransactionRequests.authInfo.cbsToken
+    
+    getTransactions(GetTransactions(getTransactionRequests.authInfo,
+      getTransactionRequests.bankId,
+      getTransactionRequests.accountId,
+      15,
+    "",""))
+    
   }
   
   
