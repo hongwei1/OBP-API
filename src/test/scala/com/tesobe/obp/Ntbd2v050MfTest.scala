@@ -13,7 +13,8 @@ class Ntbd2v050MfTest extends ServerSetup {
       cbsToken = ";,T          81433020102612",
       username = "N7jut8d",
       ntbdAv050Token = "3639292",
-      fromAccountOwnerName = "recipient Name")
+      ntbdAv050fromAccountOwnerName = "recipient Name")
+    "            ".trim should be ("")
     result.P050_ISHUROUT.esbHeaderResponse.responseStatus.callStatus should be("Success")
     result.P050_ISHUROUT.MFAdminResponse.returnCode should be("0")
     result.P050_ISHUROUT.P050_SHAA_BITZUA should be("14:48")
