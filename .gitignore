@@ -11,3 +11,4 @@ target/
 /.ensime_cache.d/
 out/
 src/main/resources/git.properties
+dependency-reduced-pom.xml
