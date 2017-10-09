@@ -79,7 +79,7 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"errorCode\");"
+							"tests[\"Body matches string\"] = responseBody.has(\"error_code\");"
 						]
 					}
 				}
