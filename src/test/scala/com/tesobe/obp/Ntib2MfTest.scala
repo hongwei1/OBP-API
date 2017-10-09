@@ -1,8 +1,6 @@
 package com.tesobe.obp  
 
 import com.tesobe.obp.Ntib2Mf._
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 
 /**

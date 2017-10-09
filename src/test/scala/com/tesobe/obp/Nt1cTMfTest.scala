@@ -1,9 +1,6 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.Nt1cTMf._
-import com.tesobe.obp.RunMockServer.startMockServer
-import com.typesafe.scalalogging.StrictLogging
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 class Nt1cTMfTest extends ServerSetup {
 

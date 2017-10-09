@@ -1,8 +1,6 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 class Ntbd1v135Test extends ServerSetup {
 

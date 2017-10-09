@@ -1,7 +1,5 @@
 package com.tesobe.obp  
 import com.tesobe.obp.Nt1c3Mf._
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 class Nt1c3MfTest  extends ServerSetup{
   implicit val formats = net.liftweb.json.DefaultFormats

@@ -1,7 +1,5 @@
 package com.tesobe.obp
 import com.tesobe.obp.GetBankAccounts._
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 class GetInboundBankAccountsTest extends ServerSetup {
   
