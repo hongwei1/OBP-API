@@ -1,10 +1,9 @@
 {
-	"variables": [],
 	"info": {
 		"name": "leumi-available-sandbox",
-		"_postman_id": "c547dfb8-5012-2e98-5c1c-50eaf7b505a8",
+		"_postman_id": "9bf871e7-e78f-863f-1bf5-f71129a4317a",
 		"description": "",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -25,21 +24,35 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/my/logins/direct",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "DirectLogin username=\"hongwei\", password=\"zhw_gz@126.comzhw_gz@126.com\", consumer_key=\"pjgzmw4ulj2tyn3y1gjv0y5u4vagi4ktjexslttc\"",
-						"description": ""
+						"value": "DirectLogin username=\"hongwei\", password=\"zhw_gz@126.comzhw_gz@126.com\", consumer_key=\"pjgzmw4ulj2tyn3y1gjv0y5u4vagi4ktjexslttc\""
 					}
 				],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/my/logins/direct",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"my",
+						"logins",
+						"direct"
+					]
+				},
 				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
 			},
 			"response": []
@@ -59,12 +72,25 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v1.2.1/root",
 				"method": "GET",
 				"header": [],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v1.2.1/root",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v1.2.1",
+						"root"
+					]
 				},
 				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
 			},
@@ -85,12 +111,27 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/adapter",
 				"method": "GET",
 				"header": [],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/adapter",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"adapter"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -110,6 +151,17 @@
 				}
 			],
 			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "https://available.openbankproject.com/obp/v1.4.0/resource-docs/v3.0.0/swagger?support=true",
 					"protocol": "https",
@@ -129,21 +181,10 @@
 						{
 							"key": "support",
 							"value": "true",
-							"equals": true,
-							"description": ""
+							"equals": true
 						}
-					],
-					"variable": []
+					]
 				},
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
-					}
-				],
-				"body": {},
 				"description": "\"Get Resource Documentation in Swagger format. Work In Progress!\",\n      \"\"\"Returns documentation about the RESTful resources on this server in Swagger format.\n        | Currently this is incomplete."
 			},
 			"response": []
@@ -162,18 +203,31 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/users/current",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current"
+					]
 				},
 				"description": "{\n  \"username\": \"simon2\",\n  \"is_first\": true,\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
 			},
@@ -194,18 +248,35 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsIkNCU19hdXRoX3Rva2VuIjoiXCI8TS8gICAgICAgICAgODE0MzMwMjAxMDI2MTJcIiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.6WttVheIUeEsNe4aSSMRWAXudvNNvIAFd8hcKnJw0mc",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsIkNCU19hdXRoX3Rva2VuIjoiXCI8TS8gICAgICAgICAgODE0MzMwMjAxMDI2MTJcIiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.6WttVheIUeEsNe4aSSMRWAXudvNNvIAFd8hcKnJw0mc"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"account"
+					]
 				},
 				"description": "{\n  \"username\": \"simonr\",\n  \"is_first\": true,\n  \"CBS_auth_token\": \"geehtbdsfbdg\",\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
 			},
@@ -226,18 +297,30 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsIkNCU19hdXRoX3Rva2VuIjoiXCI8TS8gICAgICAgICAgODE0MzMwMjAxMDI2MTJcIiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.6WttVheIUeEsNe4aSSMRWAXudvNNvIAFd8hcKnJw0mc",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsIkNCU19hdXRoX3Rva2VuIjoiXCI8TS8gICAgICAgICAgODE0MzMwMjAxMDI2MTJcIiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.6WttVheIUeEsNe4aSSMRWAXudvNNvIAFd8hcKnJw0mc"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -258,12 +341,26 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10",
 				"method": "GET",
 				"header": [],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -284,23 +381,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"account"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -321,23 +434,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/account\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc",
+						"auditor",
+						"account"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -358,23 +487,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg/auditor/account\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg/auditor/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg",
+						"auditor",
+						"account"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -395,23 +540,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs/auditor/account\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs/auditor/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs",
+						"auditor",
+						"account"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -432,23 +593,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/account\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8",
+						"auditor",
+						"account"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -469,23 +646,36 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -494,23 +684,37 @@
 		{
 			"name": "Get Accounts at Bank (Public)",
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/public\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/public",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"public"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -531,23 +735,35 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/my/accounts\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/accounts",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"accounts"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -568,23 +784,37 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/private\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/private",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"private"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -605,53 +835,63 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/transactions",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					},
 					{
 						"key": "obp_sort_direction",
-						"value": "DESC",
-						"description": ""
+						"value": "DESC"
 					},
 					{
 						"key": "obp_offset",
-						"value": "1",
-						"description": ""
+						"value": "1"
 					},
 					{
 						"key": "obp_limit",
-						"value": "2",
-						"description": ""
+						"value": "2"
 					},
 					{
 						"key": "obp_from_date",
-						"value": "2000-07-01T00:00:00.000Z",
-						"description": ""
+						"value": "2000-07-01T00:00:00.000Z"
 					},
 					{
 						"key": "obp_to_date",
-						"value": "2017-07-01T00:00:00.000Z",
-						"description": ""
+						"value": "2017-07-01T00:00:00.000Z"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/transactions",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"transactions"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -672,23 +912,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/transactions\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/transactions",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc",
+						"auditor",
+						"transactions"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -709,23 +965,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg/auditor/transactions\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg/auditor/transactions",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg",
+						"auditor",
+						"transactions"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -746,23 +1018,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs/auditor/transactions\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs/auditor/transactions",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs",
+						"auditor",
+						"transactions"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -783,23 +1071,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/transactions\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/transactions",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8",
+						"auditor",
+						"transactions"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -820,23 +1124,41 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction\n\n",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8",
+						"auditor",
+						"transactions",
+						"b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM",
+						"transaction"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -856,23 +1178,39 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/xx/account",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/xx/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"banks",
+						"10",
+						"accounts",
+						"xx",
+						"account"
+					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
@@ -893,23 +1231,42 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					},
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"This is a TRANSFER_TO_PHONE Transaction Request\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11111\"\n  },\n  \"description\": \"This is a TRANSFER_TO_PHONE Transaction Request\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"custom",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_PHONE",
+						"transaction-requests"
+					]
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -931,23 +1288,44 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/fa775e92-fcd6-4a56-8017-672457a052e8/challenge",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					},
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": "{  \"id\":\"b4ff502f-49bc-4098-af0d-0a899bde3284\",  \"answer\":\"183823\"}"
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/fa775e92-fcd6-4a56-8017-672457a052e8/challenge",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"custom",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_PHONE",
+						"transaction-requests",
+						"fa775e92-fcd6-4a56-8017-672457a052e8",
+						"challenge"
+					]
 				},
 				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
 			},
@@ -968,23 +1346,42 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					},
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11111\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"custom",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_ATM",
+						"transaction-requests"
+					]
 				},
 				"description": "response from mapper: \n\n{\n  \"id\": \"af675a31-d01c-48ce-8cad-933c34c49323\",\n  \"type\": \"SANDBOX_TAN\",\n  \"from\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"details\": {\n    \"to\": {\n      \"bank_id\": \"gh.29.uk\",\n      \"account_id\": \"26fa77a2-028f-4022-b47d-26caa8db359a\"\n    },\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"10.53\"\n    },\n    \"description\": \"A description for the transaction to be created\"\n  },\n  \"transaction_ids\": [\n    \"5e5c61ad-dea7-4ca0-bad0-49cb21034e6a\"\n  ],\n  \"status\": \"COMPLETED\",\n  \"start_date\": \"2017-01-27T13:30:59Z\",\n  \"end_date\": \"2017-01-27T13:30:59Z\",\n  \"challenge\": null,\n  \"charge\": {\n    \"summary\": \"Total charges for completed transaction\",\n    \"value\": {\n      \"currency\": \"GBP\",\n      \"amount\": \"0.001053\"\n    }\n  }\n}"
 			},
@@ -1006,23 +1403,44 @@
 				}
 			],
 			"request": {
-				"url": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/c04d2975-dede-46b6-b5bd-2377e00ef2fe/challenge",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU",
-						"description": ""
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
 					},
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"description": ""
+						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": "{  \"id\":\"2269d23d-6c14-4569-9e4e-55795457e029\",  \"answer\":\"183823\"}"
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/c04d2975-dede-46b6-b5bd-2377e00ef2fe/challenge",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"custom",
+						"banks",
+						"10",
+						"accounts",
+						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_ATM",
+						"transaction-requests",
+						"c04d2975-dede-46b6-b5bd-2377e00ef2fe",
+						"challenge"
+					]
 				},
 				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
 			},
