@@ -1,19 +1,12 @@
 package com.tesobe.obp.june2017
 
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
+import com.tesobe.obp.ServerSetup
 import com.tesobe.obp.june2017.LeumiDecoder._
-import com.tesobe.obp.Nt1cTMf.getNt1cTMf
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 /**
   * Created by work on 6/12/17.
   */
-class LeumiDecoderTest extends FunSuite with Matchers with BeforeAndAfterAll{
-
-  override def beforeAll() {
-    startMockServer
-  }
-
+class LeumiDecoderTest  extends ServerSetup {
 
   val accountId1 = base64EncodedSha256("3565953" + "fjdsaFDSAefwfsalfid")
   val accountId2 = base64EncodedSha256("50180983" + "fjdsaFDSAefwfsalfid")
@@ -72,10 +65,6 @@ class LeumiDecoderTest extends FunSuite with Matchers with BeforeAndAfterAll{
   test("getToken gives correct token") {
     val result = getToken(GetToken("N7jut8d"))
     result should be (InboundToken("N7jut8d",">,?          81433020102612"))
-  }
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 
 

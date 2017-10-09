@@ -1,17 +1,8 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class NtbdAv050MfTest  extends FunSuite with Matchers with BeforeAndAfterAll{
-
-  override def beforeAll() {
-    startMockServer
-  }
-
-
-
+class NtbdAv050MfTest extends ServerSetup{
 
   test("getNtbdAv050 returns proper values"){
     val result = getNtbdAv050(branch = "814",
@@ -27,13 +18,5 @@ class NtbdAv050MfTest  extends FunSuite with Matchers with BeforeAndAfterAll{
     result.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT should be ("")
 
   }
-
-
-
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
-
 
 }

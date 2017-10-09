@@ -1,14 +1,8 @@
 package com.tesobe.obp
 import com.tesobe.obp.Nt1cBMf._
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class Nt1CBMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
+class Nt1CBMfTest extends ServerSetup{
 
-  override def beforeAll() {
-    startMockServer
-  }
-  
   test("getBalance gets balance of account"){
     val result = getBalance("N7jut8d", "616", "330", "50180963", "/G>          81433020102612")
     result should be ("5541.28")
@@ -26,7 +20,5 @@ class Nt1CBMfTest extends FunSuite with Matchers with BeforeAndAfterAll{
    result should be("15000")
  }
 */
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
+  
 }

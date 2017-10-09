@@ -1,17 +1,8 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class Ntbd1v105MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
-
-  override def beforeAll() {
-    startMockServer
-  }
-
-
-
+class Ntbd1v105MfTest extends ServerSetup {
 
   test("getNtbd1v105 returns proper values"){
     val result = getNtbd1v105Mf(branch = "616",
@@ -35,13 +26,6 @@ class Ntbd1v105MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
     result.P135_BDIKAOUT.MFAdminResponse.returnCode should be ("0")
 
 
-  }
-
-
-
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
   }
 
 

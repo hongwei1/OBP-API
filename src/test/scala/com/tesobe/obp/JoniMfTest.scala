@@ -1,18 +1,12 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.GetBankAccounts._
-import com.tesobe.obp.RunMockServer.startMockServer
+import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.RunMockServer._
-import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JsonAST.JValue
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll with StrictLogging{
+class JoniMfTest extends ServerSetup {
 
-  override def beforeAll() {
-    startMockServer
-  }
   val username = "N7jut8d"
   val mfToken = "?+1         81433020102612"
   val mfresult: String = jsonToString("joni_result.json")
@@ -86,7 +80,4 @@ class JoniMfTest extends FunSuite with Matchers with BeforeAndAfterAll with Stri
     logger.debug(result.toString)
   }
 
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
 }

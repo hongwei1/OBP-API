@@ -1,15 +1,8 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
-import com.tesobe.obp.RunMockServer.startMockServer
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class Ntlv7MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
-
-  override def beforeAll() {
-    startMockServer
-  }
-
+class Ntlv7MfTest extends ServerSetup{
 
   test("Ntlv7 gives proper OTP"){
     val result = getNtlv7Mf(
@@ -25,13 +18,5 @@ class Ntlv7MfTest extends FunSuite with Matchers with BeforeAndAfterAll{
     result.DFHPLT_1.DFH_OPT should be ("183823")
  
   }
-
-
-
-
-  override def afterAll() {
-    com.tesobe.obp.RunMockServer.mockServer.stop()
-  }
-
-
+  
 }
