@@ -6,11 +6,11 @@ class GetInboundBankAccountsTest extends ServerSetup {
   test("getBasicBankAccounts extracts BasicBankAccounts" ) {
     val accounts = getBasicBankAccountsForUser("./src/test/resources/joni_result.json")
     accounts should be(List(
-      BasicBankAccount("3565953", "616", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),
-      BasicBankAccount("50180983", "616", "430", ">,?          81433020102612", AccountPermissions(true,false,true)),
-      BasicBankAccount("50180963", "616", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),
-      BasicBankAccount("20102612", "814", "330", ">,?          81433020102612", AccountPermissions(true,false,false)),
-      BasicBankAccount("20105505", "814", "330", ">,?          81433020102612", AccountPermissions(true,false,false))
+      BasicBankAccount("3565953", "616", "330", "?+1         81433020102612", AccountPermissions(true,false,false)),
+      BasicBankAccount("50180983", "616", "430", "?+1         81433020102612", AccountPermissions(true,false,true)),
+      BasicBankAccount("50180963", "616", "330", "?+1         81433020102612", AccountPermissions(true,false,false)),
+      BasicBankAccount("20102612", "814", "330", "?+1         81433020102612", AccountPermissions(true,false,false)),
+      BasicBankAccount("20105505", "814", "330", "?+1         81433020102612", AccountPermissions(true,false,false))
     ))
     }
 
