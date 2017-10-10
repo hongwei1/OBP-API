@@ -1,0 +1,95 @@
+{
+  "PMUTSHLIFA_OUT": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c444231202020202020200b43465920365502",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": ""
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "0",
+      "messageText": ""
+    },
+    "PMUT_MONE": "3",
+    "PMUT_RESHIMAT_MUTAVIM": [{
+      "PMUT_PIRTEY_MUTAV": {
+        "PMUT_ERETZ_MUTAV": "2121",
+        "PMUT_BANK_MUTAV": "12",
+        "PMUT_SNIF_MUTAV": "773",
+        "PMUT_SUG_CHEN_MUTAV": "0",
+        "PMUT_CHEN_MUTAV": "100727",
+        "PMUT_SHEM_MUTAV": "            סכלא",
+        "PMUT_SUG_MUTAV": "9",
+        "PMUT_TEUR_MUTAV": "",
+        "PMUT_STATUS": "1",
+        "PMUT_IBAN": "",
+        "PMUT_SHEM_MUTAV_ANGLIT": "",
+        "PMUT_TEUR_MUTAV_ANGLIT": "",
+        "PMUT_ZIHUI_MUTAV1": "0",
+        "PMUT_ZIHUI_MUTAV2": "0",
+        "PMUT_SHEM_MUTAV2": "",
+        "PMUT_SHEM_MUTAV2_ANGLIT": "",
+        "PMUT_TIKRA": "0.00",
+        "PMUT_TAR_HATCHALAT_TOKEF": "0",
+        "PMUT_TAR_TOM_TOKEF": "0",
+        "PMUT_SIMUN_TIKRA_BE_TOKEF": "1",
+        "PMUT_TAR_IDKUN": "20160916",
+        "PMUT_S_SEGMENT": "0"
+      }
+    },
+      {
+        "PMUT_PIRTEY_MUTAV": {
+          "PMUT_ERETZ_MUTAV": "2121",
+          "PMUT_BANK_MUTAV": "13",
+          "PMUT_SNIF_MUTAV": "63",
+          "PMUT_SUG_CHEN_MUTAV": "330",
+          "PMUT_CHEN_MUTAV": "1089",
+          "PMUT_SHEM_MUTAV": "             טטט",
+          "PMUT_SUG_MUTAV": "9",
+          "PMUT_TEUR_MUTAV": "",
+          "PMUT_STATUS": "1",
+          "PMUT_IBAN": "",
+          "PMUT_SHEM_MUTAV_ANGLIT": "",
+          "PMUT_TEUR_MUTAV_ANGLIT": "",
+          "PMUT_ZIHUI_MUTAV1": "0",
+          "PMUT_ZIHUI_MUTAV2": "0",
+          "PMUT_SHEM_MUTAV2": "",
+          "PMUT_SHEM_MUTAV2_ANGLIT": "",
+          "PMUT_TIKRA": "0.00",
+          "PMUT_TAR_HATCHALAT_TOKEF": "0",
+          "PMUT_TAR_TOM_TOKEF": "0",
+          "PMUT_SIMUN_TIKRA_BE_TOKEF": "1",
+          "PMUT_TAR_IDKUN": "20160508",
+          "PMUT_S_SEGMENT": "0"
+        }
+      },
+      {
+        "PMUT_PIRTEY_MUTAV": {
+          "PMUT_ERETZ_MUTAV": "2121",
+          "PMUT_BANK_MUTAV": "52",
+          "PMUT_SNIF_MUTAV": "188",
+          "PMUT_SUG_CHEN_MUTAV": "0",
+          "PMUT_CHEN_MUTAV": "639257",
+          "PMUT_SHEM_MUTAV": "             לעי",
+          "PMUT_SUG_MUTAV": "9",
+          "PMUT_TEUR_MUTAV": "",
+          "PMUT_STATUS": "1",
+          "PMUT_IBAN": "",
+          "PMUT_SHEM_MUTAV_ANGLIT": "",
+          "PMUT_TEUR_MUTAV_ANGLIT": "",
+          "PMUT_ZIHUI_MUTAV1": "0",
+          "PMUT_ZIHUI_MUTAV2": "0",
+          "PMUT_SHEM_MUTAV2": "",
+          "PMUT_SHEM_MUTAV2_ANGLIT": "",
+          "PMUT_TIKRA": "0.00",
+          "PMUT_TAR_HATCHALAT_TOKEF": "0",
+          "PMUT_TAR_TOM_TOKEF": "0",
+          "PMUT_SIMUN_TIKRA_BE_TOKEF": "1",
+          "PMUT_TAR_IDKUN": "20170202",
+          "PMUT_S_SEGMENT": "0"
+        }
+      }
+    ]
+  }
+}

@@ -1,8 +1,8 @@
-package com.tesobe.obp.june2017
+package com.tesobe.obp
 
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
-import com.tesobe.obp.ServerSetup
 import com.tesobe.obp.june2017.LeumiDecoder._
+import com.tesobe.obp.june2017._
 /**
   * Created by work on 6/12/17.
   */

@@ -278,14 +278,6 @@
             <artifactId>scalatest-embedded-kafka-streams_2.12</artifactId>
             <version>0.14.0</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.typesafe.play/play-ahc-ws-standalone_2.12 -->
-        <dependency>
-            <groupId>com.typesafe.play</groupId>
-            <artifactId>play-ahc-ws-standalone_2.12</artifactId>
-            <version>1.0.0-M10</version>
-        </dependency>
-        
     </dependencies>
 </project>
 

@@ -1,0 +1,15 @@
+{
+  "NTDriveNoResp": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff582405ab0c",
+      "responseStatus": {
+        "callStatus": "Success",
+        "errorDesc": ""
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "1",
+      "messageText": "העדכון בוצע בהצלחה !"
+    }
+  }
+}

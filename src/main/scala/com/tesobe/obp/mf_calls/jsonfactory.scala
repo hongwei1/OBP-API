@@ -371,6 +371,46 @@ case class P050ishurout(esbHeaderResponse: EsbHeaderResponse,
 
 case class Ntbd2v050(P050_ISHUROUT: P050ishurout)
 
+case class NtDriveNoResp(esbHeaderResponse: EsbHeaderResponse,
+                         MFAdminResponse: MfAdminResponse)
+
+case class Ntg6A(NTDriveNoResp: NtDriveNoResp)
+
+case class Ntg6B(NTDriveNoResp: NtDriveNoResp)
+
+case class Ntg6C(NTDriveNoResp: NtDriveNoResp)
+
+case class Ntg6D(NTDriveNoResp: NtDriveNoResp)
+
+case class PAPIErrorResponse(esbHeaderResponse: EsbHeaderResponse,
+                             MFAdminResponse: MfAdminResponse)
+
+case class PmutPirteyMutav(
+                            PMUT_ERETZ_MUTAV: String, //Country
+                            PMUT_BANK_MUTAV: String, //Bank code
+                            PMUT_SNIF_MUTAV: String, //Branch Number
+                            PMUT_SUG_CHEN_MUTAV: String, //Account Type
+                            PMUT_CHEN_MUTAV: String, //Account Number
+                            PMUT_SHEM_MUTAV: String, //Counterparty name
+                            PMUT_TEUR_MUTAV: String, //Descripion
+                            PMUT_IBAN: String, //Iban
+                            PMUT_SHEM_MUTAV_ANGLIT: String, //Counterparty name in English
+                            PMUT_TEUR_MUTAV_ANGLIT: String //Description in English
+                          )
+
+case class PmutReshimatMutavim(PMUT_PIRTEY_MUTAV: PmutPirteyMutav)
+
+case class PmutshlifaOut(esbHeaderResponse: EsbHeaderResponse,
+                         MFAdminResponse: MfAdminResponse,
+                         PMUT_MONE: String,
+                   
+                         PMUT_RESHIMAT_MUTAVIM: List[PmutReshimatMutavim]
+                        )
+
+case class Ntg6IandK(PMUTSHLIFA_OUT: PmutshlifaOut)
+
+
+
 //From OBP-Scala-South-----------------------------------------------------
 
 case class CounterPartySimple(name: Option[String],
