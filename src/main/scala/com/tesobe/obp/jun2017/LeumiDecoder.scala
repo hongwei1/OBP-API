@@ -20,6 +20,8 @@ import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
 import com.tesobe.obp.NtbdBv050Mf.getNtbdBv050
 import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
 import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
+import com.tesobe.obp.Ntg6AMf.getNtg6A
+import com.tesobe.obp.Ntg6BMf.getNtg6B
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -512,8 +514,27 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def createCounterparty(outboundCreateCounterparty: OutboundCreateCounterparty): InboundCreateCounterparty = {
-    
-    //TODO use createCounterparty to do sth
+    val accountValues = mapAccountIdToAccountValues(outboundCreateCounterparty.accountId)
+    val branchId = accountValues.branchId
+    val accountNumber = accountValues.accountNumber
+    val accountType = accountValues.accountType
+/*    
+    if (outboundCreateCounterparty.bankCode == "10") {
+      val ntg6ACall = getNtg6A(
+        branch = outboundCreateCounterparty.branchNumber,
+        accountType = accountType ,
+        accountNumber = accountNumber,
+        cbsToken = outboundCreateCounterparty,
+        counterpartyBranchNumber: String,
+        counterpartyAccountNumber: String,
+        counterpartyName: String,
+        counterpartyDescription: String,
+        counterpartyIBAN: String,
+        counterpartyNameInEnglish: String,
+        counterpartyDescriptionInEnglish: String
+      )
+    }*/
+      
     
     InboundCreateCounterparty(
       outboundCreateCounterparty.authInfo,

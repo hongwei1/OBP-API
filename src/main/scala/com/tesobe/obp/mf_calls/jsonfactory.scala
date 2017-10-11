@@ -342,9 +342,9 @@ case class P050bdikachovaout(esbHeaderResponse: EsbHeaderResponse2,
 
 case class NtbdAv050(P050_BDIKACHOVAOUT: P050bdikachovaout)
 
-case class NtdriveNoResp(esbHeaderResponse: EsbHeaderResponse,
+case class NtDriveNoResp(esbHeaderResponse: EsbHeaderResponse,
                          MFAdminResponse: MfAdminResponse)
-case class NtbdBv050(NTDriveNoResp: NtdriveNoResp)
+case class NtbdBv050(NTDriveNoResp: NtDriveNoResp)
 
 case class P050mahadura101(P050_KOD_ISHUR: String, P050_KOD_SIBA_LE_ISHUR_PAKID: String)
 
@@ -370,9 +370,6 @@ case class P050ishurout(esbHeaderResponse: EsbHeaderResponse,
                        )
 
 case class Ntbd2v050(P050_ISHUROUT: P050ishurout)
-
-case class NtDriveNoResp(esbHeaderResponse: EsbHeaderResponse,
-                         MFAdminResponse: MfAdminResponse)
 
 case class Ntg6A(NTDriveNoResp: NtDriveNoResp)
 
