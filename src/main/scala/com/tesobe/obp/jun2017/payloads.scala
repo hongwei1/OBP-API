@@ -77,7 +77,8 @@ case class OutboundCreateChallengeJune2017(
 ) extends TopicCaseClass
 
 case class OutboundCreateCounterparty(
-  authInfo: AuthInfo, 
+  authInfo: AuthInfo,
+  bankCode: String,                                
   accountId: String,
   branchNumber: String,
   accountNumber: String,
