@@ -58,9 +58,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
 
   //TODO: Replace with caching solution for production
-  case class AccountValues (branchId: String,accountType: String, accountNumber:String)
-  var mapAccountIdToAccountValues = Map[String, AccountValues]()
-  var mapAccountNumberToAccountId= Map[String, String]()
+  case class AccountIdValues(branchId: String, accountType: String, accountNumber:String)
+  var mapAccountIdToAccountValues = Map[String, AccountIdValues]()
+  var mapAccountValuesToAccountId= Map[AccountIdValues, String]()
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
   var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
   var mapTransactionValuesToTransactionId = Map[TransactionIdValues, String]()
@@ -69,12 +69,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getOrCreateAccountId(branchId: String, accountType: String, accountNumber: String): String = {
     logger.debug(s"getOrCreateAccountId-accountNr($accountNumber)")
-    if (mapAccountNumberToAccountId.contains(accountNumber)) { mapAccountNumberToAccountId(accountNumber) }
+    val accountIdValues = AccountIdValues(branchId, accountType, accountNumber)
+    if (mapAccountValuesToAccountId.contains(accountIdValues)) {
+      mapAccountValuesToAccountId(accountIdValues)
+    }
     else {
       //TODO: Do random salting for production? Will lead to expired accountIds becoming invalid.
-      val accountId = base64EncodedSha256(accountNumber + "fjdsaFDSAefwfsalfid")
-      mapAccountIdToAccountValues += (accountId -> AccountValues(branchId, accountType, accountNumber))
-      mapAccountNumberToAccountId += (accountNumber -> accountId)
+      val accountId = base64EncodedSha256(branchId + accountType + accountNumber + config.getString("salt.global"))
+      mapAccountIdToAccountValues += (accountId -> accountIdValues)
+      mapAccountValuesToAccountId += (accountIdValues -> accountId)
       accountId
     }
   }

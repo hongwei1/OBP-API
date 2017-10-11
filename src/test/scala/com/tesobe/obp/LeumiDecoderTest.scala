@@ -8,11 +8,11 @@ import com.tesobe.obp.june2017._
   */
 class LeumiDecoderTest  extends ServerSetup {
 
-  val accountId1 = base64EncodedSha256("3565953" + "fjdsaFDSAefwfsalfid")
-  val accountId2 = base64EncodedSha256("50180983" + "fjdsaFDSAefwfsalfid")
-  val accountId3 = base64EncodedSha256("50180963" + "fjdsaFDSAefwfsalfid")
-  val accountId4 = base64EncodedSha256("20102612" + "fjdsaFDSAefwfsalfid")
-  val accountId5 = base64EncodedSha256("20105505" + "fjdsaFDSAefwfsalfid")
+  val accountId1 = base64EncodedSha256("616" + "330" + "3565953" + "fjdsaFDSAefwfsalfid")
+  val accountId2 = base64EncodedSha256("616" + "430" +"50180983" + "fjdsaFDSAefwfsalfid")
+  val accountId3 = base64EncodedSha256("616" + "330" +"50180963" + "fjdsaFDSAefwfsalfid")
+  val accountId4 = base64EncodedSha256("814" + "330" + "20102612" + "fjdsaFDSAefwfsalfid")
+  val accountId5 = base64EncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")
   val mfToken = "?+1         81433020102612"
   
   test("getBankAccounts works for Stub"){
