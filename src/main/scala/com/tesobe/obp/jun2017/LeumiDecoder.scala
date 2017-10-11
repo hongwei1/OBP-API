@@ -518,22 +518,38 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
-/*    
-    if (outboundCreateCounterparty.bankCode == "10") {
+    
+    if (outboundCreateCounterparty.counterparty.bankCode == "10") {
       val ntg6ACall = getNtg6A(
-        branch = outboundCreateCounterparty.branchNumber,
+        branch = branchId,
         accountType = accountType ,
         accountNumber = accountNumber,
-        cbsToken = outboundCreateCounterparty,
-        counterpartyBranchNumber: String,
-        counterpartyAccountNumber: String,
-        counterpartyName: String,
-        counterpartyDescription: String,
-        counterpartyIBAN: String,
-        counterpartyNameInEnglish: String,
-        counterpartyDescriptionInEnglish: String
+        cbsToken = outboundCreateCounterparty.cbsToken,
+        counterpartyBranchNumber = outboundCreateCounterparty.counterparty.branchNumber,
+        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber ,
+        counterpartyName = outboundCreateCounterparty.counterparty.Name,
+        counterpartyDescription = outboundCreateCounterparty.counterparty.description,
+        counterpartyIBAN = outboundCreateCounterparty.counterparty.iban,
+        counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
+        counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
       )
-    }*/
+    } else {
+      val ntg6BCall = getNtg6B(
+        branch = branchId,
+        accountType = accountType ,
+        accountNumber = accountNumber,
+        cbsToken = outboundCreateCounterparty.cbsToken,
+        counterpartyBankId = outboundCreateCounterparty.counterparty.bankCode,
+        counterpartyBranchNumber = outboundCreateCounterparty.counterparty.branchNumber,
+        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber ,
+        counterpartyName = outboundCreateCounterparty.counterparty.Name,
+        counterpartyDescription = outboundCreateCounterparty.counterparty.description,
+        counterpartyIBAN = outboundCreateCounterparty.counterparty.iban,
+        counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
+        counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
+      )
+    }
+    
       
     
     InboundCreateCounterparty(

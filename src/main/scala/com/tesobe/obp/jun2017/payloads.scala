@@ -75,18 +75,21 @@ case class OutboundCreateChallengeJune2017(
   transactionRequestId: String,
   phoneNumber: String
 ) extends TopicCaseClass
-
+case class OutboundCounterparty(
+                         bankCode: String,
+                         branchNumber: String,
+                         accountNumber: String,
+                         Name: String,
+                         description: String,
+                         iban: String,
+                         englishName: String,
+                         englishDescription: String
+                       )
 case class OutboundCreateCounterparty(
   authInfo: AuthInfo,
-  bankCode: String,                                
   accountId: String,
-  branchNumber: String,
-  accountNumber: String,
-  Name: String,
-  description: String,
-  iban: String,
-  englishName: String,
-  englishDescription: String
+  cbsToken: String,
+  counterparty: OutboundCounterparty
 ) extends TopicCaseClass
 
 /**
