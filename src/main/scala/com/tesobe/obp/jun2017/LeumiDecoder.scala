@@ -129,11 +129,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
                                                  bankId: String,
                                                  accountId: String,
                                                  adapterTransaction: Tn2TnuaBodedet): InternalTransaction = {
-    val amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM
-    val completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH
-    val newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA
+    
+    // We can only get these six parameters from CBS. 
+    val amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM //:"TN2_SCHUM"
+    val completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH //"TN2_TA_ERECH": // Date of value for
+    val newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA //"TN2_ITRA":
+    val description = adapterTransaction.TN2_TNUA_BODEDET.TN2_TEUR_PEULA //"TN2_TEUR_PEULA":
+    val transactionType = adapterTransaction.TN2_TNUA_BODEDET.TN2_SUG_PEULA //"TN2_SUG_PEULA"
+    val transactionProcessingDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD //"TN2_TA_IBUD": // Date of transaction
+    
     InternalTransaction(
-      //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
       errorCode = "",
       List(
         InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
@@ -141,17 +146,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
       ),
       transactionId = getOrCreateTransactionId(amount,completedDate,newBalanceAmount), // Find some
       accountId = accountId, //accountId
-      amount = amount, //:"TN2_SCHUM"
+      amount = amount, 
       bankId = "10", // 10 for now (Joni)
-      completedDate = completedDate, //"TN2_TA_ERECH": // Date of value for
-      counterpartyId = "counterpartyId",
-      counterpartyName = "counterpartyName",
+      completedDate = completedDate, 
+      counterpartyId = "counterpartyId", //TODO, can not get this field from CBS
+      counterpartyName = "counterpartyName", //TODO, can not get this field from CBS
       currency = defaultCurrency, //ILS 
-      description = adapterTransaction.TN2_TNUA_BODEDET.TN2_TEUR_PEULA, //"TN2_TEUR_PEULA":
-      newBalanceAmount = newBalanceAmount,  //"TN2_ITRA":
+      description = description, 
+      newBalanceAmount = newBalanceAmount,  
       newBalanceCurrency = defaultCurrency, //ILS
-      postedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD, //"TN2_TA_IBUD": // Date of transaction
-      `type` = adapterTransaction.TN2_TNUA_BODEDET.TN2_SUG_PEULA, //"TN2_SUG_PEULA"
+      postedDate = transactionProcessingDate, 
+      `type` = transactionType, 
       userId = userId //userId
     )
   }
