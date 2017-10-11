@@ -88,6 +88,7 @@ case class Counterparty(
 case class OutboundCreateCounterparty(
   authInfo: AuthInfo,
   accountId: String,
+  cbsToken: String,
   counterparty: Counterparty
 ) extends TopicCaseClass
 
