@@ -76,6 +76,18 @@ case class OutboundCreateChallengeJune2017(
   phoneNumber: String
 ) extends TopicCaseClass
 
+case class OutboundCreateCounterparty(
+  authInfo: AuthInfo, 
+  accountId: String,
+  branchNumber: String,
+  accountNumber: String,
+  Name: String,
+  description: String,
+  iban: String,
+  englishName: String,
+  englishDescription: String
+) extends TopicCaseClass
+
 /**
   * Payloads for response topic
   *
@@ -91,6 +103,7 @@ case class InboundTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
+case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -294,6 +307,12 @@ case class InternalCreateChallengeJune2017(
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
   answer : String
+)
+
+case class InternalCreateCounterparty(
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  status: String
 )
 
 case class CustomerFaceImageJson(

@@ -511,6 +511,23 @@ object LeumiDecoder extends Decoder with StrictLogging {
     
   }
   
+  def createCounterparty(outboundCreateCounterparty: OutboundCreateCounterparty): InboundCreateCounterparty = {
+    
+    //TODO use createCounterparty to do sth
+    
+    InboundCreateCounterparty(
+      outboundCreateCounterparty.authInfo,
+      InternalCreateCounterparty(
+        "",
+        List(
+          InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+          InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+        ),
+        true.toString
+      )
+    )
+    
+  }
   
 }
 
