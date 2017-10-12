@@ -3,6 +3,7 @@ package com.tesobe.obp
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.tesobe.obp.NtbdIv050
+import net.liftweb.common.{Box, Full}
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
@@ -15,7 +16,7 @@ object Ntbd2v050Mf {
                      username: String,
                      ntbdAv050Token: String,
                      ntbdAv050fromAccountOwnerName: String,
-                    ) = {
+                    ): Ntbd2v050 = {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01"
       
@@ -46,6 +47,6 @@ object Ntbd2v050Mf {
       val result = makePostRequest(json, path)
 
       implicit val formats = net.liftweb.json.DefaultFormats
-      parse(replaceEmptyObjects(result)).extract[Ntbd2v050]
+      (parse(replaceEmptyObjects(result)).extract[Ntbd2v050])
     }
 }

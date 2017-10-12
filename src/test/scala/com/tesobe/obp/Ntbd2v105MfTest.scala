@@ -11,9 +11,13 @@ class Ntbd2v105MfTest extends ServerSetup {
       cbsToken = ">U(          81433020102612",
       ntbd1v105Token = "3639283",
     "","")
+    result match {
+      case Right(result) =>
     result.PELET_1352.esbHeaderResponse.responseStatus.callStatus should be ("Success")
     result.PELET_1352.MFAdminResponse.returnCode should be ("0")
 
+      case Left(result) => fail()
+    }
 
   }
 

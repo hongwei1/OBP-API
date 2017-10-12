@@ -20,10 +20,16 @@ class Ntbd1v105MfTest extends ServerSetup {
       nameOfMoneyReceiver = "kium",
       birthDateOfMoneyReceiver = "930708",
       mobileNumberOfMoneyReceiver = "0506724131")
-    result.P135_BDIKAOUT.P135_TOKEN should be ("3635791")
-    result.P135_BDIKAOUT.P135_AMALOT.P135_SCHUM_AMALA should be ("0.00")
-    result.P135_BDIKAOUT.esbHeaderResponse.responseStatus.callStatus should be ("Success")
-    result.P135_BDIKAOUT.MFAdminResponse.returnCode should be ("0")
+    result match {
+      case Right(result) =>
+        result.P135_BDIKAOUT.P135_TOKEN should be("3635791")
+        result.P135_BDIKAOUT.P135_AMALOT.P135_SCHUM_AMALA should be("0.00")
+        result.P135_BDIKAOUT.esbHeaderResponse.responseStatus.callStatus should be("Success")
+        result.P135_BDIKAOUT.MFAdminResponse.returnCode should be("0")
+
+      case Left(result) =>
+        fail()
+    }
 
 
   }

@@ -21,7 +21,7 @@ object Ntbd1v105Mf extends StrictLogging{
                      idType: String,
                      nameOfMoneyReceiver: String,
                      birthDateOfMoneyReceiver: String,
-                     mobileNumberOfMoneyReceiver: String): Ntbd1v105 = {
+                     mobileNumberOfMoneyReceiver: String): Either[PAPIErrorResponse,Ntbd1v105] = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01"
     
@@ -58,7 +58,11 @@ object Ntbd1v105Mf extends StrictLogging{
 
     val result = makePostRequest(json, path)
     implicit val formats = net.liftweb.json.DefaultFormats
-    parse(replaceEmptyObjects(result)).extract[Ntbd1v105]
+    try {
+      Right(parse(replaceEmptyObjects(result)).extract[Ntbd1v105])
+    } catch {
+      case _ => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+    }
   }
 
 }

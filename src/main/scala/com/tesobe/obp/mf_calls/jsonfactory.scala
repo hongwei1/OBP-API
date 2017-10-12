@@ -379,8 +379,10 @@ case class Ntg6C(NTDriveNoResp: NtDriveNoResp)
 
 case class Ntg6D(NTDriveNoResp: NtDriveNoResp)
 
-case class PAPIErrorResponse(esbHeaderResponse: EsbHeaderResponse,
+case class PAPIErrorResponse2(esbHeaderResponse: EsbHeaderResponse,
                              MFAdminResponse: MfAdminResponse)
+
+case class PAPIErrorResponse(PAPIErrorResponse: PAPIErrorResponse2)
 
 case class PmutPirteyMutav(
                             PMUT_ERETZ_MUTAV: String, //Country
