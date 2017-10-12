@@ -61,10 +61,11 @@ object Ntg6AMf extends StrictLogging{
         }
         }
       }""")
-      logger.debug("Ntg6A----makePostRequest")
 
       val result = makePostRequest(json, path)
-      
+      println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+      println(json)
+      println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
       logger.debug("Ntg6A ---extracting case class")
 
       implicit val formats = net.liftweb.json.DefaultFormats

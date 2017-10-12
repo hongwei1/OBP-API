@@ -53,6 +53,7 @@ object NtbdBv050Mf {
       }
       }
     }""")
+    val jsonfield = json.extract
     
 
     val result = makePostRequest(json, path)

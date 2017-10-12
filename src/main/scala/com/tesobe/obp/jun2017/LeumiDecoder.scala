@@ -430,6 +430,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
         ntbdAv050Token = transferToAccountToken,
         ntbdAv050fromAccountOwnerName = callNtbdAv050.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT
       )
+      InboundCreateTransactionId(createTransactionRequest.authInfo,
+        InternalTransactionId("",List(InboundStatusMessage("ESB","Success", "0", "OK")),
+          transactionNewId))
   
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.COUNTERPARTY.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJSON]
@@ -533,6 +536,25 @@ object LeumiDecoder extends Decoder with StrictLogging {
         counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
         counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
       )
+      InboundCreateCounterparty(
+        outboundCreateCounterparty.authInfo,
+        InternalCreateCounterparty(
+          "",
+          List(
+            InboundStatusMessage(
+              "ESB",
+              "Success",
+              ntg6ACall.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus,
+              ntg6ACall.NTDriveNoResp.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
+            InboundStatusMessage(
+              "MF",
+              "Success",
+              ntg6ACall.NTDriveNoResp.MFAdminResponse.returnCode,
+              ntg6ACall.NTDriveNoResp.MFAdminResponse.messageText.getOrElse(""))
+          ),
+          true.toString
+        )
+      )
     } else {
       val ntg6BCall = getNtg6B(
         branch = branchId,
@@ -548,21 +570,30 @@ object LeumiDecoder extends Decoder with StrictLogging {
         counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
         counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
       )
+      InboundCreateCounterparty(
+        outboundCreateCounterparty.authInfo,
+        InternalCreateCounterparty(
+          "",
+          List(
+            InboundStatusMessage(
+              "ESB",
+              "Success", 
+              ntg6BCall.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus,
+              ntg6BCall.NTDriveNoResp.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")), 
+            InboundStatusMessage(
+              "MF",
+              "Success",
+              ntg6BCall.NTDriveNoResp.MFAdminResponse.returnCode,
+              ntg6BCall.NTDriveNoResp.MFAdminResponse.messageText.getOrElse("")) 
+          ),
+          true.toString
+        )
+      )
     }
     
       
     
-    InboundCreateCounterparty(
-      outboundCreateCounterparty.authInfo,
-      InternalCreateCounterparty(
-        "",
-        List(
-          InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-          InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
-        ),
-        true.toString
-      )
-    )
+
     
   }
   
