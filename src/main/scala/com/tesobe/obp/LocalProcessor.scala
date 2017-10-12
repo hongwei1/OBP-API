@@ -308,7 +308,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       val valueFromKafka: String = msg.record.value()
       //Because the CreateTransaction case class, contain the "sealed trait TransactionRequestCommonBodyJSON"
       //So, we need map the trait explicitly.
-      def mapTraitFieldExplicitly(string: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${string }": {""").replace("""}},""","""}}},""")
+      def mapTraitFieldExplicitly(transactionRequestType: String) = valueFromKafka.replace(""""transactionRequestCommonBody":{""",s""""transactionRequestCommonBody":{"${transactionRequestType }": {""").replace("""}},""","""}}},""")
       
       val changeValue = 
         if(valueFromKafka.contains(Util.TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) 

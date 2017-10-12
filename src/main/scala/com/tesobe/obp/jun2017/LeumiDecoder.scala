@@ -383,8 +383,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         accountType,
         accountNumber,
         cbsToken,
-        transactionRequestBodyTransferToAccountJson.couterparty.transfer_type: String,
-        transferDateInFuture = transactionRequestBodyTransferToAccountJson.couterparty.future_date
+        transactionRequestBodyTransferToAccountJson.transfer_type,
+        transferDateInFuture = transactionRequestBodyTransferToAccountJson.future_date
       ) 
       val transferToAccountToken = callNtbdAv050.P050_BDIKACHOVAOUT.P050_TOKEN_OUT
       
@@ -393,13 +393,13 @@ object LeumiDecoder extends Decoder with StrictLogging {
         accountNumber,
         cbsToken,
         ntbdAv050Token = transferToAccountToken,
-        toAccountBankId = transactionRequestBodyTransferToAccountJson.couterparty.bank_code ,
-        toAccountBranchId = transactionRequestBodyTransferToAccountJson.couterparty.branch_number,
-        toAccountAccountNumber = transactionRequestBodyTransferToAccountJson.couterparty.account_number,
-        toAccountIban = transactionRequestBodyTransferToAccountJson.couterparty.iban,
+        toAccountBankId = transactionRequestBodyTransferToAccountJson.to.bank_code ,
+        toAccountBranchId = transactionRequestBodyTransferToAccountJson.to.branch_number,
+        toAccountAccountNumber = transactionRequestBodyTransferToAccountJson.to.account.number,
+        toAccountIban = transactionRequestBodyTransferToAccountJson.to.account.iban,
         transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount,
         description = transactionRequestBodyTransferToAccountJson.description,
-        referenceNameOfTo = transactionRequestBodyTransferToAccountJson.couterparty.other_account_owner,
+        referenceNameOfTo = transactionRequestBodyTransferToAccountJson.to.name
       )
       
       val callNtbdIv050 = getNtbdIv050(
@@ -418,7 +418,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         cbsToken,
         ntbdAv050Token =  transferToAccountToken,
         //TODO: check with leumi if bankID 10 implies leumi code 1 here
-        bankTypeOfTo = if (transactionRequestBodyTransferToAccountJson.couterparty.bank_code == "10") "0" else "1"
+        bankTypeOfTo = if (transactionRequestBodyTransferToAccountJson.to.bank_code == "10") "0" else "1"
       )
       
       val callNtbd2v050 = getNtbd2v050(

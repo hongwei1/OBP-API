@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "leumi-local-mysql",
-		"_postman_id": "2612ca9e-a808-7a33-0a81-5def8bed032c",
+		"_postman_id": "8f3da933-ddf9-8761-4ac2-1d82015826da",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -132,7 +132,10 @@
 						"value": "application/json"
 					}
 				],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v1.4.0/resource-docs/v3.0.0/swagger",
 					"protocol": "http",
@@ -264,7 +267,10 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks",
 					"protocol": "http",
@@ -1505,7 +1511,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1001\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\" : \"Tom\",\n  \t\"transfer_type\" : \"Transfer type: 1=regular; 2=RTGS - real time\",\n    \"transfer_is_scheduled\": \"if the transfer is scheduled to a future date then 1 otherwise 0\",\n    \"future_date\" : \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n    \"bank_code\" :  \"Bank code of the target account\",\n    \"branch_number\" : \"Branch number of the target account\",\n    \"account_number\" : \"Account number of the target account\",\n    \"iban\" : \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11230\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ACCOUNT Transaction Request\",\n  \"transfer_type\": \"Transfer type: 1=regular; 2=RTGS - real time\",\n  \"future_date\": \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests",
@@ -1564,10 +1570,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"a31f5a7b-9913-42b6-944f-2fea3700174b\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"81206be3-03ac-49f5-a60c-b1d878e44a82\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/b92a10d0-5d69-4994-b9a8-03865663b04d/challenge",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/c1ed5b4c-87f1-49bb-b1d8-97f117dab871/challenge",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1579,6 +1585,7 @@
 					"path": [
 						"obp",
 						"v3.0.0",
+						"custom",
 						"banks",
 						"10",
 						"accounts",
@@ -1587,7 +1594,7 @@
 						"transaction-request-types",
 						"TRANSFER_TO_ACCOUNT",
 						"transaction-requests",
-						"b92a10d0-5d69-4994-b9a8-03865663b04d",
+						"c1ed5b4c-87f1-49bb-b1d8-97f117dab871",
 						"challenge"
 					]
 				},
