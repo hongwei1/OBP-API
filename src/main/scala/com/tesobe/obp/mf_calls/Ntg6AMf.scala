@@ -21,7 +21,7 @@ object Ntg6AMf extends StrictLogging{
                  counterpartyIBAN: String,
                  counterpartyNameInEnglish: String,
                  counterpartyDescriptionInEnglish: String
-               ) = {
+               ): Either[PAPIErrorResponse, Ntg6A] = {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/A/000/01.02"
       logger.debug("parsing json for getNtg6A")
@@ -63,12 +63,14 @@ object Ntg6AMf extends StrictLogging{
       }""")
 
       val result = makePostRequest(json, path)
-      println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-      println(json)
-      println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
       logger.debug("Ntg6A ---extracting case class")
 
       implicit val formats = net.liftweb.json.DefaultFormats
-      parse(replaceEmptyObjects(result)).extract[Ntg6A]
+      try {
+        Right(parse(replaceEmptyObjects(result)).extract[Ntg6A])
+      } catch {
+        case _  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      }  
     }
 }

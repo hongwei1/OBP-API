@@ -18,8 +18,14 @@ class Ntg6CMfTest extends ServerSetup{
       counterpartyNameInEnglish = " ",
       counterpartyDescriptionInEnglish = " "
     )
-    result.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus should be ("Success")
-    result.NTDriveNoResp.MFAdminResponse.messageText should be (Some("העדכון בוצע בהצלחה !"))
+    result match {
+      case Right(result) =>
+        result.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus should be ("Success")
+        result.NTDriveNoResp.MFAdminResponse.messageText should be (Some("העדכון בוצע בהצלחה !"))
+
+      case Left(result) =>
+        fail()
+    }
   }
   
 

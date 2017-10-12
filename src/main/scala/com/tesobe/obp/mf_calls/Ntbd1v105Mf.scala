@@ -61,7 +61,7 @@ object Ntbd1v105Mf extends StrictLogging{
     try {
       Right(parse(replaceEmptyObjects(result)).extract[Ntbd1v105])
     } catch {
-      case e: _  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      case _ => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
     }
   }
 

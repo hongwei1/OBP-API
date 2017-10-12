@@ -11,14 +11,20 @@ class Ntg6KMfTest extends ServerSetup{
       accountNumber = "50180963",
       cbsToken = "בל          81433020102612"
     )
-    
-    result.PMUTSHLIFA_OUT.esbHeaderResponse.responseStatus.callStatus should be ("Success")
-    result.PMUTSHLIFA_OUT.MFAdminResponse.returnCode should be ("0")
-    result.PMUTSHLIFA_OUT.PMUT_MONE should be ("3")
-    result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM.head.PMUT_PIRTEY_MUTAV.PMUT_TEUR_MUTAV should be ("")
-    result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM.head.PMUT_PIRTEY_MUTAV.PMUT_SHEM_MUTAV  should be ("            סכלא")
-    result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM(1).PMUT_PIRTEY_MUTAV.PMUT_SHEM_MUTAV should be ("             טטט")
-    result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM(2).PMUT_PIRTEY_MUTAV.PMUT_SHEM_MUTAV should be ("             לעי")
+
+    result match {
+      case Right(result) =>
+        result.PMUTSHLIFA_OUT.esbHeaderResponse.responseStatus.callStatus should be ("Success")
+        result.PMUTSHLIFA_OUT.MFAdminResponse.returnCode should be ("0")
+        result.PMUTSHLIFA_OUT.PMUT_MONE should be ("3")
+        result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM.head.PMUT_PIRTEY_MUTAV.PMUT_TEUR_MUTAV should be ("")
+        result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM.head.PMUT_PIRTEY_MUTAV.PMUT_SHEM_MUTAV  should be ("            סכלא")
+        result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM(1).PMUT_PIRTEY_MUTAV.PMUT_SHEM_MUTAV should be ("             טטט")
+        result.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM(2).PMUT_PIRTEY_MUTAV.PMUT_SHEM_MUTAV should be ("             לעי")
+
+      case Left(result) =>
+        fail()
+    }
   }
 
 }

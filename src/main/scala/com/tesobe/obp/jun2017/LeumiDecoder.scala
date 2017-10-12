@@ -50,7 +50,7 @@ import scala.collection.mutable.{ListBuffer, Map}
   * This software may also be distributed under a commercial license from TESOBE Ltd subject to separate terms.
   */
 object LeumiDecoder extends Decoder with StrictLogging {
-  
+
   val defaultCurrency = "ILS"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
@@ -60,13 +60,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
 
   //TODO: Replace with caching solution for production
-  case class AccountIdValues(branchId: String, accountType: String, accountNumber:String)
+  case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
+
   var mapAccountIdToAccountValues = Map[String, AccountIdValues]()
-  var mapAccountValuesToAccountId= Map[AccountIdValues, String]()
+  var mapAccountValuesToAccountId = Map[AccountIdValues, String]()
+
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
+
   var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
   var mapTransactionValuesToTransactionId = Map[TransactionIdValues, String]()
-  
+
   //Helper functions start here:---------------------------------------------------------------------------------------
 
   def getOrCreateAccountId(branchId: String, accountType: String, accountNumber: String): String = {
@@ -83,10 +86,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       accountId
     }
   }
-  
-  def getOrCreateTransactionId(amount: String, completedDate: String,newBalanceAmount: String): String = {
+
+  def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {
     logger.debug(s"getOrCreateTransactionId for ($amount)($completedDate)($newBalanceAmount)")
-    val transactionIdValues = TransactionIdValues(amount,completedDate, newBalanceAmount)
+    val transactionIdValues = TransactionIdValues(amount, completedDate, newBalanceAmount)
     if (mapTransactionValuesToTransactionId.contains(transactionIdValues)) {
       mapTransactionValuesToTransactionId(transactionIdValues)
     } else {
@@ -95,7 +98,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       mapTransactionIdToTransactionValues += (transactionId -> transactionIdValues)
       transactionId
     }
-  } 
+  }
 
   def mapAdapterAccountToInboundAccountJune2017(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
 
@@ -103,16 +106,26 @@ object LeumiDecoder extends Decoder with StrictLogging {
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
     val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments || x.accountPermissions.canMakeInternalPayments
     val hasViewerRights: Boolean = x.accountPermissions.canSee
-    val  viewsToGenerate  = {
-      if (hasOwnerRights) {List("Owner")}
-      else if (hasViewerRights) {List("Auditor")}
-      else {List("")}
+    val viewsToGenerate = {
+      if (hasOwnerRights) {
+        List("Owner")
+      }
+      else if (hasViewerRights) {
+        List("Auditor")
+      }
+      else {
+        List("")
+      }
     }
     //Create Owner for result InboundAccount2017 creation
-    val accountOwner = if (hasOwnerRights) {List(username)} else {List("")}
+    val accountOwner = if (hasOwnerRights) {
+      List(username)
+    } else {
+      List("")
+    }
     InboundAccountJune2017(
       errorCode = "",
-      List(InboundStatusMessage("ESB","Success", "0", "OK")), ////TODO, need to fill the coreBanking error
+      List(InboundStatusMessage("ESB", "Success", "0", "OK")), ////TODO, need to fill the coreBanking error
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
@@ -123,18 +136,19 @@ object LeumiDecoder extends Decoder with StrictLogging {
       balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
-      bankRoutingScheme = "", 
+      bankRoutingScheme = "",
       bankRoutingAddress = "",
       branchRoutingScheme = "",
       branchRoutingAddress = "",
       accountRoutingScheme = "",
       accountRoutingAddress = "")
   }
-  def mapAdapterTransactionToInternalTransaction(userId: String, 
+
+  def mapAdapterTransactionToInternalTransaction(userId: String,
                                                  bankId: String,
                                                  accountId: String,
                                                  adapterTransaction: Tn2TnuaBodedet): InternalTransaction = {
-    
+
     // We can only get these six parameters from CBS. 
     val amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM //:"TN2_SCHUM"
     val completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH //"TN2_TA_ERECH": // Date of value for
@@ -142,86 +156,87 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val description = adapterTransaction.TN2_TNUA_BODEDET.TN2_TEUR_PEULA //"TN2_TEUR_PEULA":
     val transactionType = adapterTransaction.TN2_TNUA_BODEDET.TN2_SUG_PEULA //"TN2_SUG_PEULA"
     val transactionProcessingDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD //"TN2_TA_IBUD": // Date of transaction
-    
+
     InternalTransaction(
       errorCode = "",
       List(
-        InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-        InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
       ),
-      transactionId = getOrCreateTransactionId(amount,completedDate,newBalanceAmount), // Find some
+      transactionId = getOrCreateTransactionId(amount, completedDate, newBalanceAmount), // Find some
       accountId = accountId, //accountId
-      amount = amount, 
+      amount = amount,
       bankId = "10", // 10 for now (Joni)
-      completedDate = completedDate, 
+      completedDate = completedDate,
       counterpartyId = "counterpartyId", //TODO, can not get this field from CBS
       counterpartyName = "counterpartyName", //TODO, can not get this field from CBS
       currency = defaultCurrency, //ILS 
-      description = description, 
-      newBalanceAmount = newBalanceAmount,  
+      description = description,
+      newBalanceAmount = newBalanceAmount,
       newBalanceCurrency = defaultCurrency, //ILS
-      postedDate = transactionProcessingDate, 
-      `type` = transactionType, 
+      postedDate = transactionProcessingDate,
+      `type` = transactionType,
       userId = userId //userId
     )
   }
+
   //Helper functions end here--------------------------------------------------------------------------------------------
-  
+
   //Processor functions start here---------------------------------------------------------------------------------------
 
   override def getBanks(getBanks: GetBanks) = {
-      Banks(getBanks.authInfo, List(InboundBank(
-        "",
-        List(InboundStatusMessage("ESB","Success", "0", "OK")),
-         "10", "leumi","leumilogo","leumiurl")))
-    }
+    Banks(getBanks.authInfo, List(InboundBank(
+      "",
+      List(InboundStatusMessage("ESB", "Success", "0", "OK")),
+      "10", "leumi", "leumilogo", "leumiurl")))
+  }
 
   override def getBank(getBank: GetBank) = {
     BankWrapper(getBank.authInfo, InboundBank(
       "",
-      List(InboundStatusMessage("ESB","Success", "0", "OK")), 
-       "10", "leumi","leumilogo","leumiurl"))
+      List(InboundStatusMessage("ESB", "Success", "0", "OK")),
+      "10", "leumi", "leumilogo", "leumiurl"))
   }
 
-  
+
   def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
     //Not cached or invalid AccountId
     if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
       logger.debug("not mapped")
-      getBankAccounts(OutboundGetAccounts(getAccount.authInfo,null)) //TODO need add the data here.
+      getBankAccounts(OutboundGetAccounts(getAccount.authInfo, null)) //TODO need add the data here.
     }
     val accountNr = mapAccountIdToAccountValues(getAccount.accountId).accountNumber
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username,mfAccounts.filter(x => x.accountNr == accountNr ).head)
+      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x => x.accountNr == accountNr).head)
     )
   }
-  
+
   def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
     InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
       //TODO: Error handling
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username,mfAccounts.filter(x => 
-      x.accountNr == getAccount.accountNumber).head))
+      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x =>
+        x.accountNr == getAccount.accountNumber).head))
   }
 
-   def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundBankAccounts = {
+  def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundBankAccounts = {
     val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
-      
+
       result += mapAdapterAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i)
-      }
+    }
     InboundBankAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling
       getAccountsInput.authInfo.username,
       mfAccounts.head.cbsToken), result.toList)
   }
-  
+
   def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
     //TODO: Error handling
     val accountValues = mapAccountIdToAccountValues(getTransactionsRequest.accountId)
@@ -237,7 +252,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       accountValues.branchId,
       accountValues.accountType,
       accountValues.accountNumber,
-      getTransactionsRequest.authInfo.cbsToken, List(fromYear,fromMonth,fromDay), List(toYear,toMonth,toDay), getTransactionsRequest.limit.toString)
+      getTransactionsRequest.authInfo.cbsToken, List(fromYear, fromMonth, fromDay), List(toYear, toMonth, toDay), getTransactionsRequest.limit.toString)
     var result = new ListBuffer[InternalTransaction]
     for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
@@ -247,14 +262,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
         i
       )
     }
-      InboundTransactions(getTransactionsRequest.authInfo, result.toList)
+    InboundTransactions(getTransactionsRequest.authInfo, result.toList)
   }
-  
+
   def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
     logger.debug(s"get Transaction for ($getTransactionRequest)")
     val allTransactions: List[InternalTransaction] = {
-      if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) && 
-          mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
+      if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
+        mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
         getTransactions(GetTransactions(getTransactionRequest.authInfo,
@@ -264,8 +279,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
           simpleTransactionDate, simpleTransactionDate
         )).data
       } else if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
-        !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)){
-        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null))  //TODO , need fix
+        !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
+        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null)) //TODO , need fix
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
         getTransactions(GetTransactions(getTransactionRequest.authInfo,
@@ -275,7 +290,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           simpleTransactionDate, simpleTransactionDate
         )).data
       } else if (!mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
-        mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)){
+        mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
         getTransactions(GetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
@@ -288,17 +303,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
-          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000" 
+          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000"
         )).data
       }
     }
-    
+
     //TODO: Error handling
     val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
     InboundTransaction(getTransactionRequest.authInfo, resultTransaction)
-    
+
   }
-  
+
   def createTransaction(createTransactionRequest: CreateTransaction): InboundCreateTransactionId = {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
@@ -307,11 +322,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
-    val username =  createTransactionRequest.authInfo.username
+    val username = createTransactionRequest.authInfo.username
     val cbsToken = createTransactionRequest.authInfo.cbsToken
 
- 
-    val transactionNewId = ""  //as we cannot determine the transactionid at creation, this will always be empty
+
+    val transactionNewId = "" //as we cannot determine the transactionid at creation, this will always be empty
     if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToPhoneJson]
       val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from.mobile_phone_number
@@ -320,7 +335,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val transactionMessage = transactionRequestBodyPhoneToPhoneJson.message
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
 
-      
+
       val callNtbd1_135 = getNtbd1v135Mf(branch = branchId,
         accountType,
         accountNumber,
@@ -330,7 +345,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         mobileNumberOfMoneyReceiver = receiverPhoneNumber,
         description = transactionDescription,
         transferAmount = transactionAmount)
-      
+
       val callNtbd2_135 = getNtbd2v135Mf(branchId,
         accountType,
         accountNumber,
@@ -338,15 +353,13 @@ object LeumiDecoder extends Decoder with StrictLogging {
         cbsToken,
         ntbd1v135_Token = callNtbd1_135.P135_BDIKAOUT.P135_TOKEN,
         nicknameOfMoneySender = transactionRequestBodyPhoneToPhoneJson.from.nickname,
-        messageToMoneyReceiver =  transactionMessage)
+        messageToMoneyReceiver = transactionMessage)
 
 
-      
-
-      }else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
+    } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
       val transactionRequestBodyTransferToAtmJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAtmJson]
       val transactionAmount = transactionRequestBodyTransferToAtmJson.value.amount
-      val callNttfW = getNttfWMf(branchId,accountType,accountNumber, cbsToken)
+      val callNttfW = getNttfWMf(branchId, accountType, accountNumber, cbsToken)
       val cardData = callNttfW.PELET_NTTF_W.P_PRATIM.P_PIRTEY_KARTIS.find(x => x.P_TIKRAT_KARTIS >= transactionAmount).getOrElse(
         throw new RuntimeException(NoCreditCard)
       )
@@ -366,34 +379,70 @@ object LeumiDecoder extends Decoder with StrictLogging {
         nameOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.legal_name,
         birthDateOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.date_of_birth,
         mobileNumberOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.mobile_phone_number)
-      
-      val callNtbd2v105 = getNtbd2v105Mf(
-        branchId,
-        accountType,
-        accountNumber,
-        cbsToken,
-        ntbd1v105Token = callNtbd1v105.P135_BDIKAOUT.P135_TOKEN,
-        nicknameOfSender = transactionRequestBodyTransferToAtmJson.from.nickname,
-        messageToReceiver = transactionRequestBodyTransferToAtmJson.message)
-      
+
+      callNtbd1v105 match {
+        case Right(x) =>
+          val callNtbd2v105 = getNtbd2v105Mf(
+            branchId,
+            accountType,
+            accountNumber,
+            cbsToken,
+            ntbd1v105Token = x.P135_BDIKAOUT.P135_TOKEN,
+            nicknameOfSender = transactionRequestBodyTransferToAtmJson.from.nickname,
+            messageToReceiver = transactionRequestBodyTransferToAtmJson.message)
+
+          callNtbd2v105 match {
+            case Right(y) =>
+              InboundCreateTransactionId(createTransactionRequest.authInfo,
+                InternalTransactionId("", List(InboundStatusMessage(
+                  "ESB",
+                  "Failure",
+                  y.PELET_1352.esbHeaderResponse.responseStatus.callStatus,
+                  y.PELET_1352.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+                  transactionNewId))
+            case Left(y) =>
+              InboundCreateTransactionId(createTransactionRequest.authInfo,
+                InternalTransactionId("", List(InboundStatusMessage(
+                  "ESB",
+                  "Failure",
+                  y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                  y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+                  transactionNewId))
+
+
+          }
+
+
+        case Left(x) =>
+          InboundCreateTransactionId(createTransactionRequest.authInfo,
+            InternalTransactionId("", List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+              transactionNewId))
+
+      }
+
+
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString)) {
       val transactionRequestBodyTransferToAccountJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToAccount]
-      
+
       val callNtbdAv050 = getNtbdAv050(branchId,
         accountType,
         accountNumber,
         cbsToken,
         transactionRequestBodyTransferToAccountJson.transfer_type,
         transferDateInFuture = transactionRequestBodyTransferToAccountJson.future_date
-      ) 
+      )
       val transferToAccountToken = callNtbdAv050.P050_BDIKACHOVAOUT.P050_TOKEN_OUT
-      
+
       val callNtdBv050 = getNtbdBv050(branchId,
         accountType,
         accountNumber,
         cbsToken,
         ntbdAv050Token = transferToAccountToken,
-        toAccountBankId = transactionRequestBodyTransferToAccountJson.to.bank_code ,
+        toAccountBankId = transactionRequestBodyTransferToAccountJson.to.bank_code,
         toAccountBranchId = transactionRequestBodyTransferToAccountJson.to.branch_number,
         toAccountAccountNumber = transactionRequestBodyTransferToAccountJson.to.account.number,
         toAccountIban = transactionRequestBodyTransferToAccountJson.to.account.iban,
@@ -401,7 +450,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         description = transactionRequestBodyTransferToAccountJson.description,
         referenceNameOfTo = transactionRequestBodyTransferToAccountJson.to.name
       )
-      
+
       val callNtbdIv050 = getNtbdIv050(
         branchId,
         accountType,
@@ -410,17 +459,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
         ntbdAv050Token = transferToAccountToken,
         transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount
       )
-      
+
       val callNtbdGv050 = getNtbdGv050(
         branchId,
         accountType,
         accountNumber,
         cbsToken,
-        ntbdAv050Token =  transferToAccountToken,
+        ntbdAv050Token = transferToAccountToken,
         //TODO: check with leumi if bankID 10 implies leumi code 1 here
         bankTypeOfTo = if (transactionRequestBodyTransferToAccountJson.to.bank_code == "10") "0" else "1"
       )
-      
+
       val callNtbd2v050 = getNtbd2v050(
         branchId,
         accountType,
@@ -431,28 +480,28 @@ object LeumiDecoder extends Decoder with StrictLogging {
         ntbdAv050fromAccountOwnerName = callNtbdAv050.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT
       )
       InboundCreateTransactionId(createTransactionRequest.authInfo,
-        InternalTransactionId("",List(InboundStatusMessage("ESB","Success", "0", "OK")),
+        InternalTransactionId("", List(InboundStatusMessage("ESB", "Success", "0", "OK")),
           transactionNewId))
-  
+
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.COUNTERPARTY.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJSON]
-  
+
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.SEPA.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodySEPAJSON]
-  
+
     } else
       throw new RuntimeException("Do not support this transaction type, please check it in OBP-API side")
-  
-    InboundCreateTransactionId(createTransactionRequest.authInfo, 
-      InternalTransactionId("",List(InboundStatusMessage("ESB","Success", "0", "OK")),
+
+    InboundCreateTransactionId(createTransactionRequest.authInfo,
+      InternalTransactionId("", List(InboundStatusMessage("ESB", "Success", "0", "OK")),
         transactionNewId))
-    
+
   }
-  
+
   def getToken(getTokenRequest: GetToken): InboundToken = {
     InboundToken(getTokenRequest.username, getMFToken(getTokenRequest.username))
   }
-  
+
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createChallenge)")
 
@@ -465,18 +514,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
-    val username = createChallenge.authInfo.username 
+    val username = createChallenge.authInfo.username
     val cbsToken = jsonExtract.SDR_JONI.MFTOKEN
     //todo: never used, plz check.
-    val phoneNumber = createChallenge.phoneNumber 
+    val phoneNumber = createChallenge.phoneNumber
     val callNtlv1 = getNtlv1Mf(username,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
       cbsToken
     )
     //TODO: will use the first mobile phone contact available. Check.
-    val mobilePhoneData  = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10" ).getOrElse(
-      O1contactRec(O1recId("",""),"","","","","","","","","","","","","","","",""))
+    val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
+      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
 
 
     val callNtlv7 = getNtlv7Mf(branchId,
@@ -487,116 +536,162 @@ object LeumiDecoder extends Decoder with StrictLogging {
       mobilePhoneData.O1_TEL_AREA,
       mobilePhoneData.O1_TEL_NUM
     )
-    
+
     val answer = callNtlv7.DFHPLT_1.DFH_OPT
     InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
       "",
       List(
         //Todo: We did 3 MfCalls so far. Shall they all go in?
-        InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-        InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
       ),
-        answer))
+      answer))
   }
-  
+
   def getTransactionRequests(getTransactionRequests: GetTransactionRequests): InboundTransactions = {
 
     val accountValues = mapAccountIdToAccountValues(getTransactionRequests.accountId)
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
-    val username =  getTransactionRequests.authInfo.username
+    val username = getTransactionRequests.authInfo.username
     val cbsToken = getTransactionRequests.authInfo.cbsToken
-    
+
     getTransactions(GetTransactions(getTransactionRequests.authInfo,
       getTransactionRequests.bankId,
       getTransactionRequests.accountId,
       15,
-    "",""))
-    
+      "", ""))
+
   }
-  
+
   def createCounterparty(outboundCreateCounterparty: OutboundCreateCounterparty): InboundCreateCounterparty = {
     val accountValues = mapAccountIdToAccountValues(outboundCreateCounterparty.accountId)
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
-    
+
     if (outboundCreateCounterparty.counterparty.bankCode == "10") {
       val ntg6ACall = getNtg6A(
         branch = branchId,
-        accountType = accountType ,
+        accountType = accountType,
         accountNumber = accountNumber,
         cbsToken = outboundCreateCounterparty.authInfo.cbsToken,
         counterpartyBranchNumber = outboundCreateCounterparty.counterparty.branchNumber,
-        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber ,
+        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber,
         counterpartyName = outboundCreateCounterparty.counterparty.Name,
         counterpartyDescription = outboundCreateCounterparty.counterparty.description,
         counterpartyIBAN = outboundCreateCounterparty.counterparty.iban,
         counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
         counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
       )
-      InboundCreateCounterparty(
-        outboundCreateCounterparty.authInfo,
-        InternalCreateCounterparty(
-          "",
-          List(
-            InboundStatusMessage(
-              "ESB",
-              "Success",
-              ntg6ACall.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus,
-              ntg6ACall.NTDriveNoResp.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
-            InboundStatusMessage(
-              "MF",
-              "Success",
-              ntg6ACall.NTDriveNoResp.MFAdminResponse.returnCode,
-              ntg6ACall.NTDriveNoResp.MFAdminResponse.messageText.getOrElse(""))
-          ),
-          true.toString
-        )
-      )
+      ntg6ACall match {
+        case Right(x) =>
+
+          InboundCreateCounterparty(
+            outboundCreateCounterparty.authInfo,
+            InternalCreateCounterparty(
+              "",
+              List(
+                InboundStatusMessage(
+                  "ESB",
+                  "Success",
+                  x.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus,
+                  x.NTDriveNoResp.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
+                InboundStatusMessage(
+                  "MF",
+                  "Success",
+                  x.NTDriveNoResp.MFAdminResponse.returnCode,
+                  x.NTDriveNoResp.MFAdminResponse.messageText.getOrElse(""))
+              ),
+              true.toString
+            )
+          )
+        case Left(x) =>
+          InboundCreateCounterparty(
+            outboundCreateCounterparty.authInfo,
+            InternalCreateCounterparty(
+              "",
+              List(
+                InboundStatusMessage(
+                  "ESB",
+                  "Success",
+                  x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                  x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
+                InboundStatusMessage(
+                  "MF",
+                  "Success",
+                  x.PAPIErrorResponse.MFAdminResponse.returnCode,
+                  x.PAPIErrorResponse.MFAdminResponse.messageText.getOrElse(""))
+              ),
+              true.toString
+            )
+          )
+      }
     } else {
       val ntg6BCall = getNtg6B(
         branch = branchId,
-        accountType = accountType ,
+        accountType = accountType,
         accountNumber = accountNumber,
         cbsToken = outboundCreateCounterparty.authInfo.cbsToken,
         counterpartyBankId = outboundCreateCounterparty.counterparty.bankCode,
         counterpartyBranchNumber = outboundCreateCounterparty.counterparty.branchNumber,
-        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber ,
+        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber,
         counterpartyName = outboundCreateCounterparty.counterparty.Name,
         counterpartyDescription = outboundCreateCounterparty.counterparty.description,
         counterpartyIBAN = outboundCreateCounterparty.counterparty.iban,
         counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
         counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
       )
-      InboundCreateCounterparty(
-        outboundCreateCounterparty.authInfo,
-        InternalCreateCounterparty(
-          "",
-          List(
-            InboundStatusMessage(
-              "ESB",
-              "Success", 
-              ntg6BCall.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus,
-              ntg6BCall.NTDriveNoResp.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")), 
-            InboundStatusMessage(
-              "MF",
-              "Success",
-              ntg6BCall.NTDriveNoResp.MFAdminResponse.returnCode,
-              ntg6BCall.NTDriveNoResp.MFAdminResponse.messageText.getOrElse("")) 
-          ),
-          true.toString
-        )
-      )
-    }
-    
-      
-    
+      ntg6BCall match {
+        case Right(x) =>
 
-    
+          InboundCreateCounterparty(
+            outboundCreateCounterparty.authInfo,
+            InternalCreateCounterparty(
+              "",
+              List(
+                InboundStatusMessage(
+                  "ESB",
+                  "Success",
+                  x.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus,
+                  x.NTDriveNoResp.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
+                InboundStatusMessage(
+                  "MF",
+                  "Success",
+                  x.NTDriveNoResp.MFAdminResponse.returnCode,
+                  x.NTDriveNoResp.MFAdminResponse.messageText.getOrElse(""))
+              ),
+              true.toString
+            )
+          )
+
+        case Left(x) =>
+          InboundCreateCounterparty(
+            outboundCreateCounterparty.authInfo,
+            InternalCreateCounterparty(
+              "",
+              List(
+                InboundStatusMessage(
+                  "ESB",
+                  "Success",
+                  x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                  x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
+                InboundStatusMessage(
+                  "MF",
+                  "Success",
+                  x.PAPIErrorResponse.MFAdminResponse.returnCode,
+                  x.PAPIErrorResponse.MFAdminResponse.messageText.getOrElse(""))
+              ),
+              true.toString
+            )
+          )
+      }
+
+
+    }
+
   }
-  
 }
 
 

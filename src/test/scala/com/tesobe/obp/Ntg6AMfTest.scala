@@ -2,9 +2,9 @@ package com.tesobe.obp
 
 import com.tesobe.obp.Ntg6AMf.getNtg6A
 
-class Ntg6AMfTest extends ServerSetup{
-  
-  test("getNtg6A returns correct result on success"){
+class Ntg6AMfTest extends ServerSetup {
+
+  test("getNtg6A returns correct result on success") {
     val result = getNtg6A(
       branch = "616",
       accountType = "330",
@@ -18,9 +18,14 @@ class Ntg6AMfTest extends ServerSetup{
       counterpartyNameInEnglish = " ",
       counterpartyDescriptionInEnglish = " "
     )
-    
-    result.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus should be ("Success")
-    result.NTDriveNoResp.MFAdminResponse.messageText should be (Some("העדכון בוצע בהצלחה !"))
-  }
+    result match {
+      case Right(result) =>
+        result.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus should be("Success")
+        result.NTDriveNoResp.MFAdminResponse.messageText should be(Some("העדכון בוצע בהצלחה !"))
 
+      case Left(result) =>
+        fail()
+    }
+
+  }
 }
