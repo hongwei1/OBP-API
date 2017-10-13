@@ -11,7 +11,7 @@ object NttfWMf extends StrictLogging{
   def getNttfWMf(branch: String,
                  accountType: String,
                  accountNumber: String,
-                 cbsToken: String,
+                 cbsToken: String
                           ) = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTTF/W/000/01.01"

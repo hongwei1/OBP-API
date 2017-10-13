@@ -45,7 +45,7 @@ object Ntbd2v105Mf extends StrictLogging{
     try {
       Right(parse(replaceEmptyObjects(result)).extract[Ntbd2v105])
     } catch {
-      case _  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      case e: net.liftweb.json.MappingException  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
     }
   }
 

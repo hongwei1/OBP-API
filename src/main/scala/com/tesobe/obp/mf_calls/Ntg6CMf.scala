@@ -71,6 +71,6 @@ object Ntg6CMf extends StrictLogging{
       try {
         Right(parse(replaceEmptyObjects(result)).extract[Ntg6C])
       } catch {
-        case _  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+        case e: net.liftweb.json.MappingException  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
       }    }
 }

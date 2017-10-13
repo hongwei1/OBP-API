@@ -24,7 +24,7 @@ class Ntg6AMfTest extends ServerSetup {
         result.NTDriveNoResp.MFAdminResponse.messageText should be(Some("העדכון בוצע בהצלחה !"))
 
       case Left(result) =>
-        fail()
+        fail("mapping exception!!!")
     }
 
   }
