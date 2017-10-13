@@ -11,49 +11,47 @@
         <name>com.tesobe</name>
     </organization>
     <properties>
-        <scala.version>2.12</scala.version>
+        <scala.library>2.12</scala.library>
+        <scala.version>2.12.2</scala.version>
         <scala.compiler>2.12.2</scala.compiler>
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
-        <!-- vscaladoc settings -->
-        <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion>
-        <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
-        <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
     </properties>
+    
     <repositories>
-    <repository>
-        <id>ArtimaMavenRepository</id>
-        <name>Artima Maven Repository</name>
-        <url>http://repo.artima.com/releases/</url>
-        <layout>default</layout>
-    </repository>
-    <repository>
-        <id>bintrayhseebergermaven</id>
-        <name>bintray-hseeberger-maven</name>
-        <url>https://dl.bintray.com/hseeberger/maven/</url>
-        <layout>default</layout>
-    </repository>
-    <repository>
-        <id>sonatypepublic</id>
-        <name>sonatype-public</name>
-        <url>https://oss.sonatype.org/content/repositories/public/</url>
-        <layout>default</layout>
-    </repository>
-    <repository>
-        <id>sonatypesnapshots</id>
-        <name>sonatype-snapshots</name>
-        <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        <layout>default</layout>
-    </repository>
-    <repository>
-        <snapshots>
-        <enabled>false</enabled>
-        </snapshots>
-        <id>bintray-unisay-maven</id>
-        <name>bintray</name>
-        <url>http://dl.bintray.com/unisay/maven</url>
-    </repository>
+        <repository>
+            <id>ArtimaMavenRepository</id>
+            <name>Artima Maven Repository</name>
+            <url>http://repo.artima.com/releases/</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>bintrayhseebergermaven</id>
+            <name>bintray-hseeberger-maven</name>
+            <url>https://dl.bintray.com/hseeberger/maven/</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>sonatypepublic</id>
+            <name>sonatype-public</name>
+            <url>https://oss.sonatype.org/content/repositories/public/</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>sonatypesnapshots</id>
+            <name>sonatype-snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-unisay-maven</id>
+            <name>bintray</name>
+            <url>http://dl.bintray.com/unisay/maven</url>
+        </repository>
     </repositories>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
@@ -164,39 +162,39 @@
                     <failOnNoGitDirectory>false</failOnNoGitDirectory>
                 </configuration>
             </plugin>
-            
+
         </plugins>
     </build>
     <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>${scala.compiler}</version>
+            <version>2.12.2</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-slf4j_${scala.version}</artifactId>
-            <version>2.4.18</version>
+            <artifactId>akka-slf4j_${scala.library}</artifactId>
+            <version>2.4.16</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream-kafka_${scala.version}</artifactId>
+            <artifactId>akka-stream-kafka_${scala.library}</artifactId>
             <version>0.16</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-http_${scala.version}</artifactId>
+            <artifactId>akka-http_${scala.library}</artifactId>
             <version>10.0.9</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-http-testkit_${scala.version}</artifactId>
+            <artifactId>akka-http-testkit_${scala.library}</artifactId>
             <version>10.0.9</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.sksamuel.avro4s</groupId>
-            <artifactId>avro4s-core_${scala.version}</artifactId>
+            <artifactId>avro4s-core_${scala.library}</artifactId>
             <version>1.6.4</version>
         </dependency>
         <dependency>
@@ -211,32 +209,32 @@
         </dependency>
         <dependency>
             <groupId>io.circe</groupId>
-            <artifactId>circe-core_${scala.version}</artifactId>
+            <artifactId>circe-core_${scala.library}</artifactId>
             <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>io.circe</groupId>
-            <artifactId>circe-parser_${scala.version}</artifactId>
+            <artifactId>circe-parser_${scala.library}</artifactId>
             <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>io.circe</groupId>
-            <artifactId>circe-generic_${scala.version}</artifactId>
+            <artifactId>circe-generic_${scala.library}</artifactId>
             <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>de.knutwalker</groupId>
-            <artifactId>akka-stream-circe_${scala.version}</artifactId>
+            <artifactId>akka-stream-circe_${scala.library}</artifactId>
             <version>3.3.0</version>
         </dependency>
         <dependency>
             <groupId>de.knutwalker</groupId>
-            <artifactId>akka-stream-json_${scala.version}</artifactId>
+            <artifactId>akka-stream-json_${scala.library}</artifactId>
             <version>3.3.0</version>
         </dependency>
         <dependency>
             <groupId>de.knutwalker</groupId>
-            <artifactId>akka-http-json_${scala.version}</artifactId>
+            <artifactId>akka-http-json_${scala.library}</artifactId>
             <version>3.3.0</version>
         </dependency>
         <dependency>
@@ -246,32 +244,32 @@
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.version}</artifactId>
+            <artifactId>scalatest_${scala.library}</artifactId>
             <version>3.0.1</version>
         </dependency>
         <dependency>
             <groupId>net.liftweb</groupId>
-            <artifactId>lift-json_${scala.version}</artifactId>
+            <artifactId>lift-json_${scala.library}</artifactId>
             <version>3.1.0-M3</version>
         </dependency>
         <dependency>
             <groupId>net.liftweb</groupId>
-            <artifactId>lift-util_${scala.version}</artifactId>
+            <artifactId>lift-util_${scala.library}</artifactId>
             <version>3.1.0-M3</version>
         </dependency>
         <dependency>
             <groupId>co.fs2</groupId>
-            <artifactId>fs2-core_${scala.version}</artifactId>
+            <artifactId>fs2-core_${scala.library}</artifactId>
             <version>0.9.6</version>
         </dependency>
         <dependency>
             <groupId>co.fs2</groupId>
-            <artifactId>fs2-io_${scala.version}</artifactId>
+            <artifactId>fs2-io_${scala.library}</artifactId>
             <version>0.9.6</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.scala-logging</groupId>
-            <artifactId>scala-logging_${scala.version}</artifactId>
+            <artifactId>scala-logging_${scala.library}</artifactId>
             <version>3.5.0</version>
         </dependency>
         <dependency>
@@ -287,7 +285,7 @@
         <!-- net.manub:scalatest-embedded-kafka-streams_2.12:0.15.02 -->
         <dependency>
             <groupId>net.manub</groupId>
-            <artifactId>scalatest-embedded-kafka-streams_${scala.version}</artifactId>
+            <artifactId>scalatest-embedded-kafka-streams_${scala.library}</artifactId>
             <version>0.14.0</version>
         </dependency>
 
@@ -296,7 +294,7 @@
             <artifactId>log4j-over-slf4j</artifactId>
             <version>1.7.25</version>
         </dependency>
-        
+
     </dependencies>
 </project>
 
