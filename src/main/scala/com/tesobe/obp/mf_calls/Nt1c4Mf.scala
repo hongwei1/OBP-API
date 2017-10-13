@@ -1,10 +1,9 @@
 package com.tesobe.obp
 
-import com.typesafe.scalalogging.StrictLogging
-import net.liftweb.json.{JValue, parse}
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
-import com.tesobe.obp.Nt1c4
+import com.typesafe.scalalogging.StrictLogging
+import net.liftweb.json.{JValue, parse}
 
 
 object Nt1c4Mf extends Config with StrictLogging {

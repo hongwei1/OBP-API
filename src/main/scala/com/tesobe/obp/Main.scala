@@ -2,11 +2,11 @@ package com.tesobe.obp
 
 import akka.actor.{ActorSystem, Props}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
+import com.tesobe.obp.RunMockServer.startMockServer
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import com.tesobe.obp.RunMockServer.startMockServer
 
 /**
   * Initialize actor system and as final step sends message to ActorOrchestration to initialize all actors that will be used.

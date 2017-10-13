@@ -2,8 +2,6 @@ package com.tesobe.obp
 
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
-import com.tesobe.obp.Ntbd2v050
-import net.liftweb.common.{Box, Full}
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 

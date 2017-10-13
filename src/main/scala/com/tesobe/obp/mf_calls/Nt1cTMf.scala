@@ -1,18 +1,12 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
+import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.{JValue, parse}
-import net.liftweb.json.JsonDSL._
-import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.impl.client.DefaultHttpClient
-import java.util.Date
-
-import com.tesobe.obp.Nt1c4Mf.logger
-import com.tesobe.obp.Nt1cBMf.logger
-import com.typesafe.scalalogging.StrictLogging
 import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.DefaultHttpClient
 
 
 object Nt1cTMf extends Config with StrictLogging{

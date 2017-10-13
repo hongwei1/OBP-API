@@ -1,5 +1,5 @@
 package com.tesobe.obp
-import com.tesobe.obp.JoniMf.{config}
+import com.tesobe.obp.JoniMf.config
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JsonAST.{JValue, compactRender}
 import org.apache.http.client.methods.HttpPost

@@ -1,14 +1,9 @@
 package com.tesobe.obp
 
-import com.typesafe.scalalogging.StrictLogging
 import com.tesobe.obp.HttpClient.makePostRequest
+import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
-import net.liftweb.json.JsonAST.compactRender
-import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonParser._
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.DefaultHttpClient
 
 /**
   * Created by work on 6/12/17.

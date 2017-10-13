@@ -5,12 +5,11 @@ import akka.stream.Materializer
 import com.tesobe.obp.SouthKafkaStreamsActor.Business
 import com.tesobe.obp.june2017._
 import com.typesafe.scalalogging.StrictLogging
+import io.circe.generic.auto._
+import io.circe.parser.decode
+import io.circe.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.circe.parser.decode
-import io.circe.generic.auto._
-import io.circe.syntax._
-import net.liftweb.common.Failure
 
 /**
   * Responsible for processing requests from North Side using local json files as data sources.

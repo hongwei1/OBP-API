@@ -1,7 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
-import com.tesobe.obp.GetBankAccounts.hexEncodedSha256
+import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, hexEncodedSha256}
 import com.tesobe.obp.june2017.LeumiDecoder._
 import com.tesobe.obp.june2017._
 /**

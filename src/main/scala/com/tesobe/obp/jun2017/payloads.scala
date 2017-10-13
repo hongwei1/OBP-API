@@ -1,7 +1,5 @@
 package com.tesobe.obp.june2017
 
-import java.util.Date
-
 
 /**
   * Here are defined all the things that go through kafka

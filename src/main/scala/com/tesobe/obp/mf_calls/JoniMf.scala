@@ -10,9 +10,6 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 /*//For akka-http
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -2,7 +2,7 @@ package com.tesobe.obp
 
 import com.typesafe.scalalogging.StrictLogging
 import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.model.{Cookie, Header, Parameter}
+import org.mockserver.model.Header
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 

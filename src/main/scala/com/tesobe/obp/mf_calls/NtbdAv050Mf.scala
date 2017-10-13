@@ -1,7 +1,7 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.JoniMf.{config, replaceEmptyObjects}
 import com.tesobe.obp.HttpClient.makePostRequest
+import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 

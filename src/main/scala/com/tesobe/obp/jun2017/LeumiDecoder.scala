@@ -1,31 +1,28 @@
 package com.tesobe.obp.june2017
 
 import java.text.SimpleDateFormat
-import java.util.UUID
 
-import com.tesobe.obp._
-import com.tesobe.obp.GetBankAccounts.getBasicBankAccountsForUser
-import com.tesobe.obp.JoniMf.getJoni
+import com.tesobe.obp.ErrorMessages.NoCreditCard
+import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
+import com.tesobe.obp.JoniMf.{getJoni, getMFToken}
 import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
+import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
+import com.tesobe.obp.Ntbd2v050Mf.getNtbd2v050
+import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105Mf
 import com.tesobe.obp.Ntbd2v135Mf.getNtbd2v135Mf
+import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
+import com.tesobe.obp.NtbdBv050Mf.getNtbdBv050
+import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
+import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
+import com.tesobe.obp.Ntg6AMf.getNtg6A
+import com.tesobe.obp.Ntg6BMf.getNtg6B
 import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
-import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
-import com.tesobe.obp.Ntbd2v050Mf.getNtbd2v050
-import com.tesobe.obp.Ntbd2v105Mf.getNtbd2v105Mf
-import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
-import com.tesobe.obp.NtbdBv050Mf.getNtbdBv050
-import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
-import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
-import com.tesobe.obp.Ntg6AMf.getNtg6A
-import com.tesobe.obp.Ntg6BMf.getNtg6B
-import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
-import com.tesobe.obp.JoniMf.getMFToken
 import com.tesobe.obp.Util.TransactionRequestTypes
-import com.tesobe.obp.ErrorMessages.NoCreditCard
+import com.tesobe.obp._
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 
