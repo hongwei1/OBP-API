@@ -16,8 +16,11 @@ class Ntbd1v135Test extends ServerSetup {
       "Rent payment",
       "575.36"
     )
-   
+    result match {
+      case Right(result) =>
     result.P135_BDIKAOUT.P135_TOKEN should be ("3635791")
+      case Left(result) => fail()
+    }
   }
 
 

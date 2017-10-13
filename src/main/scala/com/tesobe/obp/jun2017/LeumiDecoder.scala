@@ -321,9 +321,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val accountType = accountValues.accountType
     val username = createTransactionRequest.authInfo.username
     val cbsToken = createTransactionRequest.authInfo.cbsToken
-
-
     val transactionNewId = "" //as we cannot determine the transactionid at creation, this will always be empty
+    
     if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyTransferToPhoneJson]
       val senderPhoneNumber = transactionRequestBodyPhoneToPhoneJson.from.mobile_phone_number
@@ -331,7 +330,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val transactionDescription = transactionRequestBodyPhoneToPhoneJson.description
       val transactionMessage = transactionRequestBodyPhoneToPhoneJson.message
       val transactionAmount = transactionRequestBodyPhoneToPhoneJson.value.amount
-
 
       val callNtbd1_135 = getNtbd1v135Mf(branch = branchId,
         accountType,
@@ -341,16 +339,45 @@ object LeumiDecoder extends Decoder with StrictLogging {
         mobileNumberOfMoneySender = senderPhoneNumber,
         mobileNumberOfMoneyReceiver = receiverPhoneNumber,
         description = transactionDescription,
-        transferAmount = transactionAmount)
+        transferAmount = transactionAmount) 
+      match {
+        case Right(x) =>
+          val callNtbd2_135 = getNtbd2v135Mf(branchId,
+            accountType,
+            accountNumber,
+            username,
+            cbsToken,
+            ntbd1v135_Token = x.P135_BDIKAOUT.P135_TOKEN,
+            nicknameOfMoneySender = transactionRequestBodyPhoneToPhoneJson.from.nickname,
+            messageToMoneyReceiver = transactionMessage)
+          match {
+            case Right(y) =>
+              InboundCreateTransactionId(createTransactionRequest.authInfo,
+                InternalTransactionId("", List(InboundStatusMessage("ESB", "Success", "0", "OK")),
+                  transactionNewId))
+            case Left(y) =>
+              InboundCreateTransactionId(createTransactionRequest.authInfo,
+                InternalTransactionId("", List(InboundStatusMessage(
+                  "ESB",
+                  "Failure",
+                  y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                  y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")
+                )),
+                  transactionNewId))
+          }
+        case Left(x) =>
+          InboundCreateTransactionId(createTransactionRequest.authInfo,
+            InternalTransactionId("", List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")
+            )),
+              transactionNewId))
+          
+      }
 
-      val callNtbd2_135 = getNtbd2v135Mf(branchId,
-        accountType,
-        accountNumber,
-        username,
-        cbsToken,
-        ntbd1v135_Token = callNtbd1_135.P135_BDIKAOUT.P135_TOKEN,
-        nicknameOfMoneySender = transactionRequestBodyPhoneToPhoneJson.from.nickname,
-        messageToMoneyReceiver = transactionMessage)
+ 
 
 
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_ATM.toString)) {
@@ -376,8 +403,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         nameOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.legal_name,
         birthDateOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.date_of_birth,
         mobileNumberOfMoneyReceiver = transactionRequestBodyTransferToAtmJson.to.mobile_phone_number)
-
-      callNtbd1v105 match {
+        match {
         case Right(x) =>
           val callNtbd2v105 = getNtbd2v105Mf(
             branchId,
@@ -387,13 +413,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
             ntbd1v105Token = x.P135_BDIKAOUT.P135_TOKEN,
             nicknameOfSender = transactionRequestBodyTransferToAtmJson.from.nickname,
             messageToReceiver = transactionRequestBodyTransferToAtmJson.message)
-
-          callNtbd2v105 match {
+          match {
             case Right(y) =>
               InboundCreateTransactionId(createTransactionRequest.authInfo,
                 InternalTransactionId("", List(InboundStatusMessage(
                   "ESB",
-                  "Failure",
+                  "Success",
                   y.PELET_1352.esbHeaderResponse.responseStatus.callStatus,
                   y.PELET_1352.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
                   transactionNewId))
@@ -405,11 +430,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
                   y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
                   transactionNewId))
-
-
           }
-
-
         case Left(x) =>
           InboundCreateTransactionId(createTransactionRequest.authInfo,
             InternalTransactionId("", List(InboundStatusMessage(

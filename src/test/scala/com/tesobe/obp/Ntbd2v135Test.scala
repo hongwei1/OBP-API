@@ -15,9 +15,12 @@ class Ntbd2v135Test extends ServerSetup {
       nicknameOfMoneySender = "mike",
       messageToMoneyReceiver = "walla"
     )
-
+    result match {
+      case Right(result) =>
     result.P135_BDIKAOUT.P135_SHAA_RISHUM should be ("14:39")
     result.P135_BDIKAOUT.P135_TARICH_BITZUA should be ("20170607")
+      case Left(result) => fail()
+    }
   }
 
 }
