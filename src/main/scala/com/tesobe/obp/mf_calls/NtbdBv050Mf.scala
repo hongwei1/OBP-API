@@ -17,7 +17,7 @@ object NtbdBv050Mf {
                    toAccountIban: String,
                    transactionAmount: String,
                    description: String,
-                   referenceNameOfTo: String,
+                   referenceNameOfTo: String
                   ) = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/B/050/01.03"

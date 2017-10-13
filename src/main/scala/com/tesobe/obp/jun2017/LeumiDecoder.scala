@@ -674,12 +674,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
               List(
                 InboundStatusMessage(
                   "ESB",
-                  "Success",
+                  "Failure",
                   x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
                   x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")),
                 InboundStatusMessage(
                   "MF",
-                  "Success",
+                  "Failure",
                   x.PAPIErrorResponse.MFAdminResponse.returnCode,
                   x.PAPIErrorResponse.MFAdminResponse.messageText.getOrElse(""))
               ),

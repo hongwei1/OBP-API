@@ -13,7 +13,7 @@ object NtbdGv050Mf {
                    accountNumber: String,
                    cbsToken: String,
                    ntbdAv050Token: String,
-                   bankTypeOfTo: String,
+                   bankTypeOfTo: String
                   ) = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03"
