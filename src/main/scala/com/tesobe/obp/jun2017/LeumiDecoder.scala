@@ -584,24 +584,24 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def createCounterparty(outboundCreateCounterparty: OutboundCreateCounterparty): InboundCreateCounterparty = {
-    val accountValues = mapAccountIdToAccountValues(outboundCreateCounterparty.accountId)
+    val accountValues = mapAccountIdToAccountValues(outboundCreateCounterparty.counterparty.thisAccountId)
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
 
-    if (outboundCreateCounterparty.counterparty.bankCode == "10") {
+    if (outboundCreateCounterparty.counterparty.thisBankId == "10") {
       val ntg6ACall = getNtg6A(
         branch = branchId,
         accountType = accountType,
         accountNumber = accountNumber,
         cbsToken = outboundCreateCounterparty.authInfo.cbsToken,
-        counterpartyBranchNumber = outboundCreateCounterparty.counterparty.branchNumber,
-        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber,
-        counterpartyName = outboundCreateCounterparty.counterparty.Name,
+        counterpartyBranchNumber = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
+        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
+        counterpartyName = outboundCreateCounterparty.counterparty.name,
         counterpartyDescription = outboundCreateCounterparty.counterparty.description,
-        counterpartyIBAN = outboundCreateCounterparty.counterparty.iban,
-        counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
-        counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
+        counterpartyIBAN = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress,
+        counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.bespoke(0).value,
+        counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.bespoke(1).value
       )
       ntg6ACall match {
         case Right(x) =>
@@ -652,14 +652,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
         accountType = accountType,
         accountNumber = accountNumber,
         cbsToken = outboundCreateCounterparty.authInfo.cbsToken,
-        counterpartyBankId = outboundCreateCounterparty.counterparty.bankCode,
-        counterpartyBranchNumber = outboundCreateCounterparty.counterparty.branchNumber,
-        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.accountNumber,
-        counterpartyName = outboundCreateCounterparty.counterparty.Name,
+        counterpartyBankId = outboundCreateCounterparty.counterparty.otherBankRoutingAddress,
+        counterpartyBranchNumber = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
+        counterpartyAccountNumber = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
+        counterpartyName = outboundCreateCounterparty.counterparty.name,
         counterpartyDescription = outboundCreateCounterparty.counterparty.description,
-        counterpartyIBAN = outboundCreateCounterparty.counterparty.iban,
-        counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.englishName,
-        counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.englishName
+        counterpartyIBAN = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress,
+        counterpartyNameInEnglish = outboundCreateCounterparty.counterparty.bespoke(0).value,
+        counterpartyDescriptionInEnglish = outboundCreateCounterparty.counterparty.bespoke(1).value
       )
       ntg6BCall match {
         case Right(x) =>
