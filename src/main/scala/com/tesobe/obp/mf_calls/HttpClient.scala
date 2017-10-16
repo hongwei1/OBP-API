@@ -10,14 +10,16 @@ object HttpClient extends StrictLogging{
   
   
   def makePostRequest(json: JValue, path: String): String = {
-
+    
     val client = new DefaultHttpClient()
     val url = config.getString("bankserver.url")
     val post = new HttpPost(url + path)
     post.addHeader("Content-Type", "application/json;charset=utf-8")
-    val jsonBody = new StringEntity(compactRender(json))
+    val jsonBody = new StringEntity(compactRender(json), "UTF-8")
     post.setEntity(jsonBody)
-    logger.debug(s"$path--Request : "+post.toString +"\n Body is :" + compactRender(json))
+
+    logger.debug(s"$path--Request : "+post.toString +"\n Body is :" + compactRender(json) +
+    "/n RealBody is: " + jsonBody.getContent().toString)
     val response = client.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
