@@ -40,7 +40,7 @@ object Nt1cBMf extends Config with StrictLogging{
         }
       }
     }""")
-    val jsonBody = new StringEntity(compactRender(json))
+    val jsonBody = new StringEntity(compactRender(json),"UTF-8")
     post.setEntity(jsonBody)
     logger.debug("NT1C_B_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
     val response = client.execute(post)
