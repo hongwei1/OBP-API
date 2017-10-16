@@ -44,7 +44,7 @@ object JoniMf extends Config with StrictLogging{
        }
      }""")
        
-     val jsonBody = new StringEntity(compactRender(json))
+     val jsonBody = new StringEntity(compactRender(json), "UTF-8")
      post.setEntity(jsonBody)
   
      logger.debug("JONI_0_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
