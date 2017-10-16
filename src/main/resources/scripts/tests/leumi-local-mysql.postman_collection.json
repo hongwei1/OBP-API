@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "leumi-local-mysql",
-		"_postman_id": "8f3da933-ddf9-8761-4ac2-1d82015826da",
+		"_postman_id": "9d88bc36-d74d-20b8-0c1c-6ea0e64509e6",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1332,10 +1332,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"6cf12dd4-9b8c-4457-a744-83556cf8decf\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"4f2bd537-ba9f-4586-80de-50e3f10eef59\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/a98d7acc-bef3-4356-a151-b857ce9646e9/challenge",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/939e2f0c-b8ef-49df-ba61-746d8538945c/challenge",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1347,7 +1347,6 @@
 					"path": [
 						"obp",
 						"v3.0.0",
-						"custom",
 						"banks",
 						"10",
 						"accounts",
@@ -1356,7 +1355,7 @@
 						"transaction-request-types",
 						"TRANSFER_TO_PHONE",
 						"transaction-requests",
-						"a98d7acc-bef3-4356-a151-b857ce9646e9",
+						"939e2f0c-b8ef-49df-ba61-746d8538945c",
 						"challenge"
 					]
 				},
@@ -1392,7 +1391,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"10001\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
@@ -1451,10 +1450,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"4b5712dc-4c07-4b20-923e-cfc12423e053\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"b4e36a08-9318-4ba8-9bf8-f4fe349a2010\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/9a22fbc0-00ae-4d73-9982-c0df98e89d85/challenge",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/5007e516-af0e-4e67-afb0-dbb4bbfe7cda/challenge",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1474,7 +1473,7 @@
 						"transaction-request-types",
 						"TRANSFER_TO_ATM",
 						"transaction-requests",
-						"9a22fbc0-00ae-4d73-9982-c0df98e89d85",
+						"5007e516-af0e-4e67-afb0-dbb4bbfe7cda",
 						"challenge"
 					]
 				},
@@ -1570,10 +1569,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"81206be3-03ac-49f5-a60c-b1d878e44a82\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"b816d5cc-4805-4bca-9777-e25206f5345b\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/c1ed5b4c-87f1-49bb-b1d8-97f117dab871/challenge",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/6c497cb5-2876-46ef-8227-796abccb75de/challenge",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1585,7 +1584,6 @@
 					"path": [
 						"obp",
 						"v3.0.0",
-						"custom",
 						"banks",
 						"10",
 						"accounts",
@@ -1594,7 +1592,7 @@
 						"transaction-request-types",
 						"TRANSFER_TO_ACCOUNT",
 						"transaction-requests",
-						"c1ed5b4c-87f1-49bb-b1d8-97f117dab871",
+						"6c497cb5-2876-46ef-8227-796abccb75de",
 						"challenge"
 					]
 				},

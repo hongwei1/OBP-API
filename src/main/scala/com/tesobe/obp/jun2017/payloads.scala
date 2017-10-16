@@ -73,19 +73,31 @@ case class OutboundCreateChallengeJune2017(
   transactionRequestId: String,
   phoneNumber: String
 ) extends TopicCaseClass
+
+case class PostCounterpartyBespoke(
+  key: String,
+  value: String
+)
 case class OutboundCounterparty(
-                         bankCode: String,
-                         branchNumber: String,
-                         accountNumber: String,
-                         Name: String,
-                         description: String,
-                         iban: String,
-                         englishName: String,
-                         englishDescription: String
-                       )
+  name: String,
+  description: String,
+  createdByUserId: String,
+  thisBankId: String,
+  thisAccountId: String,
+  thisViewId: String,
+  otherAccountRoutingScheme: String,
+  otherAccountRoutingAddress: String,
+  otherAccountSecondaryRoutingScheme: String,
+  otherAccountSecondaryRoutingAddress: String,
+  otherBankRoutingScheme: String,
+  otherBankRoutingAddress: String,
+  otherBranchRoutingScheme: String,
+  otherBranchRoutingAddress: String,
+  isBeneficiary:Boolean,
+  bespoke: List[PostCounterpartyBespoke]
+)
 case class OutboundCreateCounterparty(
   authInfo: AuthInfo,
-  accountId: String,
   counterparty: OutboundCounterparty
 ) extends TopicCaseClass
 
@@ -315,7 +327,24 @@ case class InternalCreateChallengeJune2017(
 case class InternalCreateCounterparty(
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
-  status: String
+  status: String,
+  createdByUserId: String = "",
+  name: String  = "",
+  thisBankId: String = "",
+  thisAccountId: String= "",
+  thisViewId: String= "",
+  counterpartyId: String= "",
+  otherAccountRoutingScheme: String= "",
+  otherAccountRoutingAddress: String= "",
+  otherBankRoutingScheme: String= "",
+  otherBankRoutingAddress: String = "",
+  otherBranchRoutingScheme: String= "",
+  otherBranchRoutingAddress: String= "",
+  isBeneficiary: Boolean = true,
+  description: String= "",
+  otherAccountSecondaryRoutingScheme: String = "",
+  otherAccountSecondaryRoutingAddress: String = "",
+  bespoke: List[PostCounterpartyBespoke] = Nil
 )
 
 case class CustomerFaceImageJson(
