@@ -15,9 +15,6 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"",
-							"",
-							"",
 							"tests[\"Body matches string\"] = responseBody.has(\"token\");"
 						]
 					}
@@ -47,6 +44,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"my",
 						"logins",
@@ -58,7 +56,7 @@
 			"response": []
 		},
 		{
-			"name": "getRoot",
+			"name": "Get Account by Id (Full)-yP95",
 			"event": [
 				{
 					"listen": "test",
@@ -66,71 +64,45 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"version\");"
+							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
 						]
 					}
 				}
 			],
 			"request": {
 				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "https://available.openbankproject.com/obp/v1.2.1/root",
-					"protocol": "https",
-					"host": [
-						"available",
-						"openbankproject",
-						"com"
-					],
-					"path": [
-						"obp",
-						"v1.2.1",
-						"root"
-					]
-				},
-				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
-			},
-			"response": []
-		},
-		{
-			"name": "getAdapter",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"error_code\");"
-						]
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
+				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/adapter",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/auditor/account",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
-						"adapter"
+						"accounts",
+						"yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs",
+						"auditor",
+						"account"
 					]
 				},
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
@@ -163,26 +135,20 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v1.4.0/resource-docs/v3.0.0/swagger?support=true",
+					"raw": "https://available.openbankproject.com/obp/v1.4.0/resource-docs/v3.0.0/swagger",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v1.4.0",
 						"resource-docs",
 						"v3.0.0",
 						"swagger"
-					],
-					"query": [
-						{
-							"key": "support",
-							"value": "true",
-							"equals": true
-						}
 					]
 				},
 				"description": "\"Get Resource Documentation in Swagger format. Work In Progress!\",\n      \"\"\"Returns documentation about the RESTful resources on this server in Swagger format.\n        | Currently this is incomplete."
@@ -190,7 +156,7 @@
 			"response": []
 		},
 		{
-			"name": "Get User (Current) -gateway-isfirstture",
+			"name": "Get User (Current) -gateway-isfirstTure",
 			"event": [
 				{
 					"listen": "test",
@@ -222,6 +188,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -234,15 +201,14 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Core)-tKWS -gateway-token",
+			"name": "Get User (Current) -gateway-isfirstFalse",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -252,7 +218,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsIkNCU19hdXRoX3Rva2VuIjoiXCI8TS8gICAgICAgICAgODE0MzMwMjAxMDI2MTJcIiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.6WttVheIUeEsNe4aSSMRWAXudvNNvIAFd8hcKnJw0mc"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJDQlNfYXV0aF90b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.itlyfI9FUmx9pLuhxfZ5lsY9oUSuGXPK-K4FZme-SmM"
 					}
 				],
 				"body": {
@@ -260,25 +226,22 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
-						"my",
-						"banks",
-						"10",
-						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
-						"account"
+						"users",
+						"current"
 					]
 				},
-				"description": "{\n  \"username\": \"simonr\",\n  \"is_first\": true,\n  \"CBS_auth_token\": \"geehtbdsfbdg\",\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
+				"description": "{\n  \"username\": \"simon2\",\n  \"is_first\": true,\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
 			},
 			"response": []
 		},
@@ -298,12 +261,7 @@
 			],
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsIkNCU19hdXRoX3Rva2VuIjoiXCI8TS8gICAgICAgICAgODE0MzMwMjAxMDI2MTJcIiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.6WttVheIUeEsNe4aSSMRWAXudvNNvIAFd8hcKnJw0mc"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
 					"raw": ""
@@ -316,6 +274,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -355,6 +314,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -367,7 +327,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Core)-tKWS",
+			"name": "getAdapter",
 			"event": [
 				{
 					"listen": "test",
@@ -375,7 +335,49 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
+							"tests[\"Body matches string\"] = responseBody.has(\"error_code\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/adapter",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"adapter"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Account by Id (Core)-xxx -test errors",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 400\"] = responseCode.code === 400;",
+							"tests[\"Body matches string\"] = responseBody.has(\"error\");"
 						]
 					}
 				}
@@ -389,7 +391,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -397,13 +399,14 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/account",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/xx/account",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -411,7 +414,7 @@
 						"banks",
 						"10",
 						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"xx",
 						"account"
 					]
 				},
@@ -420,7 +423,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Full)-KOa4",
+			"name": "Get Account by Id (Core)-ahrG",
 			"event": [
 				{
 					"listen": "test",
@@ -442,7 +445,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogintoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -450,20 +453,75 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/account",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/account",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"banks",
+						"10",
+						"accounts",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
+						"account"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Account by Id (Full)-3jdV",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/auditor/account",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 						"auditor",
 						"account"
 					]
@@ -473,7 +531,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Full)-+9N",
+			"name": "Get Account by Id (Full)-kQWR",
 			"event": [
 				{
 					"listen": "test",
@@ -495,7 +553,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -503,20 +561,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg/auditor/account",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM/auditor/account",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg",
+						"kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM",
 						"auditor",
 						"account"
 					]
@@ -526,7 +585,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Full)-7tI",
+			"name": "Get Account by Id (Full)-wZSh",
 			"event": [
 				{
 					"listen": "test",
@@ -548,7 +607,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -556,73 +615,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs/auditor/account",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/auditor/account",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs",
-						"auditor",
-						"account"
-					]
-				},
-				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
-			},
-			"response": []
-		},
-		{
-			"name": "Get Account by Id (Full)-dKv0",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/account",
-					"protocol": "https",
-					"host": [
-						"available",
-						"openbankproject",
-						"com"
-					],
-					"path": [
-						"obp",
-						"v3.0.0",
-						"banks",
-						"10",
-						"accounts",
-						"dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8",
+						"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0",
 						"auditor",
 						"account"
 					]
@@ -654,7 +661,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -669,6 +676,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -692,7 +700,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -707,6 +715,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -743,7 +752,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -758,6 +767,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -792,7 +802,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -807,6 +817,7 @@
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -821,7 +832,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Transactions for Account (Core)-tKWS",
+			"name": "Get Transactions for Account (Core)-ahrG",
 			"event": [
 				{
 					"listen": "test",
@@ -847,7 +858,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					},
 					{
 						"key": "obp_sort_direction",
@@ -875,13 +886,14 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/transactions",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/transactions",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -889,7 +901,7 @@
 						"banks",
 						"10",
 						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
 						"transactions"
 					]
 				},
@@ -898,7 +910,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Transactions for Account (Full)-KOa4",
+			"name": "Get Transactions for Account (Full)-yP95",
 			"event": [
 				{
 					"listen": "test",
@@ -920,7 +932,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -928,20 +940,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc/auditor/transactions",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/auditor/transactions",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"KOa4M8UfjUuWPIXwPXYPpy5FoFcTUwpfHgXC1qpSluc",
+						"yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs",
 						"auditor",
 						"transactions"
 					]
@@ -951,7 +964,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Transactions for Account (Full)-+9N",
+			"name": "Get Transactions for Account (Full)-3jdV",
 			"event": [
 				{
 					"listen": "test",
@@ -973,7 +986,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -981,20 +994,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg/auditor/transactions",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/auditor/transactions",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"-9NWFvO6agUN7Jl5uo5Lw8U7PRDl2Vx9vaMIfLo1KGg",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 						"auditor",
 						"transactions"
 					]
@@ -1004,7 +1018,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Transactions for Account (Full)-7tI",
+			"name": "Get Transactions for Account (Full)-kQWR",
 			"event": [
 				{
 					"listen": "test",
@@ -1026,7 +1040,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -1034,20 +1048,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs/auditor/transactions",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM/auditor/transactions",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"7tIxv01WIrFAihVSbEvbdEV_Wb56GXUqjpBVSI18MYs",
+						"kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM",
 						"auditor",
 						"transactions"
 					]
@@ -1057,7 +1072,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Transactions for Account (Full)-dKv0",
+			"name": "Get Transactions for Account (Full)-wZSh",
 			"event": [
 				{
 					"listen": "test",
@@ -1079,7 +1094,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -1087,20 +1102,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/transactions",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/auditor/transactions",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8",
+						"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0",
 						"auditor",
 						"transactions"
 					]
@@ -1110,7 +1126,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Transaction by Id.-dKv0 --",
+			"name": "Get Transaction by Id.-wZSh --",
 			"event": [
 				{
 					"listen": "test",
@@ -1132,7 +1148,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					}
 				],
 				"body": {
@@ -1140,20 +1156,21 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8/auditor/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/auditor/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
 						"banks",
 						"10",
 						"accounts",
-						"dKv0_nFIbqtPunACIFbJj9Et_mgFzWl1F1HtrEZehG8",
+						"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0",
 						"auditor",
 						"transactions",
 						"b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM",
@@ -1165,54 +1182,42 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Core)-tKWS -test errors",
+			"name": "getRoot",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 500\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"tests[\"Body matches string\"] = responseBody.has(\"version\");"
 						]
 					}
 				}
 			],
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/my/banks/10/accounts/xx/account",
+					"raw": "https://available.openbankproject.com/obp/v1.2.1/root",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
-						"v3.0.0",
-						"my",
-						"banks",
-						"10",
-						"accounts",
-						"xx",
-						"account"
+						"v1.2.1",
+						"root"
 					]
 				},
-				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
 			},
 			"response": []
 		},
@@ -1244,16 +1249,17 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11111\"\n  },\n  \"description\": \"This is a TRANSFER_TO_PHONE Transaction Request\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"10001\"\n  },\n  \"description\": \"This is a TRANSFER_TO_PHONE Transaction Request\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1261,7 +1267,7 @@
 						"banks",
 						"10",
 						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
 						"owner",
 						"transaction-request-types",
 						"TRANSFER_TO_PHONE",
@@ -1292,7 +1298,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					},
 					{
 						"key": "Content-Type",
@@ -1301,29 +1307,29 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"b4ff502f-49bc-4098-af0d-0a899bde3284\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"4f2bd537-ba9f-4586-80de-50e3f10eef59\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/fa775e92-fcd6-4a56-8017-672457a052e8/challenge",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/939e2f0c-b8ef-49df-ba61-746d8538945c/challenge",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
-						"custom",
 						"banks",
 						"10",
 						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
 						"owner",
 						"transaction-request-types",
 						"TRANSFER_TO_PHONE",
 						"transaction-requests",
-						"fa775e92-fcd6-4a56-8017-672457a052e8",
+						"939e2f0c-b8ef-49df-ba61-746d8538945c",
 						"challenge"
 					]
 				},
@@ -1332,7 +1338,7 @@
 			"response": []
 		},
 		{
-			"name": "Create Transaction Request. -- TRANSFER_TO_ATM",
+			"name": "Create Transaction Request. --TRANSFER_TO_ATM",
 			"event": [
 				{
 					"listen": "test",
@@ -1350,7 +1356,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					},
 					{
 						"key": "Content-Type",
@@ -1359,16 +1365,17 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11111\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"10001\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1376,7 +1383,7 @@
 						"banks",
 						"10",
 						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
 						"owner",
 						"transaction-request-types",
 						"TRANSFER_TO_ATM",
@@ -1407,7 +1414,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJpc19maXJzdCI6dHJ1ZSwidGltZXN0YW1wIjoidGltZXN0YW1wIiwiY29uc3VtZXJfaWQiOiIxMjMiLCJjb25zdW1lcl9uYW1lIjoiTmFtZSBvZiBDb25zdW1lciJ9.RvV0q6wMWFtUb55a7lnw0dmiKPkvpGQuLpnUkZq4ORU"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
 					},
 					{
 						"key": "Content-Type",
@@ -1416,16 +1423,76 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"2269d23d-6c14-4569-9e4e-55795457e029\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"b4e36a08-9318-4ba8-9bf8-f4fe349a2010\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/c04d2975-dede-46b6-b5bd-2377e00ef2fe/challenge",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests/5007e516-af0e-4e67-afb0-dbb4bbfe7cda/challenge",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
+					
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_ATM",
+						"transaction-requests",
+						"5007e516-af0e-4e67-afb0-dbb4bbfe7cda",
+						"challenge"
+					]
+				},
+				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 201;",
+							"tests[\"Body matches string\"] = responseBody.has(\"id\");",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11230\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ACCOUNT Transaction Request\",\n  \"transfer_type\": \"Transfer type: 1=regular; 2=RTGS - real time\",\n  \"future_date\": \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1433,12 +1500,69 @@
 						"banks",
 						"10",
 						"accounts",
-						"tKWSUBy6sha3Vhxc_vw9OK96a0RprtoxUuObMYR29TI",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
 						"owner",
 						"transaction-request-types",
-						"TRANSFER_TO_ATM",
+						"TRANSFER_TO_ACCOUNT",
+						"transaction-requests"
+					]
+				},
+				"description": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1001\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\" : \"Tom\",\n  \t\"transfer_type\" : \"Transfer type: 1=regular; 2=RTGS - real time\",\n    \"transfer_is_scheduled\": \"if the transfer is scheduled to a future date then 1 otherwise 0\",\n    \"future_date\" : \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n    \"bank_code\" :  \"Bank code of the target account\",\n    \"branch_number\" : \"Branch number of the target account\",\n    \"account_number\" : \"Account number of the target account\",\n    \"iban\" : \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n  }\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Answer Transaction Request Challenge. --TRANSFER_TO_ACCOUNT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Body matches string\"] = responseBody.has(\"OBP-40011: Transaction Request Status is not INITIATED.\");",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpbW9uMiIsImlzX2ZpcnN0Ijp0cnVlLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.Sdqo6wTscB2P9n3RY1DtOC0n0MlZwgmCvPwAOPDI8aA"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \"id\":\"b816d5cc-4805-4bca-9777-e25206f5345b\",  \"answer\":\"183823\"}"
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/6c497cb5-2876-46ef-8227-796abccb75de/challenge",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_ACCOUNT",
 						"transaction-requests",
-						"c04d2975-dede-46b6-b5bd-2377e00ef2fe",
+						"6c497cb5-2876-46ef-8227-796abccb75de",
 						"challenge"
 					]
 				},
