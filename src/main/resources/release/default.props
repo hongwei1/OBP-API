@@ -1,6 +1,4 @@
 hostname=http://127.0.0.1:8080
-dev.port=8080
-apiPathZero=obp
 connector=kafka_vJuneYellow2017
 
 db.driver=com.mysql.cj.jdbc.Driver
