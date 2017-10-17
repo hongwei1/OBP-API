@@ -32,19 +32,19 @@ trait ProcessorFactory {
     processorName match {
       case "localFile" => Seq(
         BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic),
-        BusinessTopic(createTopicByClassName(GetToken.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).tokenFn),
-        BusinessTopic(createTopicByClassName(GetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
-        BusinessTopic(createTopicByClassName(GetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
-        BusinessTopic(createTopicByClassName(GetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
-        BusinessTopic(createTopicByClassName(GetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn ),
-        BusinessTopic(createTopicByClassName(GetAccountbyAccountID.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountIdFn),
-        BusinessTopic(createTopicByClassName(GetAccountbyAccountNumber.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountNumberFn),
+        BusinessTopic(createTopicByClassName(OutboundGetToken.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).tokenFn),
+        BusinessTopic(createTopicByClassName(OutboundGetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
+        BusinessTopic(createTopicByClassName(OutboundGetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
+        BusinessTopic(createTopicByClassName(OutboundGetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),
+        BusinessTopic(createTopicByClassName(OutboundGetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn ),
+        BusinessTopic(createTopicByClassName(OutboundGetAccountbyAccountID.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountIdFn),
+        BusinessTopic(createTopicByClassName(OutboundGetAccountbyAccountNumber.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountNumberFn),
         BusinessTopic(createTopicByClassName(OutboundGetAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountsFn),
-        BusinessTopic(createTopicByClassName(GetTransactions.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionsFn),
-        BusinessTopic(createTopicByClassName(GetTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionFn),
-        BusinessTopic(createTopicByClassName(CreateTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createTransactionFn),
+        BusinessTopic(createTopicByClassName(OutboundGetTransactions.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionsFn),
+        BusinessTopic(createTopicByClassName(OutboundGetTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionFn),
+        BusinessTopic(createTopicByClassName(OutboundCreateTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createTransactionFn),
         BusinessTopic(createTopicByClassName(OutboundCreateChallengeJune2017.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createChallengeFn),
-        BusinessTopic(createTopicByClassName(GetTransactionRequests.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getTransactionRequestsFn),
+        BusinessTopic(createTopicByClassName(OutboundGetTransactionRequests.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getTransactionRequestsFn),
         BusinessTopic(createTopicByClassName(OutboundCreateCounterparty.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createCounterpartyFn)
 
       )

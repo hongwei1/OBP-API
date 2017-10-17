@@ -23,24 +23,23 @@ package com.tesobe.obp.june2017
 /**
   * case classes used to define topics
   */
-sealed trait TopicCaseClass
+sealed trait TopicTrait
 /**
   * Payloads for request topic
   *
   */
-case class GetBanks(authInfo: AuthInfo) extends TopicCaseClass
-case class GetBank(authInfo: AuthInfo, bankId: String) extends TopicCaseClass
-case class GetAdapterInfo(date: String) extends TopicCaseClass
-case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalCustomers)  extends TopicCaseClass
-case class GetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicCaseClass
-case class GetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicCaseClass
-case class GetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicCaseClass
-case class GetTransactiondfss(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
-case class GetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicCaseClass
-case class GetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicCaseClass
-case class GetTransactionRequests(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicCaseClass
-case class GetToken(username: String) extends TopicCaseClass
-case class CreateTransaction(
+case class OutboundGetAdapterInfo(date: String) extends TopicTrait
+case class OutboundGetBanks(authInfo: AuthInfo) extends TopicTrait
+case class OutboundGetBank(authInfo: AuthInfo, bankId: String) extends TopicTrait
+case class OutboundGetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicTrait
+case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalCustomers)  extends TopicTrait
+case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicTrait
+case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
+case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
+case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
+case class OutboundGetTransactionRequests(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicTrait
+case class OutboundGetToken(username: String) extends TopicTrait
+case class OutboundCreateTransaction(
   authInfo: AuthInfo,
   
   // fromAccount
@@ -61,7 +60,7 @@ case class CreateTransaction(
   toCounterpartyBankRoutingAddress: String,
   toCounterpartyBankRoutingScheme: String
 
-) extends TopicCaseClass
+) extends TopicTrait
 
 case class OutboundCreateChallengeJune2017(
   authInfo: AuthInfo,
@@ -72,12 +71,39 @@ case class OutboundCreateChallengeJune2017(
   transactionRequestType: String,
   transactionRequestId: String,
   phoneNumber: String
-) extends TopicCaseClass
+) extends TopicTrait
 
+case class OutboundCreateCounterparty(
+  authInfo: AuthInfo,
+  counterparty: OutboundCounterparty
+) extends TopicTrait
+
+/**
+  * Payloads for response topic
+  *
+  */
+case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
+case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
+case class InboundGetBanks(authInfo: AuthInfo, data: List[InboundBank])
+case class InboundGetBank(authInfo: AuthInfo, data: InboundBank)
+case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
+case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
+case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
+case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
+case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
+case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
+case class InboundToken(username: String, token: String)
+case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
+
+/**
+  * All subsequent case classes must be the same structure as it is defined on North Side
+  *
+  */
 case class PostCounterpartyBespoke(
   key: String,
   value: String
 )
+
 case class OutboundCounterparty(
   name: String,
   description: String,
@@ -96,32 +122,7 @@ case class OutboundCounterparty(
   isBeneficiary:Boolean,
   bespoke: List[PostCounterpartyBespoke]
 )
-case class OutboundCreateCounterparty(
-  authInfo: AuthInfo,
-  counterparty: OutboundCounterparty
-) extends TopicCaseClass
 
-/**
-  * Payloads for response topic
-  *
-  */
-case class Banks(authInfo: AuthInfo, data: List[InboundBank])
-case class BankWrapper(authInfo: AuthInfo, data: InboundBank)
-case class AdapterInfo(data: InboundAdapterInfo)
-case class UserWrapper(authInfo: AuthInfo, data: InboundValidatedUser)
-case class InboundBankAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
-case class InboundBankAccount(authInfo: AuthInfo, data: InboundAccountJune2017)
-case class InboundTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
-case class InboundTransaction(authInfo: AuthInfo, data: InternalTransaction)
-case class InboundToken(username: String, token: String)
-case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
-case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
-case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
-
-/**
-  * All subsequent case classes must be the same structure as it is defined on North Side
-  *
-  */
 case class AuthInfo(userId: String, username: String, cbsToken: String)
 
 case class InboundBank(
@@ -147,7 +148,7 @@ case class InboundValidatedUser(
   displayName: String
 )
 
-case class InboundAdapterInfo(
+case class InboundAdapterInfoInternal(
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
   name: String,

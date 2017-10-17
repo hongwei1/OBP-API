@@ -181,22 +181,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   //Processor functions start here---------------------------------------------------------------------------------------
 
-  override def getBanks(getBanks: GetBanks) = {
-    Banks(getBanks.authInfo, List(InboundBank(
+  override def getBanks(getBanks: OutboundGetBanks) = {
+    InboundGetBanks(getBanks.authInfo, List(InboundBank(
       "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")),
       "10", "leumi", "leumilogo", "leumiurl")))
   }
 
-  override def getBank(getBank: GetBank) = {
-    BankWrapper(getBank.authInfo, InboundBank(
+  override def getBank(getBank: OutboundGetBank) = {
+    InboundGetBank(getBank.authInfo, InboundBank(
       "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")),
       "10", "leumi", "leumilogo", "leumiurl"))
   }
 
 
-  def getBankAccountbyAccountId(getAccount: GetAccountbyAccountID): InboundBankAccount = {
+  def getBankAccountbyAccountId(getAccount: OutboundGetAccountbyAccountID): InboundGetAccountbyAccountID = {
     //Not cached or invalid AccountId
     if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
       logger.debug("not mapped")
@@ -204,16 +204,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
     val accountNr = mapAccountIdToAccountValues(getAccount.accountId).accountNumber
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
-    InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
+    InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
       mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x => x.accountNr == accountNr).head)
     )
   }
 
-  def getBankAccountByAccountNumber(getAccount: GetAccountbyAccountNumber): InboundBankAccount = {
+  def getBankAccountByAccountNumber(getAccount: OutboundGetAccountbyAccountNumber): InboundGetAccountbyAccountID = {
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
-    InboundBankAccount(AuthInfo(getAccount.authInfo.userId,
+    InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
       //TODO: Error handling
@@ -221,20 +221,20 @@ object LeumiDecoder extends Decoder with StrictLogging {
         x.accountNr == getAccount.accountNumber).head))
   }
 
-  def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundBankAccounts = {
+  def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundGetAccounts = {
     val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
 
       result += mapAdapterAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i)
     }
-    InboundBankAccounts(AuthInfo(getAccountsInput.authInfo.userId,
+    InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling
       getAccountsInput.authInfo.username,
       mfAccounts.head.cbsToken), result.toList)
   }
 
-  def getTransactions(getTransactionsRequest: GetTransactions): InboundTransactions = {
+  def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {
     //TODO: Error handling
     val accountValues = mapAccountIdToAccountValues(getTransactionsRequest.accountId)
     val fromDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
@@ -259,17 +259,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
         i
       )
     }
-    InboundTransactions(getTransactionsRequest.authInfo, result.toList)
+    InboundGetTransactions(getTransactionsRequest.authInfo, result.toList)
   }
 
-  def getTransaction(getTransactionRequest: GetTransaction): InboundTransaction = {
+  def getTransaction(getTransactionRequest: OutboundGetTransaction): InboundGetTransaction = {
     logger.debug(s"get Transaction for ($getTransactionRequest)")
     val allTransactions: List[InternalTransaction] = {
       if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
         mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
-        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
@@ -280,7 +280,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null)) //TODO , need fix
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
-        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
@@ -288,7 +288,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         )).data
       } else if (!mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
         mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
-        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
@@ -296,7 +296,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         )).data
       } else {
         getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null))
-        getTransactions(GetTransactions(getTransactionRequest.authInfo,
+        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
           50,
@@ -307,11 +307,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
     //TODO: Error handling
     val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
-    InboundTransaction(getTransactionRequest.authInfo, resultTransaction)
+    InboundGetTransaction(getTransactionRequest.authInfo, resultTransaction)
 
   }
 
-  def createTransaction(createTransactionRequest: CreateTransaction): InboundCreateTransactionId = {
+  def createTransaction(createTransactionRequest: OutboundCreateTransaction): InboundCreateTransactionId = {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
     // OBP-API will provide: four values:
@@ -516,7 +516,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   }
 
-  def getToken(getTokenRequest: GetToken): InboundToken = {
+  def getToken(getTokenRequest: OutboundGetToken): InboundToken = {
     InboundToken(getTokenRequest.username, getMFToken(getTokenRequest.username))
   }
 
@@ -566,7 +566,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       answer))
   }
 
-  def getTransactionRequests(getTransactionRequests: GetTransactionRequests): InboundTransactions = {
+  def getTransactionRequests(getTransactionRequests: OutboundGetTransactionRequests): InboundGetTransactions = {
 
     val accountValues = mapAccountIdToAccountValues(getTransactionRequests.accountId)
     val branchId = accountValues.branchId
@@ -575,7 +575,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val username = getTransactionRequests.authInfo.username
     val cbsToken = getTransactionRequests.authInfo.cbsToken
 
-    getTransactions(GetTransactions(getTransactionRequests.authInfo,
+    getTransactions(OutboundGetTransactions(getTransactionRequests.authInfo,
       getTransactionRequests.bankId,
       getTransactionRequests.accountId,
       15,

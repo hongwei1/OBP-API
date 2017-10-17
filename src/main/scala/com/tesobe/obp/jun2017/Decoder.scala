@@ -27,16 +27,16 @@ import io.circe.parser.decode
   */
 trait Decoder extends MappedDecoder with Config{
 
-  def getBanks(getBanks: GetBanks) = {
+  def getBanks(getBanks: OutboundGetBanks) = {
     decodeLocalFile match {
-      case Left(_) => Banks(getBanks.authInfo, List.empty[InboundBank])
-      case Right(x) => Banks(getBanks.authInfo, x.banks.map(mapBankToInboundBank))
+      case Left(_) => InboundGetBanks(getBanks.authInfo, List.empty[InboundBank])
+      case Right(x) => InboundGetBanks(getBanks.authInfo, x.banks.map(mapBankToInboundBank))
     }
   }
 
-  def getBank(getBank: GetBank) = {
+  def getBank(getBank: OutboundGetBank) = {
     decodeLocalFile match {
-      case Left(_) => BankWrapper(getBank.authInfo, InboundBank(
+      case Left(_) => InboundGetBank(getBank.authInfo, InboundBank(
         "",
         List(
           InboundStatusMessage("","", "", ""), 
@@ -45,14 +45,14 @@ trait Decoder extends MappedDecoder with Config{
         "", "","",""))
       case Right(x) =>
         x.banks.filter(_.id == Some(getBank.bankId)).headOption match {
-          case Some(x) => BankWrapper(getBank.authInfo, InboundBank(
+          case Some(x) => InboundGetBank(getBank.authInfo, InboundBank(
             "",
             List(
               InboundStatusMessage("","", "", ""),
               InboundStatusMessage("","", "", "")
             ),
             "", "","",""))
-          case None => BankWrapper(getBank.authInfo, InboundBank(
+          case None => InboundGetBank(getBank.authInfo, InboundBank(
             "",
             List(
               InboundStatusMessage("","", "", ""),
@@ -63,24 +63,24 @@ trait Decoder extends MappedDecoder with Config{
     }
   }
 
-  def getUser(getUserbyUsernamePassword: GetUserByUsernamePassword) = {
+  def getUser(getUserbyUsernamePassword: OutboundGetUserByUsernamePassword) = {
     decodeLocalFile match {
-      case Left(_) => UserWrapper(getUserbyUsernamePassword.authInfo,InboundValidatedUser("",List(InboundStatusMessage("","","","")), "", ""))
+      case Left(_) => InboundGetUserByUsernamePassword(getUserbyUsernamePassword.authInfo,InboundValidatedUser("",List(InboundStatusMessage("","","","")), "", ""))
       case Right(x) =>
         val userName = Some(getUserbyUsernamePassword.authInfo.username)
         val userPassword = Some(getUserbyUsernamePassword.password)
         x.users.filter(user => user.displayName == userName && user.password == userPassword).headOption match {
-          case Some(x) => UserWrapper(getUserbyUsernamePassword.authInfo, mapUserToInboundValidatedUser(x))
-          case None => UserWrapper(getUserbyUsernamePassword.authInfo, InboundValidatedUser("",List(InboundStatusMessage("","","","")), "", ""))
+          case Some(x) => InboundGetUserByUsernamePassword(getUserbyUsernamePassword.authInfo, mapUserToInboundValidatedUser(x))
+          case None => InboundGetUserByUsernamePassword(getUserbyUsernamePassword.authInfo, InboundValidatedUser("",List(InboundStatusMessage("","","","")), "", ""))
         }
     }
   }
   
-  def getAdapter(getAdapterInfo: GetAdapterInfo) = {
-    AdapterInfo(InboundAdapterInfo("",  List(InboundStatusMessage("ESB","Success", "0", "OK")),systemName, version, Util.gitCommit, (new Date()).toString))
+  def getAdapter(getAdapterInfo: OutboundGetAdapterInfo) = {
+    InboundAdapterInfo(InboundAdapterInfoInternal("",  List(InboundStatusMessage("ESB","Success", "0", "OK")),systemName, version, Util.gitCommit, (new Date()).toString))
   }
 
-  def getBankAccounts(getAccounts: OutboundGetAccounts): InboundBankAccounts
+  def getBankAccounts(getAccounts: OutboundGetAccounts): InboundGetAccounts
   /*
    * Decodes example_import_june2017.json file to com.tesobe.obp.june2017.Example
    */
