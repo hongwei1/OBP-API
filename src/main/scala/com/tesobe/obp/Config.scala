@@ -39,8 +39,6 @@ trait Config {
   val groupId = "obp-socgen" //UUID.randomUUID().toString
 
   val autoOffsetResetConfig = "earliest"
-  val maxWakeups = 50
-  val completionTimeout = FiniteDuration(config.getInt("kafka.request.generic.timeout") * 1000 - 450, MILLISECONDS)
 
   val targetSource = config.getString("kafka.request.target.source")
   val processorName = config.getString("kafka.request.generic.name")
