@@ -8,6 +8,9 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
+import net.liftweb.json
+import net.liftweb.json.Extraction
+import net.liftweb.json.JsonAST.prettyRender
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +32,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * This software may also be distributed under a commercial license from TESOBE Ltd subject to separate terms.
   */
 class LocalProcessor(implicit executionContext: ExecutionContext, materializer: Materializer) extends StrictLogging with Config {
-
+  
+  implicit val formats = net.liftweb.json.DefaultFormats
+  
   /**
     * Processes message that comes from generic 'Request'/'Response' topics.
     * It has to resolve version from request first and based on that employ corresponding Decoder to extract response.
@@ -389,27 +394,27 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     logger.debug(s"Processing getTransactionRequestsFn ${msg.record.value}")
     try {
       /* call Decoder for extracting data from source file */
-      val response: (OutboundGetTransactionRequests => InboundGetTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactionRequests(q)}
-      val r = decode[OutboundGetTransactionRequests](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetTransactionRequests` case class for OBP-API and Adapter sides : ", e);
-        case Right(x) => response(x).asJson.noSpaces
-      }
+      val kafkaRecordValue = msg.record.value()
+      val outboundGetTransactionRequests210  = Extraction.extract[OutboundGetTransactionRequests210](json.parse(kafkaRecordValue))
+      val abc: InboundGetTransactionRequests210 = com.tesobe.obp.june2017.LeumiDecoder.getTransactionRequests(outboundGetTransactionRequests210)
+      val r = prettyRender(Extraction.decompose(abc))
       Future(msg, r)
     } catch {
       case m: Throwable =>
         logger.error("getTransactionRequestsFn-unknown error", m)
 
-        val errorBody = InboundCreateChallengeJune2017(
+        val errorBody = InboundGetTransactionRequests210(
           AuthInfo("","",""),
-          InternalCreateChallengeJune2017(
+          InternalGetTransactionRequests(
             m.getMessage,
             List(
               InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
               InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
             ),
-            ""))
-
-        Future(msg, errorBody.asJson.noSpaces)
+            Nil
+          )
+        )
+        Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   }
   
@@ -420,7 +425,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val response: (OutboundCreateCounterparty => InboundCreateCounterparty) = { q => com.tesobe.obp.june2017.LeumiDecoder.createCounterparty(q)}
       val r = decode[OutboundCreateCounterparty](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetTransactionRequests` case class for OBP-API and Adapter sides : ", e);
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundCreateCounterparty` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
       }
       Future(msg, r)

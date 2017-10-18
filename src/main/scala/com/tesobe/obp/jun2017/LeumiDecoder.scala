@@ -564,20 +564,25 @@ object LeumiDecoder extends Decoder with StrictLogging {
       answer))
   }
 
-  def getTransactionRequests(getTransactionRequests: OutboundGetTransactionRequests): InboundGetTransactions = {
+  def getTransactionRequests(outboundGetTransactionRequests210: OutboundGetTransactionRequests210): InboundGetTransactionRequests210 = {
 
-    val accountValues = mapAccountIdToAccountValues(getTransactionRequests.accountId)
+    val accountValues = mapAccountIdToAccountValues(outboundGetTransactionRequests210.counterparty.accountId)
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
-    val username = getTransactionRequests.authInfo.username
-    val cbsToken = getTransactionRequests.authInfo.cbsToken
+    val username = outboundGetTransactionRequests210.authInfo.username
+    val cbsToken = outboundGetTransactionRequests210.authInfo.cbsToken
 
-    getTransactions(OutboundGetTransactions(getTransactionRequests.authInfo,
-      getTransactionRequests.bankId,
-      getTransactionRequests.accountId,
-      15,
-      "", ""))
+    InboundGetTransactionRequests210(
+      outboundGetTransactionRequests210.authInfo,
+      InternalGetTransactionRequests(
+        "",
+        List(
+          //Todo: We did 3 MfCalls so far. Shall they all go in?
+          InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+          InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+        ), 
+      Nil))
 
   }
 

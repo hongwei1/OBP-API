@@ -1,5 +1,7 @@
 package com.tesobe.obp.june2017
 
+import java.util.Date
+import net.liftweb.json.JsonAST.JValue
 
 /**
   * Here are defined all the things that go through kafka
@@ -37,7 +39,6 @@ case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, acc
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
-case class OutboundGetTransactionRequests(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicTrait
 case class OutboundGetToken(username: String) extends TopicTrait
 case class OutboundCreateTransaction(
   authInfo: AuthInfo,
@@ -77,6 +78,7 @@ case class OutboundCreateCounterparty(
   counterparty: OutboundCounterparty
 ) extends TopicTrait
 
+case class OutboundGetTransactionRequests210(authInfo: AuthInfo, counterparty: OutboundTransactionRequests) extends TopicTrait
 /**
   * Payloads for response topic
   *
@@ -93,6 +95,7 @@ case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCrea
 case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
 case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
+case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -347,6 +350,99 @@ case class InternalCreateCounterparty(
   bespoke: List[PostCounterpartyBespoke] = Nil
 )
 
+case class InternalGetTransactionRequests(
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  transactionRequests:List[TransactionRequest]
+)
+
+case class TransactionRequestId(val value : String) {
+  override def toString = value
+}
+
+object TransactionRequestId {
+  def unapply(id : String) = Some(TransactionRequestId(id))
+}
+case class TransactionRequestAccount (
+  val bank_id: String,
+  val account_id : String
+)
+case class TransactionRequestBody (
+  val to: TransactionRequestAccount,
+  val value : AmountOfMoney,
+  val description : String
+)
+case class AmountOfMoney (
+  val currency: String,
+  val amount: String
+)
+
+case class TransactionRequestChallenge (
+  val id: String,
+  val allowed_attempts : Int,
+  val challenge_type: String
+)
+
+case class TransactionRequestCharge(
+  val summary: String,
+  val value : AmountOfMoney
+)
+case class CounterpartyId(val value : String) {
+  override def toString = value
+}
+
+object CounterpartyId {
+  def unapply(id : String) = Some(CounterpartyId(id))
+}
+
+case class AccountId(val value : String) {
+  override def toString = value
+}
+
+object AccountId {
+  def unapply(id : String) = Some(AccountId(id))
+}
+
+case class BankId(val value : String) {
+  override def toString = value
+}
+
+object BankId {
+  def unapply(id : String) = Some(BankId(id))
+}
+case class ViewId(val value : String) {
+  override def toString = value
+}
+
+object ViewId {
+  def unapply(id : String) = Some(ViewId(id))
+}
+
+case class TransactionRequest (
+  id: TransactionRequestId,
+  `type` : String,
+  from: TransactionRequestAccount,
+  details: JValue,
+  body: TransactionRequestBody, 
+  transaction_ids: String,
+  status: String,
+  start_date: Date,
+  end_date: Date,
+  challenge: TransactionRequestChallenge,
+  charge: TransactionRequestCharge,
+  charge_policy: String,
+  counterparty_id :CounterpartyId,
+  name :String,
+  this_bank_id : BankId,
+  this_account_id : AccountId,
+  this_view_id :ViewId,
+  other_account_routing_scheme : String,
+  other_account_routing_address : String,
+  other_bank_routing_scheme : String,
+  other_bank_routing_address : String,
+  is_beneficiary :Boolean
+)
+
 case class CustomerFaceImageJson(
   url: String,
   date: String
@@ -366,3 +462,15 @@ case class InternalCustomer(
 )
 
 case class InternalCustomers(customers: List[InternalCustomer])
+
+case class OutboundTransactionRequests(
+  accountId: String,
+  accountType: String,
+  currency: String,
+  iban: String,
+  number: String,
+  bankId: String,
+  branchId: String,
+  accountRoutingScheme: String,
+  accountRoutingAddress: String
+)
