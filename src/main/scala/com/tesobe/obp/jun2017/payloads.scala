@@ -69,8 +69,7 @@ case class OutboundCreateChallengeJune2017(
   userId: String,
   username: String,
   transactionRequestType: String,
-  transactionRequestId: String,
-  phoneNumber: String
+  transactionRequestId: String
 ) extends TopicTrait
 
 case class OutboundCreateCounterparty(

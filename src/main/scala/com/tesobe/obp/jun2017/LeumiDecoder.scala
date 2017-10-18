@@ -534,8 +534,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val accountType = accountValues.accountType
     val username = createChallenge.authInfo.username
     val cbsToken = jsonExtract.SDR_JONI.MFTOKEN
-    //todo: never used, plz check.
-    val phoneNumber = createChallenge.phoneNumber
     val callNtlv1 = getNtlv1Mf(username,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
