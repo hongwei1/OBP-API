@@ -243,7 +243,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       mfAccounts.head.cbsToken), result.toList)
   }
   
-  def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
+  def getCoreAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
     val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username)
     var result = new ListBuffer[CoreAccountJsonV300]
     for (i <- mfAccounts)  {
@@ -253,6 +253,24 @@ object LeumiDecoder extends Decoder with StrictLogging {
       getCoreBankAccounts.authInfo,
       List(InboundStatusMessage("","","","")),
       result.toList)
+  }
+  
+  def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
+    val accountIdList = mapAccountIdToAccountValues.keySet.toList
+    val result = new ListBuffer[InternalInboundCoreAccount]
+    for (i <- accountIdList) {
+      result += InternalInboundCoreAccount(
+        errorCode = "",
+        backendMessages = List(
+          InboundStatusMessage("ESB", "Success", "0", "OK"),
+          InboundStatusMessage("MF", "Success", "0", "OK")), 
+        id = i,
+        label = "",
+        bank_id = "10",
+        account_routing = AccountRoutingJsonV121(scheme = "account_number", address = mapAccountIdToAccountValues(i).accountNumber)
+      )
+    }
+    InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
   }
 
   def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {
