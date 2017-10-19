@@ -503,8 +503,4 @@ case class InternalInboundCoreAccount(
   bank_id : String,
   account_routing: AccountRoutingJsonV121
 )
-case class AccountRoutingJsonV121(
-  scheme: String,
-  address: String
-)
 
