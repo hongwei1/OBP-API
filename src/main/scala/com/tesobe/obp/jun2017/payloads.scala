@@ -35,6 +35,7 @@ case class OutboundGetBanks(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetBank(authInfo: AuthInfo, bankId: String) extends TopicTrait
 case class OutboundGetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicTrait
 case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalCustomers)  extends TopicTrait
+case class OutboundGetCoreAccounts(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicTrait
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
@@ -96,11 +97,25 @@ case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCou
 case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
+case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccountJsonV300])
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
   *
   */
+
+case class CoreAccountJsonV300(
+                                id : String,
+                                label : String,
+                                bank_id : String,
+                                account_routing: AccountRoutingJsonV121
+                              )
+
+case class AccountRoutingJsonV121(
+                                   scheme: String,
+                                   address: String
+                                 )
+
 case class PostCounterpartyBespoke(
   key: String,
   value: String
@@ -474,3 +489,4 @@ case class OutboundTransactionRequests(
   accountRoutingScheme: String,
   accountRoutingAddress: String
 )
+

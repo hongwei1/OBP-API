@@ -23,6 +23,7 @@ import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp._
+import com.tesobe.obp.june2017.AccountRoutingJsonV121
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 
@@ -97,7 +98,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   }
 
-  def mapAdapterAccountToInboundAccountJune2017(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
+  def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
@@ -176,6 +177,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
       userId = userId //userId
     )
   }
+  
+  def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccountJsonV300 = {
+    CoreAccountJsonV300(
+      id = getOrCreateAccountId(account.branchNr,account.accountType,account.accountNr),
+      label = "",
+      bank_id = "10",
+      account_routing = AccountRoutingJsonV121(scheme = "account_number", address = account.accountNr))
+  } 
 
   //Helper functions end here--------------------------------------------------------------------------------------------
 
@@ -207,7 +216,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x => x.accountNr == accountNr).head)
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x => x.accountNr == accountNr).head)
     )
   }
 
@@ -217,7 +226,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
       //TODO: Error handling
-      mapAdapterAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x =>
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x =>
         x.accountNr == getAccount.accountNumber).head))
   }
 
@@ -226,12 +235,24 @@ object LeumiDecoder extends Decoder with StrictLogging {
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
 
-      result += mapAdapterAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i)
+      result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i)
     }
     InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling
       getAccountsInput.authInfo.username,
       mfAccounts.head.cbsToken), result.toList)
+  }
+  
+  def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
+    val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username)
+    var result = new ListBuffer[CoreAccountJsonV300]
+    for (i <- mfAccounts)  {
+      result += mapBasicBankAccountToCoreAccountJsonV300(i)
+    }
+    InboundGetCoreAccounts(
+      getCoreBankAccounts.authInfo,
+      List(InboundStatusMessage("","","","")),
+      result.toList)
   }
 
   def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {

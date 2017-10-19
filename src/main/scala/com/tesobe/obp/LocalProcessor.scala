@@ -249,6 +249,31 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
 
+  def getCoreAccountsFn: Business = {msg =>
+    logger.debug(s"Processing getCoreAccountsFn ${msg.record.value}")
+    try {
+      //    /* call Decoder for extracting data from source file */
+      val response: (OutboundGetCoreAccounts => InboundGetCoreAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCoreBankAccounts(q) }
+      val r = decode[OutboundGetCoreAccounts](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCoreAccounts` case class for OBP-API and Adapter sides : ", e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+          val errorBody = InboundGetCoreAccounts(
+          AuthInfo("","",""),
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            List(CoreAccountJsonV300("","", "", AccountRoutingJsonV121("","")))
+          )
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
+
   def transactionsFn: Business = {msg =>
     logger.debug(s"Processing transactionsFn ${msg.record.value}")
     try {

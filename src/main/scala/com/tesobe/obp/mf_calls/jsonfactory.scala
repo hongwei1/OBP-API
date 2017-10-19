@@ -113,7 +113,7 @@ case class AmountOfMoneyJsonV121(
                                   amount : String
                                 )
 
-case class AccountRoutingJsonV121(
+case class AccountRoutingJsonV121b(
                                    scheme: String,
                                    address: String
                                  )
@@ -131,7 +131,7 @@ case class ModeratedCoreAccountJSON(
                                      views_available: List[AccountView],
                                      `type`: String,
                                      balance: AmountOfMoneyJsonV121,
-                                     account_routing: AccountRoutingJsonV121
+                                     account_routing: AccountRoutingJsonV121b
                                    )
 
 case class Ta1TnuaBodedetContent(
