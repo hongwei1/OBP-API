@@ -98,7 +98,52 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   }
 
-  def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
+  def mapBasicBankAccountToInboundAccountJune2017WithoutBalance(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
+
+    //TODO: This is by choice and needs verification
+    //Create OwnerRights and accountViewer for result InboundAccount2017 creation
+    val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments || x.accountPermissions.canMakeInternalPayments
+    val hasViewerRights: Boolean = x.accountPermissions.canSee
+    val viewsToGenerate = {
+      if (hasOwnerRights) {
+        List("Owner")
+      }
+      else if (hasViewerRights) {
+        List("Auditor")
+      }
+      else {
+        List("")
+      }
+    }
+    //Create Owner for result InboundAccount2017 creation
+    val accountOwner = if (hasOwnerRights) {
+      List(username)
+    } else {
+      List("")
+    }
+    InboundAccountJune2017(
+      errorCode = "",
+      List(InboundStatusMessage("ESB", "Success", "0", "OK")), ////TODO, need to fill the coreBanking error
+      x.cbsToken,
+      bankId = "10",
+      branchId = x.branchNr,
+      accountId = getOrCreateAccountId(x.branchNr, x.accountType, x.accountNr),
+      accountNumber = x.accountNr,
+      accountType = x.accountType,
+      //balanceAmount = getBalance(username, x.branchNr, x.accountType, x.accountNr, x.cbsToken),
+      balanceAmount = "",
+      balanceCurrency = defaultCurrency,
+      owners = accountOwner,
+      viewsToGenerate = viewsToGenerate,
+      bankRoutingScheme = "",
+      bankRoutingAddress = "",
+      branchRoutingScheme = "",
+      branchRoutingAddress = "",
+      accountRoutingScheme = "",
+      accountRoutingAddress = "")
+  }
+
+  def mapBasicBankAccountToInboundAccountJune2017WithBalance(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
@@ -216,7 +261,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x => x.accountNr == accountNr).head)
+      mapBasicBankAccountToInboundAccountJune2017WithBalance(getAccount.authInfo.username, mfAccounts.filter(x => x.accountNr == accountNr).head)
     )
   }
 
@@ -226,7 +271,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
       //TODO: Error handling
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.filter(x =>
+      mapBasicBankAccountToInboundAccountJune2017WithBalance(getAccount.authInfo.username, mfAccounts.filter(x =>
         x.accountNr == getAccount.accountNumber).head))
   }
 
@@ -235,7 +280,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
 
-      result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i)
+      result += mapBasicBankAccountToInboundAccountJune2017WithoutBalance(getAccountsInput.authInfo.username, i)
     }
     InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling

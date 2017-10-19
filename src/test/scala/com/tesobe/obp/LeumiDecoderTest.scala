@@ -20,13 +20,13 @@ class LeumiDecoderTest  extends ServerSetup {
   test("getBankAccounts works for Stub"){
     val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", "karl", ""), null)) //TODO ,need fix
 
-    //Balance is from nt1c call, all accounts use the same json stub => all accounts have the same balance
+    //getBalance is not called here
     result should be (InboundGetAccounts(AuthInfo("karlsid", "karl", mfToken),
-      List(InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId2, "50180983", "430", "5541.28", "ILS", List("karl"), List("Owner"), "", "", "", "", "", ""), 
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId3, "50180963", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId4, "20102612", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId5, "20105505", "330", "5541.28", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
+      List(InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId1, "3565953", "330", "", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId2, "50180983", "430", "", "ILS", List("karl"), List("Owner"), "", "", "", "", "", ""), 
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId3, "50180963", "330", "", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId4, "20102612", "330", "", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId5, "20105505", "330", "", "ILS", List(""), List("Auditor"), "", "", "", "", "", ""))))
   }
   
   test("getBankAccountbyAccountId works for Stub"){
