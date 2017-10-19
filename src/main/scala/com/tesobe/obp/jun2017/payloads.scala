@@ -3,6 +3,8 @@ package com.tesobe.obp.june2017
 import java.util.Date
 import net.liftweb.json.JsonAST.JValue
 
+import scala.collection.immutable.List
+
 /**
   * Here are defined all the things that go through kafka
   * 
@@ -80,6 +82,7 @@ case class OutboundCreateCounterparty(
 ) extends TopicTrait
 
 case class OutboundGetTransactionRequests210(authInfo: AuthInfo, counterparty: OutboundTransactionRequests) extends TopicTrait
+case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
 /**
   * Payloads for response topic
   *
@@ -97,6 +100,7 @@ case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCou
 case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
+case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccountJsonV300])
 
 /**
@@ -488,5 +492,19 @@ case class OutboundTransactionRequests(
   branchId: String,
   accountRoutingScheme: String,
   accountRoutingAddress: String
+)
+
+case class BankIdAccountId(bankId : BankId, accountId : AccountId)
+case class InternalInboundCoreAccount(
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  id : String,
+  label : String,
+  bank_id : String,
+  account_routing: AccountRoutingJsonV121
+)
+case class AccountRoutingJsonV121(
+  scheme: String,
+  address: String
 )
 
