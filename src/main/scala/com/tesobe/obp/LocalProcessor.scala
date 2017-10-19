@@ -253,7 +253,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     logger.debug(s"Processing getCoreAccountsFn ${msg.record.value}")
     try {
       //    /* call Decoder for extracting data from source file */
-      val response: (OutboundGetCoreAccounts => InboundGetCoreAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCoreBankAccounts(q) }
+      val response: (OutboundGetCoreAccounts => InboundGetCoreAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCoreAccounts(q) }
       val r = decode[OutboundGetCoreAccounts](msg.record.value()) match {
         case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCoreAccounts` case class for OBP-API and Adapter sides : ", e);
         case Right(x) => response(x).asJson.noSpaces
@@ -270,6 +270,32 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             ),
             List(CoreAccountJsonV300("","", "", AccountRoutingJsonV121("","")))
           )
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
+
+  def getCoreBankAccountsFn: Business = {msg =>
+    logger.debug(s"Processing getCoreBankAccountsFn ${msg.record.value}")
+    try {
+      //    /* call Decoder for extracting data from source file */
+      val response: (OutboundGetCoreBankAccounts => InboundGetCoreBankAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCoreBankAccounts(q) }
+      val r = decode[OutboundGetCoreBankAccounts](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCoreAccounts` case class for OBP-API and Adapter sides : ", e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = InboundGetCoreBankAccounts(
+          AuthInfo("","",""),List(InternalInboundCoreAccount(
+            "",
+          List(
+            InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+            InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+          ),
+          "","", "", AccountRoutingJsonV121("",""))))
+        
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
