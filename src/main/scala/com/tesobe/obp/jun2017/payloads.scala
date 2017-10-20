@@ -84,9 +84,7 @@ case class OutboundCreateCounterparty(
 
 case class OutboundGetTransactionRequests210(authInfo: AuthInfo, counterparty: OutboundTransactionRequests) extends TopicTrait
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
-case class OutboundGetCustomersByUserIdFuture(
-  authInfo: AuthInfo
-) extends TopicTrait
+case class OutboundGetCustomersByUserIdFuture(authInfo: AuthInfo) extends TopicTrait
 /**
   * Payloads for response topic
   *
@@ -496,19 +494,19 @@ case class InternalFullCustomer(
   mobileNumber : String,
   email : String,
   faceImage : CustomerFaceImage,
-  dateOfBirth: Date,
+  dateOfBirth: String,
   relationshipStatus: String,
   dependents: Int,
-  dobOfDependents: List[Date],
+  dobOfDependents: List[String],
   highestEducationAttained: String,
   employmentStatus: String,
   creditRating : CreditRating,
   creditLimit: AmountOfMoney,
   kycStatus: Boolean,
-  lastOkDate: Date
+  lastOkDate: String
 )
 
-case class CustomerFaceImage(date : Date, url : String)
+case class CustomerFaceImage(date : String, url : String)
 case class CreditRating(rating: String, source: String)
 
 

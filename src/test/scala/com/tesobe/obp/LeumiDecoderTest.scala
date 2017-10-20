@@ -15,8 +15,6 @@ class LeumiDecoderTest  extends ServerSetup {
   val accountId3 = base64EncodedSha256("616" + "330" +"50180963" + "fjdsaFDSAefwfsalfid")
   val accountId4 = base64EncodedSha256("814" + "330" + "20102612" + "fjdsaFDSAefwfsalfid")
   val accountId5 = base64EncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")
-  val accountIdHex = hexEncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")
-  println("HEX is like this: " + accountIdHex)
   val mfToken = "?+1         81433020102612"
   
   test("getBankAccounts works for Stub"){
@@ -84,17 +82,17 @@ class LeumiDecoderTest  extends ServerSetup {
       legalName = "??????????????" + " " + "????????????????????",
       mobileNumber = "notinthiscall",
       email = "notinthiscall",
-      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("19481231"), "notinthiscall"),
-      dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
+      faceImage = CustomerFaceImage("19481231", "notinthiscall"),
+      dateOfBirth= "19481231",
       relationshipStatus = "notfromthiscall",
       dependents = 0,
-      dobOfDependents = List(simpleTransactionDateFormat.parse("19481231")),
+      dobOfDependents = List("19481231"),
       highestEducationAttained = "",
       employmentStatus = "notfromthiscall",
       creditRating = CreditRating("notfromthiscall","notfromthiscall"),
       creditLimit =  AmountOfMoney(defaultCurrency, "15000"),
       kycStatus = true,
-      lastOkDate = simpleLastLoginFormat.parse("20170611" + "120257")
+      lastOkDate = "20170611" + "120257"
     )))
   }
 

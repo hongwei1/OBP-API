@@ -57,11 +57,6 @@ object GetBankAccounts {
     if (!result.contains(leading_account)) result += leading_account //TODO: Broken by assuming leading account permissions
     result.toList
   }
-  def getBankAccountValuesfromJoniMfUser(joniMfUser: JoniMfUser): Vector[String] = {
-    Vector(joniMfUser.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
-    joniMfUser.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
-    joniMfUser.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG)
-  }
 
   
   def hexEncodedSha256(in : String): String = {

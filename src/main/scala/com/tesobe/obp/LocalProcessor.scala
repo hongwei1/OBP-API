@@ -300,6 +300,19 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
 
+  def getCustomerFn: Business = {msg =>
+    logger.debug(s"Processing getCustomerFn ${msg.record.value}")
+      //    /* call Decoder for extracting data from source file */
+      val response: (OutboundGetCustomersByUserIdFuture => InboundGetCustomersByUserIdFuture) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCustomer(q) }
+      val r = decode[OutboundGetCustomersByUserIdFuture](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCustomersByUserIdFuture` case class for OBP-API and Adapter sides : ", e);
+        case Right(y) => response(y).asJson.noSpaces
+      }
+      Future(msg, r)
+ 
+  }
+
+
   def transactionsFn: Business = {msg =>
     logger.debug(s"Processing transactionsFn ${msg.record.value}")
     try {

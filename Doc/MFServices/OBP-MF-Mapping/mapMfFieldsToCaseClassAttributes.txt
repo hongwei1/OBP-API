@@ -1,0 +1,73 @@
+InboundGetAccounts
+InboundGetAccountbyAccountID
+InboundGetAccountbyAccountID
+has data payload:
+      List(InboundAccountJune2017(InboundAccountJune2017(
+                                        errorCode = "",
+                                        List(InboundStatusMessage("ESB", "Success", "0", "OK")), ////TODO, need to fill the coreBanking error
+                                        x.cbsToken, //from the api
+                                        bankId = "10" Always 
+                                        branchId = SDRC_CHN_SNIF:joni
+                                        accountId = base64EncodedSha256(branchId + accountType + accountNumber + config.getString("salt.global")
+                                        accountNumber = SDRC_CHN_CHN:joni
+                                        accountType = SDRC_CHN_SUG:joni
+                                        balanceAmount = if not InboundGetAccounts: TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_ITRA_NOCHECHIT: NT1B C, //not used in InboundGetAccounts
+                                        balanceCurrency = 
+                                        owners = accountOwner ( SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA:joni
+                                                                SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT:joni
+                                                                SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G:joni)
+                                        viewsToGenerate = viewsToGenerate,( SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_MEIDA:joni
+                                                                            SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_PEULOT:joni
+                                                                            SDRC_LINE.SDRC_HARSHAOT.SDRC_MURSHE_TZAD_G:joni)
+                                        bankRoutingScheme = "",
+                                        bankRoutingAddress = "",
+                                        branchRoutingScheme = "",
+                                        branchRoutingAddress = "",
+                                        accountRoutingScheme = "",
+                                        accountRoutingAddress = "")
+                                    }
+                                    
+                                    
+InboundGetTransaction(s):
+has data payload (List)[InternalTransaction] as following:
+Value from leumi, all NT1cT
+val amount = adapterTransaction.TN2_TNUA_BODEDET.TN2_SCHUM //:"TN2_SCHUM" NT1cT
+    val completedDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_ERECH //"TN2_TA_ERECH": // Date of value for NT1cT
+    val newBalanceAmount = adapterTransaction.TN2_TNUA_BODEDET.TN2_ITRA //"TN2_ITRA": NT1cT
+    val description = adapterTransaction.TN2_TNUA_BODEDET.TN2_TEUR_PEULA //"TN2_TEUR_PEULA": NT1cT
+    val transactionType = adapterTransaction.TN2_TNUA_BODEDET.TN2_SUG_PEULA //"TN2_SUG_PEULA" NT1cT
+    val transactionProcessingDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD //"TN2_TA_IBUD": // Date of transaction NT1cT
+used in:
+    InternalTransaction(
+      errorCode = "",
+      List(
+        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+      ),
+      transactionId = getOrCreateTransactionId(amount, completedDate, newBalanceAmount), // Find some
+      accountId = accountId, //accountId
+      amount = amount,
+      bankId = "10", // 10 for now (Joni)
+      completedDate = completedDate,
+      counterpartyId = "counterpartyId", //TODO, can not get this field from CBS
+      counterpartyName = "counterpartyName", //TODO, can not get this field from CBS
+      currency = defaultCurrency, //ILS 
+      description = description,
+      newBalanceAmount = newBalanceAmount,
+      newBalanceCurrency = defaultCurrency, //ILS
+      postedDate = transactionProcessingDate,
+      `type` = transactionType,
+      userId = userId //userId
+    ) 
+    
+    
+InboundCreateChallenge:
+has data payload:
+InternalCreateChallengeJune2017(
+      "",
+      List(
+        //Todo: We did 3 MfCalls so far. Shall they all go in?
+        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+      ),
+      answer)) WITH answer = Field: DFHPLT_1.DFH_OPT from MfCall: NTLV7                                
