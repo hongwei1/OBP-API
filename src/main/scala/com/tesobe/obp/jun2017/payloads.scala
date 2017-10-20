@@ -1,6 +1,7 @@
 package com.tesobe.obp.june2017
 
 import java.util.Date
+
 import net.liftweb.json.JsonAST.JValue
 
 import scala.collection.immutable.List
@@ -83,6 +84,9 @@ case class OutboundCreateCounterparty(
 
 case class OutboundGetTransactionRequests210(authInfo: AuthInfo, counterparty: OutboundTransactionRequests) extends TopicTrait
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
+case class OutboundGetCustomersByUserIdFuture(
+  authInfo: AuthInfo
+) extends TopicTrait
 /**
   * Payloads for response topic
   *
@@ -102,6 +106,7 @@ case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransact
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccountJsonV300])
+case class InboundGetCustomersByUserIdFuture(authInfo: AuthInfo, data: List[InternalFullCustomer])
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -479,6 +484,33 @@ case class InternalCustomer(
   legalName: String,
   dateOfBirth: String
 )
+
+case class InternalFullCustomer(
+  status: String,
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  customerId : String,
+  bankId : String,
+  number : String,   // The Customer number i.e. the bank identifier for the customer.
+  legalName : String,
+  mobileNumber : String,
+  email : String,
+  faceImage : CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Int,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating : CreditRating,
+  creditLimit: AmountOfMoney,
+  kycStatus: Boolean,
+  lastOkDate: Date
+)
+
+case class CustomerFaceImage(date : Date, url : String)
+case class CreditRating(rating: String, source: String)
+
 
 case class InternalCustomers(customers: List[InternalCustomer])
 
