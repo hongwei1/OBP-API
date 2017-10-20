@@ -3,6 +3,8 @@ package com.tesobe.obp
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, hexEncodedSha256}
 import com.tesobe.obp.june2017.LeumiDecoder._
 import com.tesobe.obp.june2017._
+
+import scala.collection.immutable.List
 /**
   * Created by work on 6/12/17.
   */
@@ -68,6 +70,32 @@ class LeumiDecoderTest  extends ServerSetup {
   test("getToken gives correct token") {
     val result = getToken(OutboundGetToken("N7jut8d"))
     result should be (InboundToken("N7jut8d",mfToken))
+  }
+  
+  test("getCustomer gives correct result for stubs"){ 
+    val customerId = base64EncodedSha256("karl" + config.getString("salt.global"))
+    val result = getCustomer(OutboundGetCustomersByUserIdFuture(AuthInfo("karlsid", "karl", mfToken)))should be
+    InboundGetCustomersByUserIdFuture(AuthInfo("karlsid", "karl", mfToken), List(InternalFullCustomer(status = "",
+      errorCode = "",
+      backendMessages = List(InboundStatusMessage("","","","")),
+      customerId = customerId,
+      bankId = "10",
+      number = "karl",
+      legalName = "??????????????" + " " + "????????????????????",
+      mobileNumber = "notinthiscall",
+      email = "notinthiscall",
+      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("19481231"), "notinthiscall"),
+      dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
+      relationshipStatus = "notfromthiscall",
+      dependents = 0,
+      dobOfDependents = List(simpleTransactionDateFormat.parse("19481231")),
+      highestEducationAttained = "",
+      employmentStatus = "notfromthiscall",
+      creditRating = CreditRating("notfromthiscall","notfromthiscall"),
+      creditLimit =  AmountOfMoney(defaultCurrency, "15000"),
+      kycStatus = true,
+      lastOkDate = simpleLastLoginFormat.parse("20170611" + "120257")
+    )))
   }
 
 

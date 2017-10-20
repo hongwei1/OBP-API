@@ -1,11 +1,13 @@
 package com.tesobe.obp.june2017
 
 import java.text.SimpleDateFormat
+import java.util.Date
 
 import com.tesobe.obp.ErrorMessages.NoCreditCard
-import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
+import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBankAccountValuesfromJoniMfUser, getBasicBankAccountsForUser}
 import com.tesobe.obp.JoniMf.{getJoni, getMFToken}
 import com.tesobe.obp.Nt1cBMf.getBalance
+import com.tesobe.obp.Nt1cBMf.getNt1cBMfHttpApache
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
@@ -27,6 +29,8 @@ import com.tesobe.obp.june2017.AccountRoutingJsonV121
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 
+import scala.collection.immutable.List
+import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Map}
 
 
@@ -49,6 +53,9 @@ import scala.collection.mutable.{ListBuffer, Map}
   */
 object LeumiDecoder extends Decoder with StrictLogging {
 
+  implicit val formats = net.liftweb.json.DefaultFormats
+  
+
   val defaultCurrency = "ILS"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
@@ -56,6 +63,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleDayFormat: SimpleDateFormat = new SimpleDateFormat("dd")
   val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("MM")
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
+  val simpleLastLoginFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
 
   //TODO: Replace with caching solution for production
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
@@ -67,6 +75,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
   var mapTransactionValuesToTransactionId = Map[TransactionIdValues, String]()
+  
+  var mapCustomerIdToBankUserId = Map[String,String]()
+  var mapBankUserIdToCustomerId = Map[String,String]()
+  
 
   //Helper functions start here:---------------------------------------------------------------------------------------
 
@@ -95,6 +107,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
       mapTransactionValuesToTransactionId += (transactionIdValues -> transactionId)
       mapTransactionIdToTransactionValues += (transactionId -> transactionIdValues)
       transactionId
+    }
+  }
+  
+  def getOrCreateCustomerId(username: String): String = {
+    logger.debug(s"getOrCreateTransactionId for ($username)")
+    if (mapBankUserIdToCustomerId.contains(username)) mapBankUserIdToCustomerId(username) else {
+      val customerId = base64EncodedSha256(username + config.getString("salt.global"))
+      mapBankUserIdToCustomerId += (username -> customerId)
+      mapCustomerIdToBankUserId += (customerId -> username)
+      customerId
     }
   }
 
@@ -796,6 +818,61 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
     }
 
+  }
+case class Customer(
+    customerId : String, // The UUID for the customer. To be used in URLs
+    bankId : String,
+    number : String, // The Customer number i.e. the bank identifier for the customer.
+    legalName : String,
+    mobileNumber : String,
+    email : String,
+    faceImage : String,
+    dateOfBirth: String,
+    relationshipStatus: String,
+    dependents: Int,
+    dobOfDependents: List[String],
+    highestEducationAttained: String,
+    employmentStatus: String,
+    creditRating : String,
+    creditLimit: AmountOfMoney,
+    kycStatus: Boolean,
+    lastOkDate: String
+  )
+  
+  def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserIdFuture): InboundGetCustomersByUserIdFuture = {
+    val username = outboundGetCustomersByUserIdFuture.authInfo.username
+    val joniMfCall = getJoni(username).extract[JoniMfUser]
+    //Todo: just gets limit for the leading account instead of limit and balance for all
+    val nt1cBCall = getNt1cBMfHttpApache(
+      username,
+      branch = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
+      accountType = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
+      accountNumber = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
+      cbsToken = outboundGetCustomersByUserIdFuture.authInfo.cbsToken)
+    
+    val result = InternalFullCustomer(
+      status = "",
+      errorCode = "",
+      backendMessages = List(InboundStatusMessage("","","","")),
+      customerId = getOrCreateCustomerId(username),
+      bankId = "10",
+      number = username,
+      legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
+      mobileNumber = "notinthiscall",
+      email = "notinthiscall",
+      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), "notinthiscall"),
+      dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA),
+      relationshipStatus = "notfromthiscall",
+      dependents = 0,
+      dobOfDependents = List(simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA)),
+      highestEducationAttained = "",
+      employmentStatus = "notfromthiscall",
+      creditRating = CreditRating("notfromthiscall","notfromthiscall"),
+      creditLimit =  AmountOfMoney(defaultCurrency, nt1cBCall.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI),
+      kycStatus = true,
+      lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST)
+    )
+    InboundGetCustomersByUserIdFuture(outboundGetCustomersByUserIdFuture.authInfo, List(result))
   }
 }
 
