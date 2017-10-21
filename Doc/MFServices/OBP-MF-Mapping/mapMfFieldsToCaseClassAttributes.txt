@@ -70,4 +70,32 @@ InternalCreateChallengeJune2017(
         InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
         InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
       ),
-      answer)) WITH answer = Field: DFHPLT_1.DFH_OPT from MfCall: NTLV7                                
+      answer)) WITH answer = Field: DFHPLT_1.DFH_OPT // from MfCall  NTLV7        
+      
+      
+      
+InboundGetCustomersByUserIdFuture:
+has data payload:
+List(InternalFullCustomer(
+           status = "",
+           errorCode = "",
+           backendMessages = List(InboundStatusMessage("","","","")),
+           customerId = getOrCreateCustomerId(username),
+           bankId = "10",
+           number = username,
+           legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
+           mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
+           email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
+           faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("1971111"), "notinthiscall"),
+           dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
+           relationshipStatus = "notfromthiscall",
+           dependents = 0,
+           dobOfDependents = List(simpleTransactionDateFormat.parse("19711111")),
+           highestEducationAttained = "",
+           employmentStatus = "notfromthiscall",
+           creditRating = CreditRating("notfromthiscall","notfromthiscall"),
+           creditLimit =  AmountOfMoney(defaultCurrency, "0"),
+           kycStatus = true,
+           lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
+         ))
+                        

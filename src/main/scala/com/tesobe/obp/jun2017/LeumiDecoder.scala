@@ -287,6 +287,39 @@ object LeumiDecoder extends Decoder with StrictLogging {
       bank_id = "10",
       account_routing = AccountRoutingJsonV121(scheme = "account_number", address = account.accountNr))
   } 
+  
+  def getNtlv7WithNtlv1(username: String, accountId: String, joniMfuser: JoniMfUser): Ntlv7 = {
+
+    implicit val formats = net.liftweb.json.DefaultFormats
+    //Creating JSON AST
+    //Create case class object JoniMfUser
+    val accountValues = mapAccountIdToAccountValues(accountId)
+    val branchId = accountValues.branchId
+    val accountNumber = accountValues.accountNumber
+    val accountType = accountValues.accountType
+    val cbsToken = joniMfuser.SDR_JONI.MFTOKEN
+    val callNtlv1 = getNtlv1Mf(username,
+      joniMfuser.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
+      joniMfuser.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
+      cbsToken
+    )
+    //TODO: will use the first mobile phone contact available. Check.
+    val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
+      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
+
+
+    val callNtlv7 = getNtlv7Mf(branchId,
+      accountType,
+      accountNumber,
+      username,
+      cbsToken,
+      mobilePhoneData.O1_TEL_AREA,
+      mobilePhoneData.O1_TEL_NUM
+    )
+    callNtlv7
+
+  }
+  
 
   //Helper functions end here--------------------------------------------------------------------------------------------
 
@@ -879,12 +912,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
     val joniMfCall = getJoni(username).extract[JoniMfUser]
     //Todo: just gets limit for the leading account instead of limit and balance for all
-    val nt1cBCall = getNt1cBMfHttpApache(
-      username,
-      branch = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
-      accountType = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
-      accountNumber = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
-      cbsToken = outboundGetCustomersByUserIdFuture.authInfo.cbsToken)
+    val callNtlv1 = getNtlv1Mf(username,
+      joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
+      joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
+      outboundGetCustomersByUserIdFuture.authInfo.cbsToken
+    )
+    val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
+      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
+    
+    val emailAddress = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => !x.O1_MAIL_ADDRESS.trim().isEmpty).getOrElse(
+      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    )
+    
     
     val result = InternalFullCustomer(
       status = "",
@@ -894,19 +933,19 @@ object LeumiDecoder extends Decoder with StrictLogging {
       bankId = "10",
       number = username,
       legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
-      mobileNumber = "notinthiscall",
-      email = "notinthiscall",
-      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), "notinthiscall"),
-      dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA),
+      mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
+      email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
+      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("1971111"), "notinthiscall"),
+      dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
       relationshipStatus = "notfromthiscall",
       dependents = 0,
-      dobOfDependents = List(simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA)),
+      dobOfDependents = List(simpleTransactionDateFormat.parse("19711111")),
       highestEducationAttained = "",
       employmentStatus = "notfromthiscall",
       creditRating = CreditRating("notfromthiscall","notfromthiscall"),
-      creditLimit =  AmountOfMoney(defaultCurrency, nt1cBCall.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI),
+      creditLimit =  AmountOfMoney(defaultCurrency, "0"),
       kycStatus = true,
-      lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST)
+      lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
     )
     InboundGetCustomersByUserIdFuture(outboundGetCustomersByUserIdFuture.authInfo, List(result))
   }
