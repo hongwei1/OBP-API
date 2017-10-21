@@ -369,6 +369,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundGetAccounts = {
+    logger.debug("Enter getBankAccounts")
     val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username, !getAccountsInput.callMfFlag)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
