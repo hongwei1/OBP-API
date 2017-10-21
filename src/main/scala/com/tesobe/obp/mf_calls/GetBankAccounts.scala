@@ -3,8 +3,10 @@ package com.tesobe.obp
 import java.security.MessageDigest
 
 import com.tesobe.obp.Encryption.encryptToken
-import com.tesobe.obp.JoniMf.getJoni
+import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getJoniMfHttpApache, replaceEmptyObjects}
+import com.tesobe.obp.june2017.LeumiDecoder.cachedJoni
 import net.liftweb.json.JValue
+import net.liftweb.json.JsonParser.parse
 import net.liftweb.util.SecurityHelpers._
 
 import scala.collection.mutable.ListBuffer
@@ -12,11 +14,17 @@ import scala.collection.mutable.ListBuffer
 
 object GetBankAccounts {
 
-  def getBasicBankAccountsForUser(userName: String): List[BasicBankAccount] = {
+  def getBasicBankAccountsForUser(userName: String, useCache: Boolean): List[BasicBankAccount] = {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
-    val jsonAst: JValue = getJoni(userName)
+    val json: String = useCache match {
+      case true => cachedJoni.get(userName).getOrElse("This should not be possible: Empty cachedJoni")
+      case false => 
+        cachedJoni.set(userName, getJoniMfHttpApache(userName))
+        cachedJoni.get(userName).getOrElse("This should not be possible: Empty cachedJoni")
+    }
+    val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification

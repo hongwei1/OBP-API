@@ -5,7 +5,7 @@ import java.util.Date
 
 import com.tesobe.obp.ErrorMessages.NoCreditCard
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
-import com.tesobe.obp.JoniMf.{getJoni, getMFToken}
+import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getJoni, getMFToken, replaceEmptyObjects}
 import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cBMf.getNt1cBMfHttpApache
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
@@ -26,11 +26,13 @@ import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
+import com.tesobe.obp.TTLCache._
 import com.tesobe.obp._
 import com.tesobe.obp.june2017.AccountRoutingJsonV121
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json.JsonParser.parse
 
 import scala.collection.immutable.List
 import scala.collection.mutable
@@ -67,6 +69,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("MM")
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
   val simpleLastLoginFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
+
+  val cachedJoni = TTLCache[String](10)  //10 Minutes for now
 
   //TODO: Replace with caching solution for production
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
@@ -247,6 +251,13 @@ object LeumiDecoder extends Decoder with StrictLogging {
       userId = userId //userId
     )
   }
+  def getJoniMfUserFromCache(username: String) = {
+    implicit val formats = net.liftweb.json.DefaultFormats
+    val json = cachedJoni.get(username).getOrElse("This should not happen! E")
+    val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
+    //Create case class object JoniMfUser
+    jsonAst.extract[JoniMfUser]
+  }
   
 /*  def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
     TransactionRequest(
@@ -288,39 +299,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
       account_routing = AccountRoutingJsonV121(scheme = "account_number", address = account.accountNr))
   } 
   
-  def getNtlv7WithNtlv1(username: String, accountId: String, joniMfuser: JoniMfUser): Ntlv7 = {
-
-    implicit val formats = net.liftweb.json.DefaultFormats
-    //Creating JSON AST
-    //Create case class object JoniMfUser
-    val accountValues = mapAccountIdToAccountValues(accountId)
-    val branchId = accountValues.branchId
-    val accountNumber = accountValues.accountNumber
-    val accountType = accountValues.accountType
-    val cbsToken = joniMfuser.SDR_JONI.MFTOKEN
-    val callNtlv1 = getNtlv1Mf(username,
-      joniMfuser.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
-      joniMfuser.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
-      cbsToken
-    )
-    //TODO: will use the first mobile phone contact available. Check.
-    val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
-      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
-
-
-    val callNtlv7 = getNtlv7Mf(branchId,
-      accountType,
-      accountNumber,
-      username,
-      cbsToken,
-      mobilePhoneData.O1_TEL_AREA,
-      mobilePhoneData.O1_TEL_NUM
-    )
-    callNtlv7
-
-  }
-  
-
   //Helper functions end here--------------------------------------------------------------------------------------------
 
   //Processor functions start here---------------------------------------------------------------------------------------
@@ -346,7 +324,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       logger.debug("AccountId not mapped. This should not happen in normal business flow")
     }
     val accountNr = mapAccountIdToAccountValues(getAccount.accountId).accountNumber
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
+    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
@@ -355,7 +333,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getBankAccountByAccountNumber(getAccount: OutboundGetAccountbyAccountNumber): InboundGetAccountbyAccountID = {
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username)
+    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
@@ -365,7 +343,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundGetAccounts = {
-    val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username)
+    val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username, !getAccountsInput.callMfFlag)
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
 
@@ -378,7 +356,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getCoreAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
-    val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username)
+    val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
     var result = new ListBuffer[CoreAccountJsonV300]
     for (i <- mfAccounts)  {
       result += mapBasicBankAccountToCoreAccountJsonV300(i)
@@ -438,8 +416,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getTransaction(getTransactionRequest: OutboundGetTransaction): InboundGetTransaction = {
     logger.debug(s"get Transaction for ($getTransactionRequest)")
     val allTransactions: List[InternalTransaction] = {
-      if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
-        mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
+
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
         getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
@@ -448,34 +425,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           50,
           simpleTransactionDate, simpleTransactionDate
         )).data
-      } else if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
-        !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
-        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null)) //TODO , need fix
-        val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
-        val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
-        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
-          getTransactionRequest.bankId,
-          getTransactionRequest.accountId,
-          50,
-          simpleTransactionDate, simpleTransactionDate
-        )).data
-      } else if (!mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
-        mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
-        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
-          getTransactionRequest.bankId,
-          getTransactionRequest.accountId,
-          50,
-          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000"
-        )).data
-      } else {
-        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null))
-        getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
-          getTransactionRequest.bankId,
-          getTransactionRequest.accountId,
-          50,
-          "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000"
-        )).data
-      }
+
     }
 
     //TODO: Error handling
@@ -695,12 +645,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createChallenge)")
-
-    implicit val formats = net.liftweb.json.DefaultFormats
-    //Creating JSON AST
-    val jsonAst: JValue = getJoni(createChallenge.authInfo.username)
-    //Create case class object JoniMfUser
-    val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
+    val jsonExtract = getJoniMfUserFromCache(createChallenge.authInfo.username)
     val accountValues = mapAccountIdToAccountValues(createChallenge.accountId)
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
@@ -910,7 +855,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserIdFuture): InboundGetCustomersByUserIdFuture = {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
-    val joniMfCall = getJoni(username).extract[JoniMfUser]
+    val joniMfCall = getJoniMfUserFromCache(username)
     //Todo: just gets limit for the leading account instead of limit and balance for all
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
