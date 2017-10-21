@@ -302,14 +302,20 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
   def getCustomerFn: Business = {msg =>
     logger.debug(s"Processing getCustomerFn ${msg.record.value}")
-      //    /* call Decoder for extracting data from source file */
-      val response: (OutboundGetCustomersByUserIdFuture => InboundGetCustomersByUserIdFuture) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCustomer(q) }
-      val r = decode[OutboundGetCustomersByUserIdFuture](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCustomersByUserIdFuture` case class for OBP-API and Adapter sides : ", e);
-        case Right(y) => response(y).asJson.noSpaces
-      }
+    try {
+      /* call Decoder for extracting data from source file */
+      val kafkaRecordValue = msg.record.value()
+      val outboundGetCustomerByUserIdFuture  = Extraction.extract[OutboundGetCustomersByUserIdFuture](json.parse(kafkaRecordValue))
+      val abc: InboundGetCustomersByUserIdFuture = com.tesobe.obp.june2017.LeumiDecoder.getCustomer(outboundGetCustomerByUserIdFuture)
+      val r = prettyRender(Extraction.decompose(abc))
       Future(msg, r)
- 
+    } catch {
+      case m: Throwable =>
+        logger.error("getCustomerFn-unknown error", m)
+
+        val errorBody = ""
+        Future(msg, prettyRender(Extraction.decompose(errorBody)))
+    }
   }
 
 

@@ -494,19 +494,19 @@ case class InternalFullCustomer(
   mobileNumber : String,
   email : String,
   faceImage : CustomerFaceImage,
-  dateOfBirth: String,
+  dateOfBirth: Date,
   relationshipStatus: String,
   dependents: Int,
-  dobOfDependents: List[String],
+  dobOfDependents: List[Date],
   highestEducationAttained: String,
   employmentStatus: String,
   creditRating : CreditRating,
   creditLimit: AmountOfMoney,
   kycStatus: Boolean,
-  lastOkDate: String
+  lastOkDate: Date
 )
 
-case class CustomerFaceImage(date : String, url : String)
+case class CustomerFaceImage(date : Date, url : String)
 case class CreditRating(rating: String, source: String)
 
 

@@ -30,6 +30,7 @@ import com.tesobe.obp._
 import com.tesobe.obp.june2017.AccountRoutingJsonV121
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
+import net.liftweb.json.JsonAST.JValue
 
 import scala.collection.immutable.List
 import scala.collection.mutable
@@ -246,6 +247,37 @@ object LeumiDecoder extends Decoder with StrictLogging {
       userId = userId //userId
     )
   }
+  
+/*  def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
+    TransactionRequest(
+      id = TransactionIdValues(),
+      `type` = " ",
+      from =  TransactionRequestAccount("10", accountId),
+      details = "",
+      body =  TransactionRequestBody(
+        TransactionRequestAccount("notinthiscall", "notinthiscall"),
+        AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA),
+        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),
+      transaction_ids = "",
+      status = "",
+      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA),
+      end_date = simpleTransactionDateFormat.parse("20171111"),
+      challenge: TransactionRequestChallenge,
+      charge: TransactionRequestCharge,
+      charge_policy: String,
+      counterparty_id :CounterpartyId,
+      name :String,
+      this_bank_id : BankId,
+      this_account_id : AccountId,
+      this_view_id :ViewId,
+      other_account_routing_scheme : String,
+      other_account_routing_address : String,
+      other_bank_routing_scheme : String,
+      other_bank_routing_address : String,
+      is_beneficiary :Boolean
+    )
+    
+  }*/
   
   
   def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccountJsonV300 = {
@@ -697,7 +729,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       cbsToken
     )
     
-    var result = new ListBuffer[TransactionRequest]
+/*    var result = new ListBuffer[TransactionRequest]
+    for (i <- nt1c3result.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA)  {
+      result += mapNt1c3ToTransactionRequest(i)
+    }*/
 
     InboundGetTransactionRequests210(
       outboundGetTransactionRequests210.authInfo,
@@ -861,17 +896,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
       legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
       mobileNumber = "notinthiscall",
       email = "notinthiscall",
-      faceImage = CustomerFaceImage(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA, "notinthiscall"),
-      dateOfBirth= joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA,
+      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), "notinthiscall"),
+      dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA),
       relationshipStatus = "notfromthiscall",
       dependents = 0,
-      dobOfDependents = List(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA),
+      dobOfDependents = List(simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA)),
       highestEducationAttained = "",
       employmentStatus = "notfromthiscall",
       creditRating = CreditRating("notfromthiscall","notfromthiscall"),
       creditLimit =  AmountOfMoney(defaultCurrency, nt1cBCall.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI),
       kycStatus = true,
-      lastOkDate = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST
+      lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST)
     )
     InboundGetCustomersByUserIdFuture(outboundGetCustomersByUserIdFuture.authInfo, List(result))
   }
