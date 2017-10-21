@@ -274,7 +274,7 @@ object ErrorMessages {
   // Reserved for adapter (south of Kafka) messages
   
   
-  
+  class JoniCacheEmptyException(msg: String = JoniCacheEmpty) extends Exception(msg: String)
   
 }
 

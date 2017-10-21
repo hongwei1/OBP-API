@@ -19,10 +19,10 @@ object GetBankAccounts {
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
     val json: String = useCache match {
-      case true => cachedJoni.get(username).getOrElse(throw new RuntimeException(s"$JoniCacheEmpty. The JONI input$username"))
+      case true => cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty. The JONI input$username"))
       case false => 
         cachedJoni.set(username, getJoniMfHttpApache(username))
-        cachedJoni.get(username).getOrElse(throw new RuntimeException(s"$JoniCacheEmpty. The JONI input$username"))
+        cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty. The JONI input$username"))
     }
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser

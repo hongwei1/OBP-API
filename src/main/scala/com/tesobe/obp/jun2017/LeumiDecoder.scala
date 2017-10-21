@@ -247,7 +247,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   def getJoniMfUserFromCache(username: String) = {
     implicit val formats = net.liftweb.json.DefaultFormats
-    val json = cachedJoni.get(username).getOrElse(throw new RuntimeException(s"$JoniCacheEmpty. The JONI input$username"))
+    val json = cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty. The JONI input$username"))
     logger.debug(s"getJoniMfUserFromCache.cacheJoni result:$json")
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser
