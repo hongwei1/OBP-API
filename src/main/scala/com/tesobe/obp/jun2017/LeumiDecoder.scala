@@ -70,7 +70,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
   val simpleLastLoginFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
 
-  val cachedJoni = TTLCache[String](10)  //10 Minutes for now
+  val cachedJoni = TTLCache[String](10080)  //1 week in minutes for now
 
   //TODO: Replace with caching solution for production
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
@@ -288,8 +288,38 @@ object LeumiDecoder extends Decoder with StrictLogging {
       other_bank_routing_address = "",
       is_beneficiary = false
     )
-    
   }
+
+  def mapNt1c4ToTransactionRequest(transactions: TnaTnuaBodedet, accountId: String): TransactionRequest = {
+    TransactionRequest(
+      id = TransactionRequestId(""),
+      `type` = "notInNt1c4",
+      from =  TransactionRequestAccount("10", accountId),
+      details = TransactionRequestBody(
+        TransactionRequestAccount("notinthiscall", "notinthiscall"),
+        AmountOfMoney("ILS", transactions.TNA_TNUA_BODEDET.TNA_SCHUM), //amount from Nt1c4
+        description = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA ),  //description from NT1c4
+      transaction_ids = "",
+      status = "",
+      start_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_BITZUA), //nt1c4 date of request processing
+      end_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH ), //nt1c4 date of value for request
+      challenge = TransactionRequestChallenge("",0,""),
+      charge = TransactionRequestCharge("",AmountOfMoney("ILS", "0")),
+      charge_policy = "",
+      counterparty_id = CounterpartyId(""),
+      name = "",
+      this_bank_id = BankId("10"),
+      this_account_id = AccountId(accountId),
+      this_view_id = ViewId(""),
+      other_account_routing_scheme = "",
+      other_account_routing_address = "",
+      other_bank_routing_scheme = "",
+      other_bank_routing_address = "",
+      is_beneficiary = false
+    )
+  }
+  
+  
   
   
   def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccountJsonV300 = {
@@ -712,6 +742,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     var result = new ListBuffer[TransactionRequest]
     for (i <- nt1c3result.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA)  {
       result += mapNt1c3ToTransactionRequest(i,accountId)
+    }
+    for (i <- nt1c4result.TNATSHUVATAVLAIT1.TNA_SHETACH_LE_SEND_NOSAF.TNA_TNUOT.TNA_PIRTEY_TNUA)  {
+      result += mapNt1c4ToTransactionRequest(i, accountId)
     }
 
     InboundGetTransactionRequests210(
