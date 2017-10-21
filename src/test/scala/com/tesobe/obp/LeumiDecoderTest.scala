@@ -18,7 +18,7 @@ class LeumiDecoderTest  extends ServerSetup {
   val mfToken = "?+1         81433020102612"
   
   test("getBankAccounts works for Stub"){
-    val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", "karl", ""),true, null)) //TODO ,need fix
+    val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", "karl", ""),false, null)) //TODO ,need fix
 
     //getBalance is not called here
     result should be (InboundGetAccounts(AuthInfo("karlsid", "karl", mfToken),
