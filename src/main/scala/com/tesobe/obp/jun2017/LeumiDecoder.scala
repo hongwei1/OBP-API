@@ -259,36 +259,35 @@ object LeumiDecoder extends Decoder with StrictLogging {
     jsonAst.extract[JoniMfUser]
   }
   
-/*  def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
+  def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
     TransactionRequest(
-      id = TransactionIdValues(),
+      id = TransactionRequestId(""),
       `type` = " ",
       from =  TransactionRequestAccount("10", accountId),
-      details = "",
-      body =  TransactionRequestBody(
+      details = TransactionRequestBody(
         TransactionRequestAccount("notinthiscall", "notinthiscall"),
-        AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA),
-        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),
+        AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
+        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),  //description from NT1c3
       transaction_ids = "",
       status = "",
-      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA),
+      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3
       end_date = simpleTransactionDateFormat.parse("20171111"),
-      challenge: TransactionRequestChallenge,
-      charge: TransactionRequestCharge,
-      charge_policy: String,
-      counterparty_id :CounterpartyId,
-      name :String,
-      this_bank_id : BankId,
-      this_account_id : AccountId,
-      this_view_id :ViewId,
-      other_account_routing_scheme : String,
-      other_account_routing_address : String,
-      other_bank_routing_scheme : String,
-      other_bank_routing_address : String,
-      is_beneficiary :Boolean
+      challenge = TransactionRequestChallenge("",0,""),
+      charge = TransactionRequestCharge("",AmountOfMoney("ILS", "0")),
+      charge_policy = "",
+      counterparty_id = CounterpartyId(""),
+      name = "",
+      this_bank_id = BankId("10"),
+      this_account_id = AccountId(accountId),
+      this_view_id = ViewId(""),
+      other_account_routing_scheme = "",
+      other_account_routing_address = "",
+      other_bank_routing_scheme = "",
+      other_bank_routing_address = "",
+      is_beneficiary = false
     )
     
-  }*/
+  }
   
   
   def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccountJsonV300 = {
@@ -683,8 +682,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getTransactionRequests(outboundGetTransactionRequests210: OutboundGetTransactionRequests210): InboundGetTransactionRequests210 = {
-
-    val accountValues = mapAccountIdToAccountValues(outboundGetTransactionRequests210.counterparty.accountId)
+    
+    val accountId = outboundGetTransactionRequests210.counterparty.accountId
+    val accountValues = mapAccountIdToAccountValues(accountId)
     val branchId = accountValues.branchId
     val accountNumber = accountValues.accountNumber
     val accountType = accountValues.accountType
@@ -707,10 +707,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       cbsToken
     )
     
-/*    var result = new ListBuffer[TransactionRequest]
+    var result = new ListBuffer[TransactionRequest]
     for (i <- nt1c3result.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA)  {
-      result += mapNt1c3ToTransactionRequest(i)
-    }*/
+      result += mapNt1c3ToTransactionRequest(i,accountId)
+    }
 
     InboundGetTransactionRequests210(
       outboundGetTransactionRequests210.authInfo,

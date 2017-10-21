@@ -444,8 +444,7 @@ case class TransactionRequest (
   id: TransactionRequestId,
   `type` : String,
   from: TransactionRequestAccount,
-  details: JValue,
-  body: TransactionRequestBody, 
+  details: TransactionRequestBody, 
   transaction_ids: String,
   status: String,
   start_date: Date,
@@ -464,6 +463,10 @@ case class TransactionRequest (
   other_bank_routing_address : String,
   is_beneficiary :Boolean
 )
+
+case class TransactionRequestDetails(to: TransactionRequestDetailsTo, value: TransactionRequestDetailsValue)
+case class TransactionRequestDetailsTo(bank_id: String, account_id: String)
+case class TransactionRequestDetailsValue(currency: String, amount: String)
 
 case class CustomerFaceImageJson(
   url: String,
