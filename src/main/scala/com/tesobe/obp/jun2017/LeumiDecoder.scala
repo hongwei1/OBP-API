@@ -450,7 +450,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         )).data
       } else if (mapTransactionIdToTransactionValues.contains(getTransactionRequest.transactionId) &&
         !mapAccountIdToAccountValues.contains(getTransactionRequest.accountId)) {
-        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null)) //TODO , need fix
+        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo,false, null)) //TODO , need fix
         val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
         val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
         getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
@@ -468,7 +468,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2000"
         )).data
       } else {
-        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo, null))
+        getBankAccounts(OutboundGetAccounts(getTransactionRequest.authInfo,false, null))
         getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
           getTransactionRequest.bankId,
           getTransactionRequest.accountId,
