@@ -306,8 +306,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val kafkaRecordValue = msg.record.value()
       val outboundGetCustomerByUserIdFuture  = Extraction.extract[OutboundGetCustomersByUserIdFuture](json.parse(kafkaRecordValue))
-      val abc: InboundGetCustomersByUserIdFuture = com.tesobe.obp.june2017.LeumiDecoder.getCustomer(outboundGetCustomerByUserIdFuture)
-      val r = prettyRender(Extraction.decompose(abc))
+      val inboundGetCustomersByUserIdFuture  = com.tesobe.obp.june2017.LeumiDecoder.getCustomer(outboundGetCustomerByUserIdFuture)
+      val r = prettyRender(Extraction.decompose(inboundGetCustomersByUserIdFuture))
       Future(msg, r)
     } catch {
       case m: Throwable =>
@@ -466,8 +466,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       /* call Decoder for extracting data from source file */
       val kafkaRecordValue = msg.record.value()
       val outboundGetTransactionRequests210  = Extraction.extract[OutboundGetTransactionRequests210](json.parse(kafkaRecordValue))
-      val abc: InboundGetTransactionRequests210 = com.tesobe.obp.june2017.LeumiDecoder.getTransactionRequests(outboundGetTransactionRequests210)
-      val r = prettyRender(Extraction.decompose(abc))
+      val inboundGetTransactionRequests210 = com.tesobe.obp.june2017.LeumiDecoder.getTransactionRequests(outboundGetTransactionRequests210)
+      val r = prettyRender(Extraction.decompose(InboundGetTransactionRequests210))
       Future(msg, r)
     } catch {
       case m: Throwable =>

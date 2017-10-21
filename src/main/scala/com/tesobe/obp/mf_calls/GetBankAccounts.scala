@@ -3,6 +3,7 @@ package com.tesobe.obp
 import java.security.MessageDigest
 
 import com.tesobe.obp.Encryption.encryptToken
+import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getJoniMfHttpApache, replaceEmptyObjects}
 import com.tesobe.obp.june2017.LeumiDecoder.cachedJoni
 import net.liftweb.json.JValue
@@ -11,18 +12,17 @@ import net.liftweb.util.SecurityHelpers._
 
 import scala.collection.mutable.ListBuffer
 
-
 object GetBankAccounts {
 
-  def getBasicBankAccountsForUser(userName: String, useCache: Boolean): List[BasicBankAccount] = {
+  def getBasicBankAccountsForUser(username: String, useCache: Boolean): List[BasicBankAccount] = {
     //Simulating mainframe call
     implicit val formats = net.liftweb.json.DefaultFormats
     //Creating JSON AST
     val json: String = useCache match {
-      case true => cachedJoni.get(userName).getOrElse("This should not be possible: Empty cachedJoni")
+      case true => cachedJoni.get(username).getOrElse(throw new RuntimeException(s"$JoniCacheEmpty. The JONI input$username"))
       case false => 
-        cachedJoni.set(userName, getJoniMfHttpApache(userName))
-        cachedJoni.get(userName).getOrElse("This should not be possible: Empty cachedJoni")
+        cachedJoni.set(username, getJoniMfHttpApache(username))
+        cachedJoni.get(username).getOrElse(throw new RuntimeException(s"$JoniCacheEmpty. The JONI input$username"))
     }
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser

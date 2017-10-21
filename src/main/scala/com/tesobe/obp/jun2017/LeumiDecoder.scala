@@ -1,16 +1,14 @@
 package com.tesobe.obp.june2017
 
 import java.text.SimpleDateFormat
-import java.util.Date
 
-import com.tesobe.obp.ErrorMessages.NoCreditCard
+import com.tesobe.obp.ErrorMessages.{NoCreditCard, _}
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
-import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getJoni, getMFToken, replaceEmptyObjects}
-import com.tesobe.obp.Nt1cBMf.getBalance
-import com.tesobe.obp.Nt1cBMf.getNt1cBMfHttpApache
-import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
+import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getMFToken, replaceEmptyObjects}
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
+import com.tesobe.obp.Nt1cBMf.getBalance
+import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
 import com.tesobe.obp.Ntbd2v050Mf.getNtbd2v050
@@ -26,16 +24,12 @@ import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
-import com.tesobe.obp.TTLCache._
 import com.tesobe.obp._
-import com.tesobe.obp.june2017.AccountRoutingJsonV121
 import com.typesafe.scalalogging.StrictLogging
-import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.JsonParser.parse
 
 import scala.collection.immutable.List
-import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Map}
 
 
@@ -253,7 +247,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   def getJoniMfUserFromCache(username: String) = {
     implicit val formats = net.liftweb.json.DefaultFormats
-    val json = cachedJoni.get(username).getOrElse("This should not happen! E")
+    val json = cachedJoni.get(username).getOrElse(throw new RuntimeException(s"$JoniCacheEmpty. The JONI input$username"))
+    logger.debug(s"getJoniMfUserFromCache.cacheJoni result:$json")
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser
     jsonAst.extract[JoniMfUser]
