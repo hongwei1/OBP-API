@@ -1,7 +1,5 @@
 package com.tesobe.obp
 
-import java.util.Date
-
 import akka.kafka.ConsumerMessage.CommittableMessage
 import akka.stream.Materializer
 import com.tesobe.obp.SouthKafkaStreamsActor.Business
@@ -316,7 +314,9 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       case m: Throwable =>
         logger.error("getCustomerFn-unknown error", m)
         val errorBody = InboundGetCustomersByUserIdFuture(AuthInfo("","",""),
-          List(InternalFullCustomer("","",List(
+          List(InternalFullCustomer("",
+            m.getMessage,
+            List(
             InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
             InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
           ),"","","","","","",CustomerFaceImage(simpleTransactionDateFormat.parse("19481231"),""),
