@@ -18,3 +18,15 @@ gateway.token_secret=secret
 
 write_metrics=true
 display_internal_errors=true
+
+#cache
+connector.cache.ttl.seconds.getBank =100
+connector.cache.ttl.seconds.getBanks =100
+connector.cache.ttl.seconds.getUser =10
+connector.cache.ttl.seconds.getAccount =10
+connector.cache.ttl.seconds.getAccountHolderTTL =10
+connector.cache.ttl.seconds.getAccounts =3
+connector.cache.ttl.seconds.getTransaction =10
+connector.cache.ttl.seconds.getTransactions =10
+connector.cache.ttl.seconds.getCounterpartyFromTransaction =10
+connector.cache.ttl.seconds.getCounterpartiesFromTransaction =10
