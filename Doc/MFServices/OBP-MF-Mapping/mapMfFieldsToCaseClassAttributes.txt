@@ -101,30 +101,32 @@ List(InternalFullCustomer(
          
 InboundGetTransactionRequests210:
 has data payload for nt1c3(future transactions)       
-         TransactionRequest(
-               id = TransactionRequestId(""),
-               `type` = " ",
-               from =  TransactionRequestAccount("10", accountId),
-               details = TransactionRequestBody(
-                 TransactionRequestAccount("notinthiscall", "notinthiscall"),
-                 AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
-                 description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),  //description from NT1c3
-               transaction_ids = "",
-               status = "",
-               start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3
-               end_date = simpleTransactionDateFormat.parse("20171111"),
-               challenge = TransactionRequestChallenge("",0,""),
-               charge = TransactionRequestCharge("",AmountOfMoney("ILS", "0")),
-               charge_policy = "",
-               counterparty_id = CounterpartyId(""),
-               name = "",
-               this_bank_id = BankId("10"),
-               this_account_id = AccountId(accountId),
-               this_view_id = ViewId(""),
-               other_account_routing_scheme = "",
-               other_account_routing_address = "",
-               other_bank_routing_scheme = "",
-               other_bank_routing_address = "",
-               is_beneficiary = false
-             )
+    TransactionRequest(
+      id = TransactionRequestId(""),
+      `type` = if (transactions.TA1_TNUA_BODEDET.TA1_IND_KARTIS_ASHRAI == "1") {
+        "credit card"
+      }else if (transactions.TA1_TNUA_BODEDET.TA1_IND_HOR_KEVA == "1") {"standing order"} else "", //nt1c3
+      from =  TransactionRequestAccount("10", accountId),
+      details = TransactionRequestBody(
+        TransactionRequestAccount("notinthiscall", "notinthiscall"),
+        AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
+        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),  //description from NT1c3
+      transaction_ids = "",
+      status = "",
+      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3 date of request processing
+      end_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
+      challenge = TransactionRequestChallenge("",0,""),
+      charge = TransactionRequestCharge("",AmountOfMoney("ILS", "0")),
+      charge_policy = "",
+      counterparty_id = CounterpartyId(""),
+      name = "",
+      this_bank_id = BankId("10"),
+      this_account_id = AccountId(accountId),
+      this_view_id = ViewId(""),
+      other_account_routing_scheme = "",
+      other_account_routing_address = "",
+      other_bank_routing_scheme = "",
+      other_bank_routing_address = "",
+      is_beneficiary = false
+    )
                         

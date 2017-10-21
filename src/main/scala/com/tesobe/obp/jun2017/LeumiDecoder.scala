@@ -262,7 +262,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
     TransactionRequest(
       id = TransactionRequestId(""),
-      `type` = " ",
+      `type` = if (transactions.TA1_TNUA_BODEDET.TA1_IND_KARTIS_ASHRAI == "1") {
+        "credit card"
+      }else if (transactions.TA1_TNUA_BODEDET.TA1_IND_HOR_KEVA == "1") {"standing order"} else "", //nt1c3
       from =  TransactionRequestAccount("10", accountId),
       details = TransactionRequestBody(
         TransactionRequestAccount("notinthiscall", "notinthiscall"),
@@ -270,8 +272,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),  //description from NT1c3
       transaction_ids = "",
       status = "",
-      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3
-      end_date = simpleTransactionDateFormat.parse("20171111"),
+      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3 date of request processing
+      end_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
       challenge = TransactionRequestChallenge("",0,""),
       charge = TransactionRequestCharge("",AmountOfMoney("ILS", "0")),
       charge_policy = "",
