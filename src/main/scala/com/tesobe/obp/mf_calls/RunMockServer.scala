@@ -34,6 +34,7 @@ object RunMockServer extends StrictLogging{
             new Header("Content-Type", "application/json; charset=utf-8")
           )
           .withBody(jsonToString("joni_result.json"))
+          //.withBody(jsonToString("error_result.json"))
       )
     //2 Nt1cB
     mockServer

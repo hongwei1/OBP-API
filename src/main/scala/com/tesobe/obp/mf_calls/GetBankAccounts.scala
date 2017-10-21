@@ -21,7 +21,9 @@ object GetBankAccounts {
     val json: String = useCache match {
       case true => cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty. The JONI input$username"))
       case false => 
-        cachedJoni.set(username, getJoniMfHttpApache(username))
+        val result = getJoniMfHttpApache(username)
+        if (result.contains("PAPIErrorResponse")) throw new JoniFailedExeption(result) else
+        cachedJoni.set(username, result)
         cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty. The JONI input$username"))
     }
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))

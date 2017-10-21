@@ -264,6 +264,7 @@ object ErrorMessages {
   // Reserved for adapter (south of Kafka) messages
   val NoCreditCard = "OBP-60000: No valid credit card or no credit card with sufficient withdrawal limit found"
   val JoniCacheEmpty = "OBP-60001: Joni Cache return empty, do not cache it before! "
+  val JoniFailed = "OBP-60002: Joni Call to CBS failed"
   
   
   
@@ -275,6 +276,7 @@ object ErrorMessages {
   
   
   class JoniCacheEmptyException(msg: String = JoniCacheEmpty) extends Exception(msg: String)
+  class JoniFailedExeption(msg: String = JoniFailed) extends Exception(msg: String)
   
 }
 
