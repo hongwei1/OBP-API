@@ -37,7 +37,7 @@ case class OutboundGetAdapterInfo(date: String) extends TopicTrait
 case class OutboundGetBanks(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetBank(authInfo: AuthInfo, bankId: String) extends TopicTrait
 case class OutboundGetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicTrait
-case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalCustomers)  extends TopicTrait
+case class OutboundGetAccounts(authInfo: AuthInfo, callMfFlag: Boolean, customers:InternalBasicCustomers)  extends TopicTrait
 case class OutboundGetCoreAccounts(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicTrait
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
@@ -475,7 +475,7 @@ case class CustomerCreditRatingJSON(
   source: String
 )
 
-case class InternalCustomer(
+case class InternalBasicCustomer(
   bankId:String,
   customerId: String,
   customerNumber: String,
@@ -510,7 +510,7 @@ case class CustomerFaceImage(date : Date, url : String)
 case class CreditRating(rating: String, source: String)
 
 
-case class InternalCustomers(customers: List[InternalCustomer])
+case class InternalBasicCustomers(customers: List[InternalBasicCustomer])
 
 case class OutboundTransactionRequests(
   accountId: String,
