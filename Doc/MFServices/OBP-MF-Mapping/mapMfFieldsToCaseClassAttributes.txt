@@ -96,7 +96,7 @@ List(InternalFullCustomer(
            creditRating = CreditRating("notfromthiscall","notfromthiscall"),
            creditLimit =  AmountOfMoney(defaultCurrency, "0"),
            kycStatus = true,
-           lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
+           lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI, it a last login date an time for the manui(subscriber)
          ))
          
 InboundGetTransactionRequests210:
