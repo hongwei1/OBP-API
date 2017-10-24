@@ -31,7 +31,7 @@ object GetBankAccounts {
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification
     //TODO: Should this be in the props?
-    val allowedAccountTypes = List("330", "430", "110")
+    val allowedAccountTypes = List("330", "340", "110")
     //now extract values from JoniMFUser object into List of BasicBankAccount
     // (will be changed to inboundBankAccount 2017 objects 
     var result = new ListBuffer[BasicBankAccount]()
