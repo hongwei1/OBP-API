@@ -540,7 +540,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/auditor/account",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/owner/account",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -556,7 +556,7 @@
 						"10",
 						"accounts",
 						"yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs",
-						"auditor",
+						"owner",
 						"account"
 					]
 				},
@@ -650,7 +650,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/auditor/account",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/account",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -666,7 +666,7 @@
 						"10",
 						"accounts",
 						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
-						"auditor",
+						"owner",
 						"account"
 					]
 				},
@@ -705,7 +705,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM/auditor/account",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM/owner/account",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -721,7 +721,7 @@
 						"10",
 						"accounts",
 						"kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM",
-						"auditor",
+						"owner",
 						"account"
 					]
 				},
@@ -760,7 +760,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/auditor/account",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/owner/account",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -776,7 +776,7 @@
 						"10",
 						"accounts",
 						"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0",
-						"auditor",
+						"owner",
 						"account"
 					]
 				},
@@ -894,7 +894,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/auditor/transactions",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/owner/transactions",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -910,7 +910,7 @@
 						"10",
 						"accounts",
 						"yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs",
-						"auditor",
+						"owner",
 						"transactions"
 					]
 				},
@@ -949,7 +949,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/auditor/transactions",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transactions",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -965,7 +965,7 @@
 						"10",
 						"accounts",
 						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
-						"auditor",
+						"owner",
 						"transactions"
 					]
 				},
@@ -1004,7 +1004,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM/auditor/transactions",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM/owner/transactions",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1020,7 +1020,7 @@
 						"10",
 						"accounts",
 						"kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM",
-						"auditor",
+						"owner",
 						"transactions"
 					]
 				},
@@ -1059,7 +1059,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/auditor/transactions",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/owner/transactions",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1075,7 +1075,7 @@
 						"10",
 						"accounts",
 						"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0",
-						"auditor",
+						"owner",
 						"transactions"
 					]
 				},
@@ -1114,7 +1114,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/auditor/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0/owner/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1130,7 +1130,7 @@
 						"10",
 						"accounts",
 						"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0",
-						"auditor",
+						"owner",
 						"transactions",
 						"b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM",
 						"transaction"

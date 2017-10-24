@@ -14,6 +14,12 @@ class Nt1CBMfTest extends ServerSetup{
     result should be ("15000")
 
   }
+  test("false mf token shoul fail "){
+     val result = getLimit("N7jut8d","616","330","50180963","=433020102612")
+
+  }
+  
+  
 /*
  test("getLimitJsonAst gets credit limit of account") {
    val result = getLimitJsonAst("./src/test/resources/nt1c_result.json")

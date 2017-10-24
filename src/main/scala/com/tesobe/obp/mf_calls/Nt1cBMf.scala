@@ -7,6 +7,7 @@ import net.liftweb.json.JsonAST.compactRender
 import net.liftweb.json.JsonParser._
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
+import org.apache.http.entity.ContentType
 import org.apache.http.impl.client.DefaultHttpClient
 
 
@@ -40,7 +41,7 @@ object Nt1cBMf extends Config with StrictLogging{
         }
       }
     }""")
-    val jsonBody = new StringEntity(compactRender(json),"UTF-8")
+    val jsonBody = new StringEntity(compactRender(json), ContentType.create("application/json","UTF-8")) //APPLICATION_JSON)
     post.setEntity(jsonBody)
     logger.debug("NT1C_B_000--Request : "+post.toString +"\n Body is :" + compactRender(json))
     val response = client.execute(post)

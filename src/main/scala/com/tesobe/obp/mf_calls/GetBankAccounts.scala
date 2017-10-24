@@ -9,10 +9,11 @@ import com.tesobe.obp.june2017.LeumiDecoder.cachedJoni
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 import net.liftweb.util.SecurityHelpers._
+import collection.JavaConverters
 
 import scala.collection.mutable.ListBuffer
 
-object GetBankAccounts {
+object GetBankAccounts extends Config {
 
   def getBasicBankAccountsForUser(username: String, useCache: Boolean): List[BasicBankAccount] = {
     //Simulating mainframe call
@@ -31,7 +32,8 @@ object GetBankAccounts {
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
     //By specification
     //TODO: Should this be in the props?
-    val allowedAccountTypes = List("330", "340", "110")
+    //val allowedAccountTypes = List("330", "340", "110")
+    val allowedAccountTypes = config.getString("accountTypes.allowed").split(",").map(_.trim).toList
     //now extract values from JoniMFUser object into List of BasicBankAccount
     // (will be changed to inboundBankAccount 2017 objects 
     var result = new ListBuffer[BasicBankAccount]()

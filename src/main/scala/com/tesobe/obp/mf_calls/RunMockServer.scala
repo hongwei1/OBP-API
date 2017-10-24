@@ -2,9 +2,16 @@ package com.tesobe.obp
 
 import com.typesafe.scalalogging.StrictLogging
 import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.model.Header
+import org.mockserver.model.{Body, Header, JsonBody}
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
+import net.liftweb.json.JsonParser.parse
+import org.mockserver.model.Body.Type
+import org.mockserver.matchers.MatchType
+import org.mockserver.model
+import com.google.common.net.MediaType.JSON_UTF_8
+
+import scala.util.parsing.json.JSON
 
 
 
@@ -25,7 +32,7 @@ object RunMockServer extends StrictLogging{
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-          //.withBody("body")
+          //.withBody(jsonToString("joni_request.json").replace(" ","").replace("\n",""))
       )
       .respond(
         response()
@@ -43,8 +50,11 @@ object RunMockServer extends StrictLogging{
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02")
-        //.withBody("body")
-      )
+          //.withBody("", MatchType.ONLY_MATCHING_FIELDS)
+          //.withBody(new Body(JSON,JSON_UTF_8),MatchType.ONLY_MATCHING_FIELDS)
+          //.withBody(new JsonBody("{User: 'N7jut8d'}", MatchType.ONLY_MATCHING_FIELDS)
+          )
+      
       .respond(
         response()
           .withStatusCode(401)

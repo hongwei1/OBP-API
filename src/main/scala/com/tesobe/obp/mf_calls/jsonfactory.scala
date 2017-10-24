@@ -170,6 +170,13 @@ case class Ta1tshuvatavlait1(
 case class Nt1c3(
                  TA1TSHUVATAVLAIT1: Ta1tshuvatavlait1
                 )
+case class Ts00NigreretTchuva(TS00_IBAN: String)
+case class Ts00TvTchuva(TS00_NIGRERET_TCHUVA: Ts00NigreretTchuva)
+case class Ts00PirteyTchuva(TS00_TV_TCHUVA: Ts00TvTchuva)
+case class Shetachtchuva(esbHeaderResponse: EsbHeaderResponse,
+                         MFAdminResponse: MfAdminResponse,
+                         TS00_PIRTEY_TCHUVA: Ts00PirteyTchuva )
+case class Ntib2(SHETACHTCHUVA: Shetachtchuva)
 
 case class TnaTnuaBodedetContent(
                                   TNA_HOR_BIZ_IND: String,

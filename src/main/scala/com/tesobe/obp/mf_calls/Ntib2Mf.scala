@@ -1,8 +1,9 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.HttpClient.makePostRequest
+import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
-import net.liftweb.json.JValue
+import net.liftweb.json.{JValue, parse}
 import net.liftweb.json.JsonParser._
 
 /**
@@ -10,13 +11,8 @@ import net.liftweb.json.JsonParser._
   */
 object Ntib2Mf extends Config with StrictLogging{
   
-  def getNtib2Mf(mainframe: String): String = {
-    val source = scala.io.Source.fromResource(mainframe)
-    val lines = try source.mkString finally source.close()
-    lines
-  }
 
-  def getNtib2Mf(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): String = {
+  def getNtib2Mf(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Ntib2 = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01"
 
@@ -39,24 +35,8 @@ object Ntib2Mf extends Config with StrictLogging{
     """)
 
     val result = makePostRequest(json, path)
-    result
-  }
-  
-  
-  
-  def getIban(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String) = {
-    val parser = (p: Parser) => {
-      def parse: String = p.nextToken match {
-        case FieldStart("TS00_IBAN") => p.nextToken match {
-          case StringVal(token) => token
-          case _ => p.fail("expected string")
-        }
-        case End => p.fail("no field named 'TS00_IBAN'")
-        case _ => parse
-      }
 
-      parse
-    }
-    parse(getNtib2Mf(branch,  accountType,  accountNumber, username, cbsToken), parser)
+    implicit val formats = net.liftweb.json.DefaultFormats
+    parse(replaceEmptyObjects(result)).extract[Ntib2]
   }
 }
