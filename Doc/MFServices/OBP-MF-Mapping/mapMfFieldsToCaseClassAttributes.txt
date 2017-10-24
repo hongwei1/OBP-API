@@ -82,7 +82,7 @@ List(InternalFullCustomer(
            backendMessages = List(InboundStatusMessage("","","","")),
            customerId = getOrCreateCustomerId(username),
            bankId = "10",
-           number = username,
+           number = SDR_JONI.SDR_MANUI.SDRM_USERID,//JONI
            legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
            mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
            email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
@@ -96,7 +96,7 @@ List(InternalFullCustomer(
            creditRating = CreditRating("notfromthiscall","notfromthiscall"),
            creditLimit =  AmountOfMoney(defaultCurrency, "0"),
            kycStatus = true,
-           lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
+           lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI, it a last login date an time for the manui(subscriber)
          ))
          
 InboundGetTransactionRequests210:

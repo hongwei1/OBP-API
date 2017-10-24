@@ -6,7 +6,7 @@ db.url=jdbc:mysql://localhost:3306/obp?user=openapi&password=openapi&verifyServe
 
 
 kafka.bootstrap_hosts=10.236.214.84:9092,10.236.214.87:9092,10.236.214.88:9092
-kafka.akka.timeout=30
+kafka.akka.timeout=29
 remotedata.timeout=30
 
 transactionRequests_enabled=true
@@ -18,3 +18,15 @@ gateway.token_secret=secret
 
 write_metrics=true
 display_internal_errors=true
+
+#cache
+connector.cache.ttl.seconds.getBank =100
+connector.cache.ttl.seconds.getBanks =100
+connector.cache.ttl.seconds.getUser =10
+connector.cache.ttl.seconds.getAccount =10
+connector.cache.ttl.seconds.getAccountHolderTTL =10
+connector.cache.ttl.seconds.getAccounts =3
+connector.cache.ttl.seconds.getTransaction =10
+connector.cache.ttl.seconds.getTransactions =10
+connector.cache.ttl.seconds.getCounterpartyFromTransaction =10
+connector.cache.ttl.seconds.getCounterpartiesFromTransaction =10
