@@ -2,8 +2,6 @@ package com.tesobe.obp.june2017
 
 import java.util.Date
 
-import net.liftweb.json.JsonAST.JValue
-
 import scala.collection.immutable.List
 
 /**
@@ -40,6 +38,7 @@ case class OutboundGetUserByUsernamePassword(authInfo: AuthInfo, password: Strin
 case class OutboundGetAccounts(authInfo: AuthInfo, callMfFlag: Boolean, customers:InternalBasicCustomers)  extends TopicTrait
 case class OutboundGetCoreAccounts(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String) extends TopicTrait
+case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, accountId: String)extends TopicTrait
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait

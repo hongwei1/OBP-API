@@ -195,6 +195,33 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
+  
+  def checkBankAccountExistsFn: Business = { msg =>
+    try {
+      logger.debug(s"Processing bankAccountIdFn ${msg.record.value}")
+      /* call Decoder for extracting data from source file */
+      val kafkaRecordValue = msg.record.value()
+      val outboundCheckBankAccountExists  = Extraction.extract[OutboundCheckBankAccountExists](json.parse(kafkaRecordValue))
+      val inboundGetAccountbyAccountID = com.tesobe.obp.june2017.LeumiDecoder.checkBankAccountExists(outboundCheckBankAccountExists)
+      val r = prettyRender(Extraction.decompose(inboundGetAccountbyAccountID))
+      
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("banksFn-unknown error", m)
+        val errorBody = InboundGetAccountbyAccountID(
+          AuthInfo("","",""),
+          InboundAccountJune2017(
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
+              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            ),
+            "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+        )
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
 
   def bankAccountNumberFn: Business = { msg =>
     logger.debug(s"Processing bankAccountNumberFn ${msg.record.value}")

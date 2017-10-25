@@ -9,7 +9,6 @@ import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
 import com.tesobe.obp.Nt1cBMf.getBalance
 import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
-import com.tesobe.obp.Ntib2Mf.getNtib2Mf
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
 import com.tesobe.obp.Ntbd2v050Mf.getNtbd2v050
@@ -21,6 +20,7 @@ import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
 import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
 import com.tesobe.obp.Ntg6AMf.getNtg6A
 import com.tesobe.obp.Ntg6BMf.getNtg6B
+import com.tesobe.obp.Ntib2Mf.getNtib2Mf
 import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
@@ -372,6 +372,26 @@ object LeumiDecoder extends Decoder with StrictLogging {
     )
   }
 
+  def checkBankAccountExists(getAccount: OutboundCheckBankAccountExists): InboundGetAccountbyAccountID = {
+    //Not cached or invalid AccountId
+    if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
+      logger.debug("AccountId not mapped. This should not happen in normal business flow")
+    }
+    
+    val accountValues = mapAccountIdToAccountValues(getAccount.accountId)
+    val branchid = accountValues.branchId
+    val accountType = accountValues.accountType
+    val accountNr = accountValues.accountNumber
+    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
+    val iban = ""
+    
+    InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
+      getAccount.authInfo.username,
+      mfAccounts.head.cbsToken),
+      mapBasicBankAccountToInboundAccountJune2017WithBalanceandIban(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), iban)
+    )
+  }
+  
   def getBankAccountByAccountNumber(getAccount: OutboundGetAccountbyAccountNumber): InboundGetAccountbyAccountID = {
     val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
