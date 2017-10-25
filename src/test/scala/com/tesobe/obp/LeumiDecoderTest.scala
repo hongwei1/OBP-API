@@ -1,3 +1,4 @@
+
 package com.tesobe.obp
 
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
@@ -84,19 +85,20 @@ class LeumiDecoderTest  extends ServerSetup {
       legalName = "??????????????" + " " + "????????????????????",
       mobileNumber = "",
       email = "",
-      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("19481231"), "notinthiscall"),
+      faceImage = CustomerFaceImage(None, "notinthiscall"),
       dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
       relationshipStatus = "",
       dependents = 0,
-      dobOfDependents = List(simpleTransactionDateFormat.parse("19481231")),
+      dobOfDependents = List(None),
       highestEducationAttained = " ",
       employmentStatus = "",
       creditRating = CreditRating("notfromthiscall","notfromthiscall"),
       creditLimit =  AmountOfMoney(defaultCurrency, "15000"),
       kycStatus = true,
-      lastOkDate = simpleLastLoginFormat.parse("20170611" + "120257")
+      lastOkDate = Some(simpleLastLoginFormat.parse("20170611" + "120257"))
     )))
   }
 
 
 }
+

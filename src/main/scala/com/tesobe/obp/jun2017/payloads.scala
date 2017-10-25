@@ -104,6 +104,7 @@ case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGe
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccountJsonV300])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
+case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -499,16 +500,16 @@ case class InternalFullCustomer(
   dateOfBirth: Date,
   relationshipStatus: String,
   dependents: Int,
-  dobOfDependents: List[Date],
+  dobOfDependents: List[Option[Date]],
   highestEducationAttained: String,
   employmentStatus: String,
   creditRating : CreditRating,
   creditLimit: AmountOfMoney,
   kycStatus: Boolean,
-  lastOkDate: Date
+  lastOkDate: Option[Date]
 )
 
-case class CustomerFaceImage(date : Date, url : String)
+case class CustomerFaceImage(date : Option[Date], url : String)
 case class CreditRating(rating: String, source: String)
 
 
