@@ -41,36 +41,39 @@ class JoniMfTest extends ServerSetup {
    test("getBasicBankAccountsForUser"){
     val accounts = getBasicBankAccountsForUser("joni_result.json", false)
    accounts should be (List(
-     BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(true,false,false)), 
-     BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(true,false,true)),
-     BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(true,false,false)),
+     BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)), 
+     BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
+     BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(false,true,true)),
      //BasicBankAccount("20102642","814","0", AccountPermissions(true,false,false)),
-     BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(true,false,false)),
+     BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
      //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
-     BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(true,false,false))
+     BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
+     BasicBankAccount("20102612","814","330",mfToken,AccountPermissions(true,false,false))
    ))
    
   }
   test("getBasicBankAccountsForUser works first without, then with cache use"){
     val accountsFromMF = getBasicBankAccountsForUser("joni_result.json", false)
     accountsFromMF should be (List(
-      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(true,false,false)),
-      BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(true,false,true)),
-      BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(true,false,false)),
+      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)),
+      BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
+      BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102642","814","0", AccountPermissions(true,false,false)),
-      BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(true,false,false)),
+      BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
-      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(true,false,false))
+      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
+      BasicBankAccount("20102612","814","330",mfToken,AccountPermissions(true,false,false))
     ))
     val accountsFromCache = getBasicBankAccountsForUser("joni_result.json", true)
     accountsFromCache should be (List(
-      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(true,false,false)),
-      BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(true,false,true)),
-      BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(true,false,false)),
+      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)),
+      BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
+      BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102642","814","0", AccountPermissions(true,false,false)),
-      BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(true,false,false)),
+      BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
-      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(true,false,false))
+      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
+      BasicBankAccount("20102612","814","330",mfToken,AccountPermissions(true,false,false))
     ))
 
   }
