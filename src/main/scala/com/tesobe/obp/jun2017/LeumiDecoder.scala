@@ -235,8 +235,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
       amount = amount,
       bankId = "10", // 10 for now (Joni)
       completedDate = completedDate,
-      counterpartyId = "counterpartyId", //TODO, can not get this field from CBS
-      counterpartyName = "counterpartyName", //TODO, can not get this field from CBS
+      counterpartyId = "", //TODO, can not get this field from CBS
+      counterpartyName = "", //TODO, can not get this field from CBS
       currency = defaultCurrency, //ILS 
       description = description,
       newBalanceAmount = newBalanceAmount,
@@ -263,7 +263,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       }else if (transactions.TA1_TNUA_BODEDET.TA1_IND_HOR_KEVA == "1") {"standing order"} else "", //nt1c3
       from =  TransactionRequestAccount("10", accountId),
       details = TransactionRequestBody(
-        TransactionRequestAccount("notinthiscall", "notinthiscall"),
+        TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
         description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA),  //description from NT1c3
       transaction_ids = "",
@@ -292,7 +292,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       `type` = "notInNt1c4",
       from =  TransactionRequestAccount("10", accountId),
       details = TransactionRequestBody(
-        TransactionRequestAccount("notinthiscall", "notinthiscall"),
+        TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TNA_TNUA_BODEDET.TNA_SCHUM), //amount from Nt1c4
         description = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA ),  //description from NT1c4
       transaction_ids = "",
@@ -334,14 +334,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetBanks(getBanks.authInfo, List(InboundBank(
       "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")),
-      "10", "leumi", "leumilogo", "leumiurl")))
+      "10", "leumi", "", "")))
   }
 
   override def getBank(getBank: OutboundGetBank) = {
     InboundGetBank(getBank.authInfo, InboundBank(
       "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")),
-      "10", "leumi", "leumilogo", "leumiurl"))
+      "10", "leumi", "", ""))
   }
 
 
@@ -925,7 +925,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
       mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
       email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
-      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("1971111"), "notinthiscall"),
+      faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("19711111"), ""),
       dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
       relationshipStatus = "",
       dependents = 0,
