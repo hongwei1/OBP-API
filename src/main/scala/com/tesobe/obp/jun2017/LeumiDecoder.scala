@@ -927,12 +927,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
       email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
       faceImage = CustomerFaceImage(simpleTransactionDateFormat.parse("1971111"), "notinthiscall"),
       dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
-      relationshipStatus = "notfromthiscall",
+      relationshipStatus = "",
       dependents = 0,
       dobOfDependents = List(simpleTransactionDateFormat.parse("19711111")),
       highestEducationAttained = "",
-      employmentStatus = "notfromthiscall",
-      creditRating = CreditRating("notfromthiscall","notfromthiscall"),
+      employmentStatus = "",
+      creditRating = CreditRating("",""),
       creditLimit =  AmountOfMoney(defaultCurrency, "0"),
       kycStatus = true,
       lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
