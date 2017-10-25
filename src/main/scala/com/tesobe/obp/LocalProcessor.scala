@@ -333,14 +333,14 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     try {
       /* call Decoder for extracting data from source file */
       val kafkaRecordValue = msg.record.value()
-      val outboundGetCustomerByUserIdFuture  = Extraction.extract[OutboundGetCustomersByUserIdFuture](json.parse(kafkaRecordValue))
-      val inboundGetCustomersByUserIdFuture  = com.tesobe.obp.june2017.LeumiDecoder.getCustomer(outboundGetCustomerByUserIdFuture)
-      val r = prettyRender(Extraction.decompose(inboundGetCustomersByUserIdFuture))
+      val outboundGetCustomerByUserId  = Extraction.extract[OutboundGetCustomersByUserId](json.parse(kafkaRecordValue))
+      val inboundGetCustomersByUserId  = com.tesobe.obp.june2017.LeumiDecoder.getCustomer(outboundGetCustomerByUserId)
+      val r = prettyRender(Extraction.decompose(inboundGetCustomersByUserId))
       Future(msg, r)
     } catch {
       case m: Throwable =>
         logger.error("getCustomerFn-unknown error", m)
-        val errorBody = InboundGetCustomersByUserIdFuture(AuthInfo("","",""),
+        val errorBody = InboundGetCustomersByUserId(AuthInfo("","",""),
           List(InternalFullCustomer("",
             m.getMessage,
             List(

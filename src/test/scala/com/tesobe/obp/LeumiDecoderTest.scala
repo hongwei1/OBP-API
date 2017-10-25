@@ -1,6 +1,6 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, hexEncodedSha256}
+import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.june2017.LeumiDecoder._
 import com.tesobe.obp.june2017._
 
@@ -74,8 +74,8 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getCustomer gives correct result for stubs"){ 
     val customerId = base64EncodedSha256(username + config.getString("salt.global"))
-    val result = getCustomer(OutboundGetCustomersByUserIdFuture(AuthInfo("karlsid", username, mfToken)))should be
-    InboundGetCustomersByUserIdFuture(AuthInfo("karlsid", username, mfToken), List(InternalFullCustomer(status = "",
+    val result = getCustomer(OutboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken)))should be
+    InboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken), List(InternalFullCustomer(status = "",
       errorCode = "",
       backendMessages = List(InboundStatusMessage("","","","")),
       customerId = customerId,

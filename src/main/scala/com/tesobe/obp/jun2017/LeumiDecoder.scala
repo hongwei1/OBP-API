@@ -918,7 +918,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   }
 
-  def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserIdFuture): InboundGetCustomersByUserIdFuture = {
+  def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserId): InboundGetCustomersByUserId = {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
     val joniMfCall = getJoniMfUserFromCache(username)
     //Todo: just gets limit for the leading account instead of limit and balance for all
@@ -957,7 +957,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       kycStatus = true,
       lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
     )
-    InboundGetCustomersByUserIdFuture(outboundGetCustomersByUserIdFuture.authInfo, List(result))
+    InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))
   }
 }
 
