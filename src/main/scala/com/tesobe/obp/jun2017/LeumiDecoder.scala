@@ -345,7 +345,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), "", "")
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), "", "0")
     )
   }
   
@@ -357,7 +357,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
 
-      result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i, "", "")
+      result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i, "", "0")
     }
     InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling

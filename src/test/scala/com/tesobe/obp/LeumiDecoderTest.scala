@@ -24,12 +24,12 @@ class LeumiDecoderTest  extends ServerSetup {
 
     //getBalance is not called here
     result should be (InboundGetAccounts(AuthInfo("karlsid", username, mfToken),
-      List(InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId1, "3565953", "330", "", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId2, "50180983", "430", "", "ILS", List(""), List("Accountant"), "", "", "", "", "", ""), 
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId3, "50180963", "330", "", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId4, "20102612", "330", "", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId5, "20105505", "330", "", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken,"10","814","kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM","20102612","330","","ILS",List(""),List("Auditor"),"","","","","",""))))
+      List(InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId1, "3565953", "330", "0", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId2, "50180983", "430", "0", "ILS", List(""), List("Accountant"), "", "", "", "", "", ""), 
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId3, "50180963", "330", "0", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId4, "20102612", "330", "0", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId5, "20105505", "330", "0", "ILS", List(username), List("Owner"), "", "", "", "", "", ""),
+        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken,"10","814","kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM","20102612","330","0","ILS",List(""),List("Auditor"),"","","","","",""))))
   }
   
   test("getBankAccountbyAccountId works for Stub"){
