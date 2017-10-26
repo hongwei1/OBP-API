@@ -135,12 +135,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
             List("Owner")
           } else if (hasAccountantRights) {
             List("Accountant")
-          } else if (hasViewerRights) {
+          } else {
             List("Auditor")
-          }else {
-            List("")
-          }
-        }
+          }}
     //Create Owner for result InboundAccount2017 creation
     val accountOwner = if (hasOwnerRights) {
           List(username)
