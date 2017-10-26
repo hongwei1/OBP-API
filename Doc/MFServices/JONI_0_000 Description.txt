@@ -41,6 +41,15 @@ The only parameter to provide is UserName
 
 Following is a valid transaction output.
 (Don't use it as a stub. It is provided for parameters description only)
+arkadibl [12:21 PM] 
+@tesobe_twolk @tesobe_marko Use the following algorithm:
+1. if (SDRC_MURSHE_TZAD_G == 1) then assume  that SDRC_MURSHE_PEULOT=1 and SDRC_MURSHE_MEIDA=1 even if actually you see 0
+2. if (SDRC_MURSHE_TZAD_G == 0 &&  SDRC_MURSHE_PEULOT==1 ) then assume that SDRC_MURSHE_MEIDA=1 even if actually you see 0
+3. if(SDRC_MURSHE_TZAD_G == 0 && SDRC_MURSHE_PEULOT==0 ) then SDRC_MURSHE_MEIDA=1 even if you see 0.
+In other words: 
+if SDRC_MURSHE_TZAD_G=1 - it's "OWNER" profile 
+if not but SDRC_MURSHE_PEULOT==1 it's "LIMITED OWNER" profile
+otherwise it is "VIEWER" profile (you are calling it Auditor)
 
 Use only parameters which are described by comments on the right.
 =================================================================
@@ -240,7 +249,7 @@ Use only parameters which are described by comments on the right.
 						"SDRC_HARSHAOT": {			// User's permissions for the account:
 							"SDRC_MURSHE_MEIDA": "0",	// Can see the account data 1/0
 							"SDRC_MURSHE_PEULOT": "1",	// Can execute transactions (maybe only between his own accounts) 1/0
-							"SDRC_MURSHE_TZAD_G": "1"	// Can execute transactions with other parties 1/0
+							"SDRC_MURSHE_TZAD_G": "1"	// Can execute transactions with other parties 1/0 //see above
 						},
 						"SDRC_SW_MOVIL": "1",
 						"SDRC_TAAGID": "0",
