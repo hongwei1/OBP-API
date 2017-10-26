@@ -85,17 +85,17 @@ class LeumiDecoderTest  extends ServerSetup {
       legalName = "??????????????" + " " + "????????????????????",
       mobileNumber = "",
       email = "",
-      faceImage = CustomerFaceImage(None, "notinthiscall"),
+      faceImage = CustomerFaceImage(null, "notinthiscall"),
       dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
       relationshipStatus = "",
       dependents = 0,
-      dobOfDependents = List(None),
+      dobOfDependents = List(null),
       highestEducationAttained = " ",
       employmentStatus = "",
       creditRating = CreditRating("notfromthiscall","notfromthiscall"),
       creditLimit =  AmountOfMoney(defaultCurrency, "15000"),
       kycStatus = true,
-      lastOkDate = Some(simpleLastLoginFormat.parse("20170611" + "120257"))
+      lastOkDate = simpleLastLoginFormat.parse("20170611" + "120257")
     )))
   }
 

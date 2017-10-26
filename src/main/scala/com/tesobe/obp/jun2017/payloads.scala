@@ -500,16 +500,16 @@ case class InternalFullCustomer(
   dateOfBirth: Date,
   relationshipStatus: String,
   dependents: Int,
-  dobOfDependents: List[Option[Date]],
+  dobOfDependents: List[Date],
   highestEducationAttained: String,
   employmentStatus: String,
   creditRating : CreditRating,
   creditLimit: AmountOfMoney,
   kycStatus: Boolean,
-  lastOkDate: Option[Date]
+  lastOkDate: Date
 )
 
-case class CustomerFaceImage(date : Option[Date], url : String)
+case class CustomerFaceImage(date : Date, url : String)
 case class CreditRating(rating: String, source: String)
 
 

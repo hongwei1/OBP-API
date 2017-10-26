@@ -346,9 +346,9 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             List(
             InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
             InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
-          ),"","","","","","",CustomerFaceImage(None,""),
-            simpleTransactionDateFormat.parse("19481231"),"",0,List(None),
-          "", "", CreditRating("",""),AmountOfMoney("","0"),false,None)))
+          ),"","","","","","",CustomerFaceImage(null,""),
+            simpleTransactionDateFormat.parse("19481231"),"",0,null,
+          "", "", CreditRating("",""),AmountOfMoney("","0"),false,null)))
         Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   }

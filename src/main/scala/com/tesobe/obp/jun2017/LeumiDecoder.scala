@@ -945,17 +945,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
       legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
       mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
       email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
-      faceImage = CustomerFaceImage(None, ""),
+      faceImage = CustomerFaceImage(null, ""),
       dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
       relationshipStatus = "",
       dependents = 0,
-      dobOfDependents = List(None),
+      dobOfDependents = List(null),
       highestEducationAttained = "",
       employmentStatus = "",
       creditRating = CreditRating("",""),
       creditLimit =  AmountOfMoney(defaultCurrency, "0"),
       kycStatus = true,
-      lastOkDate = Some(simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST)) //JONI
+      lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST)//JONI
     )
     InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))
   }
