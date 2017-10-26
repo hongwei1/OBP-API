@@ -53,7 +53,7 @@ Input parameters description:
    - K050_IBAN_ZCUT[23] - IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored
    - K050_SCUM[15] - Amount to transfer. Format num(13).num(2)
    - K050_MATRAT_HAVARA[28] - Transfer description (text)
-   - K050_SHEM_MUTAV[16] - Counterparty name. Don't confuse with counterparties managed by the core system!
+   - K050_SHEM_MUTAV[16] - Target acount owners nickname. Don't confuse with counterparties managed by the core system!
 				The name is only used for reference and may be any but empty
 				If the calling application provides an empty name you can return error and terminate 
 				or substitute to some generic name like "Target Account" and continue.
