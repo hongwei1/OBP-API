@@ -223,33 +223,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
 
-  def bankAccountNumberFn: Business = { msg =>
-    logger.debug(s"Processing bankAccountNumberFn ${msg.record.value}")
-    try {
-      /* call Decoder for extracting data from source file */
-      val response: (OutboundGetAccountbyAccountNumber => InboundGetAccountbyAccountID) = { q => com.tesobe.obp.june2017.LeumiDecoder.getBankAccountByAccountNumber(q) }
-      val r = decode[OutboundGetAccountbyAccountNumber](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetAccountbyAccountNumber` case class for OBP-API and Adapter sides : ", e);
-        case Right(x) => response(x).asJson.noSpaces
-      }
-      Future(msg, r)
-    } catch {
-      case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
-        val errorBody = InboundGetAccountbyAccountID(
-          AuthInfo("","",""),
-          InboundAccountJune2017(
-            m.getMessage,
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
-            ),
-            "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
-        )
-        Future(msg, errorBody.asJson.noSpaces)
-    }
-  }
-  
+    
   def bankAccountsFn: Business = {msg =>
     logger.debug(s"Processing bankAccountsFn ${msg.record.value}")
     try {

@@ -39,7 +39,6 @@ trait ProcessorFactory {
         BusinessTopic(createTopicByClassName(OutboundGetAdapterInfo.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).adapterFn),
         BusinessTopic(createTopicByClassName(OutboundGetAccountbyAccountID.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountIdFn),
         BusinessTopic(createTopicByClassName(OutboundCheckBankAccountExists.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).checkBankAccountExistsFn),
-        BusinessTopic(createTopicByClassName(OutboundGetAccountbyAccountNumber.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountNumberFn),
         BusinessTopic(createTopicByClassName(OutboundGetAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankAccountsFn),
         BusinessTopic(createTopicByClassName(OutboundGetTransactions.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionsFn),
         BusinessTopic(createTopicByClassName(OutboundGetTransaction.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).transactionFn),

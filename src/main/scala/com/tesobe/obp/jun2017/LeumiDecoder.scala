@@ -122,74 +122,32 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   }
 
-  def mapBasicBankAccountToInboundAccountJune2017WithoutBalance(username: String, x: BasicBankAccount): InboundAccountJune2017 = {
+  
+  def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount, iban: String, balance: String): InboundAccountJune2017 = {
 
     //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
-    val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments || x.accountPermissions.canMakeInternalPayments
+    val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments 
+    val hasAccountantRights = x.accountPermissions.canMakeInternalPayments
     val hasViewerRights: Boolean = x.accountPermissions.canSee
     val viewsToGenerate = {
-      if (hasOwnerRights) {
-        List("Owner")
-      }
-      else if (hasViewerRights) {
-        List("Auditor")
-      }
-      else {
-        List("")
-      }
-    }
-    //Create Owner for result InboundAccount2017 creation
-    val accountOwner = if (hasOwnerRights) {
-      List(username)
-    } else {
-      List("")
-    }
-    InboundAccountJune2017(
-      errorCode = "",
-      List(InboundStatusMessage("ESB", "Success", "0", "OK")), ////TODO, need to fill the coreBanking error
-      x.cbsToken,
-      bankId = "10",
-      branchId = x.branchNr,
-      accountId = getOrCreateAccountId(x.branchNr, x.accountType, x.accountNr),
-      accountNumber = x.accountNr,
-      accountType = x.accountType,
-      //balanceAmount = getBalance(username, x.branchNr, x.accountType, x.accountNr, x.cbsToken),
-      balanceAmount = "",
-      balanceCurrency = defaultCurrency,
-      owners = accountOwner,
-      viewsToGenerate = viewsToGenerate,
-      bankRoutingScheme = "",
-      bankRoutingAddress = "",
-      branchRoutingScheme = "",
-      branchRoutingAddress = "",
-      accountRoutingScheme = "",
-      accountRoutingAddress = "")
-  }
-
-  def mapBasicBankAccountToInboundAccountJune2017WithBalanceandIban(username: String, x: BasicBankAccount, iban: String): InboundAccountJune2017 = {
-
-    //TODO: This is by choice and needs verification
-    //Create OwnerRights and accountViewer for result InboundAccount2017 creation
-    val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments || x.accountPermissions.canMakeInternalPayments
-    val hasViewerRights: Boolean = x.accountPermissions.canSee
-       val viewsToGenerate = {
           if (hasOwnerRights) {
             List("Owner")
-          }
-          else if (hasViewerRights) {
+          } else if (hasAccountantRights) {
+            List("Accountant")
+          } else if (hasViewerRights) {
             List("Auditor")
-          }
-          else {
+          }else {
             List("")
           }
         }
     //Create Owner for result InboundAccount2017 creation
-        val accountOwner = if (hasOwnerRights) {
+    val accountOwner = if (hasOwnerRights) {
           List(username)
         } else {
           List("")
         }
+    val accountRoutingScheme = if (iban.trim != "") "IBAN" else ""
     InboundAccountJune2017(
       errorCode = "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")), ////TODO, need to fill the coreBanking error
@@ -199,7 +157,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       accountId = getOrCreateAccountId(x.branchNr, x.accountType, x.accountNr),
       accountNumber = x.accountNr,
       accountType = x.accountType,
-      balanceAmount = getBalance(username, x.branchNr, x.accountType, x.accountNr, x.cbsToken),
+      balanceAmount = balance,
       balanceCurrency = defaultCurrency,
       owners = accountOwner,
       viewsToGenerate = viewsToGenerate,
@@ -207,7 +165,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       bankRoutingAddress = "",
       branchRoutingScheme = "",
       branchRoutingAddress = "",
-      accountRoutingScheme = "IBAN",
+      accountRoutingScheme = accountRoutingScheme,
       accountRoutingAddress = iban)
   }
 
@@ -355,20 +313,23 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val branchid = accountValues.branchId
     val accountType = accountValues.accountType
     val accountNr = accountValues.accountNumber
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
+    val username = getAccount.authInfo.username
+    val cbsToken = getAccount.authInfo.cbsToken
+    val mfAccounts = getBasicBankAccountsForUser(username, true)
     val ntib2Call = getNtib2Mf(
       branchid,
       accountType,
       accountNr,
-      getAccount.authInfo.username,
-      getAccount.authInfo.cbsToken
+      username,
+      cbsToken
     )
     val iban = ntib2Call.SHETACHTCHUVA.TS00_PIRTEY_TCHUVA.TS00_TV_TCHUVA.TS00_NIGRERET_TCHUVA.TS00_IBAN
+    val balance = getBalance(username, branchid, accountType, accountNr, cbsToken)
     
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017WithBalanceandIban(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), iban)
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), iban, balance)
     )
   }
 
@@ -388,19 +349,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       mfAccounts.head.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017WithoutBalance(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")))
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), "", "")
     )
   }
   
-  def getBankAccountByAccountNumber(getAccount: OutboundGetAccountbyAccountNumber): InboundGetAccountbyAccountID = {
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
-    InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
-      getAccount.authInfo.username,
-      mfAccounts.head.cbsToken),
-      //TODO: Error handling
-      mapBasicBankAccountToInboundAccountJune2017WithBalanceandIban(getAccount.authInfo.username, mfAccounts.filter(x =>
-              x.accountNr == getAccount.accountNumber).head, ""))
-  }
+
 
   def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundGetAccounts = {
     logger.debug("Enter getBankAccounts")
@@ -408,7 +361,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     var result = new ListBuffer[InboundAccountJune2017]()
     for (i <- mfAccounts) {
 
-      result += mapBasicBankAccountToInboundAccountJune2017WithoutBalance(getAccountsInput.authInfo.username, i)
+      result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i, "", "")
     }
     InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling
