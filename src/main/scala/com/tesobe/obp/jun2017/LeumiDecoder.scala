@@ -654,7 +654,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
-    logger.debug(s"LeumiDecoder-createTransaction input: ($createChallenge)")
+    logger.debug(s"LeumiDecoder-createChallenge input: ($createChallenge)")
     val jsonExtract = getJoniMfUserFromCache(createChallenge.authInfo.username)
     val accountValues = mapAccountIdToAccountValues(createChallenge.accountId)
     val branchId = accountValues.branchId

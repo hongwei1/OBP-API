@@ -100,7 +100,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("bankFn-unknown error", m)
         val errorBody = InboundGetBank(
           AuthInfo("","",""),
             InboundBank(
@@ -128,7 +128,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("userFn-unknown error", m)
         val errorBody = InboundGetUserByUsernamePassword(
           AuthInfo("","",""),
           InboundValidatedUser(
@@ -155,7 +155,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("adapterFn-unknown error", m)
         val errorBody = InboundAdapterInfo(
           InboundAdapterInfoInternal(
             m.getMessage,
@@ -181,7 +181,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("bankAccountIdFn-unknown error", m)
         val errorBody = InboundGetAccountbyAccountID(
             AuthInfo("","",""),
             InboundAccountJune2017(
@@ -198,7 +198,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   
   def checkBankAccountExistsFn: Business = { msg =>
     try {
-      logger.debug(s"Processing bankAccountIdFn ${msg.record.value}")
+      logger.debug(s"Processing checkBankAccountExistsFn ${msg.record.value}")
       /* call Decoder for extracting data from source file */
       val kafkaRecordValue = msg.record.value()
       val outboundCheckBankAccountExists  = Extraction.extract[OutboundCheckBankAccountExists](json.parse(kafkaRecordValue))
@@ -208,7 +208,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("checkBankAccountExistsFn-unknown error", m)
         val errorBody = InboundGetAccountbyAccountID(
           AuthInfo("","",""),
           InboundAccountJune2017(
@@ -236,7 +236,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("bankAccountsFn-unknown error", m)
         val errorBody = InboundGetAccounts(
           AuthInfo("","",""),
           List(InboundAccountJune2017(
@@ -263,7 +263,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("getCoreAccountsFn-unknown error", m)
           val errorBody = InboundGetCoreAccounts(
           AuthInfo("","",""),
             List(
@@ -288,7 +288,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("getCoreBankAccountsFn-unknown error", m)
         val errorBody = InboundGetCoreBankAccounts(
           AuthInfo("","",""),List(InternalInboundCoreAccount(
             "",
@@ -340,7 +340,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("transactionsFn-unknown error", m)
         val errorBody = InboundGetTransactions(
           AuthInfo("","",""),
           List(InternalTransaction(
@@ -367,7 +367,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("transactionFn-unknown error", m)
         
         val errorBody = InboundGetTransaction(
           AuthInfo("","",""),
@@ -414,7 +414,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("banksFn-unknown error", m)
+        logger.error("createTransactionFn-unknown error", m)
     
         val errorBody = InboundCreateTransactionId(
           AuthInfo("","",""),
@@ -453,7 +453,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
   } catch {
     case m: Throwable =>
-      logger.error("banksFn-unknown error", m)
+      logger.error("createChallengeFn-unknown error", m)
     
       val errorBody = InboundCreateChallengeJune2017(
         AuthInfo("","",""),
@@ -510,7 +510,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("getTransactionRequestsFn-unknown error", m)
+        logger.error("createCounterpartyFn-unknown error", m)
         
         val errorBody = InboundCreateChallengeJune2017(
           AuthInfo("","",""),
