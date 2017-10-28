@@ -18,6 +18,8 @@ gateway.token_secret=secret
 
 write_metrics=true
 display_internal_errors=true
+transactionRequests_challenge_threshold_TRANSFER_TO_PHONE=0
+
 
 #cache
 connector.cache.ttl.seconds.getBank =100
