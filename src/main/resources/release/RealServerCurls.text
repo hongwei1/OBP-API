@@ -1,0 +1,72 @@
+1 : root 
+curl -X GET http://linx107701t37:8080/obp/v3.0.0/root
+
+
+
+2: AdapterInfo
+curl -X GET http://linx107701t37:8080/obp/v3.0.0/banks/10/adapter
+
+
+
+
+3 CurrentCustomers
+curl -v --request GET \
+ --url http://linx107701t37:8080/obp/v2.2.0/users/current/customers \
+ --header 'authorization: GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80'
+
+
+
+4privateAccount
+curl -v --request GET \
+--url http://linx107701t37:8080/obp/v3.0.0/banks/10/accounts/private \
+--header 'authorization: GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80' \
+--header 'content-type: application/json'
+
+
+
+5PrivateAccountFull
+curl -v --request GET \
+--url http://linx107701t37:8080/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/auditor/account \
+--header 'authorization: GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80' \
+--header 'content-type: application/json'
+
+
+6getTransactions
+curl -v --request GET \
+--url http://linx107701t37:8080/obp/v2.2.0/my/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/transactions \
+--header 'authorization: GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80' \
+
+
+
+
+7 Create Transaction Request
+curl --request POST \
+ --url http://linx107701t37:8080/obp/v3.0.0/custom/banks/10/accounts/_hEtj6WIm_O9aYzuQQH3xWrkBkwpc9poDhRnxo2IcPw/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests \
+ --header 'authorization: GatewayLogin token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.9oyw-aeHa54qUMtc-cRDjC1g1aMQcu3vqv-2bM8e480' \
+ --header 'content-type: application/json' \
+ --data '{
+ "value": {
+   "currency": "ILS",
+   "amount": "1"
+ },
+ "description": "short one",
+ "message": "Don'\''t spend it all at once!",
+ "from": {
+   "mobile_phone_number": "+9722398712",
+   "nickname": "Tom"
+ },
+ "to": {
+   "mobile_phone_number": "+9722398746"
+ }
+ }'
+ 
+
+8 Answer Transaction Request
+curl --request POST \
+  --url http://linx107701t37:8080/obp/v3.0.0/banks/10/accounts/_hEtj6WIm_O9aYzuQQH3xWrkBkwpc9poDhRnxo2IcPw/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/4ebcb8ea-79ef-4c91-b809-2e52665b86b9/challenge \
+  --header 'authorization: GatewayLogin token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.9oyw-aeHa54qUMtc-cRDjC1g1aMQcu3vqv-2bM8e480' \
+  --header 'content-type: application/json' \
+  --data '{  "id":"94110ad6-bd2d-4550-92a0-7ee64cc7d582",  "answer":"270248"}'
+  
+  
+  

@@ -49,21 +49,21 @@ Use only parameters which are described by comments on the right.
 =================================================================
 
 {
-	"P135_BDIKAOUT": {
+	"PELET_1352": {
 		"esbHeaderResponse": {
-			"esbRequestId": "414d5120544c44423120202020202020be7cff582410af10",
-			"responseStatus": {							// IIB (ESB) status
+			"esbRequestId": "414d5120544c44423120202020202020be7cff58249eca09",
+			"responseStatus": {							// IIB (ESB) status:
 				"callStatus": "Success",					// status
-				"errorDesc": {}							// error description
+				"errorDesc": ""							// error description
 			}
 		},
-		"MFAdminResponse": {								// Mainframe status
+		"MFAdminResponse": {								// Mainframe status:
 			"returnCode": "0",							// error code
-			"messageText": {}							// error description
+			"messageText": ""							// error description
 		},
-		"P135_SHAA_RISHUM": "14:39",							// Hour of transaction execution
-		"P135_TARICH_BITZUA": "20170607",						// Date of transaction execution YYYYMMDD
-		"P135_TOKEN_ISHUR": "3635791",
-		"P135_ASMACHTA": "1109"
+		"P135_SHAA_RISHUM": "18:21",							// Registration time
+		"P135_TARICH_BITZUA": "20170612",						// Execution date
+		"P135_TOKEN_ISHUR": "3639283",							// Token - the same as in input
+		"P135_ASMACHTA": "1455"								// Ref No.
 	}
 }
