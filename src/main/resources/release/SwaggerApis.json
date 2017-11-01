@@ -8,9 +8,9 @@
       "url": "https://openbankproject.com",
       "email": "contact@tesobe.com"
     },
-    "version": "v3.0.0"
+    "version": "v3_0_0"
   },
-  "host": "available.openbankproject.com",
+  "host": "linx107701t37:8080",
   "basePath": "/obp/v3.0.0",
   "schemes": [
     "http",
@@ -30,130 +30,10 @@
     }
   ],
   "paths": {
-    "/banks": {
-      "get": {
-        "tags": [
-          "1_2_1"
-        ],
-        "summary": "Get Banks",
-        "security": [
-          {
-            "directLogin": []
-          }
-        ],
-        "description": "Get banks on this API instance\nReturns a list of banks supported on this server:\n\n* ID used as parameter in URLs\n* Short and full name of bank\n* Logo URL\n* Website",
-        "operationId": "v1_2_1-getBanks",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/BanksJSON"
-            }
-          },
-          "400": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/ErrorUnknownError"
-            }
-          }
-        }
-      }
-    },
-    "/banks/{BANK_ID}": {
-      "get": {
-        "tags": [
-          "1_2_1"
-        ],
-        "summary": "Get Bank",
-        "security": [
-          {
-            "directLogin": []
-          }
-        ],
-        "description": "Get the bank specified by BANK_ID\nReturns information about a single bank specified by BANK_ID including:\n\n* Short and full name of bank\n* Logo URL\n* Website",
-        "operationId": "v1_2_1-bankById",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "BANK_ID",
-            "description": "The bank id",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/BankJSON"
-            }
-          },
-          "400": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/ErrorUserNotLoggedIn"
-            }
-          }
-        }
-      }
-    },
-    "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/account": {
-      "get": {
-        "tags": [
-          "3_0_0"
-        ],
-        "summary": "Get Account by Id (Full)",
-        "security": [
-          {
-            "directLogin": []
-          }
-        ],
-        "description": "Information returned about an account specified by ACCOUNT_ID as moderated by the view (VIEW_ID):\n\n* Number\n* Owners\n* Type\n* Balance\n* IBAN\n* Available views (sorted by short_name)\n\nMore details about the data moderation by the view [here](#1_2_1-getViewsForBankAccount).\n\nPSD2 Context: PSD2 requires customers to have access to their account information via third party applications.\nThis call provides balance and other account information via delegated authenticaiton using OAuth.\n\nAuthentication is required if the 'is_public' field in view (VIEW_ID) is not set to `true`.\n",
-        "operationId": "v3_0_0-accountById",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "VIEW_ID",
-            "description": "The view id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "path",
-            "name": "ACCOUNT_ID",
-            "description": "The account id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "path",
-            "name": "BANK_ID",
-            "description": "The bank id",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/ModeratedAccountJSON"
-            }
-          },
-          "400": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/ErrorBankNotFound"
-            }
-          }
-        }
-      }
-    },
     "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transaction-request-types/{TRANSACTION_REQUEST_TYPE}/transaction-requests/{TRANSACTION_REQUEST_ID}/challenge": {
       "post": {
         "tags": [
-          "3_0_0"
+          "2_1_0"
         ],
         "summary": "Answer Transaction Request Challenge.",
         "security": [
@@ -161,8 +41,8 @@
             "directLogin": []
           }
         ],
-        "description": "In Sandbox mode, any string that can be converted to a positive integer will be accepted as an answer.",
-        "operationId": "v3_0_0-answerTransactionRequestChallenge",
+        "description": "In Sandbox mode, any string that can be converted to a positive integer will be accepted as an answer.\n\nThis endpoint totally depends on createTransactionRequest, it need get the following data from createTransactionRequest response body.\n\n1)`TRANSACTION_REQUEST_TYPE` : is the same as createTransactionRequest request URL . \n\n2)`TRANSACTION_REQUEST_ID` : is the `id` field in createTransactionRequest response body.\n\n3) `id` in the Json Body:  is `challenge.id` field in createTransactionRequest response body. \n\n      ",
+        "operationId": "v2_1_0-answerTransactionRequestChallenge",
         "parameters": [
           {
             "in": "body",
@@ -220,119 +100,6 @@
             "description": "Error",
             "schema": {
               "$ref": "#/definitions/ErrorUserNotLoggedIn"
-            }
-          }
-        }
-      }
-    },
-    "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests": {
-      "post": {
-        "tags": [
-          "3_0_0"
-        ],
-        "summary": "Create Transaction Request TRANSFER_TO_PHONE",
-        "security": [
-          {
-            "directLogin": []
-          }
-        ],
-        "description": "Initiate a Payment via creating a Transaction Request.\n\nIn OBP, a `transaction request` may or may not result in a `transaction`. However, a `transaction` only has one possible state: completed.\n\nA `Transaction Request` can have one of several states.\n\n`Transactions` are modeled on items in a bank statement that represent the movement of money.\n\n`Transaction Requests` are requests to move money which may or may not succeeed and thus result in a `Transaction`.\n\nA `Transaction Request` might create a security challenge that needs to be answered before the `Transaction Request` proceeds.\n\nTransaction Requests contain charge information giving the client the opportunity to proceed or not (as long as the challenge level is appropriate).\n\nTransaction Requests can have one of several Transaction Request Types which expect different bodies. The escaped body is returned in the details key of the GET response.\nThis provides some commonality and one URL for many different payment or transfer types with enough flexibility to validate them differently.\n\nThe payer is set in the URL. Money comes out of the BANK_ID and ACCOUNT_ID specified in the URL.\n\nThe payee is set in the request body. Money goes into the BANK_ID and ACCOUNT_ID specified in the request body.\n\nIn sandbox mode, TRANSACTION_REQUEST_TYPE is commonly set to SANDBOX_TAN. See getTransactionRequestTypesSupportedByBank for all supported types.\n\nIn sandbox mode, if the amount is less than 1000 EUR (any currency, unless it is set differently on this server), the transaction request will create a transaction without a challenge, else the Transaction Request will be set to INITIALISED and a challenge will need to be answered.\n\nIf a challenge is created you must answer it using Answer Transaction Request Challenge before the Transaction is created.\n\nYou can transfer between different currency accounts. (new in 2.0.0). The currency in body must match the sending account.\n\nThe following static FX rates are available in sandbox mode:\n\n{\n  \"XAF\":{\n    \"AUD\":0.00228226,\n    \"KRW\":1.87975,\n    \"JOD\":0.00127784,\n    \"GBP\":0.00131092,\n    \"AED\":0.00601555,\n    \"INR\":0.110241,\n    \"JPY\":0.185328,\n    \"USD\":0.00163773,\n    \"ILS\":0.00641333,\n    \"EUR\":0.00152449\n  },\n  \"AUD\":{\n    \"XAF\":438.162,\n    \"KRW\":895.304,\n    \"JOD\":0.556152,\n    \"GBP\":0.609788,\n    \"AED\":2.88368,\n    \"INR\":50.4238,\n    \"JPY\":87.0936,\n    \"USD\":0.785256,\n    \"ILS\":2.83558,\n    \"EUR\":0.667969\n  },\n  \"KRW\":{\n    \"XAF\":0.531986,\n    \"AUD\":0.00111694,\n    \"JOD\":6.30634E-4,\n    \"GBP\":6.97389E-4,\n    \"AED\":0.00320019,\n    \"INR\":0.0586469,\n    \"JPY\":0.0985917,\n    \"USD\":8.7125E-4,\n    \"ILS\":0.00316552,\n    \"EUR\":8.11008E-4\n  },\n  \"JOD\":{\n    \"XAF\":782.572,\n    \"AUD\":1.63992,\n    \"KRW\":1585.68,\n    \"GBP\":1.06757,\n    \"AED\":5.18231,\n    \"INR\":90.1236,\n    \"JPY\":156.304,\n    \"USD\":1.41112,\n    \"ILS\":5.02018,\n    \"EUR\":0.237707\n  },\n  \"GBP\":{\n    \"XAF\":762.826,\n    \"AUD\":1.63992,\n    \"KRW\":1433.92,\n    \"JOD\":0.936707,\n    \"AED\":4.58882,\n    \"INR\":84.095,\n    \"JPY\":141.373,\n    \"USD\":1.2493,\n    \"ILS\":4.7002,\n    \"EUR\":1.16278\n  },\n  \"AED\":{\n    \"XAF\":166.236,\n    \"AUD\":0.346779,\n    \"KRW\":312.482,\n    \"GBP\":0.217921,\n    \"AED\":0.192964,\n    \"INR\":18.3255,\n    \"JPY\":30.8081,\n    \"USD\":0.27225,\n    \"ILS\":0.968033,\n    \"EUR\":0.253425\n  },\n  \"INR\":{\n    \"XAF\":9.07101,\n    \"AUD\":0.0198319,\n    \"KRW\":17.0512,\n    \"JOD\":0.0110959,\n    \"GBP\":0.0118913,\n    \"AED\":0.0545671,\n    \"JPY\":1.68111,\n    \"USD\":0.0148559,\n    \"ILS\":0.0556764,\n    \"EUR\":0.0138287\n  },\n  \"JPY\":{\n    \"XAF\":5.39585,\n    \"AUD\":0.0114819,\n    \"KRW\":10.1428,\n    \"JOD\":0.00639777,\n    \"GBP\":0.0070735,\n    \"AED\":0.032459,\n    \"INR\":0.594846,\n    \"USD\":0.00883695,\n    \"ILS\":0.0320926,\n    \"EUR\":0.00822592\n  },\n  \"USD\":{\n    \"XAF\":610.601,\n    \"AUD\":1.27347,\n    \"KRW\":1147.78,\n    \"JOD\":0.708659,\n    \"GBP\":0.800446,\n    \"AED\":3.6731,\n    \"INR\":67.3135,\n    \"JPY\":113.161,\n    \"ILS\":3.55495,\n    \"EUR\":0.930886\n  },\n  \"ILS\":{\n    \"XAF\":155.925,\n    \"AUD\":0.352661,\n    \"KRW\":315.903,\n    \"JOD\":0.199196,\n    \"GBP\":0.212763,\n    \"AED\":1.03302,\n    \"INR\":17.9609,\n    \"JPY\":31.1599,\n    \"USD\":0.281298,\n    \"EUR\":1.19318\n  },\n  \"EUR\":{\n    \"XAF\":655.957,\n    \"AUD\":1.49707,\n    \"KRW\":1233.03,\n    \"JOD\":0.838098,\n    \"GBP\":0.860011,\n    \"AED\":3.94594,\n    \"INR\":72.3136,\n    \"JPY\":121.567,\n    \"USD\":1.07428,\n    \"ILS\":4.20494\n  }\n}\n\n\nTransaction Requests satisfy PSD2 requirements thus:\n\n1) A transaction can be initiated by a third party application.\n\n2) The customer is informed of the charge that will incurred.\n\n3) The call supports delegated authentication (OAuth)\n\nSee [this python code](https://github.com/OpenBankProject/Hello-OBP-DirectLogin-Python/blob/master/hello_payments.py) for a complete example of this flow.\n\nThere is further documentation [here](https://github.com/OpenBankProject/OBP-API/wiki/Transaction-Requests)\n\nAuthentication is Mandatory\n\n\n\nSpecial instructions for TRANSFER_TO_PHONE:\n\nWhen using a TRANSFER_TO_PHONE, the following fields need to be filling in Json Body\nfrom_account_owner_nickname : Nickname of the money sender (20 symbols)\nfrom_account_phone_number   : Mobile number of the money sender (10 digits)\nother_account_phone_number  : Mobile number of the money receiver (10 digits)\nother_account_message       : Message text to the money receiver (50 symbols)\n       ",
-        "operationId": "v3_0_0-createTransactionRequestTransferToPhone",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "BANK_BODY",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/TransactionRequestBodyTransferToPhoneJson"
-            }
-          },
-          {
-            "in": "path",
-            "name": "VIEW_ID",
-            "description": "The view id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "path",
-            "name": "ACCOUNT_ID",
-            "description": "The account id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "path",
-            "name": "BANK_ID",
-            "description": "The bank id",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/TransactionRequestWithChargeJSON210"
-            }
-          },
-          "400": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/ErrorUserNotLoggedIn"
-            }
-          }
-        }
-      }
-    },
-    "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transactions": {
-      "get": {
-        "tags": [
-          "3_0_0"
-        ],
-        "summary": "Get Transactions for Account (Full)",
-        "security": [
-          {
-            "directLogin": []
-          }
-        ],
-        "description": "Returns transactions list of the account specified by ACCOUNT_ID and [moderated](#1_2_1-getViewsForBankAccount) by the view (VIEW_ID).\n\nAuthentication via OAuth is required if the view is not public.\n\nPossible custom headers for pagination:\n\n* obp_sort_by=CRITERIA ==> default value: \"completed\" field\n* obp_sort_direction=ASC/DESC ==> default value: DESC\n* obp_limit=NUMBER ==> default value: 50\n* obp_offset=NUMBER ==> default value: 0\n* obp_from_date=DATE => default value: date of the oldest transaction registered (format below)\n* obp_to_date=DATE => default value: date of the newest transaction registered (format below)\n\n**Date format parameter**: \"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\" (2014-07-01T00:00:00.000Z) ==> time zone is UTC.",
-        "operationId": "v3_0_0-getTransactionsForBankAccount",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "VIEW_ID",
-            "description": "The view id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "path",
-            "name": "ACCOUNT_ID",
-            "description": "The account id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "path",
-            "name": "BANK_ID",
-            "description": "The bank id",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/TransactionsJSON"
-            }
-          },
-          "400": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/ErrorFilterSortDirectionError"
             }
           }
         }
@@ -400,16 +167,16 @@
     "/banks/{BANK_ID}/accounts/private": {
       "get": {
         "tags": [
-          "2_0_0"
+          "3_0_0"
         ],
-        "summary": "Get private accounts at one bank (Authenticated access).",
+        "summary": "Get private accounts at one bank.",
         "security": [
           {
             "directLogin": []
           }
         ],
         "description": "Returns the list of private (non-public) accounts at BANK_ID that the user has access to.\nFor each account the API returns the ID and the available views.\n\nIf you want to see more information on the Views, use the Account Detail call.\nIf you want less information about the account, use the /my accounts call\n\n\nAuthentication is Mandatory",
-        "operationId": "v2_0_0-privateAccountsAtOneBank",
+        "operationId": "v3_0_0-privateAccountsAtOneBank",
         "parameters": [
           {
             "in": "path",
@@ -423,7 +190,378 @@
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/BasicAccountsJSON"
+              "$ref": "#/definitions/CoreAccountsJsonV300"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
+    "/banks/{BANK_ID}/adapter": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get Info Of Adapter",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Get a basic Adapter info\n\nLogin is required.\n\n      ",
+        "operationId": "v3_0_0-getAdapter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/UsersJSONV200"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
+    "/custom/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests": {
+      "post": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Create Transaction Request (TRANSFER_TO_ACCOUNT)",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Initiate a Payment via creating a Transaction Request.\n\nIn OBP, a `transaction request` may or may not result in a `transaction`. However, a `transaction` only has one possible state: completed.\n\nA `Transaction Request` can have one of several states.\n\n`Transactions` are modeled on items in a bank statement that represent the movement of money.\n\n`Transaction Requests` are requests to move money which may or may not succeeed and thus result in a `Transaction`.\n\nA `Transaction Request` might create a security challenge that needs to be answered before the `Transaction Request` proceeds.\n\nTransaction Requests contain charge information giving the client the opportunity to proceed or not (as long as the challenge level is appropriate).\n\nTransaction Requests can have one of several Transaction Request Types which expect different bodies. The escaped body is returned in the details key of the GET response.\nThis provides some commonality and one URL for many different payment or transfer types with enough flexibility to validate them differently.\n\nThe payer is set in the URL. Money comes out of the BANK_ID and ACCOUNT_ID specified in the URL.\n\nThe payee is set in the request body. Money goes into the BANK_ID and ACCOUNT_ID specified in the request body.\n\nIn sandbox mode, TRANSACTION_REQUEST_TYPE is commonly set to SANDBOX_TAN. See getTransactionRequestTypesSupportedByBank for all supported types.\n\nIn sandbox mode, if the amount is less than 1000 EUR (any currency, unless it is set differently on this server), the transaction request will create a transaction without a challenge, else the Transaction Request will be set to INITIALISED and a challenge will need to be answered.\n\nIf a challenge is created you must answer it using Answer Transaction Request Challenge before the Transaction is created.\n\nYou can transfer between different currency accounts. (new in 2.0.0). The currency in body must match the sending account.\n\nThe following static FX rates are available in sandbox mode:\n\n{\n  \"XAF\":{\n    \"AUD\":0.00228226,\n    \"KRW\":1.87975,\n    \"JOD\":0.00127784,\n    \"GBP\":0.00131092,\n    \"AED\":0.00601555,\n    \"INR\":0.110241,\n    \"JPY\":0.185328,\n    \"USD\":0.00163773,\n    \"ILS\":0.00641333,\n    \"EUR\":0.00152449\n  },\n  \"AUD\":{\n    \"XAF\":438.162,\n    \"KRW\":895.304,\n    \"JOD\":0.556152,\n    \"GBP\":0.609788,\n    \"AED\":2.88368,\n    \"INR\":50.4238,\n    \"JPY\":87.0936,\n    \"USD\":0.785256,\n    \"ILS\":2.83558,\n    \"EUR\":0.667969\n  },\n  \"KRW\":{\n    \"XAF\":0.531986,\n    \"AUD\":0.00111694,\n    \"JOD\":6.30634E-4,\n    \"GBP\":6.97389E-4,\n    \"AED\":0.00320019,\n    \"INR\":0.0586469,\n    \"JPY\":0.0985917,\n    \"USD\":8.7125E-4,\n    \"ILS\":0.00316552,\n    \"EUR\":8.11008E-4\n  },\n  \"JOD\":{\n    \"XAF\":782.572,\n    \"AUD\":1.63992,\n    \"KRW\":1585.68,\n    \"GBP\":1.06757,\n    \"AED\":5.18231,\n    \"INR\":90.1236,\n    \"JPY\":156.304,\n    \"USD\":1.41112,\n    \"ILS\":5.02018,\n    \"EUR\":0.237707\n  },\n  \"GBP\":{\n    \"XAF\":762.826,\n    \"AUD\":1.63992,\n    \"KRW\":1433.92,\n    \"JOD\":0.936707,\n    \"AED\":4.58882,\n    \"INR\":84.095,\n    \"JPY\":141.373,\n    \"USD\":1.2493,\n    \"ILS\":4.7002,\n    \"EUR\":1.16278\n  },\n  \"AED\":{\n    \"XAF\":166.236,\n    \"AUD\":0.346779,\n    \"KRW\":312.482,\n    \"GBP\":0.217921,\n    \"AED\":0.192964,\n    \"INR\":18.3255,\n    \"JPY\":30.8081,\n    \"USD\":0.27225,\n    \"ILS\":0.968033,\n    \"EUR\":0.253425\n  },\n  \"INR\":{\n    \"XAF\":9.07101,\n    \"AUD\":0.0198319,\n    \"KRW\":17.0512,\n    \"JOD\":0.0110959,\n    \"GBP\":0.0118913,\n    \"AED\":0.0545671,\n    \"JPY\":1.68111,\n    \"USD\":0.0148559,\n    \"ILS\":0.0556764,\n    \"EUR\":0.0138287\n  },\n  \"JPY\":{\n    \"XAF\":5.39585,\n    \"AUD\":0.0114819,\n    \"KRW\":10.1428,\n    \"JOD\":0.00639777,\n    \"GBP\":0.0070735,\n    \"AED\":0.032459,\n    \"INR\":0.594846,\n    \"USD\":0.00883695,\n    \"ILS\":0.0320926,\n    \"EUR\":0.00822592\n  },\n  \"USD\":{\n    \"XAF\":610.601,\n    \"AUD\":1.27347,\n    \"KRW\":1147.78,\n    \"JOD\":0.708659,\n    \"GBP\":0.800446,\n    \"AED\":3.6731,\n    \"INR\":67.3135,\n    \"JPY\":113.161,\n    \"ILS\":3.55495,\n    \"EUR\":0.930886\n  },\n  \"ILS\":{\n    \"XAF\":155.925,\n    \"AUD\":0.352661,\n    \"KRW\":315.903,\n    \"JOD\":0.199196,\n    \"GBP\":0.212763,\n    \"AED\":1.03302,\n    \"INR\":17.9609,\n    \"JPY\":31.1599,\n    \"USD\":0.281298,\n    \"EUR\":1.19318\n  },\n  \"EUR\":{\n    \"XAF\":655.957,\n    \"AUD\":1.49707,\n    \"KRW\":1233.03,\n    \"JOD\":0.838098,\n    \"GBP\":0.860011,\n    \"AED\":3.94594,\n    \"INR\":72.3136,\n    \"JPY\":121.567,\n    \"USD\":1.07428,\n    \"ILS\":4.20494\n  }\n}\n\n\nTransaction Requests satisfy PSD2 requirements thus:\n\n1) A transaction can be initiated by a third party application.\n\n2) The customer is informed of the charge that will incurred.\n\n3) The call supports delegated authentication (OAuth)\n\nSee [this python code](https://github.com/OpenBankProject/Hello-OBP-DirectLogin-Python/blob/master/hello_payments.py) for a complete example of this flow.\n\nThere is further documentation [here](https://github.com/OpenBankProject/OBP-API/wiki/Transaction-Requests)\n\nAuthentication is Mandatory\n\n\n\nSpecial instructions for TRANSFER_TO_ACCOUNT:\n\nWhen using a TRANSFER_TO_ACCOUNT //TODO add more info.\n\n       ",
+        "operationId": "v3_0_0-createTransactionRequestTransferToAccount",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "BANK_BODY",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TransactionRequestBodyTransferToAccount"
+            }
+          },
+          {
+            "in": "path",
+            "name": "VIEW_ID",
+            "description": "The view id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/TransactionRequestWithChargeJSON210"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
+    "/custom/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transaction-request-types/TRANSFER_TO_ATM/transaction-requests": {
+      "post": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Create Transaction Request (TRANSFER_TO_ATM)",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Initiate a Payment via creating a Transaction Request.\n\nIn OBP, a `transaction request` may or may not result in a `transaction`. However, a `transaction` only has one possible state: completed.\n\nA `Transaction Request` can have one of several states.\n\n`Transactions` are modeled on items in a bank statement that represent the movement of money.\n\n`Transaction Requests` are requests to move money which may or may not succeeed and thus result in a `Transaction`.\n\nA `Transaction Request` might create a security challenge that needs to be answered before the `Transaction Request` proceeds.\n\nTransaction Requests contain charge information giving the client the opportunity to proceed or not (as long as the challenge level is appropriate).\n\nTransaction Requests can have one of several Transaction Request Types which expect different bodies. The escaped body is returned in the details key of the GET response.\nThis provides some commonality and one URL for many different payment or transfer types with enough flexibility to validate them differently.\n\nThe payer is set in the URL. Money comes out of the BANK_ID and ACCOUNT_ID specified in the URL.\n\nThe payee is set in the request body. Money goes into the BANK_ID and ACCOUNT_ID specified in the request body.\n\nIn sandbox mode, TRANSACTION_REQUEST_TYPE is commonly set to SANDBOX_TAN. See getTransactionRequestTypesSupportedByBank for all supported types.\n\nIn sandbox mode, if the amount is less than 1000 EUR (any currency, unless it is set differently on this server), the transaction request will create a transaction without a challenge, else the Transaction Request will be set to INITIALISED and a challenge will need to be answered.\n\nIf a challenge is created you must answer it using Answer Transaction Request Challenge before the Transaction is created.\n\nYou can transfer between different currency accounts. (new in 2.0.0). The currency in body must match the sending account.\n\nThe following static FX rates are available in sandbox mode:\n\n{\n  \"XAF\":{\n    \"AUD\":0.00228226,\n    \"KRW\":1.87975,\n    \"JOD\":0.00127784,\n    \"GBP\":0.00131092,\n    \"AED\":0.00601555,\n    \"INR\":0.110241,\n    \"JPY\":0.185328,\n    \"USD\":0.00163773,\n    \"ILS\":0.00641333,\n    \"EUR\":0.00152449\n  },\n  \"AUD\":{\n    \"XAF\":438.162,\n    \"KRW\":895.304,\n    \"JOD\":0.556152,\n    \"GBP\":0.609788,\n    \"AED\":2.88368,\n    \"INR\":50.4238,\n    \"JPY\":87.0936,\n    \"USD\":0.785256,\n    \"ILS\":2.83558,\n    \"EUR\":0.667969\n  },\n  \"KRW\":{\n    \"XAF\":0.531986,\n    \"AUD\":0.00111694,\n    \"JOD\":6.30634E-4,\n    \"GBP\":6.97389E-4,\n    \"AED\":0.00320019,\n    \"INR\":0.0586469,\n    \"JPY\":0.0985917,\n    \"USD\":8.7125E-4,\n    \"ILS\":0.00316552,\n    \"EUR\":8.11008E-4\n  },\n  \"JOD\":{\n    \"XAF\":782.572,\n    \"AUD\":1.63992,\n    \"KRW\":1585.68,\n    \"GBP\":1.06757,\n    \"AED\":5.18231,\n    \"INR\":90.1236,\n    \"JPY\":156.304,\n    \"USD\":1.41112,\n    \"ILS\":5.02018,\n    \"EUR\":0.237707\n  },\n  \"GBP\":{\n    \"XAF\":762.826,\n    \"AUD\":1.63992,\n    \"KRW\":1433.92,\n    \"JOD\":0.936707,\n    \"AED\":4.58882,\n    \"INR\":84.095,\n    \"JPY\":141.373,\n    \"USD\":1.2493,\n    \"ILS\":4.7002,\n    \"EUR\":1.16278\n  },\n  \"AED\":{\n    \"XAF\":166.236,\n    \"AUD\":0.346779,\n    \"KRW\":312.482,\n    \"GBP\":0.217921,\n    \"AED\":0.192964,\n    \"INR\":18.3255,\n    \"JPY\":30.8081,\n    \"USD\":0.27225,\n    \"ILS\":0.968033,\n    \"EUR\":0.253425\n  },\n  \"INR\":{\n    \"XAF\":9.07101,\n    \"AUD\":0.0198319,\n    \"KRW\":17.0512,\n    \"JOD\":0.0110959,\n    \"GBP\":0.0118913,\n    \"AED\":0.0545671,\n    \"JPY\":1.68111,\n    \"USD\":0.0148559,\n    \"ILS\":0.0556764,\n    \"EUR\":0.0138287\n  },\n  \"JPY\":{\n    \"XAF\":5.39585,\n    \"AUD\":0.0114819,\n    \"KRW\":10.1428,\n    \"JOD\":0.00639777,\n    \"GBP\":0.0070735,\n    \"AED\":0.032459,\n    \"INR\":0.594846,\n    \"USD\":0.00883695,\n    \"ILS\":0.0320926,\n    \"EUR\":0.00822592\n  },\n  \"USD\":{\n    \"XAF\":610.601,\n    \"AUD\":1.27347,\n    \"KRW\":1147.78,\n    \"JOD\":0.708659,\n    \"GBP\":0.800446,\n    \"AED\":3.6731,\n    \"INR\":67.3135,\n    \"JPY\":113.161,\n    \"ILS\":3.55495,\n    \"EUR\":0.930886\n  },\n  \"ILS\":{\n    \"XAF\":155.925,\n    \"AUD\":0.352661,\n    \"KRW\":315.903,\n    \"JOD\":0.199196,\n    \"GBP\":0.212763,\n    \"AED\":1.03302,\n    \"INR\":17.9609,\n    \"JPY\":31.1599,\n    \"USD\":0.281298,\n    \"EUR\":1.19318\n  },\n  \"EUR\":{\n    \"XAF\":655.957,\n    \"AUD\":1.49707,\n    \"KRW\":1233.03,\n    \"JOD\":0.838098,\n    \"GBP\":0.860011,\n    \"AED\":3.94594,\n    \"INR\":72.3136,\n    \"JPY\":121.567,\n    \"USD\":1.07428,\n    \"ILS\":4.20494\n  }\n}\n\n\nTransaction Requests satisfy PSD2 requirements thus:\n\n1) A transaction can be initiated by a third party application.\n\n2) The customer is informed of the charge that will incurred.\n\n3) The call supports delegated authentication (OAuth)\n\nSee [this python code](https://github.com/OpenBankProject/Hello-OBP-DirectLogin-Python/blob/master/hello_payments.py) for a complete example of this flow.\n\nThere is further documentation [here](https://github.com/OpenBankProject/OBP-API/wiki/Transaction-Requests)\n\nAuthentication is Mandatory\n\n\n\nSpecial instructions for TRANSFER_TO_ATM:\n\nWhen using a TRANSFER_TO_ATM //TODO add more info there.\n\n       ",
+        "operationId": "v3_0_0-createTransactionRequestTransferToATM",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "BANK_BODY",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TransactionRequestBodyTransferToAtmJson"
+            }
+          },
+          {
+            "in": "path",
+            "name": "VIEW_ID",
+            "description": "The view id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/TransactionRequestWithChargeJSON210"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
+    "/custom/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests": {
+      "post": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Create Transaction Request TRANSFER_TO_PHONE",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Initiate a Payment via creating a Transaction Request.\n\nIn OBP, a `transaction request` may or may not result in a `transaction`. However, a `transaction` only has one possible state: completed.\n\nA `Transaction Request` can have one of several states.\n\n`Transactions` are modeled on items in a bank statement that represent the movement of money.\n\n`Transaction Requests` are requests to move money which may or may not succeeed and thus result in a `Transaction`.\n\nA `Transaction Request` might create a security challenge that needs to be answered before the `Transaction Request` proceeds.\n\nTransaction Requests contain charge information giving the client the opportunity to proceed or not (as long as the challenge level is appropriate).\n\nTransaction Requests can have one of several Transaction Request Types which expect different bodies. The escaped body is returned in the details key of the GET response.\nThis provides some commonality and one URL for many different payment or transfer types with enough flexibility to validate them differently.\n\nThe payer is set in the URL. Money comes out of the BANK_ID and ACCOUNT_ID specified in the URL.\n\nThe payee is set in the request body. Money goes into the BANK_ID and ACCOUNT_ID specified in the request body.\n\nIn sandbox mode, TRANSACTION_REQUEST_TYPE is commonly set to SANDBOX_TAN. See getTransactionRequestTypesSupportedByBank for all supported types.\n\nIn sandbox mode, if the amount is less than 1000 EUR (any currency, unless it is set differently on this server), the transaction request will create a transaction without a challenge, else the Transaction Request will be set to INITIALISED and a challenge will need to be answered.\n\nIf a challenge is created you must answer it using Answer Transaction Request Challenge before the Transaction is created.\n\nYou can transfer between different currency accounts. (new in 2.0.0). The currency in body must match the sending account.\n\nThe following static FX rates are available in sandbox mode:\n\n{\n  \"XAF\":{\n    \"AUD\":0.00228226,\n    \"KRW\":1.87975,\n    \"JOD\":0.00127784,\n    \"GBP\":0.00131092,\n    \"AED\":0.00601555,\n    \"INR\":0.110241,\n    \"JPY\":0.185328,\n    \"USD\":0.00163773,\n    \"ILS\":0.00641333,\n    \"EUR\":0.00152449\n  },\n  \"AUD\":{\n    \"XAF\":438.162,\n    \"KRW\":895.304,\n    \"JOD\":0.556152,\n    \"GBP\":0.609788,\n    \"AED\":2.88368,\n    \"INR\":50.4238,\n    \"JPY\":87.0936,\n    \"USD\":0.785256,\n    \"ILS\":2.83558,\n    \"EUR\":0.667969\n  },\n  \"KRW\":{\n    \"XAF\":0.531986,\n    \"AUD\":0.00111694,\n    \"JOD\":6.30634E-4,\n    \"GBP\":6.97389E-4,\n    \"AED\":0.00320019,\n    \"INR\":0.0586469,\n    \"JPY\":0.0985917,\n    \"USD\":8.7125E-4,\n    \"ILS\":0.00316552,\n    \"EUR\":8.11008E-4\n  },\n  \"JOD\":{\n    \"XAF\":782.572,\n    \"AUD\":1.63992,\n    \"KRW\":1585.68,\n    \"GBP\":1.06757,\n    \"AED\":5.18231,\n    \"INR\":90.1236,\n    \"JPY\":156.304,\n    \"USD\":1.41112,\n    \"ILS\":5.02018,\n    \"EUR\":0.237707\n  },\n  \"GBP\":{\n    \"XAF\":762.826,\n    \"AUD\":1.63992,\n    \"KRW\":1433.92,\n    \"JOD\":0.936707,\n    \"AED\":4.58882,\n    \"INR\":84.095,\n    \"JPY\":141.373,\n    \"USD\":1.2493,\n    \"ILS\":4.7002,\n    \"EUR\":1.16278\n  },\n  \"AED\":{\n    \"XAF\":166.236,\n    \"AUD\":0.346779,\n    \"KRW\":312.482,\n    \"GBP\":0.217921,\n    \"AED\":0.192964,\n    \"INR\":18.3255,\n    \"JPY\":30.8081,\n    \"USD\":0.27225,\n    \"ILS\":0.968033,\n    \"EUR\":0.253425\n  },\n  \"INR\":{\n    \"XAF\":9.07101,\n    \"AUD\":0.0198319,\n    \"KRW\":17.0512,\n    \"JOD\":0.0110959,\n    \"GBP\":0.0118913,\n    \"AED\":0.0545671,\n    \"JPY\":1.68111,\n    \"USD\":0.0148559,\n    \"ILS\":0.0556764,\n    \"EUR\":0.0138287\n  },\n  \"JPY\":{\n    \"XAF\":5.39585,\n    \"AUD\":0.0114819,\n    \"KRW\":10.1428,\n    \"JOD\":0.00639777,\n    \"GBP\":0.0070735,\n    \"AED\":0.032459,\n    \"INR\":0.594846,\n    \"USD\":0.00883695,\n    \"ILS\":0.0320926,\n    \"EUR\":0.00822592\n  },\n  \"USD\":{\n    \"XAF\":610.601,\n    \"AUD\":1.27347,\n    \"KRW\":1147.78,\n    \"JOD\":0.708659,\n    \"GBP\":0.800446,\n    \"AED\":3.6731,\n    \"INR\":67.3135,\n    \"JPY\":113.161,\n    \"ILS\":3.55495,\n    \"EUR\":0.930886\n  },\n  \"ILS\":{\n    \"XAF\":155.925,\n    \"AUD\":0.352661,\n    \"KRW\":315.903,\n    \"JOD\":0.199196,\n    \"GBP\":0.212763,\n    \"AED\":1.03302,\n    \"INR\":17.9609,\n    \"JPY\":31.1599,\n    \"USD\":0.281298,\n    \"EUR\":1.19318\n  },\n  \"EUR\":{\n    \"XAF\":655.957,\n    \"AUD\":1.49707,\n    \"KRW\":1233.03,\n    \"JOD\":0.838098,\n    \"GBP\":0.860011,\n    \"AED\":3.94594,\n    \"INR\":72.3136,\n    \"JPY\":121.567,\n    \"USD\":1.07428,\n    \"ILS\":4.20494\n  }\n}\n\n\nTransaction Requests satisfy PSD2 requirements thus:\n\n1) A transaction can be initiated by a third party application.\n\n2) The customer is informed of the charge that will incurred.\n\n3) The call supports delegated authentication (OAuth)\n\nSee [this python code](https://github.com/OpenBankProject/Hello-OBP-DirectLogin-Python/blob/master/hello_payments.py) for a complete example of this flow.\n\nThere is further documentation [here](https://github.com/OpenBankProject/OBP-API/wiki/Transaction-Requests)\n\nAuthentication is Mandatory\n\n\n\nSpecial instructions for TRANSFER_TO_PHONE:\n\nWhen using a TRANSFER_TO_PHONE, the following fields need to be filling in Json Body\n\n1)from.nickname : Nickname of the money sender (20 symbols)\n\n2)from.mobile_phone_number : Mobile number of the money sender (10 digits)\n\n3)to.mobile_phone_number : Mobile number of the money receiver (10 digits)\n\n4)message : Message text to the money receiver (50 symbols)\n\n5)description Transaction description/purpose (20 symbols):\n       ",
+        "operationId": "v3_0_0-createTransactionRequestTransferToPhone",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "BANK_BODY",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TransactionRequestBodyTransferToPhoneJson"
+            }
+          },
+          {
+            "in": "path",
+            "name": "VIEW_ID",
+            "description": "The view id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/TransactionRequestWithChargeJSON210"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
+    "/my/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/account": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get Account by Id (Core)",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Information returned about the account specified by ACCOUNT_ID:\n\n* Number\n* Owners\n* Type\n* Balance\n* IBAN\n\nThis call returns the owner view and requires access to that view.\n\n\nOAuth authentication is required",
+        "operationId": "v3_0_0-getCoreAccountById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ModeratedCoreAccountJSON"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorBankAccountNotFound"
+            }
+          }
+        }
+      }
+    },
+    "/my/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/transactions": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get Transactions for Account (Core)",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Returns transactions list (Core info) of the account specified by ACCOUNT_ID.\n\nAuthentication is required.\n\nPossible custom headers for pagination:\n\n* obp_sort_by=CRITERIA ==> default value: \"completed\" field\n* obp_sort_direction=ASC/DESC ==> default value: DESC\n* obp_limit=NUMBER ==> default value: 50\n* obp_offset=NUMBER ==> default value: 0\n* obp_from_date=DATE => default value: date of the oldest transaction registered (format below)\n* obp_to_date=DATE => default value: date of the newest transaction registered (format below)\n\n**Date format parameter**: \"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\" (2014-07-01T00:00:00.000Z) ==> time zone is UTC.",
+        "operationId": "v3_0_0-getCoreTransactionsForBankAccount",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ModeratedCoreAccountJSON"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorFilterSortDirectionError"
+            }
+          }
+        }
+      }
+    },
+    "/root": {
+      "get": {
+        "tags": [
+          "1_2_1"
+        ],
+        "summary": "The root of the API",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Returns information about:\n\n* API version\n* Hosted by information\n* Git Commit",
+        "operationId": "v1_2_1-root",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/APIInfoJSON"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUnknownError"
+            }
+          }
+        }
+      }
+    },
+    "/users/current/customers": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get Customers for Current User",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Gets all Customers that are linked to a User.\n\nAuthentication via OAuth is required.",
+        "operationId": "v3_0_0-getCustomersForUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CustomerJsonV210"
             }
           },
           "400": {
@@ -490,6 +628,14 @@
         "message": {
           "type": "string",
           "example": "OBP-00007: Remote data secret cannot be obtained! Check OBP-API and OBP-Storage Props values for remotedata.hostname, remotedata.port and remotedata.secret."
+        }
+      }
+    },
+    "ErrorApiVersionNotSupported": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-00008: The API version you called is not enabled on this server. Please contact your API administrator or use another version."
         }
       }
     },
@@ -602,6 +748,14 @@
         "message": {
           "type": "string",
           "example": "OBP-10026: Failed to parse date string. Please use this format yyyy-MM-dd'T'HH:mm:ss.SSS'Z' or that one yyyy-MM-dd'T'HH:mm:ss.SSSZ!"
+        }
+      }
+    },
+    "ErrorInvalidApiVersionString": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-00027: Invalid API Version string. We could not find the version specified."
         }
       }
     },
@@ -749,6 +903,30 @@
         }
       }
     },
+    "ErrorUserNoOwnerView": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20019: User does not have access to owner view. "
+        }
+      }
+    },
+    "ErrorInvalidCustomViewFormat": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20020: View name must start with `_`. eg: _work, _life "
+        }
+      }
+    },
+    "ErrorSystemViewsCanNotBeModified": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20021: System Views can not be modified. Only the created views can be modified."
+        }
+      }
+    },
     "ErrorUserNotFoundByUsername": {
       "properties": {
         "message": {
@@ -802,6 +980,46 @@
         "message": {
           "type": "string",
           "example": "OBP-20040: Header, Payload and Signature cannot be extracted from the JWT."
+        }
+      }
+    },
+    "ErrorGatewayLoginNoNeedToCallCbs": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20041: There is no need to call CBS"
+        }
+      }
+    },
+    "ErrorGatewayLoginCannotFindUser": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20042: User cannot be found. Please initiate CBS communication in order to create it."
+        }
+      }
+    },
+    "ErrorGatewayLoginCannotGetCbsToken": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20043: Cannot get the CBSToken response from South side"
+        }
+      }
+    },
+    "ErrorGatewayLoginCannotGetOrCreateUser": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-20044: Cannot get or create user during GatewayLogin process."
+        }
+      }
+    },
+    "ErrorGatewayLoginNoJwtForResponse": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-200445: There is no useful value for JWT."
         }
       }
     },
@@ -1413,6 +1631,46 @@
         }
       }
     },
+    "ErrorAnUnspecifiedOrInternalErrorOccurred": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-50005: An unspecified or internal error occurred."
+        }
+      }
+    },
+    "ErrorKafkaInterruptedException": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-50006: Kafka interrupted exception."
+        }
+      }
+    },
+    "ErrorKafkaExecutionException": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-50007: Kafka execution exception."
+        }
+      }
+    },
+    "ErrorKafkaStreamTimeoutException": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-50008: Akka Kafka stream timeout exception."
+        }
+      }
+    },
+    "ErrorKafkaUnknownError": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "OBP-50009: Kafka unknown error."
+        }
+      }
+    },
     "ErrorConnectorEmptyResponse": {
       "properties": {
         "message": {
@@ -1461,9 +1719,6 @@
         }
       }
     },
-    "EmptyClassJson": {
-      "properties": {}
-    },
     "ChallengeAnswerJSON": {
       "required": [
         "id",
@@ -1480,29 +1735,88 @@
         }
       }
     },
+    "EmptyClassJson": {
+      "properties": {}
+    },
+    "TransactionRequestBodyTransferToAccount": {
+      "required": [
+        "value",
+        "description",
+        "transfer_type",
+        "future_date",
+        "to"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "example": "Transaction description/purpose (20 symbols)"
+        },
+        "future_date": {
+          "type": "string",
+          "example": "The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD"
+        },
+        "to": {
+          "$ref": "#/definitions/ToAccountTransferToAccountJson"
+        },
+        "transfer_type": {
+          "type": "string",
+          "example": "Transfer type: 1=regular; 2=RTGS - real time"
+        },
+        "value": {
+          "$ref": "#/definitions/AmountOfMoneyJsonV121"
+        }
+      }
+    },
+    "TransactionRequestBodyTransferToAtmJson": {
+      "required": [
+        "value",
+        "description",
+        "message",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "example": "Transaction description/purpose (20 symbols)"
+        },
+        "to": {
+          "$ref": "#/definitions/ToAccountTransferToAtmJson"
+        },
+        "from": {
+          "$ref": "#/definitions/FromAccountTransfer"
+        },
+        "message": {
+          "type": "string",
+          "example": "Message text to the money receiver (50 symbols)"
+        },
+        "value": {
+          "$ref": "#/definitions/AmountOfMoneyJsonV121"
+        }
+      }
+    },
     "TransactionRequestBodyTransferToPhoneJson": {
       "required": [
         "value",
         "description",
-        "from_account_phone_number",
-        "from_account_owner_nickname",
-        "couterparty"
+        "message",
+        "from",
+        "to"
       ],
       "properties": {
-        "couterparty": {
-          "$ref": "#/definitions/CounterpartyTransferToPhoneJson"
-        },
         "description": {
           "type": "string",
-          "example": "This is a TRANSFER_TO_PHONE Transaction Request"
+          "example": "Transaction description/purpose (20 symbols)"
         },
-        "from_account_owner_nickname": {
-          "type": "string",
-          "example": "Tom"
+        "to": {
+          "$ref": "#/definitions/ToAccountTransferToPhoneJson"
         },
-        "from_account_phone_number": {
+        "from": {
+          "$ref": "#/definitions/FromAccountTransfer"
+        },
+        "message": {
           "type": "string",
-          "example": "+9722398712"
+          "example": "Message text to the money receiver (50 symbols)"
         },
         "value": {
           "$ref": "#/definitions/AmountOfMoneyJsonV121"
@@ -1580,7 +1894,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "example": "test"
+          "example": "_test"
         },
         "description": {
           "type": "string",
@@ -1857,7 +2171,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "is_beneficiary": {
           "type": "boolean",
@@ -1876,7 +2190,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "status": {
           "type": "string",
@@ -2815,7 +3129,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "longitude": {
           "type": "number",
@@ -2936,7 +3250,7 @@
         "completed": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "type": {
           "type": "string",
@@ -2948,7 +3262,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -2976,7 +3290,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "user": {
           "$ref": "#/definitions/UserJSONV121"
@@ -3010,7 +3324,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "value": {
           "type": "string",
@@ -3036,7 +3350,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "value": {
           "type": "string",
@@ -3320,7 +3634,7 @@
         "requested_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -3337,7 +3651,7 @@
         "requested_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -3372,7 +3686,7 @@
         "expires_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "networks": {
           "type": "array",
@@ -3394,7 +3708,7 @@
         "collected": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "technology": {
           "type": "string",
@@ -3424,7 +3738,7 @@
         "valid_from_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "bank_card_number": {
           "type": "string",
@@ -3437,7 +3751,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "on_hot_list": {
           "type": "boolean",
@@ -3488,7 +3802,7 @@
         "expires_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "networks": {
           "type": "array",
@@ -3510,7 +3824,7 @@
         "collected": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "technology": {
           "type": "string",
@@ -3537,7 +3851,7 @@
         "valid_from_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "bank_card_number": {
           "type": "string",
@@ -3550,7 +3864,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "on_hot_list": {
           "type": "boolean",
@@ -3567,7 +3881,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "url": {
           "type": "string",
@@ -3806,12 +4120,12 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "employment_status": {
           "type": "string",
@@ -3887,12 +4201,12 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "employment_status": {
           "type": "string",
@@ -3953,7 +4267,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "from_department": {
           "type": "string",
@@ -4256,7 +4570,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "longitude": {
           "type": "number",
@@ -4762,7 +5076,7 @@
         "scheduled_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "category": {
           "type": "string",
@@ -4775,7 +5089,7 @@
         "actual_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -4939,7 +5253,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "id": {
           "type": "string",
@@ -4948,7 +5262,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "status": {
           "type": "string",
@@ -5152,7 +5466,7 @@
         "issue_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "bank_id": {
           "type": "string",
@@ -5173,7 +5487,7 @@
         "expiry_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -5226,7 +5540,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "relates_to_kyc_document_id": {
           "type": "string",
@@ -5292,7 +5606,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "satisfied": {
           "type": "boolean",
@@ -5336,7 +5650,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "ok": {
           "type": "boolean",
@@ -5377,7 +5691,7 @@
         "date_activated": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "customer_number": {
           "type": "string",
@@ -5386,7 +5700,7 @@
         "date_added": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "type": {
           "type": "string",
@@ -5500,7 +5814,7 @@
         "completed": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "type": {
           "type": "string",
@@ -5512,7 +5826,7 @@
         "posted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -5653,7 +5967,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "id": {
           "type": "string",
@@ -5662,7 +5976,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "status": {
           "type": "string",
@@ -5929,7 +6243,7 @@
         "when": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "meeting_id": {
           "type": "string",
@@ -5977,7 +6291,7 @@
         "date_inserted": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "user_customer_link_id": {
           "type": "string",
@@ -6060,7 +6374,7 @@
         "issue_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "type": {
           "type": "string",
@@ -6073,7 +6387,7 @@
         "expiry_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -6098,7 +6412,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "relates_to_kyc_document_id": {
           "type": "string",
@@ -6136,7 +6450,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "satisfied": {
           "type": "boolean",
@@ -6166,7 +6480,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "ok": {
           "type": "boolean",
@@ -6226,12 +6540,12 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "employment_status": {
           "type": "string",
@@ -6281,7 +6595,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "id": {
           "type": "string",
@@ -6290,7 +6604,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "status": {
           "type": "string",
@@ -6407,7 +6721,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "consumer_id": {
           "type": "string",
@@ -6615,7 +6929,7 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "credit_rating": {
           "$ref": "#/definitions/CustomerCreditRatingJSON"
@@ -6623,7 +6937,7 @@
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "employment_status": {
           "type": "string",
@@ -6689,7 +7003,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "longitude": {
           "type": "number",
@@ -6753,7 +7067,7 @@
         "date_of_birth": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "credit_rating": {
           "$ref": "#/definitions/CustomerCreditRatingJSON"
@@ -6761,7 +7075,7 @@
         "last_ok_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "employment_status": {
           "type": "string",
@@ -6812,7 +7126,7 @@
         "start_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "id": {
           "type": "string",
@@ -6821,7 +7135,7 @@
         "end_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "status": {
           "type": "string",
@@ -6928,7 +7242,7 @@
         "created": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         }
       }
     },
@@ -7024,16 +7338,36 @@
         }
       }
     },
+    "PostCounterpartyBespoke": {
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "example": "englishDescription"
+        },
+        "key": {
+          "type": "string",
+          "example": "englishDescription"
+        }
+      }
+    },
     "PostCounterpartyJSON": {
       "required": [
         "name",
+        "description",
         "other_account_routing_scheme",
         "other_account_routing_address",
+        "other_account_secondary_routing_scheme",
+        "other_account_secondary_routing_address",
         "other_bank_routing_scheme",
         "other_bank_routing_address",
         "other_branch_routing_scheme",
         "other_branch_routing_address",
-        "is_beneficiary"
+        "is_beneficiary",
+        "bespoke"
       ],
       "properties": {
         "other_account_routing_address": {
@@ -7046,27 +7380,45 @@
         },
         "name": {
           "type": "string",
-          "example": "GOOD"
+          "example": "CounterpartyName"
+        },
+        "other_account_secondary_routing_address": {
+          "type": "string",
+          "example": "BIC201483"
         },
         "is_beneficiary": {
           "type": "boolean",
           "example": "true"
         },
+        "description": {
+          "type": "string",
+          "example": "My landlord"
+        },
         "other_branch_routing_address": {
           "type": "string",
-          "example": "Berlin"
+          "example": "10010"
+        },
+        "bespoke": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostCounterpartyBespoke"
+          }
         },
         "other_bank_routing_scheme": {
           "type": "string",
-          "example": "BIC"
+          "example": "bankCode"
         },
         "other_branch_routing_scheme": {
           "type": "string",
-          "example": "OBP"
+          "example": "branchNumber"
         },
         "other_bank_routing_address": {
           "type": "string",
-          "example": "123456"
+          "example": "10"
+        },
+        "other_account_secondary_routing_scheme": {
+          "type": "string",
+          "example": "accountNumber"
         }
       }
     },
@@ -7542,7 +7894,7 @@
         "effective_date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "conversion_value": {
           "type": "number",
@@ -7562,6 +7914,7 @@
     "CounterpartyJsonV220": {
       "required": [
         "name",
+        "description",
         "created_by_user_id",
         "this_bank_id",
         "this_account_id",
@@ -7573,16 +7926,19 @@
         "other_branch_routing_address",
         "other_account_routing_scheme",
         "other_account_routing_address",
-        "is_beneficiary"
+        "other_account_secondary_routing_scheme",
+        "other_account_secondary_routing_address",
+        "is_beneficiary",
+        "bespoke"
       ],
       "properties": {
         "other_account_routing_address": {
           "type": "string",
-          "example": "DE89 3704 0044 0532 0130 00"
+          "example": "bankCode"
         },
         "other_account_routing_scheme": {
           "type": "string",
-          "example": "IBAN"
+          "example": "bankCode"
         },
         "created_by_user_id": {
           "type": "string",
@@ -7590,23 +7946,37 @@
         },
         "name": {
           "type": "string",
-          "example": "b2dd6c2c-7ebd-4014-9c73-b7d28cc71fe1"
+          "example": "CounterpartyName"
+        },
+        "other_account_secondary_routing_address": {
+          "type": "string",
+          "example": "bankCode"
         },
         "is_beneficiary": {
           "type": "boolean",
           "example": "true"
         },
+        "description": {
+          "type": "string",
+          "example": "My landlord"
+        },
         "other_branch_routing_address": {
           "type": "string",
-          "example": "Berlin"
+          "example": "bankCode"
+        },
+        "bespoke": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostCounterpartyBespoke"
+          }
         },
         "other_bank_routing_scheme": {
           "type": "string",
-          "example": "test"
+          "example": "bankCode"
         },
         "other_branch_routing_scheme": {
           "type": "string",
-          "example": "OBP"
+          "example": "bankCode"
         },
         "this_account_id": {
           "type": "string",
@@ -7618,7 +7988,7 @@
         },
         "other_bank_routing_address": {
           "type": "string",
-          "example": "test"
+          "example": "bankCode"
         },
         "this_bank_id": {
           "type": "string",
@@ -7627,6 +7997,10 @@
         "counterparty_id": {
           "type": "string",
           "example": "1d65db7c-a7b2-4839-af41-958276ab7790"
+        },
+        "other_account_secondary_routing_scheme": {
+          "type": "string",
+          "example": "bankCode"
         }
       }
     },
@@ -8004,7 +8378,7 @@
         "date": {
           "type": "string",
           "format": "date",
-          "example": "Tue Jan 22 00:08:00 UTC 2013"
+          "example": "Tue Jan 22 00:08:00 CET 2013"
         },
         "obp_api_request_id": {
           "type": "string",
@@ -8100,7 +8474,9 @@
         "can_see_other_bank_routing_scheme",
         "can_see_other_bank_routing_address",
         "can_see_other_account_routing_scheme",
-        "can_see_other_account_routing_address"
+        "can_see_other_account_routing_address",
+        "can_add_transaction_request_to_own_account",
+        "can_add_transaction_request_to_any_account"
       ],
       "properties": {
         "can_see_transaction_start_date": {
@@ -8215,6 +8591,10 @@
           "type": "boolean",
           "example": "true"
         },
+        "can_add_transaction_request_to_own_account": {
+          "type": "boolean",
+          "example": "true"
+        },
         "can_delete_physical_location": {
           "type": "boolean",
           "example": "true"
@@ -8284,6 +8664,10 @@
           "example": "true"
         },
         "can_add_counterparty": {
+          "type": "boolean",
+          "example": "true"
+        },
+        "can_add_transaction_request_to_any_account": {
           "type": "boolean",
           "example": "true"
         },
@@ -8452,159 +8836,112 @@
         }
       }
     },
-    "CounterpartyTransferToPhoneJson": {
+    "ToAccountTransferToPhoneJson": {
       "required": [
-        "other_account_message",
-        "other_account_phone_number"
+        "mobile_phone_number"
       ],
       "properties": {
-        "other_account_phone_number": {
+        "mobile_phone_number": {
           "type": "string",
           "example": "+9722398746"
-        },
-        "other_account_message": {
-          "type": "string",
-          "example": "Good Luck"
         }
       }
     },
-    "CounterpartyTransferToAtmJson": {
+    "FromAccountTransfer": {
       "required": [
-        "other_account_owner",
-        "other_account_owner_passport_id_or_national_id",
-        "other_account_owner_id_type",
-        "other_account_owner_birthday",
-        "other_account_message",
-        "other_account_phone_number"
+        "mobile_phone_number",
+        "nickname"
       ],
       "properties": {
-        "other_account_owner": {
+        "nickname": {
           "type": "string",
           "example": "Tom"
         },
-        "other_account_phone_number": {
+        "mobile_phone_number": {
           "type": "string",
-          "example": "+9722398746"
-        },
-        "other_account_owner_passport_id_or_national_id": {
+          "example": "Mobile number of the money sender (10 digits),eg: +9722398712"
+        }
+      }
+    },
+    "ToAccountTransferToAtmKycDocumentJson": {
+      "required": [
+        "type",
+        "number"
+      ],
+      "properties": {
+        "number": {
           "type": "string",
-          "example": "NationalId"
+          "example": " Passport or National ID number of the money receiver"
         },
-        "other_account_message": {
-          "type": "string",
-          "example": "Good Luck"
-        },
-        "other_account_owner_id_type": {
+        "type": {
           "type": "string",
           "example": "ID Type of the money receiver: 1 - National; 5- Passport"
-        },
-        "other_account_owner_birthday": {
-          "type": "string",
-          "example": "19900101"
         }
       }
     },
-    "TransactionRequestBodyTransferToAtmJson": {
+    "ToAccountTransferToAtmJson": {
       "required": [
-        "value",
-        "description",
-        "from_account_phone_number",
-        "from_account_owner_nickname",
-        "charge_policy",
-        "couterparty"
+        "legal_name",
+        "date_of_birth",
+        "mobile_phone_number",
+        "kyc_document"
       ],
       "properties": {
-        "couterparty": {
-          "$ref": "#/definitions/CounterpartyTransferToAtmJson"
+        "kyc_document": {
+          "$ref": "#/definitions/ToAccountTransferToAtmKycDocumentJson"
         },
-        "description": {
+        "mobile_phone_number": {
           "type": "string",
-          "example": "This is a TRANSFER_TO_ATM Transaction Request"
+          "example": "Mobile number of the money sender (10 digits),eg: +9722398746"
         },
-        "from_account_owner_nickname": {
+        "date_of_birth": {
           "type": "string",
-          "example": "Tom"
+          "example": "19900101"
         },
-        "from_account_phone_number": {
+        "legal_name": {
           "type": "string",
-          "example": "+9722398746"
-        },
-        "charge_policy": {
-          "type": "string",
-          "example": "SHARED"
-        },
-        "value": {
-          "$ref": "#/definitions/AmountOfMoneyJsonV121"
+          "example": "Thomas Andrew Smith"
         }
       }
     },
-    "CounterpartyTransferToAccount": {
+    "ToAccountTransferToAccountAccountJson": {
       "required": [
-        "other_account_owner",
-        "transfer_type",
-        "transfer_is_scheduled",
-        "future_date",
-        "bank_code",
-        "branch_number",
-        "account_number",
+        "number",
         "iban"
       ],
       "properties": {
-        "transfer_is_scheduled": {
+        "iban": {
           "type": "string",
-          "example": "if the transfer is scheduled to a future date then 1 otherwise 0"
+          "example": "IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored"
         },
-        "future_date": {
+        "number": {
           "type": "string",
-          "example": "The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD"
+          "example": "Account number of the target account"
+        }
+      }
+    },
+    "ToAccountTransferToAccountJson": {
+      "required": [
+        "name",
+        "bank_code",
+        "branch_number",
+        "account"
+      ],
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/ToAccountTransferToAccountAccountJson"
         },
         "branch_number": {
           "type": "string",
           "example": "Branch number of the target account"
         },
-        "other_account_owner": {
-          "type": "string",
-          "example": "Target bank type: 0-Leumi; 1-other bank"
-        },
-        "account_number": {
-          "type": "string",
-          "example": "Account number of the target account"
-        },
-        "transfer_type": {
-          "type": "string",
-          "example": "Transfer type: 1=regular; 2=RTGS - real time"
-        },
         "bank_code": {
           "type": "string",
           "example": "Bank code of the target account"
         },
-        "iban": {
+        "name": {
           "type": "string",
-          "example": "IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored"
-        }
-      }
-    },
-    "TransactionRequestBodyTransferToAccount": {
-      "required": [
-        "value",
-        "description",
-        "charge_policy",
-        "couterparty"
-      ],
-      "properties": {
-        "couterparty": {
-          "$ref": "#/definitions/CounterpartyTransferToAccount"
-        },
-        "charge_policy": {
-          "type": "string",
-          "example": "SHARED"
-        },
-        "description": {
-          "type": "string",
-          "example": "This is a TRANSFER_TO_ACCOUNT Transaction Request"
-        },
-        "value": {
-          "$ref": "#/definitions/AmountOfMoneyJsonV121"
+          "example": "Tom Muller - has to be english if transfer_type = 2"
         }
       }
     },
