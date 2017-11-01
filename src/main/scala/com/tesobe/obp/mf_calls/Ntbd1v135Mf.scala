@@ -1,9 +1,10 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.HttpClient.makePostRequest
+import com.tesobe.obp.HttpClient.{makePostRequest, createPapiErrorResponseFromSoapError}
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.{JValue, parse}
+import net.liftweb.json.JsonParser.ParseException
 
 
 object Ntbd1v135Mf extends StrictLogging{
@@ -58,6 +59,7 @@ object Ntbd1v135Mf extends StrictLogging{
       Right(parse(replaceEmptyObjects(result)).extract[Ntbd1v135])
     } catch {
       case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      case e: net.liftweb.json.JsonParser.ParseException => Left(createPapiErrorResponseFromSoapError(result))
     }  }
 
 }
