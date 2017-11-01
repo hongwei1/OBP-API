@@ -70,3 +70,9 @@ curl --request POST \
   
   
   
+9 Get private accounts at one bank. -V220
+
+curl --request GET \
+  --url http://linx107701t37:8080/obp/v2.2.0/banks/10/accounts/private \
+  --header 'authorization: GatewayLogin token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.9oyw-aeHa54qUMtc-cRDjC1g1aMQcu3vqv-2bM8e480' \
+  --header 'content-type: application/json'
