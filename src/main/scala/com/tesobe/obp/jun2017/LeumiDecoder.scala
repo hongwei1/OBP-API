@@ -585,8 +585,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
         cbsToken,
         transactionRequestBodyTransferToAccountJson.transfer_type,
         transferDateInFuture = transactionRequestBodyTransferToAccountJson.future_date
-      )
-      val transferToAccountToken = callNtbdAv050.P050_BDIKACHOVAOUT.P050_TOKEN_OUT
+      ) match { case Right(a) =>
+        
+      val transferToAccountToken = a.P050_BDIKACHOVAOUT.P050_TOKEN_OUT
 
       val callNtdBv050 = getNtbdBv050(branchId,
         accountType,
@@ -600,7 +601,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount,
         description = transactionRequestBodyTransferToAccountJson.description,
         referenceNameOfTo = transactionRequestBodyTransferToAccountJson.to.name
-      )
+      ) match {
+        case Right(b) =>
 
       val callNtbdIv050 = getNtbdIv050(
         branchId,
@@ -609,9 +611,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
         cbsToken,
         ntbdAv050Token = transferToAccountToken,
         transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount
-      )
-
-      val callNtbdGv050 = getNtbdGv050(
+      ) match {
+        case Right(c) =>
+      
+          val callNtbdGv050 = getNtbdGv050(
         branchId,
         accountType,
         accountNumber,
@@ -619,7 +622,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         ntbdAv050Token = transferToAccountToken,
         //TODO: check with leumi if bankID 10 implies leumi code 1 here
         bankTypeOfTo = if (transactionRequestBodyTransferToAccountJson.to.bank_code == "10") "0" else "1"
-      )
+      ) match {
+            case Right(d) => 
 
       val callNtbd2v050 = getNtbd2v050(
         branchId,
@@ -628,12 +632,59 @@ object LeumiDecoder extends Decoder with StrictLogging {
         cbsToken,
         username,
         ntbdAv050Token = transferToAccountToken,
-        ntbdAv050fromAccountOwnerName = callNtbdAv050.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT
-      )
-      InboundCreateTransactionId(createTransactionRequest.authInfo,
-        InternalTransactionId("", List(InboundStatusMessage("ESB", "Success", "0", "OK")),
-          transactionNewId))
-
+        ntbdAv050fromAccountOwnerName = a.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT
+      ) match {
+                      case Right(e) =>
+                            InboundCreateTransactionId(createTransactionRequest.authInfo,
+                              InternalTransactionId("", List(InboundStatusMessage("ESB", "Success", "0", "OK")),
+                                transactionNewId))
+                      case Left(e) =>
+                        InboundCreateTransactionId(createTransactionRequest.authInfo,
+                          InternalTransactionId("", List(InboundStatusMessage(
+                            "ESB",
+                            "Failure",
+                            e.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                            e.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+                            transactionNewId))
+      }
+            case Left(d) =>
+              InboundCreateTransactionId(createTransactionRequest.authInfo,
+                InternalTransactionId("", List(InboundStatusMessage(
+                  "ESB",
+                  "Failure",
+                  d.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                  d.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+                  transactionNewId))
+          }
+        case Left(c) =>
+          InboundCreateTransactionId(createTransactionRequest.authInfo,
+            InternalTransactionId("", List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              c.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              c.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+              transactionNewId))
+      }
+        case Left(b) =>
+          InboundCreateTransactionId(createTransactionRequest.authInfo,
+            InternalTransactionId("", List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              b.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              b.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+              transactionNewId))}
+      case Left(a) =>
+        InboundCreateTransactionId(createTransactionRequest.authInfo,
+          InternalTransactionId("", List(InboundStatusMessage(
+            "ESB",
+            "Failure",
+            a.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+            a.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+            transactionNewId))
+      }
+  InboundCreateTransactionId(createTransactionRequest.authInfo,
+    InternalTransactionId("", List(InboundStatusMessage("ESB", "Success", "0", "OK")),
+      transactionNewId))
     } else if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.COUNTERPARTY.toString)) {
       val transactionRequestBodyPhoneToPhoneJson = createTransactionRequest.transactionRequestCommonBody.asInstanceOf[TransactionRequestBodyCounterpartyJSON]
 

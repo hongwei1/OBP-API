@@ -2,7 +2,7 @@ package com.tesobe.obp
 
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
-import net.liftweb.json.JValue
+import net.liftweb.json.{JValue}
 import net.liftweb.json.JsonParser._
 
 object NtbdAv050Mf {
@@ -13,7 +13,7 @@ object NtbdAv050Mf {
                  cbsToken: String, 
                  transferType: String, 
                  transferDateInFuture: String
-                ) = {
+                ): Either[PAPIErrorResponse, NtbdAv050] = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
     val isFutureTransfer = if (transferDateInFuture != "") "1" else "0"
@@ -42,8 +42,11 @@ object NtbdAv050Mf {
     }""")
 
     val result = makePostRequest(json, path)
-
     implicit val formats = net.liftweb.json.DefaultFormats
-    parse(replaceEmptyObjects(result)).extract[NtbdAv050]
+    try {
+      Right(parse(replaceEmptyObjects(result)).extract[NtbdAv050])
+    } catch {
+      case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+    }
   }
 }

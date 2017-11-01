@@ -17,9 +17,15 @@ class NtbdBv050MfTest extends ServerSetup {
       transactionAmount = "000000015302",
       description = "Cause ",
       referenceNameOfTo = "recipient Name")
+    result match {
+      case Right(result) =>
     result.NTDriveNoResp.esbHeaderResponse.responseStatus.callStatus should be ("Success")
     result.NTDriveNoResp.MFAdminResponse.returnCode should be ("1")
     result.NTDriveNoResp.MFAdminResponse.messageText.getOrElse("") should be ("העדכון בוצע בהצלחה !")
+
+      case Left(result) =>
+        fail()
+    }
 
 
   }
