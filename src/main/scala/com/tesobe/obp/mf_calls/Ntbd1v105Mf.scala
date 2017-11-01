@@ -23,7 +23,7 @@ object Ntbd1v105Mf extends StrictLogging{
                      birthDateOfMoneyReceiver: String,
                      mobileNumberOfMoneyReceiver: String): Either[PAPIErrorResponse,Ntbd1v105] = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01"
+    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/105/01.01"
     
     val json: JValue =parse(s"""
 {
