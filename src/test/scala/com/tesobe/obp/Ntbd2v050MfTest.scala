@@ -13,10 +13,16 @@ class Ntbd2v050MfTest extends ServerSetup {
       ntbdAv050Token = "3639292",
       ntbdAv050fromAccountOwnerName = "recipient Name")
     "            ".trim should be ("")
+    result match {
+      case Right(result) =>
     result.P050_ISHUROUT.esbHeaderResponse.responseStatus.callStatus should be("Success")
     result.P050_ISHUROUT.MFAdminResponse.returnCode should be("0")
     result.P050_ISHUROUT.P050_SHAA_BITZUA should be("14:48")
     result.P050_ISHUROUT.P050_TARICH_BITZUA should be("20170620")
+
+      case Left(result) =>
+        fail()
+    }
 
   }
 

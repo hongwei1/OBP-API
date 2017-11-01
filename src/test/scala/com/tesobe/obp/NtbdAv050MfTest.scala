@@ -11,11 +11,17 @@ class NtbdAv050MfTest extends ServerSetup{
       cbsToken = ";-V          81433020102612",
       transferType= "1",
       transferDateInFuture = "20170705")
+    result match {
+      case Right(result) =>
     result.P050_BDIKACHOVAOUT.esbHeaderResponse.responseStatus.statusCode should be ("Success")
     result.P050_BDIKACHOVAOUT.MFAdminResponse.returnCode should be ("0")
     result.P050_BDIKACHOVAOUT.P050_TOKEN_OUT should be ("3639292")
     result.P050_BDIKACHOVAOUT.P050_SCUM_MAX_LE_HAVARA should be ("10000.00")
     result.P050_BDIKACHOVAOUT.P050_SHEM_HOVA_ANGLIT should be ("")
+
+      case Left(result) =>
+        fail()
+    }
 
   }
 

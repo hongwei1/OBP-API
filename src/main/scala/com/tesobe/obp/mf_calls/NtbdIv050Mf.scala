@@ -13,7 +13,7 @@ object NtbdIv050Mf {
                      cbsToken: String,
                      ntbdAv050Token: String,
                      transactionAmount: String
-                    ) = {
+                    ): Either[PAPIErrorResponse, NtbdIv050] = {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/I/050/01.03"
 
@@ -40,8 +40,11 @@ object NtbdIv050Mf {
       }""")
 
       val result = makePostRequest(json, path)
-
       implicit val formats = net.liftweb.json.DefaultFormats
-      parse(replaceEmptyObjects(result)).extract[NtbdIv050]
+      try {
+        Right(parse(replaceEmptyObjects(result)).extract[NtbdIv050])
+      } catch {
+        case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      }
     }
 }

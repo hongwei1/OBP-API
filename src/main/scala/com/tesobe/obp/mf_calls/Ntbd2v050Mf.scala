@@ -14,7 +14,7 @@ object Ntbd2v050Mf {
                      username: String,
                      ntbdAv050Token: String,
                      ntbdAv050fromAccountOwnerName: String
-                    ): Ntbd2v050 = {
+                    ): Either[PAPIErrorResponse,Ntbd2v050] = {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01"
       
@@ -43,8 +43,11 @@ object Ntbd2v050Mf {
       }""")
 
       val result = makePostRequest(json, path)
-
       implicit val formats = net.liftweb.json.DefaultFormats
-      (parse(replaceEmptyObjects(result)).extract[Ntbd2v050])
+      try {
+        Right(parse(replaceEmptyObjects(result)).extract[Ntbd2v050])
+      } catch {
+        case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      }
     }
 }
