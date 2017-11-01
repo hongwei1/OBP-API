@@ -5,6 +5,8 @@ import net.liftweb.json.JsonAST.{JValue, compactRender}
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
+import scala.xml.XML
+
 
 object HttpClient extends StrictLogging{
   
@@ -26,6 +28,13 @@ object HttpClient extends StrictLogging{
     response.close()
     logger.debug(s"$path--Response : "+response.toString+ "\n Body is :"+result)
     result
+  }
+  
+  def createPapiErrorResponseFromSoapError(result: String): PAPIErrorResponse = {
+    val xml = XML.loadString(result)
+    PAPIErrorResponse(PAPIErrorResponse2(EsbHeaderResponse("backendSoapError",
+      ResponseStatus((xml \\ "faultstring").toString(), Some((xml \\ "faultactor").toString))),
+      MfAdminResponse("BackendSoapError", Some((xml \\ "text").toString))))
   }
   }
 
