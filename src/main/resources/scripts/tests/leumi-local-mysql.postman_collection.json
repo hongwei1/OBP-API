@@ -376,7 +376,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"This is a TRANSFER_TO_PHONE Transaction Request\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"only 20 character\",\n  \"message\": \"Don't spend it all at once!\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398712\",\n    \"nickname\": \"Tom\"\n  },\n  \"to\": {\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests",
@@ -414,7 +414,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Body matches string\"] = responseBody.has(\"OBP-40011: Transaction Request Status is not INITIATED.\");",
+							"tests[\"Body matches string\"] = responseBody.has(\"Transaction Request Id not found\");",
 							"",
 							""
 						]
@@ -435,10 +435,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"3edd842d-1e91-4ecb-bc15-92e696299acf\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"0a16ed1e-d3d6-455b-b382-8811d2d826f7\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/3ba3cd17-f5f2-40f0-a395-f4e012db750e/challenge",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/04d51a31-f594-4ad3-/challenge",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -458,7 +458,126 @@
 						"transaction-request-types",
 						"TRANSFER_TO_PHONE",
 						"transaction-requests",
-						"3ba3cd17-f5f2-40f0-a395-f4e012db750e",
+						"04d51a31-f594-4ad3-",
+						"challenge"
+					]
+				},
+				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 201;",
+							"tests[\"Body matches string\"] = responseBody.has(\"id\");",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"1\",\n  \"future_date\": \"19900910\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"custom",
+						"banks",
+						"10",
+						"accounts",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_ACCOUNT",
+						"transaction-requests"
+					]
+				},
+				"description": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1001\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\" : \"Tom\",\n  \t\"transfer_type\" : \"Transfer type: 1=regular; 2=RTGS - real time\",\n    \"transfer_is_scheduled\": \"if the transfer is scheduled to a future date then 1 otherwise 0\",\n    \"future_date\" : \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n    \"bank_code\" :  \"Bank code of the target account\",\n    \"branch_number\" : \"Branch number of the target account\",\n    \"account_number\" : \"Account number of the target account\",\n    \"iban\" : \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n  }\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Answer Transaction Request Challenge. --TRANSFER_TO_ACCOUNT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Body matches string\"] = responseBody.has(\"Transaction Request Id not found\");",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \"id\":\"90658993-78ec-40aa-912d-256ca400cc20\",  \"answer\":\"183823\"}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/d2ad6d01-9eb4-47f9-a61d-7f8c29b33198/challenge",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
+						"owner",
+						"transaction-request-types",
+						"TRANSFER_TO_ACCOUNT",
+						"transaction-requests",
+						"d2ad6d01-9eb4-47f9-a61d-7f8c29b33198",
 						"challenge"
 					]
 				},
@@ -501,56 +620,6 @@
 						"obp",
 						"v1.2.1",
 						"root"
-					]
-				},
-				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
-			},
-			"response": []
-		},
-		{
-			"name": "GetToken",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"token\");"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "DirectLogin username=\"hongwei\", password=\"zhw_gz@126.comzhw_gz@126.com\", consumer_key=\"krq12vuqyvxm4xxqyxzhywn1xtva2hl32jlngbmc\""
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/my/logins/direct",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"my",
-						"logins",
-						"direct"
 					]
 				},
 				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
@@ -617,7 +686,8 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+							"tests[\"Status code is 200\"] = responseCode.code === 400;",
+							"tests[\"Body matches string\"] = responseBody.has(\"error\");"
 						]
 					}
 				}
@@ -630,10 +700,7 @@
 						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
+				"body": {},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
 					"protocol": "http",
@@ -703,7 +770,7 @@
 			"response": []
 		},
 		{
-			"name": "Get User (Current) -gateway-CBS_auth_tokenFull",
+			"name": "Get User (Current) -gateway-isfirstFalse",
 			"event": [
 				{
 					"listen": "test",
@@ -720,53 +787,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJDQlNfYXV0aF90b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRpbWVzdGFtcCI6InRpbWVzdGFtcCIsImNvbnN1bWVyX2lkIjoiMTIzIiwiY29uc3VtZXJfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIifQ.itlyfI9FUmx9pLuhxfZ5lsY9oUSuGXPK-K4FZme-SmM"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"users",
-						"current"
-					]
-				},
-				"description": "{\n  \"username\": \"simon2\",\n  \"is_first\": true,\n  \"timestamp\": \"timestamp\",\n  \"consumer_id\": \"123\",\n  \"consumer_name\": \"Name of Consumer\"\n}"
-			},
-			"response": []
-		},
-		{
-			"name": "Get User (Current) -gateway-CBS_auth_tokenEmpty",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik43anV0OGQiLCJ0aW1lc3RhbXAiOiJ0aW1lc3RhbXAiLCJjb25zdW1lcl9pZCI6IjEyMyIsImNvbnN1bWVyX25hbWUiOiJOYW1lIG9mIENvbnN1bWVyIn0.KV2ah28eCU7Yz7IdHOjYofCuWRDyqYRq8oLbNSQDRgg"
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8"
 					}
 				],
 				"body": {
@@ -938,7 +959,7 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"error_code\");"
+							"tests[\"Body matches string\"] = responseBody.has(\"git_commit\");"
 						]
 					}
 				}
@@ -1080,61 +1101,6 @@
 			"response": []
 		},
 		{
-			"name": "Get Account by Id (Full)-3jdV",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/account",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"banks",
-						"10",
-						"accounts",
-						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
-						"owner",
-						"account"
-					]
-				},
-				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
-			},
-			"response": []
-		},
-		{
 			"name": "Get Transactions for Account (Core)-3jdV-v300",
 			"event": [
 				{
@@ -1142,8 +1108,8 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
+							"tests[\"Status code is 200\"] = responseCode.code === 400;",
+							"tests[\"Body matches string\"] = responseBody.has(\"error\");"
 						]
 					}
 				}
@@ -1293,61 +1259,6 @@
 			"response": []
 		},
 		{
-			"name": "Get Transactions for Account (Full)-3jdV",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/auditor/transactions",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"banks",
-						"10",
-						"accounts",
-						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
-						"auditor",
-						"transactions"
-					]
-				},
-				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
-			},
-			"response": []
-		},
-		{
 			"name": "Create Transaction Request. --TRANSFER_TO_ATM",
 			"event": [
 				{
@@ -1375,7 +1286,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"10001\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ATM Transaction Request\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"ID Type of the money receiver: 1 - National; 5- Passport\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"19900101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"100\"\n  },\n  \"description\": \"good\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"5\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"100101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
@@ -1406,65 +1317,6 @@
 			"response": []
 		},
 		{
-			"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 201;",
-							"tests[\"Body matches string\"] = responseBody.has(\"id\");",
-							""
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"11230\"\n  },\n  \"description\": \"This is a TRANSFER_TO_ACCOUNT Transaction Request\",\n  \"transfer_type\": \"Transfer type: 1=regular; 2=RTGS - real time\",\n  \"future_date\": \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"custom",
-						"banks",
-						"10",
-						"accounts",
-						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
-						"owner",
-						"transaction-request-types",
-						"TRANSFER_TO_ACCOUNT",
-						"transaction-requests"
-					]
-				},
-				"description": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1001\"\n  },\n  \"description\": \"ABC\",\n  \"charge_policy\":\"SHARED\",\n  \"couterparty\":{\n  \t\"other_account_owner\" : \"Tom\",\n  \t\"transfer_type\" : \"Transfer type: 1=regular; 2=RTGS - real time\",\n    \"transfer_is_scheduled\": \"if the transfer is scheduled to a future date then 1 otherwise 0\",\n    \"future_date\" : \"The future date (see K050_SW_ATIDI) if applicable in format YYYYMMDD\",\n    \"bank_code\" :  \"Bank code of the target account\",\n    \"branch_number\" : \"Branch number of the target account\",\n    \"account_number\" : \"Account number of the target account\",\n    \"iban\" : \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n  }\n}"
-			},
-			"response": []
-		},
-		{
 			"name": "Answer Transaction Request Challenge. --TRANSFER_TO_ATM",
 			"event": [
 				{
@@ -1472,7 +1324,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Body matches string\"] = responseBody.has(\"OBP-40011: Transaction Request Status is not INITIATED.\");",
+							"tests[\"Body matches string\"] = responseBody.has(\"Transaction Request Id not found\");",
 							"",
 							""
 						]
@@ -1517,66 +1369,6 @@
 						"TRANSFER_TO_ATM",
 						"transaction-requests",
 						"5007e516-af0e-4e67-afb0-dbb4bbfe7cda",
-						"challenge"
-					]
-				},
-				"description": "user-id = 77f5ae14-9723-486a-b083-a91ce921c9f8"
-			},
-			"response": []
-		},
-		{
-			"name": "Answer Transaction Request Challenge. --TRANSFER_TO_ACCOUNT",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Body matches string\"] = responseBody.has(\"OBP-40011: Transaction Request Status is not INITIATED.\");",
-							"",
-							""
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{  \"id\":\"b816d5cc-4805-4bca-9777-e25206f5345b\",  \"answer\":\"183823\"}"
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests/6c497cb5-2876-46ef-8227-796abccb75de/challenge",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"banks",
-						"10",
-						"accounts",
-						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
-						"owner",
-						"transaction-request-types",
-						"TRANSFER_TO_ACCOUNT",
-						"transaction-requests",
-						"6c497cb5-2876-46ef-8227-796abccb75de",
 						"challenge"
 					]
 				},
