@@ -272,12 +272,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   
   
-  def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccountJsonV300 = {
-    CoreAccountJsonV300(
+  def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccount = {
+    CoreAccount(
       id = getOrCreateAccountId(account.branchNr,account.accountType,account.accountNr),
       label = "",
       bank_id = "10",
-      account_routing = AccountRoutingJsonV121(scheme = "account_number", address = account.accountNr))
+      account_routing = AccountRouting(scheme = "account_number", address = account.accountNr))
   } 
   
   //Helper functions end here--------------------------------------------------------------------------------------------
@@ -367,7 +367,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getCoreAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
     val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
-    var result = new ListBuffer[CoreAccountJsonV300]
+    var result = new ListBuffer[CoreAccount]
     for (i <- mfAccounts)  {
       result += mapBasicBankAccountToCoreAccountJsonV300(i)
     }
@@ -389,7 +389,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         id = i,
         label = "",
         bank_id = "10",
-        account_routing = AccountRoutingJsonV121(scheme = "account_number", address = mapAccountIdToAccountValues(i).accountNumber)
+        account_routing = AccountRouting(scheme = "account_number", address = mapAccountIdToAccountValues(i).accountNumber)
       )
     }
     InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)

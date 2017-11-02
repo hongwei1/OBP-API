@@ -270,7 +270,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
               InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
               InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
             ),
-            List(CoreAccountJsonV300("","", "", AccountRoutingJsonV121("","")))
+            List(CoreAccount("","", "", AccountRouting("","")))
           )
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -296,7 +296,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
             InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
           ),
-          "","", "", AccountRoutingJsonV121("",""))))
+          "","", "", AccountRouting("",""))))
         
         Future(msg, errorBody.asJson.noSpaces)
     }

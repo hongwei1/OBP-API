@@ -22,8 +22,19 @@ curl -v --request GET \
 --header 'authorization: GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80' \
 --header 'content-type: application/json'
 
+//user: 4CWWTZQ
+curl --request GET \
+  --url http://linx107701t37:8080/obp/v3.0.0/banks/10/accounts/private \
+  --header 'authorization: GatewayLogin token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX25hbWUiOiI0Q1dXVFpRIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.EojtZlnFFKi9Io71amd4LSkORgAv2R2qQUBJUCcN3xA' \
+  --header 'content-type: application/json'
 
-
+//user: fm4fzde
+curl --request GET \
+  --url http://linx107701t37:8080/obp/v3.0.0/banks/10/accounts/private \
+  --header 'authorization: GatewayLogin token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX25hbWUiOiJmbTRmemRlIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.bvwDJjY3_TFHjzpcsm64TbKnGb6Gnxs5HOuPyOBOuR0' \
+  --header 'content-type: application/json'
+  
+  
 5PrivateAccountFull
 curl -v --request GET \
 --url http://linx107701t37:8080/obp/v3.0.0/banks/10/accounts/yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs/auditor/account \
@@ -70,9 +81,12 @@ curl --request POST \
   
   
   
-9 Get private accounts at one bank. -V220
+9 Get private accounts at one bank. -V220 - totally wrong.
 
+//user: N7jut8d
 curl --request GET \
   --url http://linx107701t37:8080/obp/v2.2.0/banks/10/accounts/private \
   --header 'authorization: GatewayLogin token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.9oyw-aeHa54qUMtc-cRDjC1g1aMQcu3vqv-2bM8e480' \
   --header 'content-type: application/json'
+  
+ 

@@ -102,7 +102,7 @@ case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
-case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccountJsonV300])
+case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccount])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 
@@ -111,17 +111,17 @@ case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccoun
   *
   */
 
-case class CoreAccountJsonV300(
-                                id : String,
-                                label : String,
-                                bank_id : String,
-                                account_routing: AccountRoutingJsonV121
-                              )
+case class CoreAccount(
+  id: String,
+  label: String,
+  bank_id: String,
+  account_routing: AccountRouting
+)
 
-case class AccountRoutingJsonV121(
-                                   scheme: String,
-                                   address: String
-                                 )
+case class AccountRouting(
+  scheme: String,
+  address: String
+)
 
 case class PostCounterpartyBespoke(
   key: String,
@@ -534,7 +534,7 @@ case class InternalInboundCoreAccount(
   id : String,
   label : String,
   bank_id : String,
-  account_routing: AccountRoutingJsonV121
+  account_routing: AccountRouting
 )
 
 
