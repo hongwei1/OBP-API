@@ -378,9 +378,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
+    val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
     val accountIdList = mapAccountIdToAccountValues.keySet.toList
+    val outPutAccountIds = inputAccountIds intersect(accountIdList)
+    
     val result = new ListBuffer[InternalInboundCoreAccount]
-    for (i <- accountIdList) {
+    for (i <- outPutAccountIds) {
       result += InternalInboundCoreAccount(
         errorCode = "",
         backendMessages = List(
