@@ -925,7 +925,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
-      outboundGetCustomersByUserIdFuture.authInfo.cbsToken
+      joniMfCall.SDR_JONI.MFTOKEN
     )
     val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
       O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
