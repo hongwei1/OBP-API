@@ -30,20 +30,11 @@ object GetBankAccounts extends Config {
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser
     val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
-    //By specification
-    //TODO: Should this be in the props?
-    //val allowedAccountTypes = List("330", "340", "110")
     val allowedAccountTypes = config.getString("accountTypes.allowed").split(",").map(_.trim).toList
     //now extract values from JoniMFUser object into List of BasicBankAccount
     // (will be changed to inboundBankAccount 2017 objects 
     var result = new ListBuffer[BasicBankAccount]()
-    val leading_account = BasicBankAccount(
-        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_CHN,
-        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SNIF,
-        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_MOVIL_RASHI.SDRM_MOVIL_RASHI_SUG,
-        encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
-        AccountPermissions(true,false,false)
-    )
+
     for ( i <- jsonExtract.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
       for (u <- i.SDR_CHN) {
         if (allowedAccountTypes.contains(u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG)) {
@@ -56,17 +47,12 @@ object GetBankAccounts extends Config {
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
             encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
             AccountPermissions(
-                        //TODO: Check that the permission management is o.k. 
-                        //User with MEIDA right will get Accountant View
                         hasMursheMeida,
-                        //User with PEULOT right will get Owner View
                         hasMurshePeulot,
-                        //User with TZAD_G right will get Owner View
                         hasmursheTzadG
             )
           ) }
       }}
-    if (!result.contains(leading_account)) result += leading_account //TODO: Broken by assuming leading account permissions
     result.toList
   }
 

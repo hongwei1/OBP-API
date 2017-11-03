@@ -22,11 +22,11 @@ class JoniMfTest extends ServerSetup {
   }
   
   test("getJoni creates Json AST"){
-    val jsonAst: JValue = getJoni("joni_result.json")
+    val jsonAst: JValue = getJoni(username)
   }
 
   test("extact case class from Json AST"){
-    val jsonAst: JValue = getJoni("joni_result.json")
+    val jsonAst: JValue = getJoni(username)
     logger.debug(jsonAst.toString)
     val JoniCall: JoniMfUser = jsonAst.extract[JoniMfUser]
     assert(JoniCall.SDR_JONI.esbHeaderResponse.responseStatus.callStatus == "Success")
@@ -39,7 +39,7 @@ class JoniMfTest extends ServerSetup {
 
   }
    test("getBasicBankAccountsForUser"){
-    val accounts = getBasicBankAccountsForUser("joni_result.json", false)
+    val accounts = getBasicBankAccountsForUser(username, false)
    accounts should be (List(
      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)), 
      BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
@@ -48,12 +48,11 @@ class JoniMfTest extends ServerSetup {
      BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
      //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
-     BasicBankAccount("20102612","814","330",mfToken,AccountPermissions(true,false,false))
    ))
    
   }
   test("getBasicBankAccountsForUser works first without, then with cache use"){
-    val accountsFromMF = getBasicBankAccountsForUser("joni_result.json", false)
+    val accountsFromMF = getBasicBankAccountsForUser(username, false)
     accountsFromMF should be (List(
       BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)),
       BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
@@ -61,10 +60,9 @@ class JoniMfTest extends ServerSetup {
       //BasicBankAccount("20102642","814","0", AccountPermissions(true,false,false)),
       BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
-      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
-      BasicBankAccount("20102612","814","330",mfToken,AccountPermissions(true,false,false))
+      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true))
     ))
-    val accountsFromCache = getBasicBankAccountsForUser("joni_result.json", true)
+    val accountsFromCache = getBasicBankAccountsForUser(username, true)
     accountsFromCache should be (List(
       BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)),
       BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
@@ -72,8 +70,7 @@ class JoniMfTest extends ServerSetup {
       //BasicBankAccount("20102642","814","0", AccountPermissions(true,false,false)),
       BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
-      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
-      BasicBankAccount("20102612","814","330",mfToken,AccountPermissions(true,false,false))
+      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true))
     ))
 
   }
@@ -92,7 +89,7 @@ class JoniMfTest extends ServerSetup {
   }*/
 
   test("getMFToken gets the MFTOKEN, assuming / will be  escaped later"){
-    val mftoken = getMFToken("joni_result.json")
+    val mftoken = getMFToken(username)
     mftoken should be (mfToken)
   }
   

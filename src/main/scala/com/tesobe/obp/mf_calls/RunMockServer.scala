@@ -25,14 +25,14 @@ object RunMockServer extends StrictLogging{
   }
   
   def startMockServer = {
-    //1 JONI
+    //1a JONI for "N7jut8d"
     mockServer
       .when(
         request()
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-          //.withBody(jsonToString("joni_request.json").replace(" ","").replace("\n",""))
+          .withBody(jsonToString("joni_request.json").replace(" ","").replace("\n",""))
       )
       .respond(
         response()
@@ -42,6 +42,63 @@ object RunMockServer extends StrictLogging{
           )
           .withBody(jsonToString("joni_result.json"))
           //.withBody(jsonToString("error_result.json"))
+      )
+
+    //1b JONI for "4CWWTZQ"
+/*    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          .withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
+          .withBody(jsonToString("joni_4cwwtzq_request.json").replace(" ","").replace("\n",""))
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("joni_4cwwtzq_result.json").replace(" ","").replace("\n",""))
+        //.withBody(jsonToString("error_result.json"))
+      )*/
+
+    //1c JONI for "FM4FZDE"
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          .withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
+          .withBody(jsonToString("joni_fm4dzde_request.json").replace(" ","").replace("\n",""))
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("joni_fm4dzde_result.json").replace(" ","").replace("\n",""))
+        //.withBody(jsonToString("error_result.json"))
+      )
+
+    //1d JONI for "P747XTF"
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          .withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
+          .withBody(jsonToString("joni_p747xtf_request.json").replace(" ","").replace("\n",""))
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(jsonToString("joni_p747xtf_result.json"))
+        //.withBody(jsonToString("error_result.json"))
       )
     //2 Nt1cB
     mockServer

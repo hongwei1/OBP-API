@@ -1,0 +1,16 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<SOAP-ENV:Body>
+<SOAP-ENV:Fault>
+<faultcode>SOAP-ENV:Server</faultcode>
+<faultstring>BIP3113E: Exception detected in message flow com.ldb.consumers.papi.comm.papiMQRequestDispacherHTTP (broker TLDB1) </faultstring>
+<faultactor>http://localhost:7080/ESBLeumiDigitalBank/PAPI/* (timeout)</faultactor>
+<detail><text>Exception. BIP2230E: Error detected whilst processing a message in node &apos;com.ldb.consumers.papi.comm.papiMQRequestDispacherHTTP.ExceptionHandler.Analyze Error&apos;. : F:\build\slot1\S900_P\src\DataFlowEngine\SQLNodeLibrary\ImbComputeNode.cpp: 520: ImbComputeNode::evaluate: ComIbmComputeNode: com/ldb/consumers/papi/comm/papiMQRequestDispacherHTTP#FCMComposite_1_6.com/ldb/common/ExceptionHandler#FCMComposite_1_2
+BIP2488E:  (&apos;com.ldb.common.ExceptionHandler.Main&apos;, &apos;37.4&apos;) Error detected whilst executing the SQL statement &apos;&apos;CALL com.ldb.common.log.LogService(Environment, OutputRoot.MQRFH2.usr, &apos;common.exception.caught&apos;, FlowName || &apos;:&apos; || EOL || Traverse());&apos;&apos;. : F:\build\slot1\S900_P\src\DataFlowEngine\ImbRdl\ImbRdlStatementGroup.cpp: 792: SqlStatementGroup::execute: :
+BIP2934E: Error detected whilst executing the function or procedure &apos;&apos;LogService&apos;&apos;. : F:\build\slot1\S900_P\src\DataFlowEngine\ImbRdl\ImbRdlRoutine.cpp: 1326: SqlRoutine::invoke: :
+BIP2488E:  (&apos;com.ldb.common.log.LogService&apos;, &apos;6.2&apos;) Error detected whilst executing the SQL statement &apos;&apos;CALL LogServiceCall(logPatternID, logPatternData, QueueManagerName, CURRENT_TIMESTAMP, rfh2Usr.CallStatus, rfh2Usr.UserName, rfh2Usr.ServiceName, rfh2Usr.ServiceVersion, rfh2Usr.OperationRequestName, rfh2Usr.ConsumerName, rfh2Usr.Direction, rfh2Usr.TransactionID, rfh2Usr.UniqueIdentifier, BrokerName, EnvSevirity);&apos;&apos;. : F:\build\slot1\S900_P\src\DataFlowEngine\ImbRdl\ImbRdlStatementGroup.cpp: 792: SqlStatementGroup::execute: :
+BIP2934E: Error detected whilst executing the function or procedure &apos;&apos;LogServiceCall&apos;&apos;. : F:\build\slot1\S900_P\src\DataFlowEngine\ImbRdl\ImbRdlRoutine.cpp: 1550: SqlRoutine::invoke: :
+BIP2919E: (&apos;com.ldb.common.log.LogServiceCall&apos;, &apos;1.1&apos;) : An error occuirred when invoking the Java method &apos;&apos;com.ldb.common.log.LoggerHandler.insertServiceLog&apos;&apos;. The parameters passed to the method were &apos;&apos;&apos;common.exception.caught&apos;,  &apos;com.ldb.consumers.papi.comm.papiMQRequestDispacherHTTP:: F:\build\slot1\S900_P\src\DataFlowEngine\ImbRdl\ImbRdlExternalJava.cpp: 1534: SqlExternalJavaMethod::executeJavaMethod: :
+BIP2917E: A call to the Java method &apos;&apos;com.ldb.common.log.LoggerHandler.insertServiceLog&apos;&apos; with parameters &apos;&apos;&apos;&apos; failed because a Java Exception occurred. The Java Exception information is &apos;&apos;java.lang.NullPointerException&apos;&apos;. : F:\build\slot1\S900_P\src\DataFlowEngine\ImbRdl\ImbRdlExternalJava.cpp: 1415: SqlExternalJavaMethod::executeJavaMethod: : </text></detail>
+</SOAP-ENV:Fault>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

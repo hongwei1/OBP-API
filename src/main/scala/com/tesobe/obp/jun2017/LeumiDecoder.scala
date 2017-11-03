@@ -125,7 +125,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount, iban: String, balance: String): InboundAccountJune2017 = {
 
-    //TODO: This is by choice and needs verification
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
     val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments 
     val hasAccountantRights = x.accountPermissions.canMakeInternalPayments
