@@ -295,6 +295,12 @@
             <version>1.7.25</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.cb372</groupId>
+            <artifactId>scalacache-guava_${scala.library}</artifactId>
+            <version>0.9.3</version>
+        </dependency>
+
     </dependencies>
 </project>
 
