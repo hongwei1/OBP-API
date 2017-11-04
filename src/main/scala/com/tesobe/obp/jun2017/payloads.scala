@@ -499,7 +499,7 @@ case class InternalFullCustomer(
   faceImage : CustomerFaceImage,
   dateOfBirth: Date,
   relationshipStatus: String,
-  dependents: Int,
+  dependents: Integer,
   dobOfDependents: List[Date],
   highestEducationAttained: String,
   employmentStatus: String,

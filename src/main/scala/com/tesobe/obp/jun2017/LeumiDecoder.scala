@@ -1,6 +1,7 @@
 package com.tesobe.obp.june2017
 
 import java.text.SimpleDateFormat
+import java.util.{TimeZone}
 
 import com.tesobe.obp.ErrorMessages.{NoCreditCard, _}
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
@@ -64,6 +65,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("MM")
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
   val simpleLastLoginFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
+  simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("Asia/Tel_Aviv"))
 
   val cachedJoni = TTLCache[String](10080)  //1 week in minutes for now
 
@@ -934,7 +936,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
     )
     
-    
+
     val result = InternalFullCustomer(
       status = "",
       errorCode = "",
@@ -948,12 +950,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
       faceImage = CustomerFaceImage(null, ""),
       dateOfBirth= simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
       relationshipStatus = "",
-      dependents = 0,
+      dependents = null,
       dobOfDependents = List(null),
       highestEducationAttained = "",
       employmentStatus = "",
       creditRating = CreditRating("",""),
-      creditLimit =  AmountOfMoney(defaultCurrency, "0"),
+      creditLimit =  AmountOfMoney("", ""),
       kycStatus = true,
       lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST)//JONI
     )
