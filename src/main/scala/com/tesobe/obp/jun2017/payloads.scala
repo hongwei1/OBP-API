@@ -84,6 +84,8 @@ case class OutboundCreateCounterparty(
 case class OutboundGetTransactionRequests210(authInfo: AuthInfo, counterparty: OutboundTransactionRequests) extends TopicTrait
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
 case class OutboundGetCustomersByUserId(authInfo: AuthInfo) extends TopicTrait
+case class OutboundGetCounterparties(authInfo: AuthInfo, counterparty: InternalOutboundGetCounterparties) extends TopicTrait
+
 /**
   * Payloads for response topic
   *
@@ -105,7 +107,7 @@ case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInb
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccount])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
-
+case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
   *
@@ -200,6 +202,29 @@ case class InboundAccountJune2017(
   branchRoutingAddress: String,
   accountRoutingScheme: String,
   accountRoutingAddress: String
+)
+
+case class InternalCounterparty(
+  status: String,
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  createdByUserId: String,
+  name: String,
+  thisBankId: String,
+  thisAccountId: String,
+  thisViewId: String,
+  counterpartyId: String,
+  otherAccountRoutingScheme: String,
+  otherAccountRoutingAddress: String,
+  otherBankRoutingScheme: String,
+  otherBankRoutingAddress: String,
+  otherBranchRoutingScheme: String,
+  otherBranchRoutingAddress: String,
+  isBeneficiary: Boolean,
+  description: String,
+  otherAccountSecondaryRoutingScheme: String,
+  otherAccountSecondaryRoutingAddress: String,
+  bespoke: List[PostCounterpartyBespoke]
 )
 
 abstract class InboundMessageBase(optionalFields: String*) {
@@ -514,6 +539,12 @@ case class CreditRating(rating: String, source: String)
 
 
 case class InternalBasicCustomers(customers: List[InternalBasicCustomer])
+
+case class InternalOutboundGetCounterparties(
+  thisBankId: String,
+  thisAccountId: String,
+  viewId :String
+)
 
 case class OutboundTransactionRequests(
   accountId: String,
