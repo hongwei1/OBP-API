@@ -383,7 +383,7 @@ case class InternalCreateCounterparty(
   thisBankId: String = "",
   thisAccountId: String= "",
   thisViewId: String= "",
-  counterpartyId: String= "",
+  counterpartyId: String,
   otherAccountRoutingScheme: String= "",
   otherAccountRoutingAddress: String= "",
   otherBankRoutingScheme: String= "",

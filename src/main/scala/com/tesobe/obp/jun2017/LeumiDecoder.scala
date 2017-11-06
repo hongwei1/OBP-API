@@ -1,7 +1,7 @@
 package com.tesobe.obp.june2017
 
 import java.text.SimpleDateFormat
-import java.util.{TimeZone}
+import java.util.TimeZone
 
 import com.tesobe.obp.ErrorMessages.{NoCreditCard, _}
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
@@ -19,10 +19,10 @@ import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
 import com.tesobe.obp.NtbdBv050Mf.getNtbdBv050
 import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
 import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
-import com.tesobe.obp.Ntg6IMf.getNtg6I
-import com.tesobe.obp.Ntg6KMf.getNtg6K
 import com.tesobe.obp.Ntg6AMf.getNtg6A
 import com.tesobe.obp.Ntg6BMf.getNtg6B
+import com.tesobe.obp.Ntg6IMf.getNtg6I
+import com.tesobe.obp.Ntg6KMf.getNtg6K
 import com.tesobe.obp.Ntib2Mf.getNtib2Mf
 import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
@@ -864,7 +864,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   x.NTDriveNoResp.MFAdminResponse.returnCode,
                   x.NTDriveNoResp.MFAdminResponse.messageText.getOrElse(""))
               ),
-              true.toString
+              true.toString,
+              thisBankId = outboundCreateCounterparty.counterparty.thisBankId,
+              thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId,
+              thisViewId = outboundCreateCounterparty.counterparty.thisViewId,
+              counterpartyId = "",//TODO need generate a CounterpartyId
+              otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme,
+              otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress,
+              otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme,
+              otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress,
+              otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme,
+              otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
+              isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary,
+              description = outboundCreateCounterparty.counterparty.description,
+              otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme,
+              otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
+              bespoke = outboundCreateCounterparty.counterparty.bespoke
             )
           )
         case Left(x) =>
@@ -884,7 +899,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   x.PAPIErrorResponse.MFAdminResponse.returnCode,
                   x.PAPIErrorResponse.MFAdminResponse.messageText.getOrElse(""))
               ),
-              true.toString
+              true.toString,
+              thisBankId = outboundCreateCounterparty.counterparty.thisBankId,
+              thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId,
+              thisViewId = outboundCreateCounterparty.counterparty.thisViewId,
+              counterpartyId = "",//TODO need generate a CounterpartyId
+              otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme,
+              otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress,
+              otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme,
+              otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress,
+              otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme,
+              otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
+              isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary,
+              description = outboundCreateCounterparty.counterparty.description,
+              otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme,
+              otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
+              bespoke = outboundCreateCounterparty.counterparty.bespoke
             )
           )
       }
@@ -922,7 +952,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   x.NTDriveNoResp.MFAdminResponse.returnCode,
                   x.NTDriveNoResp.MFAdminResponse.messageText.getOrElse(""))
               ),
-              true.toString
+              true.toString,
+              thisBankId = outboundCreateCounterparty.counterparty.thisBankId,
+              thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId,
+              thisViewId = outboundCreateCounterparty.counterparty.thisViewId,
+              counterpartyId = "",//TODO need generate a CounterpartyId
+              otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme,
+              otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress,
+              otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme,
+              otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress,
+              otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme,
+              otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
+              isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary,
+              description = outboundCreateCounterparty.counterparty.description,
+              otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme,
+              otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
+              bespoke = outboundCreateCounterparty.counterparty.bespoke
             )
           )
 
@@ -943,7 +988,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   x.PAPIErrorResponse.MFAdminResponse.returnCode,
                   x.PAPIErrorResponse.MFAdminResponse.messageText.getOrElse(""))
               ),
-              true.toString
+              true.toString,
+              thisBankId = outboundCreateCounterparty.counterparty.thisBankId,
+              thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId,
+              thisViewId = outboundCreateCounterparty.counterparty.thisViewId,
+              counterpartyId = "", //TODO need generate a CounterpartyId
+              otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme,
+              otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress,
+              otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme,
+              otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress,
+              otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme,
+              otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
+              isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary,
+              description = outboundCreateCounterparty.counterparty.description,
+              otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme,
+              otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
+              bespoke = outboundCreateCounterparty.counterparty.bespoke
             )
           )
       }
