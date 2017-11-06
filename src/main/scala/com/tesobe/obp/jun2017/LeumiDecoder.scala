@@ -62,6 +62,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val defaultCurrency = "ILS"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
+  simpleTransactionDateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Tel_Aviv"))
   val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy")
   val simpleDayFormat: SimpleDateFormat = new SimpleDateFormat("dd")
   val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("MM")
@@ -1049,7 +1050,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       employmentStatus = "",
       creditRating = CreditRating("", ""),
       creditLimit = AmountOfMoney("", ""),
-      kycStatus = true,
+      kycStatus = null,
       lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
     )
     InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))

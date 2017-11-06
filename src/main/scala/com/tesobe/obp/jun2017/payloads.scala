@@ -1,5 +1,6 @@
 package com.tesobe.obp.june2017
 
+import java.lang
 import java.util.Date
 
 import scala.collection.immutable.List
@@ -512,26 +513,26 @@ case class InternalBasicCustomer(
 )
 
 case class InternalFullCustomer(
-  status: String,
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
-  customerId : String,
-  bankId : String,
-  number : String,   // The Customer number i.e. the bank identifier for the customer.
-  legalName : String,
-  mobileNumber : String,
-  email : String,
-  faceImage : CustomerFaceImage,
-  dateOfBirth: Date,
-  relationshipStatus: String,
-  dependents: Integer,
-  dobOfDependents: List[Date],
-  highestEducationAttained: String,
-  employmentStatus: String,
-  creditRating : CreditRating,
-  creditLimit: AmountOfMoney,
-  kycStatus: Boolean,
-  lastOkDate: Date
+                                 status: String,
+                                 errorCode: String,
+                                 backendMessages: List[InboundStatusMessage],
+                                 customerId : String,
+                                 bankId : String,
+                                 number : String, // The Customer number i.e. the bank identifier for the customer.
+                                 legalName : String,
+                                 mobileNumber : String,
+                                 email : String,
+                                 faceImage : CustomerFaceImage,
+                                 dateOfBirth: Date,
+                                 relationshipStatus: String,
+                                 dependents: Integer,
+                                 dobOfDependents: List[Date],
+                                 highestEducationAttained: String,
+                                 employmentStatus: String,
+                                 creditRating : CreditRating,
+                                 creditLimit: AmountOfMoney,
+                                 kycStatus: lang.Boolean,
+                                 lastOkDate: Date
 )
 
 case class CustomerFaceImage(date : Date, url : String)
