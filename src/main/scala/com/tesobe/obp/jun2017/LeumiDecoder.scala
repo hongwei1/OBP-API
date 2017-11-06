@@ -304,7 +304,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       otherBankRoutingAddress= "",
       otherBranchRoutingScheme= "",
       otherBranchRoutingAddress= "",
-      isBeneficiary = false,
+      isBeneficiary = true,
       description = CbsCounterparty.PMUT_TEUR_MUTAV,
       otherAccountSecondaryRoutingScheme= "",
       otherAccountSecondaryRoutingAddress= "",
