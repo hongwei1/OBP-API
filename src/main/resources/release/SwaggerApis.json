@@ -30,6 +30,237 @@
     }
   ],
   "paths": {
+    "/banks": {
+      "get": {
+        "tags": [
+          "1_2_1"
+        ],
+        "summary": "Get Banks",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Get banks on this API instance\nReturns a list of banks supported on this server:\n\n* ID used as parameter in URLs\n* Short and full name of bank\n* Logo URL\n* Website",
+        "operationId": "v1_2_1-getBanks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/BanksJSON"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUnknownError"
+            }
+          }
+        }
+      }
+    },
+    "/banks/{BANK_ID}": {
+      "get": {
+        "tags": [
+          "1_2_1"
+        ],
+        "summary": "Get Bank",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Get the bank specified by BANK_ID\nReturns information about a single bank specified by BANK_ID including:\n\n* Short and full name of bank\n* Logo URL\n* Website",
+        "operationId": "v1_2_1-bankById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/BankJSON"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
+    "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/account": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get Account by Id (Full)",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Information returned about an account specified by ACCOUNT_ID as moderated by the view (VIEW_ID):\n\n* Number\n* Owners\n* Type\n* Balance\n* IBAN\n* Available views (sorted by short_name)\n\nMore details about the data moderation by the view [here](#1_2_1-getViewsForBankAccount).\n\nPSD2 Context: PSD2 requires customers to have access to their account information via third party applications.\nThis call provides balance and other account information via delegated authenticaiton using OAuth.\n\nAuthentication is required if the 'is_public' field in view (VIEW_ID) is not set to `true`.\n",
+        "operationId": "v3_0_0-accountById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "VIEW_ID",
+            "description": "The view id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ModeratedAccountJSON"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorBankNotFound"
+            }
+          }
+        }
+      }
+    },
+    "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/counterparties": {
+      "get": {
+        "tags": [
+          "2_2_0"
+        ],
+        "summary": "Get Counterparties of one Account.",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Get the counterparties for the account / view.\n\nAuthentication is Mandatory\n",
+        "operationId": "v2_2_0-getCounterpartiesForAccount",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "VIEW_ID",
+            "description": "The view id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CounterpartiesJsonV220"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "2_2_0"
+        ],
+        "summary": "Create counterparty for an account",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Create counterparty.\n\nCounterparties are created for the account / view\nThey are how the user of the view (e.g. account owner) refers to the other side of the transaction\n\nname is the human readable name (e.g. Piano teacher, Miss Nipa)\n\nother_bank_id is an (internal) ID for the bank of the bank of the counterparty (if known)\n\nother_account_id is an (internal) ID for the bank account of the counterparty (if known)\n\nother_account_provider is a code that tells the system where that bank is hosted. Will be OBP if its known to the API. Usage of this flag (in API / connectors) is work in progress.\n\naccount_routing_scheme is a code that dictates the nature of the account_routing_address e.g. IBAN\n\naccount_routing_address is an instance of account_routing_scheme that can be used to route payments to external systems. e.g. an IBAN number\n\nbank_routing_scheme is a code that dictates the nature of the bank_routing_address e.g. \"BIC\",\n\nbank_routing_address is an instance of bank_routing_scheme\n\nis_beneficiary must be set to true in order to send payments to this counterparty\n\nThe view specified by VIEW_ID must have the canAddCounterparty permission\n\nAuthentication is Mandatory\n",
+        "operationId": "v2_2_0-createCounterparty",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "BANK_BODY",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PostCounterpartyJSON"
+            }
+          },
+          {
+            "in": "path",
+            "name": "VIEW_ID",
+            "description": "The view id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "ACCOUNT_ID",
+            "description": "The account id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CounterpartyJsonV220"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
     "/banks/{BANK_ID}/accounts/{ACCOUNT_ID}/{VIEW_ID}/transaction-request-types/{TRANSACTION_REQUEST_TYPE}/transaction-requests/{TRANSACTION_REQUEST_ID}/challenge": {
       "post": {
         "tags": [
@@ -228,7 +459,7 @@
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/UsersJSONV200"
+              "$ref": "#/definitions/AdapterInfoJsonV300"
             }
           },
           "400": {
@@ -479,7 +710,7 @@
             "directLogin": []
           }
         ],
-        "description": "Returns transactions list (Core info) of the account specified by ACCOUNT_ID.\n\nAuthentication is required.\n\nPossible custom headers for pagination:\n\n* obp_sort_by=CRITERIA ==> default value: \"completed\" field\n* obp_sort_direction=ASC/DESC ==> default value: DESC\n* obp_limit=NUMBER ==> default value: 50\n* obp_offset=NUMBER ==> default value: 0\n* obp_from_date=DATE => default value: date of the oldest transaction registered (format below)\n* obp_to_date=DATE => default value: date of the newest transaction registered (format below)\n\n**Date format parameter**: \"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\" (2014-07-01T00:00:00.000Z) ==> time zone is UTC.",
+        "description": "Returns transactions list (Core info) of the account specified by ACCOUNT_ID.\n\nAuthentication is required.\n\nPossible custom headers for pagination:\n\n* obp_sort_direction=ASC/DESC ==> default value: DESC. The sort field is the completed date.\n* obp_limit=NUMBER ==> default value: 50\n* obp_offset=NUMBER ==> default value: 0\n* obp_from_date=DATE => default value: Thu Jan 01 01:00:00 CET 1970 (format below)\n* obp_to_date=DATE => default value: 3049-01-01\n\n**Date format parameter**: \"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\" (2014-07-01T00:00:00.000Z) ==> time zone is UTC.",
         "operationId": "v3_0_0-getCoreTransactionsForBankAccount",
         "parameters": [
           {
@@ -543,6 +774,36 @@
         }
       }
     },
+    "/users/current": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get User (Current)",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Get the logged in user\n\nLogin is required.\n      ",
+        "operationId": "v3_0_0-getCurrentUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/UserJsonV200"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
+    },
     "/users/current/customers": {
       "get": {
         "tags": [
@@ -575,6 +836,14 @@
     }
   },
   "definitions": {
+    "Errordateformat": {
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "java.text.SimpleDateFormat@f67a0200"
+        }
+      }
+    },
     "ErrorHostnameNotSpecified": {
       "properties": {
         "message": {
@@ -1719,6 +1988,77 @@
         }
       }
     },
+    "EmptyClassJson": {
+      "properties": {}
+    },
+    "PostCounterpartyJSON": {
+      "required": [
+        "name",
+        "description",
+        "other_account_routing_scheme",
+        "other_account_routing_address",
+        "other_account_secondary_routing_scheme",
+        "other_account_secondary_routing_address",
+        "other_bank_routing_scheme",
+        "other_bank_routing_address",
+        "other_branch_routing_scheme",
+        "other_branch_routing_address",
+        "is_beneficiary",
+        "bespoke"
+      ],
+      "properties": {
+        "other_account_routing_address": {
+          "type": "string",
+          "example": "7987987-2348987-234234"
+        },
+        "other_account_routing_scheme": {
+          "type": "string",
+          "example": "IBAN"
+        },
+        "name": {
+          "type": "string",
+          "example": "CounterpartyName"
+        },
+        "other_account_secondary_routing_address": {
+          "type": "string",
+          "example": "BIC201483"
+        },
+        "is_beneficiary": {
+          "type": "boolean",
+          "example": "true"
+        },
+        "description": {
+          "type": "string",
+          "example": "My landlord"
+        },
+        "other_branch_routing_address": {
+          "type": "string",
+          "example": "10010"
+        },
+        "bespoke": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostCounterpartyBespoke"
+          }
+        },
+        "other_bank_routing_scheme": {
+          "type": "string",
+          "example": "bankCode"
+        },
+        "other_branch_routing_scheme": {
+          "type": "string",
+          "example": "branchNumber"
+        },
+        "other_bank_routing_address": {
+          "type": "string",
+          "example": "10"
+        },
+        "other_account_secondary_routing_scheme": {
+          "type": "string",
+          "example": "accountNumber"
+        }
+      }
+    },
     "ChallengeAnswerJSON": {
       "required": [
         "id",
@@ -1734,9 +2074,6 @@
           "example": "b20dd004-93e3-494f-8773-69e3ff8c205e"
         }
       }
-    },
-    "EmptyClassJson": {
-      "properties": {}
     },
     "TransactionRequestBodyTransferToAccount": {
       "required": [
@@ -1879,6 +2216,47 @@
         "currency": {
           "type": "string",
           "example": "EUR"
+        }
+      }
+    },
+    "AccountRouting": {
+      "required": [
+        "scheme",
+        "address"
+      ],
+      "properties": {
+        "address": {
+          "type": "string",
+          "example": "String"
+        },
+        "scheme": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "CoreAccount": {
+      "required": [
+        "id",
+        "label",
+        "bank_id",
+        "account_routing"
+      ],
+      "properties": {
+        "account_routing": {
+          "$ref": "#/definitions/AccountRouting"
+        },
+        "bank_id": {
+          "type": "string",
+          "example": " String"
+        },
+        "label": {
+          "type": "string",
+          "example": " String"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
         }
       }
     },
@@ -7354,74 +7732,6 @@
         }
       }
     },
-    "PostCounterpartyJSON": {
-      "required": [
-        "name",
-        "description",
-        "other_account_routing_scheme",
-        "other_account_routing_address",
-        "other_account_secondary_routing_scheme",
-        "other_account_secondary_routing_address",
-        "other_bank_routing_scheme",
-        "other_bank_routing_address",
-        "other_branch_routing_scheme",
-        "other_branch_routing_address",
-        "is_beneficiary",
-        "bespoke"
-      ],
-      "properties": {
-        "other_account_routing_address": {
-          "type": "string",
-          "example": "7987987-2348987-234234"
-        },
-        "other_account_routing_scheme": {
-          "type": "string",
-          "example": "IBAN"
-        },
-        "name": {
-          "type": "string",
-          "example": "CounterpartyName"
-        },
-        "other_account_secondary_routing_address": {
-          "type": "string",
-          "example": "BIC201483"
-        },
-        "is_beneficiary": {
-          "type": "boolean",
-          "example": "true"
-        },
-        "description": {
-          "type": "string",
-          "example": "My landlord"
-        },
-        "other_branch_routing_address": {
-          "type": "string",
-          "example": "10010"
-        },
-        "bespoke": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PostCounterpartyBespoke"
-          }
-        },
-        "other_bank_routing_scheme": {
-          "type": "string",
-          "example": "bankCode"
-        },
-        "other_branch_routing_scheme": {
-          "type": "string",
-          "example": "branchNumber"
-        },
-        "other_bank_routing_address": {
-          "type": "string",
-          "example": "10"
-        },
-        "other_account_secondary_routing_scheme": {
-          "type": "string",
-          "example": "accountNumber"
-        }
-      }
-    },
     "MetricsJson": {
       "required": [
         "metrics"
@@ -8357,7 +8667,7 @@
       "required": [
         "connector_name",
         "function_name",
-        "obp_api_request_id",
+        "correlation_id",
         "date",
         "duration"
       ],
@@ -8375,14 +8685,14 @@
           "type": "string",
           "example": "getBanks"
         },
+        "correlation_id": {
+          "type": "string",
+          "example": "12345"
+        },
         "date": {
           "type": "string",
           "format": "date",
           "example": "Tue Jan 22 00:08:00 CET 2013"
-        },
-        "obp_api_request_id": {
-          "type": "string",
-          "example": "12345"
         }
       }
     },
@@ -8831,8 +9141,58 @@
         "accounts": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CoreAccountJsonV300"
+            "$ref": "#/definitions/CoreAccount"
           }
+        }
+      }
+    },
+    "AccountIdJson": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "AccountsIdsJsonV300": {
+      "required": [
+        "accounts"
+      ],
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AccountIdJson"
+          }
+        }
+      }
+    },
+    "AdapterInfoJsonV300": {
+      "required": [
+        "name",
+        "version",
+        "git_commit",
+        "date"
+      ],
+      "properties": {
+        "date": {
+          "type": "string",
+          "example": "String"
+        },
+        "git_commit": {
+          "type": "string",
+          "example": "String"
+        },
+        "version": {
+          "type": "string",
+          "example": "String"
+        },
+        "name": {
+          "type": "string",
+          "example": "String"
         }
       }
     },
