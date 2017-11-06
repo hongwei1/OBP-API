@@ -48,7 +48,8 @@ trait ProcessorFactory {
         BusinessTopic(createTopicByClassName(OutboundCreateCounterparty.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).createCounterpartyFn),
         BusinessTopic(createTopicByClassName(OutboundGetCoreAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCoreAccountsFn),
         BusinessTopic(createTopicByClassName(OutboundGetCoreBankAccounts.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCoreBankAccountsFn),
-        BusinessTopic(createTopicByClassName(OutboundGetCustomersByUserId.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCustomerFn)
+        BusinessTopic(createTopicByClassName(OutboundGetCustomersByUserId.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCustomerFn),
+        BusinessTopic(createTopicByClassName(OutboundGetCounterparties.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCounterpartiesFn)
       )
       case "mockedSopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)
       case "sopra" => BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic)

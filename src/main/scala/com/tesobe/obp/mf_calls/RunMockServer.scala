@@ -45,7 +45,7 @@ object RunMockServer extends StrictLogging{
       )
 
     //1b JONI for "4CWWTZQ"
-/*    mockServer
+   mockServer
       .when(
         request()
           .withMethod("POST")
@@ -61,7 +61,7 @@ object RunMockServer extends StrictLogging{
           )
           .withBody(jsonToString("joni_4cwwtzq_result.json").replace(" ","").replace("\n",""))
         //.withBody(jsonToString("error_result.json"))
-      )*/
+      )
 
     //1c JONI for "FM4FZDE"
     mockServer

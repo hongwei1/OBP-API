@@ -13,6 +13,7 @@ import net.liftweb.json
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.prettyRender
 
+import scala.collection.immutable.List
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -524,6 +525,59 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           )
         )
         
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
+  def getCounterpartiesFn: Business = {msg =>
+    logger.debug(s"Processing getCounterpartiesFn ${msg.record.value}")
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (OutboundGetCounterparties => InboundGetCounterparties) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCounterpartiesForAccount(q)}
+      val r = decode[OutboundGetCounterparties](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundCreateCounterparty` case class for OBP-API and Adapter sides : ", e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("getCounterpartiesFn-unknown error", m)
+
+        val errorBody = InboundGetCounterparties(AuthInfo("","",""), List(InternalCounterparty(
+          status = "",
+          errorCode = "",
+          backendMessages = List(InboundStatusMessage(
+            "ESB",
+            "Failure",
+            "",
+            ""),
+            InboundStatusMessage(
+              "MF",
+              "Failure",
+              "",
+              "")
+          ),
+          createdByUserId = "",
+          name = "",
+          thisBankId = "",
+          thisAccountId = "",
+          thisViewId = "",
+          counterpartyId = "",
+          otherAccountRoutingScheme= "",
+          otherAccountRoutingAddress= "",
+          otherBankRoutingScheme= "",
+          otherBankRoutingAddress= "",
+          otherBranchRoutingScheme= "",
+          otherBranchRoutingAddress= "",
+          isBeneficiary = false,
+          description = "",
+          otherAccountSecondaryRoutingScheme= "",
+          otherAccountSecondaryRoutingAddress= "",
+          bespoke = List(PostCounterpartyBespoke("englishName", ""),
+            PostCounterpartyBespoke("englishDescription", "")
+
+
+          ))))
+
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
