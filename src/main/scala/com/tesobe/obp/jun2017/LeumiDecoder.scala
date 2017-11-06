@@ -286,7 +286,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def mapAdapterCounterpartyToInternalCounterparty(CbsCounterparty: PmutPirteyMutav, OutboundCounterparty: InternalOutboundGetCounterparties): InternalCounterparty = {
-    val bankRoutingScheme = if (CbsCounterparty.PMUT_IBAN.trim == "") "" else "IBAN"
+    val accountRoutingScheme = if (CbsCounterparty.PMUT_IBAN.trim == "") "" else "IBAN"
     InternalCounterparty(
       status = "",
       errorCode = "",
@@ -297,10 +297,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       thisAccountId = OutboundCounterparty.thisAccountId,
       thisViewId = OutboundCounterparty.viewId,
       counterpartyId = "",
-      otherAccountRoutingScheme= "",
-      otherAccountRoutingAddress= "",
-      otherBankRoutingScheme= bankRoutingScheme,
-      otherBankRoutingAddress= CbsCounterparty.PMUT_IBAN,
+      otherAccountRoutingScheme= accountRoutingScheme,
+      otherAccountRoutingAddress= CbsCounterparty.PMUT_IBAN,
+      otherBankRoutingScheme= "",
+      otherBankRoutingAddress= "",
       otherBranchRoutingScheme= "",
       otherBranchRoutingAddress= "",
       isBeneficiary = false,
@@ -643,11 +643,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
                 ntbdAv050Token = transferToAccountToken,
                 transactionAmount = transactionRequestBodyTransferToAccountJson.value.amount
               ) match {
-                case Right(c) if (c.P050_BDIKAZCHUTOUT.P050_MAHADURA_101.P050_KOD_ISHUR == "3") =>
+                case Right(c) if c.P050_BDIKAZCHUTOUT.P050_MAHADURA_101.P050_KOD_ISHUR == "3" =>
                   throw new RuntimeException("Not permitted")
 
                 case Right(c) =>
-
+                  
                   val callNtbdGv050 = getNtbdGv050(
                     branchId,
                     accountType,

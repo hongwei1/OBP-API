@@ -2,8 +2,9 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
+import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp.june2017.LeumiDecoder._
-import com.tesobe.obp.june2017._
+import com.tesobe.obp.june2017.{AmountOfMoneyJsonV121, _}
 
 import scala.collection.immutable.List
 /**
@@ -92,6 +93,38 @@ class LeumiDecoderTest  extends ServerSetup {
       kycStatus = true,
       lastOkDate = simpleLastLoginFormat.parse("20170611" + "120257")
     )))
+  }
+  
+  test("createTransaction - Transfer to Account does not break"){
+    val result = createTransaction(OutboundCreateTransaction(
+      authInfo = AuthInfo("","",""),
+      fromAccountBankId = "",
+      fromAccountId = accountId1,
+      transactionRequestType= TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString,
+      transactionChargePolicy= "",
+      transactionRequestCommonBody =  TransactionRequestBodyTransferToAccount(
+        value = com.tesobe.obp.june2017.AmountOfMoneyJsonV121("ILS","10"),
+        description = "",
+        transfer_type =  "",
+        future_date = "",
+        to = ToAccountTransferToAccountJson(
+          name = "",
+          bank_code = "",
+          branch_number = "",
+          account = ToAccountTransferToAccountAccountJson(
+          number = "",
+          iban = ""
+        ))),
+      toCounterpartyId = "",
+      toCounterpartyName = "",
+      toCounterpartyCurrency = "",
+      toCounterpartyRoutingAddress = "",
+      toCounterpartyRoutingScheme = "",
+      toCounterpartyBankRoutingAddress = "",
+      toCounterpartyBankRoutingScheme = ""
+
+    ))
+    result should be (InboundCreateTransactionId(AuthInfo("","",""),InternalTransactionId("",List(InboundStatusMessage("ESB","Success","0","OK")),"")))
   }
 
 
