@@ -43,7 +43,7 @@ import com.google.common.cache.CacheBuilder
 import net.liftweb.common.{Box, _}
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST.JValue
-import net.liftweb.util.Helpers.tryo
+import net.liftweb.util.Helpers.{now, tryo}
 import net.liftweb.util.Props
 
 import scala.collection.immutable.{List, Nil, Seq}
@@ -629,6 +629,9 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
 
   // TODO Get rid on these param lookups and document.
   override def getTransactions(bankId: BankId, accountId: AccountId, queryParams: OBPQueryParam*): Box[List[Transaction]] = {
+    val startTime  =now.getTime
+    logger.warn("3.2.1 start the getCoreTransactionsForBankAccount.getTransactions in Connector")
+    
     val limit: OBPLimit = queryParams.collect { case OBPLimit(value) => OBPLimit(value) }.headOption.get
     val offset = queryParams.collect { case OBPOffset(value) => OBPOffset(value) }.headOption.get
     val fromDate = queryParams.collect { case OBPFromDate(date) => OBPFromDate(date) }.headOption.get
@@ -649,6 +652,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     logger.debug(s"Kafka getTransactions says: req is: $req")
   
     val box = for {
+      _ <- Full(logger.warn(s"3.2.2  getCoreTransactionsForBankAccount.getTransactions.before kafka cost time : ${now.getTime-startTime}"))
       kafkaMessage <- processToBox[OutboundGetTransactions](req)
       inboundGetTransactions <- tryo{kafkaMessage.extract[InboundGetTransactions]} ?~! s"$InboundGetTransactions extract error"
       internalTransactionJune2017s <- Full(inboundGetTransactions.data)
@@ -663,8 +667,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         val isCorrect = list.forall(x => x.accountId == accountId.value && x.bankId == bankId.value)
         if (!isCorrect) throw new Exception(ErrorMessages.InvalidConnectorResponseForGetTransactions)
         // Populate fields and generate result
-        val bankAccount = checkBankAccountExists(BankId(list.head.bankId), AccountId(list.head.accountId))  
-        
+        val bankAccount = checkBankAccountExists(BankId(list.head.bankId), AccountId(list.head.accountId))
+        logger.warn(s"3.2.3  getCoreTransactionsForBankAccount.getTransactions kafka cost time : ${now.getTime-startTime}")
         val res = for {
           r: InternalTransaction <- list
           thisBankAccount <- bankAccount ?~! ErrorMessages.BankAccountNotFound
@@ -672,6 +676,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         } yield {
           transaction
         }
+        logger.warn(s"3.2.4 getCoreTransactionsForBankAccount.getTransactions package CounterParty cost time : ${now.getTime-startTime}")
         Full(res)
       //TODO is this needed updateAccountTransactions(bankId, accountId)
       case Full(list) if (list.head.errorCode!="") =>

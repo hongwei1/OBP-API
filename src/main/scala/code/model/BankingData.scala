@@ -52,6 +52,7 @@ import code.views.Views
 import code.metadata.narrative.Narrative
 import code.metadata.counterparties.Counterparties
 import code.util.Helper.MdcLoggable
+import net.liftweb.util.Helpers.now
 
 /**
  * Uniquely identifies a view
@@ -556,8 +557,12 @@ trait BankAccount extends MdcLoggable {
   final def getModeratedTransactions(user : Box[User], view : View, queryParams: OBPQueryParam*): Box[List[ModeratedTransaction]] = {
     if(authorizedAccess(view, user)) {
       for {
+        startTime  <- Full(now.getTime)
+        _ <- Full(logger.warn("3.1 start the getCoreTransactionsForBankAccount in BankingData"))
         transactions <- Connector.connector.vend.getTransactions(bankId, accountId, queryParams: _*)
+        _ <- Full(logger.warn(s"3.2 getCoreTransactionsForBankAccount.getTransactions cost time : ${now.getTime-startTime}"))
         moderated <- view.moderateTransactionsWithSameAccount(transactions) ?~! "Server error"
+        _ <- Full(logger.warn(s"3.3 getCoreTransactionsForBankAccount.moderateTransactionsWithSameAccount cost time : ${now.getTime-startTime}"))
       } yield moderated
     }
     else viewNotAllowed(view)

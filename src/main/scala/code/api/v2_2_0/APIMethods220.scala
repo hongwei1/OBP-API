@@ -25,7 +25,7 @@ import net.liftweb.http.rest.RestHelper
 import net.liftweb.http.{JsonResponse, Req, S}
 import net.liftweb.json.{DateFormat, DefaultFormats, Extraction}
 import net.liftweb.json.JsonAST.JValue
-import net.liftweb.util.Helpers.tryo
+import net.liftweb.util.Helpers.{now, tryo}
 import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
@@ -33,7 +33,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 
-trait APIMethods220 {
+trait APIMethods220 extends MdcLoggable{
   //needs to be a RestHelper to get access to JsonGet, JsonPost, etc.
   self: RestHelper =>
 
@@ -1205,13 +1205,19 @@ trait APIMethods220 {
         user =>
         
           for {
+            startTime  <- Full(now.getTime)
+            _ <- Full(logger.warn("1 start the getCoreTransactionsForBankAccount in API"))
             params <- getTransactionParams(json)
             bankAccount <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
+            _ <- Full(logger.warn(s"2 getTransaction.checkBankAccountExists cost time : ${now.getTime-startTime}"))
             // Assume owner view was requested
             view <- View.fromUrl( ViewId("owner"), bankAccount)
+            _ <- Full(logger.warn(s"3 getTransaction.View.fromUrl cost time : ${now.getTime-startTime}"))
             transactions <- bankAccount.getModeratedTransactions(user, view, params : _*)
+            _ <- Full(logger.warn(s"4 getTransaction.getModeratedTransactions cost time : ${now.getTime-startTime}"))
           } yield {
             val json = JSONFactory300.createCoreTransactionsJSON(transactions)
+            Full(logger.warn(s"5 getTransaction.createCoreTransactionsJSON cost time : ${now.getTime-startTime}"))
             successJsonResponse(Extraction.decompose(json))
           }
       }

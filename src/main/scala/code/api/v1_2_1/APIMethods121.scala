@@ -20,6 +20,7 @@ import net.liftweb.util.Props
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
 import net.liftweb.json.JsonDSL._
+
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
 import scalacache.guava
@@ -27,12 +28,13 @@ import concurrent.duration._
 import language.postfixOps
 import com.google.common.cache.CacheBuilder
 import net.liftweb.json.Extraction._
-import scalacache.{memoization}
+
+import scalacache.memoization
 import scalacache.memoization.memoizeSync
 import code.api.util.APIUtil._
-import code.util.Helper.booleanToBox
+import code.util.Helper.{MdcLoggable, booleanToBox}
 
-trait APIMethods121 {
+trait APIMethods121 extends MdcLoggable{
   //needs to be a RestHelper to get access to JsonGet, JsonPost, etc.
   self: RestHelper =>
 
@@ -2118,11 +2120,17 @@ trait APIMethods121 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "transactions" :: TransactionId(transactionId) :: "transaction" :: Nil JsonGet json => {
         user =>
           for {
+            startTime  <- Full(now.getTime)
+            _ <- Full(logger.warn("1 start the getTransaction in API"))
             account <- BankAccount(bankId, accountId) ?~! BankAccountNotFound
+            _ <- Full(logger.warn(s"2 getTransaction.BankAccount cost time : ${now.getTime-startTime}"))
             view <- View.fromUrl(viewId, account)
+            _ <- Full(logger.warn(s"3 getTransaction.View.fromUrl cost time :${now.getTime-startTime}"))
             moderatedTransaction <- account.moderatedTransaction(transactionId, view, user)
+            _ <- Full(logger.warn(s"4 getTransaction.account.moderatedTransaction cost time : ${now.getTime-startTime}"))
           } yield {
             val json = JSONFactory.createTransactionJSON(moderatedTransaction)
+            Full(logger.warn(s"5 getTransaction.createTransactionJSON cost time : ${now.getTime-startTime}"))
             successJsonResponse(Extraction.decompose(json))
           }
       }

@@ -37,10 +37,12 @@ import java.util.Date
 
 import code.metadata.counterparties.Counterparties
 import code.util.Helper
+import code.util.Helper.MdcLoggable
 import net.liftweb.common._
 import code.views.Views
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonAST.JObject
+import net.liftweb.util.Helpers.now
 
 
 class AliasType
@@ -190,7 +192,7 @@ case class UpdateViewJSON(
   */
 
 
-trait View {
+trait View extends MdcLoggable{
 
   val viewLogger = Logger(classOf[View])
   //e.g. "Public", "Authorities", "Our Network", etc.
@@ -464,7 +466,9 @@ trait View {
   }
 
   def moderateTransactionsWithSameAccount(transactions : List[Transaction]) : Box[List[ModeratedTransaction]] = {
-
+  
+    val startTime =(now.getTime)
+    logger.warn("3.3.1 start the moderateTransactionsWithSameAccount in Views")
     val accountUids = transactions.map(t => BankIdAccountId(t.bankId, t.accountId))
 
     // This function will only accept transactions which have the same This Account.
@@ -476,9 +480,11 @@ trait View {
         case Some(firstTransaction) =>
           // Moderate the *This Account* based on the first transaction
           val moderatedAccount = moderate(firstTransaction.thisAccount)
-          // Moderate each *Transaction* based on the moderated Account
+          logger.warn(s"3.3.2 moderateTransactionsWithSameAccount.BankAccount cost time : ${now.getTime-startTime}")
+          // Moderate each *Transaction* based on the moderateTransactionsWithSameAccount Account
           Full(transactions.flatMap(t => moderate(t, moderatedAccount)))
         case None =>
+          logger.warn(s"3.3.3 moderateTransactionsWithSameAccount.moderate(BankAccount+Transactions) cost time : ${now.getTime-startTime}")
           Full(Nil)
       }
     }
