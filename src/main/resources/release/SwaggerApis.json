@@ -833,6 +833,44 @@
           }
         }
       }
+    },
+    "banks/{BANK_ID}/accounts/account_ids/private": {
+      "get": {
+        "tags": [
+          "3_0_0"
+        ],
+        "summary": "Get private accounts ids at one bank.",
+        "security": [
+          {
+            "directLogin": []
+          }
+        ],
+        "description": "Returns the list of private (non-public) accounts ids at BANK_ID that the user has access to.\nFor each account the API returns the ID\n\nIf you want to see more information on the Views, use the Account Detail call.\n\n\nAuthentication is Mandatory",
+        "operationId": "v3_0_0-getAccountIdsByBankId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "BANK_ID",
+            "description": "The bank id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/AccountsIdsJsonV300"
+            }
+          },
+          "400": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/ErrorUserNotLoggedIn"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
