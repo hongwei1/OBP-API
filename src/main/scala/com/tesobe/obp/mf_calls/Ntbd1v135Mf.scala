@@ -1,7 +1,7 @@
 package com.tesobe.obp
 
 import com.tesobe.obp.ErrorMessages.InvalidMobilNumberException
-import com.tesobe.obp.HttpClient.{createPapiErrorResponseFromSoapError, makePostRequest}
+import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.{JValue, parse}
@@ -67,7 +67,6 @@ object Ntbd1v135Mf extends StrictLogging{
       Right(parse(replaceEmptyObjects(result)).extract[Ntbd1v135])
     } catch {
       case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
-      case e: net.liftweb.json.JsonParser.ParseException => Left(createPapiErrorResponseFromSoapError(result))
     }  }
 
 }
