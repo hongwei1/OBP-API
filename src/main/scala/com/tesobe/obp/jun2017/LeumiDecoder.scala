@@ -24,7 +24,7 @@ import com.tesobe.obp.Ntg6BMf.getNtg6B
 import com.tesobe.obp.Ntg6IMf.getNtg6I
 import com.tesobe.obp.Ntg6KMf.getNtg6K
 import com.tesobe.obp.Ntib2Mf.getNtib2Mf
-import com.tesobe.obp.Ntlv1Mf.{getNtlv1Mf, getNtlv1MfCore}
+import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -35,12 +35,6 @@ import net.liftweb.json.JsonParser.parse
 
 import scala.collection.immutable.List
 import scala.collection.mutable.{ListBuffer, Map}
-import scalacache.ScalaCache
-import scalacache.guava.GuavaCache
-import scalacache.Flags
-import scalacache.{put,get}
-import com.google.common.cache.CacheBuilder
-import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
 
 /**
@@ -102,7 +96,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getBasicBankAccountByAccountIdFromCachedJoni(username: String, accountId: String): BasicBankAccount = {
     val mfAccounts = getBasicBankAccountsForUser(username, true)
-    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new Exception("AccountId does not exist"))
+    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new Exception(s"AccountId($accountId) does not exist"))
   }
 
   def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {

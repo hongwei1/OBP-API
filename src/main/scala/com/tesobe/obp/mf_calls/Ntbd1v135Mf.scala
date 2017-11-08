@@ -5,7 +5,6 @@ import com.tesobe.obp.HttpClient.{createPapiErrorResponseFromSoapError, makePost
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.{JValue, parse}
-import net.liftweb.json.JsonParser.ParseException
 
 
 object Ntbd1v135Mf extends StrictLogging{
@@ -13,6 +12,7 @@ object Ntbd1v135Mf extends StrictLogging{
   def checkMobileNumber(mobileNumber: String): String = {
     val result = mobileNumber.replace("+972", "0")
     if (result.length > 10) throw new InvalidMobilNumberException else result
+    if (!mobileNumber.startsWith("+972")) throw new InvalidMobilNumberException else result
   }
 
   def getNtbd1v135Mf(branch: String,

@@ -266,7 +266,7 @@ object ErrorMessages {
   val JoniCacheEmpty = "OBP-60001: Joni Cache return empty, do not cache it before! "
   val JoniFailed = "OBP-60002: Joni Call to CBS failed"
   val SessionError = "OBP-60004: Invalid Session"
-  val InvalidMobilNumber = "OBP-60003: InvalidMobileNumber"
+  val InvalidMobilNumber = "OBP-60003: InvalidMobileNumber, we only support Israel country code. It should start as :+972xxxxxxxxx ."
   
   
   
