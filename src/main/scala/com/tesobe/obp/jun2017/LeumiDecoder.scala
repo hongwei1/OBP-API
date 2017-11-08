@@ -380,37 +380,25 @@ object LeumiDecoder extends Decoder with StrictLogging {
       mfAccounts.head.cbsToken), result.toList)
   }
 
-  def getCoreAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
-    val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
-    var result = new ListBuffer[CoreAccount]
-    for (i <- mfAccounts) {
-      result += mapBasicBankAccountToCoreAccountJsonV300(i)
-    }
-    InboundGetCoreAccounts(
-      getCoreBankAccounts.authInfo,
-      List(InboundStatusMessage("", "", "", "")),
-      result.toList)
-  }
-
-  def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
-    val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
-    val accounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
-
-    val result = new ListBuffer[InternalInboundCoreAccount]
-    for (i <- inputAccountIds) {
-      result += InternalInboundCoreAccount(
-        errorCode = "",
-        backendMessages = List(
-          InboundStatusMessage("ESB", "Success", "0", "OK"),
-          InboundStatusMessage("MF", "Success", "0", "OK")),
-        id = i,
-        label = "",
-        bank_id = "10",
-        account_routing = AccountRouting(scheme = "account_number", address = 
-          accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist")).accountNr)
-      )
-    }
-    InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
+    def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
+      val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
+      val accounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
+  
+      val result = new ListBuffer[InternalInboundCoreAccount]
+      for (i <- inputAccountIds) {
+        result += InternalInboundCoreAccount(
+          errorCode = "",
+          backendMessages = List(
+            InboundStatusMessage("ESB", "Success", "0", "OK"),
+            InboundStatusMessage("MF", "Success", "0", "OK")),
+          id = i,
+          label = "",
+          bank_id = "10",
+          account_routing = AccountRouting(scheme = "account_number", address = 
+            accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist")).accountNr)
+        )
+      }
+      InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
   }
 
   def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {
