@@ -292,7 +292,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getCoreBankAccountsFn-unknown error", m)
         val errorBody = InboundGetCoreBankAccounts(
           AuthInfo("","",""),List(InternalInboundCoreAccount(
-            "",
+            m.getCause,
           List(
             InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
             InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
