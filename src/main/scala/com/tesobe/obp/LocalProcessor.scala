@@ -265,7 +265,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     } catch {
       case m: Throwable =>
         logger.error("getCoreAccountsFn-unknown error", m)
-          val errorBody = InboundGetCoreAccounts(
+          val errorBody = InboundGetCoreAccounts(// why not error message
           AuthInfo("","",""),
             List(
               InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
@@ -292,7 +292,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getCoreBankAccountsFn-unknown error", m)
         val errorBody = InboundGetCoreBankAccounts(
           AuthInfo("","",""),List(InternalInboundCoreAccount(
-            m.getCause,
+            "", // why not error message
           List(
             InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
             InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
@@ -540,11 +540,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("getCounterpartiesFn-unknown error", m)
+        logger.error("getCounterpartiesFn-unknown error", m)   
 
         val errorBody = InboundGetCounterparties(AuthInfo("","",""), List(InternalCounterparty(
           status = "",
-          errorCode = "",
+          errorCode = "", // why not error 
           backendMessages = List(InboundStatusMessage(
             "ESB",
             "Failure",
