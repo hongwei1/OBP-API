@@ -24,7 +24,7 @@ import com.tesobe.obp.Ntg6BMf.getNtg6B
 import com.tesobe.obp.Ntg6IMf.getNtg6I
 import com.tesobe.obp.Ntg6KMf.getNtg6K
 import com.tesobe.obp.Ntib2Mf.getNtib2Mf
-import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
+import com.tesobe.obp.Ntlv1Mf.{getNtlv1Mf, getNtlv1MfCore}
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -35,6 +35,12 @@ import net.liftweb.json.JsonParser.parse
 
 import scala.collection.immutable.List
 import scala.collection.mutable.{ListBuffer, Map}
+import scalacache.ScalaCache
+import scalacache.guava.GuavaCache
+import scalacache.Flags
+import scalacache.{put,get}
+import com.google.common.cache.CacheBuilder
+import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
 
 /**
@@ -71,12 +77,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
 
   val cachedJoni = TTLCache[String](10080) //1 week in minutes for now
+  
 
   //TODO: Replace with caching solution for production
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
-
-  var mapAccountIdToAccountValues = Map[String, AccountIdValues]()
-  var mapAccountValuesToAccountId = Map[AccountIdValues, String]()
 
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
 
@@ -89,19 +93,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   //Helper functions start here:---------------------------------------------------------------------------------------
 
-  def getOrCreateAccountId(branchId: String, accountType: String, accountNumber: String): String = {
-    logger.debug(s"getOrCreateAccountId-accountNr($accountNumber)")
-    val accountIdValues = AccountIdValues(branchId, accountType, accountNumber)
-    if (mapAccountValuesToAccountId.contains(accountIdValues)) {
-      mapAccountValuesToAccountId(accountIdValues)
-    }
-    else {
-      //TODO: Do random salting for production? Will lead to expired accountIds becoming invalid.
-      val accountId = base64EncodedSha256(branchId + accountType + accountNumber + config.getString("salt.global"))
-      mapAccountIdToAccountValues += (accountId -> accountIdValues)
-      mapAccountValuesToAccountId += (accountIdValues -> accountId)
-      accountId
-    }
+
+
+  def createAccountId(branchId: String, accountType: String, accountNumber: String): String = {
+    logger.debug(s"createAccountId-accountNr($accountNumber)")
+    base64EncodedSha256(branchId + accountType + accountNumber + config.getString("salt.global"))
+  }
+  
+  def getBasicBankAccountByAccountIdFromCachedJoni(username: String, accountId: String): BasicBankAccount = {
+    val mfAccounts = getBasicBankAccountsForUser(username, true)
+    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new Exception("AccountId does not exist"))
   }
 
   def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {
@@ -155,7 +156,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       x.cbsToken,
       bankId = "10",
       branchId = x.branchNr,
-      accountId = getOrCreateAccountId(x.branchNr, x.accountType, x.accountNr),
+      accountId = createAccountId(x.branchNr, x.accountType, x.accountNr),
       accountNumber = x.accountNr,
       accountType = x.accountType,
       balanceAmount = balance,
@@ -280,7 +281,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def mapBasicBankAccountToCoreAccountJsonV300(account: BasicBankAccount): CoreAccount = {
     CoreAccount(
-      id = getOrCreateAccountId(account.branchNr, account.accountType, account.accountNr),
+      id = createAccountId(account.branchNr, account.accountType, account.accountNr),
       label = "",
       bank_id = "10",
       account_routing = AccountRouting(scheme = "account_number", address = account.accountNr))
@@ -333,52 +334,40 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
 
   def getBankAccountbyAccountId(getAccount: OutboundGetAccountbyAccountID): InboundGetAccountbyAccountID = {
-    //Not cached or invalid AccountId
-    if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
-      logger.debug("AccountId not mapped. This should not happen in normal business flow")
-    }
 
-    val accountValues = mapAccountIdToAccountValues(getAccount.accountId)
-    val branchid = accountValues.branchId
-    val accountType = accountValues.accountType
-    val accountNr = accountValues.accountNumber
     val username = getAccount.authInfo.username
-    val cbsToken = getAccount.authInfo.cbsToken
-    val mfAccounts = getBasicBankAccountsForUser(username, true)
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(username, getAccount.accountId)
+    val cbsToken =  if (account.cbsToken != getAccount.authInfo.cbsToken) {
+      throw new RuntimeException("Session Error")
+    } else account.cbsToken
     val ntib2Call = getNtib2Mf(
-      branchid,
-      accountType,
-      accountNr,
+      account.branchNr,
+      account.accountType,
+      account.accountNr,
       username,
       cbsToken
     )
     val iban = ntib2Call.SHETACHTCHUVA.TS00_PIRTEY_TCHUVA.TS00_TV_TCHUVA.TS00_NIGRERET_TCHUVA.TS00_IBAN
-    val balance = getBalance(username, branchid, accountType, accountNr, cbsToken)
+    val balance = getBalance(username, account.branchNr, account.accountType, account.accountNr, cbsToken)
 
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
-      mfAccounts.head.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), iban, balance)
+      account.cbsToken),
+      mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance)
     )
   }
 
   def checkBankAccountExists(getAccount: OutboundCheckBankAccountExists): InboundGetAccountbyAccountID = {
-    //Not cached or invalid AccountId
-    if (!mapAccountIdToAccountValues.contains(getAccount.accountId)) {
-      logger.debug("AccountId not mapped. This should not happen in normal business flow")
-    }
 
-    val accountValues = mapAccountIdToAccountValues(getAccount.accountId)
-    val branchid = accountValues.branchId
-    val accountType = accountValues.accountType
-    val accountNr = accountValues.accountNumber
-    val mfAccounts = getBasicBankAccountsForUser(getAccount.authInfo.username, true)
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(getAccount.authInfo.username, getAccount.accountId)
     val iban = ""
-
+    val cbsToken =  if (account.cbsToken != getAccount.authInfo.cbsToken) {
+      throw new RuntimeException("Session Error")
+    } else account.cbsToken
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
-      mfAccounts.head.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, mfAccounts.find(x => x.accountNr == accountNr).getOrElse(throw new Exception("Should be impossible")), "", "0")
+      cbsToken),
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, account, "", "0")
     )
   }
 
@@ -411,6 +400,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
     val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
+    val accounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
 
     val result = new ListBuffer[InternalInboundCoreAccount]
     for (i <- inputAccountIds) {
@@ -422,7 +412,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         id = i,
         label = "",
         bank_id = "10",
-        account_routing = AccountRouting(scheme = "account_number", address = mapAccountIdToAccountValues(i).accountNumber)
+        account_routing = AccountRouting(scheme = "account_number", address = 
+          accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist")).accountNr)
       )
     }
     InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
@@ -430,20 +421,23 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {
     //TODO: Error handling
-    val accountValues = mapAccountIdToAccountValues(getTransactionsRequest.accountId)
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(getTransactionsRequest.authInfo.username, getTransactionsRequest.accountId)
     val fromDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
     val fromMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
     val fromYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
     val toDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
     val toMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
     val toYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
+    val cbsToken =  if (account.cbsToken != getTransactionsRequest.authInfo.cbsToken) {
+      throw new RuntimeException("Session Error")
+    } else account.cbsToken
 
     val mfTransactions = getCompletedTransactions(
       getTransactionsRequest.authInfo.username,
-      accountValues.branchId,
-      accountValues.accountType,
-      accountValues.accountNumber,
-      getTransactionsRequest.authInfo.cbsToken, List(fromYear, fromMonth, fromDay), List(toYear, toMonth, toDay), getTransactionsRequest.limit.toString)
+      account.branchNr,
+      account.accountType,
+      account.accountNr,
+      cbsToken, List(fromYear, fromMonth, fromDay), List(toYear, toMonth, toDay), getTransactionsRequest.limit.toString)
     var result = new ListBuffer[InternalTransaction]
     for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
       result += mapAdapterTransactionToInternalTransaction(
@@ -481,12 +475,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"LeumiDecoder-createTransaction input: ($createTransactionRequest)")
     // As to this page: https://github.com/OpenBankProject/OBP-Adapter_Leumi/wiki/NTBD_1_135#-these-parameters-have-to-come-from-the-api
     // OBP-API will provide: four values:
-    val accountValues = mapAccountIdToAccountValues(createTransactionRequest.fromAccountId)
-    val branchId = accountValues.branchId
-    val accountNumber = accountValues.accountNumber
-    val accountType = accountValues.accountType
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(createTransactionRequest.authInfo.username, createTransactionRequest.fromAccountId)
+    val branchId = account.branchNr
+    val accountNumber = account.accountNr
+    val accountType = account.accountType
     val username = createTransactionRequest.authInfo.username
-    val cbsToken = createTransactionRequest.authInfo.cbsToken
+    val cbsToken =  if (account.cbsToken != createTransactionRequest.authInfo.cbsToken) {
+      throw new RuntimeException("Session Error")
+    } else account.cbsToken
     val transactionNewId = "" //as we cannot determine the transactionid at creation, this will always be empty
 
     if (createTransactionRequest.transactionRequestType == (TransactionRequestTypes.TRANSFER_TO_PHONE.toString)) {
@@ -743,12 +739,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createChallenge input: ($createChallenge)")
     val jsonExtract = getJoniMfUserFromCache(createChallenge.authInfo.username)
-    val accountValues = mapAccountIdToAccountValues(createChallenge.accountId)
-    val branchId = accountValues.branchId
-    val accountNumber = accountValues.accountNumber
-    val accountType = accountValues.accountType
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(createChallenge.authInfo.username, createChallenge.accountId)
+    val branchId = account.branchNr
+    val accountNumber = account.accountNr
+    val accountType = account.accountType
     val username = createChallenge.authInfo.username
-    val cbsToken = jsonExtract.SDR_JONI.MFTOKEN
+    val cbsToken =  if (account.cbsToken != createChallenge.authInfo.cbsToken) {
+      throw new RuntimeException("Session Error")
+    } else account.cbsToken
     val callNtlv1 = getNtlv1Mf(username,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
@@ -782,12 +780,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getTransactionRequests(outboundGetTransactionRequests210: OutboundGetTransactionRequests210): InboundGetTransactionRequests210 = {
 
     val accountId = outboundGetTransactionRequests210.counterparty.accountId
-    val accountValues = mapAccountIdToAccountValues(accountId)
-    val branchId = accountValues.branchId
-    val accountNumber = accountValues.accountNumber
-    val accountType = accountValues.accountType
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundGetTransactionRequests210.authInfo.username, outboundGetTransactionRequests210.counterparty.accountId)
+    val branchId = account.branchNr
+    val accountNumber = account.accountNr
+    val accountType = account.accountType
     val username = outboundGetTransactionRequests210.authInfo.username
-    val cbsToken = outboundGetTransactionRequests210.authInfo.cbsToken
+    val cbsToken = if (outboundGetTransactionRequests210.authInfo.cbsToken != account.cbsToken) {
+      throw new RuntimeException("Session Error")
+    } else account.cbsToken
 
     val nt1c3result = getNt1c3(
       branchId,
@@ -827,17 +827,19 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def createCounterparty(outboundCreateCounterparty: OutboundCreateCounterparty): InboundCreateCounterparty = {
-    val accountValues = mapAccountIdToAccountValues(outboundCreateCounterparty.counterparty.thisAccountId)
-    val branchId = accountValues.branchId
-    val accountNumber = accountValues.accountNumber
-    val accountType = accountValues.accountType
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundCreateCounterparty.authInfo.username, outboundCreateCounterparty.counterparty.thisAccountId)
+    val branchId = account.branchNr
+    val accountNumber = account.accountNr
+    val accountType = account.accountType
+    val cbsToken = account.cbsToken
+    if (cbsToken != outboundCreateCounterparty.authInfo.cbsToken) throw new RuntimeException("Session Error")
 
     if (outboundCreateCounterparty.counterparty.thisBankId == "10") {
       val ntg6ACall = getNtg6A(
         branch = branchId,
         accountType = accountType,
         accountNumber = accountNumber,
-        cbsToken = outboundCreateCounterparty.authInfo.cbsToken,
+        cbsToken = cbsToken,
         counterpartyBranchNumber = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
         counterpartyAccountNumber = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
         counterpartyName = outboundCreateCounterparty.counterparty.name,
@@ -924,7 +926,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         branch = branchId,
         accountType = accountType,
         accountNumber = accountNumber,
-        cbsToken = outboundCreateCounterparty.authInfo.cbsToken,
+        cbsToken = cbsToken,
         counterpartyBankId = outboundCreateCounterparty.counterparty.otherBankRoutingAddress,
         counterpartyBranchNumber = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress,
         counterpartyAccountNumber = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress,
@@ -1018,6 +1020,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
     val joniMfCall = getJoniMfUserFromCache(username)
     //Todo: just gets limit for the leading account instead of limit and balance for all
+    if (joniMfCall.SDR_JONI.MFTOKEN != outboundGetCustomersByUserIdFuture.authInfo.cbsToken) throw new RuntimeException("Session Error")
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
@@ -1060,10 +1063,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val joniCall = getJoniMfUserFromCache(outboundGetCounterparties.authInfo.username)
     if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken) throw new RuntimeException("Session Error")
 
-    val accountValues = mapAccountIdToAccountValues(outboundGetCounterparties.counterparty.thisAccountId)
-    val branchId = accountValues.branchId
-    val accountNumber = accountValues.accountNumber
-    val accountType = accountValues.accountType
+    val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundGetCounterparties.authInfo.username, outboundGetCounterparties.counterparty.thisAccountId)
+    val branchId = account.branchNr
+    val accountNumber = account.accountNr
+    val accountType = account.accountType
     
     var result = new ListBuffer[InternalCounterparty]
     

@@ -138,7 +138,7 @@
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/ModeratedAccountJSON"
+              "$ref": "#/definitions/ModeratedAccountJsonV300"
             }
           },
           "400": {
@@ -687,7 +687,7 @@
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/ModeratedCoreAccountJSON"
+              "$ref": "#/definitions/ModeratedCoreAccountJsonV300"
             }
           },
           "400": {
@@ -732,7 +732,7 @@
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/ModeratedCoreAccountJSON"
+              "$ref": "#/definitions/CoreTransactionsJsonV300"
             }
           },
           "400": {
@@ -834,7 +834,7 @@
         }
       }
     },
-    "banks/{BANK_ID}/accounts/account_ids/private": {
+    "/banks/{BANK_ID}/accounts/account_ids/private": {
       "get": {
         "tags": [
           "3_0_0"
@@ -7052,7 +7052,7 @@
         }
       }
     },
-    "UsersJSONV200": {
+    "UsersJsonV200": {
       "required": [
         "users"
       ],
@@ -7381,6 +7381,19 @@
         "kyc_status": {
           "type": "boolean",
           "example": "true"
+        }
+      }
+    },
+    "CustomerJSONs": {
+      "required": [
+        "customers"
+      ],
+      "properties": {
+        "customers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomerJsonV210"
+          }
         }
       }
     },
@@ -9229,6 +9242,290 @@
           "example": "String"
         },
         "name": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "ThisAccountJsonV300": {
+      "required": [
+        "id",
+        "bank_routing",
+        "account_routing",
+        "holders",
+        "kind"
+      ],
+      "properties": {
+        "account_routing": {
+          "$ref": "#/definitions/AccountRoutingJsonV121"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        },
+        "holders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AccountHolderJSON"
+          }
+        },
+        "bank_routing": {
+          "$ref": "#/definitions/BankRoutingJsonV121"
+        },
+        "kind": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "OtherAccountJsonV300": {
+      "required": [
+        "id",
+        "bank_routing",
+        "account_routing",
+        "kind",
+        "metadata"
+      ],
+      "properties": {
+        "account_routing": {
+          "$ref": "#/definitions/AccountRoutingJsonV121"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        },
+        "metadata": {
+          "$ref": "#/definitions/OtherAccountMetadataJSON"
+        },
+        "bank_routing": {
+          "$ref": "#/definitions/BankRoutingJsonV121"
+        },
+        "kind": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "OtherAccountsJsonV300": {
+      "required": [
+        "other_accounts"
+      ],
+      "properties": {
+        "other_accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OtherAccountJsonV300"
+          }
+        }
+      }
+    },
+    "TransactionJsonV300": {
+      "required": [
+        "id",
+        "this_account",
+        "other_account",
+        "details",
+        "metadata"
+      ],
+      "properties": {
+        "this_account": {
+          "$ref": "#/definitions/ThisAccountJsonV300"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        },
+        "details": {
+          "$ref": "#/definitions/TransactionDetailsJSON"
+        },
+        "metadata": {
+          "$ref": "#/definitions/TransactionMetadataJSON"
+        },
+        "other_account": {
+          "$ref": "#/definitions/OtherAccountJsonV300"
+        }
+      }
+    },
+    "TransactionsJsonV300": {
+      "required": [
+        "transactions"
+      ],
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TransactionJsonV300"
+          }
+        }
+      }
+    },
+    "CoreCounterpartyJsonV300": {
+      "required": [
+        "id",
+        "bank_routing",
+        "account_routing",
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "String"
+        },
+        "account_routing": {
+          "$ref": "#/definitions/AccountRoutingJsonV121"
+        },
+        "bank_routing": {
+          "$ref": "#/definitions/BankRoutingJsonV121"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "CoreTransactionJsonV300": {
+      "required": [
+        "id",
+        "account",
+        "counterparty",
+        "details"
+      ],
+      "properties": {
+        "details": {
+          "$ref": "#/definitions/CoreTransactionDetailsJSON"
+        },
+        "counterparty": {
+          "$ref": "#/definitions/CoreCounterpartyJsonV300"
+        },
+        "account": {
+          "$ref": "#/definitions/ThisAccountJsonV300"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "CoreCounterpartiesJsonV300": {
+      "required": [
+        "counterparties"
+      ],
+      "properties": {
+        "counterparties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CoreCounterpartyJsonV300"
+          }
+        }
+      }
+    },
+    "CoreTransactionsJsonV300": {
+      "required": [
+        "transactions"
+      ],
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CoreTransactionJsonV300"
+          }
+        }
+      }
+    },
+    "ModeratedAccountJsonV300": {
+      "required": [
+        "id",
+        "bank_id",
+        "label",
+        "number",
+        "owners",
+        "type",
+        "balance",
+        "views_available",
+        "account_routing"
+      ],
+      "properties": {
+        "number": {
+          "type": "string",
+          "example": "String"
+        },
+        "account_routing": {
+          "$ref": "#/definitions/AccountRoutingJsonV121"
+        },
+        "views_available": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ViewJsonV300"
+          }
+        },
+        "label": {
+          "type": "string",
+          "example": "String"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserJSONV121"
+          }
+        },
+        "balance": {
+          "$ref": "#/definitions/AmountOfMoneyJsonV121"
+        },
+        "bank_id": {
+          "type": "string",
+          "example": "String"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        },
+        "type": {
+          "type": "string",
+          "example": "String"
+        }
+      }
+    },
+    "ModeratedCoreAccountJsonV300": {
+      "required": [
+        "id",
+        "bank_id",
+        "label",
+        "number",
+        "owners",
+        "type",
+        "balance",
+        "account_routing"
+      ],
+      "properties": {
+        "number": {
+          "type": "string",
+          "example": "String"
+        },
+        "account_routing": {
+          "$ref": "#/definitions/AccountRoutingJsonV121"
+        },
+        "label": {
+          "type": "string",
+          "example": "String"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserJSONV121"
+          }
+        },
+        "balance": {
+          "$ref": "#/definitions/AmountOfMoneyJsonV121"
+        },
+        "bank_id": {
+          "type": "string",
+          "example": "String"
+        },
+        "id": {
+          "type": "string",
+          "example": "String"
+        },
+        "type": {
           "type": "string",
           "example": "String"
         }
