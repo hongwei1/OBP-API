@@ -24,7 +24,7 @@ import com.tesobe.obp.Ntg6BMf.getNtg6B
 import com.tesobe.obp.Ntg6IMf.getNtg6I
 import com.tesobe.obp.Ntg6KMf.getNtg6K
 import com.tesobe.obp.Ntib2Mf.getNtib2Mf
-import com.tesobe.obp.Ntlv1Mf.{getNtlv1Mf, getNtlv1MfCore}
+import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -35,12 +35,6 @@ import net.liftweb.json.JsonParser.parse
 
 import scala.collection.immutable.List
 import scala.collection.mutable.{ListBuffer, Map}
-import scalacache.ScalaCache
-import scalacache.guava.GuavaCache
-import scalacache.Flags
-import scalacache.{put,get}
-import com.google.common.cache.CacheBuilder
-import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
 
 /**
@@ -102,7 +96,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getBasicBankAccountByAccountIdFromCachedJoni(username: String, accountId: String): BasicBankAccount = {
     val mfAccounts = getBasicBankAccountsForUser(username, true)
-    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new Exception("AccountId does not exist"))
+    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new InvalidAccountIdException)
   }
 
   def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {
@@ -386,37 +380,25 @@ object LeumiDecoder extends Decoder with StrictLogging {
       mfAccounts.head.cbsToken), result.toList)
   }
 
-  def getCoreAccounts(getCoreBankAccounts: OutboundGetCoreAccounts): InboundGetCoreAccounts = {
-    val mfAccounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
-    var result = new ListBuffer[CoreAccount]
-    for (i <- mfAccounts) {
-      result += mapBasicBankAccountToCoreAccountJsonV300(i)
-    }
-    InboundGetCoreAccounts(
-      getCoreBankAccounts.authInfo,
-      List(InboundStatusMessage("", "", "", "")),
-      result.toList)
-  }
-
-  def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
-    val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
-    val accounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
-
-    val result = new ListBuffer[InternalInboundCoreAccount]
-    for (i <- inputAccountIds) {
-      result += InternalInboundCoreAccount(
-        errorCode = "",
-        backendMessages = List(
-          InboundStatusMessage("ESB", "Success", "0", "OK"),
-          InboundStatusMessage("MF", "Success", "0", "OK")),
-        id = i,
-        label = "",
-        bank_id = "10",
-        account_routing = AccountRouting(scheme = "account_number", address = 
-          accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist")).accountNr)
-      )
-    }
-    InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
+    def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
+      val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
+      val accounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
+  
+      val result = new ListBuffer[InternalInboundCoreAccount]
+      for (i <- inputAccountIds) {
+        result += InternalInboundCoreAccount(
+          errorCode = "",
+          backendMessages = List(
+            InboundStatusMessage("ESB", "Success", "0", "OK"),
+            InboundStatusMessage("MF", "Success", "0", "OK")),
+          id = i,
+          label = "",
+          bank_id = "10",
+          account_routing = AccountRouting(scheme = "account_number", address = 
+            accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist")).accountNr)
+        )
+      }
+      InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
   }
 
   def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {

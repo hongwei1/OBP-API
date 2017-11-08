@@ -265,6 +265,10 @@ object ErrorMessages {
   val NoCreditCard = "OBP-60000: No valid credit card or no credit card with sufficient withdrawal limit found"
   val JoniCacheEmpty = "OBP-60001: Joni Cache return empty, do not cache it before! "
   val JoniFailed = "OBP-60002: Joni Call to CBS failed"
+  val SessionError = "OBP-60003: Invalid Session"
+  val InvalidMobilNumber = "OBP-60004: InvalidMobileNumber, we only support Israel country code. It should start as :+972xxxxxxxxx ."
+  val InvalidAccountId = "OBP-60005: InvalidAccountId, this AccountId is not used before."
+  val InvalidRequestFormat = "OBP-60006: InvalidRequestFormat: Parameter for Backendcall not in malformated."
   
   
   
@@ -276,7 +280,11 @@ object ErrorMessages {
   
   
   class JoniCacheEmptyException(msg: String = JoniCacheEmpty) extends Exception(msg: String)
-  class JoniFailedExeption(msg: String = JoniFailed) extends Exception(msg: String)
+  class JoniFailedException(msg: String = JoniFailed) extends Exception(msg: String)
+  class InvalidMobilNumberException(msg: String = InvalidMobilNumber) extends Exception(msg: String)
+  class InvalidAccountIdException(msg: String = InvalidMobilNumber) extends Exception(msg: String)
+  class SessionErrorException(msg: String = SessionError) extends Exception(msg: String)
+  class InvalidRequestFormatException(msg: String = InvalidRequestFormat) extends Exception(msg: String)
   
 }
 

@@ -8,7 +8,7 @@ import net.liftweb.json.JsonAST.JValue
 class JoniMfTest extends ServerSetup {
 
   val username = "N7jut8d"
-  val mfToken = "?+1         81433020102612"
+  val mfToken = ">,?          81433020102612"
   val mfresult: String = jsonToString("joni_result.json")
   val sane_result: String = replaceEmptyObjects(mfresult)
   implicit val formats = net.liftweb.json.DefaultFormats
@@ -34,7 +34,7 @@ class JoniMfTest extends ServerSetup {
     assert(JoniCall.SDR_JONI.esbHeaderResponse.responseStatus.errorDesc
       == Some(""))
     JoniCall.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE(2).SDR_CHN(0).SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN should be ("20102642")
-    JoniCall.SDR_JONI.MFTOKEN should be ("""?+1         81433020102612""")
+    JoniCall.SDR_JONI.MFTOKEN should be (mfToken)
 
 
   }

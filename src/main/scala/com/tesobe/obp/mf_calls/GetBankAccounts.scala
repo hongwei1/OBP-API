@@ -23,7 +23,7 @@ object GetBankAccounts extends Config {
       case true => cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty The Joni Cache Input Key =$username "))
       case false => 
         val result = getJoniMfHttpApache(username)
-        if (result.contains("PAPIErrorResponse")) throw new JoniFailedExeption(result) else
+        if (result.contains("PAPIErrorResponse")) throw new JoniFailedException(result) else
         cachedJoni.set(username, result)
         cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty The Joni Cache Input Key =$username "))
     }
