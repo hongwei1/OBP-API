@@ -17,7 +17,7 @@ class LeumiDecoderTest  extends ServerSetup {
   val accountId3 = base64EncodedSha256("616" + "330" +"50180963" + "fjdsaFDSAefwfsalfid")
   val accountId4 = base64EncodedSha256("814" + "330" + "20102612" + "fjdsaFDSAefwfsalfid")
   val accountId5 = base64EncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")
-  val mfToken = "?+1         81433020102612"
+  val mfToken = ">,?          81433020102612"
   val username = "N7jut8d"
   
   test("getBankAccounts works for Stub"){
@@ -39,7 +39,7 @@ class LeumiDecoderTest  extends ServerSetup {
 
   
   test("getTransactions works for Stubs first transaction"){
-    val result = getTransactions(OutboundGetTransactions(AuthInfo("karlsid", username, ""), "10", accountId1, 15, "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2017"))
+    val result = getTransactions(OutboundGetTransactions(AuthInfo("karlsid", username, ">,?          81433020102612"), "10", accountId1, 15, "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2017"))
     val transactionId = base64EncodedSha256(result.data.head.amount + result.data.head.completedDate + result.data.head.newBalanceAmount)
     result.data.head should be (InternalTransaction(
       "",
@@ -97,7 +97,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("createTransaction - Transfer to Account does not break"){
     val result = createTransaction(OutboundCreateTransaction(
-      authInfo = AuthInfo("","",""),
+      authInfo = AuthInfo("",username,mfToken),
       fromAccountBankId = "",
       fromAccountId = accountId1,
       transactionRequestType= TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString,
@@ -124,7 +124,7 @@ class LeumiDecoderTest  extends ServerSetup {
       toCounterpartyBankRoutingScheme = ""
 
     ))
-    result should be (InboundCreateTransactionId(AuthInfo("","",""),InternalTransactionId("",List(InboundStatusMessage("ESB","Success","0","OK")),"")))
+    result should be (InboundCreateTransactionId(AuthInfo("",username,mfToken),InternalTransactionId("",List(InboundStatusMessage("ESB","Success","0","OK")),"")))
   }
 
 
