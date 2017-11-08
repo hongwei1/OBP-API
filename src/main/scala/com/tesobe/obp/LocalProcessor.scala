@@ -77,8 +77,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             InboundBank(
               m.getMessage,
               List(
-                InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-                InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+                InboundStatusMessage("ESB","Success", "0", "OK"),
+                InboundStatusMessage("MF","Success", "0", "OK") 
             ),
              "", "","","")
           )
@@ -107,8 +107,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             InboundBank(
               m.getMessage,
               List(
-                InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-                InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+                InboundStatusMessage("ESB","Success", "0", "OK"),
+                InboundStatusMessage("MF","Success", "0", "OK") 
               ),
               "", "","","")
         )
@@ -135,8 +135,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InboundValidatedUser(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK") 
             ),
             "", "")
         )
@@ -161,8 +161,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InboundAdapterInfoInternal(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")  //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK") 
             ),
             "", "","", "")
         )
@@ -188,8 +188,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             InboundAccountJune2017(
               m.getMessage,
               List(
-                InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-                InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+                InboundStatusMessage("ESB","Success", "0", "OK"),
+                InboundStatusMessage("MF","Success", "0", "OK")  
               ),
               "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
         )
@@ -215,8 +215,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InboundAccountJune2017(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
         )
@@ -243,8 +243,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           List(InboundAccountJune2017(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
         ))
@@ -252,30 +252,6 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
 
-  def getCoreAccountsFn: Business = {msg =>
-    logger.debug(s"Processing getCoreAccountsFn ${msg.record.value}")
-    try {
-      //    /* call Decoder for extracting data from source file */
-      val response: (OutboundGetCoreAccounts => InboundGetCoreAccounts) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCoreAccounts(q) }
-      val r = decode[OutboundGetCoreAccounts](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCoreAccounts` case class for OBP-API and Adapter sides : ", e);
-        case Right(x) => response(x).asJson.noSpaces
-      }
-      Future(msg, r)
-    } catch {
-      case m: Throwable =>
-        logger.error("getCoreAccountsFn-unknown error", m)
-          val errorBody = InboundGetCoreAccounts(// why not error message
-          AuthInfo("","",""),
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
-            ),
-            List(CoreAccount("","", "", AccountRouting("","")))
-          )
-        Future(msg, errorBody.asJson.noSpaces)
-    }
-  }
 
   def getCoreBankAccountsFn: Business = {msg =>
     logger.debug(s"Processing getCoreBankAccountsFn ${msg.record.value}")
@@ -292,10 +268,10 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getCoreBankAccountsFn-unknown error", m)
         val errorBody = InboundGetCoreBankAccounts(
           AuthInfo("","",""),List(InternalInboundCoreAccount(
-            "", // why not error message
+            m.getMessage,
           List(
-            InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-            InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")  
           ),
           "","", "", AccountRouting("",""))))
         
@@ -319,8 +295,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           List(InternalFullCustomer("",
             m.getMessage,
             List(
-            InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-            InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")  
           ),"","","","","","",CustomerFaceImage(null,""),
             simpleTransactionDateFormat.parse("19481231"),"",0,null,
           "", "", CreditRating("",""),AmountOfMoney("","0"),false,null)))
@@ -347,8 +323,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           List(InternalTransaction(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             "", "","", "","", "","","","","","", "","", "")
           ))
@@ -375,8 +351,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InternalTransaction(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             "", "","", "","", "","","","","","", "","", ""))
       
@@ -422,8 +398,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InternalTransactionId(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             ""))
     
@@ -461,8 +437,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         InternalCreateChallengeJune2017(
           m.getMessage,
           List(
-            InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-            InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")  
           ),
           ""))
     
@@ -488,8 +464,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InternalGetTransactionRequests(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             Nil
           )
@@ -518,8 +494,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
           InternalCreateChallengeJune2017(
             m.getMessage,
             List(
-              InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-              InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")  
             ),
             false.toString
           )
@@ -544,7 +520,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
         val errorBody = InboundGetCounterparties(AuthInfo("","",""), List(InternalCounterparty(
           status = "",
-          errorCode = "", // why not error 
+          errorCode = m.getMessage,
           backendMessages = List(InboundStatusMessage(
             "ESB",
             "Failure",

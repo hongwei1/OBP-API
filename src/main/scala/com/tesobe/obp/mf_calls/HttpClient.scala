@@ -1,10 +1,12 @@
 package com.tesobe.obp
+import com.tesobe.obp.ErrorMessages.InvalidRequestFormatException
 import com.tesobe.obp.JoniMf.config
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JsonAST.{JValue, compactRender}
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
+
 import scala.xml.XML
 
 
@@ -27,15 +29,9 @@ object HttpClient extends StrictLogging{
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
     logger.debug(s"$path--Response : "+response.toString+ "\n Body is :"+result)
-    result
+    if (result.startsWith("<")) throw new InvalidRequestFormatException else result
   }
-  
-  def createPapiErrorResponseFromSoapError(result: String): PAPIErrorResponse = {
-    val xml = XML.loadString(result)
-    PAPIErrorResponse(PAPIErrorResponse2(EsbHeaderResponse("backendSoapError",
-      ResponseStatus((xml \\ "faultstring").toString(), Some((xml \\ "faultactor").toString))),
-      MfAdminResponse("BackendSoapError", Some((xml \\ "text").toString))))
-  }
+
   }
 
 
