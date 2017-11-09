@@ -105,7 +105,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getBasicBankAccountByAccountIdFromCachedJoni(username: String, accountId: String): BasicBankAccount = {
     val mfAccounts = getBasicBankAccountsForUser(username, true)
-    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new InvalidAccountIdException)
+    mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new InvalidAccountIdException(s"$InvalidAccountId accountId = $accountId"))
   }
 
   def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {

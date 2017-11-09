@@ -6,8 +6,7 @@ import net.liftweb.json.JsonAST.{JValue, compactRender}
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
-
-import scala.xml.XML
+import com.tesobe.obp.ErrorMessages._
 
 
 object HttpClient extends StrictLogging{
@@ -29,7 +28,7 @@ object HttpClient extends StrictLogging{
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
     logger.debug(s"$path--Response : "+response.toString+ "\n Body is :"+result)
-    if (result.startsWith("<")) throw new InvalidRequestFormatException else result
+    if (result.startsWith("<")) throw new InvalidRequestFormatException(s"$InvalidRequestFormat, current Request is $result") else result
   }
 
   }
