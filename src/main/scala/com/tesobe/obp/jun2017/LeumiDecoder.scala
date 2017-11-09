@@ -71,14 +71,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
 
   val cachedJoni = TTLCache[String](10080) //1 week in minutes for now
+  val cachedTransactionId = TTLCache[TransactionIdValues](10080) //1 week in minutes for now
   
 
-  //TODO: Replace with caching solution for production
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
 
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
-
-  var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
 
   var mapCustomerIdToBankUserId = Map[String, String]()
   var mapBankUserIdToCustomerId = Map[String, String]()
@@ -111,12 +109,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
     mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new InvalidAccountIdException(s"$InvalidAccountId accountId = $accountId"))
   }
 
-  def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {
+  def createTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {
     logger.debug(s"getOrCreateTransactionId for ($amount)($completedDate)($newBalanceAmount)")
     val transactionIdValues = TransactionIdValues(amount, completedDate, newBalanceAmount)
-
       val transactionId = base64EncodedSha256(amount + completedDate + newBalanceAmount)
-      mapTransactionIdToTransactionValues += (transactionId -> transactionIdValues)
+     cachedTransactionId.set(transactionId,transactionIdValues)
       transactionId
       }
 
@@ -192,7 +189,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
         InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
       ),
-      transactionId = getOrCreateTransactionId(amount, completedDate, newBalanceAmount), // Find some
+      transactionId = createTransactionId(amount, completedDate, newBalanceAmount), // Find some
       accountId = accountId, //accountId
       amount = amount,
       bankId = "10", // 10 for now (Joni)
@@ -401,7 +398,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
       //TODO: Error handling
       getAccountsInput.authInfo.username,
-      mfAccounts.head.cbsToken), result.toList)
+      mfAccounts.headOption.getOrElse(
+        throw new Exception("No Accounts for username: " + getAccountsInput.authInfo.username)).cbsToken), result.toList)
   }
 
     def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
@@ -460,7 +458,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"get Transaction for ($getTransactionRequest)")
     val allTransactions: List[InternalTransaction] = {
 
-      val transactionDate: String = mapTransactionIdToTransactionValues(getTransactionRequest.transactionId).completedDate
+      val transactionDate: String = cachedTransactionId.get(getTransactionRequest.transactionId).getOrElse(
+        throw new Exception("Invalid TransactionId")
+      ).completedDate
       val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
       getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
         getTransactionRequest.bankId,
@@ -472,7 +472,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
 
     //TODO: Error handling
-    val resultTransaction = allTransactions.filter(x => x.transactionId == getTransactionRequest.transactionId).head
+    val resultTransaction = allTransactions.find(x => x.transactionId == getTransactionRequest.transactionId).getOrElse(throw new Exception("Invalid TransactionID"))
     InboundGetTransaction(getTransactionRequest.authInfo, resultTransaction)
 
   }
