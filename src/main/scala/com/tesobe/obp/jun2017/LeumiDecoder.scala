@@ -79,7 +79,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
 
   var mapTransactionIdToTransactionValues = Map[String, TransactionIdValues]()
-  var mapTransactionValuesToTransactionId = Map[TransactionIdValues, String]()
 
   var mapCustomerIdToBankUserId = Map[String, String]()
   var mapBankUserIdToCustomerId = Map[String, String]()
@@ -103,6 +102,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr)
   }
   
+  def createTransactionCounterpartyId(description: String, accountID: String) = {
+    base64EncodedSha256(description + accountID + config.getString("salt.global"))
+  }
+  
   def getBasicBankAccountByAccountIdFromCachedJoni(username: String, accountId: String): BasicBankAccount = {
     val mfAccounts = getBasicBankAccountsForUser(username, true)
     mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new InvalidAccountIdException)
@@ -111,15 +114,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getOrCreateTransactionId(amount: String, completedDate: String, newBalanceAmount: String): String = {
     logger.debug(s"getOrCreateTransactionId for ($amount)($completedDate)($newBalanceAmount)")
     val transactionIdValues = TransactionIdValues(amount, completedDate, newBalanceAmount)
-    if (mapTransactionValuesToTransactionId.contains(transactionIdValues)) {
-      mapTransactionValuesToTransactionId(transactionIdValues)
-    } else {
+
       val transactionId = base64EncodedSha256(amount + completedDate + newBalanceAmount)
-      mapTransactionValuesToTransactionId += (transactionIdValues -> transactionId)
       mapTransactionIdToTransactionValues += (transactionId -> transactionIdValues)
       transactionId
-    }
-  }
+      }
 
   def getOrCreateCustomerId(username: String): String = {
     logger.debug(s"getOrCreateTransactionId for ($username)")
@@ -198,8 +197,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
       amount = amount,
       bankId = "10", // 10 for now (Joni)
       completedDate = completedDate,
-      counterpartyId = "", //TODO, can not get this field from CBS
-      counterpartyName = "", //TODO, can not get this field from CBS
+      counterpartyId = createTransactionCounterpartyId(description, accountId),
+      counterpartyName = description,
       currency = defaultCurrency, //ILS 
       description = description,
       newBalanceAmount = newBalanceAmount,
@@ -239,8 +238,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
       charge_policy = "",
-      counterparty_id = CounterpartyId(""),
-      name = "",
+      counterparty_id = CounterpartyId(createTransactionCounterpartyId(
+        transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
+        accountId)),
+      name = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
       this_bank_id = BankId("10"),
       this_account_id = AccountId(accountId),
       this_view_id = ViewId(""),
@@ -268,8 +269,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
       charge_policy = "",
-      counterparty_id = CounterpartyId(""),
-      name = "",
+      counterparty_id = CounterpartyId(createTransactionCounterpartyId(
+      transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA,
+        accountId)),
+      name = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA,
       this_bank_id = BankId("10"),
       this_account_id = AccountId(accountId),
       this_view_id = ViewId(""),
