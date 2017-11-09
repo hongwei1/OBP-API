@@ -75,11 +75,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
 
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
-
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
-
-  var mapCustomerIdToBankUserId = Map[String, String]()
-  var mapBankUserIdToCustomerId = Map[String, String]()
 
 
   //Helper functions start here:---------------------------------------------------------------------------------------
@@ -117,15 +113,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
       transactionId
       }
 
-  def getOrCreateCustomerId(username: String): String = {
-    logger.debug(s"getOrCreateTransactionId for ($username)")
-    if (mapBankUserIdToCustomerId.contains(username)) mapBankUserIdToCustomerId(username) else {
+  def createCustomerId(username: String): String = {
+    logger.debug(s"getOrCreateCustomerId for ($username)")
       val customerId = base64EncodedSha256(username + config.getString("salt.global"))
-      mapBankUserIdToCustomerId += (username -> customerId)
-      mapCustomerIdToBankUserId += (customerId -> username)
       customerId
-    }
-  }
+      }
 
 
   def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount, iban: String, balance: String): InboundAccountJune2017 = {
@@ -1044,7 +1036,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       status = "",
       errorCode = "",
       backendMessages = List(InboundStatusMessage("", "", "", "")),
-      customerId = getOrCreateCustomerId(username),
+      customerId = createCustomerId(username),
       bankId = "10",
       number = username,
       legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
