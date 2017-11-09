@@ -520,7 +520,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
         val errorBody = InboundGetCounterparties(AuthInfo("","",""), List(InternalCounterparty(
           status = "",
-          errorCode = m.getMessage, // why not error 
+          errorCode = m.getMessage,
           backendMessages = List(InboundStatusMessage(
             "ESB",
             "Failure",
