@@ -94,6 +94,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
     base64EncodedSha256(branchId + accountType + accountNumber + config.getString("salt.global"))
   }
   
+  def createCounterpartyId(counterpartyName: String,
+                           counterpartyBankCode: String,
+                           counterpartyBranchNr: String,
+                           counterpartyAccountType: String,
+                           counterpartyAccountNr:String) = {
+    logger.debug(s"createCounterpartyId-counterpartyName($counterpartyName)")
+    base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr)
+  }
+  
   def getBasicBankAccountByAccountIdFromCachedJoni(username: String, accountId: String): BasicBankAccount = {
     val mfAccounts = getBasicBankAccountsForUser(username, true)
     mfAccounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == accountId)).getOrElse(throw new InvalidAccountIdException)
@@ -283,16 +292,28 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def mapAdapterCounterpartyToInternalCounterparty(CbsCounterparty: PmutPirteyMutav, OutboundCounterparty: InternalOutboundGetCounterparties): InternalCounterparty = {
     val accountRoutingScheme = if (CbsCounterparty.PMUT_IBAN.trim == "") "" else "IBAN"
+    val counterpartyName = CbsCounterparty.PMUT_SHEM_MUTAV
+    val counterpartyBankCode = CbsCounterparty.PMUT_BANK_MUTAV
+    val counterpartyBranchNr = CbsCounterparty.PMUT_SNIF_MUTAV
+    val counterpartyAccountType = CbsCounterparty.PMUT_SUG_CHEN_MUTAV
+    val counterpartyAccountNr = CbsCounterparty.PMUT_CHEN_MUTAV
+    
+    val description = CbsCounterparty.PMUT_TEUR_MUTAV
     InternalCounterparty(
       status = "",
       errorCode = "",
       backendMessages = List(InboundStatusMessage("","","","")),
       createdByUserId = "",
-      name = CbsCounterparty.PMUT_SHEM_MUTAV,
+      name = counterpartyName,
       thisBankId = OutboundCounterparty.thisBankId,
       thisAccountId = OutboundCounterparty.thisAccountId,
       thisViewId = OutboundCounterparty.viewId,
-      counterpartyId = "",
+      counterpartyId = createCounterpartyId(
+        counterpartyName,
+        counterpartyBankCode,
+        counterpartyBranchNr,
+        counterpartyAccountType,
+        counterpartyAccountNr),
       otherAccountRoutingScheme= accountRoutingScheme,
       otherAccountRoutingAddress= CbsCounterparty.PMUT_IBAN,
       otherBankRoutingScheme= "",
@@ -300,7 +321,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       otherBranchRoutingScheme= "",
       otherBranchRoutingAddress= "",
       isBeneficiary = true,
-      description = CbsCounterparty.PMUT_TEUR_MUTAV,
+      description = description,
       otherAccountSecondaryRoutingScheme= "",
       otherAccountSecondaryRoutingAddress= "",
       bespoke = List(PostCounterpartyBespoke("englishName", CbsCounterparty.PMUT_SHEM_MUTAV_ANGLIT),
