@@ -187,7 +187,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       amount = amount,
       bankId = "10", // 10 for now (Joni)
       completedDate = completedDate,
-      counterpartyId = createTransactionCounterpartyId(description, accountId),
+      counterpartyId = "",
       counterpartyName = description,
       currency = defaultCurrency, //ILS 
       description = description,
@@ -228,9 +228,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
       charge_policy = "",
-      counterparty_id = CounterpartyId(createTransactionCounterpartyId(
-        transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
-        accountId)),
+      counterparty_id = CounterpartyId(""),
       name = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
       this_bank_id = BankId("10"),
       this_account_id = AccountId(accountId),
@@ -259,9 +257,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
       charge_policy = "",
-      counterparty_id = CounterpartyId(createTransactionCounterpartyId(
-      transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA,
-        accountId)),
+      counterparty_id = CounterpartyId(""),
       name = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA,
       this_bank_id = BankId("10"),
       this_account_id = AccountId(accountId),
