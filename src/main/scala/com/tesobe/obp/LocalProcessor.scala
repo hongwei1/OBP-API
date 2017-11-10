@@ -557,6 +557,60 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
+
+  def getCounterpartyByIdFn: Business = {msg =>
+    logger.debug(s"Processing getCounterpartyByIdFn ${msg.record.value}")
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (OutboundGetCounterpartyByCounterpartyId => InboundGetCounterparty) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCounterpartyByCounterpartyId(q)}
+      val r = decode[OutboundGetCounterpartyByCounterpartyId](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCounterpartyByCounterpartyId` case class for OBP-API and Adapter sides : ", e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("getCounterpartiesFn-unknown error", m)
+
+        val errorBody = InboundGetCounterparty(AuthInfo("","",""), InternalCounterparty(
+          status = "",
+          errorCode = m.getMessage,
+          backendMessages = List(InboundStatusMessage(
+            "ESB",
+            "Failure",
+            "",
+            ""),
+            InboundStatusMessage(
+              "MF",
+              "Failure",
+              "",
+              "")
+          ),
+          createdByUserId = "",
+          name = "",
+          thisBankId = "",
+          thisAccountId = "",
+          thisViewId = "",
+          counterpartyId = "",
+          otherAccountRoutingScheme= "",
+          otherAccountRoutingAddress= "",
+          otherBankRoutingScheme= "",
+          otherBankRoutingAddress= "",
+          otherBranchRoutingScheme= "",
+          otherBranchRoutingAddress= "",
+          isBeneficiary = false,
+          description = "",
+          otherAccountSecondaryRoutingScheme= "",
+          otherAccountSecondaryRoutingAddress= "",
+          bespoke = List(PostCounterpartyBespoke("englishName", ""),
+            PostCounterpartyBespoke("englishDescription", "")
+
+
+          )))
+
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
   
   private def getResponse(msg: CommittableMessage[String, String]): String = {
     decode[Request](msg.record.value()) match {

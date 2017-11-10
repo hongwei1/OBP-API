@@ -549,10 +549,10 @@ case class InternalOutboundGetCounterparties(
   viewId :String
 )
 case class InternalOutboundGetCounterpartyById(
-  thisBankId: String,
-  thisAccountId: String,
-  viewId : String,
-  counterpartyById : String
+                                                thisBankId: String,
+                                                thisAccountId: String,
+                                                viewId : String,
+                                                counterpartyId : String
 )
 
 case class OutboundTransactionRequests(

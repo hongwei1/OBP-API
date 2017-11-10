@@ -71,7 +71,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
 
   val cachedJoni = TTLCache[String](10080) //1 week in minutes for now
-  val cachedTransactionId = TTLCache[TransactionIdValues](10080) //1 week in minutes for now
+  val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
+  val cachedCounterparties = TTLCache[List[InternalCounterparty]](10080)
   
 
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
@@ -1105,17 +1106,24 @@ object LeumiDecoder extends Decoder with StrictLogging {
     
     var result = new ListBuffer[InternalCounterparty]
     
-    val ntg6ICall = getNtg6I(branchId,accountType,accountNumber, outboundGetCounterparties.authInfo.cbsToken) match {
+    val ntg6ICall = getNtg6I(branchId,accountType,accountNumber, outboundGetCounterparties.authInfo.cbsToken) 
+    
+    ntg6ICall match {
       case Right(x) =>
         for (i <- x.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM) {
           result += mapAdapterCounterpartyToInternalCounterparty(i.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
         }
         
-        val ntg6KCall = getNtg6K(branchId,accountType,accountNumber,outboundGetCounterparties.authInfo.cbsToken) match {
+        val ntg6KCall = getNtg6K(branchId,accountType,accountNumber,outboundGetCounterparties.authInfo.cbsToken) 
+        ntg6KCall match {
           case Right(y) => 
             for (u <- y.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM){
               result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
             }
+            val returnValue = result.toList
+            cachedCounterparties.set(outboundGetCounterparties.authInfo.username, returnValue)
+            InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
+
 
           case Left(y) =>
             InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
@@ -1194,7 +1202,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
         
         
     }
-    InboundGetCounterparties(outboundGetCounterparties.authInfo, result.toList)
+  }
+  
+  def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
+    val counterpartiesFromCache = cachedCounterparties.get(outboundGetCounterpartyByCounterpartyId.authInfo.username).getOrElse(
+      throw new Exception(s"Counterparties not cached for user: (${outboundGetCounterpartyByCounterpartyId.authInfo.username})")
+    )
+    val counterpartyById = counterpartiesFromCache.find(x => 
+        x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new Exception("Invalid or uncached counterpartyId"))
+    InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, counterpartyById)
+      
   }
 
 }
