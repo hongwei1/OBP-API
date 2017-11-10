@@ -9,7 +9,7 @@ import net.liftweb.json.{JValue, parse}
 object Nt1c4Mf extends Config with StrictLogging {
 
 
-  def getNt1c4(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Nt1c4 = {
+  def getNt1c4(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Either[PAPIErrorResponse,Nt1c4] = {
 
 
     //OBP-Adapter_Leumi/Doc/MFServices/NT1C_4_000 Sample.txt
@@ -33,9 +33,11 @@ object Nt1c4Mf extends Config with StrictLogging {
         }
       }""")
     val result = makePostRequest(json, path)
-
     implicit val formats = net.liftweb.json.DefaultFormats
-    parse(replaceEmptyObjects(result)).extract[Nt1c4]
-  }
+    try {
+      Right(parse(replaceEmptyObjects(result)).extract[Nt1c4])
+    } catch {
+      case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+    }  }
 
 }

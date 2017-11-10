@@ -2,7 +2,6 @@ package com.tesobe.obp
 
 import java.security.MessageDigest
 
-import com.tesobe.obp.Encryption.encryptToken
 import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getJoniMfHttpApache, replaceEmptyObjects}
 import com.tesobe.obp.june2017.LeumiDecoder.cachedJoni
@@ -45,7 +44,7 @@ object GetBankAccounts extends Config {
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_CHN,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SNIF,
             u.SDRC_LINE.SDRC_CHN.SDRC_CHN_SUG,
-            encryptToken(jsonExtract.SDR_JONI.MFTOKEN),
+            jsonExtract.SDR_JONI.MFTOKEN,
             AccountPermissions(
                         hasMursheMeida,
                         hasMurshePeulot,
