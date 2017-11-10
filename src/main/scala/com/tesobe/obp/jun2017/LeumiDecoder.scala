@@ -8,7 +8,7 @@ import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccounts
 import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getMFToken, replaceEmptyObjects}
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
-import com.tesobe.obp.Nt1cBMf.getBalance
+import com.tesobe.obp.Nt1cBMf.getNt1cB
 import com.tesobe.obp.Nt1cTMf.getNt1cT
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
@@ -359,14 +359,36 @@ object LeumiDecoder extends Decoder with StrictLogging {
       username,
       cbsToken
     )
-    val iban = ntib2Call.SHETACHTCHUVA.TS00_PIRTEY_TCHUVA.TS00_TV_TCHUVA.TS00_NIGRERET_TCHUVA.TS00_IBAN
-    val balance = getBalance(username, account.branchNr, account.accountType, account.accountNr, cbsToken)
+    ntib2Call match {
+      case Right(x) =>
 
-    InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
-      getAccount.authInfo.username,
-      account.cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance)
-    )
+        val iban = x.SHETACHTCHUVA.TS00_PIRTEY_TCHUVA.TS00_TV_TCHUVA.TS00_NIGRERET_TCHUVA.TS00_IBAN
+        val nt1cbCall = getNt1cB(username, account.branchNr, account.accountType, account.accountNr, cbsToken)
+        nt1cbCall match {
+          case Right(y) =>
+
+            val balance = y.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_ITRA_NOCHECHIT
+            InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
+              getAccount.authInfo.username,
+              account.cbsToken),
+              mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance)
+            )
+          case Left(y) =>
+            InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017("backend error", List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")
+            )), "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
+        }
+      case Left(x) =>
+        InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017("backend error", List(InboundStatusMessage(
+          "ESB",
+          "Failure",
+          x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+          x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")
+        )), "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
+    }
   }
 
   def checkBankAccountExists(getAccount: OutboundCheckBankAccountExists): InboundGetAccountbyAccountID = {

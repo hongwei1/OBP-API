@@ -12,7 +12,7 @@ import net.liftweb.json.JsonParser._
 object Ntib2Mf extends Config with StrictLogging{
   
 
-  def getNtib2Mf(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Ntib2 = {
+  def getNtib2Mf(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Either[PAPIErrorResponse,Ntib2] = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01"
 
@@ -35,8 +35,12 @@ object Ntib2Mf extends Config with StrictLogging{
     """)
 
     val result = makePostRequest(json, path)
-
     implicit val formats = net.liftweb.json.DefaultFormats
-    parse(replaceEmptyObjects(result)).extract[Ntib2]
+    try {
+      Right(parse(replaceEmptyObjects(result)).extract[Ntib2])
+    } catch {
+      case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+    }
   }
+
 }
