@@ -9,7 +9,7 @@ import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getMFToken, replace
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
 import com.tesobe.obp.Nt1cBMf.getBalance
-import com.tesobe.obp.Nt1cTMf.getCompletedTransactions
+import com.tesobe.obp.Nt1cTMf.getNt1cT
 import com.tesobe.obp.Ntbd1v105Mf.getNtbd1v105Mf
 import com.tesobe.obp.Ntbd1v135Mf.getNtbd1v135Mf
 import com.tesobe.obp.Ntbd2v050Mf.getNtbd2v050
@@ -425,26 +425,38 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val toDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
     val toMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
     val toYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
-    val cbsToken =  if (account.cbsToken != getTransactionsRequest.authInfo.cbsToken) {
+    val cbsToken = if (account.cbsToken != getTransactionsRequest.authInfo.cbsToken) {
       throw new RuntimeException("Session Error")
     } else account.cbsToken
 
-    val mfTransactions = getCompletedTransactions(
+    val mfTransactions = getNt1cT(
       getTransactionsRequest.authInfo.username,
       account.branchNr,
       account.accountType,
       account.accountNr,
       cbsToken, List(fromYear, fromMonth, fromDay), List(toYear, toMonth, toDay), getTransactionsRequest.limit.toString)
-    var result = new ListBuffer[InternalTransaction]
-    for (i <- mfTransactions.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
-      result += mapAdapterTransactionToInternalTransaction(
-        getTransactionsRequest.authInfo.userId,
-        "10",
-        getTransactionsRequest.accountId,
-        i
-      )
+
+    mfTransactions match {
+      case Right(x) =>
+        var result = new ListBuffer[InternalTransaction]
+        for (i <- x.TN2_TSHUVA_TAVLAIT.TN2_SHETACH_LE_SEND_NOSAF.TN2_TNUOT.TN2_PIRTEY_TNUA) {
+          result += mapAdapterTransactionToInternalTransaction(
+            getTransactionsRequest.authInfo.userId,
+            "10",
+            getTransactionsRequest.accountId,
+            i
+          )
+        }
+        InboundGetTransactions(getTransactionsRequest.authInfo, result.toList)
+      case Left(x) => 
+        InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction("backend error",List(InboundStatusMessage(
+          "ESB",
+          "Failure",
+          x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+          x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("")
+        )), "","","","","","","","","","","","","","")))
+        
     }
-    InboundGetTransactions(getTransactionsRequest.authInfo, result.toList)
   }
 
   def getTransaction(getTransactionRequest: OutboundGetTransaction): InboundGetTransaction = {
