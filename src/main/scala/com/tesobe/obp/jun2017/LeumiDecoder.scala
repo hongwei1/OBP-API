@@ -284,7 +284,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def mapAdapterCounterpartyToInternalCounterparty(CbsCounterparty: PmutPirteyMutav, OutboundCounterparty: InternalOutboundGetCounterparties): InternalCounterparty = {
-    val accountRoutingScheme = if (CbsCounterparty.PMUT_IBAN.trim == "") "" else "IBAN"
+    val iBan = CbsCounterparty.PMUT_IBAN.trim
+    val accountRoutingScheme = if (iBan == "") "" else "IBAN"
     val counterpartyName = CbsCounterparty.PMUT_SHEM_MUTAV
     val counterpartyBankCode = CbsCounterparty.PMUT_BANK_MUTAV
     val counterpartyBranchNr = CbsCounterparty.PMUT_SNIF_MUTAV
@@ -292,8 +293,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val counterpartyAccountNr = CbsCounterparty.PMUT_CHEN_MUTAV
     
     val description = CbsCounterparty.PMUT_TEUR_MUTAV
+    val englishName = CbsCounterparty.PMUT_SHEM_MUTAV_ANGLIT
+    val englishDescription = CbsCounterparty.PMUT_TEUR_MUTAV_ANGLIT
+    
     InternalCounterparty(
-      status = "",
       errorCode = "",
       backendMessages = List(InboundStatusMessage("","","","")),
       createdByUserId = "",
@@ -307,18 +310,19 @@ object LeumiDecoder extends Decoder with StrictLogging {
         counterpartyBranchNr,
         counterpartyAccountType,
         counterpartyAccountNr),
-      otherAccountRoutingScheme= accountRoutingScheme,
-      otherAccountRoutingAddress= CbsCounterparty.PMUT_IBAN,
-      otherBankRoutingScheme= "",
-      otherBankRoutingAddress= "",
-      otherBranchRoutingScheme= "",
-      otherBranchRoutingAddress= "",
+      otherAccountRoutingScheme= "account_number",
+      otherAccountRoutingAddress= counterpartyAccountNr,
+      otherBankRoutingScheme= "bank_code",
+      otherBankRoutingAddress= counterpartyBankCode,
+      otherBranchRoutingScheme= "branch_number",
+      otherBranchRoutingAddress= counterpartyBranchNr,
       isBeneficiary = true,
       description = description,
-      otherAccountSecondaryRoutingScheme= "",
-      otherAccountSecondaryRoutingAddress= "",
-      bespoke = List(PostCounterpartyBespoke("englishName", CbsCounterparty.PMUT_SHEM_MUTAV_ANGLIT),
-        PostCounterpartyBespoke("englishDescription", CbsCounterparty.PMUT_TEUR_MUTAV_ANGLIT)
+      otherAccountSecondaryRoutingScheme= accountRoutingScheme,
+      otherAccountSecondaryRoutingAddress= iBan,
+      bespoke = List(
+        PostCounterpartyBespoke("englishName", englishName),
+        PostCounterpartyBespoke("englishDescription", englishDescription)
     ))
   }
 
@@ -1127,7 +1131,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
           case Left(y) =>
             InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-              status = "",
               errorCode = "",
               backendMessages = List(InboundStatusMessage(
                 "ESB",
@@ -1165,7 +1168,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
         }
       case Left(x) =>
         InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-          status = "",
           errorCode = "",
           backendMessages = List(InboundStatusMessage(
             "ESB",
@@ -1208,9 +1210,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val counterpartiesFromCache = cachedCounterparties.get(outboundGetCounterpartyByCounterpartyId.authInfo.username).getOrElse(
       throw new Exception(s"Counterparties not cached for user: (${outboundGetCounterpartyByCounterpartyId.authInfo.username})")
     )
-    val counterpartyById = counterpartiesFromCache.find(x => 
-        x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new Exception("Invalid or uncached counterpartyId"))
-    InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, counterpartyById)
+    val internalCounterparty = counterpartiesFromCache.find(x => 
+        x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId}"))
+    InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, internalCounterparty)
       
   }
 

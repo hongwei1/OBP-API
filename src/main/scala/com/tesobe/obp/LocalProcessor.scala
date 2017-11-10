@@ -519,7 +519,6 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getCounterpartiesFn-unknown error", m)   
 
         val errorBody = InboundGetCounterparties(AuthInfo("","",""), List(InternalCounterparty(
-          status = "",
           errorCode = m.getMessage,
           backendMessages = List(InboundStatusMessage(
             "ESB",
@@ -573,7 +572,6 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getCounterpartiesFn-unknown error", m)
 
         val errorBody = InboundGetCounterparty(AuthInfo("","",""), InternalCounterparty(
-          status = "",
           errorCode = m.getMessage,
           backendMessages = List(InboundStatusMessage(
             "ESB",

@@ -269,7 +269,7 @@ object ErrorMessages {
   val InvalidMobilNumber = "OBP-60004: Invalid Mobile Number, we only support Israel country code. It should start as :+972xxxxxxxxx ."
   val InvalidAccountId = "OBP-60005: Invalid AccountId, the following Account Id is not in Joni cache. "
   val InvalidRequestFormat = "OBP-60006: Invalid Request Format: Parameter for Backendcall not in malformated."
-  
+  val InvalidCounterPartyId = "OBP-60007: Invalid or uncached counterpartyId. "
   
   
   
@@ -285,6 +285,7 @@ object ErrorMessages {
   class InvalidAccountIdException(msg: String = InvalidAccountId) extends Exception(msg: String)
   class SessionErrorException(msg: String = SessionError) extends Exception(msg: String)
   class InvalidRequestFormatException(msg: String = InvalidRequestFormat) extends Exception(msg: String)
+  class InvalidCounterPartyIdException(msg: String = InvalidCounterPartyId) extends Exception(msg: String)
   
 }
 
