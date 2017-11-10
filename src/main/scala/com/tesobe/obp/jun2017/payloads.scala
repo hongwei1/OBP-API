@@ -208,7 +208,6 @@ case class InboundAccountJune2017(
 )
 
 case class InternalCounterparty(
-  status: String,
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
   createdByUserId: String,
