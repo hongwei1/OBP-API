@@ -86,6 +86,7 @@ case class OutboundGetTransactionRequests210(authInfo: AuthInfo, counterparty: O
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
 case class OutboundGetCustomersByUserId(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetCounterparties(authInfo: AuthInfo, counterparty: InternalOutboundGetCounterparties) extends TopicTrait
+case class OutboundGetCounterpartyByCounterpartyId(authInfo: AuthInfo, counterparty: InternalOutboundGetCounterpartyById) extends TopicTrait
 
 /**
   * Payloads for response topic
@@ -109,6 +110,7 @@ case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[Inbou
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
+case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
   *
@@ -545,6 +547,12 @@ case class InternalOutboundGetCounterparties(
   thisBankId: String,
   thisAccountId: String,
   viewId :String
+)
+case class InternalOutboundGetCounterpartyById(
+  thisBankId: String,
+  thisAccountId: String,
+  viewId : String,
+  counterpartyById : String
 )
 
 case class OutboundTransactionRequests(
