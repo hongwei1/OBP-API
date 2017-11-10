@@ -52,7 +52,7 @@ class LeumiDecoderTest  extends ServerSetup {
       "-1312.21",
       "10",
       "20160201",
-      "SUPble8aSituWnX1M2aOscxrnVYEcWb6OsMqWi3yObY",
+      "",
       "פרעון הלוואה",
       "ILS",
       "פרעון הלוואה",
