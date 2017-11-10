@@ -820,7 +820,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
           InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
         ),
-        Nil))
+        result.toList))
 
   }
 
