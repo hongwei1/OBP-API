@@ -1208,7 +1208,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
     val counterpartiesFromCache = cachedCounterparties.get(outboundGetCounterpartyByCounterpartyId.authInfo.username).getOrElse(
-      throw new Exception(s"Counterparties not cached for user: (${outboundGetCounterpartyByCounterpartyId.authInfo.username})")
+      getCounterpartiesForAccount(OutboundGetCounterparties(
+        outboundGetCounterpartyByCounterpartyId.authInfo, 
+        InternalOutboundGetCounterparties(
+          outboundGetCounterpartyByCounterpartyId.counterparty.thisBankId,
+          outboundGetCounterpartyByCounterpartyId.counterparty.thisAccountId,
+          outboundGetCounterpartyByCounterpartyId.counterparty.viewId))).data
     )
     val internalCounterparty = counterpartiesFromCache.find(x => 
         x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId}"))
