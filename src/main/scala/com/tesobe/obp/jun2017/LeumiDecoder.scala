@@ -787,42 +787,79 @@ object LeumiDecoder extends Decoder with StrictLogging {
       throw new RuntimeException("Session Error")
     } else account.cbsToken
 
-    val nt1c3result = getNt1c3(
+      val nt1c3result = getNt1c3(
       branchId,
       accountType,
       accountNumber,
       username,
       cbsToken
-    )
+    ) 
+      
+      nt1c3result match {
+      case Right(x) =>
 
-    val nt1c4result = getNt1c4(
-      branchId,
-      accountType,
-      accountNumber,
-      username,
-      cbsToken
-    )
+        val nt1c4result = getNt1c4(
+          branchId,
+          accountType,
+          accountNumber,
+          username,
+          cbsToken
+        ) 
+        
+        nt1c4result match {
+          case Right(y) =>
 
-    var result = new ListBuffer[TransactionRequest]
-    for (i <- nt1c3result.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA) {
-      result += mapNt1c3ToTransactionRequest(i, accountId)
+
+            var result = new ListBuffer[TransactionRequest]
+            for (i <- x.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA) {
+              result += mapNt1c3ToTransactionRequest(i, accountId)
+            }
+            for (i <- y.TNATSHUVATAVLAIT1.TNA_SHETACH_LE_SEND_NOSAF.TNA_TNUOT.TNA_PIRTEY_TNUA) {
+              result += mapNt1c4ToTransactionRequest(i, accountId)
+            }
+
+            InboundGetTransactionRequests210(
+              outboundGetTransactionRequests210.authInfo,
+              InternalGetTransactionRequests(
+                "",
+                List(
+                  //Todo: We did 3 MfCalls so far. Shall they all go in?
+                  InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+                  InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+                ),
+                result.toList))
+
+          case Left(y) =>
+
+            InboundGetTransactionRequests210(
+              outboundGetTransactionRequests210.authInfo,
+              InternalGetTransactionRequests(
+                "",
+                List(InboundStatusMessage(
+                  "ESB",
+                  "Failure",
+                  y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+                  y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+                Nil))
+
+
+        }
+      case Left(x) =>
+
+        InboundGetTransactionRequests210(
+          outboundGetTransactionRequests210.authInfo,
+          InternalGetTransactionRequests(
+            "",
+            List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+            Nil))
+
+
     }
-    for (i <- nt1c4result.TNATSHUVATAVLAIT1.TNA_SHETACH_LE_SEND_NOSAF.TNA_TNUOT.TNA_PIRTEY_TNUA) {
-      result += mapNt1c4ToTransactionRequest(i, accountId)
-    }
-
-    InboundGetTransactionRequests210(
-      outboundGetTransactionRequests210.authInfo,
-      InternalGetTransactionRequests(
-        "",
-        List(
-          //Todo: We did 3 MfCalls so far. Shall they all go in?
-          InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
-          InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
-        ),
-        result.toList))
-
-  }
+  }        
 
   def createCounterparty(outboundCreateCounterparty: OutboundCreateCounterparty): InboundCreateCounterparty = {
     val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundCreateCounterparty.authInfo.username, outboundCreateCounterparty.counterparty.thisAccountId)

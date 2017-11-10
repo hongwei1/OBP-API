@@ -12,7 +12,11 @@ class Nt1c4MfTest extends ServerSetup{
         accountNumber = "50180963",
         username = "N7jut8d",
         cbsToken = "<.D          81433020102612")
+    result match {
+      case Right(result) =>
     result.TNATSHUVATAVLAIT1.TNA_SHETACH_LE_SEND_NOSAF.TNA_TNUOT.TNA_PIRTEY_TNUA(5).TNA_TNUA_BODEDET.TNA_AMF_OR_NAFA  should be ("1")
+      case Left(result) => fail()
+    }
     
   }
 
