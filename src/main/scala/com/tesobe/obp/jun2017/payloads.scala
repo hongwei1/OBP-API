@@ -152,7 +152,7 @@ case class OutboundCounterparty(
   bespoke: List[PostCounterpartyBespoke]
 )
 
-case class  AuthInfo(userId: String, username: String, cbsToken: String)
+case class AuthInfo(userId: String, username: String, cbsToken: String, isFirst: Boolean = true)
 
 case class InboundBank(
   errorCode: String,
