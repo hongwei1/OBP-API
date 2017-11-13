@@ -45,7 +45,7 @@ object Ntlv1Mf extends StrictLogging{
     parse(replaceEmptyObjects(result)).extract[Ntlv1]
   }
 
-  def getNtlv1Mf(username: String, idNumber: String, idType: String, cbsToken: String) = {
+  def getNtlv1Mf(username: String, idNumber: String, idType: String, cbsToken: String, isFirst: Boolean = true) = {
 
     import scalacache.Flags
     import scalacache.memoization.{cacheKeyExclude, memoizeSync}
@@ -54,20 +54,14 @@ object Ntlv1Mf extends StrictLogging{
       getNtlv1MfCore(username, idNumber, idType, cbsToken)
     }
 
-    cbsToken.compareToIgnoreCase("") == true match { // cbsToken(MFToken) represents an unique variable in a session scope
-      case true => // Failure
-        throw new Exception("NTLV_1_000 cannot be called with empty MFToken.")
+    isFirst == true match {
+      case true => // Call MF
+        implicit val flags = Flags(readsEnabled = false)
+        getNtlv1MfCached(username, idNumber, idType, cbsToken)
       case false => // Try to read from cache
         implicit val flags = Flags(readsEnabled = true)
-        getNtlv1MfCached(username, idNumber, idType, cbsToken) match {
-          case response if response.O1OUT1AREA_1.esbHeaderResponse.responseStatus.callStatus.equalsIgnoreCase("Success") => // Cached successful call
-            response
-          case _ =>
-            implicit val flags = Flags(readsEnabled = false) // Call MF because last cached value has error
-            getNtlv1MfCached(username, idNumber, idType, cbsToken)
-        }
+        getNtlv1MfCached(username, idNumber, idType, cbsToken)
     }
   }
-
 
 }

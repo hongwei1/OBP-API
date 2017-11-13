@@ -126,13 +126,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
     val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments
     val hasAccountantRights = x.accountPermissions.canMakeInternalPayments
+    val hasAuditorRights = x.accountPermissions.canSee
     val viewsToGenerate = {
       if (hasOwnerRights) {
-        List("Owner")
+        List("Owner","Accountant", "Auditor")
       } else if (hasAccountantRights) {
-        List("Accountant")
-      } else {
+        List("Accountant", "Auditor")
+      } else if (hasAuditorRights){
         List("Auditor")
+      } else {
+        List("")
       }
     }
     //Create Owner for result InboundAccount2017 creation
