@@ -1740,6 +1740,203 @@
 				"description": "{\n  \"name\": \"\",\n  \"counterparty_bank_id\": \"\",\n  \"primary_routing_scheme\": \"IBAN\",\n  \"primary_routing_address\": \"7987987-2348987-234234\"\n}\n\n\n\n{\n  \"counterparty_id\": \"abd7d870-a83b-47fa-b255-91686934994d\",\n  \"display\": {\n    \"name\": \"\",\n    \"is_alias\": false\n  },\n  \"created_by_user_id\": \"77f5ae14-9723-486a-b083-a91ce921c9f8\",\n  \"used_by_account\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"primary_routing\": {\n    \"scheme\": \"IBAN\",\n    \"address\": \"7987987-2348987-234234\"\n  },\n  \"metadata\": {\n    \"public_alias\": \"\",\n    \"private_alias\": \"\",\n    \"more_info\": \"\",\n    \"URL\": \"\",\n    \"image_URL\": \"\",\n    \"open_corporates_URL\": \"\",\n    \"corporate_location\": null,\n    \"physical_location\": null\n  }\n}"
 			},
 			"response": []
+		},
+		{
+			"name": "Get Counterparty by Id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
+						"owner",
+						"counterparties",
+						"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE"
+					]
+				},
+				"description": "{\n  \"name\": \"\",\n  \"counterparty_bank_id\": \"\",\n  \"primary_routing_scheme\": \"IBAN\",\n  \"primary_routing_address\": \"7987987-2348987-234234\"\n}\n\n\n\n{\n  \"counterparty_id\": \"abd7d870-a83b-47fa-b255-91686934994d\",\n  \"display\": {\n    \"name\": \"\",\n    \"is_alias\": false\n  },\n  \"created_by_user_id\": \"77f5ae14-9723-486a-b083-a91ce921c9f8\",\n  \"used_by_account\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"primary_routing\": {\n    \"scheme\": \"IBAN\",\n    \"address\": \"7987987-2348987-234234\"\n  },\n  \"metadata\": {\n    \"public_alias\": \"\",\n    \"private_alias\": \"\",\n    \"more_info\": \"\",\n    \"URL\": \"\",\n    \"image_URL\": \"\",\n    \"open_corporates_URL\": \"\",\n    \"corporate_location\": null,\n    \"physical_location\": null\n  }\n}"
+			},
+			"response": [
+				{
+					"id": "3bcb2e20-6465-4cfd-9fb8-0ba3f8dd7dd1",
+					"name": "Get Counterparty by Id",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"obp",
+								"v3.0.0",
+								"banks",
+								"10",
+								"accounts",
+								"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
+								"owner",
+								"counterparties",
+								"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*",
+							"name": "Access-Control-Allow-Origin",
+							"description": "Specifies a URI that may access the resource. For requests without credentials, the server may specify '*' as a wildcard, thereby allowing any origin to access the resource."
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, private, no-store",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Length",
+							"value": "676",
+							"name": "Content-Length",
+							"description": "The length of the response body in octets (8-bit bytes)"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "Correlation-Id",
+							"value": "eq9ay9mc13281ktvb6o4wjgos",
+							"name": "Correlation-Id",
+							"description": "Custom header"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2017 11:49:49 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2017 11:49:49 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "Expires",
+							"value": "Fri, 10 Nov 2017 11:49:49 GMT",
+							"name": "Expires",
+							"description": "Gives the date/time after which the response is considered stale"
+						},
+						{
+							"key": "GatewayLogin",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8",
+							"name": "GatewayLogin",
+							"description": "Custom header"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache",
+							"name": "Pragma",
+							"description": "Implementation-specific headers that may have various effects anywhere along the request-response chain."
+						},
+						{
+							"key": "Server",
+							"value": "Jetty(9.2.15.v20160210)",
+							"name": "Server",
+							"description": "A name for the server"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY",
+							"name": "X-Frame-Options",
+							"description": "Clickjacking protection: \"deny\" - no rendering within a frame, \"sameorigin\" - no rendering if origin mismatch"
+						}
+					],
+					"cookie": [
+						{
+							"expires": "Tue Jan 19 2038 04:14:07 GMT+0100 (CET)",
+							"httpOnly": false,
+							"domain": "127.0.0.1",
+							"path": "/OBP-API-1.0",
+							"secure": false,
+							"value": "node01x7t2ztrf5bas1twgoj1djq8n80.node0",
+							"key": "JSESSIONID"
+						},
+						{
+							"expires": "Tue Jan 19 2038 04:14:07 GMT+0100 (CET)",
+							"httpOnly": false,
+							"domain": "127.0.0.1",
+							"path": "/",
+							"secure": false,
+							"value": "eq9ay9mc13281ktvb6o4wjgos",
+							"key": "JSESSIONID"
+						}
+					],
+					"responseTime": 280,
+					"body": "{\"name\":\"         יעכטגאט\",\"description\":\"                     יעכטגאט\",\"created_by_user_id\":\"\",\"this_bank_id\":\"10\",\"this_account_id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"this_view_id\":\"owner\",\"counterparty_id\":\"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE\",\"other_bank_routing_scheme\":\"\",\"other_bank_routing_address\":\"\",\"other_branch_routing_scheme\":\"\",\"other_branch_routing_address\":\"\",\"other_account_routing_scheme\":\"\",\"other_account_routing_address\":\"\",\"other_account_secondary_routing_scheme\":\"\",\"other_account_secondary_routing_address\":\"\",\"is_beneficiary\":true,\"bespoke\":[{\"key\":\"englishName\",\"value\":\"\"},{\"key\":\"englishDescription\",\"value\":\"\"}]}"
+				}
+			]
 		}
 	]
 }

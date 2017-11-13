@@ -373,7 +373,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
               mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance)
             )
           case Left(y) =>
-            InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017("backend error", List(InboundStatusMessage(
+            InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError, List(InboundStatusMessage(
               "ESB",
               "Failure",
               y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -381,7 +381,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
             )), "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
         }
       case Left(x) =>
-        InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017("backend error", List(InboundStatusMessage(
+        InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError, List(InboundStatusMessage(
           "ESB",
           "Failure",
           x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -474,7 +474,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         }
         InboundGetTransactions(getTransactionsRequest.authInfo, result.toList)
       case Left(x) => 
-        InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction("backend error",List(InboundStatusMessage(
+        InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction(MainFrameError,List(InboundStatusMessage(
           "ESB",
           "Failure",
           x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -555,7 +555,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   transactionNewId))
             case Left(y) =>
               InboundCreateTransactionId(createTransactionRequest.authInfo,
-                InternalTransactionId("", List(InboundStatusMessage(
+                InternalTransactionId(MainFrameError, List(InboundStatusMessage(
                   "ESB",
                   "Failure",
                   y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -565,7 +565,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           }
         case Left(x) =>
           InboundCreateTransactionId(createTransactionRequest.authInfo,
-            InternalTransactionId("", List(InboundStatusMessage(
+            InternalTransactionId(MainFrameError, List(InboundStatusMessage(
               "ESB",
               "Failure",
               x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -620,7 +620,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   transactionNewId))
             case Left(y) =>
               InboundCreateTransactionId(createTransactionRequest.authInfo,
-                InternalTransactionId("", List(InboundStatusMessage(
+                InternalTransactionId(MainFrameError, List(InboundStatusMessage(
                   "ESB",
                   "Failure",
                   y.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -629,7 +629,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           }
         case Left(x) =>
           InboundCreateTransactionId(createTransactionRequest.authInfo,
-            InternalTransactionId("", List(InboundStatusMessage(
+            InternalTransactionId(MainFrameError, List(InboundStatusMessage(
               "ESB",
               "Failure",
               x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -707,7 +707,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                               transactionNewId))
                         case Left(e) =>
                           InboundCreateTransactionId(createTransactionRequest.authInfo,
-                            InternalTransactionId("", List(InboundStatusMessage(
+                            InternalTransactionId(MainFrameError, List(InboundStatusMessage(
                               "ESB",
                               "Failure",
                               e.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -716,7 +716,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                       }
                     case Left(d) =>
                       InboundCreateTransactionId(createTransactionRequest.authInfo,
-                        InternalTransactionId("", List(InboundStatusMessage(
+                        InternalTransactionId(MainFrameError, List(InboundStatusMessage(
                           "ESB",
                           "Failure",
                           d.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -725,7 +725,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   }
                 case Left(c) =>
                   InboundCreateTransactionId(createTransactionRequest.authInfo,
-                    InternalTransactionId("", List(InboundStatusMessage(
+                    InternalTransactionId(MainFrameError, List(InboundStatusMessage(
                       "ESB",
                       "Failure",
                       c.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -734,7 +734,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
               }
             case Left(b) =>
               InboundCreateTransactionId(createTransactionRequest.authInfo,
-                InternalTransactionId("", List(InboundStatusMessage(
+                InternalTransactionId(MainFrameError, List(InboundStatusMessage(
                   "ESB",
                   "Failure",
                   b.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -743,7 +743,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           }
         case Left(a) =>
           InboundCreateTransactionId(createTransactionRequest.authInfo,
-            InternalTransactionId("", List(InboundStatusMessage(
+            InternalTransactionId(MainFrameError, List(InboundStatusMessage(
               "ESB",
               "Failure",
               a.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
@@ -872,7 +872,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
             InboundGetTransactionRequests210(
               outboundGetTransactionRequests210.authInfo,
               InternalGetTransactionRequests(
-                "",
+                MainFrameError,
                 List(InboundStatusMessage(
                   "ESB",
                   "Failure",
@@ -887,7 +887,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         InboundGetTransactionRequests210(
           outboundGetTransactionRequests210.authInfo,
           InternalGetTransactionRequests(
-            "",
+            MainFrameError,
             List(InboundStatusMessage(
               "ESB",
               "Failure",
@@ -962,7 +962,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           InboundCreateCounterparty(
             outboundCreateCounterparty.authInfo,
             InternalCreateCounterparty(
-              "",
+              MainFrameError,
               List(
                 InboundStatusMessage(
                   "ESB",
@@ -1051,7 +1051,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           InboundCreateCounterparty(
             outboundCreateCounterparty.authInfo,
             InternalCreateCounterparty(
-              "",
+              MainFrameError,
               List(
                 InboundStatusMessage(
                   "ESB",
@@ -1165,7 +1165,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
           case Left(y) =>
             InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-              errorCode = "",
+              errorCode = MainFrameError,
               backendMessages = List(InboundStatusMessage(
                 "ESB",
                 "Failure",
@@ -1202,7 +1202,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         }
       case Left(x) =>
         InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-          errorCode = "",
+          errorCode = MainFrameError,
           backendMessages = List(InboundStatusMessage(
             "ESB",
             "Failure",
