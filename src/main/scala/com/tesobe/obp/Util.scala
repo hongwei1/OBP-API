@@ -270,6 +270,7 @@ object ErrorMessages {
   val InvalidAccountId = "OBP-60005: Invalid AccountId, the following Account Id is not in Joni cache. "
   val InvalidRequestFormat = "OBP-60006: Invalid Request Format: Parameter for Backendcall not in malformated."
   val InvalidCounterPartyId = "OBP-60007: Invalid or uncached counterpartyId. "
+  val MainFrameError = "OBP-60008: Main Frame Error ."
   
   
   
