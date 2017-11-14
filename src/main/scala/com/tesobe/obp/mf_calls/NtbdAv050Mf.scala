@@ -17,6 +17,7 @@ object NtbdAv050Mf {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
     val isFutureTransfer = if (transferDateInFuture != "") "1" else "0"
+    
 
     val json: JValue =parse(s"""
     {

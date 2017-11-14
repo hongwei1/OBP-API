@@ -271,6 +271,9 @@ object ErrorMessages {
   val InvalidRequestFormat = "OBP-60006: Invalid Request Format: Parameter for Backendcall not in malformated."
   val InvalidCounterPartyId = "OBP-60007: Invalid or uncached counterpartyId. "
   val MainFrameError = "OBP-60008: Main Frame Error ."
+  val InvalidPassportOrNationalId = "OBP-60009: Invalid Passport or National ID number"
+  val InvalidAmount = "OBP-60010: Invalid Amount"
+  val InvalidIdType = "OBP-60011: Invalid Id Type: valid types: 1 - National; 5- Passport"
   
   
   
@@ -287,6 +290,9 @@ object ErrorMessages {
   class SessionErrorException(msg: String = SessionError) extends Exception(msg: String)
   class InvalidRequestFormatException(msg: String = InvalidRequestFormat) extends Exception(msg: String)
   class InvalidCounterPartyIdException(msg: String = InvalidCounterPartyId) extends Exception(msg: String)
+  class InvalidPassportOrNationalIdException(msg: String = InvalidPassportOrNationalId) extends Exception(msg: String)
+  class InvalidAmountException(msg: String = InvalidAmount) extends Exception(msg: String)
+  class InvalidIdTypeException(msg: String = InvalidIdType) extends Exception(msg: String)
   
 }
 

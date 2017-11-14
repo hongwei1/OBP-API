@@ -5,7 +5,7 @@ import java.util.TimeZone
 
 import com.tesobe.obp.ErrorMessages.{NoCreditCard, _}
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
-import com.tesobe.obp.JoniMf.{correctArrayWithSingleElement, getMFToken, replaceEmptyObjects}
+import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
 import com.tesobe.obp.Nt1cBMf.getNt1cB
@@ -30,6 +30,7 @@ import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp._
 import com.typesafe.scalalogging.StrictLogging
+import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.JsonParser.parse
 
@@ -209,6 +210,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
     //Create case class object JoniMfUser
     jsonAst.extract[JoniMfUser]
+  }
+  
+  def getJoniMFUserFromMainframe(username: String) = {
+    val result = getJoniMfHttpApache(username)
+    if (result.contains("PAPIErrorResponse")) throw new JoniFailedException(s"$JoniFailed Current Response is $result") else
+      cachedJoni.set(username, result)
+    val json = cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty The Joni Cache Input Key =$username "))
+    val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
+    //Create case class object JoniMfUser
+    val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
+    jsonExtract
+    
   }
 
   def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
@@ -442,7 +455,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getTransactions(getTransactionsRequest: OutboundGetTransactions): InboundGetTransactions = {
-    //TODO: Error handling
+    
     val account = getBasicBankAccountByAccountIdFromCachedJoni(getTransactionsRequest.authInfo.username, getTransactionsRequest.accountId)
     val fromDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
     val fromMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
@@ -788,29 +801,46 @@ object LeumiDecoder extends Decoder with StrictLogging {
       jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
       cbsToken
     )
-    //TODO: will use the first mobile phone contact available. Check.
-    val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
-      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
+    
+    callNtlv1 match {
+      case Right(x) =>
+        //TODO: will use the first mobile phone contact available. Check.
+        val mobilePhoneData = x.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
+          throw new InvalidMobilNumberException())
 
 
-    val callNtlv7 = getNtlv7Mf(branchId,
-      accountType,
-      accountNumber,
-      username,
-      cbsToken,
-      mobilePhoneData.O1_TEL_AREA,
-      mobilePhoneData.O1_TEL_NUM
-    )
+        val callNtlv7 = getNtlv7Mf(branchId,
+          accountType,
+          accountNumber,
+          username,
+          cbsToken,
+          mobilePhoneData.O1_TEL_AREA,
+          mobilePhoneData.O1_TEL_NUM
+        )
 
-    val answer = callNtlv7.DFHPLT_1.DFH_OPT
-    InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
-      "",
-      List(
-        //Todo: We did 3 MfCalls so far. Shall they all go in?
-        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
-        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
-      ),
-      answer))
+
+        val answer = callNtlv7.DFHPLT_1.DFH_OPT
+        InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
+          "",
+          List(
+            //Todo: We did 3 MfCalls so far. Shall they all go in?
+            InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
+            InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+          ),
+          answer))
+
+      case Left(x) =>
+
+        InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
+          "",
+          List(InboundStatusMessage(
+            "ESB",
+            "Failure",
+            x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+            x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+          ""))
+    }
+        
   }
 
   def getTransactionRequests(outboundGetTransactionRequests210: OutboundGetTransactionRequests210): InboundGetTransactionRequests210 = {
@@ -1091,46 +1121,81 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserId): InboundGetCustomersByUserId = {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
-    val joniMfCall = getJoniMfUserFromCache(username)
-    //Todo: just gets limit for the leading account instead of limit and balance for all
-    if (joniMfCall.SDR_JONI.MFTOKEN != outboundGetCustomersByUserIdFuture.authInfo.cbsToken) throw new RuntimeException("Session Error")
+    val joniMfCall = if (outboundGetCustomersByUserIdFuture.authInfo.isFirst) getJoniMFUserFromMainframe(username) else getJoniMfUserFromCache(username)
+    if (outboundGetCustomersByUserIdFuture.authInfo.isFirst == false &&
+      outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) throw new RuntimeException("Session Error")
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
       joniMfCall.SDR_JONI.MFTOKEN,
       outboundGetCustomersByUserIdFuture.authInfo.isFirst
     )
-    val mobilePhoneData = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
-      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
+    callNtlv1 match {
+      case Right(x) =>
 
-    val emailAddress = callNtlv1.O1OUT1AREA_1.O1_CONTACT_REC.find(x => !x.O1_MAIL_ADDRESS.trim().isEmpty).getOrElse(
-      O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
-    )
+        val mobilePhoneData = x.O1OUT1AREA_1.O1_CONTACT_REC.find(x => x.O1_TEL_USE_TYPE_CODE == "10").getOrElse(
+          O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""))
+
+        val emailAddress = x.O1OUT1AREA_1.O1_CONTACT_REC.find(x => !x.O1_MAIL_ADDRESS.trim().isEmpty).getOrElse(
+          O1contactRec(O1recId("", ""), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+        )
 
 
-    val result = InternalFullCustomer(
-      status = "",
-      errorCode = "",
-      backendMessages = List(InboundStatusMessage("", "", "", "")),
-      customerId = createCustomerId(username),
-      bankId = "10",
-      number = username,
-      legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
-      mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
-      email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
-      faceImage = CustomerFaceImage(null, ""),
-      dateOfBirth = simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
-      relationshipStatus = "",
-      dependents = null,
-      dobOfDependents = List(null),
-      highestEducationAttained = "",
-      employmentStatus = "",
-      creditRating = CreditRating("", ""),
-      creditLimit = AmountOfMoney("", ""),
-      kycStatus = null,
-      lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
-    )
-    InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))
+        val result = InternalFullCustomer(
+          status = "",
+          errorCode = "",
+          backendMessages = List(InboundStatusMessage("", "", "", "")),
+          customerId = createCustomerId(username),
+          bankId = "10",
+          number = username,
+          legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
+          mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
+          email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
+          faceImage = CustomerFaceImage(null, ""),
+          dateOfBirth = simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
+          relationshipStatus = "",
+          dependents = null,
+          dobOfDependents = List(null),
+          highestEducationAttained = "",
+          employmentStatus = "",
+          creditRating = CreditRating("", ""),
+          creditLimit = AmountOfMoney("", ""),
+          kycStatus = null,
+          lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
+        )
+        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))
+
+      case Left(x)  =>
+        
+        
+        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, 
+          List(InternalFullCustomer(
+            status = "",
+            errorCode = MainFrameError,
+            backendMessages = List(InboundStatusMessage(
+              "ESB",
+              "Failure",
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
+              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+            customerId = "",
+            bankId = "",
+            number = "",
+            legalName = "",
+            mobileNumber = "",
+            email = "",
+            faceImage = null,
+            dateOfBirth = null,
+            relationshipStatus = "",
+            dependents = null,
+            dobOfDependents = List(null),
+            highestEducationAttained = "",
+            employmentStatus = "",
+            creditRating = CreditRating("", ""),
+            creditLimit = AmountOfMoney("", ""),
+            kycStatus = null,
+            lastOkDate = null
+          )))
+    }
   }
 
   def getCounterpartiesForAccount(outboundGetCounterparties: OutboundGetCounterparties): InboundGetCounterparties = {

@@ -16,11 +16,12 @@ object Ntlv1Mf extends StrictLogging{
   implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
 
 
-  def getNtlv1MfCore(username: String, idNumber: String, idType: String, cbsToken: String): Ntlv1  = {
-  
+  def getNtlv1MfCore(username: String, idNumber: String, idType: String, cbsToken: String): Either[PAPIErrorResponse,Ntlv1]  = {
+
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01"
 
-    val json: JValue = parse(s"""
+    val json: JValue = parse(
+      s"""
     {
       "NTLV_1_000": {
         "NtdriveCommonHeader": {
@@ -38,11 +39,14 @@ object Ntlv1Mf extends StrictLogging{
       }
     }
     """)
-    val result = makePostRequest(json, path)
-    
 
+    val result = makePostRequest(json, path)
     implicit val formats = net.liftweb.json.DefaultFormats
-    parse(replaceEmptyObjects(result)).extract[Ntlv1]
+    try {
+      Right(parse(replaceEmptyObjects(result)).extract[Ntlv1])
+    } catch {
+      case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+    }
   }
 
   def getNtlv1Mf(username: String, idNumber: String, idType: String, cbsToken: String, isFirst: Boolean = true) = {
@@ -50,7 +54,7 @@ object Ntlv1Mf extends StrictLogging{
     import scalacache.Flags
     import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
-    def getNtlv1MfCached(username: String, idNumber: String, idType: String, cbsToken: String)(implicit @cacheKeyExclude flags: Flags): Ntlv1  = memoizeSync {
+    def getNtlv1MfCached(username: String, idNumber: String, idType: String, cbsToken: String)(implicit @cacheKeyExclude flags: Flags): Either[PAPIErrorResponse,Ntlv1]  = memoizeSync {
       getNtlv1MfCore(username, idNumber, idType, cbsToken)
     }
 

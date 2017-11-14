@@ -19,8 +19,16 @@ class Ntlv1MfTest extends ServerSetup{
       idNumber = "4051769",
       idType = "1",
       cbsToken = "<&+          81433020102612")
+
+
+    result match {
+      case Right(result) =>
     result.O1OUT1AREA_1.O1_CONTACT_REC.head.O1_TEL_AREA should be("50")
     result.O1OUT1AREA_1.O1_CONTACT_REC.head.O1_TEL_NUM should be("5410377")
+
+      case Left(result) =>
+        fail()
+    }
     
   }
 
