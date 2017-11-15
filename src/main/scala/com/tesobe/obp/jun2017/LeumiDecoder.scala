@@ -805,7 +805,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createChallenge input: ($createChallenge)")
-    val joniMfCall = getJoniMf(createChallenge.authInfo.username,createChallenge.authInfo.isFirst)
+    val joniMfCall = getJoniMf(createChallenge.authInfo.username,false)
     joniMfCall match {
       case Right(joniMfCall) =>
         
@@ -1163,7 +1163,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserId): InboundGetCustomersByUserId = {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
-    val joniMfCall = getJoniMf(username, outboundGetCustomersByUserIdFuture.authInfo.isFirst)
+    val joniMfCall = getJoniMf(username, false)
     joniMfCall match {
       case Right(joniMfCall) =>
     if (outboundGetCustomersByUserIdFuture.authInfo.isFirst == false &&
@@ -1265,7 +1265,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getCounterpartiesForAccount(outboundGetCounterparties: OutboundGetCounterparties): InboundGetCounterparties = {
-    val joniCall = getJoniMf(outboundGetCounterparties.authInfo.username, outboundGetCounterparties.authInfo.isFirst)
+    val joniCall = getJoniMf(outboundGetCounterparties.authInfo.username, false)
     joniCall match {
       case Right(joniCall) =>
     
