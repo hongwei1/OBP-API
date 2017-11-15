@@ -2,6 +2,7 @@ package com.tesobe.obp
 
 
 
+import com.google.common.cache.CacheBuilder
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.{JArray, JField, JObject, compactRender}
@@ -10,6 +11,9 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 import com.tesobe.obp.HttpClient.makePostRequest
+
+import scalacache.ScalaCache
+import scalacache.guava.GuavaCache
 
 /*//For akka-http
 import scala.concurrent._
@@ -24,6 +28,9 @@ import akka.stream.ActorMaterializer*/
 
 
 object JoniMf extends Config with StrictLogging{
+
+  val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
+  implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
 
 
    def getJoniMfCore(username: String): Either[PAPIErrorResponse,JoniMfUser] = {

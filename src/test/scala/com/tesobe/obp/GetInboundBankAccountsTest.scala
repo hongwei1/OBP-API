@@ -5,13 +5,13 @@ class GetInboundBankAccountsTest extends ServerSetup {
   
   test("getBasicBankAccounts extracts BasicBankAccounts" ) {
     val accounts = getBasicBankAccountsForUser("N7jut8d", false)
-    accounts should be(List(
+    accounts should be(Right(List(
       BasicBankAccount("3565953", "616", "330", ">,?          81433020102612", AccountPermissions(false,true,true)),
       BasicBankAccount("50180983", "616", "430", ">,?          81433020102612", AccountPermissions(false,true,false)),
       BasicBankAccount("50180963", "616", "330", ">,?          81433020102612", AccountPermissions(false,true,true)),
       BasicBankAccount("20102612", "814", "330", ">,?          81433020102612", AccountPermissions(false,true,true)),
       BasicBankAccount("20105505", "814", "330", ">,?          81433020102612", AccountPermissions(false,true,true))
-    ))
+    )))
     }
 
    test("base64encodedSha256(string) is really sha256 hash of string") {

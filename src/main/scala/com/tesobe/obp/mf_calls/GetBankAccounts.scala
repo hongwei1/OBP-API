@@ -2,13 +2,10 @@ package com.tesobe.obp
 
 import java.security.MessageDigest
 
-import com.tesobe.obp.ErrorMessages._
+
 import com.tesobe.obp.JoniMf.getJoniMf
-import com.tesobe.obp.june2017.LeumiDecoder.cachedJoni
-import net.liftweb.json.JValue
-import net.liftweb.json.JsonParser.parse
 import net.liftweb.util.SecurityHelpers._
-import collection.JavaConverters
+
 
 import scala.collection.mutable.ListBuffer
 
@@ -22,7 +19,6 @@ object GetBankAccounts extends Config {
 
         val allowedAccountTypes = config.getString("accountTypes.allowed").split(",").map(_.trim).toList
         //now extract values from JoniMFUser object into List of BasicBankAccount
-        // (will be changed to inboundBankAccount 2017 objects 
         var result = new ListBuffer[BasicBankAccount]()
 
         for (i <- x.SDR_JONI.SDR_LAK_SHEDER.SDRL_LINE) {
