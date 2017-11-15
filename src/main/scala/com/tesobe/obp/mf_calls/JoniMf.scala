@@ -57,7 +57,7 @@ object JoniMf extends Config with StrictLogging{
      }
    }
 
-  def getJoniMf(username: String, isFirst: Boolean = true) = {
+  def getJoniMf(username: String, isFirst: Boolean = true): Either[PAPIErrorResponse, JoniMfUser] = {
 
     import scalacache.Flags
     import scalacache.memoization.{cacheKeyExclude, memoizeSync}

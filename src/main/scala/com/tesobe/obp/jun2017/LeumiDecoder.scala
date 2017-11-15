@@ -222,27 +222,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       userId = userId //userId
     )
   }
-
-  def getJoniMfUserFromCache(username: String) = {
-    implicit val formats = net.liftweb.json.DefaultFormats
-    val json = cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty The Joni Cache Input Key =$username "))
-    logger.debug(s"getJoniMfUserFromCache.cacheJoni result:$json")
-    val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
-    //Create case class object JoniMfUser
-    jsonAst.extract[JoniMfUser]
-  }
   
-  def getJoniMFUserFromMainframe(username: String) = {
-    val result = getJoniMfHttpApache(username)
-    if (result.contains("PAPIErrorResponse")) throw new JoniFailedException(s"$JoniFailed Current Response is $result") else
-      cachedJoni.set(username, result)
-    val json = cachedJoni.get(username).getOrElse(throw new JoniCacheEmptyException(s"$JoniCacheEmpty The Joni Cache Input Key =$username "))
-    val jsonAst: JValue = correctArrayWithSingleElement(parse(replaceEmptyObjects(json)))
-    //Create case class object JoniMfUser
-    val jsonExtract: JoniMfUser = jsonAst.extract[JoniMfUser]
-    jsonExtract
-    
-  }
 
   def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
     TransactionRequest(
@@ -825,7 +805,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createChallenge input: ($createChallenge)")
-    val jsonExtract = getJoniMfUserFromCache(createChallenge.authInfo.username)
+    val joniMfCall = getJoniMf(createChallenge.authInfo.username,createChallenge.authInfo.isFirst)
+    joniMfCall match {
+      case Right(joniMfCall) =>
+        
     val account = getBasicBankAccountByAccountIdFromCachedJoni(createChallenge.authInfo.username, createChallenge.accountId)
     account match {
       case Right(account) =>
@@ -837,8 +820,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
         throw new RuntimeException("Session Error")
       } else account.cbsToken
       val callNtlv1 = getNtlv1Mf(username,
-        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
-        jsonExtract.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
+        joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
+        joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
         cbsToken
       )
       
@@ -880,6 +863,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
         InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
           "",
           createInboundStatusMessages(account),
+          ""))
+    }
+      case Left(joniMfCall) =>
+        InboundCreateChallengeJune2017(createChallenge.authInfo, InternalCreateChallengeJune2017(
+          "",
+          createInboundStatusMessages(joniMfCall),
           ""))
     }
         
@@ -1174,7 +1163,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserId): InboundGetCustomersByUserId = {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
-    val joniMfCall = if (outboundGetCustomersByUserIdFuture.authInfo.isFirst) getJoniMFUserFromMainframe(username) else getJoniMfUserFromCache(username)
+    val joniMfCall = getJoniMf(username, outboundGetCustomersByUserIdFuture.authInfo.isFirst)
+    joniMfCall match {
+      case Right(joniMfCall) =>
     if (outboundGetCustomersByUserIdFuture.authInfo.isFirst == false &&
       outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) throw new RuntimeException("Session Error")
     val callNtlv1 = getNtlv1Mf(username,
@@ -1225,11 +1216,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           List(InternalFullCustomer(
             status = "",
             errorCode = MainFrameError,
-            backendMessages = List(InboundStatusMessage(
-              "ESB",
-              "Failure",
-              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.callStatus,
-              x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse(""))),
+            backendMessages = createInboundStatusMessages(x),
             customerId = "",
             bankId = "",
             number = "",
@@ -1249,11 +1236,40 @@ object LeumiDecoder extends Decoder with StrictLogging {
             lastOkDate = null
           )))
     }
+      case Left(joniMfCall) =>
+        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo,
+          List(InternalFullCustomer(
+            status = "",
+            errorCode = MainFrameError,
+            backendMessages = createInboundStatusMessages(joniMfCall),
+            customerId = "",
+            bankId = "",
+            number = "",
+            legalName = "",
+            mobileNumber = "",
+            email = "",
+            faceImage = null,
+            dateOfBirth = null,
+            relationshipStatus = "",
+            dependents = null,
+            dobOfDependents = List(null),
+            highestEducationAttained = "",
+            employmentStatus = "",
+            creditRating = CreditRating("", ""),
+            creditLimit = AmountOfMoney("", ""),
+            kycStatus = null,
+            lastOkDate = null
+          )))
+    }
+        
   }
 
   def getCounterpartiesForAccount(outboundGetCounterparties: OutboundGetCounterparties): InboundGetCounterparties = {
-    val joniCall = getJoniMfUserFromCache(outboundGetCounterparties.authInfo.username)
-    if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken) throw new RuntimeException("Session Error")
+    val joniCall = getJoniMf(outboundGetCounterparties.authInfo.username, outboundGetCounterparties.authInfo.isFirst)
+    joniCall match {
+      case Right(joniCall) =>
+    
+    if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken && !outboundGetCounterparties.authInfo.isFirst) throw new RuntimeException("Session Error")
 
     val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundGetCounterparties.authInfo.username, outboundGetCounterparties.counterparty.thisAccountId)
     account match {
@@ -1357,6 +1373,30 @@ object LeumiDecoder extends Decoder with StrictLogging {
             PostCounterpartyBespoke("englishDescription", "")
           ))))
     }
+      case Left(joniCall) =>
+        InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
+          errorCode = MainFrameError,
+          backendMessages = createInboundStatusMessages(joniCall),
+          createdByUserId = "",
+          name = "",
+          thisBankId = "",
+          thisAccountId = "",
+          thisViewId = "",
+          counterpartyId = "",
+          otherAccountRoutingScheme= "",
+          otherAccountRoutingAddress= "",
+          otherBankRoutingScheme= "",
+          otherBankRoutingAddress= "",
+          otherBranchRoutingScheme= "",
+          otherBranchRoutingAddress= "",
+          isBeneficiary = false,
+          description = "",
+          otherAccountSecondaryRoutingScheme= "",
+          otherAccountSecondaryRoutingAddress= "",
+          bespoke = List(PostCounterpartyBespoke("englishName", ""),
+            PostCounterpartyBespoke("englishDescription", "")
+          ))))
+    } 
         
   }
   
