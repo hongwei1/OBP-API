@@ -3,7 +3,7 @@ package com.tesobe.obp.june2017
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 
-import com.tesobe.obp.ErrorMessages.{NoCreditCard, _}
+import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
 import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
@@ -30,12 +30,9 @@ import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp._
 import com.typesafe.scalalogging.StrictLogging
-import net.liftweb.json.JValue
-import net.liftweb.json.JsonAST.JValue
-import net.liftweb.json.JsonParser.parse
 
 import scala.collection.immutable.List
-import scala.collection.mutable.{ListBuffer, Map}
+import scala.collection.mutable.ListBuffer
 
 
 /**
@@ -365,7 +362,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       case Right(account) =>
     
     val cbsToken =  if (account.cbsToken != getAccount.authInfo.cbsToken) {
-      throw new RuntimeException("Session Error")
+      throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
     val ntib2Call = getNtib2Mf(
       account.branchNr,
@@ -413,7 +410,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       case Right(account) =>
     val iban = ""
     val cbsToken =  if (account.cbsToken != getAccount.authInfo.cbsToken) {
-      throw new RuntimeException("Session Error")
+      throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
@@ -513,8 +510,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val toDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
     val toMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
     val toYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
-    val cbsToken = if (account.cbsToken != getTransactionsRequest.authInfo.cbsToken) {
-      throw new RuntimeException("Session Error")
+    val cbsToken = if (account.cbsToken != getTransactionsRequest.authInfo.cbsToken  && 
+    !getTransactionsRequest.authInfo.isFirst) {
+      throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
 
     val mfTransactions = getNt1cT(
@@ -564,7 +562,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
     }
 
-    //TODO: Error handling
     val resultTransaction = allTransactions.find(x => x.transactionId == getTransactionRequest.transactionId).getOrElse(throw new Exception("Invalid TransactionID"))
     InboundGetTransaction(getTransactionRequest.authInfo, resultTransaction)
 
@@ -582,8 +579,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
         val accountNumber = account.accountNr
         val accountType = account.accountType
         val username = createTransactionRequest.authInfo.username
-        val cbsToken = if (account.cbsToken != createTransactionRequest.authInfo.cbsToken) {
-          throw new RuntimeException("Session Error")
+        val cbsToken = if (account.cbsToken != createTransactionRequest.authInfo.cbsToken && 
+        !createTransactionRequest.authInfo.isFirst) {
+          throw new RuntimeException(mFTokenMatchError)
         } else account.cbsToken
         val transactionNewId = "" //as we cannot determine the transactionid at creation, this will always be empty
 
@@ -799,10 +797,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   }
 
-  def getToken(getTokenRequest: OutboundGetToken): InboundToken = {
-    InboundToken(getTokenRequest.username, getMFToken(getTokenRequest.username))
-  }
-
   def createChallenge(createChallenge: OutboundCreateChallengeJune2017): InboundCreateChallengeJune2017 = {
     logger.debug(s"LeumiDecoder-createChallenge input: ($createChallenge)")
     val joniMfCall = getJoniMf(createChallenge.authInfo.username,createChallenge.authInfo.isFirst)
@@ -816,8 +810,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val accountNumber = account.accountNr
       val accountType = account.accountType
       val username = createChallenge.authInfo.username
-      val cbsToken =  if (account.cbsToken != createChallenge.authInfo.cbsToken) {
-        throw new RuntimeException("Session Error")
+      val cbsToken =  if (account.cbsToken != createChallenge.authInfo.cbsToken && 
+      !createChallenge.authInfo.isFirst) {
+        throw new RuntimeException(mFTokenMatchError)
       } else account.cbsToken
       val callNtlv1 = getNtlv1Mf(username,
         joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
@@ -885,8 +880,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val accountNumber = account.accountNr
     val accountType = account.accountType
     val username = outboundGetTransactionRequests210.authInfo.username
-    val cbsToken = if (outboundGetTransactionRequests210.authInfo.cbsToken != account.cbsToken) {
-      throw new RuntimeException("Session Error")
+    val cbsToken = if (outboundGetTransactionRequests210.authInfo.cbsToken != account.cbsToken && 
+      !outboundGetTransactionRequests210.authInfo.isFirst) {
+      throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
 
       val nt1c3result = getNt1c3(
@@ -974,7 +970,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         val accountNumber = account.accountNr
         val accountType = account.accountType
         val cbsToken = account.cbsToken
-        if (cbsToken != outboundCreateCounterparty.authInfo.cbsToken) throw new RuntimeException("Session Error")
+        if (cbsToken != outboundCreateCounterparty.authInfo.cbsToken  && !outboundCreateCounterparty.authInfo.isFirst) throw new RuntimeException(mFTokenMatchError)
 
         if (outboundCreateCounterparty.counterparty.thisBankId == "10") {
           val ntg6ACall = getNtg6A(
@@ -1167,7 +1163,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     joniMfCall match {
       case Right(joniMfCall) =>
     if (outboundGetCustomersByUserIdFuture.authInfo.isFirst == false &&
-      outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) throw new RuntimeException("Session Error")
+      outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) throw new RuntimeException(mFTokenMatchError)
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,
@@ -1269,7 +1265,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     joniCall match {
       case Right(joniCall) =>
     
-    if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken && !outboundGetCounterparties.authInfo.isFirst) throw new RuntimeException("Session Error")
+    if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken && !outboundGetCounterparties.authInfo.isFirst) throw new RuntimeException(mFTokenMatchError)
 
     val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundGetCounterparties.authInfo.username, outboundGetCounterparties.counterparty.thisAccountId)
     account match {

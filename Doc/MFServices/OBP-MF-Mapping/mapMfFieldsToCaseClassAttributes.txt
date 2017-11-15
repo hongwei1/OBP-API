@@ -4,7 +4,7 @@ InboundGetAccountbyAccountID
 has data payload:
       List(InboundAccountJune2017(InboundAccountJune2017(
                                         errorCode = "",
-                                        List(InboundStatusMessage("ESB", "Success", "0", "OK")), ////TODO, need to fill the coreBanking error
+                                        List(InboundStatusMessage("ESB", "Success", "0", "OK")), 
                                         x.cbsToken, //from the api
                                         bankId = "10" Always 
                                         branchId = SDRC_CHN_SNIF:joni
@@ -41,16 +41,16 @@ used in:
     InternalTransaction(
       errorCode = "",
       List(
-        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
-        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+        InboundStatusMessage("ESB", "Success", "0", "OK"), 
+        InboundStatusMessage("MF", "Success", "0", "OK") 
       ),
       transactionId = getOrCreateTransactionId(amount, completedDate, newBalanceAmount), // Find some
       accountId = accountId, //accountId
       amount = amount,
       bankId = "10", // 10 for now (Joni)
       completedDate = completedDate,
-      counterpartyId = "counterpartyId", //TODO, can not get this field from CBS
-      counterpartyName = "counterpartyName", //TODO, can not get this field from CBS
+      counterpartyId = "counterpartyId", 
+      counterpartyName = "counterpartyName", 
       currency = defaultCurrency, //ILS 
       description = description,
       newBalanceAmount = newBalanceAmount,
@@ -66,9 +66,9 @@ has data payload:
 InternalCreateChallengeJune2017(
       "",
       List(
-        //Todo: We did 3 MfCalls so far. Shall they all go in?
-        InboundStatusMessage("ESB", "Success", "0", "OK"), //TODO, need to fill the coreBanking error
-        InboundStatusMessage("MF", "Success", "0", "OK") //TODO, need to fill the coreBanking error
+        
+        InboundStatusMessage("ESB", "Success", "0", "OK"),
+        InboundStatusMessage("MF", "Success", "0", "OK") 
       ),
       answer)) WITH answer = Field: DFHPLT_1.DFH_OPT // from MfCall  NTLV7        
       

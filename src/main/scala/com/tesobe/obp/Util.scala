@@ -275,6 +275,7 @@ object ErrorMessages {
   val InvalidAmount = "OBP-60010: Invalid Amount"
   val InvalidIdType = "OBP-60011: Invalid Id Type: valid types: 1 - National; 5- Passport"
   val mFTokenMatchError = "OBP-60012: Session error - cbs_token from North side does not match MFTOKEN from South side."
+  val EmptyUsernameError = "OBP-60013: Request was sent with empty username."
 
   
   

@@ -63,11 +63,7 @@ class LeumiDecoderTest  extends ServerSetup {
       "karlsid"
     ))
   }
-  
-  test("getToken gives correct token") {
-    val result = getToken(OutboundGetToken("N7jut8d"))
-    result should be (InboundToken("N7jut8d",mfToken))
-  }
+
   
   test("getCustomer gives correct result for stubs"){ 
     val customerId = base64EncodedSha256(username + config.getString("salt.global"))
