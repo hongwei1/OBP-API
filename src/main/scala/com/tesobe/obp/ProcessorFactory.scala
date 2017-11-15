@@ -32,7 +32,6 @@ trait ProcessorFactory {
     processorName match {
       case "localFile" => Seq(
         BusinessTopic(topic, LocalProcessor()(executionContext, materializer).generic),
-        BusinessTopic(createTopicByClassName(OutboundGetToken.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).tokenFn),
         BusinessTopic(createTopicByClassName(OutboundGetBanks.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).banksFn),
         BusinessTopic(createTopicByClassName(OutboundGetBank.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).bankFn),
         BusinessTopic(createTopicByClassName(OutboundGetUserByUsernamePassword.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).userFn),

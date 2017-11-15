@@ -407,16 +407,6 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
   
-  def tokenFn: Business = {msg =>
-    logger.debug(s"Processing tokenFn ${msg.record.value}")
-    /* call Decoder for extracting data from source file */
-    val response: (OutboundGetToken => InboundToken) = { q => com.tesobe.obp.june2017.LeumiDecoder.getToken(q) }
-    val r = decode[OutboundGetToken](msg.record.value()) match {
-      case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetToken` case class for OBP-API and Adapter sides : ", e);
-      case Right(x) => response(x).asJson.noSpaces
-    }
-    Future(msg, r)
-  }
   
   def createChallengeFn: Business = {msg =>
     logger.debug(s"Processing createChallengeFn ${msg.record.value}")
