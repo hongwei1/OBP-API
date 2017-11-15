@@ -1161,7 +1161,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val joniMfCall = getJoniMf(username, false)
     joniMfCall match {
       case Right(joniMfCall) =>
-    if (outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) 
+        if (outboundGetCustomersByUserIdFuture.authInfo.isFirst == false &&
+            outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN)
       throw new RuntimeException(mFTokenMatchError)
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
