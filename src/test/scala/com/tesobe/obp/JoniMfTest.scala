@@ -40,7 +40,7 @@ class JoniMfTest extends ServerSetup {
   }
    test("getBasicBankAccountsForUser"){
     val accounts = getBasicBankAccountsForUser(username, false)
-   accounts should be (List(
+   accounts should be (Right(List(
      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)), 
      BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
      BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(false,true,true)),
@@ -48,12 +48,12 @@ class JoniMfTest extends ServerSetup {
      BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
      //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
      BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true)),
-   ))
+   )))
    
   }
   test("getBasicBankAccountsForUser works first without, then with cache use"){
     val accountsFromMF = getBasicBankAccountsForUser(username, false)
-    accountsFromMF should be (List(
+    accountsFromMF should be (Right(List(
       BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)),
       BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
       BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(false,true,true)),
@@ -61,9 +61,9 @@ class JoniMfTest extends ServerSetup {
       BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
       BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true))
-    ))
+    )))
     val accountsFromCache = getBasicBankAccountsForUser(username, true)
-    accountsFromCache should be (List(
+    accountsFromCache should be (Right(List(
       BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)),
       BasicBankAccount("50180983", "616", "430", mfToken, AccountPermissions(false,true,false)),
       BasicBankAccount("50180963", "616", "330", mfToken, AccountPermissions(false,true,true)),
@@ -71,7 +71,7 @@ class JoniMfTest extends ServerSetup {
       BasicBankAccount("20102612", "814", "330", mfToken, AccountPermissions(false,true,true)),
       //BasicBankAccount("20102632", "814", "999", AccountPermissions(true,false,false)),
       BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true))
-    ))
+    )))
 
   }
 /*  test("getBankAccountsForUser without leading account"){
