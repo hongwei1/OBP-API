@@ -68,7 +68,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val simpleLastLoginFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
 
-  val cachedJoni = TTLCache[String](10080) //1 week in minutes for now
   val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
   val cachedCounterparties = TTLCache[List[InternalCounterparty]](10080)
   
@@ -1159,11 +1158,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def getCustomer(outboundGetCustomersByUserIdFuture: OutboundGetCustomersByUserId): InboundGetCustomersByUserId = {
     val username = outboundGetCustomersByUserIdFuture.authInfo.username
-    val joniMfCall = getJoniMf(username, outboundGetCustomersByUserIdFuture.authInfo.isFirst)
+    val joniMfCall = getJoniMf(username, false)
     joniMfCall match {
       case Right(joniMfCall) =>
-    if (outboundGetCustomersByUserIdFuture.authInfo.isFirst == false &&
-      outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) throw new RuntimeException(mFTokenMatchError)
+    if (outboundGetCustomersByUserIdFuture.authInfo.cbsToken != joniMfCall.SDR_JONI.MFTOKEN) 
+      throw new RuntimeException(mFTokenMatchError)
     val callNtlv1 = getNtlv1Mf(username,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_ZEHUT,
       joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SUG_ZIHUY,

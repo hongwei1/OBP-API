@@ -43,7 +43,6 @@ case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, ac
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
-case class OutboundGetToken(username: String) extends TopicTrait
 case class OutboundCreateTransaction(
   authInfo: AuthInfo,
   
@@ -102,7 +101,6 @@ case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransac
 case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
 case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
-case class InboundToken(username: String, token: String)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
