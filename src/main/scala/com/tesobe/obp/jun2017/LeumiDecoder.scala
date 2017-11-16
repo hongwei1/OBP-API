@@ -21,8 +21,8 @@ import com.tesobe.obp.NtbdGv050Mf.getNtbdGv050
 import com.tesobe.obp.NtbdIv050Mf.getNtbdIv050
 import com.tesobe.obp.Ntg6AMf.getNtg6A
 import com.tesobe.obp.Ntg6BMf.getNtg6B
-import com.tesobe.obp.Ntg6IMf.getNtg6I
-import com.tesobe.obp.Ntg6KMf.getNtg6K
+import com.tesobe.obp.Ntg6IMf.getNtg6IMf
+import com.tesobe.obp.Ntg6KMf.getNtg6KMf
 import com.tesobe.obp.Ntib2Mf.getNtib2Mf
 import com.tesobe.obp.Ntlv1Mf.getNtlv1Mf
 import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
@@ -69,7 +69,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
 
   val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
-  val cachedCounterparties = TTLCache[List[InternalCounterparty]](10080)
   val cachedTransactionRequestIds = TTLCache[TransactionRequestIdValues](10080)
   
 
@@ -239,18 +238,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
         asmachta = transactions.TA1_TNUA_BODEDET.TA1_ASMACHTA
       )),
       `type` = if (transactions.TA1_TNUA_BODEDET.TA1_IND_KARTIS_ASHRAI == "1") {
-        "credit card"
+        "_FUTURE_CREDIT_CARD"
       } else if (transactions.TA1_TNUA_BODEDET.TA1_IND_HOR_KEVA == "1") {
-        "standing order"
-      } else "", //nt1c3
+        "_FUTURE_STANDING_ORDER"
+      } else "_FUTURE", 
       from = TransactionRequestAccount("10", accountId),
       details = TransactionRequestBody(
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
         description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA), //description from NT1c3
       transaction_ids = "" ,
-      status = "",
-      start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3 date of request processing
+      status = "COMPLETED",
+      start_date = null,
       end_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
@@ -275,15 +274,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
         completedDate = transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH,
         newBalanceAmount = transactions.TNA_TNUA_BODEDET.TNA_ITRA
       )),
-      `type` = "",
+      `type` = "_INTRADAY",
       from = TransactionRequestAccount("10", accountId),
       details = TransactionRequestBody(
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TNA_TNUA_BODEDET.TNA_SCHUM), //amount from Nt1c4
         description = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA), //description from NT1c4
       transaction_ids = "",
-      status = "",
-      start_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_BITZUA), //nt1c4 date of request processing
+      status = "COMPLETED",
+      start_date = null,
       end_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH), //nt1c4 date of value for request
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
@@ -337,21 +336,44 @@ object LeumiDecoder extends Decoder with StrictLogging {
         counterpartyBranchNr,
         counterpartyAccountType,
         counterpartyAccountNr),
-      otherAccountRoutingScheme= "account_number",
+      otherAccountRoutingScheme= "",
       otherAccountRoutingAddress= counterpartyAccountNr,
-      otherBankRoutingScheme= "bank_code",
+      otherBankRoutingScheme= "",
       otherBankRoutingAddress= counterpartyBankCode,
-      otherBranchRoutingScheme= "branch_number",
+      otherBranchRoutingScheme= "",
       otherBranchRoutingAddress= counterpartyBranchNr,
       isBeneficiary = true,
       description = description,
       otherAccountSecondaryRoutingScheme= accountRoutingScheme,
       otherAccountSecondaryRoutingAddress= iBan,
       bespoke = List(
-        PostCounterpartyBespoke("englishName", englishName),
-        PostCounterpartyBespoke("englishDescription", englishDescription)
+        PostCounterpartyBespoke("", englishName),
+        PostCounterpartyBespoke("", englishDescription)
     ))
   }
+  
+  def createInboundGetCounterpartiesError(authInfo: AuthInfo, x: PAPIErrorResponse) = InboundGetCounterparties(authInfo, List(InternalCounterparty(
+    errorCode = MainFrameError,
+    backendMessages = createInboundStatusMessages(x),
+    createdByUserId = "",
+    name = "",
+    thisBankId = "",
+    thisAccountId = "",
+    thisViewId = "",
+    counterpartyId = "",
+    otherAccountRoutingScheme= "",
+    otherAccountRoutingAddress= "",
+    otherBankRoutingScheme= "",
+    otherBankRoutingAddress= "",
+    otherBranchRoutingScheme= "",
+    otherBranchRoutingAddress= "",
+    isBeneficiary = false,
+    description = "",
+    otherAccountSecondaryRoutingScheme= "",
+    otherAccountSecondaryRoutingAddress= "",
+    bespoke = List(PostCounterpartyBespoke("englishName", ""),
+      PostCounterpartyBespoke("englishDescription", "")
+    ))))
 
   //Helper functions end here--------------------------------------------------------------------------------------------
 
@@ -1280,11 +1302,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   def getCounterpartiesForAccount(outboundGetCounterparties: OutboundGetCounterparties): InboundGetCounterparties = {
+    val isFirst = outboundGetCounterparties.authInfo.isFirst
     val joniCall = getJoniMf(outboundGetCounterparties.authInfo.username, false)
     joniCall match {
       case Right(joniCall) =>
     
-    if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken && !outboundGetCounterparties.authInfo.isFirst) throw new RuntimeException(mFTokenMatchError)
+    if (joniCall.SDR_JONI.MFTOKEN != outboundGetCounterparties.authInfo.cbsToken && !isFirst) throw new RuntimeException(mFTokenMatchError)
 
     val account = getBasicBankAccountByAccountIdFromCachedJoni(outboundGetCounterparties.authInfo.username, outboundGetCounterparties.counterparty.thisAccountId)
     account match {
@@ -1293,138 +1316,78 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val branchId = account.branchNr
     val accountNumber = account.accountNr
     val accountType = account.accountType
+        
     
     var result = new ListBuffer[InternalCounterparty]
     
-    val ntg6ICall = getNtg6I(branchId,accountType,accountNumber, outboundGetCounterparties.authInfo.cbsToken) 
-    
-    ntg6ICall match {
-      case Right(x) =>
-        for (i <- x.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM) {
-          result += mapAdapterCounterpartyToInternalCounterparty(i.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
-        }
-        
-        val ntg6KCall = getNtg6K(branchId,accountType,accountNumber,outboundGetCounterparties.authInfo.cbsToken) 
-        ntg6KCall match {
-          case Right(y) => 
-            for (u <- y.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM){
-              result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
+    val ntg6ICall = getNtg6IMf(branchId,accountType,accountNumber, outboundGetCounterparties.authInfo.cbsToken, isFirst)
+
+        ntg6ICall match {
+          case Right(x) =>
+            for (i <- x.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM) {
+              result += mapAdapterCounterpartyToInternalCounterparty(i.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
             }
-            val returnValue = result.toList
-            cachedCounterparties.set(outboundGetCounterparties.authInfo.username, returnValue)
-            InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
 
+            val ntg6KCall = getNtg6KMf(branchId, accountType, accountNumber, outboundGetCounterparties.authInfo.cbsToken, isFirst)
+            ntg6KCall match {
+              case Right(y) =>
+                for (u <- y.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM){
+                  result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
+                }
+                val returnValue = result.toList
+                InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
 
-          case Left(y) =>
-            InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-              errorCode = MainFrameError,
-              backendMessages = createInboundStatusMessages(y),
-              createdByUserId = "",
-              name = "",
-              thisBankId = "",
-              thisAccountId = "",
-              thisViewId = "",
-              counterpartyId = "",
-              otherAccountRoutingScheme= "",
-              otherAccountRoutingAddress= "",
-              otherBankRoutingScheme= "",
-              otherBankRoutingAddress= "",
-              otherBranchRoutingScheme= "",
-              otherBranchRoutingAddress= "",
-              isBeneficiary = false,
-              description = "",
-              otherAccountSecondaryRoutingScheme= "",
-              otherAccountSecondaryRoutingAddress= "",
-              bespoke = List(PostCounterpartyBespoke("englishName", ""),
-                PostCounterpartyBespoke("englishDescription", "")
-              ))))
+              case Left(y) if y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("") == "B" =>
 
+                val returnValue = result.toList
+                InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
+
+              case Left(y) =>
+                createInboundGetCounterpartiesError(outboundGetCounterparties.authInfo, y)
+
+            }
+          case Left(x) if x.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("") == "B" =>
+
+            val ntg6KCall = getNtg6KMf(branchId, accountType, accountNumber, outboundGetCounterparties.authInfo.cbsToken, isFirst)
+            ntg6KCall match {
+              case Right(y) =>
+                for (u <- y.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM) {
+                  result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
+                }
+                val returnValue = result.toList
+                InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
+
+              case Left(y) if y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("") == "B" =>
+
+                val returnValue = result.toList
+                InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
+
+              case Left(y) =>
+                createInboundGetCounterpartiesError(outboundGetCounterparties.authInfo, y)
+            }
+
+          case Left(x) =>
+            createInboundGetCounterpartiesError(outboundGetCounterparties.authInfo, x)
         }
-      case Left(x) =>
-        InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-          errorCode = MainFrameError,
-          backendMessages = createInboundStatusMessages(x),
-          createdByUserId = "",
-          name = "",
-          thisBankId = "",
-          thisAccountId = "",
-          thisViewId = "",
-          counterpartyId = "",
-          otherAccountRoutingScheme= "",
-          otherAccountRoutingAddress= "",
-          otherBankRoutingScheme= "",
-          otherBankRoutingAddress= "",
-          otherBranchRoutingScheme= "",
-          otherBranchRoutingAddress= "",
-          isBeneficiary = false,
-          description = "",
-          otherAccountSecondaryRoutingScheme= "",
-          otherAccountSecondaryRoutingAddress= "",
-          bespoke = List(PostCounterpartyBespoke("englishName", ""),
-            PostCounterpartyBespoke("englishDescription", "")
-          ))))
-    }
       case Left(account) =>
-        InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-          errorCode = MainFrameError,
-          backendMessages = createInboundStatusMessages(account),
-          createdByUserId = "",
-          name = "",
-          thisBankId = "",
-          thisAccountId = "",
-          thisViewId = "",
-          counterpartyId = "",
-          otherAccountRoutingScheme= "",
-          otherAccountRoutingAddress= "",
-          otherBankRoutingScheme= "",
-          otherBankRoutingAddress= "",
-          otherBranchRoutingScheme= "",
-          otherBranchRoutingAddress= "",
-          isBeneficiary = false,
-          description = "",
-          otherAccountSecondaryRoutingScheme= "",
-          otherAccountSecondaryRoutingAddress= "",
-          bespoke = List(PostCounterpartyBespoke("englishName", ""),
-            PostCounterpartyBespoke("englishDescription", "")
-          ))))
+        createInboundGetCounterpartiesError(outboundGetCounterparties.authInfo, account)
     }
       case Left(joniCall) =>
-        InboundGetCounterparties(outboundGetCounterparties.authInfo, List(InternalCounterparty(
-          errorCode = MainFrameError,
-          backendMessages = createInboundStatusMessages(joniCall),
-          createdByUserId = "",
-          name = "",
-          thisBankId = "",
-          thisAccountId = "",
-          thisViewId = "",
-          counterpartyId = "",
-          otherAccountRoutingScheme= "",
-          otherAccountRoutingAddress= "",
-          otherBankRoutingScheme= "",
-          otherBankRoutingAddress= "",
-          otherBranchRoutingScheme= "",
-          otherBranchRoutingAddress= "",
-          isBeneficiary = false,
-          description = "",
-          otherAccountSecondaryRoutingScheme= "",
-          otherAccountSecondaryRoutingAddress= "",
-          bespoke = List(PostCounterpartyBespoke("englishName", ""),
-            PostCounterpartyBespoke("englishDescription", "")
-          ))))
-    } 
-        
+        createInboundGetCounterpartiesError(outboundGetCounterparties.authInfo, joniCall)
+    }
+
   }
+    
   
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
-    val counterpartiesFromCache = cachedCounterparties.get(outboundGetCounterpartyByCounterpartyId.authInfo.username).getOrElse(
-      getCounterpartiesForAccount(OutboundGetCounterparties(
+    val counterparties = getCounterpartiesForAccount(OutboundGetCounterparties(
         outboundGetCounterpartyByCounterpartyId.authInfo, 
         InternalOutboundGetCounterparties(
           outboundGetCounterpartyByCounterpartyId.counterparty.thisBankId,
           outboundGetCounterpartyByCounterpartyId.counterparty.thisAccountId,
           outboundGetCounterpartyByCounterpartyId.counterparty.viewId))).data
-    )
-    val internalCounterparty = counterpartiesFromCache.find(x => 
+    
+    val internalCounterparty = counterparties.find(x => 
         x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId}"))
     InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, internalCounterparty)
       
