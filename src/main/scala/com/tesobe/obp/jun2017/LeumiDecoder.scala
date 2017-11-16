@@ -232,7 +232,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def mapNt1c3ToTransactionRequest(transactions: Ta1TnuaBodedet, accountId: String): TransactionRequest = {
     TransactionRequest(
-      id = TransactionRequestId(""),
+      id = TransactionRequestId(createTransactionRequestId(
+        amount = transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA,
+        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
+        makor = transactions.TA1_TNUA_BODEDET.TA1_MAKOR_TNUA,
+        asmachta = transactions.TA1_TNUA_BODEDET.TA1_ASMACHTA
+      )),
       `type` = if (transactions.TA1_TNUA_BODEDET.TA1_IND_KARTIS_ASHRAI == "1") {
         "credit card"
       } else if (transactions.TA1_TNUA_BODEDET.TA1_IND_HOR_KEVA == "1") {
@@ -243,12 +248,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
         description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA), //description from NT1c3
-      transaction_ids = createTransactionRequestId(
-        amount = transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA,
-        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
-        makor = transactions.TA1_TNUA_BODEDET.TA1_MAKOR_TNUA,
-        asmachta = transactions.TA1_TNUA_BODEDET.TA1_ASMACHTA
-      ),
+      transaction_ids = "" ,
       status = "",
       start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3 date of request processing
       end_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
@@ -270,18 +270,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   def mapNt1c4ToTransactionRequest(transactions: TnaTnuaBodedet, accountId: String): TransactionRequest = {
     TransactionRequest(
-      id = TransactionRequestId(""),
-      `type` = "notInNt1c4",
+      id = TransactionRequestId(createTransactionId(
+        amount = transactions.TNA_TNUA_BODEDET.TNA_SCHUM,
+        completedDate = transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH,
+        newBalanceAmount = transactions.TNA_TNUA_BODEDET.TNA_ITRA
+      )),
+      `type` = "",
       from = TransactionRequestAccount("10", accountId),
       details = TransactionRequestBody(
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TNA_TNUA_BODEDET.TNA_SCHUM), //amount from Nt1c4
         description = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA), //description from NT1c4
-      transaction_ids = createTransactionId(
-        amount = transactions.TNA_TNUA_BODEDET.TNA_SCHUM,
-        completedDate = transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH,
-        newBalanceAmount = transactions.TNA_TNUA_BODEDET.TNA_ITRA
-      ),
+      transaction_ids = "",
       status = "",
       start_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_BITZUA), //nt1c4 date of request processing
       end_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH), //nt1c4 date of value for request
