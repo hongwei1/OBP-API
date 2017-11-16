@@ -1,4 +1,5 @@
-﻿NT1C MF transaction (request 3; action 000) - MF transaction returns the following account information:
+﻿
+NT1C MF transaction (request 3; action 000) - MF transaction returns the following account information:
 =======================================================================================================
 1. Future transactions list on specific account which is dedicated to serve "Get Transaction Requests" implementation.
 

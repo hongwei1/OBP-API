@@ -70,10 +70,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
   val cachedCounterparties = TTLCache[List[InternalCounterparty]](10080)
+  val cachedTransactionRequestIds = TTLCache[TransactionRequestIdValues](10080)
   
 
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
+  case class TransactionRequestIdValues(amount: String, description: String, makor: String, asmachta: String)
 
 
   //Helper functions start here:---------------------------------------------------------------------------------------
@@ -115,6 +117,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
      cachedTransactionId.set(transactionId,transactionIdValues)
       transactionId
       }
+  
+  def createTransactionRequestId(amount: String, description: String, makor: String, asmachta: String): String = {
+    logger.debug(s"createTransactionRequestId for ($amount) ($description) ($makor) ($asmachta)")
+    val transactionRequestIdValues = TransactionRequestIdValues(amount, description, makor, asmachta)
+    val transactionRequestId = base64EncodedSha256(amount + description + makor + asmachta)
+    cachedTransactionRequestIds.set(transactionRequestId, transactionRequestIdValues)
+    transactionRequestId
+  }
 
   def createCustomerId(username: String): String = {
     logger.debug(s"getOrCreateCustomerId for ($username)")
@@ -233,7 +243,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
         description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA), //description from NT1c3
-      transaction_ids = "",
+      transaction_ids = createTransactionRequestId(
+        amount = transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA,
+        description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA,
+        makor = transactions.TA1_TNUA_BODEDET.TA1_MAKOR_TNUA,
+        asmachta = transactions.TA1_TNUA_BODEDET.TA1_ASMACHTA
+      ),
       status = "",
       start_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_TNUA), //nt1c3 date of request processing
       end_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
@@ -262,7 +277,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TNA_TNUA_BODEDET.TNA_SCHUM), //amount from Nt1c4
         description = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA), //description from NT1c4
-      transaction_ids = "",
+      transaction_ids = createTransactionId(
+        amount = transactions.TNA_TNUA_BODEDET.TNA_SCHUM,
+        completedDate = transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH,
+        newBalanceAmount = transactions.TNA_TNUA_BODEDET.TNA_ITRA
+      ),
       status = "",
       start_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_BITZUA), //nt1c4 date of request processing
       end_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH), //nt1c4 date of value for request

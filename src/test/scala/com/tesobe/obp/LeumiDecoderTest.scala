@@ -65,9 +65,35 @@ class LeumiDecoderTest  extends ServerSetup {
   }
 
   
-  test("getCustomer gives correct result for stubs"){ 
+  test("getCustomer gives correct result for stubs , isFirst = true"){ 
     val customerId = base64EncodedSha256(username + config.getString("salt.global"))
-    val result = getCustomer(OutboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken)))should be
+    val result = getCustomer(OutboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken, true)))should be
+    InboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken), List(InternalFullCustomer(status = "",
+      errorCode = "",
+      backendMessages = List(InboundStatusMessage("","","","")),
+      customerId = customerId,
+      bankId = "10",
+      number = username,
+      legalName = "??????????????" + " " + "????????????????????",
+      mobileNumber = "",
+      email = "",
+      faceImage = CustomerFaceImage(null, "notinthiscall"),
+      dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
+      relationshipStatus = "",
+      dependents = 0,
+      dobOfDependents = List(null),
+      highestEducationAttained = " ",
+      employmentStatus = "",
+      creditRating = CreditRating("notfromthiscall","notfromthiscall"),
+      creditLimit =  AmountOfMoney(defaultCurrency, "15000"),
+      kycStatus = true,
+      lastOkDate = simpleLastLoginFormat.parse("20170611" + "120257")
+    )))
+  }
+
+  test("getCustomer gives correct result for stubs , isFirst = false"){
+    val customerId = base64EncodedSha256(username + config.getString("salt.global"))
+    val result = getCustomer(OutboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken, false)))should be
     InboundGetCustomersByUserId(AuthInfo("karlsid", username, mfToken), List(InternalFullCustomer(status = "",
       errorCode = "",
       backendMessages = List(InboundStatusMessage("","","","")),
