@@ -53,7 +53,7 @@
 			},
 			"response": [
 				{
-					"id": "6578a018-2b0b-4b03-bf6d-3bec489c633c",
+					"id": "de4aff54-b1ca-41c1-a50c-c11dad820d9b",
 					"name": "Get Customers for Current User -V220",
 					"originalRequest": {
 						"method": "GET",
@@ -190,6 +190,283 @@
 			]
 		},
 		{
+			"name": "Get Customers for Current User -V220 --isFirst=false",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v2.2.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v2.2.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": [
+				{
+					"id": "3d79b4e4-5a46-4d14-9bd7-e00b9fd72bf7",
+					"name": "Get Customers for Current User -V220",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/obp/v2.2.0/users/current/customers",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"obp",
+								"v2.2.0",
+								"users",
+								"current",
+								"customers"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*",
+							"name": "Access-Control-Allow-Origin",
+							"description": "Specifies a URI that may access the resource. For requests without credentials, the server may specify '*' as a wildcard, thereby allowing any origin to access the resource."
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, private, no-store",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Length",
+							"value": "537",
+							"name": "Content-Length",
+							"description": "The length of the response body in octets (8-bit bytes)"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "Correlation-Id",
+							"value": "nwqxyjqobmvwjbtrx6szv1eu",
+							"name": "Correlation-Id",
+							"description": "Custom header"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2017 16:30:52 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2017 16:30:52 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "Expires",
+							"value": "Fri, 10 Nov 2017 16:30:52 GMT",
+							"name": "Expires",
+							"description": "Gives the date/time after which the response is considered stale"
+						},
+						{
+							"key": "GatewayLogin",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8",
+							"name": "GatewayLogin",
+							"description": "Custom header"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache",
+							"name": "Pragma",
+							"description": "Implementation-specific headers that may have various effects anywhere along the request-response chain."
+						},
+						{
+							"key": "Server",
+							"value": "Jetty(9.2.15.v20160210)",
+							"name": "Server",
+							"description": "A name for the server"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY",
+							"name": "X-Frame-Options",
+							"description": "Clickjacking protection: \"deny\" - no rendering within a frame, \"sameorigin\" - no rendering if origin mismatch"
+						}
+					],
+					"cookie": [
+						{
+							"expires": "Tue Jan 19 2038 04:14:07 GMT+0100 (CET)",
+							"httpOnly": false,
+							"domain": "127.0.0.1",
+							"path": "/OBP-API-1.0",
+							"secure": false,
+							"value": "node01x7t2ztrf5bas1twgoj1djq8n80.node0",
+							"key": "JSESSIONID"
+						},
+						{
+							"expires": "Tue Jan 19 2038 04:14:07 GMT+0100 (CET)",
+							"httpOnly": false,
+							"domain": "127.0.0.1",
+							"path": "/",
+							"secure": false,
+							"value": "nwqxyjqobmvwjbtrx6szv1eu",
+							"key": "JSESSIONID"
+						}
+					],
+					"responseTime": 147,
+					"body": "{\"customers\":[{\"bank_id\":\"10\",\"customer_id\":\"GkXoxmH12vyO4SvYPmXivYeD_Ex912q4hlA3fmgR-z0\",\"customer_number\":\"N7jut8d\",\"legal_name\":\"?????????????? ????????????????????\",\"mobile_phone_number\":\"505410377\",\"email\":\"\",\"face_image\":{\"url\":\"\",\"date\":null},\"date_of_birth\":\"1948-12-31\",\"relationship_status\":\"\",\"dependants\":null,\"dob_of_dependants\":[null],\"credit_rating\":{\"rating\":\"\",\"source\":\"\"},\"credit_limit\":{\"currency\":\"\",\"amount\":\"\"},\"highest_education_attained\":\"\",\"employment_status\":\"\",\"kyc_status\":null,\"last_ok_date\":\"2017-06-11\"}]}"
+				}
+			]
+		},
+		{
+			"name": "Get Customers for Current User -V300",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Customers for Current User -V300 --isFirst=false",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
 			"name": "Get private accounts at one bank. -V300",
 			"event": [
 				{
@@ -241,7 +518,7 @@
 			},
 			"response": [
 				{
-					"id": "2ad8fb6a-b598-4e59-8cfb-64b40911b19d",
+					"id": "6c0caddf-3dfe-4da4-897e-4db27ec5353d",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -435,7 +712,7 @@
 			},
 			"response": [
 				{
-					"id": "2815f945-899c-444c-98e0-cbac1892f31f",
+					"id": "1f5f7fe8-08ed-482a-8973-17ca008ebfff",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -1037,7 +1314,7 @@
 			},
 			"response": [
 				{
-					"id": "ceee4fc1-6e92-4f5a-8f88-f282b169c2fd",
+					"id": "c4d64c4e-174e-4bd7-a84e-a7721cefaa1b",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -1190,7 +1467,7 @@
 					"listen": "test",
 					"script": {
 						"type": "text/javascript",
-						"exec": [
+						"exec": [	
 							"tests[\"Status code is 200\"] = responseCode.code === 400;",
 							""
 						]
@@ -1301,7 +1578,7 @@
 			},
 			"response": [
 				{
-					"id": "5fcb59f9-bbe3-4395-8a67-8a6c81b44ecb",
+					"id": "0f074efd-ed25-41ff-aba8-eb850508f2cf",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1597,53 +1874,6 @@
 					]
 				},
 				"description": "{\n  \"name\": \"\",\n  \"counterparty_bank_id\": \"\",\n  \"primary_routing_scheme\": \"IBAN\",\n  \"primary_routing_address\": \"7987987-2348987-234234\"\n}\n\n\n\n{\n  \"counterparty_id\": \"abd7d870-a83b-47fa-b255-91686934994d\",\n  \"display\": {\n    \"name\": \"\",\n    \"is_alias\": false\n  },\n  \"created_by_user_id\": \"77f5ae14-9723-486a-b083-a91ce921c9f8\",\n  \"used_by_account\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"primary_routing\": {\n    \"scheme\": \"IBAN\",\n    \"address\": \"7987987-2348987-234234\"\n  },\n  \"metadata\": {\n    \"public_alias\": \"\",\n    \"private_alias\": \"\",\n    \"more_info\": \"\",\n    \"URL\": \"\",\n    \"image_URL\": \"\",\n    \"open_corporates_URL\": \"\",\n    \"corporate_location\": null,\n    \"physical_location\": null\n  }\n}"
-			},
-			"response": []
-		},
-		{
-			"name": "Get Customers for Current User -V300",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"users",
-						"current",
-						"customers"
-					]
-				},
-				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
 			},
 			"response": []
 		},
@@ -2142,7 +2372,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -2161,6 +2391,84 @@
 					{
 						"key": "Authorization",
 						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
+					},
+					{
+						"key": "obp_sort_direction",
+						"value": "DESC"
+					},
+					{
+						"key": "obp_offset",
+						"value": "1"
+					},
+					{
+						"key": "obp_limit",
+						"value": "2"
+					},
+					{
+						"key": "obp_from_date",
+						"value": "2000-07-01T00:00:00.000Z"
+					},
+					{
+						"key": "obp_to_date",
+						"value": "2017-07-01T00:00:00.000Z"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/my/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/transactions",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"my",
+						"banks",
+						"10",
+						"accounts",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
+						"transactions"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Transactions for Account (Core)-3jdV-v300-false",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8"
 					},
 					{
 						"key": "obp_sort_direction",
@@ -2319,7 +2627,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"100\"\n  },\n  \"description\": \"good\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"5\",\n      \"number\": \"HU6876273\"\n    },\n    \"date_of_birth\": \"100101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"100\"\n  },\n  \"description\": \"good\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"5\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"100101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
@@ -2567,7 +2875,7 @@
 			},
 			"response": [
 				{
-					"id": "3b0eca63-b857-4c36-9a0c-ffd14e190cb6",
+					"id": "d40a629e-85d1-4746-a892-4ea4707fe4a2",
 					"name": "Get Counterparties of one Account --isFirst=false",
 					"originalRequest": {
 						"method": "GET",
@@ -2761,7 +3069,7 @@
 			},
 			"response": [
 				{
-					"id": "c77ad580-9610-47df-932c-9bb8e0f07c70",
+					"id": "559e106f-c876-4885-9522-d0e70917f52b",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
