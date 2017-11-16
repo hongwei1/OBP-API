@@ -360,7 +360,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     account match {
       case Right(account) =>
     
-    val cbsToken =  if (account.cbsToken != getAccount.authInfo.cbsToken) {
+    val cbsToken =  if (getAccount.authInfo.isFirst == false && account.cbsToken != getAccount.authInfo.cbsToken) {
       throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
     val ntib2Call = getNtib2Mf(
@@ -408,7 +408,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     account match {
       case Right(account) =>
     val iban = ""
-    val cbsToken =  if (account.cbsToken != getAccount.authInfo.cbsToken) {
+    val cbsToken =  if (getAccount.authInfo.isFirst == false && account.cbsToken != getAccount.authInfo.cbsToken) {
       throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
