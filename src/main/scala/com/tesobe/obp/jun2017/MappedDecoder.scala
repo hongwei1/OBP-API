@@ -64,7 +64,7 @@ trait MappedDecoder {
   }
   
   def mapAdapterAccountToInboundAccountJune2017(x: Account) = {
-    InboundAccountJune2017( "", List(InboundStatusMessage("ESB","Success", "0", "OK")), "cbs", bankId = x.bank.get, branchId = x.branchId.get, accountId = x.branchId.get, accountNumber = x.branchId.get, accountType = x.branchId.get, balanceAmount = x.branchId.get, balanceCurrency = x.branchId.get, owners = x.owners, viewsToGenerate = x.owners, bankRoutingScheme = x.bank.get, bankRoutingAddress = x.bank.get, branchRoutingScheme = x.bank.get, branchRoutingAddress = x.bank.get, accountRoutingScheme = x.bank.get, accountRoutingAddress = x.bank.get)
+    InboundAccountJune2017( "", List(InboundStatusMessage("ESB","Success", "0", "OK")), "cbs", bankId = x.bank.get, branchId = x.branchId.get, accountId = x.branchId.get, accountNumber = x.branchId.get, accountType = x.branchId.get, balanceAmount = x.branchId.get, balanceCurrency = x.branchId.get, owners = x.owners, viewsToGenerate = x.owners, bankRoutingScheme = x.bank.get, bankRoutingAddress = x.bank.get, branchRoutingScheme = x.bank.get, branchRoutingAddress = x.bank.get, accountRoutingScheme = x.bank.get, accountRoutingAddress = x.bank.get, creditLimitAmount = "", creditLimitCurrency = "")
   }
 
   private def extractQuery(request: Request): Option[String] = {

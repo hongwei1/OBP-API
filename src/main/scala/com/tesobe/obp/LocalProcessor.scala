@@ -191,7 +191,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
                 InboundStatusMessage("ESB","Success", "0", "OK"),
                 InboundStatusMessage("MF","Success", "0", "OK")  
               ),
-              "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+              "", "","", "","", "","","",List(""),List(""),"", "","", "","","","","")
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -218,7 +218,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
               InboundStatusMessage("ESB","Success", "0", "OK"),
               InboundStatusMessage("MF","Success", "0", "OK")  
             ),
-            "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+            "", "","", "","", "","","",List(""),List(""),"", "","", "","","","","")
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -246,7 +246,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
               InboundStatusMessage("ESB","Success", "0", "OK"),
               InboundStatusMessage("MF","Success", "0", "OK")  
             ),
-            "", "","", "","", "","","",List(""),List(""),"", "","", "","","")
+            "", "","", "","", "","","",List(""),List(""),"", "","", "","","","","")
         ))
         Future(msg, errorBody.asJson.noSpaces)
     }

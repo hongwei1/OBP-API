@@ -202,7 +202,9 @@ case class InboundAccountJune2017(
   branchRoutingScheme: String,
   branchRoutingAddress: String,
   accountRoutingScheme: String,
-  accountRoutingAddress: String
+  accountRoutingAddress: String,
+  creditLimitAmount: String,
+  creditLimitCurrency: String
 )
 
 case class InternalCounterparty(
