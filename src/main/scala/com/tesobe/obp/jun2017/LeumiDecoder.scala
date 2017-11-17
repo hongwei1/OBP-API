@@ -189,7 +189,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
       branchRoutingScheme = "",
       branchRoutingAddress = "",
       accountRoutingScheme = accountRoutingScheme,
-      accountRoutingAddress = iban)
+      accountRoutingAddress = iban,
+      creditLimitAmount = "",
+      creditLimitCurrency = "")
   }
 
   def mapAdapterTransactionToInternalTransaction(userId: String,
@@ -428,17 +430,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
           case Left(y) =>
             InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError, 
               createInboundStatusMessages(y),
-              "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
+              "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
         }
       case Left(x) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError,
          createInboundStatusMessages(x),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
+          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
     }
       case Left(account) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError,
           createInboundStatusMessages(account),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
+          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
     }
         
   }
@@ -460,7 +462,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       case Left(account) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError
           , createInboundStatusMessages(account),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", ""))
+          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
     }
   }
 
@@ -499,7 +501,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
             branchRoutingScheme = "",
             branchRoutingAddress = "",
             accountRoutingScheme = "",
-            accountRoutingAddress = "")))
+            accountRoutingAddress = "",
+            creditLimitAmount = "",
+            creditLimitCurrency = "")))
     }
   }
 
