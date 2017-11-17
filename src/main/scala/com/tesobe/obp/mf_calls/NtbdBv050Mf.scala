@@ -2,6 +2,7 @@ package com.tesobe.obp
 
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
+import com.tesobe.obp.ErrorMessages._
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
@@ -24,8 +25,15 @@ object NtbdBv050Mf {
     
     //TODO: reference name has to be in english for RTGS transfer. Ask leumi for definition of "english".
     val finalReferenceNameOfTo = if (referenceNameOfTo == "") "TargetAccount" else referenceNameOfTo
+    val constrainedReferenceNameOfTo = if (finalReferenceNameOfTo.length <= 28) finalReferenceNameOfTo else finalReferenceNameOfTo.substring(0,28)
+   
+      val constrainedTransactionAmount =  try { f"${transactionAmount.toDouble}%1.2f"
+    } catch {
+      case _: Throwable => throw new RuntimeException(InvalidAmount)
+    }
+      val constrainedDescription = if (description.length <= 28) description else description.substring(0,28)
 
-    val json: JValue =parse(s"""
+      val json: JValue =parse(s"""
     {
       "NTBD_B_050": {
         "NtdriveCommonHeader": {
@@ -45,9 +53,9 @@ object NtbdBv050Mf {
         "K050_SUG_ZCUT": "000",
         "K050_CHN_ZCUT": "$toAccountAccountNumber",
         "K050_IBAN_ZCUT": "$toAccountIban",
-        "K050_SCUM": "$transactionAmount",
-        "K050_MATRAT_HAVARA": "$description",
-        "K050_SHEM_MUTAV": "$finalReferenceNameOfTo",
+        "K050_SCUM": "$constrainedTransactionAmount",
+        "K050_MATRAT_HAVARA": "$constrainedDescription",
+        "K050_SHEM_MUTAV": "$constrainedReferenceNameOfTo",
         "K050_SHLAV_PEULA": "0",
         "K050_MISPAR_SIDURI": "1"
       }
@@ -55,12 +63,13 @@ object NtbdBv050Mf {
     }""")
 
 
-    val result = makePostRequest(json, path)
-    implicit val formats = net.liftweb.json.DefaultFormats
-    try {
-      Right(parse(replaceEmptyObjects(result)).extract[NtbdBv050])
-    } catch {
-      case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      val result = makePostRequest(json, path)
+      implicit val formats = net.liftweb.json.DefaultFormats
+      try {
+        Right(parse(replaceEmptyObjects(result)).extract[NtbdBv050])
+      } catch {
+        case e: net.liftweb.json.MappingException => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
+      }
     }
   }
-}
+

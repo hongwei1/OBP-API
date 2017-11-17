@@ -19,7 +19,7 @@ object Ntbd2v050Mf {
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01"
       
       val finalFromAccountOwnerName = if (ntbdAv050fromAccountOwnerName.trim == "") "CustomerName" else ntbdAv050fromAccountOwnerName
-
+      
       val json: JValue = parse(s"""
       {
         "NTBD_2_050": {

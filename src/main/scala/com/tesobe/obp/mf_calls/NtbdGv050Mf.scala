@@ -1,5 +1,6 @@
 package com.tesobe.obp
 
+import com.tesobe.obp.ErrorMessages.InvalidIdTypeException
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import net.liftweb.json.JValue
@@ -16,7 +17,7 @@ object NtbdGv050Mf {
                   ): Either[PAPIErrorResponse, NtbdGv050] = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03"
-
+    if (bankTypeOfTo != "0" && bankTypeOfTo != "1") throw new InvalidIdTypeException()
     val json: JValue = parse(s"""
     {
       "NTBD_G_050": {

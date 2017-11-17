@@ -20,7 +20,8 @@ package object Ntbd2v135Mf extends StrictLogging{
                                ): Either[PAPIErrorResponse,Ntbd2v135] = {
     
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/135/01.01"
-
+    val constrainedNickname = if (nicknameOfMoneySender.length <= 20) nicknameOfMoneySender else nicknameOfMoneySender.substring(0,20)
+    val constrainedMessage = if (messageToMoneyReceiver.length <= 50) messageToMoneyReceiver else messageToMoneyReceiver.substring(0,50)
     val json: JValue = parse(s"""{
         "NTBD_2_135": {
           "NtdriveCommonHeader": {
@@ -37,8 +38,8 @@ package object Ntbd2v135Mf extends StrictLogging{
           "KELET_1352": {
             "K135_TOKEN_ISHUR": "$ntbd1v135_Token",
             "K135_BAKASH_TASHL": "1",
-            "K135_KINUY_MAVIR": "$nicknameOfMoneySender",
-            "K135_MELEL_LE_MUTAV": "$messageToMoneyReceiver"
+            "K135_KINUY_MAVIR": "$constrainedNickname",
+            "K135_MELEL_LE_MUTAV": "$constrainedMessage"
           }
         }
       }

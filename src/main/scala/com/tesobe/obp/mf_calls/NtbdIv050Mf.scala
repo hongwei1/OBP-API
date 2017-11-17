@@ -1,5 +1,6 @@
 package com.tesobe.obp
 
+import com.tesobe.obp.ErrorMessages.InvalidAmount
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import net.liftweb.json.JValue
@@ -17,6 +18,12 @@ object NtbdIv050Mf {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/I/050/01.03"
 
+      val constrainedTransactionAmount =  try { f"${transactionAmount.toDouble}%1.2f"
+      } catch {
+        case _: Throwable => throw new RuntimeException(InvalidAmount)
+      }
+
+
       val json: JValue = parse(s"""
       {
         "NTBD_I_050": {
@@ -32,7 +39,7 @@ object NtbdIv050Mf {
         },
           "K050_SIYUMMUTAVIM": {
           "K050_TOKEN_S": "$ntbdAv050Token",
-          "K050_SCUM_MIZTABER_S": "$transactionAmount",
+          "K050_SCUM_MIZTABER_S": "$constrainedTransactionAmount",
           "K050_SHLAV_PEULA_S": "2",
           "K050_MISPAR_MUTAVIM_S": "1"
         }

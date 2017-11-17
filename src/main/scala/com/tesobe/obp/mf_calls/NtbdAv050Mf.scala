@@ -1,8 +1,12 @@
 package com.tesobe.obp
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
-import net.liftweb.json.{JValue}
+import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 
 object NtbdAv050Mf {
@@ -14,9 +18,15 @@ object NtbdAv050Mf {
                  transferType: String, 
                  transferDateInFuture: String
                 ): Either[PAPIErrorResponse, NtbdAv050] = {
+    val formatter = DateTimeFormatter.BASIC_ISO_DATE
+
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
-    val isFutureTransfer = if (transferDateInFuture != "") "1" else "0"
+    if (transferType.toInt != 1 && transferType.toInt != 2) throw new InvalidIdTypeException()
+    val isFutureTransfer = if (transferDateInFuture.trim != "") "1" else "0"
+    if (transferDateInFuture.trim != "") try {
+      val localDateForTransfer = LocalDate.parse(transferDateInFuture, formatter)
+      } catch { case _: Throwable => throw new RuntimeException(InvalidTimeError)}
     
 
     val json: JValue =parse(s"""
