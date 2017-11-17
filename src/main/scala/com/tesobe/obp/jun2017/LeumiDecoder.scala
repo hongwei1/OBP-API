@@ -147,7 +147,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
 
-  def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount, iban: String, balance: String): InboundAccountJune2017 = {
+  def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount, iban: String, balance: String, creditLimit: String): InboundAccountJune2017 = {
 
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
     val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments
@@ -171,6 +171,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       List("")
     }
     val accountRoutingScheme = if (iban.trim != "") "IBAN" else ""
+    val creditLimitCurrency = if (creditLimit.trim != "") "ILS" else ""
     InboundAccountJune2017(
       errorCode = "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")), 
@@ -190,8 +191,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
       branchRoutingAddress = "",
       accountRoutingScheme = accountRoutingScheme,
       accountRoutingAddress = iban,
-      creditLimitAmount = "",
-      creditLimitCurrency = "")
+      creditLimitAmount = creditLimit,
+      creditLimitCurrency = creditLimitCurrency)
   }
 
   def mapAdapterTransactionToInternalTransaction(userId: String,
@@ -422,10 +423,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
           case Right(y) =>
 
             val balance = y.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_ITRA_NOCHECHIT
+            val creditLimit = y.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI
             InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
               getAccount.authInfo.username,
               account.cbsToken),
-              mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance)
+              mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance, creditLimit)
             )
           case Left(y) =>
             InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError, 
@@ -457,7 +459,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
       getAccount.authInfo.username,
       cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, account, "", "0")
+      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, account, "", "0", "")
     )
       case Left(account) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError
@@ -475,7 +477,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         var result = new ListBuffer[InboundAccountJune2017]()
         for (i <- mfAccounts) {
 
-          result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i, "", "0")
+          result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i, "", "0", "")
         }
         InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
           getAccountsInput.authInfo.username,

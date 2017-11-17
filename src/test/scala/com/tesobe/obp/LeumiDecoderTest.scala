@@ -34,7 +34,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getBankAccountbyAccountId works for Stub"){
     val result = getBankAccountbyAccountId(OutboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),"10",accountId1))
-    result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),(InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success", "0", "OK")),  mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "IBAN","IL230106160000050180963", "", ""))))
+    result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),(InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success", "0", "OK")),  mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "IBAN","IL230106160000050180963", "15000", "ILS"))))
   }
 
   
@@ -127,7 +127,7 @@ class LeumiDecoderTest  extends ServerSetup {
       transactionRequestCommonBody =  TransactionRequestBodyTransferToAccount(
         value = com.tesobe.obp.june2017.AmountOfMoneyJsonV121("ILS","10"),
         description = "",
-        transfer_type =  "",
+        transfer_type =  "1",
         future_date = "",
         to = ToAccountTransferToAccountJson(
           name = "",

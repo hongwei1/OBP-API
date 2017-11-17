@@ -22,7 +22,7 @@ object NtbdAv050Mf {
 
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
-    if (transferType.toInt != 1 && transferType.toInt != 2) throw new InvalidIdTypeException()
+    if (transferType != "0" && transferType != "1") throw new InvalidIdTypeException()
     val isFutureTransfer = if (transferDateInFuture.trim != "") "1" else "0"
     if (transferDateInFuture.trim != "") try {
       val localDateForTransfer = LocalDate.parse(transferDateInFuture, formatter)

@@ -10,7 +10,7 @@ class NtbdGv050MfTest extends ServerSetup {
       accountNumber = "03565953",
       cbsToken = "<)V          81433020102612",
       ntbdAv050Token = "3639292",
-      bankTypeOfTo = "15302")
+      bankTypeOfTo = "1")
     result match {
       case Right(result) =>
     result.P050_AMALOTOUT.esbHeaderResponse.responseStatus.callStatus should be("Success")
