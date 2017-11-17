@@ -1,6 +1,7 @@
 package com.tesobe.obp
 
 import com.google.common.cache.CacheBuilder
+import com.tesobe.obp.ErrorMessages.{InvalidAmountException, InvalidIdTypeException, InvalidPassportOrNationalIdException}
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
@@ -19,6 +20,9 @@ object Ntlv1Mf extends StrictLogging{
   def getNtlv1MfCore(username: String, idNumber: String, idType: String, cbsToken: String): Either[PAPIErrorResponse,Ntlv1]  = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01"
+
+    if (idNumber.length > 9) throw new InvalidPassportOrNationalIdException()
+    if (idType != "1" && idType != "5") throw new InvalidIdTypeException()
 
     val json: JValue = parse(
       s"""

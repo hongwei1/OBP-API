@@ -1,11 +1,11 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.Ntg6IMf.getNtg6I
+import com.tesobe.obp.Ntg6IMf.getNtg6IMf
 
 class Ntg6IMfTest extends ServerSetup{
   
   test("getNtg6I returns correct result on success"){
-    val result = getNtg6I(
+    val result = getNtg6IMf(
       branch = "616",
       accountType = "330",
       accountNumber = "50180963",

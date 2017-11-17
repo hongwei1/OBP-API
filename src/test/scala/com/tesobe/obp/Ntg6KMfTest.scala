@@ -1,16 +1,11 @@
 package com.tesobe.obp
 
-import com.tesobe.obp.Ntg6KMf.getNtg6K
+import com.tesobe.obp.Ntg6KMf.getNtg6KMf
 
 class Ntg6KMfTest extends ServerSetup{
   
   test("getNtg6K returns correct result on success"){
-    val result = getNtg6K(
-      branch = "616",
-      accountType = "330",
-      accountNumber = "50180963",
-      cbsToken = "בל          81433020102612"
-    )
+    val result = getNtg6KMf(branch = "616", accountType = "330", accountNumber = "50180963", cbsToken = "בל          81433020102612", true)
 
     result match {
       case Right(result) =>

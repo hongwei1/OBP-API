@@ -1,13 +1,19 @@
 package com.tesobe.obp
+import com.google.common.cache.CacheBuilder
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
+import scalacache.ScalaCache
+import scalacache.guava.GuavaCache
+
 object Ntg6IMf extends StrictLogging{
+  val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
+  implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
   
-    def getNtg6I(
+    def getNtg6IMfCore(
                  branch: String,
                  accountType: String,
                  accountNumber: String,
@@ -41,4 +47,28 @@ object Ntg6IMf extends StrictLogging{
         case e: net.liftweb.json.MappingException  => Left(parse(replaceEmptyObjects(result)).extract[PAPIErrorResponse])
       } 
     }
+
+  def getNtg6IMf(
+                  branch: String,
+                  accountType: String,
+                  accountNumber: String,
+                  cbsToken: String,
+                  isFirst: Boolean = true) = {
+
+    import scalacache.Flags
+    import scalacache.memoization.{cacheKeyExclude, memoizeSync}
+
+    def getNtg6IMfCached(branch: String, accountType: String, accountNumber: String, cbsToken: String)(implicit @cacheKeyExclude flags: Flags): Either[PAPIErrorResponse,Ntg6IandK]  = memoizeSync {
+      getNtg6IMfCore(branch, accountType, accountNumber, cbsToken)
+    }
+
+    isFirst == true match {
+      case true => // Call MF
+        implicit val flags = Flags(readsEnabled = false)
+        getNtg6IMfCached(branch, accountType, accountNumber, cbsToken)
+      case false => // Try to read from cache
+        implicit val flags = Flags(readsEnabled = true)
+        getNtg6IMfCached(branch, accountType, accountNumber, cbsToken)
+    }
+  }
 }
