@@ -17,7 +17,7 @@ object NtbdGv050Mf {
                   ): Either[PAPIErrorResponse, NtbdGv050] = {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03"
-    if (bankTypeOfTo != "0" && bankTypeOfTo != "1") throw new InvalidIdTypeException()
+    if (bankTypeOfTo != "0" && bankTypeOfTo != "1") throw new Exception("invalid bank type")
     val json: JValue = parse(s"""
     {
       "NTBD_G_050": {
