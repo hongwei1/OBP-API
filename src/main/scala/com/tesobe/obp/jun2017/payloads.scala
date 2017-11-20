@@ -3,6 +3,8 @@ package com.tesobe.obp.june2017
 import java.lang
 import java.util.Date
 
+import net.liftweb.json.JsonAST.JValue
+
 import scala.collection.immutable.List
 
 /**
@@ -102,7 +104,7 @@ case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
 case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
-  case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
+case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccount])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
@@ -471,7 +473,8 @@ case class TransactionRequest (
   id: TransactionRequestId,
   `type` : String,
   from: TransactionRequestAccount,
-  details: TransactionRequestBody, 
+  body: TransactionRequestBody,
+  details: JValue = null,
   transaction_ids: String,
   status: String,
   start_date: Date,

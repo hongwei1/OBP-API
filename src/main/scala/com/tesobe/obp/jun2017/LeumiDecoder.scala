@@ -246,7 +246,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         "_FUTURE_STANDING_ORDER"
       } else "_FUTURE", 
       from = TransactionRequestAccount("10", accountId),
-      details = TransactionRequestBody(
+      body = TransactionRequestBody(
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TA1_TNUA_BODEDET.TA1_SCHUM_TNUA), //amount from Nt1c3
         description = transactions.TA1_TNUA_BODEDET.TA1_TEUR_TNUA), //description from NT1c3
@@ -279,7 +279,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       )),
       `type` = "_INTRADAY",
       from = TransactionRequestAccount("10", accountId),
-      details = TransactionRequestBody(
+      body = TransactionRequestBody(
         TransactionRequestAccount("", ""),
         AmountOfMoney("ILS", transactions.TNA_TNUA_BODEDET.TNA_SCHUM), //amount from Nt1c4
         description = transactions.TNA_TNUA_BODEDET.TNA_TEUR_PEULA), //description from NT1c4

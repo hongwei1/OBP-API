@@ -443,7 +443,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       val kafkaRecordValue = msg.record.value()
       val outboundGetTransactionRequests210  = Extraction.extract[OutboundGetTransactionRequests210](json.parse(kafkaRecordValue))
       val inboundGetTransactionRequests210 = com.tesobe.obp.june2017.LeumiDecoder.getTransactionRequests(outboundGetTransactionRequests210)
-      val r = prettyRender(Extraction.decompose(InboundGetTransactionRequests210))
+      val r = prettyRender(Extraction.decompose(inboundGetTransactionRequests210))
       Future(msg, r)
     } catch {
       case m: Throwable =>
