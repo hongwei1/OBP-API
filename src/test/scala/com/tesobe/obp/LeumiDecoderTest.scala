@@ -19,6 +19,9 @@ class LeumiDecoderTest  extends ServerSetup {
   val accountId5 = base64EncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")
   val mfToken = ">,?          81433020102612"
   val username = "N7jut8d"
+  val authInfoIsFirstTrue = AuthInfo("", username, mfToken, true) 
+  val authInfoIsFirstFalse = AuthInfo("", username, mfToken, false)
+  
   
   test("getBankAccounts works for Stub"){
     val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", username, ""),true, null)) //TODO ,need fix
@@ -148,6 +151,23 @@ class LeumiDecoderTest  extends ServerSetup {
     ))
     result should be (InboundCreateTransactionId(AuthInfo("",username,mfToken),InternalTransactionId("",List(InboundStatusMessage("ESB","Success","0","OK")),"")))
   }
+  
+  test("getCounterparties returns correct result for test stub"){
+    val result = getCounterpartiesForAccount(OutboundGetCounterparties(authInfoIsFirstTrue,
+      InternalOutboundGetCounterparties("10", accountId1,"")))
+    
+   result should be (InboundGetCounterparties(AuthInfo("","N7jut8d",">,?          81433020102612",true),
+      List(
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","    חבש ןר לאיחי","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","Zix0iCiIyhzHzu8UXry9uEyWqwHjdV6jONCeCfAt_HI","","122573","","10","","601",true,"                 ךורא רצק םש","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","            סכלא","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","g-K_lhH0LWAQgzfZaowpn4Nhf7blan1v8hFow5i1RyM","","100727","","12","","773",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","             טטט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","OC8wYolmHumLENu2PEQhIj9Np5cWb0bWlTX59qXHR9A","","1089","","13","","63",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","             לעי","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","5qocG1uPAq-LSFNUeXs0_ahvT3Hmw5QL6HcnNytGanI","","639257","","52","","188",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("","")))
+      )))
+
+
+  }
+  
 
 
 }

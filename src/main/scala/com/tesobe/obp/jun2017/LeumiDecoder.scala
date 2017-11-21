@@ -1353,7 +1353,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                 val returnValue = result.toList
                 InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
 
-              case Left(y) if y.PAPIErrorResponse.esbHeaderResponse.responseStatus.errorDesc.getOrElse("") == "B" =>
+              case Left(y) if y.PAPIErrorResponse.MFAdminResponse.returnCode == "B" =>
 
                 val returnValue = result.toList
                 InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
@@ -1362,7 +1362,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                 createInboundGetCounterpartiesError(outboundGetCounterparties.authInfo, y)
 
             }
-          case Left(x) if x.PAPIErrorResponse.MFAdminResponse.returnCode == "300" =>
+          case Left(x) if x.PAPIErrorResponse.MFAdminResponse.returnCode == "B" =>
 
             val ntg6KCall = getNtg6KMf(branchId, accountType, accountNumber, outboundGetCounterparties.authInfo.cbsToken, isFirst)
             ntg6KCall match {
@@ -1373,7 +1373,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                 val returnValue = result.toList
                 InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
 
-              case Left(y) if y.PAPIErrorResponse.MFAdminResponse.returnCode == "300" =>
+              case Left(y) if y.PAPIErrorResponse.MFAdminResponse.returnCode == "B" =>
 
                 val returnValue = result.toList
                 InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
