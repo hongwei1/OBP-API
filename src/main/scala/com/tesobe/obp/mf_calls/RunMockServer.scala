@@ -493,6 +493,8 @@ object RunMockServer extends StrictLogging{
             new Header("Content-Type", "application/json; charset=utf-8")
           )
           .withBody(jsonToString("ntg6_I_result.json"))
+        //.withBody(jsonToString("errorB_result.json"))
+
       )
     
     //24 Ntg6K
@@ -512,6 +514,8 @@ object RunMockServer extends StrictLogging{
             new Header("Content-Type", "application/json; charset=utf-8")
           )
           .withBody(jsonToString("ntg6_K_result.json"))
+        //.withBody(jsonToString("errorB_result.json"))
+
       )
 
   }

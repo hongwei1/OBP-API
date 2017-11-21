@@ -1,0 +1,15 @@
+{
+  "PAPIErrorResponse": {
+    "esbHeaderResponse": {
+      "esbRequestId": "414d5120544c44423120202020202020be7cff58249ecb16",
+      "responseStatus": {
+        "callStatus": "ProviderError",
+        "errorDesc": "Provider Error - NTDRIVE returned 762: מספר החשבון הוחלף"
+      }
+    },
+    "MFAdminResponse": {
+      "returnCode": "B",
+      "messageText": "מספר החשבון הוחלף"
+    }
+  }
+}
