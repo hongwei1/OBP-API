@@ -70,11 +70,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
   val cachedTransactionRequestIds = TTLCache[TransactionRequestIdValues](10080)
-  
+  val cachedCounterpartyIds = TTLCache[String](10080) 
 
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
   case class TransactionRequestIdValues(amount: String, description: String, makor: String, asmachta: String)
+
 
 
   //Helper functions start here:---------------------------------------------------------------------------------------
@@ -86,13 +87,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
     base64EncodedSha256(branchId + accountType + accountNumber + config.getString("salt.global"))
   }
   
-  def createCounterpartyId(counterpartyName: String,
-                           counterpartyBankCode: String,
-                           counterpartyBranchNr: String,
-                           counterpartyAccountType: String,
-                           counterpartyAccountNr:String) = {
+  def createCounterpartyId(
+                            counterpartyName: String,
+                            counterpartyBankCode: String,
+                            counterpartyBranchNr: String,
+                            counterpartyAccountType: String,
+                            counterpartyAccountNr: String,
+                            ownerAccountId: String): String = {
     logger.debug(s"createCounterpartyId-counterpartyName($counterpartyName)")
-    base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr)
+
+    val counterpartyId = base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr)
+    cachedCounterpartyIds.set(counterpartyId, ownerAccountId)
+    counterpartyId
   }
   
   def createTransactionCounterpartyId(description: String, accountID: String) = {
@@ -312,7 +318,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       account_routing = AccountRouting(scheme = "account_number", address = account.accountNr))
   }
   
-  def mapAdapterCounterpartyToInternalCounterparty(CbsCounterparty: PmutPirteyMutav, OutboundCounterparty: InternalOutboundGetCounterparties): InternalCounterparty = {
+  def mapAdapterCounterpartyToInternalCounterparty(
+                                                    CbsCounterparty: PmutPirteyMutav,
+                                                    OutboundCounterparty: InternalOutboundGetCounterparties,
+                                                    thisAccountId: String): InternalCounterparty = {
     val iBan = CbsCounterparty.PMUT_IBAN.trim
     val accountRoutingScheme = if (iBan == "") "" else "IBAN"
     val counterpartyName = CbsCounterparty.PMUT_SHEM_MUTAV
@@ -333,12 +342,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       thisBankId = OutboundCounterparty.thisBankId,
       thisAccountId = OutboundCounterparty.thisAccountId,
       thisViewId = OutboundCounterparty.viewId,
-      counterpartyId = createCounterpartyId(
-        counterpartyName,
-        counterpartyBankCode,
-        counterpartyBranchNr,
-        counterpartyAccountType,
-        counterpartyAccountNr),
+      counterpartyId = createCounterpartyId(counterpartyName, counterpartyBankCode, counterpartyBranchNr, counterpartyAccountType, counterpartyAccountNr, thisAccountId),
       otherAccountRoutingScheme= "",
       otherAccountRoutingAddress= counterpartyAccountNr,
       otherBankRoutingScheme= "",
@@ -1341,14 +1345,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
         ntg6ICall match {
           case Right(x) =>
             for (i <- x.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM) {
-              result += mapAdapterCounterpartyToInternalCounterparty(i.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
+              result += mapAdapterCounterpartyToInternalCounterparty(i.PMUT_PIRTEY_MUTAV,
+                outboundGetCounterparties.counterparty,
+                outboundGetCounterparties.counterparty.thisAccountId)
             }
 
             val ntg6KCall = getNtg6KMf(branchId, accountType, accountNumber, outboundGetCounterparties.authInfo.cbsToken, isFirst)
             ntg6KCall match {
               case Right(y) =>
                 for (u <- y.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM){
-                  result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
+                  result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty, outboundGetCounterparties.counterparty.thisAccountId)
                 }
                 val returnValue = result.toList
                 InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
@@ -1368,7 +1374,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
             ntg6KCall match {
               case Right(y) =>
                 for (u <- y.PMUTSHLIFA_OUT.PMUT_RESHIMAT_MUTAVIM) {
-                  result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty)
+                  result += mapAdapterCounterpartyToInternalCounterparty(u.PMUT_PIRTEY_MUTAV, outboundGetCounterparties.counterparty, "")
                 }
                 val returnValue = result.toList
                 InboundGetCounterparties(outboundGetCounterparties.authInfo, returnValue)
@@ -1396,12 +1402,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
     
   
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
+    
+    val thisAccountId = cachedCounterpartyIds.get(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException() )
+   
     val counterparties = getCounterpartiesForAccount(OutboundGetCounterparties(
         outboundGetCounterpartyByCounterpartyId.authInfo, 
         InternalOutboundGetCounterparties(
-          outboundGetCounterpartyByCounterpartyId.counterparty.thisBankId,
-          outboundGetCounterpartyByCounterpartyId.counterparty.thisAccountId,
-          outboundGetCounterpartyByCounterpartyId.counterparty.viewId))).data
+          "10",
+          thisAccountId,
+          ""))).data
     
     val internalCounterparty = counterparties.find(x => 
         x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId}"))

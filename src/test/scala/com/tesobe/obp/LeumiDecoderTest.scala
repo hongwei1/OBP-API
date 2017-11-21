@@ -168,6 +168,14 @@ class LeumiDecoderTest  extends ServerSetup {
 
   }
   
+  test("getCounterpartyByCounterpartyId returns correct result for ")  {
+    val result = getCounterpartyByCounterpartyId(OutboundGetCounterpartyByCounterpartyId(authInfoIsFirstTrue,
+      OutboundGetCounterpartyById("kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE")))
+    
+    result should be (InboundGetCounterparty(authInfoIsFirstTrue, InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
+    ))
+  }
+  
 
 
 }

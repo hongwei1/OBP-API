@@ -277,6 +277,7 @@ object ErrorMessages {
   val mFTokenMatchError = "OBP-60012: Session error - cbs_token from North side does not match MFTOKEN from South side."
   val EmptyUsernameError = "OBP-60013: Request was sent with empty username."
   val InvalidTimeError = "OBP-60014: Invalid time or time format."
+  val CounterpartyIdNotCached = "OBP-60015: CounterpartyId not in Cache."
 
   
   
@@ -296,6 +297,7 @@ object ErrorMessages {
   class InvalidPassportOrNationalIdException(msg: String = InvalidPassportOrNationalId) extends Exception(msg: String)
   class InvalidAmountException(msg: String = InvalidAmount) extends Exception(msg: String)
   class InvalidIdTypeException(msg: String = InvalidIdType) extends Exception(msg: String)
+  class CounterpartyIdCacheEmptyException(msg: String = CounterpartyIdNotCached)extends Exception(msg: String)
   
 }
 
