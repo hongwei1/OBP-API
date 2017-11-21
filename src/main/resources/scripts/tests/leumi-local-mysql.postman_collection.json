@@ -152,7 +152,7 @@
 			},
 			"response": [
 				{
-					"id": "25a3e957-9a2d-4451-8c6d-760e588bf7bd",
+					"id": "1bbe3ea6-2cc7-4391-b801-1bf9de6bbbd8",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -346,7 +346,7 @@
 			},
 			"response": [
 				{
-					"id": "a15719e9-3c93-44a0-84c3-baa99037b476",
+					"id": "7a461af5-e147-434e-bd2d-96ee84b2917b",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -815,7 +815,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -869,7 +869,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -891,7 +891,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-requests",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -908,7 +908,9 @@
 						"accounts",
 						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 						"owner",
-						"transaction-requests"
+						"transactions",
+						"b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM",
+						"transaction"
 					]
 				},
 				"description": ""
@@ -973,7 +975,7 @@
 			},
 			"response": [
 				{
-					"id": "a452b613-606e-40a2-95b0-ea9c867a40c0",
+					"id": "463c6c5d-b51c-400d-8f3f-ce1b52788336",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -1355,7 +1357,7 @@
 			},
 			"response": [
 				{
-					"id": "d0fcb692-d6ea-4832-9779-ca569bd3f8ed",
+					"id": "9e57118a-4129-4b43-8068-6392ccbe369b",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1618,7 +1620,7 @@
 			},
 			"response": [
 				{
-					"id": "7a874811-3420-4aa3-bf2d-a5314375d3b0",
+					"id": "0920d82f-1797-4216-afb0-47a554accc72",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1821,7 +1823,7 @@
 			},
 			"response": [
 				{
-					"id": "e9b9542c-7b7c-42b0-9a3e-19f40022092d",
+					"id": "3c74e546-aed3-4f2a-80e4-722f0052868d",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2130,7 +2132,7 @@
 			},
 			"response": [
 				{
-					"id": "65cf6468-ede6-46b0-9d62-39814c995bca",
+					"id": "4a62e23d-634c-4442-aa6a-43aa76f5e497",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2328,7 +2330,7 @@
 			},
 			"response": [
 				{
-					"id": "04b11d66-63ae-4b6d-9186-cb3ba04b3ce1",
+					"id": "f5bc4737-9849-487e-bfc4-7755729c640d",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -3201,7 +3203,7 @@
 			},
 			"response": [
 				{
-					"id": "697b7028-9879-4e27-833f-77196b05d024",
+					"id": "4a1da527-88c4-4b34-a223-1db1bb4f0b20",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
