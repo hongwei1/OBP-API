@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "leumi-available-sandbox",
-		"_postman_id": "fdd6ec39-5198-1044-f29f-4ba9b0c680ab",
+		"_postman_id": "708cb24d-a5ea-105c-824c-68dbd93cacf6",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -133,7 +133,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -147,7 +146,7 @@
 			},
 			"response": [
 				{
-					"id": "25a3e957-9a2d-4451-8c6d-760e588bf7bd",
+					"id": "4b3870e3-62ff-4bab-be39-14f961478114",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -173,7 +172,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -324,7 +322,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -339,7 +336,7 @@
 			},
 			"response": [
 				{
-					"id": "a15719e9-3c93-44a0-84c3-baa99037b476",
+					"id": "c5d255d9-d08f-4b9e-9fa7-346422b52b0f",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -365,7 +362,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -481,7 +477,7 @@
 			]
 		},
 		{
-			"name": "4Get Account by Id (Core)",
+			"name": "4Get Account by Id (Core)-new style",
 			"event": [
 				{
 					"listen": "test",
@@ -518,7 +514,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -535,7 +530,7 @@
 			"response": []
 		},
 		{
-			"name": "5Get Account by Id (Full)",
+			"name": "5Get Account by Id (Full) - new style",
 			"event": [
 				{
 					"listen": "test",
@@ -572,7 +567,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -625,7 +619,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -701,7 +694,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -778,7 +770,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -795,14 +786,14 @@
 			"response": []
 		},
 		{
-			"name": "9Get Transaction Requests.-V210 --in process",
+			"name": "9Get Transaction Requests.-V210",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -831,7 +822,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -842,20 +832,19 @@
 						"owner",
 						"transaction-requests"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
 		{
-			"name": "10Get Transaction by Id- V121 --inprocess",
+			"name": "10Get Transaction by Id- V121",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -877,14 +866,13 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-requests",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transactions/b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM/transaction",
 					"protocol": "https",
 					"host": [
 						"available",
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -893,10 +881,11 @@
 						"accounts",
 						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 						"owner",
-						"transaction-requests"
+						"transactions",
+						"b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM",
+						"transaction"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -938,7 +927,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -957,7 +945,7 @@
 			},
 			"response": [
 				{
-					"id": "a452b613-606e-40a2-95b0-ea9c867a40c0",
+					"id": "bab1618c-ae22-47c8-905c-4e2375fccc50",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -983,7 +971,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -1140,7 +1127,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1198,7 +1184,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1256,7 +1241,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1315,7 +1299,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1334,7 +1317,7 @@
 			},
 			"response": [
 				{
-					"id": "d0fcb692-d6ea-4832-9779-ca569bd3f8ed",
+					"id": "1b732f75-c995-4d98-b0c5-e5e0cd455103",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1360,7 +1343,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -1518,7 +1500,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1576,7 +1557,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1594,7 +1574,7 @@
 			},
 			"response": [
 				{
-					"id": "7a874811-3420-4aa3-bf2d-a5314375d3b0",
+					"id": "23b9d14a-24d6-4fbd-8dc5-1b8aa5b64deb",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1620,7 +1600,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -1777,7 +1756,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -1795,7 +1773,7 @@
 			},
 			"response": [
 				{
-					"id": "e9b9542c-7b7c-42b0-9a3e-19f40022092d",
+					"id": "b0a8cb8e-bb3d-4f4f-9d6e-586abcb2bd13",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1976,7 +1954,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2081,7 +2058,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2098,7 +2074,7 @@
 			},
 			"response": [
 				{
-					"id": "65cf6468-ede6-46b0-9d62-39814c995bca",
+					"id": "3d17d442-41e1-4150-bb4e-d48cb848285a",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2124,7 +2100,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -2278,7 +2253,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2294,7 +2268,7 @@
 			},
 			"response": [
 				{
-					"id": "04b11d66-63ae-4b6d-9186-cb3ba04b3ce1",
+					"id": "1fb950ea-9bf6-4c26-be4c-080798fe7e93",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2320,7 +2294,6 @@
 								"openbankproject",
 								"com"
 							],
-							
 							"path": [
 								"obp",
 								"v3.0.0",
@@ -2476,7 +2449,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2524,7 +2496,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2563,7 +2534,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2612,7 +2582,6 @@
 						"openbankproject",
 						"com"
 					],
-					
 					"path": [
 						"obp",
 						"v3.0.0",
@@ -2620,8 +2589,7 @@
 						"10",
 						"branches"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2670,8 +2638,7 @@
 						"branches",
 						"10"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2719,8 +2686,7 @@
 						"10",
 						"atms"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2769,8 +2735,7 @@
 						"atms",
 						"10"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2892,8 +2857,7 @@
 						"users",
 						"current"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2991,8 +2955,7 @@
 						"user_id",
 						"a31cbe57-8a71-4fb4-8a21-056361d13e22"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -3040,8 +3003,7 @@
 						"username",
 						"USERNAME"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -3087,8 +3049,7 @@
 						"v3.0.0",
 						"users"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -3140,7 +3101,7 @@
 			},
 			"response": [
 				{
-					"id": "697b7028-9879-4e27-833f-77196b05d024",
+					"id": "b79ac423-5448-4216-a4d5-d2e159a8d9d5",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -3278,6 +3239,85 @@
 					"body": "{\"accounts\":[{\"id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"3565953\"}},{\"id\":\"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"50180983\"}},{\"id\":\"yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"50180963\"}},{\"id\":\"kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"20102612\"}},{\"id\":\"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"20105505\"}}]}"
 				}
 			]
+		},
+		{
+			"name": "GetSwagger",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v1.4.0/resource-docs/v3.0.0/swagger",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v1.4.0",
+						"resource-docs",
+						"v3.0.0",
+						"swagger"
+					]
+				},
+				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
+			},
+			"response": []
+		},
+		{
+			"name": "GetMessage-docs",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/message-docs/vJune2017",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"message-docs",
+						"vJune2017"
+					]
+				},
+				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
+			},
+			"response": []
 		}
 	]
 }
