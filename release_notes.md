@@ -4,6 +4,10 @@
 ```
 Date          Commit        Action 
 
+12/11/2017    9529c3b       Make Payments in 1.2.1 disabled. Internal Accounts API disabled.
+20/09/2017                  Upgraded Lift version to 3.1.0. Script scripts/migrate/migrate_0000008.sql has to be executed at existing instances
+13/09/2017    1503229       DISABLED API versions v1.0, v1.1, v1.2
+09/09/2017    fa3b054       Added Props api_enabled_versions and api_enabled_endpoints
 19/04/2017    4033a01       Added remotedata.secret=secret - This should be set to the same value, local and remote (or just local)
 28/03/2017                  Added webui_footer2_logo_left_url and webui_footer2_middle_text - for bottom footer, default=""
 28/03/2017                  Added Props webui_top_text which is used by default.html (default="")
@@ -17,5 +21,6 @@ Date          Commit        Action
 05/04/2017                  added 8 new caching props to sample.props.template which start with connector.cache.ttl.seconds.* and end with function names (getBank, getBanks, getAccount, getAccounts, getTransaction, getTransactions, getCounterpartyFromTransaction, getCounterpartiesFromTransaction). If it's omitted default value is 0 i.e. no caching.
 02/05/2017    3084827       added 1 new caching props to sample.props.template connector.cache.ttl.seconds.APIMethods121.getTransactions. If it's omitted default value is 0 i.e. no caching. This cacahe is from API level.
 10/05/2017    7f95a5c       added allow_public_views=false, we will not create the public views and will not access them (if public views are exsiting)when it is false.
+17/07/2017    1530231       added account_id.length=64, this will set all relevant accountid length to 64, when create new sandbox.  
 
 ```

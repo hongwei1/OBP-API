@@ -21,25 +21,53 @@ class RemotedataUsersActor extends Actor with ObpActorHelper with MdcLoggable  {
       logger.debug("getResourceUserByResourceUserId(" + id +")")
       sender ! extractResult(mapper.getResourceUserByResourceUserId(id))
 
+    case cc.getResourceUserByResourceUserIdFuture(id: Long) =>
+      logger.debug("getResourceUserByResourceUserIdFuture(" + id +")")
+      sender ! (mapper.getResourceUserByResourceUserIdF(id))
+
     case cc.getUserByProviderId(provider : String, idGivenByProvider : String) =>
       logger.debug("getUserByProviderId(" + provider +"," + idGivenByProvider +")")
       sender ! extractResult(mapper.getUserByProviderId(provider, idGivenByProvider))
+
+    case cc.getUserByProviderIdFuture(provider : String, idGivenByProvider : String) =>
+      logger.debug("getUserByProviderIdFuture(" + provider +"," + idGivenByProvider +")")
+      sender ! (mapper.getUserByProviderId(provider, idGivenByProvider))
+
+    case cc.getOrCreateUserByProviderIdFuture(provider : String, idGivenByProvider : String) =>
+      logger.debug("getOrCreateUserByProviderIdFuture(" + provider +"," + idGivenByProvider +")")
+      sender ! (mapper.getOrCreateUserByProviderId(provider, idGivenByProvider))
 
     case cc.getUserByUserId(userId: String) =>
       logger.debug("getUserByUserId(" + userId +")")
       sender ! extractResult(mapper.getUserByUserId(userId))
 
+    case cc.getUserByUserIdFuture(userId: String) =>
+      logger.debug("getUserByUserIdFuture(" + userId +")")
+      sender ! (mapper.getUserByUserId(userId))
+
     case cc.getUserByUserName(userName: String) =>
       logger.debug("getUserByUserName(" + userName +")")
       sender ! extractResult(mapper.getUserByUserName(userName))
+
+    case cc.getUserByUserNameFuture(userName: String) =>
+      logger.debug("getUserByUserNameFuture(" + userName +")")
+      sender ! (mapper.getUserByUserName(userName))
 
     case cc.getUserByEmail(email: String) =>
       logger.debug("getUserByEmail(" + email +")")
       sender ! extractResult(mapper.getUserByEmail(email))
 
+    case cc.getUserByEmailFuture(email: String) =>
+      logger.debug("getUserByEmailFuture(" + email +")")
+      sender ! (mapper.getUserByEmailF(email))
+
     case cc.getAllUsers() =>
       logger.debug("getAllUsers()")
       sender ! extractResult(mapper.getAllUsers())
+
+    case cc.getAllUsersF() =>
+      logger.debug("getAllUsersF()")
+      sender ! (mapper.getAllUsersFF())
 
     case cc.createResourceUser(provider: String, providerId: Option[String], name: Option[String], email: Option[String], userId: Option[String]) =>
       logger.debug("createResourceUser(" + provider + ", " + providerId.getOrElse("None") + ", " + name.getOrElse("None") + ", " + email.getOrElse("None") + ", " + userId.getOrElse("None") + ")")

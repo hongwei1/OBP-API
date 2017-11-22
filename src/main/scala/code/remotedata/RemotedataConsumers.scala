@@ -8,6 +8,7 @@ import com.google.common.cache.CacheBuilder
 import net.liftweb.common._
 import net.liftweb.util.Props
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scalacache.{Flags, ScalaCache}
 import scalacache.guava.GuavaCache
@@ -23,8 +24,11 @@ object RemotedataConsumers extends ObpActorInit with ConsumersProvider {
 
   val cc = RemotedataConsumersCaseClasses
 
-  def getConsumerByConsumerId(consumerId: Long): Box[Consumer] =
-    extractFutureToBox(actor ? cc.getConsumerByConsumerId(consumerId))
+  def getConsumerByPrimaryId(id: Long): Box[Consumer] =
+    extractFutureToBox(actor ? cc.getConsumerByPrimaryId(id))
+
+  def getConsumerByConsumerKeyFuture(consumerKey: String): Future[Box[Consumer]] =
+    (actor ? cc.getConsumerByConsumerKeyFuture(consumerKey)).mapTo[Box[Consumer]]
 
   def getConsumerByConsumerKey(consumerKey: String): Box[Consumer] = {
 
@@ -44,10 +48,14 @@ object RemotedataConsumers extends ObpActorInit with ConsumersProvider {
     }
   }
 
-  def createConsumer(key: Option[String], secret: Option[String], isActive: Option[Boolean], name: Option[String], appType: Option[AppType.AppType], description: Option[String], developerEmail: Option[String], redirectURL: Option[String], createdByUserId: Option[String]): Box[Consumer] =
+  def createConsumer(key: Option[String], secret: Option[String], isActive: Option[Boolean], name: Option[String], appType: Option[AppType], description: Option[String], developerEmail: Option[String], redirectURL: Option[String], createdByUserId: Option[String]): Box[Consumer] =
     extractFutureToBox(actor ? cc.createConsumer(key, secret, isActive, name, appType, description, developerEmail, redirectURL, createdByUserId))
 
-  def updateConsumer(consumerId: Long, key: Option[String], secret: Option[String], isActive: Option[Boolean], name: Option[String], appType: Option[AppType.AppType], description: Option[String], developerEmail: Option[String], redirectURL: Option[String], createdByUserId: Option[String]): Box[Consumer] =
-    extractFutureToBox(actor ? cc.updateConsumer(consumerId, key, secret, isActive, name, appType, description, developerEmail, redirectURL, createdByUserId))
+  def updateConsumer(id: Long, key: Option[String], secret: Option[String], isActive: Option[Boolean], name: Option[String], appType: Option[AppType], description: Option[String], developerEmail: Option[String], redirectURL: Option[String], createdByUserId: Option[String]): Box[Consumer] =
+    extractFutureToBox(actor ? cc.updateConsumer(id, key, secret, isActive, name, appType, description, developerEmail, redirectURL, createdByUserId))
+
+  def getOrCreateConsumer(consumerId: Option[String], key: Option[String], secret: Option[String], isActive: Option[Boolean], name: Option[String], appType: Option[AppType], description: Option[String], developerEmail: Option[String], redirectURL: Option[String], createdByUserId: Option[String]): Box[Consumer] =
+    extractFutureToBox(actor ? cc.getOrCreateConsumer(consumerId, key, secret, isActive, name, appType, description, developerEmail, redirectURL, createdByUserId))
+
 
 }

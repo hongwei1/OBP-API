@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 
 import code.accountholder.{AccountHolders, MapperAccountHolders}
+import code.api.util.ErrorMessages
 import code.crm.CrmEvent.CrmEvent
 import code.metadata.counterparties.{Counterparties, MapperCounterparties}
 import code.products.Products
@@ -11,8 +12,8 @@ import code.products.Products.{Product, ProductCode}
 import code.bankconnectors.{Connector, OBPLimit, OBPOffset}
 import code.model.dataAccess.ResourceUser
 import code.model._
-import code.branches.Branches.Branch
-import code.atms.Atms.Atm
+import code.branches.Branches.{Branch, BranchT}
+import code.atms.Atms.AtmT
 import code.users.Users
 import code.util.Helper
 import code.views.Views
@@ -52,8 +53,8 @@ trait OBPDataImport extends MdcLoggable {
   type ViewType <: View
   type TransactionType <: TransactionUUID
   type AccountOwnerUsername = String
-  type BranchType <: Branch
-  type AtmType <: Atm
+  type BranchType <: BranchT
+  type AtmType <: AtmT
   type ProductType <: Product
   type CrmEventType <: CrmEvent
 
@@ -165,11 +166,11 @@ trait OBPDataImport extends MdcLoggable {
    */
   protected def setAccountOwner(owner : AccountOwnerUsername, account: BankAccount, createdUsers: List[ResourceUser]): AnyVal = {
     val resourceUserOwner = createdUsers.find(user => owner == user.name)
-    println("{resourceUserOwner: " + resourceUserOwner)
+    //println("{resourceUserOwner: " + resourceUserOwner)
 
     resourceUserOwner match {
       case Some(o) => {
-        AccountHolders.accountHolders.vend.createAccountHolder(o.resourceUserId.value, account.bankId.value, account.accountId.value, "OBPDataImport")
+        AccountHolders.accountHolders.vend.createAccountHolder(o.resourceUserId.value, account.bankId.value, account.accountId.value)
       }
       case None => {
         //This shouldn't happen as AuthUser should generate the ResourceUsers when saved
@@ -210,7 +211,7 @@ trait OBPDataImport extends MdcLoggable {
 
   final protected def createDataLicences(data : SandboxDataImport) = {
 
-    throw new Exception ("Not implemented")
+    throw new Exception (ErrorMessages.NotImplemented)
 
   }
 
@@ -536,7 +537,7 @@ trait OBPDataImport extends MdcLoggable {
           account.save()
 
           views.filterNot(_.isPublic).foreach(v => {
-            //grant the owner access to non-public views
+            //grant the owner access to Private views
             //this should always find the owners as that gets verified at an earlier stage, but it's not perfect this way
             val accOwners = us.filter(u => accOwnerUsernames.exists(name => u.name == name))
             accOwners.foreach(Views.views.vend.addPermission(v.uid, _))

@@ -2,11 +2,13 @@ package code.cards
 
 import java.util.Date
 
+import code.api.util.ErrorMessages
 import code.model.dataAccess.MappedBankAccount
 import code.model._
 import code.views.Views
-import net.liftweb.mapper.{MappedString, _}
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.mapper.{By, MappedString, _}
+import net.liftweb.common.{Box, Full}
+import net.liftweb.util.Helpers.tryo
 
 
 /**
@@ -14,7 +16,7 @@ import net.liftweb.common.{Box, Empty, Full}
   */
 
 object MappedPhysicalCardProvider extends PhysicalCardProvider {
-  def AddPhysicalCard(bankCardNumber: String,
+  override def createOrUpdatePhysicalCard(bankCardNumber: String,
                       nameOnCard: String,
                       issueNumber: String,
                       serialNumber: String,
@@ -34,25 +36,56 @@ object MappedPhysicalCardProvider extends PhysicalCardProvider {
                       posted: Option[CardPostedInfo]
                      ): Box[MappedPhysicalCard] = {
 
-    val accountId1 = MappedBankAccount.find(By(MappedBankAccount.bank, bankId), By(MappedBankAccount.theAccountId, accountId)) match {
-      case Full(a) => a.id.get
-      case _ => 0
+    val mappedBankAccountPrimaryKey: Long = MappedBankAccount
+      .find(
+        By(MappedBankAccount.bank, bankId),
+        By(MappedBankAccount.theAccountId, accountId))
+      .openOrThrowException(s"$accountId do not have Primary key, please contact admin, check the database! ").id.get
+    
+    def getPhysicalCard(bankId: BankId, bankCardNumber: String): Box[MappedPhysicalCard] = {
+      MappedPhysicalCard.find(
+        By(MappedPhysicalCard.mBankId, bankId.value),
+        By(MappedPhysicalCard.mBankCardNumber, bankCardNumber)
+      )
     }
-      Some(
-      MappedPhysicalCard.create
-        .mBankCardNumber(bankCardNumber)
-        .mIssueNumber(nameOnCard)
-        .mNameOnCard(issueNumber)
-        .mSerialNumber(serialNumber)
-        .mValidFrom(validFrom)
-        .mExpires(expires)
-        .mEnabled(enabled)
-        .mCancelled(cancelled)
-        .mOnHotList(onHotList)
-        .mAllows(allows.mkString(","))
-        .mAccount(accountId1)
-        .saveMe()
-        )
+    
+    //check the product existence and update or insert data
+    getPhysicalCard(BankId(bankId), bankCardNumber) match {
+      case Full(mappedPhysicalCard) =>
+        tryo {
+          mappedPhysicalCard
+            .mBankId(bankId)
+            .mBankCardNumber(bankCardNumber)
+            .mIssueNumber(nameOnCard)
+            .mNameOnCard(issueNumber)
+            .mSerialNumber(serialNumber)
+            .mValidFrom(validFrom)
+            .mExpires(expires)
+            .mEnabled(enabled)
+            .mCancelled(cancelled)
+            .mOnHotList(onHotList)
+            .mAllows(allows.mkString(","))
+            .mAccount(mappedBankAccountPrimaryKey) // Card <-MappedLongForeignKey-> BankAccount, so need the primary key here.
+            .saveMe()
+        } ?~! ErrorMessages.UpdateCardError
+      case _ =>
+        tryo {
+          MappedPhysicalCard.create
+            .mBankId(bankId)
+            .mBankCardNumber(bankCardNumber)
+            .mIssueNumber(nameOnCard)
+            .mNameOnCard(issueNumber)
+            .mSerialNumber(serialNumber)
+            .mValidFrom(validFrom)
+            .mExpires(expires)
+            .mEnabled(enabled)
+            .mCancelled(cancelled)
+            .mOnHotList(onHotList)
+            .mAllows(allows.mkString(","))
+            .mAccount(mappedBankAccountPrimaryKey) // Card <-MappedLongForeignKey-> BankAccount, so need the primary key here.
+            .saveMe()
+        } ?~! ErrorMessages.CreateCardError
+    }
   }
   def getPhysicalCards(user: User) = {
     val accounts = Views.views.vend.getAllAccountsUserCanSee(Full(user))
@@ -82,6 +115,7 @@ object MappedPhysicalCardProvider extends PhysicalCardProvider {
 class MappedPhysicalCard extends PhysicalCardTrait with LongKeyedMapper[MappedPhysicalCard] with IdPK with OneToMany[Long, MappedPhysicalCard] {
   def getSingleton = MappedPhysicalCard
 
+  object mBankId extends MappedString(this, 50)
   object mBankCardNumber extends MappedString(this, 50)
   object mNameOnCard extends MappedString(this, 128)
   object mIssueNumber extends MappedString(this, 10)
@@ -101,6 +135,7 @@ class MappedPhysicalCard extends PhysicalCardTrait with LongKeyedMapper[MappedPh
   object mCollected extends MappedDateTime(this)
   object mPosted extends MappedDateTime(this)
 
+  def bankId: String = mBankId.get
   def bankCardNumber: String = mBankCardNumber.get
   def nameOnCard: String = mNameOnCard.get
   def issueNumber: String = mIssueNumber.get
@@ -109,7 +144,7 @@ class MappedPhysicalCard extends PhysicalCardTrait with LongKeyedMapper[MappedPh
   def expires: Date = mExpires.get
   def enabled: Boolean = mEnabled.get
   def cancelled: Boolean = mCancelled.get
-  def onHotList: Boolean = mOnHotList
+  def onHotList: Boolean = mOnHotList.get
   def technology: String = mTechnology.get
   def networks: List[String] = mNetworks.get.split(",").toList
   def allows: List[code.model.CardAction] = Option(mAllows.get) match {
@@ -127,7 +162,7 @@ class MappedPhysicalCard extends PhysicalCardTrait with LongKeyedMapper[MappedPh
     }
     case _ => None
   }
-  def pinResets: List[code.model.PinResetInfo] = mPinResets.map(a => PinResetInfo(a.mReplacementDate, PinResetReason.valueOf(a.mReplacementReason))).toList
+  def pinResets: List[code.model.PinResetInfo] = mPinResets.map(a => PinResetInfo(a.mReplacementDate.get, PinResetReason.valueOf(a.mReplacementReason.get))).toList
   def collected: Option[CardCollectionInfo] = Option(mCollected.get) match {
     case Some(x) => Some(CardCollectionInfo(x))
     case _ => None
@@ -140,7 +175,7 @@ class MappedPhysicalCard extends PhysicalCardTrait with LongKeyedMapper[MappedPh
 }
 
 object MappedPhysicalCard extends MappedPhysicalCard with LongKeyedMetaMapper[MappedPhysicalCard] {
-  override def dbIndexes = UniqueIndex(mBankCardNumber) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(mBankId, mBankCardNumber) :: super.dbIndexes
 }
 
 

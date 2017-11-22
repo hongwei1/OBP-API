@@ -33,12 +33,16 @@
 package code.api.util
 
 import java.io.InputStream
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 
 import code.api.Constant._
 import code.api.DirectLogin
+import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.OAuthHandshake._
+import code.api._
+import code.api.util.APIUtil.ApiVersion.ApiVersion
 import code.api.v1_2.ErrorMessage
 import code.bankconnectors._
 import code.consumer.Consumers
@@ -46,26 +50,34 @@ import code.customer.Customer
 import code.entitlement.Entitlement
 import code.metrics.{APIMetrics, ConnectorMetricsProvider}
 import code.model._
+import code.model.dataAccess.ResourceUserCaseClass
 import code.sanitycheck.SanityCheck
 import code.util.Helper.{MdcLoggable, SILENCE_IS_GOLDEN}
 import dispatch.url
+import net.liftweb.actor.LAFuture
 import net.liftweb.common.{Empty, _}
 import net.liftweb.http._
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.js.JsExp
-import net.liftweb.json.JsonAST.JValue
-import net.liftweb.json.{Extraction, parse}
+import net.liftweb.http.rest.RestContinuation
+import net.liftweb.json.JsonAST.{JField, JValue}
+import net.liftweb.json.JsonParser.ParseException
+import net.liftweb.json.{Extraction, MappingException, parse}
 import net.liftweb.util.Helpers._
-import net.liftweb.util.Props
+import net.liftweb.util.{Props, StringHelpers}
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
 import scala.xml.{Elem, XML}
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 object ErrorMessages {
 import code.api.util.APIUtil._
 
+val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
 
   // Notes to developers. Please:
   // 1) Follow (the existing) grouping of messages
@@ -73,6 +85,8 @@ import code.api.util.APIUtil._
   // 3) Before adding a new message, check that you can't use one that already exists.
   // 4) Use Proper Names for OBP Resources.
   // 5) Don't use abbreviations.
+  // 6) Any messaage defined here should be considered "fair game" to return over the API. Thus:
+  // 7) Since the existance of "OBP-..." in a message is used to determine if we should display to a user if display_internal_errors=false, do *not* concatenate internal or core banking system error messages to these strings.
 
   // Infrastructure / config level messages (OBP-00XXX)
   val HostnameNotSpecified = "OBP-00001: Hostname not specified. Could not get hostname from Props. Please edit your props file. Here are some example settings: hostname=http://127.0.0.1:8080 or hostname=https://www.example.com"
@@ -85,9 +99,10 @@ import code.api.util.APIUtil._
   val PublicViewsNotAllowedOnThisInstance = "OBP-00005: Public views not allowed on this instance. Please set allow_public_views = true in props files. "
 
 
-  val RemoteDataSecretMatchError = "OBP-00006: Remote data secret cannot be matched!" // (was OBP-20021)
-  val RemoteDataSecretObtainError = "OBP-00007: Remote data secret cannot be obtained!" // (was OBP-20022)
+  val RemoteDataSecretMatchError = "OBP-00006: Remote data secret cannot be matched! Check OBP-API and OBP-Storage Props values for remotedata.hostname, remotedata.port and remotedata.secret." // (was OBP-20021)
+  val RemoteDataSecretObtainError = "OBP-00007: Remote data secret cannot be obtained! Check OBP-API and OBP-Storage Props values for remotedata.hostname, remotedata.port and remotedata.secret." // (was OBP-20022)
 
+  val ApiVersionNotSupported = "OBP-00008: The API version you called is not enabled on this server. Please contact your API administrator or use another version."
 
 
   // General messages (OBP-10XXX)
@@ -98,12 +113,18 @@ import code.api.util.APIUtil._
   val InvalidDateFormat = "OBP-10005: Invalid Date Format. Could not convert value to a Date."
   val InvalidInputJsonFormat = "OBP-10006: Invalid input JSON format." // Why do we need this as well as InvalidJsonFormat?
   val IncorrectRoleName = "OBP-10007: Incorrect Role name: "
+  val CouldNotTransformJsonToInternalModel = "OBP-10008: Could not transform Json to internal model."
+  val CountNotSaveOrUpdateResource = "OBP-10009: Could not save or update resource."
+  val NotImplemented = "OBP-10010: Not Implemented "
 
   // General Sort and Paging
   val FilterSortDirectionError = "OBP-10023: obp_sort_direction parameter can only take two values: DESC or ASC!" // was OBP-20023
   val FilterOffersetError = "OBP-10024: wrong value for obp_offset parameter. Please send a positive integer (=>0)!" // was OBP-20024
   val FilterLimitError = "OBP-10025: wrong value for obp_limit parameter. Please send a positive integer (=>1)!" // was OBP-20025
   val FilterDateFormatError = s"OBP-10026: Failed to parse date string. Please use this format ${defaultFilterFormat.toPattern} or that one ${fallBackFilterFormat.toPattern}!" // OBP-20026
+
+  val InvalidApiVersionString = "OBP-00027: Invalid API Version string. We could not find the version specified."
+
 
 
 
@@ -118,7 +139,7 @@ import code.api.util.APIUtil._
 
   val InvalidConsumerKey = "OBP-20008: Invalid Consumer Key."
   val InvalidConsumerCredentials = "OBP-20009: Invalid consumer credentials"
- 
+
   val InvalidValueLength = "OBP-20010: Value too long"
   val InvalidValueCharacters = "OBP-20011: Value contains invalid characters"
 
@@ -127,7 +148,7 @@ import code.api.util.APIUtil._
   val UsernameHasBeenLocked = "OBP-20013: The account has been locked, please contact administrator !"
 
   val InvalidConsumerId = "OBP-20014: Invalid Consumer ID. Please specify a valid value for CONSUMER_ID."
-  
+
   val UserNoPermissionUpdateConsumer = "OBP-20015: Only the developer that created the consumer key should be able to edit it, please login with the right user."
 
   val UnexpectedErrorDuringLogin = "OBP-20016: An unexpected login error occurred. Please try again."
@@ -136,10 +157,24 @@ import code.api.util.APIUtil._
 
 
   val InvalidInternalRedirectUrl = "OBP-20018: Login failed, invalid internal redirectUrl."
+  val UserNoOwnerView = "OBP-20019: User does not have access to owner view. "
+  val InvalidCustomViewFormat = "OBP-20020: View name must start with `_`. eg: _work, _life "
+  val SystemViewsCanNotBeModified = "OBP-20021: System Views can not be modified. Only the created views can be modified."
 
 
 
   val UserNotFoundByUsername = "OBP-20027: User not found by username."
+  val GatewayLoginMissingParameters = "OBP-20028: These GatewayLogin parameters are missing: "
+  val GatewayLoginUnknownError = "OBP-20029: Unknown Gateway login error."
+  val GatewayLoginHostPropertyMissing = "OBP-20030: Property gateway.host is not defined."
+  val GatewayLoginWhiteListAddresses = "OBP-20031: Gateway login can be done only from allowed addresses."
+  val GatewayLoginJwtTokenIsNotValid = "OBP-20040: The JWT is corrupted/changed during a transport."
+  val GatewayLoginCannotExtractJwtToken = "OBP-20041: Header, Payload and Signature cannot be extracted from the JWT."
+  val GatewayLoginNoNeedToCallCbs = "OBP-20042: There is no need to call CBS"
+  val GatewayLoginCannotFindUser = "OBP-20043: User cannot be found. Please initiate CBS communication in order to create it."
+  val GatewayLoginCannotGetCbsToken = "OBP-20044: Cannot get the CBSToken response from South side"
+  val GatewayLoginCannotGetOrCreateUser = "OBP-20045: Cannot get or create user during GatewayLogin process."
+  val GatewayLoginNoJwtForResponse = "OBP-20046: There is no useful value for JWT."
 
 
 
@@ -156,7 +191,7 @@ import code.api.util.APIUtil._
 
   val CustomerNumberAlreadyExists = "OBP-30006: Customer Number already exists. Please specify a different value for BANK_ID or CUSTOMER_NUMBER."
   val CustomerAlreadyExistsForUser = "OBP-30007: The User is already linked to a Customer at the bank specified by BANK_ID"
-  val CustomerDoNotExistsForUser = "OBP-30008: User is not linked to a Customer at the bank specified by BANK_ID"
+  val UserCustomerLinksNotFoundForUser = "OBP-30008: User Customer Link not found by USER_ID"
   val AtmNotFoundByAtmId = "OBP-30009: ATM not found. Please specify a valid value for ATM_ID."
   val BranchNotFoundByBranchId = "OBP-300010: Branch not found. Please specify a valid value for BRANCH_ID."
   val ProductNotFoundByProductCode = "OBP-30011: Product not found. Please specify a valid value for PRODUCT_CODE."
@@ -168,7 +203,7 @@ import code.api.util.APIUtil._
   val CounterpartyNotFoundByCounterpartyId = "OBP-30017: Counterparty not found. Please specify a valid value for COUNTERPARTY_ID."
   val BankAccountNotFound = "OBP-30018: Bank Account not found. Please specify valid values for BANK_ID and ACCOUNT_ID. "
   val ConsumerNotFoundByConsumerId = "OBP-30019: Consumer not found. Please specify a valid value for CONSUMER_ID."
-  
+
   val CreateBankError = "OBP-30020: Could not create the Bank"
   val UpdateBankError = "OBP-30021: Could not update the Bank"
   val ViewNoPermission = "OBP-30022: The current view does not have the permission: "
@@ -185,7 +220,15 @@ import code.api.util.APIUtil._
   val CreateProductError = "OBP-30030: Could not insert the Product"
   val UpdateProductError = "OBP-30031: Could not update the Product"
 
-  
+  val CreateCardError = "OBP-30032: Could not insert the Card"
+  val UpdateCardError = "OBP-30033: Could not update the Card"
+
+  val ViewIdNotSupported = "OBP-30034: This ViewId is do not supported. Only support four now: Owner, Public, Accountant, Auditor."
+
+
+  val UserCustomerLinkNotFound = "OBP-30035: User Customer Link not found"
+
+
 
   // Meetings
   val MeetingsNotSupported = "OBP-30101: Meetings are not supported on this server."
@@ -217,6 +260,8 @@ import code.api.util.APIUtil._
   val InsufficientAuthorisationToCreateBranch  = "OBP-30209: Insufficient authorisation to Create Branch. You do not have the role CanCreateBranch." // was OBP-20019
   val InsufficientAuthorisationToCreateBank  = "OBP-30210: Insufficient authorisation to Create Bank. You do not have the role CanCreateBank." // was OBP-20020
 
+  val InvalidConnector = "OBP-30211: Invalid Connector Version. Please specify a valid value for CONNECTOR."
+  
   // General Resource related messages above here
 
 
@@ -236,6 +281,8 @@ import code.api.util.APIUtil._
   val InvalidChargePolicy = "OBP-40013: Invalid Charge Policy. Please specify a valid value for Charge_Policy: SHARED, SENDER or RECEIVER. "
   val AllowedAttemptsUsedUp = "OBP-40014: Sorry, you've used up your allowed attempts. "
   val InvalidChallengeType = "OBP-40015: Invalid Challenge Type. Please specify a valid value for CHALLENGE_TYPE, when you create the transaction request."
+  val InvalidChallengeAnswer = "OBP-40016: Invalid Challenge Answer. Please specify a valid value for answer in Json body."
+  val InvalidPhoneNumber = "OBP-40017: Invalid Phone Number. Please specify a valid value for PHONE_NUMBER. Eg:+9722398746 "
 
 
 
@@ -244,7 +291,13 @@ import code.api.util.APIUtil._
   val FutureTimeoutException = "OBP-50001: Future Timeout Exception."
   val KafkaMessageClassCastException = "OBP-50002: Kafka Response Message Class Cast Exception."
   val AdapterOrCoreBankingSystemException = "OBP-50003: Adapter Or Core Banking System Exception. Failed to get a valid response from the south side Adapter or Core Banking System."
-
+  // This error may not be shown to user, just for debugging.
+  val CurrentUserNotFoundException = "OBP-50004: Method (AuthUser.getCurrentUser) can not find the current user in the current context!"
+  val AnUnspecifiedOrInternalErrorOccurred = "OBP-50005: An unspecified or internal error occurred."
+  val KafkaInterruptedException = "OBP-50006: Kafka interrupted exception."
+  val KafkaExecutionException = "OBP-50007: Kafka execution exception."
+  val KafkaStreamTimeoutException = "OBP-50008: Akka Kafka stream timeout exception."
+  val KafkaUnknownError = "OBP-50009: Kafka unknown error."
 
   // Connector Data Exceptions (OBP-502XX)
   val ConnectorEmptyResponse = "OBP-50200: Connector cannot return the data we requested." // was OBP-30200
@@ -252,6 +305,7 @@ import code.api.util.APIUtil._
   val InvalidConnectorResponseForGetBankAccount = "OBP-50202: Connector did not return the account we requested."  // was OBP-30202
   val InvalidConnectorResponseForGetTransaction = "OBP-50203: Connector did not return the transaction we requested."  // was OBP-30203
   val InvalidConnectorResponseForGetTransactions = "OBP-50204: Connector did not return the set of transactions we requested."  // was OBP-30204
+  val InvalidConnectorResponseForGetTransactionRequests210 = "OBP-50205: Connector did not return the set of transaction requests we requested." 
 
 
   // Adapter Exceptions (OBP-6XXXX)
@@ -276,8 +330,8 @@ import code.api.util.APIUtil._
       v.setAccessible(true)
       v.getName() -> v.get(this)
     }
-  
-  //For Swagger, get varible name by value: 
+
+  //For Swagger, get varible name by value:
   // eg: val InvalidUserId = "OBP-30107: Invalid User Id."
   //  getFildNameByValue("OBP-30107: Invalid User Id.") return InvalidUserId
   def getFildNameByValue(value: String) = {
@@ -303,37 +357,23 @@ object APIUtil extends MdcLoggable {
   val defaultFilterFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
   val fallBackFilterFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
   import code.api.util.ErrorMessages._
-  
+
   def httpMethod : String =
     S.request match {
       case Full(r) => r.request.method
       case _ => "GET"
     }
 
-  def isThereDirectLoginHeader : Boolean = {
-    S.request match {
-      case Full(a) =>  a.header("Authorization") match {
-        case Full(parameters) => parameters.contains("DirectLogin")
-        case _ => false
-      }
-      case _ => false
-    }
-  }
+  def hasDirectLoginHeader : Boolean = hasHeader("DirectLogin")
 
-  def isThereGatewayHeader : Boolean = {
-    S.request match {
-      case Full(a) =>  a.header("Authorization") match {
-        case Full(parameters) => parameters.contains("Gateway")
-        case _ => false
-      }
-      case _ => false
-    }
-  }
+  def hasAnOAuthHeader : Boolean = hasHeader("OAuth")
 
-  def isThereAnOAuthHeader : Boolean = {
+  def hasGatewayHeader() = hasHeader("GatewayLogin")
+
+  def hasHeader(`type`: String) : Boolean = {
     S.request match {
       case Full(a) =>  a.header("Authorization") match {
-        case Full(parameters) => parameters.contains("OAuth")
+        case Full(parameters) => parameters.contains(`type`)
         case _ => false
       }
       case _ => false
@@ -342,7 +382,14 @@ object APIUtil extends MdcLoggable {
 
   def registeredApplication(consumerKey: String): Boolean = {
     Consumers.consumers.vend.getConsumerByConsumerKey(consumerKey) match {
-      case Full(application) => application.isActive
+      case Full(application) => application.isActive.get
+      case _ => false
+    }
+  }
+
+  def registeredApplicationFuture(consumerKey: String): Future[Boolean] = {
+    Consumers.consumers.vend.getConsumerByConsumerKeyFuture(consumerKey) map {
+      case Full(c) => c.isActive.get
       case _ => false
     }
   }
@@ -350,12 +397,12 @@ object APIUtil extends MdcLoggable {
   def logAPICall(date: TimeSpan, duration: Long, rd: Option[ResourceDoc]) = {
     if(Props.getBool("write_metrics", false)) {
       val user =
-        if (isThereAnOAuthHeader) {
+        if (hasAnOAuthHeader) {
           getUser match {
             case Full(u) => Full(u)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_direct_login", true) && isThereDirectLoginHeader) {
+        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
           DirectLogin.getUser match {
             case Full(u) => Full(u)
             case _ => Empty
@@ -365,12 +412,12 @@ object APIUtil extends MdcLoggable {
         }
 
       val consumer =
-        if (isThereAnOAuthHeader) {
+        if (hasAnOAuthHeader) {
           getConsumer match {
             case Full(c) => Full(c)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_direct_login", true) && isThereDirectLoginHeader) {
+        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
           DirectLogin.getConsumer match {
             case Full(c) => Full(c)
             case _ => Empty
@@ -390,18 +437,17 @@ object APIUtil extends MdcLoggable {
       var appName = if (u != null) c.name.toString() else "null"
       var developerEmail = if (u != null) c.developerEmail.toString() else "null"
       val implementedByPartialFunction = rd match {
-        case Some(r) => r.apiFunction
+        case Some(r) => r.partialFunctionName
         case _       => ""
       }
       //name of version where the call is implemented) -- S.request.get.view
-      val implementedInVersion = S.request.get.view
+      val implementedInVersion = S.request.openOrThrowException("Attempted to open an empty Box.").view
       //(GET, POST etc.) --S.request.get.requestType.method
-      val verb = S.request.get.requestType.method
+      val verb = S.request.openOrThrowException("Attempted to open an empty Box.").requestType.method
       val url = S.uriAndQueryString.getOrElse("")
       val correlationId = getCorrelationId()
 
       //execute saveMetric in future, as we do not need to know result of operation
-      import scala.concurrent.ExecutionContext.Implicits.global
       Future {
         APIMetrics.apiMetrics.vend.saveMetric(
           userId,
@@ -442,7 +488,32 @@ object APIUtil extends MdcLoggable {
     commit
   }
 
-  def getHeaders() = headers ::: List(("Correlation-Id", getCorrelationId()))
+  /**
+    *
+    * @param jwt is a JWT value extracted from GatewayLogin Authorization Header.
+    *            Value None implies that Authorization Header is NOT GatewayLogin
+    * @return GatewayLogin Custom Response Header
+    * Example of the Header in Response generated by this function:
+    * GatewayLogin: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiIxMjMiLCJhcHBfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIiLCJ0aW1lc3RhbXAiOiIiLCJjYnNfdG9rZW4iOiI-LD8gICAgICAgICAgODE0MzMwMjAxMDI2MTIiLCJ0ZW1lbm9zX2lkIjoiIn0.saE7W-ydZcwbjxfWx7q6HeQ1q4LMLYZiuYSx7qdP0k8
+    */
+  def getGatewayLoginHeader(jwt: Option[SessionContext]) = {
+    jwt match {
+      case Some(v) =>
+       v.gatewayLoginResponseHeader match {
+         case Some(h) =>
+           val header = (gatewayResponseHeaderName, h)
+           CustomResponseHeaders(List(header))
+         case None =>
+           CustomResponseHeaders(Nil)
+       }
+      case None =>
+        CustomResponseHeaders(Nil)
+    }
+  }
+
+  def getHeadersCommonPart() = headers ::: List(("Correlation-Id", getCorrelationId()))
+
+  def getHeaders() = getHeadersCommonPart() ::: getGatewayResponseHeader()
 
   case class CustomResponseHeaders(list: List[(String, String)])
 
@@ -457,7 +528,7 @@ object APIUtil extends MdcLoggable {
     JsonResponse(json, getHeaders() ::: headers.list, Nil, httpCode)
 
   def successJsonResponseFromCaseClass(cc: Any, httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
-    JsonResponse(Extraction.decompose(cc), getHeaders() ::: headers.list, Nil, httpCode)
+    JsonResponse(snakify(Extraction.decompose(cc)), getHeaders() ::: headers.list, Nil, httpCode)
 
   def acceptedJsonResponse(json: JsExp, httpCode : Int = 202)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
     JsonResponse(json, getHeaders() ::: headers.list, Nil, httpCode)
@@ -465,7 +536,7 @@ object APIUtil extends MdcLoggable {
   def errorJsonResponse(message : String = "error", httpCode : Int = 400)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
     JsonResponse(Extraction.decompose(ErrorMessage(message)), getHeaders() ::: headers.list, Nil, httpCode)
 
-  def notImplementedJsonResponse(message : String = "Not Implemented", httpCode : Int = 501)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
+  def notImplementedJsonResponse(message : String = ErrorMessages.NotImplemented, httpCode : Int = 501)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
     JsonResponse(Extraction.decompose(ErrorMessage(message)), getHeaders() ::: headers.list, Nil, httpCode)
 
 
@@ -493,10 +564,10 @@ object APIUtil extends MdcLoggable {
     }
   }
 
-  /** enforce the password. 
-    * The rules : 
+  /** enforce the password.
+    * The rules :
     * 1) length is >16 characters without validations
-    * 2) or Min 10 characters with mixed numbers + letters + upper+lower case + at least one special character. 
+    * 2) or Min 10 characters with mixed numbers + letters + upper+lower case + at least one special character.
     * */
   def isValidStrongPassword(password: String): Boolean = {
     /**
@@ -514,7 +585,7 @@ object APIUtil extends MdcLoggable {
       case _ => false
     }
   }
-  
+
 
 
   /** These three functions check rather than assert. I.e. they are silent if OK and return an error message if not.
@@ -564,13 +635,28 @@ object APIUtil extends MdcLoggable {
       case _ => ErrorMessages.InvalidValueCharacters
     }
   }
-  
+
+
+  def ValueOrOBP(text : String) =
+    text match {
+      case t if t == null => "OBP"
+      case t if t.length > 0 => t
+      case _ => "OBP"
+    }
+
+  def ValueOrOBPId(text : String, OBPId: String) =
+    text match {
+      case t if t == null => OBPId
+      case t if t.length > 0 => t
+      case _ => OBPId
+    }
+
   def stringOrNull(text : String) =
     if(text == null || text.isEmpty)
       null
     else
       text
-  
+
   def stringOptionOrNull(text : Option[String]) =
     text match {
       case Some(t) => stringOrNull(t)
@@ -587,23 +673,23 @@ object APIUtil extends MdcLoggable {
       val parsedDate = tryo{
         defaultFilterFormat.parse(date)
       }
-      
+
       lazy val fallBackParsedDate = tryo{
         fallBackFilterFormat.parse(date)
       }
-      
+
       if(parsedDate.isDefined){
-        Full(parsedDate.get)
+        Full(parsedDate.openOrThrowException("Attempted to open an empty Box."))
       }
       else if(fallBackParsedDate.isDefined){
-        Full(fallBackParsedDate.get)
+        Full(fallBackParsedDate.openOrThrowException("Attempted to open an empty Box."))
       }
       else{
         Failure(FilterDateFormatError)
       }
     }
   }
-  
+
    def getSortDirection(req: Req): Box[OBPOrder] = {
     req.header("obp_sort_direction") match {
       case Full(v) => {
@@ -617,7 +703,7 @@ object APIUtil extends MdcLoggable {
       case _ => Full(OBPOrder(None))
     }
   }
-  
+
    def getFromDate(req: Req): Box[OBPFromDate] = {
     val date: Box[Date] = req.header("obp_from_date") match {
       case Full(d) => {
@@ -627,29 +713,34 @@ object APIUtil extends MdcLoggable {
         Full(new Date(0))
       }
     }
-    
+
     date.map(OBPFromDate(_))
   }
-  
+
    def getToDate(req: Req): Box[OBPToDate] = {
     val date: Box[Date] = req.header("obp_to_date") match {
       case Full(d) => {
         DateParser.parse(d)
       }
-      case _ => Full(new Date())
+      case _ => {
+        // Use a fixed date far into the future (rather than current date/time so that cache keys are more static)
+        // (Else caching is invlidated by constantly changing date)
+        val toDate = dateformat.parse("3049-01-01")
+        Full (toDate)
+      }
     }
-    
+
     date.map(OBPToDate(_))
   }
-  
+
    def getOffset(req: Req): Box[OBPOffset] = {
     getPaginationParam(req, "obp_offset", 0, 0, FilterOffersetError).map(OBPOffset(_))
   }
-  
+
    def getLimit(req: Req): Box[OBPLimit] = {
     getPaginationParam(req, "obp_limit", 50, 1, FilterLimitError).map(OBPLimit(_))
   }
-  
+
    def getPaginationParam(req: Req, paramName: String, defaultValue: Int, minimumValue: Int, errorMsg: String): Box[Int]= {
     req.header(paramName) match {
       case Full(v) => {
@@ -670,7 +761,7 @@ object APIUtil extends MdcLoggable {
       case _ => Full(defaultValue)
     }
   }
-  
+
   def getTransactionParams(req: Req): Box[List[OBPQueryParam]] = {
     for{
       sortDirection <- getSortDirection(req)
@@ -698,7 +789,7 @@ object APIUtil extends MdcLoggable {
   }
   //ended -- Filtering and Paging revelent methods  ////////////////////////////
 
-  
+
   /** Import this object's methods to add signing operators to dispatch.Request */
   object OAuth {
     import javax.crypto
@@ -811,7 +902,7 @@ object APIUtil extends MdcLoggable {
         val form_params = r.getFormParams.asScala.groupBy(_.getName).mapValues(_.map(_.getValue)).map {
             case (k, v) => k -> v.toString
           }
-        val body_encoding = r.getBodyEncoding
+        val body_encoding = r.getCharset
         var body = new String()
         if (r.getByteData != null )
           body = new String(r.getByteData)
@@ -820,9 +911,10 @@ object APIUtil extends MdcLoggable {
                                       consumer, token, verifier, callback)
 
         def createRequest( reqData: ReqData ): Request = {
+          val charset = if(reqData.body_encoding == "null") Charset.defaultCharset() else Charset.forName(reqData.body_encoding)
           val rb = url(reqData.url)
             .setMethod(reqData.method)
-            .setBodyEncoding(reqData.body_encoding)
+            .setBodyEncoding(charset)
             .setBody(reqData.body) <:< reqData.headers
           if (reqData.query_params.nonEmpty)
             rb <<? reqData.query_params
@@ -833,7 +925,7 @@ object APIUtil extends MdcLoggable {
           oauth_url,
           r.getMethod,
           body,
-          body_encoding,
+          if (body_encoding == null) "null" else body_encoding.name(),
           IMap("Authorization" -> ("OAuth " + oauth_params.map {
             case (k, v) => encode_%(k) + "=\"%s\"".format(encode_%(v.toString))
           }.mkString(",") )),
@@ -851,21 +943,24 @@ object APIUtil extends MdcLoggable {
 
    */
 
+
   // Used to tag Resource Docs
   case class ResourceDocTag(tag: String)
 
   // Use the *singular* case. for both the variable name and string.
   // e.g. "This call is Payment related"
   val apiTagTransactionRequest = ResourceDocTag("TransactionRequest")
-  val apiTagApiInfo = ResourceDocTag("APIInfo")
+  val apiTagApi = ResourceDocTag("API")
   val apiTagBank = ResourceDocTag("Bank")
   val apiTagAccount = ResourceDocTag("Account")
   val apiTagPublicData = ResourceDocTag("PublicData")
   val apiTagPrivateData = ResourceDocTag("PrivateData")
   val apiTagTransaction = ResourceDocTag("Transaction")
-  val apiTagMetaData = ResourceDocTag("MetaData")
+  val apiTagCounterpartyMetaData = ResourceDocTag("CounterpartyMetaData")
+  val apiTagTransactionMetaData = ResourceDocTag("TransactionMetaData")
   val apiTagView = ResourceDocTag("View")
   val apiTagEntitlement = ResourceDocTag("Entitlement")
+  val apiTagRole = ResourceDocTag("Role")
   val apiTagOwnerRequired = ResourceDocTag("OwnerViewRequired")
   val apiTagCounterparty = ResourceDocTag("Counterparty")
   val apiTagKyc = ResourceDocTag("KYC")
@@ -875,6 +970,15 @@ object APIUtil extends MdcLoggable {
   val apiTagMeeting = ResourceDocTag("Meeting")
   val apiTagExperimental = ResourceDocTag("Experimental")
   val apiTagPerson = ResourceDocTag("Person")
+  val apiTagCard = ResourceDocTag("Card")
+  val apiTagSandbox = ResourceDocTag("Sandbox")
+  val apiTagBranch = ResourceDocTag("Branch")
+  val apiTagATM = ResourceDocTag("ATM")
+  val apiTagProduct = ResourceDocTag("Product")
+  val apiTagOpenData = ResourceDocTag("Open Data")
+  val apiTagConsumer = ResourceDocTag("Consumer")
+  val apiTagDataWarehouse = ResourceDocTag("Data Warehouse")
+  val apiTagFx = ResourceDocTag("FX")
 
   case class Catalogs(core: Boolean = false, psd2: Boolean = false, obwg: Boolean = false)
 
@@ -884,40 +988,40 @@ object APIUtil extends MdcLoggable {
   val notCore = false
   val notPSD2 = false
   val notOBWG = false
-  
+
   case class BaseErrorResponseBody(
     //code: String,//maybe used, for now, 400,204,200...are handled in RestHelper class
     //TODO, this should be a case class name, but for now, the InvalidNumber are just String, not the case class.
     name: String,
     detail: String
-  ) 
-  
+  )
+
   //check #511, https://github.com/OpenBankProject/OBP-API/issues/511
-  // get rid of JValue, but in API-EXPLORER or other places, it need the Empty JValue "{}" 
+  // get rid of JValue, but in API-EXPLORER or other places, it need the Empty JValue "{}"
   // So create the EmptyClassJson to set the empty JValue "{}"
   case class EmptyClassJson()
-  
+
   // Used to document the API calls
   case class ResourceDoc(
-    partialFunction : PartialFunction[Req, Box[User] => Box[JsonResponse]],
-    apiVersion: String, // TODO: Constrain to certain strings?
-    apiFunction: String, // The partial function that implements this resource. Could use it to link to the source code that implements the call
-    requestVerb: String, // GET, POST etc. TODO: Constrain to GET, POST etc.
-    requestUrl: String, // The URL (not including /obp/vX.X). Starts with / No trailing slash. TODO Constrain the string?
-    summary: String, // A summary of the call (originally taken from code comment) SHOULD be under 120 chars to be inline with Swagger
-    description: String, // Longer description (originally taken from github wiki)
-    exampleRequestBody: scala.Product, // An example of the body required (maybe empty)
-    successResponseBody: scala.Product, // A successful response body
-    errorResponseBodies: List[String], // Possible error responses
-    catalogs: Catalogs,
-    tags: List[ResourceDocTag]
+                          partialFunction : OBPEndpoint, // PartialFunction[Req, Box[User] => Box[JsonResponse]],
+                          implementedInApiVersion: String, // TODO: Use ApiVersion enumeration instead of string
+                          partialFunctionName: String, // The string name of the partial function that implements this resource. Could use it to link to the source code that implements the call
+                          requestVerb: String, // GET, POST etc. TODO: Constrain to GET, POST etc.
+                          requestUrl: String, // The URL (not including /obp/vX.X). Starts with / No trailing slash. TODO Constrain the string?
+                          summary: String, // A summary of the call (originally taken from code comment) SHOULD be under 120 chars to be inline with Swagger
+                          description: String, // Longer description (originally taken from github wiki)
+                          exampleRequestBody: scala.Product, // An example of the body required (maybe empty)
+                          successResponseBody: scala.Product, // A successful response body
+                          errorResponseBodies: List[String], // Possible error responses
+                          catalogs: Catalogs,
+                          tags: List[ResourceDocTag]
   )
-  
-  
+
+
   /**
-    * 
+    *
     * This is the base class for all kafka outbound case class
-    * action and messageFormat are mandatory 
+    * action and messageFormat are mandatory
     * The optionalFields can be any other new fields .
     */
   abstract class OutboundMessageBase(
@@ -926,7 +1030,7 @@ object APIUtil extends MdcLoggable {
     def action: String
     def messageFormat: String
   }
-  
+
   abstract class InboundMessageBase(
     optionalFields: String*
   ) {
@@ -939,9 +1043,9 @@ object APIUtil extends MdcLoggable {
     messageFormat: String,
     description: String,
     exampleOutboundMessage: JValue,
-    exampleInboundMessage: JValue  
+    exampleInboundMessage: JValue
   )
-  
+
   // Define relations between API end points. Used to create _links in the JSON and maybe later for API Explorer browsing
   case class ApiRelation(
     fromPF : PartialFunction[Req, Box[User] => Box[JsonResponse]],
@@ -1096,7 +1200,7 @@ Returns a string showed to the developer
         toResourceDoc.partialFunction,
         relation.rel,
         // Add the vVersion to the documented url
-        s"/${apiVersionWithV(toResourceDoc.apiVersion)}${toResourceDoc.requestUrl}"
+        s"/${apiVersionWithV(toResourceDoc.implementedInApiVersion)}${toResourceDoc.requestUrl}"
       )
     internalApiLinks
   }
@@ -1191,7 +1295,7 @@ Returns a string showed to the developer
       case _       => "off"
     }
   }
-  
+
   // check is there a "$" in the input value.
   // eg: MODULE$ is not the useful input.
   // eg2: allFieldsAndValues is just for SwaggerJSONsV220.allFieldsAndValues,it is not useful.
@@ -1207,7 +1311,6 @@ Returns a string showed to the developer
     val t1 = System.currentTimeMillis()
     if (Props.getBool("write_metrics", false)){
       val correlationId = getCorrelationId()
-      import scala.concurrent.ExecutionContext.Implicits.global
       Future {
         ConnectorMetricsProvider.metrics.vend.saveConnectorMetric(nameOfConnector, nameOfFunction, correlationId, now, t1 - t0)
       }
@@ -1215,14 +1318,14 @@ Returns a string showed to the developer
     result
   }
 
-  val localRemotedataSecret = UUID.randomUUID.toString
-
   def akkaSanityCheck (): Box[Boolean] = {
-    val remotedataSecret = Props.getBool("remotedata.enable", false) match {
-      case true => Props.get("remotedata.secret").openOrThrowException("Cannot obtain property remotedata.secret")
-      case false => localRemotedataSecret
+    Props.getBool("use_akka", false) match {
+      case true =>
+        val remotedataSecret = Props.get("remotedata.secret").openOrThrowException("Cannot obtain property remotedata.secret")
+        SanityCheck.sanityCheck.vend.remoteAkkaSanityCheck(remotedataSecret)
+      case false => Empty
     }
-    SanityCheck.sanityCheck.vend.remoteAkkaSanityCheck(remotedataSecret)
+
 
   }
   /**
@@ -1241,5 +1344,475 @@ Returns a string showed to the developer
     * @return - the source port of the client or last seen proxy.
     */
   def getRemotePort(): Int = S.containerRequest.map(_.remotePort).openOr(0)
+
+
+  /**
+    * Defines Gateway Custom Response Header.
+    */
+  val gatewayResponseHeaderName = "GatewayLogin"
+  /**
+    * Set value of Gateway Custom Response Header.
+    */
+  def setGatewayResponseHeader(s: S)(value: String) = s.setSessionAttribute(gatewayResponseHeaderName, value)
+  /**
+    * @return - Gateway Custom Response Header.
+    */
+  def getGatewayResponseHeader() = {
+    S.getSessionAttribute(gatewayResponseHeaderName) match {
+      case Full(h) => List((gatewayResponseHeaderName, h))
+      case _ => Nil
+    }
+  }
+  def getGatewayLoginJwt(): Option[String] = {
+    getGatewayResponseHeader() match {
+      case Nil =>
+        None
+      case x :: Nil =>
+        Some(x._2)
+    }
+  }
+  /**
+    * Set value of GatewayLogin username.
+    */
+  def setGatewayLoginUsername(s: S)(value: String) = s.setSessionAttribute(gatewayResponseHeaderName + "username", value)
+
+  /**
+    * Set value of GatewayLogin cbsToken.
+    */
+  def setGatewayLoginCbsToken(s: S)(value: Option[String]) = {
+    value match  {
+      case Some(v) => s.setSessionAttribute(gatewayResponseHeaderName + "cbstoken", v)
+      case _ => // Do nothing
+    }
+  }
+
+  /**
+    * @return - GatewayLogin username Header.
+    */
+  def getGatewayLoginUsername() = {
+    S.getSessionAttribute(gatewayResponseHeaderName + "username") match {
+      case Full(h) => h
+      case _ => ""
+    }
+  }
+
+  /**
+    * @return - GatewayLogin cbsToken Header.
+    */
+  def getGatewayLoginCbsToken() = {
+    S.getSessionAttribute(gatewayResponseHeaderName + "cbstoken") match {
+      case Full(h) => h
+      case _ => ""
+    }
+  }
+
+  /**
+    * Turn a string of format "FooBar" into snake case "foo_bar"
+    *
+    * Note: snakify is not reversible, ie. in general the following will _not_ be true:
+    *
+    * s == camelify(snakify(s))
+    *
+    * @return the underscored JValue
+    */
+  def snakify(json: JValue): JValue = json mapField {
+    case JField(name, x) => JField(StringHelpers.snakify(name), x)
+  }
+
+
+  /**
+    * Turns a string of format "foo_bar" into camel case "FooBar"
+    *
+    * Functional code courtesy of Jamie Webb (j@jmawebb.cjb.net) 2006/11/28
+    * @param json the JValue to CamelCase
+    *
+    * @return the CamelCased JValue
+    */
+  def camelify(json: JValue): JValue = json mapField {
+    case JField(name, x) => JField(StringHelpers.camelify(name), x)
+  }
+
+  /**
+    * Turn a string of format "foo_bar" into camel case with the first letter in lower case: "fooBar"
+    * This function is especially used to camelCase method names.
+    *
+    * @param json the JValue to CamelCase
+    *
+    * @return the CamelCased JValue
+    */
+  def camelifyMethod(json: JValue): JValue = json mapField {
+    case JField(name, x) => JField(StringHelpers.camelifyMethod(name), x)
+  }
+
+
+
+  def getDisabledVersions() : List[String] = Props.get("api_disabled_versions").getOrElse("").replace("[", "").replace("]", "").split(",").toList.filter(_.nonEmpty)
+
+  def getDisabledEndpoints() : List[String] = Props.get("api_disabled_endpoints").getOrElse("").replace("[", "").replace("]", "").split(",").toList.filter(_.nonEmpty)
+
+
+
+  def getEnabledVersions() : List[String] = Props.get("api_enabled_versions").getOrElse("").replace("[", "").replace("]", "").split(",").toList.filter(_.nonEmpty)
+
+  def getEnabledEndpoints() : List[String] = Props.get("api_enabled_endpoints").getOrElse("").replace("[", "").replace("]", "").split(",").toList.filter(_.nonEmpty)
+
+
+  def validatePhoneNumber(number: String): Boolean = {
+    number.toList match {
+      case x :: _ if x != '+' => false // First char has to be +
+      case _ :: xs if xs.size > 15 => false // Number of digits has to be up to 15
+      case _ :: xs if xs.size < 5  => false // Minimal number of digits is 5
+      case _ :: xs if xs.exists(c => Character.isDigit(c) == false) => false // Ony digits are allowed
+      case _ => true
+
+    }
+  }/*
+  Determine if a version should be allowed.
+
+    For a VERSION to be allowed it must be:
+
+    1) Absent from Props api_disabled_versions
+    2) Present here (api_enabled_versions=[v2_2_0,v3_0_0]) -OR- api_enabled_versions must be empty.
+
+    Note we use "v" and "_" in the name to match the ApiVersions enumeration in ApiUtil.scala
+   */
+  def versionIsAllowed(version: ApiVersion) : Boolean = {
+    val disabledVersions: List[String] = getDisabledVersions()
+    val enabledVersions: List[String] = getEnabledVersions()
+    if (
+      !disabledVersions.contains(version.toString) &&
+        // Enabled versions or all
+        (enabledVersions.contains(version.toString) || enabledVersions.isEmpty)
+    ) true
+    else
+      false
+  }
+
+
+  /*
+  If a version is allowed, enable its endpoints.
+  Note a version such as v3_0_0.OBPAPI3_0_0 may well include routes from other earlier versions.
+   */
+
+  def enableVersionIfAllowed(version: ApiVersion) : Boolean = {
+    val allowed: Boolean = if (versionIsAllowed(version)
+    ) {
+      version match {
+//        case ApiVersion.v1_0 => LiftRules.statelessDispatch.append(v1_0.OBPAPI1_0)
+//        case ApiVersion.v1_1 => LiftRules.statelessDispatch.append(v1_1.OBPAPI1_1)
+//        case ApiVersion.v1_2 => LiftRules.statelessDispatch.append(v1_2.OBPAPI1_2)
+        // Can we depreciate the above?
+        case ApiVersion.v1_2_1 => LiftRules.statelessDispatch.append(v1_2_1.OBPAPI1_2_1)
+        case ApiVersion.v1_3_0 => LiftRules.statelessDispatch.append(v1_3_0.OBPAPI1_3_0)
+        case ApiVersion.v1_4_0 => LiftRules.statelessDispatch.append(v1_4_0.OBPAPI1_4_0)
+        case ApiVersion.v2_0_0 => LiftRules.statelessDispatch.append(v2_0_0.OBPAPI2_0_0)
+        case ApiVersion.v2_1_0 => LiftRules.statelessDispatch.append(v2_1_0.OBPAPI2_1_0)
+        case ApiVersion.v2_2_0 => LiftRules.statelessDispatch.append(v2_2_0.OBPAPI2_2_0)
+        case ApiVersion.v3_0_0 => LiftRules.statelessDispatch.append(v3_0_0.OBPAPI3_0_0)
+      }
+
+      logger.info(s"${version.toString} was ENABLED")
+
+      true
+    } else {
+      logger.info(s"${version.toString} was NOT enabled")
+      false
+    }
+    allowed
+  }
+
+
+  type OBPEndpoint = PartialFunction[Req, Box[User] => Box[JsonResponse]]
+
+/*
+Versions are groups of endpoints in a file
+ */
+  object ApiVersion extends Enumeration {
+    type ApiVersion = Value
+    val v1_0, v1_1, v1_2, v1_2_1, v1_3_0, v1_4_0, v2_0_0, v2_1_0, v2_2_0, v3_0_0, importerApi, accountsApi, bankMockApi = Value
+  }
+
+
+
+  def convertToApiVersion (apiVersionString: String) : Box[ApiVersion] = {
+
+    // Make sure the string has the "v" prefix
+    try {
+      val apiVersionStringWithV: String = if (apiVersionString.take(1).toLowerCase != "v") {
+        s"v$apiVersionString"
+      } else
+        apiVersionString
+
+      // replace dots with _
+      Full(ApiVersion.withName(apiVersionStringWithV.replace(".", "_")))
+    } catch {
+      case e: Exception => Failure(InvalidApiVersionString)
+    }
+
+
+
+  }
+
+  def dottedApiVersion (apiVersion: ApiVersion) : String = apiVersion.toString.replace("_", ".").replace("v","")
+  def vDottedApiVersion (apiVersion: ApiVersion) : String = apiVersion.toString.replace("_", ".")
+
+  // TODO make this a method of the ApiVersion object so its easier to call
+  def noV (apiVersion: ApiVersion) : String = apiVersion.toString.replace("v", "").replace("V","")
+
+
+  def getAllowedEndpoints (endpoints : List[OBPEndpoint], resourceDocs: ArrayBuffer[ResourceDoc]) : List[OBPEndpoint] = {
+
+    // Endpoints
+    val disabledEndpoints = getDisabledEndpoints
+
+    // Endpoints
+    val enabledEndpoints = getEnabledEndpoints
+
+
+
+    val routes = for (
+      item <- resourceDocs
+         if
+           // Remove any Resource Doc / endpoint mentioned in Disabled endpoints in Props
+           !disabledEndpoints.contains(item.partialFunctionName) &&
+           // Only allow Resrouce Doc / endpoints mentioned in enabled endpoints - unless none are mentioned in which case ignore.
+           (enabledEndpoints.contains(item.partialFunctionName) || enabledEndpoints.isEmpty)  &&
+           // Only allow Resource Doc if it matches one of the pre selected endpoints from the version list.
+             // i.e. this function may recieve more Resource Docs than version endpoints
+            endpoints.exists(_ == item.partialFunction)
+    )
+      yield item.partialFunction
+    routes.toList
+    }
+  
+  def extractToCaseClass[T](in: String)(implicit ev: Manifest[T]): Box[T] = {
+    implicit val formats = net.liftweb.json.DefaultFormats
+    try {
+      val parseJValue: JValue = parse(in)
+      val t: T = parseJValue.extract[T]
+      Full(t)
+    } catch {
+      case m: ParseException =>
+        logger.error("String-->Jvalue parse error"+in,m)
+        Failure("String-->Jvalue parse error"+in+m.getMessage)
+      case m: MappingException =>
+        logger.error("JValue-->CaseClass extract error"+in,m)
+        Failure("JValue-->CaseClass extract error"+in+m.getMessage)
+      case m: Throwable =>
+        logger.error("extractToCaseClass unknow error"+in,m)
+        Failure("extractToCaseClass unknow error"+in+m.getMessage)
+    }
+  }
+
+  def scalaFutureToLaFuture[T](scf: Future[T])(implicit m: Manifest[T]): LAFuture[T] = {
+    val laf = new LAFuture[T]
+    scf.onSuccess {
+      case v: T => laf.satisfy(v)
+      case _ => laf.abort
+    }
+    scf.onFailure {
+      case e: Throwable => laf.fail(Failure(e.getMessage(), Full(e), Empty))
+    }
+    laf
+  }
+
+  /**
+    * @param in LAFuture with a useful payload. Payload is tuple(Case Class, Custom Response Header)
+    * @return value of type JsonResponse
+    *
+    * Process a request asynchronously. The thread will not
+    * block until there's a response.  The parameter is a function
+    * that takes a function as it's parameter.  The function is invoked
+    * when the calculation response is ready to be rendered:
+    * RestContinuation.async {
+    *   reply => {
+    *     myActor ! DoCalc(123, answer => reply{XmlResponse(<i>{answer}</i>)})
+    *   }
+    * }
+    * The body of the function will be executed on a separate thread.
+    * When the answer is ready, apply the reply function... the function
+    * body will be executed in the scope of the current request (the
+    * current session and the current Req object).
+    */
+  def futureToResponse[T](in: LAFuture[(T, CustomResponseHeaders)]): JsonResponse = {
+    RestContinuation.async(reply => {
+      in.onSuccess(t => reply.apply(successJsonResponseFromCaseClass(t._1)(t._2)))
+      in.onFail {
+        case Failure(msg, _, _) => reply.apply(errorJsonResponse(msg))
+        case _                  => reply.apply(errorJsonResponse("Error"))
+      }
+    })
+  }
+
+
+  /**
+    * @param in LAFuture with a useful payload. Payload is tuple(Case Class, Custom Response Header)
+    * @return value of type Box[JsonResponse]
+    *
+    * Process a request asynchronously. The thread will not
+    * block until there's a response.  The parameter is a function
+    * that takes a function as it's parameter.  The function is invoked
+    * when the calculation response is ready to be rendered:
+    * RestContinuation.async {
+    *   reply => {
+    *     myActor ! DoCalc(123, answer => reply{XmlResponse(<i>{answer}</i>)})
+    *   }
+    * }
+    * The body of the function will be executed on a separate thread.
+    * When the answer is ready, apply the reply function... the function
+    * body will be executed in the scope of the current request (the
+    * current session and the current Req object).
+    */
+  def futureToBoxedResponse[T](in: LAFuture[(T, CustomResponseHeaders)]): Box[JsonResponse] = {
+    RestContinuation.async(reply => {
+      in.onSuccess(t => Full(reply.apply(successJsonResponseFromCaseClass(t._1)(t._2))))
+      in.onFail {
+        case Failure(msg, _, _) => Full(reply.apply(errorJsonResponse(msg)))
+        case _                  => Full(reply.apply(errorJsonResponse("Error")))
+      }
+    })
+  }
+
+  implicit def scalaFutureToJsonResponse[T](scf: Future[(T, CustomResponseHeaders)])(implicit m: Manifest[T]): JsonResponse = {
+    futureToResponse(scalaFutureToLaFuture(scf))
+  }
+
+  /**
+    * This function is implicitly used at Endpoints to transform a Scala Future to Box[JsonResponse] for instance next part of code
+    * for {
+        users <- Future { someComputation }
+      } yield {
+        users
+      }
+      will be translated by Scala compiler to
+      APIUtil.scalaFutureToBoxedJsonResponse(
+        for {
+          users <- Future { someComputation }
+        } yield {
+          users
+        }
+      )
+    * @param scf
+    * @param m
+    * @tparam T
+    * @return
+    */
+  implicit def scalaFutureToBoxedJsonResponse[T](scf: Future[(T, CustomResponseHeaders)])(implicit m: Manifest[T]): Box[JsonResponse] = {
+    futureToBoxedResponse(scalaFutureToLaFuture(scf))
+  }
+
+
+  /**
+    * This function is planed to be used at an endpoint in order to get a User based on Authorization Header data
+    * It has to do the same thing as function OBPRestHelper.failIfBadAuthorizationHeader does
+    * The only difference is that this function use Akka's Future in non-blocking way i.e. without using Await.result
+    * @return An User wrapped into a Future
+    */
+  def getUserFromAuthorizationHeaderFuture(): Future[(Box[User], Option[SessionContext])] = {
+    if (hasAnOAuthHeader) {
+      getUserFromOAuthHeaderFuture()
+    } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
+      DirectLogin.getUserFromDirectLoginHeaderFuture()
+    } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
+      Props.get("gateway.host") match {
+        case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == true) => // Only addresses from white list can use this feature
+          val s = S
+          val (httpCode, message, parameters) = GatewayLogin.validator(s.request)
+          httpCode match {
+            case 200 =>
+              val payload = GatewayLogin.parseJwt(parameters)
+              payload match {
+                case Full(payload) =>
+                  GatewayLogin.getOrCreateResourceUserFuture(payload: String) map {
+                    case Full((u, cbsAuthToken)) => // Authentication is successful
+                      GatewayLogin.getOrCreateConsumer(payload, u)
+                      val payloadJson = parse(payload).extract[PayloadOfJwtJSON]
+                      val sessionContextForRequest = ApiSession.updateSessionContext(GatewayLoginRequestPayload(Some(payloadJson)), None)
+                      val jwt = GatewayLogin.createJwt(payload, cbsAuthToken)
+                      val sessionContext = ApiSession.updateSessionContext(GatewayLoginResponseHeader(Some(jwt)), sessionContextForRequest)
+                      (Full(u), sessionContext)
+                    case Failure(msg, t, c) =>
+                      (Failure(msg, t, c), None)
+                    case _ =>
+                      (Failure(payload), None)
+                  }
+                case Failure(msg, t, c) =>
+                  Future { (Failure(msg, t, c), None) }
+                case _ =>
+                  Future { (Failure(ErrorMessages.GatewayLoginUnknownError), None) }
+              }
+            case _ =>
+              Future { (Failure(message), None) }
+          }
+        case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == false) => // All other addresses will be rejected
+          Future { (Failure(ErrorMessages.GatewayLoginWhiteListAddresses), None) }
+        case Empty =>
+          Future { (Failure(ErrorMessages.GatewayLoginHostPropertyMissing), None) } // There is no gateway.host in props file
+        case Failure(msg, t, c) =>
+          Future { (Failure(msg, t, c), None) }
+        case _ =>
+          Future { (Failure(ErrorMessages.GatewayLoginUnknownError), None) }
+      }
+    } else {
+      Future { (Empty, None) }
+    }
+  }
+
+  /**
+    * This function is used to factor out common code at endpoints regarding Authorized access
+    * @param emptyUserErrorMsg is a message which will be provided as a response in case that Box[User] = Empty
+    */
+  def extractCallContext(emptyUserErrorMsg: String): Future[(Box[User], Option[SessionContext])] = {
+    getUserFromAuthorizationHeaderFuture() map {
+      x => (fullBoxOrException(x._1 ?~! emptyUserErrorMsg), x._2)
+    }
+  }
+
+  /**
+    * This Function is used to terminate a Future used in for-comprehension with specific message
+    * Please note that boxToFailed(Empty ?~ ("Some failure message")) will be transformed to Failure("Some failure message", Empty, Empty)
+    * @param box Some boxed type
+    * @return Boxed value or throw some exception
+    */
+  def fullBoxOrException[T](box: Box[T])(implicit m: Manifest[T]) : Box[T]= {
+    box match {
+      case Full(v) => // Just forwarding
+        Full(v)
+      case Empty => // Just forwarding
+        throw new Exception("Empty Box not allowed")
+      case ParamFailure(msg,_,_,_) =>
+        throw new Exception(msg)
+      case obj@Failure(msg, _, c) =>
+        val failuresMsg = Props.getBool("display_internal_errors").openOr(false) match {
+          case true => // Show all error in a chain
+            obj.messageChain
+          case false => // Do not display internal errors
+            val obpFailures = obj.failureChain.filter(_.msg.contains("OBP-"))
+            obpFailures match {
+              case Nil => ErrorMessages.AnUnspecifiedOrInternalErrorOccurred
+              case _ => obpFailures.map(_.msg).mkString(" <- ")
+            }
+        }
+        throw new Exception(failuresMsg)
+      case _ =>
+        throw new Exception(UnknownError)
+    }
+  }
+
+  def unboxFullAndWrapIntoFuture[T](box: Box[T])(implicit m: Manifest[T]) : Future[T] = {
+    Future {
+      unboxFull(box)
+    }
+  }
+
+  def unboxFull[T](box: Box[T])(implicit m: Manifest[T]) : T = {
+    box match {
+      case Full(value) =>
+        value
+      case _ =>
+        throw new Exception("Only Full Box is allowed at function unboxFull")
+    }
+  }
+
 
 }

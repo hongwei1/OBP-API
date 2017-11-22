@@ -195,13 +195,19 @@ trait View {
   val viewLogger = Logger(classOf[View])
   //e.g. "Public", "Authorities", "Our Network", etc.
 
+  //This is used for distinguishing all the views
+  //For now, we need have some system views and user created views.
+  // System Views: eg: owner, accountant ... They are the fixed views, account owner can not modify it. 
+  // User Created Views: Start with _, eg _son, _wife ... The owner can update the fields for these views. 
+  def isSystem : Boolean
+  
   //these ids are used together to uniquely identify a view
   def viewId : ViewId
   def accountId : AccountId
   def bankId : BankId
 
   //and here is the unique identifier
-  def uid : ViewUID = ViewUID(viewId, bankId, accountId)
+  def uid : ViewIdBankIdAccountId = ViewIdBankIdAccountId(viewId, bankId, accountId)
 
   def name: String
   def description : String
@@ -298,6 +304,9 @@ trait View {
   def canDeleteWhereTag : Boolean
 
   def canInitiateTransaction: Boolean  
+  def canAddTransactionRequestToOwnAccount: Boolean   //added following two for payments
+  def canAddTransactionRequestToAnyAccount: Boolean  
+  def canSeeBankAccountCreditLimit: Boolean
 
   def moderate(transaction : Transaction): Box[ModeratedTransaction] = {
     moderate(transaction, moderate(transaction.thisAccount))
@@ -457,15 +466,18 @@ trait View {
 
   def moderateTransactionsWithSameAccount(transactions : List[Transaction]) : Box[List[ModeratedTransaction]] = {
 
-    val accountUids = transactions.map(t => BankAccountUID(t.bankId, t.accountId))
+    val accountUids = transactions.map(t => BankIdAccountId(t.bankId, t.accountId))
 
+    // This function will only accept transactions which have the same This Account.
     if(accountUids.toSet.size > 1) {
       viewLogger.warn("Attempted to moderate transactions not belonging to the same account in a call where they should")
       Failure("Could not moderate transactions as they do not all belong to the same account")
     } else {
       transactions.headOption match {
         case Some(firstTransaction) =>
+          // Moderate the *This Account* based on the first transaction
           val moderatedAccount = moderate(firstTransaction.thisAccount)
+          // Moderate each *Transaction* based on the moderated Account
           Full(transactions.flatMap(t => moderate(t, moderatedAccount)))
         case None =>
           Full(Nil)
@@ -492,6 +504,7 @@ trait View {
       val bankRoutingAddress = if(canSeeBankRoutingAddress) Some(bankAccount.bankRoutingAddress) else None 
       val accountRoutingScheme = if(canSeeBankAccountRoutingScheme) Some(bankAccount.accountRoutingScheme) else None 
       val accountRoutingAddress = if(canSeeBankAccountRoutingAddress) Some(bankAccount.accountRoutingAddress) else None 
+      val accountRules = if(canSeeBankAccountCreditLimit) bankAccount.accountRules else Nil
 
       Some(
         new ModeratedBankAccount(
@@ -510,7 +523,8 @@ trait View {
           bankRoutingScheme = bankRoutingScheme,
           bankRoutingAddress = bankRoutingAddress,
           accountRoutingScheme = accountRoutingScheme,
-          accountRoutingAddress = accountRoutingAddress
+          accountRoutingAddress = accountRoutingAddress,
+          accountRules = accountRules
         )
       )
     }
@@ -518,6 +532,7 @@ trait View {
       None
   }
 
+  // Moderate the Counterparty side of the Transaction (i.e. the Other Account involved in the transaction)
   def moderate(otherBankAccount : Counterparty) : Option[ModeratedOtherBankAccount] = {
     if (canSeeTransactionOtherBankAccount)
     {
@@ -650,9 +665,9 @@ trait View {
 
 object View {
   def fromUrl(viewId: ViewId, account: BankAccount): Box[View] =
-    Views.views.vend.view(viewId, BankAccountUID(account.bankId, account.accountId))
+    Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
   def fromUrl(viewId: ViewId, accountId: AccountId, bankId: BankId): Box[View] =
-    Views.views.vend.view(ViewUID(viewId, bankId, accountId))
+    Views.views.vend.view(ViewIdBankIdAccountId(viewId, bankId, accountId))
 
   @deprecated(Helper.deprecatedJsonGenerationMessage)
   def linksJson(views: List[View], accountId: AccountId, bankId: BankId): JObject = {

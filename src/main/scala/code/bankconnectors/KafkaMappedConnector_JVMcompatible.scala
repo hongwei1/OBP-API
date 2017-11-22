@@ -29,19 +29,21 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.{Date, Locale, UUID}
 
-import code.accountholder.{AccountHolders, MapperAccountHolders}
-import code.api.APIFailure
+import code.accountholder.AccountHolders
 import code.api.util.APIUtil.saveConnectorMetric
-import code.api.util.ErrorMessages
-import code.api.v2_1_0.{AtmJsonPost, BranchJsonPost, TransactionRequestCommonBodyJSON}
-import code.atms.Atms.{Atm, AtmId}
-import code.atms.MappedAtm
-import code.branches.Branches.{Branch, BranchId}
-import code.branches.MappedBranch
+import code.api.util.{ErrorMessages, SessionContext}
+import code.api.util.ErrorMessages._
+import code.api.v2_1_0.{PostCounterpartyBespoke, TransactionRequestCommonBodyJSON}
+import code.atms.Atms.{AtmId, AtmT}
+import code.atms.{Atms, MappedAtm}
+import code.bankconnectors.vJune2017.AccountRules
+import code.bankconnectors.vMar2017.{InboundAdapterInfoInternal, KafkaMappedConnector_vMar2017}
+import code.branches.Branches.{Branch, BranchId, BranchT}
 import code.fx.{FXRate, fx}
+import code.kafka.KafkaHelper
 import code.management.ImporterAPI.ImporterTransaction
 import code.metadata.comments.Comments
-import code.metadata.counterparties.{Counterparties, CounterpartyTrait}
+import code.metadata.counterparties.CounterpartyTrait
 import code.metadata.narrative.MappedNarrative
 import code.metadata.tags.Tags
 import code.metadata.transactionimages.TransactionImages
@@ -50,36 +52,29 @@ import code.model._
 import code.model.dataAccess._
 import code.products.Products.{Product, ProductCode}
 import code.transaction.MappedTransaction
+import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.transactionrequests.TransactionRequests._
 import code.transactionrequests.{MappedTransactionRequestTypeCharge, TransactionRequestTypeCharge, TransactionRequestTypeChargeMock, TransactionRequests}
-import code.util.{Helper, TTLCache}
+import code.util.Helper
+import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.google.common.cache.CacheBuilder
+import com.tesobe.obp.transport.Pager
+import com.tesobe.obp.transport.spi.{DefaultPager, DefaultSorter, TimestampFilter}
 import net.liftweb.common._
-import net.liftweb.json
+import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json.MappingException
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Props
 
-import scalacache.ScalaCache
-import scalacache.guava.GuavaCache
-import scala.collection.JavaConversions._
-import scalacache.guava
-import scalacache._
-import guava._
-import concurrent.duration._
-import language.postfixOps
-import memoization._
-import com.google.common.cache.CacheBuilder
-import com.tesobe.obp.transport.Pager
-import com.tesobe.obp.transport.spi.{DefaultPager, DefaultSorter, TimestampFilter}
-import net.liftweb.json.Extraction._
-import code.util.Helper.MdcLoggable
-import net.liftweb.json.JsonAST.{JObject, JValue}
-import net.liftweb.json.MappingException
-
+import scala.collection.immutable.{List, Seq}
 import scala.concurrent.TimeoutException
-import code.api.util.ErrorMessages._
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scalacache.{ScalaCache, _}
+import scalacache.guava.GuavaCache
+import scalacache.memoization._
 
 object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper with MdcLoggable {
 
@@ -108,7 +103,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   val primaryUserIdentifier = AuthUser.getCurrentUserUsername
 
 
-  override def getAdapterInfo: Box[InboundAdapterInfo] = Empty
+  override def getAdapterInfo: Box[InboundAdapterInfoInternal] = Empty
   
   // "Versioning" of the messages sent by this or similar connector might work like this:
   // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
@@ -240,7 +235,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   }("getBank")
   
   //TODO this is not implement in adapter
-  def getUser( username: String, password: String ): Box[InboundUser] = saveConnectorMetric {
+  override def getUser( username: String, password: String ): Box[InboundUser] = saveConnectorMetric {
     memoizeSync(getUserTTL millisecond) {
       try {
         for {
@@ -278,58 +273,63 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     }
   }("getUser")
 
-  def updateUserAccountViews( user: ResourceUser ) = Empty 
-//  def updateUserAccountViews( user: ResourceUser ) = saveConnectorMetric {
-//    memoizeSync(updateUserAccountViewsTTL millisecond){
-//      val accounts: List[KafkaInboundAccount] = getBanks.getOrElse(List.empty).flatMap { bank => {
-//        val bankId = bank.bankId.value
-//        val username = user.name
-//        logger.debug(s"JVMCompatible updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
-//        for {
-//          req <- tryo { Map[String, String](
-//            "version" -> formatVersion,
-//            "name" -> "get",
-//            "target" -> "accounts",
-//            "userId" -> username,
-//            "bankId" -> bankId)}
-//          } yield {
-//            val res = tryExtract[List[KafkaInboundAccount]](process(req)) match {
-//              case Full(a) => a
-//              case Empty => List.empty
-//            }
-//            logger.debug(s"JVMCompatible updateUserAccountViews got response ${res}")
-//            res
-//          }
-//        }
-//      }.flatten
-//  
-//      logger.debug(s"JVMCompatible getAccounts says res is $accounts")
-//  
-//      val views = for {
-//        acc <- accounts
-//        username <- tryo {user.name}
-//        views <- tryo {createViews( BankId(acc.bankId),
-//          AccountId(acc.accountId),
-//          true,
-//          true,
-//          true,
-//          true
-//        )}
-//        setAccountLinktoUser<-Full(setAccountHolder(BankAccountUID(BankId(acc.bankId), AccountId(acc.accountId)),user))
-//        existing_views <- tryo {Views.views.vend.views(BankAccountUID(BankId(acc.bankId), AccountId(acc.accountId)))}
-//      } yield {
-//        setAccountOwner(username, BankId(acc.bankId), AccountId(acc.accountId), username::Nil)
-//        views.foreach(v => {
-//          Views.views.vend.addPermission(v.uid, user)
-//          logger.debug(s"------------> updated view ${v.uid} for resourceuser ${user} and account ${acc}")
-//        })
-//        existing_views.filterNot(_.users.contains(user.resourceUserId)).foreach (v => {
-//          Views.views.vend.addPermission(v.uid, user)
-//          logger.debug(s"------------> added resourceuser ${user} to view ${v.uid} for account ${acc}")
-//        })
-//      }
-//    }
-//  } ("updateUserAccountViews")
+  override def updateUserAccountViewsOld( user: ResourceUser ) = saveConnectorMetric {
+    memoizeSync(updateUserAccountViewsTTL millisecond){
+      //1 getAccounts from Kafka
+      val accounts: List[KafkaInboundAccount] = getBanks.getOrElse(List.empty).flatMap { bank => {
+        val bankId = bank.bankId.value
+        val username = user.name
+        logger.debug(s"JVMCompatible updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
+        for {
+          req <- tryo { Map[String, String](
+            "version" -> formatVersion,
+            "name" -> "get",
+            "target" -> "accounts",
+            "userId" -> username,
+            "bankId" -> bankId)}
+          } yield {
+            val res = tryExtract[List[KafkaInboundAccount]](process(req)) match {
+              case Full(a) => a
+              case Empty => List.empty
+            }
+            logger.debug(s"JVMCompatible updateUserAccountViews got response ${res}")
+            res
+          }
+        }
+      }.flatten
+
+      logger.debug(s"JVMCompatible getAccounts says res is $accounts")
+
+      //2 CreatViews for each account
+      for {
+        acc <- accounts
+        username <- tryo {user.name}
+        createdNewViewsForTheUser <- tryo {createViews( BankId(acc.bankId),
+          AccountId(acc.accountId),
+          true,
+          true,
+          true,
+          true
+        )}
+      //3 get all the existing views.
+        existingViewsNotBelongtoTheUser <- tryo {
+          Views.views.vend.views(BankIdAccountId(BankId(acc.bankId), AccountId(acc.accountId)))
+          .filterNot(_.users.contains(user.resourceUserId))
+        }
+      } yield {
+        //4 set Account link to User
+        setAccountHolder(username, BankId(acc.bankId), AccountId(acc.accountId), username::Nil)
+        createdNewViewsForTheUser.foreach(v => {
+          Views.views.vend.addPermission(v.uid, user)
+          logger.debug(s"------------> updated view ${v.uid} for resourceuser ${user} and account ${acc}")
+        })
+        existingViewsNotBelongtoTheUser.foreach (v => {
+          Views.views.vend.addPermission(v.uid, user)
+          logger.debug(s"------------> added resourceuser ${user} to view ${v.uid} for account ${acc}")
+        })
+      }
+    }
+  } ("updateUserAccountViews")
 
   // Gets current challenge level for transaction request
   // TODO, not implement in Adapter, just fake the response 
@@ -341,7 +341,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     currency: String,
     userId: String,
     userName: String
-  ): AmountOfMoney =  saveConnectorMetric {
+  ): Box[AmountOfMoney] =  saveConnectorMetric {
     // Create argument list
 //    val req = Map(
 //      "version" -> formatVersion,
@@ -363,7 +363,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
         val limit = BigDecimal("1000")
         val rate = fx.exchangeRate ("XAF", currency)
         val convertedLimit = fx.convert(limit, rate)
-        AmountOfMoney(currency,convertedLimit.toString())
+        Full(AmountOfMoney(currency,convertedLimit.toString()))
 //      }
 //    }
   }("getChallengeThreshold")
@@ -391,19 +391,8 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   }("getChargeLevel")
   
   //TODO, not implement in Adapter, just fake the response 
-  override def createChallenge(
-    bankId: BankId,
-    accountId: AccountId,
-    userId: String,
-    transactionRequestType: TransactionRequestType,
-    transactionRequestId: String
-  ): Box[String] = saveConnectorMetric{
-    LocalMappedConnector.createChallenge(
-      bankId: BankId, accountId: AccountId,
-      userId: String,
-      transactionRequestType: TransactionRequestType,
-      transactionRequestId: String
-    )}("createChallenge")
+  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String) = saveConnectorMetric{
+    LocalMappedConnector.createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String)}("createChallenge")
   
   //TODO, not implement in Adapter, just fake the response 
   override def validateChallengeAnswer(
@@ -417,7 +406,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   }("validateChallengeAnswer")
 
   // Gets transaction identified by bankid, accountid and transactionId
-  def getTransaction(
+  override def getTransaction(
     bankId: BankId, 
     accountId: AccountId, 
     transactionId: TransactionId
@@ -483,9 +472,10 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   
   //CM 4 checked the cache, is it in the method or in the lower level
   override def getTransactions(
-    bankId: BankId, 
-    accountId: AccountId, 
-    queryParams: OBPQueryParam*
+                                bankId: BankId,
+                                accountId: AccountId,
+                                session: Option[SessionContext],
+                                queryParams: OBPQueryParam*
   ): Box[List[Transaction]] = 
     saveConnectorMetric 
     {
@@ -494,22 +484,14 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
         
         //TODO this is a quick solution for cache, because of (queryParams: OBPQueryParam*)
         def getTransactionsCached(bankId: BankId, accountId: AccountId, userId : String , loginUser: String): Box[List[Transaction]] =  memoizeSync(getTransactionsTTL millisecond) {
-          //the following are OBP page classes
-          val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
-          val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
-          val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
-          val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
+          val limit: OBPLimit = queryParams.collect { case OBPLimit(value) => OBPLimit(value) }.headOption.get
+          val offset = queryParams.collect { case OBPOffset(value) => OBPOffset(value) }.headOption.get
+          val fromDate = queryParams.collect { case OBPFromDate(date) => OBPFromDate(date) }.headOption.get
+          val toDate = queryParams.collect { case OBPToDate(date) => OBPToDate(date)}.headOption.get
           val ordering = queryParams.collect {
             //we don't care about the intended sort field and only sort on finish date for now
-            case OBPOrdering(_, direction) =>
-              direction match {
-                case OBPAscending => OrderBy(MappedTransaction.tFinishDate, Ascending)
-                case OBPDescending => OrderBy(MappedTransaction.tFinishDate, Descending)
-              }
-          }
-          val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT, Locale.ENGLISH)
-          val optionalParams : Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
-          val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
+            case OBPOrdering(field, direction) => OBPOrdering(field, direction)}.headOption.get
+          val optionalParams = Seq(limit, offset, fromDate, toDate, ordering)
       
           //the following are OBPJVM page classes, need to map to OBP pages
           val invalid = ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, UTC)
@@ -568,7 +550,8 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
 
   override def getBankAccount(
     bankId: BankId, 
-    accountId: AccountId
+    accountId: AccountId,
+    session: Option[SessionContext]
   ): Box[KafkaBankAccount] = saveConnectorMetric{
     try {
       val accountHolder = getAccountHolderCached(bankId,accountId)
@@ -700,34 +683,19 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   */
 
 
-  // Get all counterparties related to an account
-  override def getCounterpartiesFromTransaction(bankId: BankId, accountId: AccountId): List[Counterparty] = memoizeSync(getCounterpartyFromTransactionTTL millisecond) {
-  Counterparties.counterparties.vend.getMetadatas(bankId, accountId).flatMap(getCounterpartyFromTransaction(bankId, accountId, _))}
-  
-  // Get one counterparty related to a bank account
-  override def getCounterpartyFromTransaction(bankId: BankId, accountId: AccountId, counterpartyID: String): Box[Counterparty] = memoizeSync(getCounterpartiesFromTransactionTTL millisecond) {
-    // Get the metadata and pass it to getCounterparty to construct the other account.
-    Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyID).flatMap(getCounterpartyFromTransaction(bankId, accountId, _))
-  }
-  def getCounterparty(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[Counterparty] = {
+  override def getCounterparty(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[Counterparty] = {
     //note: kafka mode just used the mapper data
     LocalMappedConnector.getCounterparty(thisBankId, thisAccountId, couterpartyId)
   }
 
   // Get one counterparty by the Counterparty Id
-   def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] = 
+  override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] = 
     LocalMappedConnector.getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId)
   
   override def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] =
     LocalMappedConnector.getCounterpartyByIban(iban: String)
   
-  override def getPhysicalCards(user: User): List[PhysicalCard] =
-    List()
-
-  override def getPhysicalCardsForBank(bank: Bank, user: User): List[PhysicalCard] =
-    List()
-
-  def AddPhysicalCard(bankCardNumber: String,
+  override def createOrUpdatePhysicalCard(bankCardNumber: String,
                       nameOnCard: String,
                       issueNumber: String,
                       serialNumber: String,
@@ -813,19 +781,19 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
                               chargePolicy: String) = {
   
     val toCounterpartyAccountRoutingAddress =
-      if (transactionRequestType.value == "SANDBOX_TAN")
+      if (transactionRequestType.value == SANDBOX_TAN.toString)
         toAccount.accountId.value
       else
         toCounterparty.otherAccountRoutingAddress
   
     val toCounterpartyBankRoutingAddress =
-      if (transactionRequestType.value == "SANDBOX_TAN")
+      if (transactionRequestType.value == SANDBOX_TAN.toString)
         toAccount.bankId.value
       else
         toCounterparty.otherBankRoutingAddress
     
     val toCounterpartyName =
-      if (transactionRequestType.value == "SANDBOX_TAN")
+      if (transactionRequestType.value == SANDBOX_TAN.toString)
         getAccountHolderCached(BankId(toCounterpartyBankRoutingAddress), AccountId(toCounterpartyAccountRoutingAddress))
       else
         toCounterparty.name
@@ -961,12 +929,6 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     TransactionRequests.transactionRequestProvider.vend.getTransactionRequest(transactionRequestId)
   }
 
-
-  override def getTransactionRequestTypesImpl(fromAccount: BankAccount): Box[List[TransactionRequestType]] = {
-    val validTransactionRequestTypes = Props.get("transactionRequests_supported_types", "").split(",").map(x => TransactionRequestType(x)).toList
-    Full(validTransactionRequestTypes)
-  }
-
   /*
     Bank account creation
    */
@@ -984,7 +946,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     branchId: String,
     accountRoutingScheme: String,
     accountRoutingAddress: String
-  ): (Bank, BankAccount) = {
+  ) = {
     //don't require and exact match on the name, just the identifier
     val bank: Bank = MappedBank.find(By(MappedBank.national_identifier, bankNationalIdentifier)) match {
       case Full(b) =>
@@ -1013,17 +975,17 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
       accountHolderName
     )
 
-    (bank, account)
+    Full((bank, account))
   }
 
 //  //for sandbox use -> allows us to check if we can generate a new test account with the given number
-  override def accountExists(bankId: BankId, accountNumber: String): Boolean = true
+  override def accountExists(bankId: BankId, accountNumber: String) = Full(true)
   // {
 //    getAccountByNumber(bankId, accountNumber) != null
 //  }
 
   //remove an account and associated transactions
-  override def removeAccount(bankId: BankId, accountId: AccountId) : Boolean = {
+  override def removeAccount(bankId: BankId, accountId: AccountId) = {
     //delete comments on transactions of this account
     val commentsDeleted = Comments.comments.vend.bulkDeleteComments(bankId, accountId)
 
@@ -1062,8 +1024,8 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
       case _ => false
     }
 
-    commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
-      transactionsDeleted && privilegesDeleted && viewsDeleted && accountDeleted
+    Full(commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
+      transactionsDeleted && privilegesDeleted && viewsDeleted && accountDeleted)
 }
 
   //creates a bank account for an existing bank, with the appropriate values set. Can fail if the bank doesn't exist
@@ -1089,11 +1051,6 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
       createAccountIfNotExisting(bankId, accountId, accountNumber, accountType, accountLabel, currency, balanceInSmallestCurrencyUnits, accountHolderName)
     }
 
-  }
-
-  //sets a user as an account owner/holder
-  override def setAccountHolder(bankAccountUID: BankAccountUID, user: User): Unit = {
-    AccountHolders.accountHolders.vend.createAccountHolder(user.resourceUserId.value, bankAccountUID.bankId.value, bankAccountUID.accountId.value)
   }
 
   private def createAccountIfNotExisting(bankId: BankId, accountId: AccountId, accountNumber: String,
@@ -1145,7 +1102,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
    */
 
   //used by the transaction import api
-  override def updateAccountBalance(bankId: BankId, accountId: AccountId, newBalance: BigDecimal): Boolean = {
+  override def updateAccountBalance(bankId: BankId, accountId: AccountId, newBalance: BigDecimal) = {
 
     //this will be Full(true) if everything went well
     val result = for {
@@ -1153,10 +1110,10 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
       bank <- getBank(bankId)
     } yield {
       //acc.balance = newBalance
-      setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now)
+      setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now).openOrThrowException("Attempted to open an empty Box.")
     }
-
-    result.getOrElse(false)
+  
+    Full(result.getOrElse(false))
   }
 
   //transaction import api uses bank national identifiers to uniquely indentify banks,
@@ -1174,7 +1131,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   }
 //
 //  //used by transaction import api call to check for duplicates
-  override def getMatchingTransactionCount(bankNationalIdentifier : String, accountNumber : String, amount: String, completed: Date, otherAccountHolder: String): Int = 5
+  override def getMatchingTransactionCount(bankNationalIdentifier : String, accountNumber : String, amount: String, completed: Date, otherAccountHolder: String) = Full(5)
 //   {
 //    //we need to convert from the legacy bankNationalIdentifier to BankId, and from the legacy accountNumber to AccountId
 //    val count = for {
@@ -1238,7 +1195,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
 //    } yield transaction
 //  }
 
-  override def setBankAccountLastUpdated(bankNationalIdentifier: String, accountNumber : String, updateDate: Date) : Boolean = true
+  override def setBankAccountLastUpdated(bankNationalIdentifier: String, accountNumber : String, updateDate: Date)  = Full(true)
   // {
 //    val result = for {
 //      bankId <- getBankByNationalIdentifier(bankNationalIdentifier).map(_.bankId)
@@ -1258,7 +1215,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
    */
 
 
-  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String): Boolean = {
+  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String) = {
     //this will be Full(true) if everything went well
     val result = for {
       acc <- getBankAccount(bankId, accountId)
@@ -1268,7 +1225,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
       d.setLabel(label)
       d.save()
     }
-    result.getOrElse(false)
+    Full(result.getOrElse(false))
   }
 
 
@@ -1294,15 +1251,15 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     LocalMappedConnector.getProduct(bankId, productCode)
   }
 
-  override  def createOrUpdateBranch(branch: BranchJsonPost, branchRoutingScheme: String, branchRoutingAddress: String): Box[Branch] = {
-    LocalMappedConnector.createOrUpdateBranch(branch, branchRoutingScheme, branchRoutingAddress)
+  override  def createOrUpdateBranch(branch: Branch): Box[BranchT] = {
+    LocalMappedConnector.createOrUpdateBranch(branch)
   }
 
-  override def getBranch(bankId : BankId, branchId: BranchId) : Box[MappedBranch]= {
+  override def getBranch(bankId : BankId, branchId: BranchId) : Box[BranchT]= {
     LocalMappedConnector.getBranch(bankId, branchId)
   }
 
-  override def createOrUpdateAtm(atm: AtmJsonPost): Box[Atm] = {
+  override def createOrUpdateAtm(atm: Atms.Atm): Box[AtmT] = {
     LocalMappedConnector.createOrUpdateAtm(atm)
   }
 
@@ -1450,6 +1407,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     def accountRoutingScheme: String = "NONE" //TODO
     def accountRoutingAddress: String = "NONE" //TODO
     def branchId: String = "NONE" //TODO
+    def accountRules: List[AccountRules] = List() //TODO
 
     // Fields modifiable from OBP are stored in mapper
     def label : String              = (for {
@@ -1484,6 +1442,10 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     def otherBranchRoutingScheme: String = counterparty.other_branch_routing_scheme
     def otherBranchRoutingAddress: String = counterparty.other_branch_routing_address
     def isBeneficiary : Boolean = counterparty.is_beneficiary
+    def description: String = ""
+    def otherAccountSecondaryRoutingScheme: String = ""
+    def otherAccountSecondaryRoutingAddress: String = ""
+    def bespoke: List[PostCounterpartyBespoke] = Nil
   }
 
   case class KafkaTransactionRequestTypeCharge(kafkaInboundTransactionRequestTypeCharge: KafkaInboundTransactionRequestTypeCharge) extends TransactionRequestTypeCharge{

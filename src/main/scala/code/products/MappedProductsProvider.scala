@@ -1,13 +1,10 @@
 package code.products
 
-import code.products.Products._
 import code.common.{License, Meta}
 import code.model.BankId
-import code.products.Products.ProductCode
-import code.util.{UUIDString, DefaultStringField}
+import code.products.Products.{Product, ProductCode}
+import code.util.UUIDString
 import net.liftweb.mapper._
-
-import code.products.Products.Product
 
 
 object MappedProductsProvider extends ProductsProvider {
@@ -41,14 +38,14 @@ class MappedProduct extends Product with LongKeyedMapper[MappedProduct] with IdP
   object mCategory extends MappedString(this, 50)
   object mFamily extends MappedString(this, 50)
   object mSuperFamily extends MappedString(this, 50)
-  object mMoreInfoUrl extends DefaultStringField(this) // use URL field?
-  object mDetails extends DefaultStringField(this)
-  object mDescription extends DefaultStringField(this)
+  object mMoreInfoUrl extends MappedString(this, 2000) // use URL field?
+  object mDetails extends MappedString(this, 2000)
+  object mDescription extends MappedString(this, 2000)
 
 
   // Exposed inside meta.license See below
-  object mLicenseId extends DefaultStringField(this)
-  object mLicenseName extends DefaultStringField(this)
+  object mLicenseId extends UUIDString(this) // This are common open data fields in OBP, add class for them?
+  object mLicenseName extends MappedString(this, 255)
 
   override def bankId: BankId = BankId(mBankId.get)
 
@@ -62,12 +59,12 @@ class MappedProduct extends Product with LongKeyedMapper[MappedProduct] with IdP
   override def details: String = mDetails.get
   override def description: String = mDescription.get
 
-  override def meta: Meta = new Meta {
-    override def license: License = new License {
-      override def id: String = mLicenseId.get
-      override def name: String = mLicenseName.get
-    }
-  }
+  override def meta = Meta (
+    license = License (
+      id = mLicenseId.get,
+      name = mLicenseName.get
+    )
+  )
 
 
 }

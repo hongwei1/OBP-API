@@ -32,9 +32,14 @@
 package code.api.v2_0_0
 
 import code.api.OBPRestHelper
+import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
 import code.api.v1_3_0.APIMethods130
 import code.api.v1_4_0.APIMethods140
+import code.api.v2_1_0.OBPAPI2_1_0.findResourceDoc
+import code.model.User
 import code.util.Helper.MdcLoggable
+import net.liftweb.common.Box
+import net.liftweb.http.{JsonResponse, Req}
 
 object OBPAPI2_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 with APIMethods200 with MdcLoggable {
 
@@ -45,7 +50,7 @@ object OBPAPI2_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
 
   // Note: Since we pattern match on these routes, if two implementations match a given url the first will match
 
-  var routes = List(
+  val endpointsOf1_2_1 =  List(
     Implementations1_2_1.root(version, versionStatus),
     Implementations1_2_1.getBanks,
     Implementations1_2_1.bankById,
@@ -116,15 +121,18 @@ object OBPAPI2_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
     Implementations1_2_1.addWhereTagForViewOnTransaction,
     Implementations1_2_1.updateWhereTagForViewOnTransaction,
     Implementations1_2_1.deleteWhereTagForViewOnTransaction,
-    Implementations1_2_1.getOtherAccountForTransaction,
-    Implementations1_2_1.makePayment,
+    Implementations1_2_1.getOtherAccountForTransaction
+    //Implementations1_2_1.makePayment
+  )
 
     // New in 1.3.0
-    Implementations1_3_0.getCards,
-    Implementations1_3_0.getCardsForBank,
+    val endpointsOf1_3_0 = Implementations1_3_0.getCards ::
+    Implementations1_3_0.getCardsForBank::
+    Nil
 
     // New in 1.4.0
-    Implementations1_4_0.getCustomer,
+    // Possible Endpoints 2.0.0 (less info about the views)
+    val endpointsOf1_4_0 = List(   Implementations1_4_0.getCustomer,
     //  Now in 2.0.0 Implementations1_4_0.addCustomer,
     Implementations1_4_0.getCustomerMessages,
     Implementations1_4_0.addCustomerMessage,
@@ -134,10 +142,11 @@ object OBPAPI2_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
     Implementations1_4_0.getCrmEvents,
     // Now in 2.0.0 Implementations1_4_0.createTransactionRequest,
     // Now in 2.0.0 Implementations1_4_0.getTransactionRequests,
-    Implementations1_4_0.getTransactionRequestTypes,
+    Implementations1_4_0.getTransactionRequestTypes)
 
     // Updated in 2.0.0 (less info about the views)
-    Implementations2_0_0.allAccountsAllBanks,
+    val endpointsOf2_0_0 =  List(
+      Implementations2_0_0.allAccountsAllBanks,
     Implementations2_0_0.corePrivateAccountsAllBanks,
     Implementations2_0_0.publicAccountsAllBanks,
     Implementations2_0_0.allAccountsAtOneBank,
@@ -183,11 +192,31 @@ object OBPAPI2_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
     Implementations2_0_0.getCustomers
   )
 
+
+  val allResourceDocs =
+    Implementations2_0_0.resourceDocs ++
+      Implementations1_4_0.resourceDocs ++
+      Implementations1_3_0.resourceDocs ++
+      Implementations1_2_1.resourceDocs
+
+  def findResourceDoc(pf: PartialFunction[Req, Box[User] => Box[JsonResponse]]): Option[ResourceDoc] = {
+    allResourceDocs.find(_.partialFunction==pf)
+  }
+  // Filter the possible endpoints by the disabled / enabled Props settings and add them together
+  val routes : List[OBPEndpoint] =
+    List(Implementations1_2_1.root(version, versionStatus)) ::: // For now we make this mandatory
+      getAllowedEndpoints(endpointsOf1_2_1, Implementations1_2_1.resourceDocs) :::
+      getAllowedEndpoints(endpointsOf1_3_0, Implementations1_3_0.resourceDocs) :::
+      getAllowedEndpoints(endpointsOf1_4_0, Implementations1_4_0.resourceDocs) :::
+      getAllowedEndpoints(endpointsOf2_0_0, Implementations2_0_0.resourceDocs)
+
+
+
   routes.foreach(route => {
-    oauthServe(apiPrefix{route})
+    oauthServe(apiPrefix{route}, findResourceDoc(route))
   })
 
-
+  logger.info(s"version $version has been run! There are ${routes.length} routes.")
 
 
 }

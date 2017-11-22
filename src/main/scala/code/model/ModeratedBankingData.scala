@@ -32,6 +32,7 @@ Berlin 13359, Germany
 
 package code.model
 import java.util.Date
+
 import code.model.Moderation.Moderated
 import code.util.Helper
 import net.liftweb.json.JsonAST.JObject
@@ -40,8 +41,12 @@ import net.liftweb.json.JsonAST.JField
 import net.liftweb.json._
 import net.liftweb.json.JsonDSL._
 import java.net.URL
+
+import code.bankconnectors.vJune2017.AccountRules
 import net.liftweb.common.Box
 import net.liftweb.common.Failure
+
+import scala.collection.immutable.List
 
 object Moderation {
   type Moderated[A] = Option[A]
@@ -182,22 +187,23 @@ object ModeratedTransactionMetadata {
 
 
 class ModeratedBankAccount(
-  val accountId : AccountId,
-  val owners : Moderated[Set[User]],
-  val accountType : Moderated[String],
-  val balance: String = "", //TODO: Moderated[String]?
-  val currency : Moderated[String],
-  val label : Moderated[String],
-  val nationalIdentifier : Moderated[String],
-  val swift_bic : Moderated[String],
-  val iban : Moderated[String],
-  val number: Moderated[String],
-  val bankName: Moderated[String],
-  val bankId : BankId,
-  val bankRoutingScheme : Moderated[String],
-  val bankRoutingAddress :Moderated[String],
-  val accountRoutingScheme : Moderated[String],
-  val accountRoutingAddress :Moderated[String]
+                            val accountId : AccountId,
+                            val owners : Moderated[Set[User]],
+                            val accountType : Moderated[String],
+                            val balance: String = "", //TODO: Moderated[String]?
+                            val currency : Moderated[String],
+                            val label : Moderated[String],
+                            val nationalIdentifier : Moderated[String],
+                            val swift_bic : Moderated[String],
+                            val iban : Moderated[String],
+                            val number: Moderated[String],
+                            val bankName: Moderated[String],
+                            val bankId : BankId,
+                            val bankRoutingScheme : Moderated[String],
+                            val bankRoutingAddress :Moderated[String],
+                            val accountRoutingScheme : Moderated[String],
+                            val accountRoutingAddress :Moderated[String],
+                            val accountRules: List[AccountRules]
 ){
   @deprecated(Helper.deprecatedJsonGenerationMessage)
   def toJson = {

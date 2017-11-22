@@ -8,6 +8,7 @@ import code.customer.{AmountOfMoney, CreditRating, Customer, CustomerFaceImage, 
 import code.model._
 import net.liftweb.common.Box
 
+import scala.concurrent.Future
 
 object RemotedataCustomers extends ObpActorInit with CustomerProvider {
 
@@ -15,6 +16,12 @@ object RemotedataCustomers extends ObpActorInit with CustomerProvider {
 
   def getCustomerByUserId(bankId: BankId, userId: String): Box[Customer] =
     extractFutureToBox(actor ? cc.getCustomerByUserId(bankId, userId))
+
+  def getCustomersByUserId(userId: String): List[Customer] =
+    extractFuture(actor ? cc.getCustomersByUserId(userId))
+
+  def getCustomersByUserIdBox(userId: String): Box[List[Customer]] =
+    extractFutureToBox(actor ? cc.getCustomersByUserIdFuture(userId))
 
   def getCustomerByCustomerId(customerId: String) : Box[Customer] =
     extractFutureToBox(actor ? cc.getCustomerByCustomerId(customerId))

@@ -32,13 +32,15 @@
 package code.api.v3_0_0
 
 import code.api.OBPRestHelper
-import code.api.util.APIUtil.ResourceDoc
+import code.api.util.APIUtil
+import code.api.util.APIUtil.{ApiVersion, OBPEndpoint, ResourceDoc, dottedApiVersion, getAllowedEndpoints}
 import code.api.v1_3_0.APIMethods130
 import code.api.v1_4_0.APIMethods140
 import code.api.v2_0_0.APIMethods200
 import code.api.v2_1_0.APIMethods210
 import code.api.v2_2_0.APIMethods220
-import code.api.v2_2_0.OBPAPI2_2_0._
+import code.api.v2_2_0.OBPAPI2_2_0.{Implementations2_2_0, _}
+import code.api.v3_0_0.custom.CustomAPIMethods300
 import code.model.User
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.Box
@@ -47,25 +49,23 @@ import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 
-object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 with APIMethods200 with APIMethods210 with APIMethods220 with APIMethods300 with MdcLoggable {
+
+
+/*
+This file defines which endpoints from all the versions are available in v3.0.0
+ */
+
+
+object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 with APIMethods200 with APIMethods210 with APIMethods220 with APIMethods300 with CustomAPIMethods300 with MdcLoggable {
   
-  
-  val version = "3.0.0"
+
+  // Note discrepancy between Resource Docs and this _ vs .
+  val version = dottedApiVersion(ApiVersion.v3_0_0)    // Previously "3.0.0"
   val versionStatus = "BLEEDING-EDGE"
 
-  // Get disabled API versions from props
-  val disabledVersions = Props.get("api_disabled_versions").getOrElse("").replace("[", "").replace("]", "").split(",")
-  // Get disabled API endpoints from props
-  val disabledEndpoints = Props.get("api_disabled_endpoints").getOrElse("").replace("[", "").replace("]", "").split(",")
 
-  // Note: Since we pattern match on these routes, if two implementations match a given url the first will match
-
-  var routes = List(Implementations1_2_1.root(version, versionStatus))
-
-
-  // ### VERSION 1.2.1 - BEGIN ###
-  //First step - make a list of allowed endpoints
-  val endpointsOf1_2_1 = Implementations1_2_1.addCommentForViewOnTransaction ::
+  // Possible Endpoints from 1.2.1
+  val endpointsOf1_2_1 =  Implementations1_2_1.addCommentForViewOnTransaction ::
                           Implementations1_2_1.addCounterpartyCorporateLocation::
                           Implementations1_2_1.addCounterpartyImageUrl ::
                           Implementations1_2_1.addCounterpartyMoreInfo ::
@@ -130,57 +130,24 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.updateWhereTagForViewOnTransaction ::
                           Nil
 
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations1_2_1.resourceDocs if !disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) &&  endpointsOf1_2_1.exists(_ == item.partialFunction)) {
-    routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 1.2.1 - END ###
 
-
-  // ### VERSION 1.3.0 - BEGIN ###
-  // New in 1.3.0
-  //First step - make a list of allowed endpoints
+  // Possible Endpoints from VERSION 1.3.0
   val endpointsOf1_3_0 = Implementations1_3_0.getCards ::
                          Implementations1_3_0.getCardsForBank ::
                          Nil
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations1_3_0.resourceDocs if !disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) &&  endpointsOf1_3_0.exists(_ == item.partialFunction)) {
-    routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 1.3.0 - END ###
 
 
-
-  // ### VERSION 1.4.0 - BEGIN ###
-  // New in 1.4.0
-  //First step - make a list of allowed endpoints
+  // Possible Endpoints from 1.4.0
   val endpointsOf1_4_0 = Implementations1_4_0.getCustomerMessages ::
                           Implementations1_4_0.addCustomerMessage ::
-                          Implementations1_4_0.getBranches ::
-                          Implementations1_4_0.getAtms ::
+                          // Implementations1_4_0.getBranches :: //now in V300
+                          // Implementations1_4_0.getAtms :: //now in V300
                           Implementations1_4_0.getCrmEvents ::
                           Implementations1_4_0.getTransactionRequestTypes ::
                          Nil
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations1_4_0.resourceDocs if !disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) &&  endpointsOf1_4_0.exists(_ == item.partialFunction)) {
-    routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 1.4.0 - END ###
 
 
-
-  // ### VERSION 2.0.0 - BEGIN ###
-  // Updated in 2.0.0 (less info about the views)
-  //First step - make a list of allowed endpoints
+  // Possible Endpoints from 2.0.0
   val endpointsOf2_0_0 = //Now in V3.0.0 Implementations2_0_0.allAccountsAllBanks ::
                          //Now in V3.0.0 Implementations2_0_0.accountById ::
                           Implementations2_0_0.addEntitlement ::
@@ -201,7 +168,7 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_0_0.getAllEntitlements ::
                           //now in V300 Implementations2_0_0.getCoreAccountById ::
                           //now in V300 Implementations2_0_0.getCoreTransactionsForBankAccount ::
-                          Implementations2_0_0.getCurrentUser ::
+                          // Implementations2_0_0.getCurrentUser ::
                           Implementations2_0_0.getEntitlements ::
                           Implementations2_0_0.getKycChecks ::
                           Implementations2_0_0.getKycDocuments ::
@@ -215,24 +182,13 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_0_0.getTransactionTypes ::
                           // Implementations2_0_0.getUser ::
                           //now in V300 Implementations2_0_0.corePrivateAccountsAllBanks ::
-                          Implementations2_0_0.privateAccountsAtOneBank ::
+                          //now in V300 Implementations2_0_0.privateAccountsAtOneBank ::
                           Implementations2_0_0.publicAccountsAllBanks ::
                           Implementations2_0_0.publicAccountsAtOneBank ::
                           Nil
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations2_0_0.resourceDocs if !disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) &&  endpointsOf2_0_0.exists(_ == item.partialFunction)) {
-      routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 2.0.0 - END ###
 
 
-
-  // ### VERSION 2.1.0 - BEGIN ###
-  // New in 2.1.0
-  //First step - make a list of allowed endpoints
+  // Possible Endpoints from 2.1.0
   val endpointsOf2_1_0 = Implementations2_1_0.sandboxDataImport ::
                           Implementations2_1_0.getTransactionRequestTypesSupportedByBank ::
                           Implementations2_1_0.createTransactionRequest ::
@@ -243,60 +199,40 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_1_0.getConsumer ::
                           Implementations2_1_0.getConsumers ::
                           Implementations2_1_0.enableDisableConsumers ::
-                          Implementations2_1_0.addCardsForBank ::
-                          Implementations2_1_0.getUsers ::
+                          Implementations2_1_0.addCardForBank ::
+                          // Implementations2_1_0.getUsers ::
                           Implementations2_1_0.createTransactionType ::
-                          Implementations2_1_0.createCounterparty ::
-                          Implementations2_1_0.getAtm ::
-                          Implementations2_1_0.getBranch ::
+                          // Implementations2_1_0.getAtm :: //now in V300
+                          // Implementations2_1_0.getBranch :: //now in V300
                           Implementations2_1_0.updateBranch ::
-                          //now in V220
-                          //Implementations2_1_0.createBranch ::
                           Implementations2_1_0.getProduct ::
                           Implementations2_1_0.getProducts ::
                           Implementations2_1_0.createCustomer ::
-                          Implementations2_1_0.getCustomer ::
-                          Implementations2_1_0.getCustomers ::
+                          Implementations2_1_0.getCustomersForCurrentUserAtBank ::
+                          // Implementations2_1_0.getCustomersForUser ::
                           Implementations2_1_0.updateConsumerRedirectUrl ::
                           Implementations2_1_0.getMetrics ::
                           Nil
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations2_1_0.resourceDocs if !disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) &&  endpointsOf2_1_0.exists(_ == item.partialFunction)) {
-    routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 2.1.0 - END ###
-  
-  
-  // ### VERSION 2.1.0 - BEGIN ###
-  //First step - make a list of allowed endpoints
-  val endpointsOf2_2_0 = //V300 Implementations2_2_0.getViewsForBankAccount ::
-                          //V300 Implementations2_2_0.createViewForBankAccount ::
-                          //V300 Implementations2_2_0.updateViewForBankAccount ::
-                          Implementations2_2_0.getCurrentFxRate ::
+
+
+  // Possible Endpoints from 2.1.0
+  val endpointsOf2_2_0 =  Implementations2_2_0.getCurrentFxRate ::
                           Implementations2_2_0.getCounterpartiesForAccount ::
+                          Implementations2_2_0.getCounterpartyById ::
                           Implementations2_2_0.getMessageDocs ::
                           Implementations2_2_0.createBank ::
                           Implementations2_2_0.createAccount ::
-                          Implementations2_2_0.createBranch ::
-                          Implementations2_2_0.createAtm ::
+                          //Implementations2_2_0.createAtm ::
                           Implementations2_2_0.createProduct ::
                           Implementations2_2_0.config ::
                           Implementations2_2_0.getConnectorMetrics ::
-                          Nil
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations2_2_0.resourceDocs if (!disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) && endpointsOf2_2_0.exists(_ == item.partialFunction))) {
-    routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 2.2.0 - END ###
+                          Implementations2_2_0.createCounterparty ::
+                          //Implementations2_2_0.getCustomersForUser ::
+                          //Implementations2_2_0.getCoreTransactionsForBankAccount ::
+    Nil
+
   
-  // New in 3.0.0
-  //First step - make a list of allowed endpoints
+  // Possible Endpoints from 3.0.0
   val endpointsOf3_0_0 = Implementations3_0_0.getCoreTransactionsForBankAccount ::
                           Implementations3_0_0.getTransactionsForBankAccount ::
                           Implementations3_0_0.accountById ::
@@ -310,29 +246,54 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations3_0_0.getUserByUserId ::
                           Implementations3_0_0.getUserByUsername ::
                           Implementations3_0_0.getAdapter ::
+                          Implementations3_0_0.createBranch ::
+                          Implementations3_0_0.getBranches ::
+                          Implementations3_0_0.getBranch ::
+                          Implementations3_0_0.createAtm ::
+                          Implementations3_0_0.getAtm ::
+                          Implementations3_0_0.getAtms ::
+                          Implementations3_0_0.getUsers ::
+                          Implementations3_0_0.getCustomersForUser ::
+                          Implementations3_0_0.getCurrentUser ::
+                          Implementations3_0_0.privateAccountsAtOneBank ::
+                          Implementations3_0_0.getPrivateAccountIdsbyBankId ::
                           Nil
-  //Second step - iterate through all endpoints defined in resource doc
-  //       then - omit endpoints of disabled version in props file
-  //       and  - omit partially disabled endpoint in props file
-  //       and  - add only ones which intersect with the list defined in the first step
-  for ( item <- Implementations3_0_0.resourceDocs if (!disabledVersions.contains("v" + item.apiVersion) && !disabledEndpoints.contains(item.apiFunction) && endpointsOf3_0_0.exists(_ == item.partialFunction))) {
-    routes = routes:::List(item.partialFunction)
-  }
-  // ### VERSION 3.0.0 - END ###
 
+
+  // Possible Endpoints from 3.0.0 Custom Folder
+  val endpointsOfCustom3_0_0 = ImplementationsCustom3_0_0.endpointsOfCustom3_0_0
+  
+  val allResourceDocs = Implementations3_0_0.resourceDocs ++
+                        ImplementationsCustom3_0_0.resourceDocs ++
+                        Implementations2_2_0.resourceDocs ++
+                        Implementations2_1_0.resourceDocs ++
+                        Implementations2_0_0.resourceDocs ++
+                        Implementations1_4_0.resourceDocs ++
+                        Implementations1_3_0.resourceDocs ++
+                        Implementations1_2_1.resourceDocs
+  
   def findResourceDoc(pf: PartialFunction[Req, Box[User] => Box[JsonResponse]]): Option[ResourceDoc] = {
-    val all = Implementations3_0_0.resourceDocs ++
-              Implementations2_2_0.resourceDocs ++
-              Implementations2_1_0.resourceDocs ++
-              Implementations2_0_0.resourceDocs ++
-              Implementations1_4_0.resourceDocs ++
-              Implementations1_3_0.resourceDocs ++
-              Implementations1_2_1.resourceDocs
-    all.find(_.partialFunction==pf)
+    allResourceDocs.find(_.partialFunction==pf)
   }
 
+  // Filter the possible endpoints by the disabled / enabled Props settings and add them together
+  val routes : List[OBPEndpoint] =
+    List(Implementations1_2_1.root(version, versionStatus)) ::: // For now we make this mandatory
+  getAllowedEndpoints(endpointsOf1_2_1, Implementations1_2_1.resourceDocs) :::
+  getAllowedEndpoints(endpointsOf1_3_0, Implementations1_3_0.resourceDocs) :::
+  getAllowedEndpoints(endpointsOf1_4_0, Implementations1_4_0.resourceDocs) :::
+  getAllowedEndpoints(endpointsOf2_0_0, Implementations2_0_0.resourceDocs) :::
+  getAllowedEndpoints(endpointsOf2_1_0, Implementations2_1_0.resourceDocs) :::
+  getAllowedEndpoints(endpointsOf2_2_0, Implementations2_2_0.resourceDocs) :::
+  getAllowedEndpoints(endpointsOf3_0_0, Implementations3_0_0.resourceDocs) :::
+  getAllowedEndpoints(endpointsOfCustom3_0_0, ImplementationsCustom3_0_0.resourceDocs)
+
+
+  // Make them available for use!
   routes.foreach(route => {
     oauthServe(apiPrefix{route}, findResourceDoc(route))
   })
+
+  logger.info(s"version $version has been run! There are ${routes.length} routes.")
 
 }

@@ -34,10 +34,8 @@ package code.api
 
 import code.api.util.{APIUtil, ErrorMessages}
 import net.liftweb.http.rest.RestHelper
-import net.liftweb.http.Req
+import net.liftweb.http.{JsonResponse, LiftResponse, Req, S}
 import net.liftweb.common._
-import net.liftweb.http.LiftResponse
-import net.liftweb.http.JsonResponse
 import APIUtil._
 import code.model.User
 import code.api.OAuthHandshake._
@@ -45,6 +43,8 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.Extraction
 import net.liftweb.util.{Helpers, Props}
 import code.api.Constant._
+import code.api.v3_0_0.OBPAPI3_0_0.Implementations3_0_0
+import com.github.dwickern.macros.NameOf.nameOf
 import code.util.Helper.MdcLoggable
 
 trait APIFailure{
@@ -89,6 +89,20 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
   /*
   An implicit function to convert magically between a Boxed JsonResponse and a JsonResponse
   If we have something good, return it. Else log and return an error.
+  Please note that behaviour of this function depends om property display_internal_errors=true/false in case of Failure
+  # When is disabled we show only last message which should be a user friendly one. For instance:
+  # {
+  #   "error": "OBP-30001: Bank not found. Please specify a valid value for BANK_ID."
+  # }
+  # When is disabled we also do filtering. Every message which does not contain "OBP-" is considered as internal and as that is not shown.
+  # In case the filtering implies an empty response we provide a generic one:
+  # {
+  #   "error": "OBP-50005: An unspecified or internal error occurred."
+  # }
+  # When is enabled we show all messages in a chain. For instance:
+  # {
+  #   "error": "OBP-30001: Bank not found. Please specify a valid value for BANK_ID. <- Full(Kafka_TimeoutExceptionjava.util.concurrent.TimeoutException: The stream has not been completed in 1550 milliseconds.)"
+  # }
   */
   implicit def jsonResponseBoxToJsonResponse(box: Box[JsonResponse]): JsonResponse = {
     box match {
@@ -97,9 +111,19 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
         logger.debug("jsonResponseBoxToJsonResponse case ParamFailure says: API Failure: " + apiFailure.msg + " ($apiFailure.responseCode)")
         errorJsonResponse(apiFailure.msg, apiFailure.responseCode)
       }
-      case Failure(msg, _, _) => {
-        logger.debug("jsonResponseBoxToJsonResponse case Failure API Failure: " + msg)
-        errorJsonResponse(msg)
+      case obj@Failure(msg, _, c) => {
+        val failuresMsg = Props.getBool("display_internal_errors").openOr(false) match {
+          case true => // Show all error in a chain
+            obj.messageChain
+          case false => // Do not display internal errors
+            val obpFailures = obj.failureChain.filter(_.msg.contains("OBP-"))
+            obpFailures match {
+              case Nil => ErrorMessages.AnUnspecifiedOrInternalErrorOccurred
+              case _ => obpFailures.map(_.msg).mkString(" <- ")
+            }
+          }
+        logger.debug("jsonResponseBoxToJsonResponse case Failure API Failure: " + failuresMsg)
+        errorJsonResponse(failuresMsg)
       }
       case _ => errorJsonResponse()
     }
@@ -132,30 +156,97 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
     }
   }
 
-  def failIfBadAuthorizationHeader(fn: (Box[User]) => Box[JsonResponse]) : JsonResponse = {
-    if (isThereAnOAuthHeader) {
-      getUser match {
-        case Full(u) => fn(Full(u))
-        case ParamFailure(_, _, _, apiFailure : APIFailure) => errorJsonResponse(apiFailure.msg, apiFailure.responseCode)
-        case Failure(msg, _, _) => errorJsonResponse(msg)
-        case _ => errorJsonResponse("oauth error")
+  lazy val newStyleEndpoints: List[(String, String)] = List(
+    (nameOf(Implementations3_0_0.getUser), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getCurrentUser), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getUserByUserId), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getUserByUsername), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getUsers), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getCustomersForUser), ApiVersion.v2_2_0.toString),
+    (nameOf(Implementations3_0_0.getCustomersForUser), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getCoreTransactionsForBankAccount), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getTransactionsForBankAccount), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.corePrivateAccountsAllBanks), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getViewsForBankAccount), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getPrivateAccountIdsbyBankId), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.privateAccountsAtOneBank), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getCoreAccountById), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.accountById), ApiVersion.v3_0_0.toString)
+  )
+  /**
+    * Function which inspect does an Endpoint use Akka's Future in non-blocking way i.e. without using Await.result
+    * @param rd Resource Document which contains all description of an Endpoint
+    * @return true if some endpoint can get User from Authorization Header
+    */
+  def newStyleEndpoints(rd: Option[ResourceDoc]) : Boolean = {
+    rd match {
+      case Some(e) if newStyleEndpoints.exists(_ == (e.partialFunctionName, "v" + e.implementedInApiVersion)) =>
+        true
+      case _ =>
+        false
+    }
+  }
+
+  def failIfBadAuthorizationHeader(rd: Option[ResourceDoc])(fn: (Box[User]) => Box[JsonResponse]) : JsonResponse = {
+    if(newStyleEndpoints(rd)) {
+      fn(Empty)
+    } else if (hasAnOAuthHeader) {
+      val usr = getUser
+      usr match {
+        case Full(u) => fn(Full(u)) // Authentication is successful
+        case ParamFailure(a, b, c, apiFailure : APIFailure) => ParamFailure(a, b, c, apiFailure : APIFailure)
+        case Failure(msg, t, c) => Failure(msg, t, c)
+        case _ => Failure("oauth error")
       }
-    } else if (Props.getBool("allow_direct_login", true) && isThereDirectLoginHeader) {
+    } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
       DirectLogin.getUser match {
-        case Full(u) => fn(Full(u))
+        case Full(u) => fn(Full(u)) // Authentication is successful
         case _ => {
           var (httpCode, message, directLoginParameters) = DirectLogin.validator("protectedResource", DirectLogin.getHttpMethod)
-          errorJsonResponse(message, httpCode)
+          Full(errorJsonResponse(message, httpCode))
         }
       }
-//    } else if (Props.getBool("allow_gateway_login", true) && isThereGatewayHeader) {
-//        DirectLogin.getUser match {
-//          case Full(u) => fn(Full(u))
-//          case _ => {
-//            var (httpCode, message, directLoginParameters) = DirectLogin.validator("protectedResource", DirectLogin.getHttpMethod)
-//            errorJsonResponse(message, httpCode)
-//          }
-//        }
+    } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
+      logger.info("allow_gateway_login-getRemoteIpAddress: " + getRemoteIpAddress() )
+      Props.get("gateway.host") match {
+        case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == true) => // Only addresses from white list can use this feature
+          val s = S
+          val (httpCode, message, parameters) = GatewayLogin.validator(s.request)
+          httpCode match {
+            case 200 =>
+              val payload = GatewayLogin.parseJwt(parameters)
+              payload match {
+                case Full(payload) =>
+                  val s = S
+                  GatewayLogin.getOrCreateResourceUser(payload: String) match {
+                    case Full((u, cbsAuthToken)) => // Authentication is successful
+                      GatewayLogin.getOrCreateConsumer(payload, u)
+                      setGatewayResponseHeader(s) {
+                        GatewayLogin.createJwt(payload, cbsAuthToken)
+                      }
+                      setGatewayLoginUsername(s)(u.name)
+                      setGatewayLoginCbsToken(s)(cbsAuthToken)
+                      fn(Full(u))
+                    case Failure(msg, t, c) => Failure(msg, t, c)
+                    case _ => Full(errorJsonResponse(payload, httpCode))
+                  }
+                case Failure(msg, t, c) =>
+                  Failure(msg, t, c)
+                case _ =>
+                  Failure(ErrorMessages.GatewayLoginUnknownError)
+              }
+            case _ =>
+              Failure(message)
+          }
+        case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == false) => // All other addresses will be rejected
+          Failure(ErrorMessages.GatewayLoginWhiteListAddresses)
+        case Empty =>
+          Failure(ErrorMessages.GatewayLoginHostPropertyMissing) // There is no gateway.host in props file
+        case Failure(msg, t, c) =>
+          Failure(msg, t, c)
+        case _ =>
+          Failure(ErrorMessages.GatewayLoginUnknownError)
+      }
     } else {
       fn(Empty)
     }
@@ -203,7 +294,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
           //if request matches PartialFunction cases for each defined url
           //if request has correct oauth headers
           val startTime = Helpers.now
-          val response = failIfBadAuthorizationHeader {
+          val response = failIfBadAuthorizationHeader(rd) {
                           failIfBadJSON(r, handler)
                         }
           val endTime = Helpers.now

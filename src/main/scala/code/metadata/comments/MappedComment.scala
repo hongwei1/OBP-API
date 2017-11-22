@@ -5,7 +5,7 @@ import java.util.{Date, UUID}
 import code.model._
 import code.model.dataAccess.ResourceUser
 import code.users.Users
-import code.util.{UUIDString, DefaultStringField, MappedUUID}
+import code.util.{AccountIdString, MappedUUID, UUIDString}
 import net.liftweb.common.{Box, Failure, Full}
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo
@@ -62,7 +62,7 @@ class MappedComment extends Comment with LongKeyedMapper[MappedComment] with IdP
 
   object apiId extends MappedUUID(this)
 
-  object text_ extends DefaultStringField(this)
+  object text_ extends MappedString(this, 2000)
   object poster extends MappedLongForeignKey(this, ResourceUser)
   object replyTo extends MappedUUID(this) {
     override def defaultValue = ""
@@ -72,7 +72,7 @@ class MappedComment extends Comment with LongKeyedMapper[MappedComment] with IdP
   object date extends MappedDateTime(this)
 
   object bank extends UUIDString(this)
-  object account extends UUIDString(this)
+  object account extends AccountIdString(this)
   object transaction extends UUIDString(this)
 
   override def id_ : String = apiId.get

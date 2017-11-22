@@ -4,7 +4,7 @@ import code.TransactionTypes.TransactionTypeProvider
 import code.model._
 import code.TransactionTypes.TransactionType._
 
-import code.util.{MediumString, UUIDString, DefaultStringField}
+import code.util.{MediumString, UUIDString}
 import net.liftweb.common._
 import net.liftweb.mapper._
 import code.api.util.ErrorMessages
@@ -69,8 +69,8 @@ class MappedTransactionType extends LongKeyedMapper[MappedTransactionType] with 
   object mTransactionTypeId extends UUIDString(this)
   object mBankId extends UUIDString(this)
   object mShortCode extends MappedString(this,20)
-  object mSummary extends MediumString(this)
-  object mDescription extends DefaultStringField(this)
+  object mSummary extends MappedString(this, 64)
+  object mDescription extends MappedString(this, 2000)
 
 
   object mCustomerFee_Currency extends MappedString(this, 3)
@@ -95,13 +95,13 @@ class MappedTransactionType extends LongKeyedMapper[MappedTransactionType] with 
   }
 
   def updateAllFields(mappedTransactionType: MappedTransactionType): Box[MappedTransactionType] = {
-    mTransactionTypeId.set(mappedTransactionType.mTransactionTypeId)
-    mBankId.set(mappedTransactionType.mBankId)
-    mShortCode.set(mappedTransactionType.mShortCode)
-    mSummary.set(mappedTransactionType.mSummary)
-    mDescription.set(mappedTransactionType.mDescription)
-    mCustomerFee_Currency.set(mappedTransactionType.mCustomerFee_Currency)
-    mCustomerFee_Amount.set(mappedTransactionType.mCustomerFee_Amount)
+    mTransactionTypeId.set(mappedTransactionType.mTransactionTypeId.get)
+    mBankId.set(mappedTransactionType.mBankId.get)
+    mShortCode.set(mappedTransactionType.mShortCode.get)
+    mSummary.set(mappedTransactionType.mSummary.get)
+    mDescription.set(mappedTransactionType.mDescription.get)
+    mCustomerFee_Currency.set(mappedTransactionType.mCustomerFee_Currency.get)
+    mCustomerFee_Amount.set(mappedTransactionType.mCustomerFee_Amount.get)
     Some(this)
   }
 }

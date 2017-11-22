@@ -31,6 +31,7 @@ Berlin 13359, Germany
  */
 package code.snippet
 
+import code.api.util.ErrorMessages
 import code.model._
 import code.model.dataAccess.AuthUser
 import net.liftweb.common.{Empty, Full}
@@ -45,7 +46,7 @@ class ConsumerRegistration extends MdcLoggable {
   private object nameVar extends RequestVar("")
   private object redirectionURLVar extends RequestVar("")
   private object authenticationURLVar extends RequestVar("")
-  private object appTypeVar extends RequestVar[Consumer.appType.enum.AppType](Consumer.appType.enum.values.head)
+  private object appTypeVar extends RequestVar[AppType](AppType.Web)
   private object descriptionVar extends RequestVar("")
   private object devEmailVar extends RequestVar("")
   private object appType extends RequestVar("Web")
@@ -65,10 +66,7 @@ class ConsumerRegistration extends MdcLoggable {
   
   def registerForm = {
 
-    val appTypes = Consumer.appType.enum.values.toList.map { appType =>
-      val id = appType.toString
-      (id, id)
-    }
+    val appTypes = List((AppType.Web.toString, AppType.Web.toString), (AppType.Mobile.toString, AppType.Mobile.toString))
 
     def submitButtonDefense: Unit = {
       submitButtonDefenseFlag("true")
@@ -76,49 +74,45 @@ class ConsumerRegistration extends MdcLoggable {
 
     def registerWithoutWarnings =
       register &
-      "#registration-errors" #> ""
+      "#register-consumer-errors" #> ""
 
     def register = {
-      ".register" #> {
-          ".appTypeClass" #> SHtml.select(appTypes, Empty, appType(_)) &
-          ".appNameClass" #> SHtml.text(nameVar.is, nameVar(_)) & 
-          ".appRedirectUrlClass" #> SHtml.text(redirectionURLVar, redirectionURLVar(_)) &
-          ".appDevClass" #> SHtml.text(devEmailVar, devEmailVar(_)) &
-          ".appDescClass" #> SHtml.textarea(descriptionVar, descriptionVar (_)) &
-          ".appUserAuthenticationUrlClass" #> SHtml.text(authenticationURLVar.is, authenticationURLVar(_)) &
-          "type=submit" #> SHtml.submit("Send", () => submitButtonDefense)
+      "form" #> {
+          "#appType" #> SHtml.select(appTypes, Empty, appType(_)) &
+          "#appName" #> SHtml.text(nameVar.is, nameVar(_)) & 
+          "#appRedirectUrl" #> SHtml.text(redirectionURLVar, redirectionURLVar(_)) &
+          "#appDev" #> SHtml.text(devEmailVar, devEmailVar(_)) &
+          "#appDesc" #> SHtml.textarea(descriptionVar, descriptionVar (_)) &
+          "#appUserAuthenticationUrl" #> SHtml.text(authenticationURLVar.is, authenticationURLVar(_)) &
+          "type=submit" #> SHtml.submit("Register consumer", () => submitButtonDefense)
       } &
-      ".success" #> ""
+      "#register-consumer-success" #> ""
     }
 
     def showResults(consumer : Consumer) = {
       val urlOAuthEndpoint = Props.get("hostname", "") + "/oauth/initiate"
       val urlDirectLoginEndpoint = Props.get("hostname", "") + "/my/logins/direct"
       //thanks for registering, here's your key, etc.
-      ".app-consumer_id *" #> consumer.id.get &
-      ".app-name *" #> consumer.name.get &
-      ".app-redirect-url *" #> consumer.redirectURL &
-      ".app-user-authentication-url *" #> consumer.userAuthenticationURL &
-      ".app-type *" #> consumer.appType.get.toString &
-      ".app-description *" #> consumer.description.get &
-      ".app-developer *" #> consumer.developerEmail.get &
-      ".auth-key *" #> consumer.key.get &
-      ".secret-key *" #> consumer.secret.get &
-      ".registration" #> "" &
-      ".oauth-endpoint a *" #> urlOAuthEndpoint &
-      ".oauth-endpoint a [href]" #> urlOAuthEndpoint &
-      ".directlogin-endpoint a *" #> urlDirectLoginEndpoint &
-      ".directlogin-endpoint a [href]" #> urlDirectLoginEndpoint &
-      ".post-consumer-registration-more-info-link a *" #> registrationMoreInfoText &
-      ".post-consumer-registration-more-info-link a [href]" #> registrationMoreInfoUrl
+      "#app-consumer_id *" #> consumer.id.get &
+      "#app-name *" #> consumer.name.get &
+      "#app-redirect-url *" #> consumer.redirectURL &
+      "#app-user-authentication-url *" #> consumer.userAuthenticationURL &
+      "#app-type *" #> consumer.appType.get.toString &
+      "#app-description *" #> consumer.description.get &
+      "#app-developer *" #> consumer.developerEmail.get &
+      "#auth-key *" #> consumer.key.get &
+      "#secret-key *" #> consumer.secret.get &
+      "#oauth-endpoint a *" #> urlOAuthEndpoint &
+      "#oauth-endpoint a [href]" #> urlOAuthEndpoint &
+      "#directlogin-endpoint a *" #> urlDirectLoginEndpoint &
+      "#directlogin-endpoint a [href]" #> urlDirectLoginEndpoint &
+      "#post-consumer-registration-more-info-link a *" #> registrationMoreInfoText &
+      "#post-consumer-registration-more-info-link a [href]" #> registrationMoreInfoUrl &
+      "#register-consumer-input" #> ""
     }
 
-    def saveAndShowResults(consumer : Consumer) = {
-      val c = Consumers.consumers.vend.updateConsumer(consumer.id, Some(Helpers.randomString(40).toLowerCase), Some(Helpers.randomString(40).toLowerCase), Some(true), None, None, None, None, None, None)
-      val result = c match {
-        case Full(x) => x
-        case _       => consumer
-      }
+    def showRegistrationResults(result : Consumer) = {
+
       notifyRegistrationOccurred(result)
       sendEmailToDeveloper(result)
 
@@ -128,7 +122,7 @@ class ConsumerRegistration extends MdcLoggable {
     def showErrors(errors : List[FieldError]) = {
       val errorsString = errors.map(_.msg.toString)
       register &
-      "#registration-errors *" #> {
+      "#register-consumer-errors *" #> {
         ".error *" #>
           errorsString.map({ e=>
             ".errorContent *" #> e
@@ -136,12 +130,22 @@ class ConsumerRegistration extends MdcLoggable {
       }
     }
 
-    //TODO this should be used somewhere else, it is check the empty of description for the hack attack from GUI.
-    def showErrorsForDescription (descriptioinError : String) = {
+    def showUnknownErrors(errors : List[String]) = {
       register &
-        "#registration-errors *" #> {
+        "#register-consumer-errors *" #> {
           ".error *" #>
-            List(descriptioinError).map({ e=>
+            errors.map({ e=>
+              ".errorContent *" #> e
+            })
+        }
+    }
+
+    //TODO this should be used somewhere else, it is check the empty of description for the hack attack from GUI.
+    def showErrorsForDescription (descriptionError : String) = {
+      register &
+        "#register-consumer-errors *" #> {
+          ".error *" #>
+            List(descriptionError).map({ e=>
               ".errorContent *" #> e
             })
         }
@@ -149,13 +153,10 @@ class ConsumerRegistration extends MdcLoggable {
 
     def analyseResult = {
 
-      def withNameOpt(s: String): Option[Consumer.appType.enum.AppType] = Consumer.appType.enum.values.find(_.toString == s)
+      def withNameOpt(s: String): Option[AppType] = Some(AppType.valueOf(s))
 
       val appTypeSelected = withNameOpt(appType.is)
-
-      val consumer = Consumers.consumers.vend.createConsumer(None, None, None, Some(nameVar.is), Some(appTypeSelected.get), Some(descriptionVar.is), Some(devEmailVar.is), Some(redirectionURLVar.is), Some(AuthUser.getCurrentResourceUserUserId))
-
-      val errors = consumer.get.validate
+      println("appTypeSelected: " + appTypeSelected)
       nameVar.set(nameVar.is)
       appTypeVar.set(appTypeSelected.get)
       descriptionVar.set(descriptionVar.is)
@@ -163,13 +164,27 @@ class ConsumerRegistration extends MdcLoggable {
       redirectionURLVar.set(redirectionURLVar.is)
 
       if(submitButtonDefenseFlag.isEmpty)
-        showErrorsForDescription("The 'Send' button random name has been modified !")
+        showErrorsForDescription("The 'Register' button random name has been modified !")
       else if(descriptionVar.isEmpty)
         showErrorsForDescription("Description of the application can not be empty !")
-      else if(errors.isEmpty)
-        saveAndShowResults(consumer.get)
-      else
-        showErrors(errors)
+      else{
+        val consumer = Consumers.consumers.vend.createConsumer(
+          Some(Helpers.randomString(40).toLowerCase),
+          Some(Helpers.randomString(40).toLowerCase),
+          Some(true),
+          Some(nameVar.is),
+          appTypeSelected,
+          Some(descriptionVar.is),
+          Some(devEmailVar.is),
+          Some(redirectionURLVar.is),
+          Some(AuthUser.getCurrentResourceUserUserId))
+        println("consumer: " + consumer)
+        consumer match {
+          case Full(x) if x.validate.isEmpty => showRegistrationResults(x)
+          case Full(x) if !x.validate.isEmpty => showErrors(x.validate)
+          case _ => showUnknownErrors(List(ErrorMessages.UnknownError))
+        }
+      }
     }
 
     if(S.post_?) analyseResult

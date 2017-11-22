@@ -2,12 +2,18 @@ package code.bankconnectors
 
 import java.util.{Date, UUID}
 
-import code.api.util.ErrorMessages
-import code.api.v2_1_0.{AtmJsonPost, BranchJsonPost, TransactionRequestCommonBodyJSON}
-import code.atms.Atms.{Atm, AtmId}
-import code.atms.MappedAtm
-import code.branches.Branches.{Branch, BranchId}
+import code.api.util.APIUtil.{saveConnectorMetric, stringOrNull}
+import code.api.util.{APIUtil, ErrorMessages, SessionContext}
+import code.api.v1_2_1.AccountRoutingJsonV121
+import code.api.v2_1_0.{PostCounterpartyBespoke, TransactionRequestCommonBodyJSON}
+import code.api.v3_0_0.CoreAccountJsonV300
+import code.atms.Atms.{AtmId, AtmT}
+import code.atms.{Atms, MappedAtm}
+import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
+import code.branches.Branches._
 import code.branches.MappedBranch
+import code.cards.MappedPhysicalCard
+import code.customer.Customer
 import code.fx.{FXRate, MappedFXRate, fx}
 import code.management.ImporterAPI.ImporterTransaction
 import code.metadata.comments.Comments
@@ -24,48 +30,44 @@ import code.transaction.MappedTransaction
 import code.transactionrequests.TransactionRequests._
 import code.transactionrequests._
 import code.util.Helper
-import code.util.Helper._
+import code.util.Helper.{MdcLoggable, _}
 import code.views.Views
+import com.google.common.cache.CacheBuilder
 import com.tesobe.model.UpdateBankAccount
 import net.liftweb.common._
 import net.liftweb.mapper.{By, _}
 import net.liftweb.util.Helpers.{tryo, _}
-import net.liftweb.util.{BCrypt, Props, StringHelpers}
+import net.liftweb.util.Props
 
+import scala.collection.immutable.List
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.math.BigInt
-import code.api.util.APIUtil.saveConnectorMetric
-import code.api.v2_2_0.ProductJsonV220
-
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
-import scalacache._
-import concurrent.duration._
-import language.postfixOps
-import memoization._
-import com.google.common.cache.CacheBuilder
-import code.util.Helper.MdcLoggable
+import scalacache.memoization._
 
 
 object LocalMappedConnector extends Connector with MdcLoggable {
 
   type AccountType = MappedBankAccount
   val maxBadLoginAttempts = Props.get("max.bad.login.attempts") openOr "10"
-  
+
   val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
   implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
   val getTransactionsTTL                    = Props.get("connector.cache.ttl.seconds.getTransactions", "0").toInt * 1000 // Miliseconds
 
-  //This is the implicit parameter for saveConnectorMetric function.  
-  //eg:  override def getBank(bankId: BankId): Box[Bank] = saveConnectorMetric 
+  //This is the implicit parameter for saveConnectorMetric function.
+  //eg:  override def getBank(bankId: BankId): Box[Bank] = saveConnectorMetric
   implicit override val nameOfConnector = LocalMappedConnector.getClass.getSimpleName
 
 
-  override def getAdapterInfo: Box[InboundAdapterInfo] = Empty
+  override def getAdapterInfo: Box[InboundAdapterInfoInternal] = Empty
 
   // Gets current challenge level for transaction request
-  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String): AmountOfMoney = {
+  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String): Box[AmountOfMoney] = {
     val propertyName = "transactionRequests_challenge_threshold_" + transactionRequestType.toUpperCase
     val threshold = BigDecimal(Props.get(propertyName, "1000"))
     logger.debug(s"threshold is $threshold")
@@ -77,7 +79,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     val rate = fx.exchangeRate(thresholdCurrency, currency)
     val convertedThreshold = fx.convert(threshold, rate)
     logger.debug(s"getChallengeThreshold for currency $currency is $convertedThreshold")
-    AmountOfMoney(currency, convertedThreshold.toString())
+    Full(AmountOfMoney(currency, convertedThreshold.toString()))
   }
 
   /**
@@ -88,17 +90,19 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     * 4. Save both the salt and the hash in the user's database record.
     * 5. Send the challenge over an separate communication channel.
     */
-  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String): Box[String] = {
-    val challengeId = UUID.randomUUID().toString
-    val challenge = StringHelpers.randomString(6)
-    // Random string. For instance: EONXOA
-    val salt = BCrypt.gensalt()
-    val hash = BCrypt.hashpw(challenge, salt).substring(0, 44)
-    // TODO Extend database model in order to store users salt and hash
-    // Store salt and hash and bind to challengeId
-    // TODO Send challenge to the user over an separate communication channel
-    //Return id of challenge
-    Full(challengeId)
+  // Now, move this method to `code.transactionChallenge.MappedExpectedChallengeAnswerProvider.validateChallengeAnswerInOBPSide`
+  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String) = {
+//    val challengeId = UUID.randomUUID().toString
+//    val challenge = StringHelpers.randomString(6)
+//    // Random string. For instance: EONXOA
+//    val salt = BCrypt.gensalt()
+//    val hash = BCrypt.hashpw(challenge, salt).substring(0, 44)
+//    // TODO Extend database model in order to store users salt and hash
+//    // Store salt and hash and bind to challengeId
+//    // TODO Send challenge to the user over an separate communication channel
+//    //Return id of challenge
+//    Full(challengeId)
+    Full("123")
   }
 
   /**
@@ -137,10 +141,6 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     Full(AmountOfMoney(currency, chargeLevel.toString))
   }
 
-  def getUser(name: String, password: String): Box[InboundUser] = ???
-
-  def updateUserAccountViews(user: ResourceUser): Unit = ???
-
   //gets a particular bank handled by this connector
   override def getBank(bankId: BankId): Box[Bank] = saveConnectorMetric {
     getMappedBank(bankId)
@@ -150,11 +150,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     MappedBank
       .find(By(MappedBank.permalink, bankId.value))
       .map(
-        bank => 
-          bank.bankRoutingScheme ==null && bank.bankRoutingAddress == null match {
-            case true  => bank.mBankRoutingScheme("OBP_BANK_ID").mBankRoutingAddress(bank.bankId.value) 
-            case _ => bank
-          }
+        bank =>
+            bank
+              .mBankRoutingScheme(APIUtil.ValueOrOBP(bank.bankRoutingScheme))
+              .mBankRoutingAddress(APIUtil.ValueOrOBPId(bank.bankRoutingAddress,bank.bankId.value))
       )
 
   //gets banks handled by this connector
@@ -163,10 +162,9 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         .findAll()
         .map(
           bank =>
-            bank.bankRoutingScheme ==null && bank.bankRoutingAddress == null match {
-              case true  => bank.mBankRoutingScheme("OBP_BANK_ID").mBankRoutingAddress(bank.bankId.value)
-              case _ => bank
-            }
+             bank
+               .mBankRoutingScheme(APIUtil.ValueOrOBP(bank.bankRoutingScheme))
+               .mBankRoutingAddress(APIUtil.ValueOrOBPId(bank.bankRoutingAddress, bank.bankId.value))
         )
      )
   }("getBanks")
@@ -182,7 +180,9 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       By(MappedTransaction.transactionId, transactionId.value)).flatMap(_.toTransaction)
   }
 
-  override def getTransactions(bankId: BankId, accountId: AccountId, queryParams: OBPQueryParam*): Box[List[Transaction]] = {
+  override def getTransactions(bankId: BankId, accountId: AccountId, session: Option[SessionContext], queryParams: OBPQueryParam*): Box[List[Transaction]] = {
+
+    // TODO Refactor this. No need for database lookups etc.
     val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
     val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
     val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
@@ -198,17 +198,20 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
     val optionalParams : Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
     val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
-  
-    def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams : Seq[QueryParam[MappedTransaction]]): Box[List[Transaction]] =  memoizeSync(getTransactionsTTL millisecond){
-  
+
+    def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams : Seq[QueryParam[MappedTransaction]]) : Box[List[Transaction]]
+    =  memoizeSync(getTransactionsTTL millisecond){
+
+      //logger.info("Cache miss getTransactionsCached")
+
       val mappedTransactions = MappedTransaction.findAll(mapperParams: _*)
-  
+
       updateAccountTransactions(bankId, accountId)
-  
+
       for (account <- getBankAccount(bankId, accountId))
         yield mappedTransactions.flatMap(_.toTransaction(account))
     }
-  
+
     getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams)
   }
 
@@ -242,18 +245,39 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
   }
 
-  override def getBankAccount(bankId: BankId, accountId: AccountId): Box[MappedBankAccount] = {
+  override def getBankAccount(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[MappedBankAccount] = {
     MappedBankAccount
-      .find(By(MappedBankAccount.bank, bankId.value), 
+      .find(By(MappedBankAccount.bank, bankId.value),
         By(MappedBankAccount.theAccountId, accountId.value))
       .map(
-        account => 
-          account.accountRoutingScheme ==null && account.accountRoutingAddress == null match {
-            case true  => account.mAccountRoutingScheme("OBP_ACCOUNT_ID").mAccountRoutingAddress(account.accountId.value) 
-            case _ => account
-        }
+        account =>
+            account
+              .mAccountRoutingScheme(APIUtil.ValueOrOBP(account.accountRoutingScheme))
+              .mAccountRoutingAddress(APIUtil.ValueOrOBPId(account.accountRoutingAddress,account.accountId.value))
+      )
+  }
+  
+  override def checkBankAccountExists(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[MappedBankAccount] = {
+    getBankAccount(bankId: BankId, accountId: AccountId)
+  }
+  
+  override def getCoreBankAccounts(BankIdAcountIds: List[BankIdAccountId], session: Option[SessionContext]) : Box[List[CoreAccount]]= {
+    Full(
+        BankIdAcountIds
+        .map(bankIdAccountId =>
+          getBankAccount(
+            bankIdAccountId.bankId, 
+            bankIdAccountId.accountId)
+            .openOrThrowException(ErrorMessages.BankAccountNotFound))
+        .map(account =>
+          CoreAccount(
+            account.accountId.value, 
+            stringOrNull(account.label),
+            account.bankId.value, 
+            AccountRouting(account.accountRoutingScheme,account.accountRoutingAddress)))
     )
   }
+  
 
   override def getEmptyBankAccount(): Box[AccountType] = {
     Full(new MappedBankAccount())
@@ -261,7 +285,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   /**
     * This is used for create or update the special bankAccount for COUNTERPARTY stuff (toAccountProvider != "OBP") and (Connector = Kafka)
-    * details in createTransactionRequest - V210 ,case "COUNTERPARTY"
+    * details in createTransactionRequest - V210 ,case COUNTERPARTY.toString
     *
     */
   def createOrUpdateMappedBankAccount(bankId: BankId, accountId: AccountId, currency: String): Box[BankAccount] = {
@@ -275,20 +299,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
     Full(mappedBankAccount)
   }
-
-
-  // Get all counterparties related to an account
-  override def getCounterpartiesFromTransaction(bankId: BankId, accountId: AccountId): List[Counterparty] =
-  //TODO, performance issue, when many metadata and many transactions, this will course a big problem .
-  Counterparties.counterparties.vend.getMetadatas(bankId, accountId).flatMap(getCounterpartyFromTransaction(bankId, accountId, _))
-
-  // Get one counterparty related to a bank account
-  override def getCounterpartyFromTransaction(bankId: BankId, accountId: AccountId, counterpartyID: String): Box[Counterparty] =
-  // Get the metadata and pass it to getOtherBankAccount to construct the other account.
-  Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyID).flatMap(getCounterpartyFromTransaction(bankId, accountId, _))
-
-
-  def getCounterparty(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[Counterparty] = {
+  
+  override def getCounterparty(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[Counterparty] = {
     for {
       t <- Counterparties.counterparties.vend.getMetadata(thisBankId, thisAccountId, couterpartyId)
     } yield {
@@ -313,8 +325,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       )
     }
   }
-
-  def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] ={
+  
+  override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] ={
     Counterparties.counterparties.vend.getCounterparty(counterpartyId.value)
   }
 
@@ -323,14 +335,15 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   }
 
 
-  override def getPhysicalCards(user: User): List[PhysicalCard] = {
+  override def getPhysicalCards(user: User) = {
     val list = code.cards.PhysicalCard.physicalCardProvider.vend.getPhysicalCards(user)
-    for (l <- list) yield
+    val cardList = for (l <- list) yield
       new PhysicalCard(
-        bankCardNumber = l.mBankCardNumber,
-        nameOnCard = l.mNameOnCard,
-        issueNumber = l.mIssueNumber,
-        serialNumber = l.mSerialNumber,
+        bankId=l.bankId,
+        bankCardNumber = l.bankCardNumber,
+        nameOnCard = l.nameOnCard,
+        issueNumber = l.issueNumber,
+        serialNumber = l.serialNumber,
         validFrom = l.validFrom,
         expires = l.expires,
         enabled = l.enabled,
@@ -345,16 +358,18 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         collected = l.collected,
         posted = l.posted
       )
+    Full(cardList)
   }
 
-  override def getPhysicalCardsForBank(bank: Bank, user: User): List[PhysicalCard] = {
+  override def getPhysicalCardsForBank(bank: Bank, user: User)= {
     val list = code.cards.PhysicalCard.physicalCardProvider.vend.getPhysicalCardsForBank(bank, user)
-    for (l <- list) yield
+    val cardList = for (l <- list) yield
       new PhysicalCard(
-        bankCardNumber = l.mBankCardNumber,
-        nameOnCard = l.mNameOnCard,
-        issueNumber = l.mIssueNumber,
-        serialNumber = l.mSerialNumber,
+        bankId= l.bankId,
+        bankCardNumber = l.bankCardNumber,
+        nameOnCard = l.nameOnCard,
+        issueNumber = l.issueNumber,
+        serialNumber = l.serialNumber,
         validFrom = l.validFrom,
         expires = l.expires,
         enabled = l.enabled,
@@ -369,9 +384,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         collected = l.collected,
         posted = l.posted
       )
+    Full(cardList)
   }
 
-  def AddPhysicalCard(bankCardNumber: String,
+  override def createOrUpdatePhysicalCard(bankCardNumber: String,
                               nameOnCard: String,
                               issueNumber: String,
                               serialNumber: String,
@@ -390,7 +406,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                               collected: Option[CardCollectionInfo],
                               posted: Option[CardPostedInfo]
                              ) : Box[PhysicalCard] = {
-    val list = code.cards.PhysicalCard.physicalCardProvider.vend.AddPhysicalCard(
+    val physicalCardBox: Box[MappedPhysicalCard] = code.cards.PhysicalCard.physicalCardProvider.vend.createOrUpdatePhysicalCard(
                                                                               bankCardNumber,
                                                                               nameOnCard,
                                                                               issueNumber,
@@ -410,12 +426,13 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                                                               collected,
                                                                               posted
                                                                             )
-    for (l <- list) yield
+    for (l <- physicalCardBox) yield
     new PhysicalCard(
-      bankCardNumber = l.mBankCardNumber,
-      nameOnCard = l.mNameOnCard,
-      issueNumber = l.mIssueNumber,
-      serialNumber = l.mSerialNumber,
+      bankId = l.bankId,
+      bankCardNumber = l.bankCardNumber,
+      nameOnCard = l.nameOnCard,
+      issueNumber = l.issueNumber,
+      serialNumber = l.serialNumber,
       validFrom = l.validFrom,
       expires = l.expires,
       enabled = l.enabled,
@@ -452,7 +469,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
     // Is it better to pass these into this function ?
     val fromTransAmt = -amount//from fromAccount balance should decrease
-    val toTransAmt = fx.convert(amount, rate.get)
+    val toTransAmt = fx.convert(amount, rate.openOrThrowException("Attempted to open an empty Box."))
 
     // From
     val sentTransactionId = saveTransaction(fromAccount, toAccount, toCounterparty, fromTransAmt, description, transactionRequestType, chargePolicy)
@@ -483,13 +500,13 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
 
     //update the balance of the fromAccount for which a transaction is being created
-    val newAccountBalance: Long = fromAccountUpdate.get.accountBalance.get + Helper.convertToSmallestCurrencyUnits(amount, fromAccountUpdate.get.currency)
-    fromAccountUpdate.get.accountBalance(newAccountBalance).save()
+    val newAccountBalance: Long = fromAccountUpdate.openOrThrowException("Attempted to open an empty Box.").accountBalance.get + Helper.convertToSmallestCurrencyUnits(amount, fromAccountUpdate.openOrThrowException("Attempted to open an empty Box.").currency)
+    fromAccountUpdate.openOrThrowException("Attempted to open an empty Box.").accountBalance(newAccountBalance).save()
 
     val mappedTransaction = MappedTransaction.create
       //No matter which type (SANDBOX_TAN,SEPA,FREE_FORM,COUNTERPARTYE), always filled the following nine fields.
-      .bank(fromAccountUpdate.get.bankId.value)
-      .account(fromAccountUpdate.get.accountId.value)
+      .bank(fromAccountUpdate.openOrThrowException("Attempted to open an empty Box.").bankId.value)
+      .account(fromAccountUpdate.openOrThrowException("Attempted to open an empty Box.").accountId.value)
       .transactionType(transactionRequestType.value)
       .amount(Helper.convertToSmallestCurrencyUnits(amount, currency))
       .newAccountBalance(newAccountBalance)
@@ -586,14 +603,6 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     TransactionRequests.transactionRequestProvider.vend.getTransactionRequest(transactionRequestId)
   }
 
-
-  override def getTransactionRequestTypesImpl(fromAccount : BankAccount) : Box[List[TransactionRequestType]] = {
-    //TODO: write logic / data access
-    // Get Transaction Request Types from Props "transactionRequests_supported_types". Default is empty string
-    val validTransactionRequestTypes = Props.get("transactionRequests_supported_types", "").split(",").map(x => TransactionRequestType(x)).toList
-    Full(validTransactionRequestTypes)
-  }
-
   /*
     Bank account creation
    */
@@ -611,7 +620,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     branchId: String,
     accountRoutingScheme: String,
     accountRoutingAddress: String
-  ): (Bank, BankAccount) = {
+  )  = {
     //don't require and exact match on the name, just the identifier
     val bank = MappedBank.find(By(MappedBank.national_identifier, bankNationalIdentifier)) match {
       case Full(b) =>
@@ -638,18 +647,18 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       "", "", "" //added field in V220
     )
 
-    (bank, account)
+    Full((bank, account))
   }
 
   //for sandbox use -> allows us to check if we can generate a new test account with the given number
-  override def accountExists(bankId: BankId, accountNumber: String): Boolean = {
-    MappedBankAccount.count(
+  override def accountExists(bankId: BankId, accountNumber: String) = {
+    Full(MappedBankAccount.count(
       By(MappedBankAccount.bank, bankId.value),
-      By(MappedBankAccount.accountNumber, accountNumber)) > 0
+      By(MappedBankAccount.accountNumber, accountNumber)) > 0)
   }
 
   //remove an account and associated transactions
-  override def removeAccount(bankId: BankId, accountId: AccountId) : Boolean = {
+  override def removeAccount(bankId: BankId, accountId: AccountId) = {
     //delete comments on transactions of this account
     val commentsDeleted = Comments.comments.vend.bulkDeleteComments(bankId, accountId)
 
@@ -688,8 +697,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       case _ => false
     }
 
-    commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
-      transactionsDeleted && privilegesDeleted && viewsDeleted && accountDeleted
+    Full(commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
+      transactionsDeleted && privilegesDeleted && viewsDeleted && accountDeleted)
 }
 
   //creates a bank account for an existing bank, with the appropriate values set. Can fail if the bank doesn't exist
@@ -774,7 +783,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
    */
 
   //used by the transaction import api
-  override def updateAccountBalance(bankId: BankId, accountId: AccountId, newBalance: BigDecimal): Boolean = {
+  override def updateAccountBalance(bankId: BankId, accountId: AccountId, newBalance: BigDecimal) = {
 
     //this will be Full(true) if everything went well
     val result = for {
@@ -782,10 +791,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       bank <- getMappedBank(bankId)
     } yield {
       acc.accountBalance(Helper.convertToSmallestCurrencyUnits(newBalance, acc.currency)).save
-      setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now)
+      setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now).openOrThrowException("Attempted to open an empty Box.")
     }
 
-    result.getOrElse(false)
+    Full(result.getOrElse(false))
   }
 
   //transaction import api uses bank national identifiers to uniquely indentify banks,
@@ -808,7 +817,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   }
 
   //used by transaction import api call to check for duplicates
-  override def getMatchingTransactionCount(bankNationalIdentifier : String, accountNumber : String, amount: String, completed: Date, otherAccountHolder: String): Int = {
+  override def getMatchingTransactionCount(bankNationalIdentifier : String, accountNumber : String, amount: String, completed: Date, otherAccountHolder: String) = {
     //we need to convert from the legacy bankNationalIdentifier to BankId, and from the legacy accountNumber to AccountId
     val count = for {
       bankId <- getBankByNationalIdentifier(bankNationalIdentifier).map(_.bankId)
@@ -828,7 +837,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
 
     //icky
-    count.map(_.toInt) getOrElse 0
+    Full(count.map(_.toInt) getOrElse 0)
   }
 
   //used by transaction import api
@@ -870,7 +879,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     } yield transaction
   }
 
-  override def setBankAccountLastUpdated(bankNationalIdentifier: String, accountNumber : String, updateDate: Date) : Boolean = {
+  override def setBankAccountLastUpdated(bankNationalIdentifier: String, accountNumber : String, updateDate: Date) = {
     val result = for {
       bankId <- getBankByNationalIdentifier(bankNationalIdentifier).map(_.bankId)
       account <- getAccountByNumber(bankId, accountNumber)
@@ -884,7 +893,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
           case _ => logger.warn("can't set bank account.lastUpdated because the account was not found"); false
         }
     }
-    result.getOrElse(false)
+    Full(result.getOrElse(false))
   }
 
   /*
@@ -892,7 +901,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
    */
 
 
-  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String): Boolean = {
+  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String) = {
     //this will be Full(true) if everything went well
     val result = for {
       acc <- getBankAccount(bankId, accountId)
@@ -901,7 +910,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         acc.accountLabel(label).save
       }
 
-    result.getOrElse(false)
+    Full(result.getOrElse(false))
   }
 
   override def getProducts(bankId: BankId): Box[List[MappedProduct]] = {
@@ -915,101 +924,385 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     )
   }
 
-  // TODO This should accept a normal case class not "json" case class i.e. don't rely on REST json structures
-  override def createOrUpdateBranch(branch: BranchJsonPost, branchRoutingScheme: String, branchRoutingAddress: String): Box[Branch] = {
 
-    //check the branch existence and update or insert data
-    getBranch(BankId(branch.bank_id), BranchId(branch.id)) match {
+  override def createOrUpdateBranch(branch: Branch): Box[BranchT] = {
+
+    // TODO
+    // Either this should accept a Branch case class i.e. extract the construction of a Branch out of here and move it to the API
+    // OR maybe this function could accept different versions of json and use pattern mathing to decide how to extract here.
+
+
+    //override def createOrUpdateBranch(branch: BranchJsonPost, branchRoutingScheme: String, branchRoutingAddress: String): Box[Branch] = {
+
+
+
+/*
+
+
+    val address : Address = Address(
+      branch.address.line_1,
+      branch.address.line_2,
+      branch.address.line_3,
+      branch.address.city,
+      branch.address.county,
+      branch.address.state,
+      branch.address.post_code,
+      branch.address.country_code
+    )
+
+    val location: Location = Location(branch.location.latitude.toDouble,
+                                      branch.location.longitude.toDouble)
+
+
+    val lobby : Lobby = Lobby(
+      monday = OpeningTimes(
+        openingTime = branch.lobby.monday.opening_time,
+        closingTime = branch.lobby.monday.closing_time),
+      tuesday = OpeningTimes(
+        openingTime = branch.lobby.tuesday.opening_time,
+        closingTime = branch.lobby.tuesday.closing_time),
+      wednesday = OpeningTimes(
+        openingTime = branch.lobby.wednesday.opening_time,
+        closingTime = branch.lobby.wednesday.closing_time),
+      thursday = OpeningTimes(
+        openingTime = branch.lobby.thursday.opening_time,
+        closingTime = branch.lobby.thursday.closing_time),
+      friday = OpeningTimes(
+        openingTime = branch.lobby.friday.opening_time,
+        closingTime = branch.lobby.friday.closing_time),
+      saturday = OpeningTimes(
+        openingTime = branch.lobby.saturday.opening_time,
+        closingTime = branch.lobby.saturday.closing_time),
+      sunday = OpeningTimes(
+        openingTime = branch.lobby.sunday.opening_time,
+        closingTime = branch.lobby.sunday.closing_time)
+    )
+
+    val driveUp : DriveUp = DriveUp(
+      monday = OpeningTimes(
+        openingTime = branch.drive_up.monday.opening_time,
+        closingTime = branch.drive_up.monday.closing_time),
+      tuesday = OpeningTimes(
+        openingTime = branch.drive_up.tuesday.opening_time,
+        closingTime = branch.drive_up.tuesday.closing_time),
+      wednesday = OpeningTimes(
+        openingTime = branch.drive_up.wednesday.opening_time,
+        closingTime = branch.drive_up.wednesday.closing_time),
+      thursday = OpeningTimes(
+        openingTime = branch.drive_up.thursday.opening_time,
+        closingTime = branch.drive_up.thursday.closing_time),
+      friday = OpeningTimes(
+        openingTime = branch.drive_up.friday.opening_time,
+        closingTime = branch.drive_up.friday.closing_time),
+      saturday = OpeningTimes(
+        openingTime = branch.drive_up.saturday.opening_time,
+        closingTime = branch.drive_up.saturday.closing_time),
+      sunday = OpeningTimes(
+        openingTime = branch.drive_up.sunday.opening_time,
+        closingTime = branch.drive_up.sunday.closing_time)
+    )
+
+
+
+    val license = License(branch.meta.license.id, branch.meta.license.name)
+
+    val meta = Meta(license = license)
+
+    val branchRouting = Routing(branch.branch_routing.scheme, branch.branch_routing.address)
+
+
+
+    val branch : Branch = Branch(
+    branchId =  BranchId(branch.id),
+    bankId = BankId(branch.bank_id),
+    name = branch.name,
+    address = address,
+    location = location,
+    meta =  meta,
+    lobbyString = "depreciated from V3.0.0",
+    driveUpString = "depreciated from V3.0.0",
+    lobby = lobby,
+    driveUp = driveUp,
+    branchRouting = branchRouting,
+    // Easy access for people who use wheelchairs etc. "Y"=true "N"=false ""=Unknown
+    isAccessible = branch.is_accessible,
+    branchType = branch.branch_type,
+    moreInfo = branch.more_info
+    )
+
+*/
+
+
+
+     val isAccessibleString = optionBooleanToString(branch.isAccessible)
+     val branchTypeString = branch.branchType.orNull
+
+    logger.info("before create or update branch")
+
+    val foundBranch : Box[MappedBranch] = getBranch(branch.bankId, branch.branchId)
+
+    logger.info("after getting")
+
+      //check the branch existence and update or insert data
+    val branchToReturn = foundBranch match {
       case Full(mappedBranch) =>
         tryo {
+          // Update...
+          logger.info("We found a branch so update...")
           mappedBranch
-            .mBranchId(branch.id)
-            .mBankId(branch.bank_id)
+            // Doesn't make sense to update branchId and bankId
+            //.mBranchId(branch.branchId)
+            //.mBankId(branch.bankId)
             .mName(branch.name)
-            .mLine1(branch.address.line_1)
-            .mLine2(branch.address.line_2)
-            .mLine3(branch.address.line_3)
+            .mLine1(branch.address.line1)
+            .mLine2(branch.address.line2)
+            .mLine3(branch.address.line3)
             .mCity(branch.address.city)
-            .mCounty(branch.address.country)
+            .mCounty(branch.address.county.orNull)
             .mState(branch.address.state)
-            .mPostCode(branch.address.postcode)
+            .mPostCode(branch.address.postCode)
+            .mCountryCode(branch.address.countryCode)
             .mlocationLatitude(branch.location.latitude)
             .mlocationLongitude(branch.location.longitude)
             .mLicenseId(branch.meta.license.id)
             .mLicenseName(branch.meta.license.name)
-            .mLobbyHours(branch.lobby.hours)
-            .mDriveUpHours(branch.drive_up.hours)
-            .mBranchRoutingScheme(branchRoutingScheme) //Added in V220
-            .mBranchRoutingAddress(branchRoutingAddress) //Added in V220
+            .mLobbyHours(branch.lobbyString.map(_.hours).getOrElse("")) // ok like this? only used by versions prior to v3.0.0
+            .mDriveUpHours(branch.driveUpString.map(_.hours).getOrElse("")) // ok like this? only used by versions prior to v3.0.0
+            .mBranchRoutingScheme(branch.branchRouting.map(_.scheme).orNull) //Added in V220
+            .mBranchRoutingAddress(branch.branchRouting.map(_.address).orNull) //Added in V220
+
+            .mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnMonday(branch.lobby.map(_.monday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnTuesday(branch.lobby.map(_.tuesday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnTuesday(branch.lobby.map(_.tuesday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnWednesday(branch.lobby.map(_.wednesday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnWednesday(branch.lobby.map(_.wednesday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnThursday(branch.lobby.map(_.thursday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnThursday(branch.lobby.map(_.thursday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnFriday(branch.lobby.map(_.friday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnFriday(branch.lobby.map(_.friday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnSaturday(branch.lobby.map(_.saturday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnSaturday(branch.lobby.map(_.saturday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnSunday(branch.lobby.map(_.sunday).map(_.closingTime).orNull)
+
+
+            // Drive Up
+            .mDriveUpOpeningTimeOnMonday(branch.driveUp.map(_.monday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnMonday(branch.driveUp.map(_.monday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnThursday(branch.driveUp.map(_.thursday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnThursday(branch.driveUp.map(_.thursday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnFriday(branch.driveUp.map(_.friday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnFriday(branch.driveUp.map(_.friday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnSunday(branch.driveUp.map(_.sunday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnSunday(branch.driveUp.map(_.sunday).map(_.closingTime).orNull)
+
+            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
+
+            .mBranchType(branch.branchType.orNull)
+            .mMoreInfo(branch.moreInfo.orNull)
+
             .saveMe()
-        } ?~! ErrorMessages.UpdateBranchError
+            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
+
+            .mBranchType(branch.branchType.orNull)
+            .mMoreInfo(branch.moreInfo.orNull)
+            .mPhoneNumber(branch.phoneNumber.orNull)
+
+            .saveMe()
+        }
       case _ =>
         tryo {
+          // Insert...
+          logger.info("Creating Branch...")
           MappedBranch.create
-            .mBranchId(branch.id)
-            .mBankId(branch.bank_id)
+            .mBranchId(branch.branchId.toString)
+            .mBankId(branch.bankId.toString)
             .mName(branch.name)
-            .mLine1(branch.address.line_1)
-            .mLine2(branch.address.line_2)
-            .mLine3(branch.address.line_3)
+            .mLine1(branch.address.line1)
+            .mLine2(branch.address.line2)
+            .mLine3(branch.address.line3)
             .mCity(branch.address.city)
-            .mCounty(branch.address.country)
+            .mCounty(branch.address.county.orNull)
             .mState(branch.address.state)
-            .mPostCode(branch.address.postcode)
+            .mPostCode(branch.address.postCode)
+            .mCountryCode(branch.address.countryCode)
             .mlocationLatitude(branch.location.latitude)
             .mlocationLongitude(branch.location.longitude)
             .mLicenseId(branch.meta.license.id)
             .mLicenseName(branch.meta.license.name)
-            .mLobbyHours(branch.lobby.hours)
-            .mDriveUpHours(branch.drive_up.hours)
-            .mBranchRoutingScheme(branchRoutingScheme) //Added in V220
-            .mBranchRoutingAddress(branchRoutingAddress) //Added in V220
+            .mLobbyHours(branch.lobbyString.map(_.hours).getOrElse("")) // null no good.
+            .mDriveUpHours(branch.driveUpString.map(_.hours).getOrElse("")) // OK like this? only used by versions prior to v3.0.0
+            .mBranchRoutingScheme(branch.branchRouting.map(_.scheme).orNull) //Added in V220
+            .mBranchRoutingAddress(branch.branchRouting.map(_.address).orNull) //Added in V220
+            .mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnMonday(branch.lobby.map(_.monday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnTuesday(branch.lobby.map(_.tuesday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnTuesday(branch.lobby.map(_.tuesday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnWednesday(branch.lobby.map(_.wednesday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnWednesday(branch.lobby.map(_.wednesday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnThursday(branch.lobby.map(_.thursday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnThursday(branch.lobby.map(_.thursday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnFriday(branch.lobby.map(_.friday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnFriday(branch.lobby.map(_.friday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnSaturday(branch.lobby.map(_.saturday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnSaturday(branch.lobby.map(_.saturday).map(_.closingTime).orNull)
+
+            .mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).map(_.openingTime).orNull)
+            .mLobbyClosingTimeOnSunday(branch.lobby.map(_.sunday).map(_.closingTime).orNull)
+
+
+            // Drive Up
+            .mDriveUpOpeningTimeOnMonday(branch.driveUp.map(_.monday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnMonday(branch.driveUp.map(_.monday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnThursday(branch.driveUp.map(_.thursday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnThursday(branch.driveUp.map(_.thursday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnFriday(branch.driveUp.map(_.friday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnFriday(branch.driveUp.map(_.friday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.closingTime).orNull)
+
+            .mDriveUpOpeningTimeOnSunday(branch.driveUp.map(_.sunday).map(_.openingTime).orNull)
+            .mDriveUpClosingTimeOnSunday(branch.driveUp.map(_.sunday).map(_.closingTime).orNull)
+
+            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
+
+            .mBranchType(branch.branchType.orNull)
+            .mMoreInfo(branch.moreInfo.orNull)
+            .mPhoneNumber(branch.phoneNumber.orNull)
             .saveMe()
-        } ?~! ErrorMessages.CreateBranchError
+        }
     }
+    // Return the recently created / updated Branch from the database
+    branchToReturn
   }
 
 
   // TODO This should accept a normal case class not "json" case class i.e. don't rely on REST json structures
-  override def createOrUpdateAtm(atm: AtmJsonPost): Box[Atm] = {
+  override def createOrUpdateAtm(atm: Atms.Atm): Box[AtmT] = {
+
+    val isAccessibleString = optionBooleanToString(atm.isAccessible)
+    val hasDepositCapabilityString = optionBooleanToString(atm.hasDepositCapability)
 
     //check the atm existence and update or insert data
-    getAtm(BankId(atm.bank_id), AtmId(atm.id)) match {
+    getAtm(atm.bankId, atm.atmId) match {
       case Full(mappedAtm) =>
         tryo {
           mappedAtm.mName(atm.name)
-            .mLine1(atm.address.line_1)
-            .mLine2(atm.address.line_2)
-            .mLine3(atm.address.line_3)
+            .mLine1(atm.address.line1)
+            .mLine2(atm.address.line2)
+            .mLine3(atm.address.line3)
             .mCity(atm.address.city)
-            .mCounty(atm.address.country)
+            .mCounty(atm.address.county.getOrElse(""))
+            .mCountryCode(atm.address.countryCode)
             .mState(atm.address.state)
-            .mPostCode(atm.address.postcode)
+            .mPostCode(atm.address.postCode)
             .mlocationLatitude(atm.location.latitude)
             .mlocationLongitude(atm.location.longitude)
             .mLicenseId(atm.meta.license.id)
             .mLicenseName(atm.meta.license.name)
+            .mOpeningTimeOnMonday(atm.OpeningTimeOnMonday.orNull)
+            .mClosingTimeOnMonday(atm.ClosingTimeOnMonday.orNull)
+
+            .mOpeningTimeOnTuesday(atm.OpeningTimeOnTuesday.orNull)
+            .mClosingTimeOnTuesday(atm.ClosingTimeOnTuesday.orNull)
+
+            .mOpeningTimeOnWednesday(atm.OpeningTimeOnWednesday.orNull)
+            .mClosingTimeOnWednesday(atm.ClosingTimeOnWednesday.orNull)
+
+            .mOpeningTimeOnThursday(atm.OpeningTimeOnThursday.orNull)
+            .mClosingTimeOnThursday(atm.ClosingTimeOnThursday.orNull)
+
+            .mOpeningTimeOnFriday(atm.OpeningTimeOnFriday.orNull)
+            .mClosingTimeOnFriday(atm.ClosingTimeOnFriday.orNull)
+
+            .mOpeningTimeOnSaturday(atm.OpeningTimeOnSaturday.orNull)
+            .mClosingTimeOnSaturday(atm.ClosingTimeOnSaturday.orNull)
+
+            .mOpeningTimeOnSunday(atm.OpeningTimeOnSunday.orNull)
+            .mClosingTimeOnSunday(atm.ClosingTimeOnSunday.orNull)
+            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
+            .mLocatedAt(atm.locatedAt.orNull)
+            .mMoreInfo(atm.moreInfo.orNull)
+            .mHasDepositCapability(hasDepositCapabilityString)
             .saveMe()
-        } ?~! ErrorMessages.UpdateAtmError
+        }
       case _ =>
         tryo {
           MappedAtm.create
-            .mAtmId(atm.id)
-            .mBankId(atm.bank_id)
+            .mAtmId(atm.atmId.value)
+            .mBankId(atm.bankId.value)
             .mName(atm.name)
-            .mLine1(atm.address.line_1)
-            .mLine2(atm.address.line_2)
-            .mLine3(atm.address.line_3)
+            .mLine1(atm.address.line1)
+            .mLine2(atm.address.line2)
+            .mLine3(atm.address.line3)
             .mCity(atm.address.city)
-            .mCounty(atm.address.country)
+            .mCounty(atm.address.county.getOrElse(""))
+            .mCountryCode(atm.address.countryCode)
             .mState(atm.address.state)
-            .mPostCode(atm.address.postcode)
+            .mPostCode(atm.address.postCode)
             .mlocationLatitude(atm.location.latitude)
             .mlocationLongitude(atm.location.longitude)
             .mLicenseId(atm.meta.license.id)
             .mLicenseName(atm.meta.license.name)
+            .mOpeningTimeOnMonday(atm.OpeningTimeOnMonday.orNull)
+            .mClosingTimeOnMonday(atm.ClosingTimeOnMonday.orNull)
+
+            .mOpeningTimeOnTuesday(atm.OpeningTimeOnTuesday.orNull)
+            .mClosingTimeOnTuesday(atm.ClosingTimeOnTuesday.orNull)
+
+            .mOpeningTimeOnWednesday(atm.OpeningTimeOnWednesday.orNull)
+            .mClosingTimeOnWednesday(atm.ClosingTimeOnWednesday.orNull)
+
+            .mOpeningTimeOnThursday(atm.OpeningTimeOnThursday.orNull)
+            .mClosingTimeOnThursday(atm.ClosingTimeOnThursday.orNull)
+
+            .mOpeningTimeOnFriday(atm.OpeningTimeOnFriday.orNull)
+            .mClosingTimeOnFriday(atm.ClosingTimeOnFriday.orNull)
+
+            .mOpeningTimeOnSaturday(atm.OpeningTimeOnSaturday.orNull)
+            .mClosingTimeOnSaturday(atm.ClosingTimeOnSaturday.orNull)
+
+            .mOpeningTimeOnSunday(atm.OpeningTimeOnSunday.orNull)
+            .mClosingTimeOnSunday(atm.ClosingTimeOnSunday.orNull)
+            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
+            .mLocatedAt(atm.locatedAt.orNull)
+            .mMoreInfo(atm.moreInfo.orNull)
+            .mHasDepositCapability(hasDepositCapabilityString)
             .saveMe()
-        } ?~! ErrorMessages.CreateAtmError
+        }
     }
   }
 
@@ -1077,8 +1370,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         By(MappedBranch.mBranchId, branchId.value))
       .map(
         branch => 
-          branch.branchRoutingScheme == null && branch.branchRoutingAddress == null match {
-            case true => branch.mBranchRoutingScheme("OBP_BRANCH_ID").mBranchRoutingAddress(branch.branchId.value) 
+          branch.branchRouting.map(_.scheme) == null && branch.branchRouting.map(_.address) == null match {
+            case true => branch.mBranchRoutingScheme("OBP_BRANCH_ID").mBranchRoutingAddress(branch.branchId.value)
             case _ => branch
         }
     )
@@ -1142,7 +1435,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       )
       //If it is empty, return the default value : "0.0000000" and set the BankAccount currency
       case _ =>
-        val fromAccountCurrency: String = getBankAccount(bankId, accountId).get.currency
+        val fromAccountCurrency: String = getBankAccount(bankId, accountId).openOrThrowException("Attempted to open an empty Box.").currency
         TransactionRequestTypeChargeMock(transactionRequestType.value, bankId.value, fromAccountCurrency, "0.00", "Warning! Default value!")
     }
 
@@ -1195,4 +1488,46 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                .saveMe()
              } ?~! ErrorMessages.UpdateBankError
     }
+  
+  override def createCounterparty(
+    name: String,
+    description: String,
+    createdByUserId: String,
+    thisBankId: String,
+    thisAccountId: String,
+    thisViewId: String,
+    otherAccountRoutingScheme: String,
+    otherAccountRoutingAddress: String,
+    otherAccountSecondaryRoutingScheme: String,
+    otherAccountSecondaryRoutingAddress: String,
+    otherBankRoutingScheme: String,
+    otherBankRoutingAddress: String,
+    otherBranchRoutingScheme: String,
+    otherBranchRoutingAddress: String,
+    isBeneficiary:Boolean,
+    bespoke: List[PostCounterpartyBespoke]
+  ): Box[CounterpartyTrait] =
+    Counterparties.counterparties.vend.createCounterparty(
+      createdByUserId = createdByUserId,
+      thisBankId = thisBankId,
+      thisAccountId = thisAccountId,
+      thisViewId = thisViewId,
+      name = name,
+      otherAccountRoutingScheme = otherAccountRoutingScheme,
+      otherAccountRoutingAddress = otherAccountRoutingAddress,
+      otherBankRoutingScheme = otherBankRoutingScheme,
+      otherBankRoutingAddress = otherBankRoutingAddress,
+      otherBranchRoutingScheme = otherBranchRoutingScheme,
+      otherBranchRoutingAddress = otherBranchRoutingAddress,
+      isBeneficiary = isBeneficiary,
+      otherAccountSecondaryRoutingScheme = otherAccountSecondaryRoutingScheme,
+      otherAccountSecondaryRoutingAddress = otherAccountSecondaryRoutingAddress,
+      description = description,
+      bespoke = bespoke
+    )
+  
+  
+  override def getCustomersByUserIdBox(userId: String)(session: Option[SessionContext]): Box[List[Customer]] =
+    Customer.customerProvider.vend.getCustomersByUserIdBox(userId)
+  
 }

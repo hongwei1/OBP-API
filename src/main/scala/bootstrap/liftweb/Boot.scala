@@ -38,27 +38,27 @@ import javax.mail.internet.MimeMessage
 import code.accountholder.MapperAccountHolders
 import code.actorsystem.ObpActorSystem
 import code.api.Constant._
-import code.api.ResourceDocs1_4_0.ResourceDocs
+import code.api.ResourceDocs1_4_0._
 import code.api._
 import code.api.sandbox.SandboxApiCalls
 import code.api.util.{APIUtil, ErrorMessages}
 import code.atms.MappedAtm
-import code.bankconnectors.KafkaHelperActors
 import code.branches.MappedBranch
 import code.cards.{MappedPhysicalCard, PinReset}
 import code.crm.MappedCrmEvent
 import code.customer.{MappedCustomer, MappedCustomerMessage}
 import code.entitlement.MappedEntitlement
 import code.fx.{MappedCurrency, MappedFXRate}
+import code.kafka.KafkaHelperActors
 import code.kycchecks.MappedKycCheck
 import code.kycdocuments.MappedKycDocument
 import code.kycmedias.MappedKycMedia
 import code.kycstatuses.MappedKycStatus
 import code.loginattempts.MappedBadLoginAttempt
-import code.management.{AccountsAPI, ImporterAPI}
+import code.management.{ImporterAPI}
 import code.meetings.MappedMeeting
 import code.metadata.comments.MappedComment
-import code.metadata.counterparties.{MappedCounterparty, MappedCounterpartyMetadata, MappedCounterpartyWhereTag}
+import code.metadata.counterparties.{MappedCounterparty, MappedCounterpartyBespoke, MappedCounterpartyMetadata, MappedCounterpartyWhereTag}
 import code.metadata.narrative.MappedNarrative
 import code.metadata.tags.MappedTag
 import code.metadata.transactionimages.MappedTransactionImage
@@ -71,11 +71,11 @@ import code.remotedata.RemotedataActors
 import code.snippet.{OAuthAuthorisation, OAuthWorkedThanks}
 import code.socialmedia.MappedSocialMedia
 import code.transaction.MappedTransaction
+import code.transactionChallenge.MappedExpectedChallengeAnswer
 import code.transactionStatusScheduler.TransactionStatusScheduler
 import code.transaction_types.MappedTransactionType
 import code.transactionrequests.{MappedTransactionRequest, MappedTransactionRequestTypeCharge}
 import code.usercustomerlinks.MappedUserCustomerLink
-import code.util.Helper
 import code.util.Helper.MdcLoggable
 import net.liftweb.common._
 import net.liftweb.http._
@@ -83,7 +83,8 @@ import net.liftweb.mapper._
 import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util.Helpers._
-import net.liftweb.util.{Helpers, Schedule, _}
+import net.liftweb.util.{Helpers, Props, Schedule, _}
+import code.api.util.APIUtil.{ApiVersion, enableVersionIfAllowed}
 
 
 /**
@@ -97,6 +98,7 @@ class Boot extends MdcLoggable {
     val contextPath = LiftRules.context.path
     val propsPath = tryo{Box.legacyNullTest(System.getProperty("props.resource.dir"))}.toIterable.flatten
 
+    if (Props.mode == Props.RunModes.Development) logger.info("OBP-API Props all fields : \n" + Props.props.mkString("\n"))
     logger.info("external props folder: " + propsPath)
 
     /**
@@ -213,8 +215,10 @@ class Boot extends MdcLoggable {
       LiftRules.statelessDispatch.append(DirectLogin)
     }
 
-    // Get disbled API versions from props
-    val disabledVersions = Props.get("api_disabled_versions").getOrElse("").replace("[", "").replace("]", "").split(",")
+
+
+
+
 
     //  OpenIdConnect endpoint and validator
     if(Props.getBool("allow_openidconnect", false)) {
@@ -222,29 +226,36 @@ class Boot extends MdcLoggable {
     }
 
     // Add the various API versions
-    if (!disabledVersions.contains("v1_0")) LiftRules.statelessDispatch.append(v1_0.OBPAPI1_0)
-    if (!disabledVersions.contains("v1_1")) LiftRules.statelessDispatch.append(v1_1.OBPAPI1_1)
-    if (!disabledVersions.contains("v1_2")) LiftRules.statelessDispatch.append(v1_2.OBPAPI1_2)
-    // Can we depreciate the above?
-    if (!disabledVersions.contains("v1_2_1")) LiftRules.statelessDispatch.append(v1_2_1.OBPAPI1_2_1)
-    if (!disabledVersions.contains("v1_3_0")) LiftRules.statelessDispatch.append(v1_3_0.OBPAPI1_3_0)
-    if (!disabledVersions.contains("v1_4_0")) LiftRules.statelessDispatch.append(v1_4_0.OBPAPI1_4_0)
-    if (!disabledVersions.contains("v2_0_0")) LiftRules.statelessDispatch.append(v2_0_0.OBPAPI2_0_0)
-    if (!disabledVersions.contains("v2_1_0")) LiftRules.statelessDispatch.append(v2_1_0.OBPAPI2_1_0)
-    if (!disabledVersions.contains("v2_2_0")) LiftRules.statelessDispatch.append(v2_2_0.OBPAPI2_2_0)
-    if (!disabledVersions.contains("v3_0_0")) LiftRules.statelessDispatch.append(v3_0_0.OBPAPI3_0_0)
+    enableVersionIfAllowed(ApiVersion.v1_2_1)
+    enableVersionIfAllowed(ApiVersion.v1_3_0)
+    enableVersionIfAllowed(ApiVersion.v1_4_0)
+    enableVersionIfAllowed(ApiVersion.v2_0_0)
+    enableVersionIfAllowed(ApiVersion.v2_1_0)
+    enableVersionIfAllowed(ApiVersion.v2_2_0)
+    enableVersionIfAllowed(ApiVersion.v3_0_0)
 
+
+    // TODO Wrap these with enableVersionIfAllowed as well
     //add management apis
     LiftRules.statelessDispatch.append(ImporterAPI)
-    LiftRules.statelessDispatch.append(AccountsAPI)
+
+    //LiftRules.statelessDispatch.append(AccountsAPI)
 
     // add other apis
-    LiftRules.statelessDispatch.append(BankMockAPI)
+    LiftRules.statelessDispatch.append(BankMockAPI) // Do we still need this?
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Resource Docs are used in the process of surfacing endpoints so we enable them explicitly
+    // to avoid a circular dependency.
+    // Make the (currently identical) endpoints available to different versions.
+    LiftRules.statelessDispatch.append(ResourceDocs140)
+    LiftRules.statelessDispatch.append(ResourceDocs200)
+    LiftRules.statelessDispatch.append(ResourceDocs210)
+    LiftRules.statelessDispatch.append(ResourceDocs220)
+    LiftRules.statelessDispatch.append(ResourceDocs300)
+    ////////////////////////////////////////////////////
 
-    // Add Resource Docs These are treated separately else we have circular dependency.
-    LiftRules.statelessDispatch.append(ResourceDocs)
 
     // LiftRules.statelessDispatch.append(Metrics) TODO: see metric menu entry below
 
@@ -344,7 +355,7 @@ class Boot extends MdcLoggable {
     }
 
     //for XSS vulnerability, set X-Frame-Options header as DENY
-    LiftRules.listOfSupplimentalHeaders.default.set(List(("X-Frame-Options", "DENY")))
+    LiftRules.supplementalHeaders.default.set(List(("X-Frame-Options", "DENY")))
     
     // Make a transaction span the whole HTTP request
     S.addAround(DB.buildLoanWrapper)
@@ -384,7 +395,10 @@ class Boot extends MdcLoggable {
     APIUtil.akkaSanityCheck() match {
       case Full(c) if c == true => logger.info(s"remotedata.secret matched = $c")
       case Full(c) if c == false => throw new Exception(ErrorMessages.RemoteDataSecretMatchError)
-      case Empty => throw new Exception(ErrorMessages.RemoteDataSecretObtainError)
+      case Empty =>  Props.getBool("use_akka", false) match {
+        case true => throw new Exception(ErrorMessages.RemoteDataSecretObtainError)
+        case false => logger.info("Akka middleware layer is disabled.")
+      }
       case _ => throw new Exception(s"Unexpected error occurs during Akka sanity check!")
     }
 
@@ -460,13 +474,15 @@ object ToSchemify {
     Token,
     Nonce,
     MappedCounterparty,
+    MappedCounterpartyBespoke,
     MappedCounterpartyMetadata,
     MappedCounterpartyWhereTag,
     MappedTransactionRequest,
     MappedMetric,
     MapperAccountHolders,
     MappedEntitlement,
-    MappedConnectorMetric
+    MappedConnectorMetric,
+    MappedExpectedChallengeAnswer
   )
 
   // The following tables are accessed directly via Mapper / JDBC

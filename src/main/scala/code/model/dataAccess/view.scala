@@ -33,7 +33,7 @@ Berlin 13359, Germany
 package code.model.dataAccess
 
 import code.api.APIFailure
-import code.util.UUIDString
+import code.util.{AccountIdString, UUIDString}
 import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper._
 import code.model._
@@ -60,7 +60,7 @@ class ViewImpl extends View with LongKeyedMapper[ViewImpl] with ManyToMany with 
   object users_ extends MappedManyToMany(ViewPrivileges, ViewPrivileges.view, ViewPrivileges.user, ResourceUser)
 
   object bankPermalink extends UUIDString(this)
-  object accountPermalink extends UUIDString(this)
+  object accountPermalink extends AccountIdString(this)
 
 
   object id_ extends MappedLongIndex(this)
@@ -159,8 +159,15 @@ class ViewImpl extends View with LongKeyedMapper[ViewImpl] with ManyToMany with 
     canAddWhereTag_(actions.exists(_ == "can_add_where_tag"))
     canSeeWhereTag_(actions.exists(_ == "can_see_where_tag"))
     canDeleteWhereTag_(actions.exists(_ == "can_delete_where_tag"))
+    canAddTransactionRequestToOwnAccount_(actions.exists(_ == "can_add_transaction_request_to_own_account")) //added following two for payments
+    canAddTransactionRequestToAnyAccount_(actions.exists(_ == "can_add_transaction_request_to_any_account"))
+    canSeeBankAccountCreditLimit_(actions.exists(_ == "can_see_bank_account_credit_limit"))
   }
 
+  object isSystem_ extends MappedBoolean(this){
+    override def defaultValue = false
+    override def dbIndexed_? = true
+  }
 
   object isPublic_ extends MappedBoolean(this){
     override def defaultValue = false
@@ -386,8 +393,18 @@ class ViewImpl extends View with LongKeyedMapper[ViewImpl] with ManyToMany with 
   object canInitiateTransaction_ extends MappedBoolean(this){
     override def defaultValue = false
   }
+  object canAddTransactionRequestToOwnAccount_ extends MappedBoolean(this){ 
+    override def defaultValue = false
+  }
+  object canAddTransactionRequestToAnyAccount_ extends MappedBoolean(this){
+    override def defaultValue = false
+  }
+  object canSeeBankAccountCreditLimit_ extends MappedBoolean(this){
+    override def defaultValue = false
+  }
 
   def id: Long = id_.get
+  def isSystem: Boolean = isSystem_.get
 
   def viewId : ViewId = ViewId(permalink_.get)
   def accountId : AccountId = AccountId(accountPermalink.get)
@@ -486,6 +503,9 @@ class ViewImpl extends View with LongKeyedMapper[ViewImpl] with ManyToMany with 
   def canDeleteWhereTag : Boolean = canDeleteWhereTag_.get
 
   def canInitiateTransaction: Boolean = canInitiateTransaction_.get
+  def canAddTransactionRequestToOwnAccount: Boolean = canAddTransactionRequestToOwnAccount_.get //added following two for payments
+  def canAddTransactionRequestToAnyAccount: Boolean = canAddTransactionRequestToAnyAccount_.get
+  def canSeeBankAccountCreditLimit: Boolean = canSeeBankAccountCreditLimit_.get
   //TODO: if you add new permissions here, remember to set them wherever views are created
   // (e.g. BankAccountCreationDispatcher)
 }
@@ -493,14 +513,14 @@ class ViewImpl extends View with LongKeyedMapper[ViewImpl] with ManyToMany with 
 object ViewImpl extends ViewImpl with LongKeyedMetaMapper[ViewImpl]{
   override def dbIndexes = Index(permalink_, bankPermalink, accountPermalink) :: super.dbIndexes
 
-  def find(viewUID : ViewUID) : Box[ViewImpl] = {
+  def find(viewUID : ViewIdBankIdAccountId) : Box[ViewImpl] = {
     find(By(permalink_, viewUID.viewId.value) :: accountFilter(viewUID.bankId, viewUID.accountId): _*) ~>
       APIFailure(s"View with permalink $viewId not found", 404)
     //TODO: APIFailures with http response codes belong at a higher level in the code
   }
 
-  def find(viewId : ViewId, bankAccountId : BankAccountUID): Box[ViewImpl] = {
-    find(ViewUID(viewId, bankAccountId.bankId, bankAccountId.accountId))
+  def find(viewId : ViewId, bankAccountId : BankIdAccountId): Box[ViewImpl] = {
+    find(ViewIdBankIdAccountId(viewId, bankAccountId.bankId, bankAccountId.accountId))
   }
 
   def accountFilter(bankId : BankId, accountId : AccountId) : List[QueryParam[ViewImpl]] = {

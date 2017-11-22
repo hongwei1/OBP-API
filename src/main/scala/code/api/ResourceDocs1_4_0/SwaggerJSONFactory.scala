@@ -3,6 +3,7 @@ package code.api.ResourceDocs1_4_0
 import java.util.{Date, UUID}
 
 import code.api.Constant._
+import code.api.util.APIUtil.ApiVersion.ApiVersion
 import code.api.util.{APIUtil, ErrorMessages}
 import code.api.util.APIUtil.{BaseErrorResponseBody, ResourceDoc}
 import net.liftweb
@@ -35,7 +36,8 @@ object SwaggerJSONFactory {
   // Security Definitions Object
   // link->https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#securityDefinitionsObject
   case class SecurityDefinitionsJson(
-    directLogin: DirectLoginJson
+    directLogin: DirectLoginJson ,
+    gatewayLogin: GatewayLoginJson
   )
   case class DirectLoginJson(
     `type`: String = "apiKey",
@@ -44,10 +46,18 @@ object SwaggerJSONFactory {
     name: String = "Authorization"
   )
   
+  case class GatewayLoginJson(
+    `type`: String = "apiKey",
+    description: String = "https://github.com/OpenBankProject/OBP-API/wiki/Gateway-Login",
+    in: String = "header",
+    name: String = "Authorization"
+  )
+  
   //Security Requirement Object
   //link -> https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#securityRequirementObject
   case class SecurityJson(
-    directLogin: List[String] = Nil
+    directLogin: List[String] = Nil,
+    gatewayLogin: List[String] = Nil
   )
   
   case class ResponseObjectSchemaJson(
@@ -152,7 +162,7 @@ object SwaggerJSONFactory {
     * @param requestedApiVersion eg: 2_2_0
     * @return
     */
-  def createSwaggerResourceDoc(resourceDocList: List[ResourceDoc], requestedApiVersion: String): SwaggerResourceDoc = {
+  def createSwaggerResourceDoc(resourceDocList: List[ResourceDoc], requestedApiVersion: ApiVersion): SwaggerResourceDoc = {
     
     //reference to referenceObject: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#referenceObject  
     //according to the apiFunction name, prepare the reference 
@@ -180,9 +190,9 @@ object SwaggerJSONFactory {
     val infoDescription = "An Open Source API for Banks. (c) TESOBE Ltd. 2011 - 2016. Licensed under the AGPL and commercial licences."
     val infoContact = InfoContactJson("TESOBE Ltd. / Open Bank Project", "https://openbankproject.com" ,"contact@tesobe.com")
     val infoApiVersion = requestedApiVersion
-    val info = InfoJson(infoTitle, infoDescription, infoContact, infoApiVersion)
+    val info = InfoJson(infoTitle, infoDescription, infoContact, infoApiVersion.toString)
     val host = Props.get("hostname", "unknown host").replaceFirst("http://", "").replaceFirst("https://", "")
-    val basePath = s"/$ApiPathZero/" + infoApiVersion
+    val basePath = "/"
     val schemas = List("http", "https")
     // Paths Object
     // link ->https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#paths-object
@@ -204,9 +214,11 @@ object SwaggerJSONFactory {
     //          "schema": {"$ref": "#/definitions/Error"
     val paths: ListMap[String, Map[String, OperationObjectJson]] = resourceDocList.groupBy(x => x.requestUrl).toSeq.sortBy(x => x._1).map { mrd =>
       
-      //TODO here can extract to  a method
+      //`/banks/BANK_ID` --> `/obp/v3.0.0/banks/BANK_ID` 
+      val pathAddedObpandVersion = s"/$ApiPathZero/" + APIUtil.vDottedApiVersion(infoApiVersion)+mrd._1
+      //`/obp/v3.0.0/banks/BANK_ID` --> `/obp/v3.0.0/banks/{BANK_ID}`
       val path =
-        mrd._1
+        pathAddedObpandVersion
         .replaceAll("/BANK_ID", "/{BANK_ID}")
         .replaceAll("/ACCOUNT_ID", "/{ACCOUNT_ID}")
         .replaceAll("/VIEW_ID", "/{VIEW_ID}")
@@ -283,19 +295,20 @@ object SwaggerJSONFactory {
       if(path.contains("/{AMT_ID}"))
         pathParameters = OperationParameterPathJson(name="AMT_ID", description="The kyc media id") :: pathParameters
       if(path.contains("/{API_VERSION}"))
-        pathParameters = OperationParameterPathJson(name="API_VERSION", description="v2.2.0") :: pathParameters
+        pathParameters = OperationParameterPathJson(name="API_VERSION", description="eg:v2.2.0, v3.0.0") :: pathParameters
   
       val operationObjects: Map[String, OperationObjectJson] = mrd._2.map(rd =>
         (rd.requestVerb.toLowerCase,
           OperationObjectJson(
-            tags = List(s"${rd.apiVersion.toString}"), 
+            tags = rd.tags.map(_.tag),
             summary = rd.summary,
             description = pegDownProcessor.markdownToHtml(rd.description.stripMargin).replaceAll("\n", ""),
             operationId =
-              rd.apiFunction match {
-                //TODO, the UUID is just a temporory way, need fix 
-                case "createTransactionRequest" => s"${rd.apiVersion.toString }-${rd.apiFunction.toString}-${UUID.randomUUID().toString}"
-                case _ => s"${rd.apiVersion.toString }-${rd.apiFunction.toString }"
+              rd.partialFunctionName match {
+                //No longer need this special case since all transaction reqquest Resource Docs have explicit URL
+                //case "createTransactionRequest" => s"${rd.apiVersion.toString }-${rd.apiFunction.toString}-${UUID.randomUUID().toString}"
+                // Note: The operationId should not start with a number becuase Javascript constructors may use it to build variables.
+                case _ => s"v${rd.implementedInApiVersion.toString }-${rd.partialFunctionName.toString }"
               },
             //TODO, this is for Post Body 
             parameters =
@@ -348,7 +361,7 @@ object SwaggerJSONFactory {
       host = host,
       basePath = basePath,
       schemes = schemas,
-      securityDefinitions = SecurityDefinitionsJson(DirectLoginJson()), //default value
+      securityDefinitions = SecurityDefinitionsJson(DirectLoginJson(),GatewayLoginJson()), //default value
       security = SecurityJson()::Nil, //default value
       paths = paths
     )
@@ -380,7 +393,7 @@ object SwaggerJSONFactory {
     // eg return :  "required": ["id","name","bank","banks"],  
     val required =
       for {
-        f <- entity.getClass.getDeclaredFields
+        f <- entity.getClass.getDeclaredFields //get all the field name in the class
         if f.getType.toString.contains("Option") == false
       } yield {
         f.getName
@@ -422,43 +435,59 @@ object SwaggerJSONFactory {
     //      name -> Tesobe,              --> "name" : {"type":"string"}              
     //      bank -> Bank(gh.29.uk),      --> "bank": {"$ref":"#/definitions/Bank"}    
     //      banks -> List(Bank(gh.29.uk) --> "banks": {"type": "array", "items":{"$ref": "#/definitions/Bank"}}  
-    val properties = for ((key, value) <- mapOfFields) yield {
+    val properties = for {
+      (key, value) <- mapOfFields
+      // Uncomment this to debug problems with json data etc.
+      // _ = print("\n val properties for comprehension: " + key + " is " + value)
+    } yield {
       value match {
+        //Boolean - 4 kinds
         case i: Boolean                    => "\""  + key + """": {"type":"boolean", "example":"""" +i+"\"}"
         case Some(i: Boolean)              => "\""  + key + """": {"type":"boolean", "example":"""" +i+"\"}"
         case List(i: Boolean, _*)          => "\""  + key + """": {"type":"array", "items":{"type": "boolean"}}"""
         case Some(List(i: Boolean, _*))    => "\""  + key + """": {"type":"array", "items":{"type": "boolean"}}"""
+        //String   
         case i: String                     => "\""  + key + """": {"type":"string","example":"""" +i+"\"}"
         case Some(i: String)               => "\""  + key + """": {"type":"string","example":"""" +i+"\"}"
         case List(i: String, _*)           => "\""  + key + """": {"type":"array", "items":{"type": "string"}}"""
         case Some(List(i: String, _*))     => "\""  + key + """": {"type":"array", "items":{"type": "string"}}"""
+        //Int 
         case i: Int                        => "\""  + key + """": {"type":"integer", "format":"int32","example":"""" +i+"\"}"
         case Some(i: Int)                  => "\""  + key + """": {"type":"integer", "format":"int32","example":"""" +i+"\"}"
-        case List(i: Long, _*)             => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int32"}}"""
-        case Some(List(i: Long, _*))       => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int32"}}"""
+        case List(i: Int, _*)              => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int32"}}"""
+        case Some(List(i: Int, _*))        => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int32"}}"""
+        //Long
         case i: Long                       => "\""  + key + """": {"type":"integer", "format":"int64","example":"""" +i+"\"}"
         case Some(i: Long)                 => "\""  + key + """": {"type":"integer", "format":"int64","example":"""" +i+"\"}"
-        case List(i: Long, _*)             => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int64"}}"""
-        case Some(List(i: Long, _*))       => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int64"}}"""
+        case List(i: Long, _*)             => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int32"}}"""
+        case Some(List(i: Long, _*))       => "\""  + key + """": {"type":"array", "items":{"type":"integer", "format":"int32"}}"""
+        //Float
         case i: Float                      => "\""  + key + """": {"type":"number", "format":"float","example":"""" +i+"\"}"
         case Some(i: Float)                => "\""  + key + """": {"type":"number", "format":"float","example":"""" +i+"\"}"
         case List(i: Float, _*)            => "\""  + key + """": {"type":"array", "items":{"type": "float"}}"""
         case Some(List(i: Float, _*))      => "\""  + key + """": {"type":"array", "items":{"type": "float"}}"""
+        //Double
         case i: Double                     => "\""  + key + """": {"type":"number", "format":"double","example":"""" +i+"\"}"
         case Some(i: Double)               => "\""  + key + """": {"type":"number", "format":"double","example":"""" +i+"\"}"
         case List(i: Double, _*)           => "\""  + key + """": {"type":"array", "items":{"type": "double"}}"""
         case Some(List(i: Double, _*))     => "\""  + key + """": {"type":"array", "items":{"type": "double"}}"""
+        //Date
         case i: Date                       => "\""  + key + """": {"type":"string", "format":"date","example":"""" +i+"\"}"
         case Some(i: Date)                 => "\""  + key + """": {"type":"string", "format":"date","example":"""" +i+"\"}"
         case List(i: Date, _*)             => "\""  + key + """": {"type":"array", "items":{"type":"string", "format":"date"}}"""
         case Some(List(i: Date, _*))       => "\""  + key + """": {"type":"array", "items":{"type":"string", "format":"date"}}"""
+       
         //TODO this should be improved, matching the JValue,now just support the default value
         case APIUtil.defaultJValue         => "\""  + key + """": {"type":"string","example":""}"""
-        //the case classes.  
+        //List case classes.  
         case List(f)                       => "\""  + key + """": {"type": "array", "items":{"$ref": "#/definitions/""" +f.getClass.getSimpleName ++"\"}}"
+        case List(f,_*)                    => "\""  + key + """": {"type": "array", "items":{"$ref": "#/definitions/""" +f.getClass.getSimpleName ++"\"}}"
+        case List(Some(f))                 => "\""  + key + """": {"type": "array", "items":{"$ref": "#/definitions/""" +f.getClass.getSimpleName ++"\"}}"
+        case List(Some(f),_*)              => "\""  + key + """": {"type": "array", "items":{"$ref": "#/definitions/""" +f.getClass.getSimpleName ++"\"}}"
+        case Some(List(f))                 => "\""  + key + """": {"type": "array", "items":{"$ref": "#/definitions/""" +f.getClass.getSimpleName ++"\"}}"
+        case Some(List(f,_*))              => "\""  + key + """": {"type": "array", "items":{"$ref": "#/definitions/""" +f.getClass.getSimpleName ++"\"}}"
+        //Single object
         case Some(f)                       => "\""  + key + """": {"$ref":"#/definitions/""" +f.getClass.getSimpleName +"\"}"
-        case List(Some(f))                 => "\""  + key + """": {"$ref":"#/definitions/""" +f.getClass.getSimpleName +"\"}"
-        case Some(List(f))                 => "\""  + key + """": {"$ref":"#/definitions/""" +f.getClass.getSimpleName +"\"}"
         case f                             => "\""  + key + """": {"$ref":"#/definitions/""" +f.getClass.getSimpleName +"\"}"
         case _ => "unknown"
       }

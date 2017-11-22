@@ -1,13 +1,18 @@
 package code.customer
 
+import java.lang
 import java.util.Date
 
 import code.model.{BankId, User}
-import code.usercustomerlinks.{MappedUserCustomerLink, UserCustomerLink}
+import code.usercustomerlinks.{MappedUserCustomerLink, MappedUserCustomerLinkProvider, UserCustomerLink}
 import code.users.Users
-import code.util.{UUIDString, DefaultStringField, MappedUUID}
+import code.util.{MappedUUID, UUIDString}
 import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper.{By, _}
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 object MappedCustomerProvider extends CustomerProvider {
 
@@ -26,9 +31,10 @@ object MappedCustomerProvider extends CustomerProvider {
     available
   }
 
+  // TODO Rename
   override def getCustomerByUserId(bankId: BankId, userId: String): Box[Customer] = {
     // If there are more than customer linked to a user we take a first one in a list
-    val customerId = UserCustomerLink.userCustomerLink.vend.getUserCustomerLinkByUserId(userId) match {
+    val customerId = UserCustomerLink.userCustomerLink.vend.getUserCustomerLinksByUserId(userId) match {
       case x :: xs => x.customerId
       case _       => "There is no linked customer to this user"
     }
@@ -39,6 +45,19 @@ object MappedCustomerProvider extends CustomerProvider {
     MappedCustomer.find(
       By(MappedCustomer.mCustomerId, customerId)
     )
+  }
+
+  override def getCustomersByUserId(userId: String): List[Customer] = {
+    val customerIds = MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(userId).map(_.customerId)
+    MappedCustomer.findAll(ByList(MappedCustomer.mCustomerId, customerIds))
+  }
+
+  def getCustomersByUserIdF(userId: String): Box[List[Customer]] = {
+    Full(getCustomersByUserId(userId))
+  }
+
+  override def getCustomersByUserIdBox(userId: String): Box[List[Customer]]= {
+    Full(getCustomersByUserId(userId))
   }
 
   override def getBankIdByCustomerId(customerId: String): Box[String] = {
@@ -126,22 +145,23 @@ class MappedCustomer extends Customer with LongKeyedMapper[MappedCustomer] with 
 
   def getSingleton = MappedCustomer
 
+  // Unique
   object mCustomerId extends MappedUUID(this)
 
-  //object mUser extends MappedLongForeignKey(this, ResourceUser)
+  // Combination of bank id and customer number is unique
   object mBank extends UUIDString(this)
-
   object mNumber extends MappedString(this, 50)
+
   object mMobileNumber extends MappedString(this, 50)
   object mLegalName extends MappedString(this, 255)
   object mEmail extends MappedEmail(this, 200)
-  object mFaceImageUrl extends DefaultStringField(this)
+  object mFaceImageUrl extends MappedString(this, 2000)
   object mFaceImageTime extends MappedDateTime(this)
   object mDateOfBirth extends MappedDateTime(this)
-  object mRelationshipStatus extends DefaultStringField(this)
+  object mRelationshipStatus extends MappedString(this, 16)
   object mDependents extends MappedInt(this)
-  object mHighestEducationAttained  extends DefaultStringField(this)
-  object mEmploymentStatus extends DefaultStringField(this)
+  object mHighestEducationAttained  extends MappedString(this, 32)
+  object mEmploymentStatus extends MappedString(this, 32)
   object mCreditRating extends MappedString(this, 100)
   object mCreditSource extends MappedString(this, 100)
   object mCreditLimitCurrency extends MappedString(this, 100)
@@ -150,7 +170,7 @@ class MappedCustomer extends Customer with LongKeyedMapper[MappedCustomer] with 
   object mLastOkDate extends MappedDateTime(this)
 
   override def customerId: String = mCustomerId.get // id.toString
-  override def bank: String = mBank.get
+  override def bankId: String = mBank.get
   override def number: String = mNumber.get
   override def mobileNumber: String = mMobileNumber.get
   override def legalName: String = mLegalName.get
@@ -161,7 +181,7 @@ class MappedCustomer extends Customer with LongKeyedMapper[MappedCustomer] with 
   }
   override def dateOfBirth: Date = mDateOfBirth.get
   override def relationshipStatus: String = mRelationshipStatus.get
-  override def dependents: Int = mDependents.get
+  override def dependents: Integer = mDependents.get
   override def dobOfDependents: List[Date] = List(createdAt.get)
   override def highestEducationAttained: String = mHighestEducationAttained.get
   override def employmentStatus: String = mEmploymentStatus.get
@@ -173,11 +193,11 @@ class MappedCustomer extends Customer with LongKeyedMapper[MappedCustomer] with 
     override def currency: String = mCreditLimitCurrency.get
     override def amount: String = mCreditLimitAmount.get
   }
-  override def kycStatus: Boolean = mKycStatus.get
+  override def kycStatus: lang.Boolean = mKycStatus.get
   override def lastOkDate: Date = mLastOkDate.get
 }
 
 object MappedCustomer extends MappedCustomer with LongKeyedMetaMapper[MappedCustomer] {
   //one customer info per bank for each api user
-  override def dbIndexes = UniqueIndex(mCustomerId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(mCustomerId) :: UniqueIndex(mBank, mNumber) :: super.dbIndexes
 }

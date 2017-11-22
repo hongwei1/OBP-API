@@ -4,6 +4,7 @@ import java.util.{Date, UUID}
 
 import bootstrap.liftweb.ToSchemify
 import code.accountholder.AccountHolders
+import code.api.v2_1_0.PostCounterpartyBespoke
 import code.entitlement.Entitlement
 import code.metadata.counterparties.{Counterparties, CounterpartyTrait}
 import code.model._
@@ -21,7 +22,7 @@ import scala.util.Random
 trait LocalMappedConnectorTestSetup extends TestConnectorSetupWithStandardPermissions {
   //TODO: replace all these helpers with connector agnostic methods like createRandomBank
   // that call Connector.createBank etc.
-  // (same in LocalConnectorTestSetup)
+  // (same in LocalRecordConnectorTestSetup)
   // Tests should simply use the currently selected connector
   override protected def createBank(id : String) : Bank = {
         MappedBank.create
@@ -46,8 +47,12 @@ trait LocalMappedConnectorTestSetup extends TestConnectorSetupWithStandardPermis
       otherBankRoutingAddress = bankId,
       otherBranchRoutingScheme ="OBP",
       otherBranchRoutingAddress ="Berlin",
-      isBeneficiary = isBeneficiary
-    ).get
+      isBeneficiary = isBeneficiary,
+      otherAccountSecondaryRoutingScheme ="String",
+      otherAccountSecondaryRoutingAddress ="String",
+      description = "String",
+      bespoke = Nil
+    ).openOrThrowException("Attempted to open an empty Box.")
   }
 
 // TODO: Should return an option or box so can test if the insert succeeded
@@ -84,7 +89,7 @@ trait LocalMappedConnectorTestSetup extends TestConnectorSetupWithStandardPermis
   }
 
   override protected def updateAccountCurrency(bankId: BankId, accountId : AccountId, currency : String) : BankAccount = {
-     MappedBankAccount.find(By(MappedBankAccount.bank, bankId.value), By(MappedBankAccount.theAccountId, accountId.value)).get.accountCurrency(currency).saveMe()
+     MappedBankAccount.find(By(MappedBankAccount.bank, bankId.value), By(MappedBankAccount.theAccountId, accountId.value)).openOrThrowException("Attempted to open an empty Box.").accountCurrency(currency).saveMe()
   }
 
   def addEntitlement(bankId: String, userId: String, roleName: String): Box[Entitlement] = {

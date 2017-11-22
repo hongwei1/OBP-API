@@ -3,14 +3,16 @@ package code.util
 import java.net.{Socket, SocketException}
 import java.util.{Date, GregorianCalendar}
 
+import code.api.util.APIUtil.fullBoxOrException
 import net.liftweb.common._
-import net.liftweb.util.{Mailer, Props}
-import net.liftweb.util.Helpers._
-import net.liftweb.json.JsonAST._
 import net.liftweb.json.Extraction._
+import net.liftweb.json.JsonAST._
 import net.liftweb.json.{DateFormat, Formats}
-import net.liftweb.json.Printer._
+import net.liftweb.util.Helpers._
+import net.liftweb.util.Props
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Random
 
 
@@ -81,6 +83,29 @@ object Helper{
       Empty
   }
 
+  /**
+    * Helper function which wrap some statement into Future.
+    * The function is curried i.e.
+    * use this parameter syntax ---> (failMsg: String)(statement: => Boolean)
+    * instead of this one ---------> (failMsg: String, statement: => Boolean)
+    * Below is an example of recommended usage.
+    * Please note that the second parameter is provided in curly bracket in order to mimics body of a function.
+    *   booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
+    *     hasEntitlement("", u.userId, ApiRole.CanGetAnyUser)
+    *   }
+    * @param failMsg is used in case that result of call of function booleanToBox returns Empty
+    * @param statement is call by name parameter.
+    * @return In case the statement is false the function returns Future[Failure(failMsg)].
+    *         Otherwise returns Future[Full()].
+    */
+  def booleanToFuture(failMsg: String)(statement: => Boolean): Future[Box[Unit]] = {
+    Future{
+      booleanToBox(statement)
+    } map {
+      x => fullBoxOrException(x ?~! failMsg)
+    }
+  }
+
   val deprecatedJsonGenerationMessage = "json generation handled elsewhere as it changes from api version to api version"
 
   /**
@@ -126,7 +151,7 @@ object Helper{
    */
   def prettyJson(input: JValue) : String = {
     implicit val formats = net.liftweb.json.DefaultFormats
-    pretty(render(decompose(input)))
+    prettyRender(decompose(input))
   }
 
   /**
@@ -143,7 +168,7 @@ object Helper{
       * pattern eg2: https://xxxxxx/oautxxxx -->http://xxxxxx
       */
     //Note: the pattern should be : val  pattern = "(https?):\\/\\/(.*)(?=((\\/)|(\\?))oauthcallback*)".r, but the OAuthTest is different, so add the following logic
-    val pattern = "(https?):\\/\\/(.*)(?=((\\/)|(\\?))oauth*)".r
+    val pattern = "([A-Za-z][A-Za-z0-9+.-]*):\\/\\/(.*)(?=((\\/)|(\\?))oauth*)".r
     val validRedirectURL = pattern findFirstIn input
     // Now for the OAuthTest, the redirect format is : http://localhost:8016?oauth_token=G5AEA2U1WG404EGHTIGBHKRR4YJZAPPHWKOMNEEV&oauth_verifier=53018
     // It is not the normal case: http://localhost:8082/oauthcallback?oauth_token=LUDKELGJXRDOC1AK1X1TOYIXM5W1AORFJT5KE43B&oauth_verifier=14062
@@ -252,4 +277,33 @@ object Helper{
   trait MdcLoggable extends Loggable {
     MDC.put("host" -> getHostname)
   }
+
+  /*
+  Return true for Y, YES and true etc.
+   */
+  def stringToBooleanOption(input : String) : Option[Boolean] = {
+    var upperInput = input.toUpperCase()
+    upperInput match {
+      case "Y" | "YES" | "TRUE" | "1" | "-1" => Full(true)
+      case "N" | "NO" | "FALSE" | "0" => Full(false)
+      case _ => None
+    }
+  }
+
+  /*
+  Return "Y" for true, "N" for false and "" if None
+   */
+  def optionBooleanToString(input : Option[Boolean]) : String = {
+    val result : String = input match {
+      case Some(a) => a match {
+        case true => "Y"
+        case false => "N"
+      }
+      case _ => ""
+    }
+    result
+  }
+
+
+
 }

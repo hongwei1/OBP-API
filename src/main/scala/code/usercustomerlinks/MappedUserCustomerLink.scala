@@ -1,7 +1,7 @@
 package code.usercustomerlinks
 
 import java.util.Date
-import code.util.{UUIDString, DefaultStringField, MappedUUID}
+import code.util.{UUIDString, MappedUUID}
 import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper._
 
@@ -27,9 +27,10 @@ object MappedUserCustomerLinkProvider extends UserCustomerLinkProvider {
       By(MappedUserCustomerLink.mCustomerId, customerId))
   }
 
-  override def getUserCustomerLinkByUserId(userId: String): List[UserCustomerLink] = {
-    MappedUserCustomerLink.findAll(
-      By(MappedUserCustomerLink.mUserId, userId)).sortWith(_.id < _.id)
+  override def getUserCustomerLinksByUserId(userId: String): List[UserCustomerLink] = {
+    val userCustomerLinks : List[UserCustomerLink] = MappedUserCustomerLink.findAll(
+      By(MappedUserCustomerLink.mUserId, userId)).sortWith(_.id.get < _.id.get)
+    userCustomerLinks
   }
 
   override def getUserCustomerLink(userId : String, customerId: String): Box[UserCustomerLink] = {
@@ -63,7 +64,7 @@ class MappedUserCustomerLink extends UserCustomerLink with LongKeyedMapper[Mappe
   override def customerId: String = mCustomerId.get // id.toString
   override def userId: String = mUserId.get
   override def dateInserted: Date = mDateInserted.get
-  override def isActive: Boolean = mIsActive
+  override def isActive: Boolean = mIsActive.get
 }
 
 object MappedUserCustomerLink extends MappedUserCustomerLink with LongKeyedMetaMapper[MappedUserCustomerLink] {

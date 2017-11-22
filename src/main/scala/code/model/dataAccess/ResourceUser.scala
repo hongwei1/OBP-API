@@ -34,7 +34,7 @@ package code.model.dataAccess
 import code.util.MappedUUID
 import net.liftweb.mapper._
 import net.liftweb.util.Props
-import code.model.{BankAccountUID, User, UserId, View}
+import code.model.{BankIdAccountId, User, UserId, View}
 import code.views.Views
 import net.liftweb.common.Full
 
@@ -80,8 +80,27 @@ class ResourceUser extends LongKeyedMapper[ResourceUser] with User with ManyToMa
     Views.views.vend.permittedViews(this, a)
   }
 
+  def toCaseClass: ResourceUserCaseClass =
+    ResourceUserCaseClass(
+      emailAddress = emailAddress,
+      idGivenByProvider = idGivenByProvider,
+      resourceUserId = resourceUserId.value,
+      userId = userId,
+      name = name,
+      provider = provider
+    )
+
 }
 
 object ResourceUser extends ResourceUser with LongKeyedMetaMapper[ResourceUser]{
     override def dbIndexes = UniqueIndex(provider_, providerId) ::super.dbIndexes
 }
+
+case class ResourceUserCaseClass(
+                                  emailAddress: String,
+                                  idGivenByProvider: String,
+                                  resourceUserId: Long,
+                                  userId: String,
+                                  name: String,
+                                  provider: String
+                                )

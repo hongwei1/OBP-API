@@ -96,7 +96,7 @@ import com.tesobe.model.{CreateBankAccount, UpdateBankAccount}
       */
     def setAsOwner(bankId : BankId, accountId : AccountId, user: User): Unit = {
       createOwnerView(bankId, accountId, user)
-      Connector.connector.vend.setAccountHolder(BankAccountUID(bankId, accountId), user)
+      Connector.connector.vend.setAccountHolder(BankIdAccountId(bankId, accountId), user)
     }
   
     /**
@@ -110,7 +110,7 @@ import com.tesobe.model.{CreateBankAccount, UpdateBankAccount}
       */
     private def createOwnerView(bankId : BankId, accountId : AccountId, user: User): Unit = {
 
-      val ownerViewUID = ViewUID(ViewId("owner"), bankId, accountId)
+      val ownerViewUID = ViewIdBankIdAccountId(ViewId("owner"), bankId, accountId)
       val existingOwnerView = Views.views.vend.view(ownerViewUID)
 
       existingOwnerView match {
@@ -131,7 +131,7 @@ import com.tesobe.model.{CreateBankAccount, UpdateBankAccount}
           {
             //TODO: if we add more permissions to ViewImpl we need to remember to set them here...
             logger.debug(s"creating owner view on account account $accountId at bank $bankId")
-            val view = Views.views.vend.createOwnerView(bankId, accountId, "Owner View")
+            val view = Views.views.vend.getOrCreateOwnerView(bankId, accountId, "Owner View")
 
             logger.debug(s"creating owner view access to user ${user.emailAddress}")
             Views.views.vend.addPermission(ownerViewUID, user)
@@ -168,15 +168,15 @@ import com.tesobe.model.{CreateBankAccount, UpdateBankAccount}
           val result = for {
             user <- foundUser ?~!
               s"user ${message.accountOwnerId} at ${message.accountOwnerProvider} not found. Could not create the account with owner view"
-          } yield {
-            val (_, bankAccount) = Connector.connector.vend.createBankAndAccount(
-              message.bankName, 
-              message.bankIdentifier, 
+            (_, bankAccount) <- Connector.connector.vend.createBankAndAccount(
+              message.bankName,
+              message.bankIdentifier,
               message.accountNumber,
-              accountType, accountLabel, 
+              accountType, accountLabel,
               currency, user.name,
               "","","" //added field in V220
-              )
+            )
+          } yield {
             logger.debug(s"created account with id ${bankAccount.bankId.value} with number ${bankAccount.number} at bank with identifier ${message.bankIdentifier}")
             BankAccountCreation.setAsOwner(bankAccount.bankId, bankAccount.accountId, user)
           }

@@ -2,22 +2,20 @@ package code.api.v1_4_0
 
 import java.util.Date
 
-import code.api.util.APIUtil.{BaseErrorResponseBody, ResourceDoc}
-import code.common.{Address, License, Location, Meta}
-import code.atms.Atms.Atm
-import code.branches.Branches.Branch
-import code.crm.CrmEvent.{CrmEvent, CrmEventId}
-import code.products.Products.Product
+import code.api.util.APIUtil.ResourceDoc
+import code.api.v1_2_1.AmountOfMoneyJsonV121
+import code.api.v3_0_0.BranchJsonV300
+import code.atms.Atms.AtmT
+import code.branches.Branches.BranchT
+import code.common._
+import code.crm.CrmEvent.CrmEvent
 import code.customer.{Customer, CustomerMessage}
 import code.model._
-import code.products.Products.ProductCode
-import code.transactionrequests.TransactionRequests._
-import net.liftweb.json.JsonAST.{JObject, JValue}
-import org.pegdown.PegDownProcessor
-import code.api.v1_2_1.AmountOfMoneyJsonV121
-import code.api.v2_0_0.TransactionRequestChargeJsonV200
+import code.products.Products.Product
 import code.transactionrequests.TransactionRequestTypeCharge
-import net.liftweb.common.Full
+import code.transactionrequests.TransactionRequests._
+import org.pegdown.PegDownProcessor
+
 
 object JSONFactory1_4_0 {
 
@@ -62,17 +60,17 @@ object JSONFactory1_4_0 {
 
   case class AddCustomerMessageJson(message : String, from_department : String, from_person : String)
 
-  case class LicenseJson(id : String, name : String)
+  case class LicenseJsonV140(id : String, name : String)
 
-  case class MetaJson(license : LicenseJson)
+  case class MetaJsonV140(license : LicenseJsonV140)
 
-  case class LocationJson(latitude : Double, longitude : Double)
+  case class LocationJsonV140(latitude : Double, longitude : Double)
 
-  case class DriveUpJson(hours : String)
-  case class LobbyJson(hours : String)
-  
-  
-  
+  case class DriveUpStringJson(hours : String)
+  case class LobbyStringJson(hours : String)
+
+
+
   case class BranchRoutingJsonV141(
     scheme: String,
     address: String
@@ -80,26 +78,29 @@ object JSONFactory1_4_0 {
 
   case class BranchJson(id : String,
                         name : String,
-                        address : AddressJson,
-                        location : LocationJson,
-                        lobby : LobbyJson,
-                        drive_up: DriveUpJson,
-                        meta : MetaJson,
-                        branch_routing: BranchRoutingJsonV141)
+                        address : AddressJsonV140,
+                        location : LocationJsonV140,
+                        lobby : LobbyStringJson,
+                        drive_up: DriveUpStringJson,
+                        meta : MetaJsonV140,
+                        branch_routing: BranchRoutingJsonV141) // This is bad branch_routing should not have been put in V140
 
   case class BranchesJson (branches : List[BranchJson])
 
+  case class BranchesJsonV300 (branches : List[BranchJsonV300])
+
 
   case class AtmJson(id : String,
-                        name : String,
-                        address : AddressJson,
-                        location : LocationJson,
-                        meta : MetaJson)
+                     name : String,
+                     address : AddressJsonV140,
+                     location : LocationJsonV140,
+                     meta : MetaJsonV140)
 
   case class AtmsJson (atms : List[AtmJson])
 
 
-  case class AddressJson(line_1 : String, line_2 : String, line_3 : String, city : String, state : String, postcode : String, country : String)
+  // Note this case class has country (not countryCode) and it is missing county
+  case class AddressJsonV140(line_1 : String, line_2 : String, line_3 : String, city : String, state : String, postcode : String, country : String)
 
 
 
@@ -146,57 +147,75 @@ object JSONFactory1_4_0 {
   }
 
   // Accept a license object and return its json representation
-  def createLicenseJson(license : License) : LicenseJson = {
-    LicenseJson(license.id, license.name)
+  def createLicenseJson(license : LicenseT) : LicenseJsonV140 = {
+    LicenseJsonV140(license.id, license.name)
   }
 
-  def createLocationJson(location : Location) : LocationJson = {
-    LocationJson(location.latitude, location.longitude)
+  def createLocationJson(location : LocationT) : LocationJsonV140 = {
+    LocationJsonV140(location.latitude, location.longitude)
   }
 
 
-  def createDriveUpJson(hours : String) : DriveUpJson = {
-    DriveUpJson(hours)
+  def createDriveUpStringJson(hours : String) : DriveUpStringJson = {
+    DriveUpStringJson(hours)
   }
 
-  def createLobbyJson(hours : String) : LobbyJson = {
-    LobbyJson(hours)
+  def createLobbyStringJson(hours : String) : LobbyStringJson = {
+    LobbyStringJson(hours)
   }
 
-  def createMetaJson(meta: Meta) : MetaJson = {
-    MetaJson(createLicenseJson(meta.license))
+  def createMetaJson(meta: MetaT) : MetaJsonV140 = {
+    MetaJsonV140(createLicenseJson(meta.license))
   }
 
 
   // Accept an address object and return its json representation
-  def createAddressJson(address : Address) : AddressJson = {
-    AddressJson(address.line1, address.line2, address.line3, address.city, address.state, address.postCode, address.countryCode)
+  def createAddressJson(address : AddressT) : AddressJsonV140 = {
+    AddressJsonV140(address.line1, address.line2, address.line3, address.city, address.state, address.postCode, address.countryCode)
   }
 
   // Branches
 
-  def createBranchJson(branch: Branch) : BranchJson = {
+  def createBranchJson(branch: BranchT) : BranchJson = {
     BranchJson(branch.branchId.value,
                 branch.name,
                 createAddressJson(branch.address),
                 createLocationJson(branch.location),
-                createLobbyJson(branch.lobby.hours),
-                createDriveUpJson(branch.driveUp.hours),
+                createLobbyStringJson(branch.lobbyString.map(_.hours).getOrElse("")),
+                createDriveUpStringJson(branch.driveUpString.map(_.hours).getOrElse("")),
                 createMetaJson(branch.meta),
                 BranchRoutingJsonV141(
-                  scheme = branch.branchRoutingScheme,
-                  address = branch.branchRoutingAddress
+                  scheme = branch.branchRouting.map(_.scheme).getOrElse(""),
+                  address = branch.branchRouting.map(_.scheme).getOrElse("")
                 )
     )
   }
 
-  def createBranchesJson(branchesList: List[Branch]) : BranchesJson = {
+//  def createBranchJson(branch: BranchT) : BranchJson = {
+//    BranchJson(branch.branchId.value,
+//      branch.name,
+//      createAddressJson(branch.address),
+//      createLocationJson(branch.location),
+//      createLobbyStringJson(branch.lobbyString.getOrElse("")),
+//      createDriveUpStringJson(branch.driveUpString.getOrElse("")),
+//      createMetaJson(branch.meta),
+//      BranchRoutingJsonV141(
+//        scheme = branch.branchRouting.map(_.scheme).getOrElse(""),
+//        address = branch.branchRouting.map(_.address).getOrElse("")
+//      )
+//    )
+//  }
+
+
+
+
+  def createBranchesJson(branchesList: List[BranchT]) : BranchesJson = {
     BranchesJson(branchesList.map(createBranchJson))
   }
 
   // Atms
 
-  def createAtmJson(atm: Atm) : AtmJson = {
+  def createAtmJson(atm: AtmT) : AtmJson = {
     AtmJson(atm.atmId.value,
       atm.name,
       createAddressJson(atm.address),
@@ -204,7 +223,7 @@ object JSONFactory1_4_0 {
       createMetaJson(atm.meta))
   }
 
-  def createAtmsJson(AtmsList: List[Atm]) : AtmsJson = {
+  def createAtmsJson(AtmsList: List[AtmT]) : AtmsJson = {
     AtmsJson(AtmsList.map(createAtmJson))
   }
 
@@ -217,7 +236,7 @@ object JSONFactory1_4_0 {
                         family : String,
                         super_family : String,
                         more_info_url: String,
-                        meta : MetaJson)
+                        meta : MetaJsonV140)
 
   case class ProductsJson (products : List[ProductJson])
 
@@ -281,6 +300,7 @@ object JSONFactory1_4_0 {
 
   // Used to describe the OBP API calls for documentation and API discovery purposes
   case class ResourceDocJson(operation_id: String,
+                         implemented_by: ImplementedByJson,
                          request_verb: String,
                          request_url: String,
                          summary: String,
@@ -288,7 +308,6 @@ object JSONFactory1_4_0 {
                          example_request_body: scala.Product,
                          success_response_body: scala.Product,
                          error_response_bodies: List[String],
-                         implemented_by: ImplementedByJson,
                          is_core: Boolean,
                          is_psd2: Boolean,
                          is_obwg: Boolean,
@@ -311,7 +330,7 @@ object JSONFactory1_4_0 {
     val pegDownProcessor : PegDownProcessor = new PegDownProcessor
 
     ResourceDocJson(
-      operation_id = s"${rd.apiVersion.toString}-${rd.apiFunction.toString}",
+      operation_id = s"v${rd.implementedInApiVersion.toString}-${rd.partialFunctionName.toString}",
       request_verb = rd.requestVerb,
       request_url = rd.requestUrl,
       summary = rd.summary,
@@ -320,7 +339,7 @@ object JSONFactory1_4_0 {
       example_request_body = rd.exampleRequestBody,
       success_response_body = rd.successResponseBody,
       error_response_bodies = rd.errorResponseBodies,
-      implemented_by = ImplementedByJson(rd.apiVersion, rd.apiFunction),
+      implemented_by = ImplementedByJson(rd.implementedInApiVersion, rd.partialFunctionName),
       is_core = rd.catalogs.core,
       is_psd2 = rd.catalogs.psd2,
       is_obwg = rd.catalogs.obwg,// No longer tracking isCore
@@ -399,14 +418,14 @@ object JSONFactory1_4_0 {
       TransactionRequestChargeJsonV140(transactionRequestTypeCharges.chargeSummary,
         AmountOfMoneyJsonV121(transactionRequestTypeCharges.chargeCurrency, transactionRequestTypeCharges.chargeAmount)))
   }
-  
+
   /**
     * package the transactionRequestTypeCharges
     */
   def createTransactionRequestTypesJSONs(transactionRequestTypeCharges: List[TransactionRequestTypeCharge]): TransactionRequestTypesJsonV140 = {
     TransactionRequestTypesJsonV140(transactionRequestTypeCharges.map(createTransactionRequestTypesJSON))
   }
-  
+
   case class TransactionRequestAccountJsonV140 (
                              bank_id: String,
                              account_id : String
@@ -446,8 +465,55 @@ object JSONFactory1_4_0 {
     val summary: String,
     val value : AmountOfMoneyJsonV121
   )
-  
+
   case class TransactionRequestTypeJsonV140(value: String, charge: TransactionRequestChargeJsonV140)
 
   case class TransactionRequestTypesJsonV140(transaction_request_types: List[TransactionRequestTypeJsonV140])
+
+
+  // It seems we can't overload this function i.e. have to give it specific name because
+  // else cant use it with a nested case class when the top case class is a different version
+  def transformToLocationFromV140(locationJsonV140: LocationJsonV140): Location = {
+    Location (
+      latitude = locationJsonV140.latitude,
+      longitude = locationJsonV140.longitude,
+      date = None,
+      user = None
+    )
+  }
+
+
+  def transformV140ToLicence(licenseJsonV140: LicenseJsonV140): License = {
+    License (
+      id = licenseJsonV140.id,
+      name = licenseJsonV140.name
+    )
+  }
+
+
+  def transformToMetaFromV140(metaJsonV140: MetaJsonV140): Meta = {
+    Meta (
+      license = transformV140ToLicence (
+        metaJsonV140.license)
+    )
+  }
+
+
+  def transformToAddressFromV140(addressJsonV140: AddressJsonV140): Address = {
+    Address(
+      line1 = addressJsonV140.line_1,
+      line2 = addressJsonV140.line_2,
+      line3 = addressJsonV140.line_3,
+      city = addressJsonV140.city,
+      county = None,
+      state = addressJsonV140.state,
+      postCode = addressJsonV140.postcode,
+      countryCode = addressJsonV140.country // May not be a code
+    )
+  }
+
+
+
+
+
 }

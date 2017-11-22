@@ -2,6 +2,7 @@ package code.metadata.counterparties
 
 import java.util.Date
 
+import code.api.v2_1_0.PostCounterpartyBespoke
 import code.model._
 import net.liftweb.common.{Box, Empty}
 import code.util.Helper.MdcLoggable
@@ -52,7 +53,7 @@ object MongoCounterparties extends Counterparties with MdcLoggable {
   def createMetadata(originalPartyBankId: BankId, originalPartyAccountId : AccountId, otherAccountHolder : String, otherAccountNumber : String) : Metadata = {
     //create it
     if(otherAccountHolder.isEmpty){
-      logger.info("other account holder is Empty. creating a metadata record with no public alias")
+      logger.info("other account holder is Empty. creating a metadata record with private alias")
       //no holder name, nothing to hide, so we don't need to create a public alias
       Metadata
         .createRecord
@@ -60,7 +61,7 @@ object MongoCounterparties extends Counterparties with MdcLoggable {
         .originalPartyAccountId(originalPartyAccountId.value)
         .accountNumber(otherAccountNumber)
         .holder("")
-        .save
+        .save(true)
 
     } else {
       Metadata.createRecord.
@@ -68,7 +69,7 @@ object MongoCounterparties extends Counterparties with MdcLoggable {
         originalPartyAccountId(originalPartyAccountId.value).
         holder(otherAccountHolder).
         accountNumber(otherAccountNumber).
-        publicAlias(newPublicAliasName(originalPartyBankId, originalPartyAccountId)).save
+        publicAlias(newPublicAliasName(originalPartyBankId, originalPartyAccountId)).save(true)
     }
   }
 
@@ -120,7 +121,11 @@ object MongoCounterparties extends Counterparties with MdcLoggable {
                                    otherBankRoutingAddress: String,
                                    otherBranchRoutingScheme: String,
                                    otherBranchRoutingAddress: String,
-                                   isBeneficiary: Boolean
+                                   isBeneficiary: Boolean,
+                                   otherAccountSecondaryRoutingScheme: String,
+                                   otherAccountSecondaryRoutingAddress: String,
+                                   description: String,
+                                   bespoke: List[PostCounterpartyBespoke]
                                  ): Box[CounterpartyTrait] = Empty
 
   override def checkCounterpartyAvailable(

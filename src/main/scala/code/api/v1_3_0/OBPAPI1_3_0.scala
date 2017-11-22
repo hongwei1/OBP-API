@@ -1,8 +1,13 @@
 package code.api.v1_3_0
 
 import code.api.OBPRestHelper
+import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
 import code.api.v1_2_1.APIMethods121
+import code.api.v2_1_0.OBPAPI2_1_0.findResourceDoc
+import code.model.User
 import code.util.Helper.MdcLoggable
+import net.liftweb.common.Box
+import net.liftweb.http.{JsonResponse, Req}
 
 
 // Added so we can add resource docs for this version of the API
@@ -15,7 +20,8 @@ object OBPAPI1_3_0 extends OBPRestHelper with APIMethods130 with APIMethods121 w
   val versionStatus = "STABLE"
 
   //TODO: check all these calls to see if they should really have the same behaviour as 1.2.1
-  val routes = List(
+
+  val endpointsOf1_2_1 = List(
     Implementations1_2_1.root(version, versionStatus),
     Implementations1_2_1.getBanks,
     Implementations1_2_1.bankById,
@@ -84,14 +90,33 @@ object OBPAPI1_3_0 extends OBPRestHelper with APIMethods130 with APIMethods121 w
     Implementations1_2_1.addWhereTagForViewOnTransaction,
     Implementations1_2_1.updateWhereTagForViewOnTransaction,
     Implementations1_2_1.deleteWhereTagForViewOnTransaction,
-    Implementations1_2_1.getOtherAccountForTransaction,
-    Implementations1_2_1.makePayment,
+    Implementations1_2_1.getOtherAccountForTransaction
+    //Implementations1_2_1.makePayment
+  )
+
+  val endpointsOf1_3_0 = List(
     Implementations1_3_0.getCards,
     Implementations1_3_0.getCardsForBank
   )
 
+  val allResourceDocs =
+    Implementations1_3_0.resourceDocs ++
+      Implementations1_2_1.resourceDocs
+
+  def findResourceDoc(pf: PartialFunction[Req, Box[User] => Box[JsonResponse]]): Option[ResourceDoc] = {
+    allResourceDocs.find(_.partialFunction==pf)
+  }
+  // Filter the possible endpoints by the disabled / enabled Props settings and add them together
+  val routes : List[OBPEndpoint] =
+    List(Implementations1_2_1.root(version, versionStatus)) ::: // For now we make this mandatory
+      getAllowedEndpoints(endpointsOf1_2_1, Implementations1_2_1.resourceDocs) :::
+      getAllowedEndpoints(endpointsOf1_3_0, Implementations1_3_0.resourceDocs)
+
+
   routes.foreach(route => {
-    oauthServe(apiPrefix{route})
+    oauthServe(apiPrefix{route}, findResourceDoc(route))
   })
+
+  logger.info(s"version $version has been run! There are ${routes.length} routes.")
 
 }

@@ -36,16 +36,19 @@ import java.util.Date
 
 import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121, BankRoutingJsonV121}
 import code.api.v1_4_0.JSONFactory1_4_0._
-import code.api.v2_1_0.{MetricJson, MetricsJson, ResourceUserJSON}
-import code.atms.Atms.Atm
-import code.branches.Branches.Branch
+import code.api.v2_1_0.{MetricJson, MetricsJson, PostCounterpartyBespoke, ResourceUserJSON}
+import code.atms.Atms.{Atm, AtmId, AtmT}
+import code.branches.Branches._
+import code.common.{Address, Location, Meta}
+import code.customer.Customer
+import code.model.dataAccess.{AuthUser, ResourceUser}
 import code.products.Products.Product
 import code.fx.FXRate
 import code.metadata.counterparties.CounterpartyTrait
 import code.metrics.{APIMetric, ConnectorMetric}
 import code.model._
 import code.users.Users
-import net.liftweb.common.Full
+import net.liftweb.common.{Box, Full}
 //import net.liftweb.common.Box
 //import net.liftweb.json.Extraction
 //import net.liftweb.json.JsonAST.JValue
@@ -144,6 +147,7 @@ case class FXRateJsonV220(
 
 case class CounterpartyJsonV220(
                              name: String,
+                             description: String,
                              created_by_user_id: String,
                              this_bank_id: String,
                              this_account_id: String,
@@ -155,7 +159,10 @@ case class CounterpartyJsonV220(
                              other_branch_routing_address: String,
                              other_account_routing_scheme: String,
                              other_account_routing_address: String,
-                             is_beneficiary: Boolean
+                             other_account_secondary_routing_scheme: String,
+                             other_account_secondary_routing_address: String,
+                             is_beneficiary: Boolean,
+                             bespoke:List[PostCounterpartyBespoke]
                            )
 
 case class CounterpartiesJsonV220(
@@ -180,26 +187,26 @@ case class BankJSONV220(
 
 //keep similar to "case class BranchJsonPost" in V210
 case class BranchJsonV220(
-  id: String,
-  bank_id: String,
-  name: String,
-  address: AddressJson,
-  location: LocationJson,
-  meta: MetaJson,
-  lobby: LobbyJson,
-  drive_up: DriveUpJson,
-  branch_routing: BranchRoutingJsonV141
+                           id: String,
+                           bank_id: String,
+                           name: String,
+                           address: AddressJsonV140,
+                           location: LocationJsonV140,
+                           meta: MetaJsonV140,
+                           lobby: LobbyStringJson,
+                           drive_up: DriveUpStringJson,
+                           branch_routing: BranchRoutingJsonV141
 )
 
 
 
 case class AtmJsonV220(
-                           id: String,
-                           bank_id: String,
-                           name: String,
-                           address: AddressJson,
-                           location: LocationJson,
-                           meta: MetaJson
+                        id: String,
+                        bank_id: String,
+                        name: String,
+                        address: AddressJsonV140,
+                        location: LocationJsonV140,
+                        meta: MetaJsonV140
                          )
 
 
@@ -213,7 +220,7 @@ case class ProductJsonV220(bank_id: String,
                            more_info_url: String,
                            details: String,
                            description: String,
-                           meta : MetaJson)
+                           meta : MetaJsonV140)
 
 
 case class ProductsJsonV220 (products : List[ProductJsonV220])
@@ -245,7 +252,7 @@ case class ConfigurationJSON(akka: AkkaJSON, elastic_search: ElasticSearchJSON, 
 case class ConnectorMetricJson(
                                connector_name: String,
                                function_name: String,
-                               obp_api_request_id: String,
+                               correlation_id: String,
                                date: Date,
                                duration: Long
                              )
@@ -264,6 +271,70 @@ case class ConsumerJson(consumer_id: Long,
                         enabled: Boolean,
                         created: Date
                        )
+
+
+
+case class BasicUserJsonV220 (
+                               user_id: String,
+                               email: String,
+                               provider_id: String,
+                               provider: String,
+                               username: String
+                             )
+
+
+case class BasicCustomerJsonV220(
+                                  customer_id: String,
+                                  customer_number: String,
+                                  legal_name: String
+                                )
+
+
+case class BasicViewJsonV220(
+                              view_id: String,
+                              name: String,
+                              description: String,
+                              is_public: Boolean
+                            )
+
+
+case class CustomerViewJsonV220(
+  user: BasicUserJsonV220,
+  customer: BasicCustomerJsonV220,
+  view: BasicViewJsonV220
+)
+
+
+
+
+
+
+/*
+
+[{
+"user": {
+"user_id": "5995d6a2-01b3-423c-a173-5481df49bdaf",
+"email": "robert.x.0.gh@example.com",
+"provider_id": "robert.x.0.gh",
+"provider": "OBP",
+"username": "robert.x.0.gh"
+},
+"customer": {
+"customer_id": "yauiuy67876f",
+"customer_number": "12345",
+"legal_name": "Robert Manchester"
+},
+"view": {
+"view_id": "owner",
+"short_name": "Accountant",
+"description": "For the accountants",
+"is_public": false
+}
+}]
+
+*/
+
+
 
 object JSONFactory220{
 
@@ -371,18 +442,22 @@ object JSONFactory220{
   def createCounterpartyJSON(counterparty: CounterpartyTrait): CounterpartyJsonV220 = {
     CounterpartyJsonV220(
       name = counterparty.name,
+      description = counterparty.description,
       created_by_user_id = counterparty.createdByUserId,
       this_bank_id = counterparty.thisBankId,
       this_account_id = counterparty.thisAccountId,
       this_view_id = counterparty.thisViewId,
       counterparty_id = counterparty.counterpartyId,
       other_bank_routing_scheme = counterparty.otherBankRoutingScheme,
-      other_account_routing_scheme = counterparty.otherAccountRoutingScheme,
       other_bank_routing_address = counterparty.otherBankRoutingAddress,
+      other_account_routing_scheme = counterparty.otherAccountRoutingScheme,
       other_account_routing_address = counterparty.otherAccountRoutingAddress,
+      other_account_secondary_routing_scheme = counterparty.otherAccountSecondaryRoutingScheme,
+      other_account_secondary_routing_address = counterparty.otherAccountSecondaryRoutingAddress,
       other_branch_routing_scheme = counterparty.otherBranchRoutingScheme,
       other_branch_routing_address =counterparty.otherBranchRoutingAddress,
-      is_beneficiary = counterparty.isBeneficiary
+      is_beneficiary = counterparty.isBeneficiary,
+      bespoke= counterparty.bespoke
     )
   }
 
@@ -408,7 +483,24 @@ object JSONFactory220{
   }
 
   // keep similar to def createBranchJson(branch: Branch) -- v140
-  def createBranchJson(branch: Branch): BranchJsonV220 = {
+//  def createBranchJson(branch: BranchT): BranchJsonV220 = {
+//    BranchJsonV220(
+//      id= branch.branchId.value,
+//      bank_id= branch.bankId.value,
+//      name= branch.name,
+//      address= createAddressJson(branch.address),
+//      location= createLocationJson(branch.location),
+//      meta= createMetaJson(branch.meta),
+//      lobby= createLobbyStringJson(branch.lobbyString.getOrElse("")),
+//      drive_up= createDriveUpStringJson(branch.driveUpString.getOrElse("")),
+//      branch_routing = BranchRoutingJsonV141(
+//        scheme = branch.branchRouting.map(_.scheme).getOrElse(""),
+//        address = branch.branchRouting.map(_.address).getOrElse("")
+//      )
+//    )
+//  }
+
+  def createBranchJson(branch: BranchT): BranchJsonV220 = {
     BranchJsonV220(
       id= branch.branchId.value,
       bank_id= branch.bankId.value,
@@ -416,17 +508,19 @@ object JSONFactory220{
       address= createAddressJson(branch.address),
       location= createLocationJson(branch.location),
       meta= createMetaJson(branch.meta),
-      lobby= createLobbyJson(branch.lobby.hours),
-      drive_up= createDriveUpJson(branch.driveUp.hours),
+      lobby= createLobbyStringJson(branch.lobbyString.map(_.hours).getOrElse("")),
+      drive_up= createDriveUpStringJson(branch.driveUpString.map(_.hours).getOrElse("")),
       branch_routing = BranchRoutingJsonV141(
-        scheme = branch.branchRoutingScheme,
-        address = branch.branchRoutingAddress
+        scheme = branch.branchRouting.map(_.scheme).getOrElse(""),
+        address = branch.branchRouting.map(_.address).getOrElse("")
       )
     )
   }
 
 
-  def createAtmJson(atm: Atm): AtmJsonV220 = {
+
+
+  def createAtmJson(atm: AtmT): AtmJsonV220 = {
     AtmJsonV220(
       id= atm.atmId.value,
       bank_id= atm.bankId.value,
@@ -482,7 +576,7 @@ object JSONFactory220{
     ConnectorMetricJson(
       connector_name = metric.getConnectorName(),
       function_name = metric.getFunctionName(),
-      obp_api_request_id = metric.getCorrelationId(),
+      correlation_id = metric.getCorrelationId(),
       duration = metric.getDuration(),
       date = metric.getDate()
     )
@@ -504,19 +598,126 @@ object JSONFactory220{
       case _ => null
     }
 
-    ConsumerJson(consumer_id=c.id,
-      key=c.key,
-      secret=c.secret,
-      app_name=c.name,
+    ConsumerJson(consumer_id=c.id.get,
+      key=c.key.get,
+      secret=c.secret.get,
+      app_name=c.name.get,
       app_type=c.appType.toString(),
-      description=c.description,
-      developer_email=c.developerEmail,
-      redirect_url=c.redirectURL,
-      created_by_user_id =c.createdByUserId,
+      description=c.description.get,
+      developer_email=c.developerEmail.get,
+      redirect_url=c.redirectURL.get,
+      created_by_user_id =c.createdByUserId.get,
       created_by_user =resourceUserJSON,
-      enabled=c.isActive,
-      created=c.createdAt
+      enabled=c.isActive.get,
+      created=c.createdAt.get
     )
   }
+
+
+
+  def createUserCustomerViewJsonV220(user: ResourceUser, customer: Customer, view: View): CustomerViewJsonV220 = {
+
+    var basicUser = BasicUserJsonV220(
+      user_id = user.resourceUserId.toString,
+      email = user.email.get,
+      provider_id = user.idGivenByProvider,
+      provider = user.provider,
+      username = user.name_.get // TODO Double check this is the same as AuthUser.username ??
+    )
+
+    val basicCustomer = BasicCustomerJsonV220(
+      customer_id = customer.customerId,
+      customer_number = customer.number.toString,
+      legal_name = customer.legalName
+    )
+
+    val basicView = BasicViewJsonV220(
+      view_id = view.viewId.value,
+      name = view.name,
+      description = view.description,
+      is_public = view.isPublic
+    )
+
+    val customerViewJsonV220: CustomerViewJsonV220 =
+      CustomerViewJsonV220(
+        user = basicUser,
+        customer = basicCustomer,
+        view = basicView
+      )
+
+    customerViewJsonV220
+  }
+
+
+
+
+
+
+  def transformV220ToBranch(branchJsonV220: BranchJsonV220): Box[Branch] = {
+
+    val address : Address = transformToAddressFromV140(branchJsonV220.address) // Note the address in V220 is V140
+    val location: Location =  transformToLocationFromV140(branchJsonV220.location)  // Note the location in V220 is V140
+    val meta: Meta =  transformToMetaFromV140(branchJsonV220.meta)  // Note the meta in V220 is V140
+
+    Full(Branch(
+      BranchId(branchJsonV220.id),
+      BankId(branchJsonV220.bank_id),
+      branchJsonV220.name,
+      address = address,
+      location = location,
+      lobbyString = Some(LobbyString(branchJsonV220.lobby.hours)),
+      driveUpString = Some(DriveUpString(branchJsonV220.drive_up.hours)),
+      meta = meta,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None))
+  }
+
+  def transformToAtmFromV220(atmJsonV220: AtmJsonV220): Box[Atm] = {
+    val address : Address = transformToAddressFromV140(atmJsonV220.address) // Note the address in V220 is V140
+    val location: Location =  transformToLocationFromV140(atmJsonV220.location)  // Note the location in V220 is V140
+    val meta: Meta =  transformToMetaFromV140(atmJsonV220.meta)  // Note the meta in V220 is V140
+
+    val atm = Atm(
+      atmId = AtmId(atmJsonV220.id),
+      bankId = BankId(atmJsonV220.bank_id),
+      name = atmJsonV220.name,
+      address = address,
+      location = location,
+      meta = meta,
+      OpeningTimeOnMonday = None,
+      ClosingTimeOnMonday = None,
+
+      OpeningTimeOnTuesday = None,
+      ClosingTimeOnTuesday = None,
+
+      OpeningTimeOnWednesday = None,
+      ClosingTimeOnWednesday = None,
+
+      OpeningTimeOnThursday = None,
+      ClosingTimeOnThursday = None,
+
+      OpeningTimeOnFriday = None,
+      ClosingTimeOnFriday = None,
+
+      OpeningTimeOnSaturday = None,
+      ClosingTimeOnSaturday = None,
+
+      OpeningTimeOnSunday = None,
+      ClosingTimeOnSunday = None,
+      // Easy access for people who use wheelchairs etc. true or false ""=Unknown
+      isAccessible = None,
+      locatedAt = None,
+      moreInfo = None,
+      hasDepositCapability = None
+    )
+    Full(atm)
+  }
+
+
   
 }

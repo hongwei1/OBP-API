@@ -2,6 +2,7 @@ package code.actorsystem
 
 import akka.util.Timeout
 import code.api.APIFailure
+import code.util.Helper.MdcLoggable
 import net.liftweb.common._
 import net.liftweb.util.Props
 
@@ -9,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-trait ObpActorInit {
+trait ObpActorInit extends MdcLoggable{
   // Default is 3 seconds, which should be more than enough for slower systems
   val ACTOR_TIMEOUT: Long = Props.getLong("remotedata.timeout").openOr(3)
 
@@ -37,7 +38,9 @@ trait ObpActorInit {
       case t: T => Full(t)
       case _ => Empty ~> APIFailure(s"future extraction to box failed", 501)
     }
+    
     Await.result(r, TIMEOUT)
+    
   }
 
   def CreateActorNameFromClassName(c: String): String = {

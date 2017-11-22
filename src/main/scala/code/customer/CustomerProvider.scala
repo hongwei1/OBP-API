@@ -1,11 +1,14 @@
 package code.customer
 
+import java.lang
 import java.util.Date
 
 import code.model.{BankId, User}
 import code.remotedata.RemotedataCustomers
 import net.liftweb.common.Box
 import net.liftweb.util.{Props, SimpleInjector}
+
+import scala.concurrent.Future
 
 object Customer extends SimpleInjector {
 
@@ -21,6 +24,10 @@ object Customer extends SimpleInjector {
 
 trait CustomerProvider {
   def getCustomerByUserId(bankId: BankId, userId: String): Box[Customer]
+
+  def getCustomersByUserId(userId: String): List[Customer]
+
+  def getCustomersByUserIdBox(userId: String): Box[List[Customer]]
 
   def getCustomerByCustomerId(customerId: String): Box[Customer]
 
@@ -58,6 +65,8 @@ trait CustomerProvider {
 
 class RemotedataCustomerProviderCaseClasses {
   case class getCustomerByUserId(bankId: BankId, userId: String)
+  case class getCustomersByUserId(userId: String)
+  case class getCustomersByUserIdFuture(userId: String)
   case class getCustomerByCustomerId(customerId: String)
   case class getBankIdByCustomerId(customerId: String)
   case class getCustomerByCustomerNumber(customerNumber: String, bankId : BankId)
@@ -88,7 +97,7 @@ object RemotedataCustomerProviderCaseClasses extends RemotedataCustomerProviderC
 
 trait Customer {
   def customerId : String // The UUID for the customer. To be used in URLs
-  def bank : String
+  def bankId : String
   def number : String // The Customer number i.e. the bank identifier for the customer.
   def legalName : String
   def mobileNumber : String
@@ -96,13 +105,13 @@ trait Customer {
   def faceImage : CustomerFaceImage
   def dateOfBirth: Date
   def relationshipStatus: String
-  def dependents: Int
+  def dependents: Integer
   def dobOfDependents: List[Date]
   def highestEducationAttained: String
   def employmentStatus: String
   def creditRating : CreditRating
   def creditLimit: AmountOfMoney
-  def kycStatus: Boolean
+  def kycStatus: lang.Boolean
   def lastOkDate: Date
 }
 

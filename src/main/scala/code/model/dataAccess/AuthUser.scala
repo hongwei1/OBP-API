@@ -33,20 +33,24 @@ package code.model.dataAccess
 
 import java.util.UUID
 
-import code.api.util.APIUtil.isValidStrongPassword
+import code.accountholder.AccountHolders
+import code.api.util.APIUtil.{hasAnOAuthHeader, isValidStrongPassword, _}
 import code.api.util.{APIUtil, ErrorMessages}
 import code.api.{DirectLogin, OAuthHandshake}
 import code.bankconnectors.{Connector, InboundUser}
-import code.loginattempts.LoginAttempt
-import code.users.Users
-import code.util.Helper
 import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.mapper._
 import net.liftweb.util.Mailer.{BCC, From, Subject, To}
 import net.liftweb.util._
+import net.liftweb.util.Bindable
 
 import scala.xml.{NodeSeq, Text}
+import code.loginattempts.LoginAttempt
+import code.model._
+import code.users.Users
+import code.util.Helper
+import code.views.Views
 
 
 /**
@@ -164,7 +168,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with Logger {
   }
 
   def createUnsavedResourceUser() : ResourceUser = {
-    val user = Users.users.vend.createUnsavedResourceUser(getProvider(), Some(username), Some(username), Some(email), None).get
+    val user = Users.users.vend.createUnsavedResourceUser(getProvider(), Some(username.get), Some(username.get), Some(email.get), None).openOrThrowException("Attempted to open an empty Box.")
     user
   }
 
@@ -197,9 +201,9 @@ class AuthUser extends MegaProtoUser[AuthUser] with Logger {
       info("user reference is not null. Trying to update the ResourceUser")
       Users.users.vend.getResourceUserByResourceUserId(user.get).map{ u =>{
           info("API User found ")
-          u.name_(username)
-          .email(email)
-          .providerId(username)
+          u.name_(username.get)
+          .email(email.get)
+          .providerId(username.get)
           .save
         }
       }
@@ -208,7 +212,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with Logger {
   }
 
   override def delete_!(): Boolean = {
-    user.obj.map(u => Users.users.vend.deleteResourceUser(u.id))
+    user.obj.map(u => Users.users.vend.deleteResourceUser(u.id.get))
     super.delete_!
   }
 
@@ -271,74 +275,60 @@ import net.liftweb.util.Helpers._
 
     <div>{loginXml getOrElse NodeSeq.Empty}</div>
   }
-
+  
   /**
-   * Find current user
-   */
-  def getCurrentUserUsername: String = {
-    for {
-      current <- AuthUser.currentUser
-      username <- tryo{current.username.get}
-      if (username.nonEmpty)
-    } yield {
-      return username
-    }
-
-    for {
-      current <- OAuthHandshake.getUser
-      username <- tryo{current.name}
-      if (username.nonEmpty)
-    } yield {
-      return username
-    }
-
-    for {
-      current <- DirectLogin.getUser
-      username <- tryo{current.name}
-      if (username.nonEmpty)
-    } yield {
-      return username
-    }
-
-    return ""
-  }
-  /**
-    * Find current ResourceUser_UserId from AuthUser, reference the @getCurrentUserUsername
+    * Find current ResourceUser from the server. 
     * This method has no parameters, it depends on different login types:
     *  AuthUser:  AuthUser.currentUser
     *  OAuthHandshake: OAuthHandshake.getUser
     *  DirectLogin: DirectLogin.getUser
-    * to get the current Resourceuser.userId feild.
-    * 
-    * Note: resourceuser has two ids: id(Long) and userid_(String),
-    * This method return userid_(String).
+    * to get the current Resourceuser .
+    *
     */
+  def getCurrentUser: Box[User] = {
+    for {
+      resourceUser <- if (AuthUser.currentUser.isDefined)
+        //AuthUser.currentUser.get.user.foreign // this will be issue when the resource user is in remote side
+        Users.users.vend.getUserByUserName(AuthUser.currentUser.openOrThrowException("Attempted to open an empty Box.").username.get)
+      else if (hasDirectLoginHeader)
+        DirectLogin.getUser
+      else if (hasAnOAuthHeader) {
+        OAuthHandshake.getUser
+      } else {
+        debug(ErrorMessages.CurrentUserNotFoundException)
+        Failure(ErrorMessages.CurrentUserNotFoundException)
+        //This is a big problem, if there is no current user from here.
+        //throw new RuntimeException(ErrorMessages.CurrentUserNotFoundException)
+      }
+    } yield {
+      resourceUser
+    }
+  }
+  /**
+   * get current user.
+    * Note: 1. it will call getCurrentUser method, 
+    *          
+   */
+  def getCurrentUserUsername: String = {
+     getCurrentUser match{
+       case Full(user) => user.name
+       case _ => "" //TODO need more error handling for different user cases
+     }
+  }
+  
+  /**
+    *  get current user.userId
+    *  Note: 1.resourceuser has two ids: id(Long) and userid_(String),
+    *        
+    * @return return userid_(String).
+    */
+  
   def getCurrentResourceUserUserId: String = {
-    for {
-      current <- AuthUser.currentUser
-      user <- Users.users.vend.getUserByResourceUserId(current.user.get)
-    } yield {
-      return user.userId
+    getCurrentUser match{
+      case Full(user) => user.userId
+      case _ => "" //TODO need more error handling for different user cases
     }
-
-    for {
-      current <- OAuthHandshake.getUser
-      userId <- tryo{current.userId}
-      if (userId.nonEmpty)
-    } yield {
-      return userId
-    }
-
-    for {
-      current <- DirectLogin.getUser
-      userId <- tryo{current.userId}
-      if (userId.nonEmpty)
-    } yield {
-      return userId
-    }
-
-     return ""
-   }
+  }
 
   /**
     * The string that's generated when the user name is not found.  By
@@ -353,7 +343,7 @@ import net.liftweb.util.Helpers._
    * Overridden to use the hostname set in the props file
    */
   override def sendPasswordReset(name: String) {
-    findUserByUsername(name) match {
+    findUserByUsernameLocally(name) match {
       case Full(user) if user.validated_? =>
         user.resetUniqueId().save
         val resetLink = Props.get("hostname", "ERROR")+
@@ -377,29 +367,26 @@ import net.liftweb.util.Helpers._
   }
 
   override def lostPasswordXhtml = {
-    <div id="authorizeSection">
-      <div id="userAccess">
-        <div class="account account-in-content">
-          Enter your email address or username and we'll email you a link to reset your password
-          <form class="forgotPassword" action={S.uri} method="post">
-            <div class="field username">
-              <label>Username or email address</label> <user:email />
+    <div id="recover-password">
+          <h1>Recover Password</h1>
+          <div id="recover-password-explanation">Enter your email address or username and we'll email you a link to reset your password</div>
+          <form action={S.uri} method="post">
+            <div class="form-group">
+              <label>Username or email address</label> <span id="recover-password-email"><input id="email" type="text" /></span>
             </div>
-            <div class="field buttons">
-              <div class="button button-field">
-                <user:submit />
-              </div>
+            <div id="recover-password-submit">
+              <input type="submit" />
             </div>
           </form>
-        </div>
-      </div>
     </div>
   }
 
   override def lostPassword = {
-    bind("user", lostPasswordXhtml,
-      "email" -> SHtml.text("", sendPasswordReset _),
-      "submit" -> lostPasswordSubmitButton(S.?("submit")))
+    val bind =
+          "#email" #> SHtml.text("", sendPasswordReset _) &
+          "type=submit" #> lostPasswordSubmitButton(S.?("submit"))
+
+    bind(lostPasswordXhtml)
   }
 
   //override def def passwordResetMailBody(user: TheUserType, resetLink: String): Elem = { }
@@ -434,30 +421,32 @@ import net.liftweb.util.Helpers._
     if (url.isEmpty) {
       s""
     } else {
-      scala.xml.Unparsed(s"""<tr><td colspan="2"><input type="checkbox" id="agree-terms-input" /><span id="agree-terms-text">I hereby agree to the <a href="$url" title="T &amp; C">Terms and Conditions</a></span></td></tr>""")
+      scala.xml.Unparsed(s"""<div id="signup-agree-terms" class="checkbox"><label><input type="checkbox" />I hereby agree to the <a href="$url" title="T &amp; C">Terms and Conditions</a></label></div>""")
     }
   }
 
 
   override def signupXhtml (user:AuthUser) =  {
-    <div id="authorizeSection" class="signupSection">
-      <div class="signup-error"><span class="lift:Msg?id=signup"/></div>
-      <div>
-        <form id="signupForm" method="post" action={S.uri}>
-          <table>
-            <tr>
-              <td colspan="2">{ S.?("sign.up") }</td>
-            </tr>
-              {localForm(user, false, signupFields)}
-              {agreeTerms}
-            <tr>
-              <td>&nbsp;</td>
-              <td><user:submit/></td>
-            </tr>
-          </table>
-        </form>
-      </div>
+    <div id="signup">
+      <form method="post" action={S.uri}>
+          <h1>Sign Up</h1>
+          <div id="signup-error" class="alert alert-danger hide"><span data-lift="Msg?id=error"/></div>
+          {localForm(user, false, signupFields)}
+          {agreeTerms}
+          <div id="signup-submit">
+            <input type="submit" />
+          </div>
+      </form>
     </div>
+  }
+
+  override def localForm(user: TheUserType, ignorePassword: Boolean, fields: List[FieldPointerType]): NodeSeq = {
+    for {
+      pointer <- fields
+      field <- computeFieldFromPointer(user, pointer).toList
+      if field.show_? && (!ignorePassword || !pointer.isPasswordField_?)
+      form <- field.toForm.toList
+    } yield <div class="form-group"><label>{field.displayName}</label> {form}</div>
   }
 
   def userLoginFailed = {
@@ -484,9 +473,7 @@ import net.liftweb.util.Helpers._
 
 
   def getResourceUserId(username: String, password: String): Box[Long] = {
-    println("ENTER getResourceUserIdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n\n\n\n\n\n\n\n\n\n")
-    println("username:" + username + "\n" + "password: " + password)
-    findUserByUsername(username) match {
+    findUserByUsernameLocally(username) match {
       case Full(user) if (user.getProvider() == Props.get("hostname","")) =>
         if (
           user.validated_? &&
@@ -496,8 +483,7 @@ import net.liftweb.util.Helpers._
             {
               // We logged in correctly, so reset badLoginAttempts counter (if it exists)
               LoginAttempt.resetBadLoginAttempts(username)
-              println(Full(user.user))
-              Full(user.user) // Return the user.
+              Full(user.user.get) // Return the user.
             }
         // User is unlocked AND password is bad
         else if (
@@ -529,7 +515,7 @@ import net.liftweb.util.Helpers._
                 val userId = for { kafkaUser <- getUserFromConnector(username, password)
                   kafkaUserId <- tryo{kafkaUser.user} } yield {
                     LoginAttempt.resetBadLoginAttempts(username)
-                    kafkaUserId.toLong
+                    kafkaUserId.get
                 }
                 userId match {
                   case Full(l:Long) => Full(l)
@@ -542,7 +528,7 @@ import net.liftweb.util.Helpers._
                 val userId = for { obpjvmUser <- getUserFromConnector(username, password)
                   obpjvmUserId <- tryo{obpjvmUser.user} } yield {
                     LoginAttempt.resetBadLoginAttempts(username)
-                    obpjvmUserId.toLong
+                    obpjvmUserId.get
                 }
                 userId match {
                   case Full(l:Long) => Full(l)
@@ -582,7 +568,7 @@ import net.liftweb.util.Helpers._
 
         val extProvider = connector
 
-        val user = findUserByUsername(name) match {
+        val user = findUserByUsernameLocally(name) match {
           // Check if the external user is already created locally
           case Full(user) if user.validated_?
             // && user.provider == extProvider
@@ -638,7 +624,7 @@ import net.liftweb.util.Helpers._
       if (S.post_?) {
         val usernameFromGui = S.param("username").getOrElse("")
         val passwordFromGui = S.param("password").getOrElse("")
-        findUserByUsername(usernameFromGui) match {
+        findUserByUsernameLocally(usernameFromGui) match {
           // Check if user came from localhost and
           // if User is NOT locked and password is good
           case Full(user) if user.validated_? &&
@@ -693,7 +679,7 @@ import net.liftweb.util.Helpers._
               }
               //This method is used for connector = kafka* || obpjvm*
               //It will update the views and createAccountHolder ....
-              registeredUserHelper(user.username)
+              registeredUserHelper(user.username.get)
               //Check the internal redirect, in case for open redirect issue.
               // variable redir is from loginRedirect, it is set-up in OAuthAuthorisation.scala as following code:
               // val currentUrl = S.uriAndQueryString.getOrElse("/")
@@ -761,7 +747,7 @@ import net.liftweb.util.Helpers._
                     info(ErrorMessages.InvalidInternalRedirectUrl + loginRedirect.get)
                   }
                 case _ =>
-                  LoginAttempt.incrementBadLoginAttempts(username)
+                  LoginAttempt.incrementBadLoginAttempts(username.get)
                   Empty
               }
 
@@ -782,8 +768,9 @@ import net.liftweb.util.Helpers._
       scala.xml.XML.loadString(loginSubmitButton(S.?("Login"), loginAction _).toString().replace("type=\"submit\"","class=\"submit\" type=\"submit\""))
     }
 
-    bind("user", loginXhtml,
-         "submit" -> insertSubmitButton)
+    val bind =
+          "submit" #> insertSubmitButton
+   bind(loginXhtml)
   }
   
   
@@ -811,9 +798,9 @@ import net.liftweb.util.Helpers._
     if (connector.startsWith("kafka") || connector == "obpjvm") {
       for {
        user <- getUserFromConnector(name, password)
-       u <- Users.users.vend.getUserByUserName(username)
-       //TODO need more error handle here, I need the exception to debug
-       v <- tryo {Connector.connector.vend.updateUserAccountViews(u)}
+       //u <- user.user.foreign  // this will be issue when the resource user is in remote side
+       u <- Users.users.vend.getUserByUserName(name)
+       v <- Full (updateUserAccountViews(u))
       } yield {
         user
       }
@@ -828,18 +815,36 @@ import net.liftweb.util.Helpers._
     if (connector.startsWith("kafka") || connector == "obpjvm") {
       for {
        u <- Users.users.vend.getUserByUserName(username)
-       //TODO need more error handle here, I need the exception to debug
-       // just tryo it, for perfermace for now. It is no problem to get error 
-       // for this case, we need move the  updateUserAccountViews to somewhere else. 
-       v <- tryo (Connector.connector.vend.updateUserAccountViews(u))
+       v <- Full (updateUserAccountViews(u))
       } yield v
     }
   }
- 
+  
   /**
-    * find the authUser by author user name(authUser and resourceUser are the same)
+    * This is a helper method 
+    * update the views, accountHolders for OBP side when sign up new remote user
+    * 
     */
-  protected def findUserByUsername(name: String): Box[TheUserType] = {
+  def updateUserAccountViews(user: User): Unit = {
+    //get all accounts from Kafka
+    val accounts = Connector.connector.vend.getBankAccounts(user.name, false).openOrThrowException("Attempted to open an empty Box.")
+    debug(s"-->AuthUser.updateUserAccountViews.accounts : ${accounts} ")
+    
+    for {
+      account <- accounts
+      viewId <- account.viewsToGenerate 
+      bankAccountUID <- Full(BankIdAccountId(BankId(account.bankId), AccountId(account.accountId))) 
+      view <- Views.views.vend.getOrCreateAccountView(bankAccountUID, viewId)
+    } yield {
+      Views.views.vend.getOrCreateViewPrivilege(view,user)
+      AccountHolders.accountHolders.vend.getOrCreateAccountHolder(user,bankAccountUID)
+    }
+  }
+  /**
+    * Find the authUser by author user name(authUser and resourceUser are the same).
+    * Only search for the local database. 
+    */
+  protected def findUserByUsernameLocally(name: String): Box[TheUserType] = {
     find(By(this.username, name))
   }
 
@@ -878,14 +883,15 @@ import net.liftweb.util.Helpers._
           }
 
         case xs =>
-          xs.foreach(e => S.error("signup", e.msg))
+          xs.foreach(e => S.error("error", e.msg))
           signupFunc(Full(innerSignup _))
       }
     }
 
-    def innerSignup = bind("user",
-      signupXhtml(theUser),
-      "submit" -> signupSubmitButton(S.?("sign.up"), testSignup _))
+    def innerSignup = {
+      val bind = "type=submit" #> signupSubmitButton(S.?("sign.up"), testSignup _)
+      bind(signupXhtml(theUser))
+    }
 
     innerSignup
   }

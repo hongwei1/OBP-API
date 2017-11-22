@@ -7,16 +7,18 @@ import java.time.format.DateTimeFormatter
 import java.util.{Date, Locale, Optional, UUID}
 
 import code.accountholder.{AccountHolders, MapperAccountHolders}
-import code.api.util.ErrorMessages
-import code.api.v2_1_0.{BranchJsonPost, TransactionRequestCommonBodyJSON}
+import code.api.util.{ErrorMessages, SessionContext}
+import code.api.v2_1_0.TransactionRequestCommonBodyJSON
 import code.atms.Atms.AtmId
 import code.atms.MappedAtm
-import code.branches.Branches.{Branch, BranchId}
+import code.bankconnectors.vJune2017.AccountRules
+import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
+import code.branches.Branches.{Branch, BranchId, BranchT}
 import code.branches.MappedBranch
 import code.fx.{FXRate, fx}
 import code.management.ImporterAPI.ImporterTransaction
 import code.metadata.comments.Comments
-import code.metadata.counterparties.{Counterparties, CounterpartyTrait}
+import code.metadata.counterparties.CounterpartyTrait
 import code.metadata.narrative.MappedNarrative
 import code.metadata.tags.Tags
 import code.metadata.transactionimages.TransactionImages
@@ -25,10 +27,13 @@ import code.model._
 import code.model.dataAccess._
 import code.products.Products.{Product, ProductCode}
 import code.transaction.MappedTransaction
+import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.transactionrequests.TransactionRequests._
 import code.transactionrequests._
 import code.util.Helper
+import code.util.Helper.MdcLoggable
 import code.views.Views
+import com.google.common.cache.CacheBuilder
 import com.tesobe.obp.kafka.{Configuration, SimpleConfiguration, SimpleNorth}
 import com.tesobe.obp.transport.nov2016.{Bank => _, Transaction => _, User => _, _}
 import com.tesobe.obp.transport.spi.{DefaultSorter, TimestampFilter}
@@ -39,14 +44,12 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util.Props
 
 import scala.collection.JavaConversions._
-import scalacache.guava
+import scala.collection.immutable.{List, Seq}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import scalacache._
-import guava._
-import concurrent.duration._
-import language.postfixOps
-import memoization._
-import com.google.common.cache.CacheBuilder
-import code.util.Helper.MdcLoggable
+import scalacache.guava._
+import scalacache.memoization._
 
 /**
   * Uses the https://github.com/OpenBankProject/OBP-JVM library to connect to
@@ -115,9 +118,9 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   val getCounterpartyFromTransactionTTL     = Props.get("connector.cache.ttl.seconds.getCounterpartyFromTransaction", "0").toInt * 1000 // Miliseconds
   val getCounterpartiesFromTransactionTTL   = Props.get("connector.cache.ttl.seconds.getCounterpartiesFromTransaction", "0").toInt * 1000 // Miliseconds
 
-  override def getAdapterInfo: Box[InboundAdapterInfo] = Empty
-
-  def getUser( username: String, password: String ): Box[InboundUser] = {
+  override def getAdapterInfo: Box[InboundAdapterInfoInternal] = Empty
+  
+  override def getUser( username: String, password: String ): Box[InboundUser] = {
     val parameters = new JHashMap
     parameters.put("username", username)
     parameters.put("password", password)
@@ -131,9 +134,9 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
 
   }
 
-  def updateUserAccountViews( user: ResourceUser ) = {
+  override def updateUserAccountViewsOld( user: ResourceUser ) = {
 
-    val accounts = getBanks.get.flatMap { bank => {
+    val accounts = getBanks.openOrThrowException("Attempted to open an empty Box.").flatMap { bank => {
       val bankId = bank.bankId.value
       logger.debug(s"ObpJvm updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
       val parameters = new JHashMap
@@ -172,9 +175,9 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
         acc.generate_accountants_view,
         acc.generate_auditors_view
       )}
-      existing_views <- tryo {Views.views.vend.views(BankAccountUID(BankId(acc.bank), AccountId(acc.id)))}
+      existing_views <- tryo {Views.views.vend.views(BankIdAccountId(BankId(acc.bank), AccountId(acc.id)))}
     } yield {
-      setAccountOwner(username, BankId(acc.bank), AccountId(acc.id), acc.owners)
+      setAccountHolder(username, BankId(acc.bank), AccountId(acc.id), acc.owners)
       views.foreach(v => {
         Views.views.vend.addPermission(v.uid, user)
         logger.info(s"------------> updated view ${v.uid} for resourceuser ${user} and account ${acc}")
@@ -210,7 +213,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
   // Gets current challenge level for transaction request
-  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String): AmountOfMoney = {
+  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String) = {
     val parameters = new JHashMap
 
     parameters.put("accountId", accountId)
@@ -225,12 +228,12 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
 
     response.data().map(d => new ChallengeThresholdReader(d)) match {
       // Check does the response data match the requested data
-      case c:ChallengeThresholdReader => AmountOfMoney(c.currency, c.amount)
+      case c:ChallengeThresholdReader => Full(AmountOfMoney(c.currency, c.amount))
       case _ =>
         val limit = BigDecimal("0")
         val rate = fx.exchangeRate ("EUR", currency)
         val convertedLimit = fx.convert(limit, rate)
-        AmountOfMoney(currency, convertedLimit.toString())
+        Full(AmountOfMoney(currency, convertedLimit.toString()))
     }
 
   }
@@ -245,7 +248,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     LocalMappedConnector.getChargeLevel(bankId: BankId, accountId: AccountId, viewId: ViewId, userId: String, userName: String,
                                         transactionRequestType: String, currency: String)
   }
-  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String): Box[String] =
+  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String) =
     LocalMappedConnector.createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String)
   override def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String): Box[Boolean] =
     LocalMappedConnector.validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String)
@@ -271,7 +274,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
   // Gets transaction identified by bankid, accountid and transactionId
-  def getTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId): Box[Transaction] = {
+  override def getTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId): Box[Transaction] = {
 
     val primaryUserIdentifier = AuthUser.getCurrentUserUsername
 
@@ -311,27 +314,22 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     getTransactionInner(bankId, accountId, transactionId, primaryUserIdentifier)
   }
 
-  override def getTransactions(bankId: BankId, accountId: AccountId, queryParams: OBPQueryParam*): Box[List[Transaction]] = {
+  override def getTransactions(bankId: BankId, accountId: AccountId, session: Option[SessionContext], queryParams: OBPQueryParam*): Box[List[Transaction]] = {
 
     val primaryUserIdentifier = AuthUser.getCurrentUserUsername
 
     def getTransactionsInner(bankId: BankId, accountId: AccountId, userName: String, queryParams: OBPQueryParam*) : Box[List[Transaction]] = memoizeSync(getTransactionsTTL millisecond) {
-      val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
-      val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
-      val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
-      val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
+      val limit: OBPLimit = queryParams.collect { case OBPLimit(value) => OBPLimit(value) }.headOption.get
+      val offset = queryParams.collect { case OBPOffset(value) => OBPOffset(value) }.headOption.get
+      val fromDate = queryParams.collect { case OBPFromDate(date) => OBPFromDate(date) }.headOption.get
+      val toDate = queryParams.collect { case OBPToDate(date) => OBPToDate(date)}.headOption.get
       val ordering = queryParams.collect {
         //we don't care about the intended sort field and only sort on finish date for now
-        case OBPOrdering(_, direction) =>
-          direction match {
-            case OBPAscending => OrderBy(MappedTransaction.tFinishDate, Ascending)
-            case OBPDescending => OrderBy(MappedTransaction.tFinishDate, Descending)
-          }
-      }
-      val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT, Locale.ENGLISH)
-      val optionalParams : Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
-      val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
+        case OBPOrdering(field, direction) => OBPOrdering(field, direction)}.headOption.get
+      val optionalParams = Seq(limit, offset, fromDate, toDate, ordering)
       implicit val formats = net.liftweb.json.DefaultFormats
+
+      val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT, Locale.ENGLISH)
 
       val parameters = new JHashMap
       val invalid = ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, UTC)
@@ -389,7 +387,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     //TODO is this needed updateAccountTransactions(bankId, accountId)
   }
 
-  override def getBankAccount(bankId: BankId, accountId: AccountId): Box[ObpJvmBankAccount] = memoizeSync(getAccountTTL millisecond) {
+  override def getBankAccount(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[ObpJvmBankAccount] = memoizeSync(getAccountTTL millisecond) {
     val parameters = new JHashMap
 
     //val primaryUserIdentifier = AuthUser.getCurrentUserUsername
@@ -552,33 +550,15 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
   */
 
-
-  // Get all counterparties related to an account
-  override def getCounterpartiesFromTransaction(bankId: BankId, accountId: AccountId): List[Counterparty] = memoizeSync(getCounterpartyFromTransactionTTL millisecond) {
-    Counterparties.counterparties.vend.getMetadatas(bankId, accountId).flatMap(getCounterpartyFromTransaction(bankId, accountId, _))
-  }
-
-  // Get one counterparty related to a bank account
-  override def getCounterpartyFromTransaction(bankId: BankId, accountId: AccountId, counterpartyID: String): Box[Counterparty] = memoizeSync(getCounterpartiesFromTransactionTTL millisecond) {
-    // Get the metadata and pass it to getCounterparty to construct the other account.
-    Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyID).flatMap(getCounterpartyFromTransaction(bankId, accountId, _))
-  }
-
-  def getCounterparty(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[Counterparty] = Empty
-
-  def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] =
+  
+  override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] =
     LocalMappedConnector.getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId)
 
   override def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] =
     LocalMappedConnector.getCounterpartyByIban(iban: String)
 
-  override def getPhysicalCards(user: User): List[PhysicalCard] =
-    List()
-
-  override def getPhysicalCardsForBank(bank: Bank, user: User): List[PhysicalCard] =
-    List()
-
-  def AddPhysicalCard(bankCardNumber: String,
+  
+  override def createOrUpdatePhysicalCard(bankCardNumber: String,
                       nameOnCard: String,
                       issueNumber: String,
                       serialNumber: String,
@@ -639,7 +619,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     parameters.put("type", "obp.mar.2017")
 
     // toCounterparty
-    if( transactionRequestType.value == "SANDBOX_TAN" ) {
+    if( transactionRequestType.value == SANDBOX_TAN.toString ) {
       fields.put("toCounterpartyId",                 toAccount.accountId.value)//not used 
       fields.put("toCounterpartyName",               toAccount.name)//optional name, no need to be correct
       fields.put("toCounterpartyCurrency",           toAccount.currency)
@@ -647,8 +627,8 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       fields.put("toCounterpartyRoutingScheme",      "BKCOM_ACCOUNT")
       fields.put("toCounterpartyBankRoutingAddress", toAccount.bankId.value)
       fields.put("toCounterpartyBankRoutingScheme",  "BKCOM_ACCOUNT")
-    } else if(  transactionRequestType.value == "SEPA" ||
-                transactionRequestType.value == "COUNTERPARTY") {
+    } else if(  transactionRequestType.value == SEPA.toString ||
+                transactionRequestType.value == COUNTERPARTY.toString) {
       fields.put("toCounterpartyId",                 toCounterparty.counterpartyId)
       fields.put("toCounterpartyName",               toCounterparty.name)
       fields.put("toCounterpartyCurrency",           fromAccount.currency) // TODO toCounterparty.currency
@@ -792,11 +772,6 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
 
-  override def getTransactionRequestTypesImpl(fromAccount : BankAccount) : Box[List[TransactionRequestType]] = {
-    //TODO: write logic / data access
-    Full(List(TransactionRequestType("SANDBOX_TAN")))
-  }
-
   /*
     Bank account creation
    */
@@ -814,7 +789,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     branchId: String,
     accountRoutingScheme: String,
     accountRoutingAddress: String
-  ): (Bank, BankAccount) = {
+  ) = {
     //don't require and exact match on the name, just the identifier
     val bank: Bank = MappedBank.find(By(MappedBank.national_identifier, bankNationalIdentifier)) match {
       case Full(b) =>
@@ -843,16 +818,16 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       accountHolderName
     )
 
-    (bank, account)
+    Full((bank, account))
   }
 
   //for sandbox use -> allows us to check if we can generate a new test account with the given number
-  override def accountExists(bankId: BankId, accountNumber: String): Boolean = {
-    getAccountByNumber(bankId, accountNumber, AuthUser.getCurrentUserUsername) != null
+  override def accountExists(bankId: BankId, accountNumber: String) = {
+    Full(getAccountByNumber(bankId, accountNumber, AuthUser.getCurrentUserUsername) != null)
   }
 
   //remove an account and associated transactions
-  override def removeAccount(bankId: BankId, accountId: AccountId) : Boolean = {
+  override def removeAccount(bankId: BankId, accountId: AccountId) = {
     //delete comments on transactions of this account
     val commentsDeleted = Comments.comments.vend.bulkDeleteComments(bankId, accountId)
 
@@ -891,8 +866,8 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       case _ => false
     }
 
-    commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
-      transactionsDeleted && privilegesDeleted && viewsDeleted && accountDeleted
+    Full(commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
+      transactionsDeleted && privilegesDeleted && viewsDeleted && accountDeleted)
   }
 
   //creates a bank account for an existing bank, with the appropriate values set. Can fail if the bank doesn't exist
@@ -970,7 +945,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
    */
 
   //used by the transaction import api
-  override def updateAccountBalance(bankId: BankId, accountId: AccountId, newBalance: BigDecimal): Boolean = {
+  override def updateAccountBalance(bankId: BankId, accountId: AccountId, newBalance: BigDecimal) = {
 
     //this will be Full(true) if everything went well
     val result = for {
@@ -978,10 +953,10 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       bank <- getBank(bankId)
     } yield {
       //acc.balance = newBalance
-      setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now)
+      setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now).openOrThrowException("Attempted to open an empty Box.")
     }
-
-    result.getOrElse(false)
+  
+    Full(result.getOrElse(false))
   }
 
   //transaction import api uses bank national identifiers to uniquely indentify banks,
@@ -999,7 +974,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
   //used by transaction import api call to check for duplicates
-  override def getMatchingTransactionCount(bankNationalIdentifier : String, accountNumber : String, amount: String, completed: Date, counterpartyHolder: String): Int = {
+  override def getMatchingTransactionCount(bankNationalIdentifier : String, accountNumber : String, amount: String, completed: Date, counterpartyHolder: String) = {
     //we need to convert from the legacy bankNationalIdentifier to BankId, and from the legacy accountNumber to AccountId
     val count = for {
       bankId <- getBankByNationalIdentifier(bankNationalIdentifier).map(_.bankId)
@@ -1019,7 +994,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     }
 
     //icky
-    count.map(_.toInt) getOrElse 0
+    Full(count.map(_.toInt) getOrElse 0)
   }
 
   //used by transaction import api
@@ -1061,7 +1036,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     } yield transaction
   }
 
-  override def setBankAccountLastUpdated(bankNationalIdentifier: String, accountNumber : String, updateDate: Date) : Boolean = {
+  override def setBankAccountLastUpdated(bankNationalIdentifier: String, accountNumber : String, updateDate: Date) = {
     val result = for {
       bankId <- getBankByNationalIdentifier(bankNationalIdentifier).map(_.bankId)
       account <- getAccountByNumber(bankId, accountNumber, AuthUser.getCurrentUserUsername)
@@ -1072,7 +1047,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
           case _ => logger.warn("can't set bank account.lastUpdated because the account was not found"); false
         }
     }
-    result.getOrElse(false)
+    Full(result.getOrElse(false))
   }
 
   /*
@@ -1080,7 +1055,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
    */
 
 
-  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String): Boolean = {
+  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String) = {
     //this will be Full(true) if everything went well
     val result = for {
       acc <- getBankAccount(bankId, accountId)
@@ -1090,7 +1065,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       d.setLabel(label)
       d.save()
     }
-    result.getOrElse(false)
+    Full(result.getOrElse(false))
   }
 
 
@@ -1195,6 +1170,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     def accountRoutingScheme: String = r.account_routing_scheme
     def accountRoutingAddress: String = r.account_routing_address
     def branchId: String = r.branchId
+    def accountRules: List[AccountRules] = List()
 
     // Fields modifiable from OBP are stored in mapper
     def label : String              = (for {
@@ -1413,7 +1389,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
 
   override def getProduct(bankId: BankId, productCode: ProductCode): Box[Product] = Empty
 
-  override  def createOrUpdateBranch(branch: BranchJsonPost, branchRoutingScheme: String, branchRoutingAddress: String): Box[Branch] = Empty
+  override  def createOrUpdateBranch(branch: Branch): Box[BranchT] = Empty
   
   override def createOrUpdateBank(
     bankId: String,

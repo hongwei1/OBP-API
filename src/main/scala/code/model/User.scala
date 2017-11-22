@@ -68,7 +68,7 @@ trait User {
     * @return the account's permitted views for the user 
     */
   def permittedViews(bankAccount: BankAccount) : List[View] =
-    Views.views.vend.permittedViews(this, BankAccountUID(bankAccount.bankId, bankAccount.accountId))
+    Views.views.vend.permittedViews(this, BankIdAccountId(bankAccount.bankId, bankAccount.accountId))
 
   def canInitiateTransactions(bankAccount: BankAccount) : Box[Unit] ={
     if(permittedViews(bankAccount).exists(_.canInitiateTransaction)){
@@ -81,7 +81,7 @@ trait User {
      
 
   def views: List[View]
-  def permittedView(v: View, b: BankAccount): Boolean =
+  def permittedView(v: View): Boolean =
     views.contains(v)
   
   /**
@@ -93,10 +93,10 @@ trait User {
     permittedViews(bankAccount).exists(v => v.viewId==ViewId("owner"))
 
   /**
-  * @return the bank accounts where the user has at least access to a non public view (is_public==false)
+  * @return the bank accounts where the user has at least access to a Private view (is_public==false)
   */
-  def nonPublicAccounts : List[BankAccount] = {
-    Views.views.vend.getNonPublicBankAccounts(this).flatMap { a =>
+  def privateAccounts : List[BankAccount] = {
+    Views.views.vend.getPrivateBankAccounts(this).flatMap { a =>
       BankAccount(a.bankId, a.accountId)
     }
   }
