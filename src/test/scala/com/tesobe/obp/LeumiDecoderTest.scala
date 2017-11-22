@@ -130,7 +130,7 @@ class LeumiDecoderTest  extends ServerSetup {
       transactionRequestCommonBody =  TransactionRequestBodyTransferToAccount(
         value = com.tesobe.obp.june2017.AmountOfMoneyJsonV121("ILS","10"),
         description = "",
-        transfer_type =  "1",
+        transfer_type =  "RealTime",
         future_date = "",
         to = ToAccountTransferToAccountJson(
           name = "",

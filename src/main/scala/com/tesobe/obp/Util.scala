@@ -276,8 +276,9 @@ object ErrorMessages {
   val InvalidIdType = "OBP-60011: Invalid Id Type: valid types: 1 - National; 5- Passport"
   val mFTokenMatchError = "OBP-60012: Session error - cbs_token from North side does not match MFTOKEN from South side."
   val EmptyUsernameError = "OBP-60013: Request was sent with empty username."
-  val InvalidTimeError = "OBP-60014: Invalid time or time format."
+  val InvalidTime = "OBP-60014: Invalid time or time format."
   val CounterpartyIdNotCached = "OBP-60015: CounterpartyId not in Cache."
+  val InvalidTransferType = "OBP-60016: Invalid TransferType: valid types: regular, RealTime"
 
   
   
@@ -298,7 +299,8 @@ object ErrorMessages {
   class InvalidAmountException(msg: String = InvalidAmount) extends Exception(msg: String)
   class InvalidIdTypeException(msg: String = InvalidIdType) extends Exception(msg: String)
   class CounterpartyIdCacheEmptyException(msg: String = CounterpartyIdNotCached)extends Exception(msg: String)
-  
+  class InvalidTransferTypeException(msg:String = InvalidTransferType)extends Exception(msg: String)
+  class InvalidTimeException(msg:String = InvalidTime) extends Exception(msg: String)
 }
 
 
