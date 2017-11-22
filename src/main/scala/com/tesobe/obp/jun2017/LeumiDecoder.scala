@@ -177,7 +177,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
       List("")
     }
     val accountRoutingScheme = if (iban.trim != "") "IBAN" else ""
-    val creditLimitCurrency = if (creditLimit.trim != "") "ILS" else ""
     InboundAccountJune2017(
       errorCode = "",
       List(InboundStatusMessage("ESB", "Success", "0", "OK")), 
@@ -197,8 +196,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       branchRoutingAddress = "",
       accountRoutingScheme = accountRoutingScheme,
       accountRoutingAddress = iban,
-      creditLimitAmount = creditLimit,
-      creditLimitCurrency = creditLimitCurrency)
+      accountRules = List(AccountRules("CREDIT_LIMIT", creditLimit)))
   }
 
   def mapAdapterTransactionToInternalTransaction(userId: String,
@@ -428,6 +426,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
             val balance = y.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_ITRA_NOCHECHIT
             val creditLimit = y.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI
+            println("creditLimit - " + creditLimit)
             InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
               getAccount.authInfo.username,
               account.cbsToken),
@@ -436,17 +435,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
           case Left(y) =>
             InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError, 
               createInboundStatusMessages(y),
-              "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
+              "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
         }
       case Left(x) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError,
          createInboundStatusMessages(x),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
+          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
     }
       case Left(account) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError,
           createInboundStatusMessages(account),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
+          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
     }
         
   }
@@ -468,7 +467,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       case Left(account) =>
         InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError
           , createInboundStatusMessages(account),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", "", ""))
+          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
     }
   }
 
@@ -508,8 +507,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
             branchRoutingAddress = "",
             accountRoutingScheme = "",
             accountRoutingAddress = "",
-            creditLimitAmount = "",
-            creditLimitCurrency = "")))
+            accountRules = Nil)))
     }
   }
 

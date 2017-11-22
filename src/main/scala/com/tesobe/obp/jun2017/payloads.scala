@@ -185,7 +185,7 @@ case class InboundAdapterInfoInternal(
   git_commit: String,
   date: String
 )
-
+case class AccountRules(scheme: String, value: String)
 case class InboundAccountJune2017(
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
@@ -205,8 +205,7 @@ case class InboundAccountJune2017(
   branchRoutingAddress: String,
   accountRoutingScheme: String,
   accountRoutingAddress: String,
-  creditLimitAmount: String,
-  creditLimitCurrency: String
+  accountRules: List[AccountRules]
 )
 
 case class InternalCounterparty(
