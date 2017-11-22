@@ -1,5 +1,6 @@
 package com.tesobe.obp
 
+import com.tesobe.obp.ErrorMessages.{InvalidTimeException, InvalidTransferTypeException}
 import com.tesobe.obp.NtbdAv050Mf.getNtbdAv050
 
 class NtbdAv050MfTest extends ServerSetup{
@@ -9,7 +10,7 @@ class NtbdAv050MfTest extends ServerSetup{
       accountType = "330",
       accountNumber = "20102612",
       cbsToken = ";-V          81433020102612",
-      transferType= "1",
+      transferType= "regular",
       transferDateInFuture = "20170705")
     result match {
       case Right(result) =>
@@ -22,6 +23,25 @@ class NtbdAv050MfTest extends ServerSetup{
       case Left(result) =>
         fail()
     }
+
+  }
+  test("getNtbdAv050 fails for invalid parameters"){
+    
+    an [InvalidTransferTypeException] should be thrownBy getNtbdAv050(branch = "814",
+      accountType = "330",
+      accountNumber = "20102612",
+      cbsToken = ";-V          81433020102612",
+      transferType= "whatever",
+      transferDateInFuture = "20170705")
+
+    an [InvalidTimeException] should be thrownBy getNtbdAv050(branch = "814",
+      accountType = "330",
+      accountNumber = "20102612",
+      cbsToken = ";-V          81433020102612",
+      transferType= "regular",
+      transferDateInFuture = "20171705")
+   
+
 
   }
 

@@ -22,11 +22,12 @@ object NtbdAv050Mf {
 
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
-    if (transferType != "0" && transferType != "1") throw new InvalidIdTypeException()
+    val cbsTransferType =
+    if (transferType == "regular") "1" else if (transferType == "RealTime") "2" else throw new InvalidTransferTypeException()
     val isFutureTransfer = if (transferDateInFuture.trim != "") "1" else "0"
     if (transferDateInFuture.trim != "") try {
       val localDateForTransfer = LocalDate.parse(transferDateInFuture, formatter)
-      } catch { case _: Throwable => throw new RuntimeException(InvalidTimeError)}
+      } catch { case _: Throwable => throw new InvalidTimeException()}
     
 
     val json: JValue =parse(s"""
@@ -43,7 +44,7 @@ object NtbdAv050Mf {
       }
       },
         "K050_BDIKACHOVAIN": {
-        "K050_OFEN_HAVARA": "$transferType",
+        "K050_OFEN_HAVARA": "$cbsTransferType",
         "K050_OFI_DISKET": "0",
         "K050_ID_HORAA": "0",
         "K050_SW_ATIDI": "$isFutureTransfer",
