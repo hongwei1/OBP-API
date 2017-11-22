@@ -599,6 +599,65 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
+
+  def getBranchesFn: Business = { msg =>
+    try {
+      logger.debug(s"Processing getBranchesFn ${msg.record.value}")
+      /* call Decoder for extracting data from source file */
+      val kafkaRecordValue = msg.record.value()
+      val outboundGetBranches  = Extraction.extract[OutboundGetBranches](json.parse(kafkaRecordValue))
+      val inboundGetBranches = com.tesobe.obp.june2017.LeumiDecoder.getBranches(outboundGetBranches)
+      val r = prettyRender(Extraction.decompose(inboundGetBranches))
+
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("checkBankAccountExistsFn-unknown error", m)
+        val errorBody = InboundGetBranches(
+          AuthInfo("","",""),
+          InboundBranchVJune2017(
+            "",
+            m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK")
+            ),
+            branchId = BranchId(""),
+            bankId = BankId(""),
+            name = "",
+            address =  Address(line1 = "",
+              line2 = "",
+              line3 = "",
+              city = "",
+              county = Some(""),
+              state = "",
+              postCode = "",
+              //ISO_3166-1_alpha-2
+              countryCode = ""),
+            location = Location(11,11),
+            //lobbyString = None,
+            //driveUpString = None,
+            meta = Meta(License("","")),
+            branchRouting = None,
+            lobby = Some(Lobby(monday = OpeningTimes("",""),
+              tuesday = OpeningTimes("",""),
+              wednesday = OpeningTimes("",""),
+              thursday = OpeningTimes("",""),
+              friday = OpeningTimes("",""),
+              saturday = OpeningTimes("",""),
+              sunday = OpeningTimes("","")
+            )),
+            driveUp = None,
+            // Easy access for people who use wheelchairs etc.
+            isAccessible = Some(true),
+            branchType  = Some(""),
+            moreInfo = Some(""),
+            phoneNumber = Some("")
+          ) :: Nil
+        )
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
   
   private def getResponse(msg: CommittableMessage[String, String]): String = {
     decode[Request](msg.record.value()) match {

@@ -32,7 +32,7 @@ object HttpClient extends StrictLogging{
     if (result.startsWith("<")) throw new InvalidRequestFormatException(s"$InvalidRequestFormat, current Request is $result") else result
   }
   
-  def getLeumiBranches() = {
+  def getLeumiBranches(): String = {
     val client = HttpClients.createDefault()
     val url = "http://www.bankleumi.co.il/vgnprod/xml/branchesExpanded.xml"
     logger.debug(s"Getting Leumi Branch Information from {$url}")
@@ -42,9 +42,7 @@ object HttpClient extends StrictLogging{
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
     logger.debug("Response : "+response.toString+ "\n Body is :"+result)
-
-
-
+    result
   }
 
   }

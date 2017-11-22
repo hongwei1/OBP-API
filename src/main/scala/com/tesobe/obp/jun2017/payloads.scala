@@ -88,6 +88,8 @@ case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: Lis
 case class OutboundGetCustomersByUserId(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetCounterparties(authInfo: AuthInfo, counterparty: InternalOutboundGetCounterparties) extends TopicTrait
 case class OutboundGetCounterpartyByCounterpartyId(authInfo: AuthInfo, counterparty: OutboundGetCounterpartyById) extends TopicTrait
+case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicTrait
+
 
 /**
   * Payloads for response topic
@@ -111,6 +113,8 @@ case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFu
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
+case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
+
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
   *
@@ -577,3 +581,79 @@ case class InternalInboundCoreAccount(
 )
 
 
+case class  InboundBranchVJune2017(
+                                    status: String,
+                                    errorCode: String,
+                                    backendMessages: List[InboundStatusMessage],
+                                    branchId: BranchId,
+                                    bankId: BankId,
+                                    name: String,
+                                    address: Address,
+                                    location: Location,
+                                   // lobbyString: Option[String],
+                                   // driveUpString: Option[String],
+                                    meta: Meta,
+                                    branchRouting: Option[Routing],
+                                    lobby: Option[Lobby],
+                                    driveUp: Option[DriveUp],
+                                    // Easy access for people who use wheelchairs etc.
+                                    isAccessible : Option[Boolean],
+                                    branchType : Option[String],
+                                    moreInfo : Option[String],
+                                    phoneNumber : Option[String]
+                                  )
+case class BranchId(value : String)
+
+case class Lobby(
+                  monday: OpeningTimes,
+                  tuesday: OpeningTimes,
+                  wednesday: OpeningTimes,
+                  thursday: OpeningTimes,
+                  friday: OpeningTimes,
+                  saturday: OpeningTimes,
+                  sunday: OpeningTimes
+                )
+
+case class DriveUp(
+                    monday: OpeningTimes,
+                    tuesday: OpeningTimes,
+                    wednesday: OpeningTimes,
+                    thursday: OpeningTimes,
+                    friday: OpeningTimes,
+                    saturday: OpeningTimes,
+                    sunday: OpeningTimes
+                  )
+case class OpeningTimes(
+                         openingTime: String,
+                         closingTime: String
+                       )
+case class Routing(
+                    scheme: String,
+                    address: String
+                  )
+
+case class Address(
+                    line1 : String,
+                    line2 : String,
+                    line3 : String,
+                    city : String,
+                    county : Option[String],
+                    state : String,
+                    postCode : String,
+                    //ISO_3166-1_alpha-2
+                    countryCode : String)
+
+
+case class Location(
+                     latitude: Double,
+                     longitude: Double,
+                   )
+
+case class Meta (
+                  license : License
+                )
+
+case class License (
+                     id : String,
+                     name : String
+                   )

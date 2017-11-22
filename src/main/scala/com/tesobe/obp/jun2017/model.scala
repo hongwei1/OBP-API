@@ -1,5 +1,6 @@
 package com.tesobe.obp.june2017
 
+
 /**
   * Model based on example_import_june2017.json
   * 
@@ -19,34 +20,8 @@ package com.tesobe.obp.june2017
   *
   */
 
-case class DriveUp(
-                    hours: Option[String]
-                  )
 
-case class License(
-                    id: Option[String],
-                    name: Option[String]
-                  )
 
-case class Meta(
-                 license: License
-               )
-
-case class Location(
-                     latitude: Double,
-                     longitude: Double
-                   )
-
-case class Address(
-                    city: Option[String],
-                    countryCode: Option[String],
-                    line3: Option[String],
-                    line2: Option[String],
-                    line1: Option[String],
-                    county: Option[String],
-                    state: Option[String],
-                    postCode: Option[String]
-                  )
 
 case class Branch(
                    name: Option[String],
