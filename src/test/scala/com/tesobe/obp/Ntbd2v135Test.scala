@@ -17,8 +17,8 @@ class Ntbd2v135Test extends ServerSetup {
     )
     result match {
       case Right(result) =>
-    result.P135_BDIKAOUT.P135_SHAA_RISHUM should be ("14:39")
-    result.P135_BDIKAOUT.P135_TARICH_BITZUA should be ("20170607")
+    result.PELET_1352.esbHeaderResponse.responseStatus.callStatus should be ("Success")
+    result.PELET_1352.MFAdminResponse.returnCode should be ("0")
       case Left(result) => fail()
     }
   }
