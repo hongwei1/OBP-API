@@ -5,6 +5,7 @@ import java.util.TimeZone
 
 import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
+import com.tesobe.obp.HttpClient.getLeumiBranches
 import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
@@ -1415,6 +1416,53 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, internalCounterparty)
       
   }
+  
+  def getBranches(outboundGetBranches: OutboundGetBranches): InboundGetBranches = {
+    
+    val branches = xml.XML.loadString(getLeumiBranches())
+    
+    InboundGetBranches(
+      outboundGetBranches.authInfo,
+      InboundBranchVJune2017(
+        "",
+        "",
+        List(
+          InboundStatusMessage("ESB","Success", "0", "OK"),
+          InboundStatusMessage("MF","Success", "0", "OK")
+        ),
+        branchId = BranchId(""),
+        bankId = BankId(""),
+        name = "",
+        address =  Address(line1 = "",
+          line2 = "",
+          line3 = "",
+          city = "",
+          county = Some(""),
+          state = "",
+          postCode = "",
+          //ISO_3166-1_alpha-2
+          countryCode = ""),
+        location = Location(11,11),
+        //lobbyString = None,
+        //driveUpString = None,
+        meta = Meta(License("","")),
+        branchRouting = None,
+        lobby = Some(Lobby(monday = OpeningTimes("",""),
+          tuesday = OpeningTimes("",""),
+          wednesday = OpeningTimes("",""),
+          thursday = OpeningTimes("",""),
+          friday = OpeningTimes("",""),
+          saturday = OpeningTimes("",""),
+          sunday = OpeningTimes("","")
+        )),
+        driveUp = None,
+        // Easy access for people who use wheelchairs etc.
+        isAccessible = Some(true),
+        branchType  = Some(""),
+        moreInfo = Some(""),
+        phoneNumber = Some("")
+      ) :: Nil
+    )  }
 
 }
 

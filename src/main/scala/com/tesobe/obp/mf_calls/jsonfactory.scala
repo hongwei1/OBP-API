@@ -295,7 +295,7 @@ case class P135Bdikaout2(esbHeaderResponse: EsbHeaderResponse,
                          P135_TARICH_BITZUA: String //Date of transaction execution YYYYMMDD
                          )
 
-case class Ntbd2v135(P135_BDIKAOUT: P135Bdikaout2 )
+case class Ntbd2v135(PELET_1352: Pelet1352)
 
 case class Dfhplt1(esbHeaderResponse: EsbHeaderResponse,
                    MFAdminResponse: MfAdminResponse,
