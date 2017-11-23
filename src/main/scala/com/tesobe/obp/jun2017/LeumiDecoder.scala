@@ -196,7 +196,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       branchRoutingAddress = "",
       accountRoutingScheme = accountRoutingScheme,
       accountRoutingAddress = iban,
-      accountRules = List(AccountRules("CREDIT_LIMIT", creditLimit)))
+      accountRules = if (creditLimit.isEmpty) List() else List(AccountRules("CREDIT_LIMIT", creditLimit)))
   }
 
   def mapAdapterTransactionToInternalTransaction(userId: String,
