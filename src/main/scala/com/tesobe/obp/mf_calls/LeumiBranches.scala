@@ -53,7 +53,8 @@ case class LeumiBranch(
   
   def getLeumiBranches: List[LeumiBranch] = {
     //val branchXML = xml.XML.loadString(getLeumiBranchesFromBank())
-    val branchXML = xml.XML.loadFile("/home/work/.IdeaProjects/OBP-Adapter_Leumi-GITLAB/src/main/resources/someBranches.xml")
+    val resourcesPath = getClass.getResource("/someBranches.xml")
+    val branchXML = xml.XML.loadFile(resourcesPath.getPath)
     var result = new ListBuffer[LeumiBranch]
     for (y <- branchXML \\ "city") {
       val cityName = (y \ "@name").text
