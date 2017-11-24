@@ -379,7 +379,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       location = Location(leumiBranch.x.toDouble,leumiBranch.y.toDouble),
       // lobbyString = Option[String],
       // driveUpString = Option[String],
-      meta = Meta(License("","")),
+      meta = Meta(License(id = "pddl", name = "Open Data Commons Public Domain Dedication and License (PDDL)")),
       branchRouting = None,
       lobby = None,
       driveUp = None,

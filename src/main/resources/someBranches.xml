@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<branchPerCity>
+    <city name="אבן יהודה">
+        <branch code="957">
+            <extCode>0</extCode>
+            <name>אבן יהודה</name>
+            <address>רח' המייסדים 64</address>
+            <zipcode>4050000</zipcode>
+            <phone isLeumiCall= "1">03-9545522 או מכל טלפון 5522*</phone>
+            <fax >0778083957</fax>
+            <shaot ob1="0000" ob2="0830" ob3="0830" ob4="0830" ob5="0830" ob6="0830" ob7="0000" cb1="0000" cb2="1300" cb3="1430" cb4="1430" cb5="1300" cb6="1230" cb7="0000" oe1="0000" oe2="1600" oe3="0000" oe4="0000" oe5="1600" oe6="0000" oe7="0000" ce1="0000" ce2="1815" ce3="0000" ce4="0000" ce5="1815" ce6="0000" ce7="0000"/>
+            <x>34.88898</x>
+            <y>32.2697</y>
+            <type>0</type>
+            <ExpandedInformation>
+                <Comments>
+                    <TellerInd>0</TellerInd>
+                </Comments>
+                <UnusualHours>
+                    <DueDate></DueDate>
+                    <Description></Description>
+                </UnusualHours>
+                <Mashcanta />
+                <BusinessSector>0</BusinessSector>
+                <ATM>1</ATM>
+                <CashDeposit>1</CashDeposit>
+                <MobileCash>1</MobileCash>
+                <ATMForex>
+                    <Dollar>דולר</Dollar>
+                    <Euro>אירו</Euro>
+                </ATMForex>
+                <InternationalTrade>
+                    <Fax>0778087061</Fax>
+                    <Phone>0768039444</Phone>
+                </InternationalTrade>
+                <swift>1</swift>
+                <leumiTor>0</leumiTor>
+                <Accessibility>
+                    <Access1>נגישות לכסא גלגלים</Access1>
+                    <Access2>לולאת השראה ללקויי שמיעה</Access2>
+                    <Access3>כספומט מותאם ללקויי ראייה</Access3>
+                    <Access4>עמדת מידע מותאמת ללקויי ראייה</Access4>
+                    <Access5>שירותי נכים בסניף</Access5>
+                </Accessibility>
+            </ExpandedInformation>
+        </branch>
+    </city>
+    <city name="אום אל פחם">
+        <branch code="820">
+            <extCode>0</extCode>
+            <name>אום אל פחם</name>
+            <address>הרחוב הראשי</address>
+            <zipcode>3001000</zipcode>
+            <phone isLeumiCall= "1">03-9545522 או מכל טלפון 5522*</phone>
+            <fax >0778083820</fax>
+            <shaot ob1="0830" ob2="0830" ob3="0830" ob4="0830" ob5="0830" ob6="0000" ob7="0000" cb1="1415" cb2="1300" cb3="1415" cb4="1415" cb5="1300" cb6="0000" cb7="0000" oe1="0000" oe2="1600" oe3="0000" oe4="0000" oe5="1600" oe6="0000" oe7="0000" ce1="0000" ce2="1815" ce3="0000" ce4="0000" ce5="1815" ce6="0000" ce7="0000"/>
+            <x>35.154961</x>
+            <y>33.523341</y>
+            <type>4</type>
+            <ExpandedInformation>
+                <Comments>
+                    <TellerInd>1</TellerInd>
+                </Comments>
+                <UnusualHours>
+                    <DueDate></DueDate>
+                    <Description></Description>
+                </UnusualHours>
+                <Mashcanta />
+                <BusinessSector>1</BusinessSector>
+                <ATM>1</ATM>
+                <CashDeposit>1</CashDeposit>
+                <MobileCash>0</MobileCash>
+                <ATMForex />
+                <InternationalTrade>
+                    <Fax>0778087061</Fax>
+                    <Phone>0768039444</Phone>
+                </InternationalTrade>
+                <swift>1</swift>
+                <leumiTor>614</leumiTor>
+                <Accessibility>
+                    <Access1>נגישות לכסא גלגלים</Access1>
+                    <Access2>לולאת השראה ללקויי שמיעה</Access2>
+                    <Access3>כספומט מותאם ללקויי ראייה</Access3>
+                    <Access5>שירותי נכים במרחב ציבורי</Access5>
+                </Accessibility>
+            </ExpandedInformation>
+        </branch>
+    </city>
+    <city name="אופקים">
+        <branch code="789">
+            <extCode>0</extCode>
+            <name>אופקים</name>
+            <address>יהדות דרום אפריקה 14</address>
+            <zipcode>8757313</zipcode>
+            <phone isLeumiCall= "1">03-9545522 או מכל טלפון 5522*</phone>
+            <fax >0778082789</fax>
+            <shaot ob1="0000" ob2="0830" ob3="0830" ob4="0830" ob5="0830" ob6="0830" ob7="0000" cb1="0000" cb2="1300" cb3="1430" cb4="1430" cb5="1300" cb6="1230" cb7="0000" oe1="0000" oe2="1600" oe3="0000" oe4="0000" oe5="1600" oe6="0000" oe7="0000" ce1="0000" ce2="1815" ce3="0000" ce4="0000" ce5="1815" ce6="0000" ce7="0000"/>
+            <x>34.622797</x>
+            <y>31.315581</y>
+            <type>4</type>
+            <ExpandedInformation>
+                <Comments>
+                    <TellerInd>1</TellerInd>
+                </Comments>
+                <UnusualHours>
+                    <DueDate></DueDate>
+                    <Description></Description>
+                </UnusualHours>
+                <Mashcanta />
+                <BusinessSector>1</BusinessSector>
+                <ATM>1</ATM>
+                <CashDeposit>1</CashDeposit>
+                <MobileCash>1</MobileCash>
+                <ATMForex>
+                    <Dollar>דולר</Dollar>
+                </ATMForex>
+                <InternationalTrade>
+                    <Fax>0778087061</Fax>
+                    <Phone>0768039444</Phone>
+                </InternationalTrade>
+                <swift>1</swift>
+                <leumiTor>709</leumiTor>
+                <Accessibility>
+                    <Access1>נגישות לכסא גלגלים</Access1>
+                    <Access2>לולאת השראה ללקויי שמיעה</Access2>
+                    <Access3>כספומט מותאם ללקויי ראייה</Access3>
+                    <Access5>שירותי נכים בסניף</Access5>
+                </Accessibility>
+            </ExpandedInformation>
+        </branch>
+    </city>
+    <city name="אור יהודה">
+        <branch code="676">
+            <extCode>0</extCode>
+            <name>אור יהודה</name>
+            <address>קניאור, אליהו סעדון 120</address>
+            <zipcode>6039725</zipcode>
+            <phone isLeumiCall= "1">03-9545522 או מכל טלפון 5522*</phone>
+            <fax >0778082676</fax>
+            <shaot ob1="0830" ob2="0830" ob3="0830" ob4="0830" ob5="0830" ob6="0000" ob7="0000" cb1="1400" cb2="1300" cb3="1400" cb4="1400" cb5="1300" cb6="0000" cb7="0000" oe1="0000" oe2="1600" oe3="0000" oe4="0000" oe5="1600" oe6="0000" oe7="0000" ce1="0000" ce2="1815" ce3="0000" ce4="0000" ce5="1815" ce6="0000" ce7="0000"/>
+            <x>34.857448</x>
+            <y>32.025846</y>
+            <type>4</type>
+            <ExpandedInformation>
+                <Comments>
+                    <TellerInd>0</TellerInd>
+                </Comments>
+                <UnusualHours>
+                    <DueDate></DueDate>
+                    <Description></Description>
+                </UnusualHours>
+                <Mashcanta>
+                    <NewCustomers>*3200</NewCustomers>
+                    <CustomerService>*6062</CustomerService>
+                    <Phone>0768667688</Phone>
+                    <Fax>035330693 </Fax>
+                    <shaot />
+                </Mashcanta>
+                <BusinessSector>1</BusinessSector>
+                <ATM>1</ATM>
+                <CashDeposit>1</CashDeposit>
+                <MobileCash>1</MobileCash>
+                <ATMForex>
+                    <Dollar>דולר</Dollar>
+                    <Euro>אירו</Euro>
+                </ATMForex>
+                <InternationalTrade>
+                    <Fax>0778087061</Fax>
+                    <Phone>0768039444</Phone>
+                </InternationalTrade>
+                <swift>1</swift>
+                <leumiTor>677</leumiTor>
+                <Accessibility>
+                    <Access1>נגישות לכסא גלגלים</Access1>
+                    <Access2>לולאת השראה ללקויי שמיעה</Access2>
+                    <Access3>כספומט מותאם ללקויי ראייה</Access3>
+                    <Access4>עמדת מידע מותאמת ללקויי ראייה</Access4>
+                    <Access5>שירותי נכים בסניף</Access5>
+                </Accessibility>
+            </ExpandedInformation>
+        </branch>
+    </city>
+</branchPerCity>
