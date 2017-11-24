@@ -180,7 +180,7 @@ class LeumiDecoderTest  extends ServerSetup {
     val result = getBranches(OutboundGetBranches(authInfoIsFirstTrue, "10"))
     result.data.head should be (
 
-      InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId(""),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000",""),Location(34.88898,32.2697),Meta(License("","")),None,None,None,Some(true),None,None,Some(""))
+      InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId(""),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000",""),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,None,None,Some(true),None,None,Some(""))
     )
   }
   
