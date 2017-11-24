@@ -5,7 +5,8 @@ import java.util.TimeZone
 
 import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
-import com.tesobe.obp.HttpClient.getLeumiBranches
+import com.tesobe.obp.LeumiBranches.getLeumiBranches
+import com.tesobe.obp.LeumiBranches.LeumiBranch
 import com.tesobe.obp.JoniMf._
 import com.tesobe.obp.Nt1c3Mf.getNt1c3
 import com.tesobe.obp.Nt1c4Mf.getNt1c4
@@ -356,6 +357,38 @@ object LeumiDecoder extends Decoder with StrictLogging {
         PostCounterpartyBespoke("", englishName),
         PostCounterpartyBespoke("", englishDescription)
     ))
+  }
+  
+  def mapLeumiBranchToObpBranch(leumiBranch: LeumiBranch): InboundBranchVJune2017 = {
+    InboundBranchVJune2017(
+      status = "",
+      errorCode = "",
+      backendMessages = List(InboundStatusMessage("", "", "", "")),
+      branchId = BranchId(leumiBranch.branchCode),
+      bankId = BankId(""),
+      name = leumiBranch.name,
+      address = Address(
+        line1 = leumiBranch.address,
+        line2 = "",
+        line3 = "",
+        city = leumiBranch.city,
+        county = None,
+        state = "",
+        postCode = leumiBranch.zipcode, 
+        countryCode = ""),
+      location = Location(leumiBranch.x.toDouble,leumiBranch.y.toDouble),
+      // lobbyString = Option[String],
+      // driveUpString = Option[String],
+      meta = Meta(License("","")),
+      branchRouting = None,
+      lobby = None,
+      driveUp = None,
+      // Easy access for people who use wheelchairs etc.
+      isAccessible  = Some(leumiBranch.accessibility),
+      branchType  = None,
+      moreInfo  = None,
+      phoneNumber  = Some("")
+    )
   }
   
   def createInboundGetCounterpartiesError(authInfo: AuthInfo, x: PAPIErrorResponse) = InboundGetCounterparties(authInfo, List(InternalCounterparty(
@@ -1419,49 +1452,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getBranches(outboundGetBranches: OutboundGetBranches): InboundGetBranches = {
     
-    val branches = xml.XML.loadString(getLeumiBranches())
+    val branches = getLeumiBranches
+    val result = new ListBuffer[InboundBranchVJune2017]
+    for (i <- branches) {
+      result += mapLeumiBranchToObpBranch(i)
+    }
     
     InboundGetBranches(
       outboundGetBranches.authInfo,
-      InboundBranchVJune2017(
-        "",
-        "",
-        List(
-          InboundStatusMessage("ESB","Success", "0", "OK"),
-          InboundStatusMessage("MF","Success", "0", "OK")
-        ),
-        branchId = BranchId(""),
-        bankId = BankId(""),
-        name = "",
-        address =  Address(line1 = "",
-          line2 = "",
-          line3 = "",
-          city = "",
-          county = Some(""),
-          state = "",
-          postCode = "",
-          //ISO_3166-1_alpha-2
-          countryCode = ""),
-        location = Location(11,11),
-        //lobbyString = None,
-        //driveUpString = None,
-        meta = Meta(License("","")),
-        branchRouting = None,
-        lobby = Some(Lobby(monday = OpeningTimes("",""),
-          tuesday = OpeningTimes("",""),
-          wednesday = OpeningTimes("",""),
-          thursday = OpeningTimes("",""),
-          friday = OpeningTimes("",""),
-          saturday = OpeningTimes("",""),
-          sunday = OpeningTimes("","")
-        )),
-        driveUp = None,
-        // Easy access for people who use wheelchairs etc.
-        isAccessible = Some(true),
-        branchType  = Some(""),
-        moreInfo = Some(""),
-        phoneNumber = Some("")
-      ) :: Nil
+      result.toList
     )  }
 
 }
