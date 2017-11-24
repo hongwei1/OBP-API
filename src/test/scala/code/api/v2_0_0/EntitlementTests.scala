@@ -40,8 +40,8 @@ class EntitlementTests extends V200ServerSetup with DefaultUsers {
       When("We make the request")
       val requestGet = (v2_0Request / "users" / resourceUser1.userId / "entitlements").GET <@ (user1)
       val responseGet = makeGetRequest(requestGet)
-      Then("We should get a 400")
-      responseGet.code should equal(400)
+      Then("We should get a 40")
+      responseGet.code should equal(403)
       val error = for { JObject(o) <- responseGet.body; JField("error", JString(error)) <- o } yield error
       And("We should get a message: " + s"$CanGetEntitlementsForAnyUserAtAnyBank entitlement required")
       error should contain (UserHasMissingRoles + CanGetEntitlementsForAnyUserAtAnyBank)
@@ -55,6 +55,19 @@ class EntitlementTests extends V200ServerSetup with DefaultUsers {
       val responseGet = makeGetRequest(requestGet)
       Then("We should get a 200")
       responseGet.code should equal(200)
+    }
+
+    scenario("We try to delete some entitlement as a super admin - deleteEntitlement") {
+      When("We add required entitlement")
+      val ent = Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, ApiRole.CanGetAnyUser.toString).openOrThrowException("Attempted to open an empty Box.")
+      And("We make the request")
+      val requestDelete = (v2_0Request / "users" / resourceUser1.userId / "entitlement" / ent.entitlementId).DELETE <@ (user1)
+      val responseDelete = makeDeleteRequest(requestDelete)
+      Then("We should get a 400")
+      responseDelete.code should equal(400)
+      val error = for { JObject(o) <- responseDelete.body; JField("error", JString(error)) <- o } yield error
+      And("We should get a message: " + ErrorMessages.UserNotSuperAdmin)
+      error should contain (ErrorMessages.UserNotSuperAdmin)
     }
   }
 

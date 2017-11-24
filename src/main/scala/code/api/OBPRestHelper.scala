@@ -78,7 +78,6 @@ case class UserNotFound(providerId : String, userId: String) extends APIFailure 
 trait OBPRestHelper extends RestHelper with MdcLoggable {
 
   implicit def errorToJson(error: ErrorMessage): JValue = Extraction.decompose(error)
-  implicit def successToJson(success: SuccessMessage): JValue = Extraction.decompose(success)
 
   val version : String
   val versionStatus : String
@@ -162,6 +161,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
     (nameOf(Implementations3_0_0.getUserByUserId), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.getUserByUsername), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.getUsers), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getUsers), ApiVersion.v2_1_0.toString),
     (nameOf(Implementations3_0_0.getCustomersForUser), ApiVersion.v2_2_0.toString),
     (nameOf(Implementations3_0_0.getCustomersForUser), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.getCoreTransactionsForBankAccount), ApiVersion.v3_0_0.toString),
