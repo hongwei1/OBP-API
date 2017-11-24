@@ -1129,6 +1129,8 @@ trait Connector extends MdcLoggable{
 
   def getBranch(bankId : BankId, branchId: BranchId) : Box[BranchT] = Failure(NotImplemented + currentMethodName)
 
+  def getBranches(bankId: BankId, queryParams: OBPQueryParam*): Box[List[BranchT]] = Failure(NotImplemented + currentMethodName)
+
   def getAtm(bankId : BankId, atmId: AtmId) : Box[AtmT] = Failure(NotImplemented + currentMethodName)
 
   //This method is only existing in mapper
