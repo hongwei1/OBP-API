@@ -48,10 +48,15 @@ case class LeumiBranch(
                       shaot: Shaot,
                       x: String,
                       y: String,
-                      accessibility: Boolean
+                      accessibility: Boolean,
+                      accessible_features: List[String],
+                      hasAtm : Boolean,
+                      isAnAtmUsablebyVisuallyImpaired: Boolean
                       )
   
   def getLeumiBranches: List[LeumiBranch] = {
+    
+    //TODO: this uses a small snippet for development only, change back to original
     //val branchXML = xml.XML.loadString(getLeumiBranchesFromBank())
     val resourcesPath = getClass.getResource("/someBranches.xml")
     val branchXML = xml.XML.loadFile(resourcesPath.getPath)
@@ -99,8 +104,13 @@ case class LeumiBranch(
         )
         val x = (i \ "x").text
         val y = (i \ "y").text
-        val accesibility = if ((i \\ "Access1").text == "נגישות לכסא גלגלים") true else false
-        result += LeumiBranch(branchCode, name, address, zipcode,cityName, phone, fax, shaot, x, y, accesibility)
+        val accessibility = (i \\ "Access1").text == "נגישות לכסא גלגלים"
+        val accessible_features = List((i \\ "Access1").text, (i \\ "Access2").text, (i \\ "Access3").text,
+        (i \\ "Access4").text, (i \\ "Access5").text)
+        val hasAtm = (i \\ "ATM").text == "1"
+        val isAtmUsableByVisuallyImpaired = (i \\ "Access3").text == "כספומט מותאם ללקויי ראייה"
+        result += LeumiBranch(branchCode, name, address, zipcode,cityName, phone, 
+          fax, shaot, x, y, accessibility,accessible_features, hasAtm, isAtmUsableByVisuallyImpaired )
       }
     }
     result.toList

@@ -598,6 +598,7 @@ case class  InboundBranchVJune2017(
                                     driveUp: Option[DriveUp],
                                     // Easy access for people who use wheelchairs etc.
                                     isAccessible : Option[Boolean],
+                                    accessibleFeatures: Option[List[String]],
                                     branchType : Option[String],
                                     moreInfo : Option[String],
                                     phoneNumber : Option[String]
@@ -605,13 +606,13 @@ case class  InboundBranchVJune2017(
 case class BranchId(value : String)
 
 case class Lobby(
-                  monday: OpeningTimes,
-                  tuesday: OpeningTimes,
-                  wednesday: OpeningTimes,
-                  thursday: OpeningTimes,
-                  friday: OpeningTimes,
-                  saturday: OpeningTimes,
-                  sunday: OpeningTimes
+                  monday: List[OpeningTimes],
+                  tuesday: List[OpeningTimes],
+                  wednesday: List[OpeningTimes],
+                  thursday: List[OpeningTimes],
+                  friday: List[OpeningTimes],
+                  saturday: List[OpeningTimes],
+                  sunday: List[OpeningTimes]
                 )
 
 case class DriveUp(

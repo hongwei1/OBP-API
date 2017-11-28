@@ -365,7 +365,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       errorCode = "",
       backendMessages = List(InboundStatusMessage("", "", "", "")),
       branchId = BranchId(leumiBranch.branchCode),
-      bankId = BankId(""),
+      bankId = BankId("10"),
       name = leumiBranch.name,
       address = Address(
         line1 = leumiBranch.address,
@@ -375,7 +375,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         county = None,
         state = "",
         postCode = leumiBranch.zipcode, 
-        countryCode = ""),
+        countryCode = "IL"),
       location = Location(leumiBranch.x.toDouble,leumiBranch.y.toDouble),
       // lobbyString = Option[String],
       // driveUpString = Option[String],
@@ -385,6 +385,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       driveUp = None,
       // Easy access for people who use wheelchairs etc.
       isAccessible  = Some(leumiBranch.accessibility),
+      accessibleFeatures = Some(leumiBranch.accessible_features),
       branchType  = None,
       moreInfo  = None,
       phoneNumber  = Some("")
