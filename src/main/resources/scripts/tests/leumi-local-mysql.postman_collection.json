@@ -152,7 +152,7 @@
 			},
 			"response": [
 				{
-					"id": "1bbe3ea6-2cc7-4391-b801-1bf9de6bbbd8",
+					"id": "91acbf4d-55df-47a1-b673-e5ab2d1724fc",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -346,7 +346,7 @@
 			},
 			"response": [
 				{
-					"id": "7a461af5-e147-434e-bd2d-96ee84b2917b",
+					"id": "a7a45ed0-6f21-4645-8788-09c1e2f24706",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -489,7 +489,7 @@
 			]
 		},
 		{
-			"name": "4Get Account by Id (Core)",
+			"name": "4Get Account by Id (Core)-new Style",
 			"event": [
 				{
 					"listen": "test",
@@ -544,7 +544,7 @@
 			"response": []
 		},
 		{
-			"name": "5Get Account by Id (Full)",
+			"name": "5Get Account by Id (Full)-new Style",
 			"event": [
 				{
 					"listen": "test",
@@ -771,7 +771,85 @@
 					},
 					{
 						"key": "obp_from_date",
-						"value": "2000-07-01T00:00:00.000Z"
+						"value": "2017-07-00T00:00:00.000Z"
+					},
+					{
+						"key": "obp_to_date",
+						"value": "2017-07-01T00:00:00.000Z"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transactions",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks",
+						"10",
+						"accounts",
+						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
+						"owner",
+						"transactions"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "8Get Transactions for Account  (Full) -new style --isFirst=false",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8"
+					},
+					{
+						"key": "obp_sort_direction",
+						"value": "DESC"
+					},
+					{
+						"key": "obp_offset",
+						"value": "1"
+					},
+					{
+						"key": "obp_limit",
+						"value": "2"
+					},
+					{
+						"key": "obp_from_date",
+						"value": "2017-07-00T00:00:00.000Z"
 					},
 					{
 						"key": "obp_to_date",
@@ -975,7 +1053,7 @@
 			},
 			"response": [
 				{
-					"id": "463c6c5d-b51c-400d-8f3f-ce1b52788336",
+					"id": "bc70fa0f-c6d6-4e7d-9fff-69cdc83980c8",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -1149,10 +1227,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{  \"id\":\"b0fdf0e5-d3fa-47a1-83c4-2b774b690ed8\",  \"answer\":\"183823\"}"
+					"raw": "{  \"id\":\"c4bdb149-54d0-4c89-8f1c-d3480e9b2981\",  \"answer\":\"183823\"}"
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/ccec6b74-7554-40da-b7d7-afc475feb754/challenge",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_PHONE/transaction-requests/ed09016e-4274-4444-b5c0-b6683fe1033c/challenge",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -1172,7 +1250,7 @@
 						"transaction-request-types",
 						"TRANSFER_TO_PHONE",
 						"transaction-requests",
-						"ccec6b74-7554-40da-b7d7-afc475feb754",
+						"ed09016e-4274-4444-b5c0-b6683fe1033c",
 						"challenge"
 					]
 				},
@@ -1327,7 +1405,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"1\",\n  \"future_date\": \"20173317\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"regular\",\n  \"future_date\": \"20173317\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests",
@@ -1357,7 +1435,7 @@
 			},
 			"response": [
 				{
-					"id": "9e57118a-4129-4b43-8068-6392ccbe369b",
+					"id": "67b73e7e-dbc2-4532-91f8-cee04adb2c00",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1564,7 +1642,7 @@
 			"response": []
 		},
 		{
-			"name": "15Create Transaction Request. --SEPA",
+			"name": "15Create Transaction Request. --SEPA --in process",
 			"event": [
 				{
 					"listen": "test",
@@ -1591,7 +1669,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"1\",\n  \"future_date\": \"20173317\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
+					"raw": "{\n  \"to\": {\n    \"iban\": \"GR1301720530005053000582373\"\n  },\n  \"value\": {\n    \"currency\": \"GBP\",\n    \"amount\": \"10\"\n  },\n  \"description\": \"A description for the transaction to be created\",\n  \"charge_policy\": \"SHARED\"\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/SEPA/transaction-requests",
@@ -1620,7 +1698,7 @@
 			},
 			"response": [
 				{
-					"id": "0920d82f-1797-4216-afb0-47a554accc72",
+					"id": "ce058974-4fa1-481a-a768-1c0fd9644838",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1767,7 +1845,7 @@
 			]
 		},
 		{
-			"name": "16Create Transaction Request. --COUNTERPARTY",
+			"name": "16Create Transaction Request. --COUNTERPARTY --in process",
 			"event": [
 				{
 					"listen": "test",
@@ -1823,7 +1901,7 @@
 			},
 			"response": [
 				{
-					"id": "3c74e546-aed3-4f2a-80e4-722f0052868d",
+					"id": "7204bac9-bddd-47ac-80ad-e69843561cdf",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2050,7 +2128,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"name\": \"Mr Ben4\",\n  \"description\": \"My landlord\",\n  \"other_bank_routing_scheme\": \"bankCode\",\n  \"other_bank_routing_address\": \"String\",\n  \"other_branch_routing_scheme\": \"branchNumber\",\n  \"other_branch_routing_address\": \"String\",\n  \"other_account_routing_scheme\": \"IBAN\",\n  \"other_account_routing_address\": \"DE89 3704 0044 0532 0130 00\",\n  \"other_account_secondary_routing_scheme\": \"accountNumber\",\n  \"other_account_secondary_routing_address\": \"String\",\n  \"is_beneficiary\": true,\n  \"bespoke\": [\n    {\n      \"key\": \"englishName\",\n      \"value\": \"english Name \"\n    },\n    {\n      \"key\": \"englishDescription\",\n      \"value\": \"english Description\"\n    },\n    {\n      \"key\": \"englishDescription\",\n      \"value\": \"english Description\"\n    },\n    {\n      \"key\": \"englishDescription\",\n      \"value\": \"english Description\"\n    },\n    {\n      \"key\": \"englishDescription\",\n      \"value\": \"english Description\"\n    },\n    {\n      \"key\": \"englishDescription\",\n      \"value\": \"english Description\"\n    }\n  ]\n}"
+					"raw": "{\n  \"name\": \"Mr Ben4\",\n  \"description\": \"My landlord\",\n  \"other_bank_routing_scheme\": \"bankCode\",\n  \"other_bank_routing_address\": \"String\",\n  \"other_branch_routing_scheme\": \"branchNumber\",\n  \"other_branch_routing_address\": \"String\",\n  \"other_account_routing_scheme\": \"IBAN\",\n  \"other_account_routing_address\": \"DE89 3704 0044 0532 0130 00\",\n  \"other_account_secondary_routing_scheme\": \"accountNumber\",\n  \"other_account_secondary_routing_address\": \"String\",\n  \"is_beneficiary\": true,\n  \"bespoke\": [\n    {\n      \"key\": \"englishName\",\n      \"value\": \"english Name \"\n    },\n    {\n      \"key\": \"englishDescription\",\n      \"value\": \"english Description\"\n    }\n  ]\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties",
@@ -2085,7 +2163,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
 						]
 					}
 				}
@@ -2132,7 +2210,7 @@
 			},
 			"response": [
 				{
-					"id": "4a62e23d-634c-4442-aa6a-43aa76f5e497",
+					"id": "8403295a-9819-413e-93de-4fe618f1e3b1",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2330,7 +2408,7 @@
 			},
 			"response": [
 				{
-					"id": "f5bc4737-9849-487e-bfc4-7755729c640d",
+					"id": "77b7a5ce-7dae-458b-b04f-609176ffbeff",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2905,7 +2983,7 @@
 			"response": []
 		},
 		{
-			"name": "Get User (Current) -gateway-isfirstTure --not used in Leumi",
+			"name": "GetMessage-docs",
 			"event": [
 				{
 					"listen": "test",
@@ -2919,18 +2997,13 @@
 			],
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/message-docs/kafka_vMar2017",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -2942,407 +3015,13 @@
 					"path": [
 						"obp",
 						"v3.0.0",
-						"users",
-						"current"
+						"message-docs",
+						"kafka_vMar2017"
 					]
 				},
-				"description": ""
+				"description": "get the OBP token\n\n case Req(\"my\" :: \"logins\" :: \"direct\" :: Nil,_ , PostRequest|GetRequest) => {"
 			},
 			"response": []
-		},
-		{
-			"name": "getUser.-V300 new Style-not used in Leumi",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/email/EMAIL/terminator",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"users",
-						"email",
-						"EMAIL",
-						"terminator"
-					]
-				},
-				"description": "{\n  \"name\": \"\",\n  \"counterparty_bank_id\": \"\",\n  \"primary_routing_scheme\": \"IBAN\",\n  \"primary_routing_address\": \"7987987-2348987-234234\"\n}\n\n\n\n{\n  \"counterparty_id\": \"abd7d870-a83b-47fa-b255-91686934994d\",\n  \"display\": {\n    \"name\": \"\",\n    \"is_alias\": false\n  },\n  \"created_by_user_id\": \"77f5ae14-9723-486a-b083-a91ce921c9f8\",\n  \"used_by_account\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"primary_routing\": {\n    \"scheme\": \"IBAN\",\n    \"address\": \"7987987-2348987-234234\"\n  },\n  \"metadata\": {\n    \"public_alias\": \"\",\n    \"private_alias\": \"\",\n    \"more_info\": \"\",\n    \"URL\": \"\",\n    \"image_URL\": \"\",\n    \"open_corporates_URL\": \"\",\n    \"corporate_location\": null,\n    \"physical_location\": null\n  }\n}"
-			},
-			"response": []
-		},
-		{
-			"name": "getUserByUserId.-V300 new Style-not used in Leumi ",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/user_id/a31cbe57-8a71-4fb4-8a21-056361d13e22",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"users",
-						"user_id",
-						"a31cbe57-8a71-4fb4-8a21-056361d13e22"
-					]
-				},
-				"description": ""
-			},
-			"response": []
-		},
-		{
-			"name": "getUserByUsername.-V300 new Style-not used in Leumi",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/username/USERNAME",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"users",
-						"username",
-						"USERNAME"
-					]
-				},
-				"description": ""
-			},
-			"response": []
-		},
-		{
-			"name": "Get all Users.-V300 new Style-not used in Leumi",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 400;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"users"
-					]
-				},
-				"description": ""
-			},
-			"response": []
-		},
-		{
-			"name": "Get Accounts at all Banks (Private). -V300-new Style-not used in Leumi",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\n  \"name\":\"Friend47\",\n\n  \"other_bank_id\":\"pbgr\",\n\n  \"other_account_id\":\"2058201\",\n\n  \"other_account_provider\":\"OBP\",\n\n  \"other_account_routing_scheme\":\"IBAN\",\n\n  \"other_account_routing_address\":\"GR1301720530005053000582373\",\n\n  \"other_bank_routing_scheme\":\"BIC\",\n\n  \"other_bank_routing_address\":\"PIRBGRAAXXX\",\n\n  \"is_beneficiary\":true\n\n}\n"
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/my/accounts",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"obp",
-						"v3.0.0",
-						"my",
-						"accounts"
-					]
-				},
-				"description": "{\n  \"name\": \"\",\n  \"counterparty_bank_id\": \"\",\n  \"primary_routing_scheme\": \"IBAN\",\n  \"primary_routing_address\": \"7987987-2348987-234234\"\n}\n\n\n\n{\n  \"counterparty_id\": \"abd7d870-a83b-47fa-b255-91686934994d\",\n  \"display\": {\n    \"name\": \"\",\n    \"is_alias\": false\n  },\n  \"created_by_user_id\": \"77f5ae14-9723-486a-b083-a91ce921c9f8\",\n  \"used_by_account\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"primary_routing\": {\n    \"scheme\": \"IBAN\",\n    \"address\": \"7987987-2348987-234234\"\n  },\n  \"metadata\": {\n    \"public_alias\": \"\",\n    \"private_alias\": \"\",\n    \"more_info\": \"\",\n    \"URL\": \"\",\n    \"image_URL\": \"\",\n    \"open_corporates_URL\": \"\",\n    \"corporate_location\": null,\n    \"physical_location\": null\n  }\n}"
-			},
-			"response": [
-				{
-					"id": "4a1da527-88c4-4b34-a223-1db1bb4f0b20",
-					"name": "Get private accounts at one bank. -V300",
-					"originalRequest": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwidGVtZW5vc19pZCI6IiJ9.SWqLUDw_Y9c-f9txch9gIMJyXR4UDqzjVRBYJ85kq80"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\n  \"name\":\"Friend47\",\n\n  \"other_bank_id\":\"pbgr\",\n\n  \"other_account_id\":\"2058201\",\n\n  \"other_account_provider\":\"OBP\",\n\n  \"other_account_routing_scheme\":\"IBAN\",\n\n  \"other_account_routing_address\":\"GR1301720530005053000582373\",\n\n  \"other_bank_routing_scheme\":\"BIC\",\n\n  \"other_bank_routing_address\":\"PIRBGRAAXXX\",\n\n  \"is_beneficiary\":true\n\n}\n"
-						},
-						"url": {
-							"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/private",
-							"protocol": "http",
-							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
-							],
-							"port": "8080",
-							"path": [
-								"obp",
-								"v3.0.0",
-								"banks",
-								"10",
-								"accounts",
-								"private"
-							]
-						}
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"_postman_previewtype": "text",
-					"header": [
-						{
-							"key": "Access-Control-Allow-Origin",
-							"value": "*",
-							"name": "Access-Control-Allow-Origin",
-							"description": "Specifies a URI that may access the resource. For requests without credentials, the server may specify '*' as a wildcard, thereby allowing any origin to access the resource."
-						},
-						{
-							"key": "Cache-Control",
-							"value": "no-cache, private, no-store",
-							"name": "Cache-Control",
-							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
-						},
-						{
-							"key": "Content-Length",
-							"value": "743",
-							"name": "Content-Length",
-							"description": "The length of the response body in octets (8-bit bytes)"
-						},
-						{
-							"key": "Content-Type",
-							"value": "application/json; charset=utf-8",
-							"name": "Content-Type",
-							"description": "The mime type of this content"
-						},
-						{
-							"key": "Correlation-Id",
-							"value": "3b7o6uy86118pkyehsuh1i2x",
-							"name": "Correlation-Id",
-							"description": "Custom header"
-						},
-						{
-							"key": "Date",
-							"value": "Fri, 10 Nov 2017 16:35:06 GMT",
-							"name": "Date",
-							"description": "The date and time that the message was sent"
-						},
-						{
-							"key": "Date",
-							"value": "Fri, 10 Nov 2017 16:35:06 GMT",
-							"name": "Date",
-							"description": "The date and time that the message was sent"
-						},
-						{
-							"key": "Expires",
-							"value": "Fri, 10 Nov 2017 16:35:06 GMT",
-							"name": "Expires",
-							"description": "Gives the date/time after which the response is considered stale"
-						},
-						{
-							"key": "GatewayLogin",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsInRlbWVub3NfaWQiOiIifQ.BVCfsa19K8OgUQ9a9nQVozHoTGk7TZge4TJpg2JByi8",
-							"name": "GatewayLogin",
-							"description": "Custom header"
-						},
-						{
-							"key": "Pragma",
-							"value": "no-cache",
-							"name": "Pragma",
-							"description": "Implementation-specific headers that may have various effects anywhere along the request-response chain."
-						},
-						{
-							"key": "Server",
-							"value": "Jetty(9.2.15.v20160210)",
-							"name": "Server",
-							"description": "A name for the server"
-						},
-						{
-							"key": "X-Frame-Options",
-							"value": "DENY",
-							"name": "X-Frame-Options",
-							"description": "Clickjacking protection: \"deny\" - no rendering within a frame, \"sameorigin\" - no rendering if origin mismatch"
-						}
-					],
-					"cookie": [
-						{
-							"expires": "Invalid Date",
-							"httpOnly": false,
-							"domain": "127.0.0.1",
-							"path": "/OBP-API-1.0",
-							"secure": false,
-							"value": "node01x7t2ztrf5bas1twgoj1djq8n80.node0",
-							"key": "JSESSIONID"
-						},
-						{
-							"expires": "Invalid Date",
-							"httpOnly": false,
-							"domain": "127.0.0.1",
-							"path": "/",
-							"secure": false,
-							"value": "3b7o6uy86118pkyehsuh1i2x",
-							"key": "JSESSIONID"
-						}
-					],
-					"responseTime": 132,
-					"body": "{\"accounts\":[{\"id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"3565953\"}},{\"id\":\"ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"50180983\"}},{\"id\":\"yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"50180963\"}},{\"id\":\"kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"20102612\"}},{\"id\":\"wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0\",\"label\":\"\",\"bank_id\":\"10\",\"account_routing\":{\"scheme\":\"account_number\",\"address\":\"20105505\"}}]}"
-				}
-			]
 		}
 	]
 }
