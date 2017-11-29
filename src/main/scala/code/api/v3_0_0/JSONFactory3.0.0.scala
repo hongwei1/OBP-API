@@ -318,7 +318,7 @@ case class BranchJsonV300(
                            branch_routing: BranchRoutingJsonV141,
                            // Easy access for people who use wheelchairs etc. "Y"=true "N"=false ""=Unknown
                            is_accessible : String,
-                           accessibleFeatures: Option[String],
+                           accessibleFeatures: String,
                            branch_type : String,
                            more_info : String,
                            phone_number : String
@@ -690,7 +690,7 @@ object JSONFactory300{
         address = branch.branchRouting.map(_.address).getOrElse("")
       ),
       is_accessible = branch.isAccessible.map(_.toString).getOrElse(""),
-      accessibleFeatures = branch.accessibleFeatures,
+      accessibleFeatures = branch.accessibleFeatures.getOrElse(""),
       branch_type = branch.branchType.getOrElse(""),
       more_info = branch.moreInfo.getOrElse(""),
       phone_number = branch.phoneNumber.getOrElse("")
@@ -873,7 +873,7 @@ object JSONFactory300{
       branchRouting = branchRouting,
       // Easy access for people who use wheelchairs etc. true or false ""=Unknown
       isAccessible = Some(isAccessible),
-      accessibleFeatures = branchJsonV300.accessibleFeatures,
+      accessibleFeatures = Some(branchJsonV300.accessibleFeatures),
       branchType = Some(branchJsonV300.branch_type),
       moreInfo = Some(branchJsonV300.more_info),
       phoneNumber = Some(branchJsonV300.phone_number)
