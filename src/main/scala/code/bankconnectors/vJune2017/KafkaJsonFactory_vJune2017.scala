@@ -295,6 +295,7 @@ case class  InboundBranchVJune2017(
                            driveUp: Option[DriveUp],
                            // Easy access for people who use wheelchairs etc.
                            isAccessible : Option[Boolean],
+                           accessibleFeatures: Option[String],
                            branchType : Option[String],
                            moreInfo : Option[String],
                            phoneNumber : Option[String]

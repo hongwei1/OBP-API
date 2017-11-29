@@ -1382,17 +1382,18 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           driveUpString = None,
           meta = Meta(License("","")),
           branchRouting = None,
-          lobby = Some(Lobby(monday = OpeningTimes("",""),
-            tuesday = OpeningTimes("",""),
-            wednesday = OpeningTimes("",""),
-            thursday = OpeningTimes("",""),
-            friday = OpeningTimes("",""),
-            saturday = OpeningTimes("",""),
-            sunday = OpeningTimes("","")
+          lobby = Some(Lobby(monday = List(OpeningTimes("","")),
+            tuesday = List(OpeningTimes("","")),
+            wednesday = List(OpeningTimes("","")),
+            thursday = List(OpeningTimes("","")),
+            friday = List(OpeningTimes("","")),
+            saturday = List(OpeningTimes("","")),
+            sunday = List(OpeningTimes("",""))
           )),
           driveUp = None,
           // Easy access for people who use wheelchairs etc.
           isAccessible = Some(true),
+          accessibleFeatures = None,
           branchType  = Some(""),
           moreInfo = Some(""),
           phoneNumber = Some("")
