@@ -640,6 +640,8 @@ object JSONFactory300{
 
 
   def createBranchJsonV300(branch: BranchT): BranchJsonV300 = {
+    val getOrCreateLobby: Lobby = branch.lobby.getOrElse(Lobby(List(OpeningTimes("","")),List(OpeningTimes("","")),List(OpeningTimes("","")),List(OpeningTimes("","")),List(OpeningTimes("","")),List(OpeningTimes("","")),List(OpeningTimes("",""))))
+    
     BranchJsonV300(branch.branchId.value,
       branch.bankId.value,
       branch.name,
@@ -654,13 +656,13 @@ object JSONFactory300{
       createLocationJson(branch.location),
       createMetaJson(branch.meta),
       LobbyJsonV330(
-        monday = branch.lobby.get.monday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
-        tuesday = branch.lobby.get.tuesday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
-        wednesday = branch.lobby.get.wednesday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
-        thursday = branch.lobby.get.thursday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
-        friday = branch.lobby.get.friday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
-        saturday = branch.lobby.get.saturday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
-        sunday = branch.lobby.get.sunday.map(x => OpeningTimesV300(x.openingTime,x.closingTime))
+        monday = getOrCreateLobby.monday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
+        tuesday = getOrCreateLobby.tuesday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
+        wednesday = getOrCreateLobby.wednesday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
+        thursday = getOrCreateLobby.thursday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
+        friday = getOrCreateLobby.friday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
+        saturday = getOrCreateLobby.saturday.map(x => OpeningTimesV300(x.openingTime,x.closingTime)),
+        sunday = getOrCreateLobby.sunday.map(x => OpeningTimesV300(x.openingTime,x.closingTime))
       ),
       DriveUpJsonV330(
         monday = OpeningTimesV300(
