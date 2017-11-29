@@ -12,7 +12,7 @@ import code.bankconnectors.vMar2017._
 import code.customer.{Customer, CreditLimit, CreditRating, CustomerFaceImage}
 import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
 import code.common.{Address, Location, Meta, Routing}
-import code.customer.{Customer, MockCreditLimit, MockCreditRating, MockCustomerFaceImage}
+
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData

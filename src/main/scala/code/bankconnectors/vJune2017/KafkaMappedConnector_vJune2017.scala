@@ -80,7 +80,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   val customersByUserIdBoxTTL = getSecondsCache("getCustomersByUserIdBox")
   val memoryCounterpartyTTL = getSecondsCache("createMemoryCounterparty")
   val memoryTransactionTTL = getSecondsCache("createMemoryTransaction") 
-  
+  val branchesTTL = getSecondsCache("getBranches")  
   
   // "Versioning" of the messages sent by this or similar connector works like this:
   // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
@@ -1492,7 +1492,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     )
   )
   override def getBranches(bankId: BankId, queryParams: OBPQueryParam*): Box[List[BranchT]] = saveConnectorMetric {
-    memoizeSync(getBranchesTTL millisecond){
+    memoizeSync(branchesTTL millisecond){
       val req = OutboundGetBranches(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString)
       logger.info(s"Kafka getBanks Req is: $req")
 
