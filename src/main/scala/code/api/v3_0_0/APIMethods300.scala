@@ -961,7 +961,7 @@ trait APIMethods300 {
               s"${InvalidNumber } offset:${S.param("offset").get }"
 
 
-            branches <- Box(Branches.branchesProvider.vend.getBranches(bankId,OBPLimit(limit), OBPOffset(offset))) ~> APIFailure("No branches available. License may not be set.", 204)
+            branches <- Box(Connector.connector.vend.getBranches(bankId,OBPLimit(limit), OBPOffset(offset))) ~> APIFailure("No branches available. License may not be set.", 204)
           } yield {
             // Format the data as json
             val json = JSONFactory300.createBranchesJson(branches)

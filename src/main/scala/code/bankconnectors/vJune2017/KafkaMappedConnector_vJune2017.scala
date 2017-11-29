@@ -33,6 +33,8 @@ import code.api.util.{APIUtil, ApiSession, ErrorMessages, SessionContext}
 import code.api.v2_1_0.PostCounterpartyBespoke
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
+import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
+import code.common._
 import code.customer._
 import code.kafka.KafkaHelper
 import code.metadata.counterparties.CounterpartyTrait
@@ -1437,6 +1439,90 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     )
   }
+
+  messageDocs += MessageDoc(
+    process = "obp.get.Branches",
+    messageFormat = messageFormat,
+    description = "getBranches",
+    exampleOutboundMessage = decompose(
+      OutboundGetBranches(authInfoExample,"bankid")
+    ),
+    exampleInboundMessage = decompose(
+      InboundGetBranches(
+        authInfoExample,
+        InboundBranchVJune2017(
+          status = "",
+          errorCodeExample,
+          inboundStatusMessagesExample,
+          branchId = BranchId(""),
+          bankId = BankId(""),
+          name = "",
+          address =  Address(line1 = "",
+            line2 = "",
+            line3 = "",
+            city = "",
+            county = Some(""),
+            state = "",
+            postCode = "",
+            //ISO_3166-1_alpha-2
+            countryCode = ""),
+          location = Location(11,11, None,None),
+          lobbyString = None,
+          driveUpString = None,
+          meta = Meta(License("","")),
+          branchRouting = None,
+          lobby = Some(Lobby(monday = List(OpeningTimes("","")),
+            tuesday = List(OpeningTimes("","")),
+            wednesday = List(OpeningTimes("","")),
+            thursday = List(OpeningTimes("","")),
+            friday = List(OpeningTimes("","")),
+            saturday = List(OpeningTimes("","")),
+            sunday = List(OpeningTimes("",""))
+          )),
+          driveUp = None,
+          // Easy access for people who use wheelchairs etc.
+          isAccessible = Some(true),
+          accessibleFeatures = None,
+          branchType  = Some(""),
+          moreInfo = Some(""),
+          phoneNumber = Some("")
+        )  :: Nil
+      )
+
+    )
+  )
+  override def getBranches(bankId: BankId, queryParams: OBPQueryParam*): Box[List[BranchT]] = saveConnectorMetric {
+    memoizeSync(getBranchesTTL millisecond){
+      val req = OutboundGetBranches(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString)
+      logger.info(s"Kafka getBanks Req is: $req")
+
+      val box = for {
+        kafkaMessage <- processToBox[OutboundGetBranches](req)
+        inboundGetBranches <- tryo{kafkaMessage.extract[InboundGetBranches]} ?~! s"$InboundGetBranches extract error"
+        inboundBranches <- Full(inboundGetBranches.data)
+      } yield{
+        inboundBranches
+      }
+
+
+      logger.debug(s"Kafka getBranches Res says:  is: $Box")
+      val res = box match {
+        case Full(list) if (list.head.errorCode=="") =>
+          Full(list)
+        case Full(list) if (list.head.errorCode!="") =>
+          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ list.head.errorCode+". + CoreBank-Error:"+ list.head.backendMessages)
+        case Empty =>
+          Failure(ErrorMessages.ConnectorEmptyResponse)
+        case Failure(msg, e, c) =>
+          Failure(msg, e, c)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+      logger.info(s"Kafka getBranches says res is $res")
+      res
+    }
+  }("getBranches")
+
 
 }
 
