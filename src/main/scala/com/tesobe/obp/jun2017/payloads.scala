@@ -472,7 +472,7 @@ object ViewId {
   def unapply(id : String) = Some(ViewId(id))
 }
 
-case class TransactionRequest (
+case class TransactionRequest(
   id: TransactionRequestId,
   `type` : String,
   from: TransactionRequestAccount,

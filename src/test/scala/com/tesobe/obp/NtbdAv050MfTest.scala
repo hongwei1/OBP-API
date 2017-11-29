@@ -11,7 +11,7 @@ class NtbdAv050MfTest extends ServerSetup{
       accountNumber = "20102612",
       cbsToken = ";-V          81433020102612",
       transferType= "regular",
-      transferDateInFuture = "20170705")
+      transferDateInFuture = "28190705")
     result match {
       case Right(result) =>
     result.P050_BDIKACHOVAOUT.esbHeaderResponse.responseStatus.statusCode should be ("Success")
@@ -40,6 +40,20 @@ class NtbdAv050MfTest extends ServerSetup{
       cbsToken = ";-V          81433020102612",
       transferType= "regular",
       transferDateInFuture = "20171705")
+
+    an [InvalidTimeException] should be thrownBy getNtbdAv050(branch = "814",
+      accountType = "330",
+      accountNumber = "20102612",
+      cbsToken = ";-V          81433020102612",
+      transferType= "regular",
+      transferDateInFuture = "20170732")
+
+    an [InvalidTimeException] should be thrownBy getNtbdAv050(branch = "814",
+      accountType = "330",
+      accountNumber = "20102612",
+      cbsToken = ";-V          81433020102612",
+      transferType= "regular",
+      transferDateInFuture = "20171128")
    
 
 
