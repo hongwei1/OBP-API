@@ -5,7 +5,7 @@ import com.tesobe.obp.ErrorMessages.InvalidTimeException
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp.june2017.LeumiDecoder._
-import com.tesobe.obp.june2017.{AmountOfMoneyJsonV121, _}
+import com.tesobe.obp.june2017._
 
 import scala.collection.immutable.List
 /**
@@ -227,12 +227,13 @@ class LeumiDecoderTest  extends ServerSetup {
   }
   
   test("getTransactionRequests returns correct result for first transaction request of test stub"){
-    val result = getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","","")))
-    println(result)
-    
-    result.data.transactionRequests.head should be (TransactionRequest(TransactionRequestId("lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y"),"_FUTURE_STANDING_ORDER",TransactionRequestAccount("10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),TransactionRequestBody(TransactionRequestAccount("",""),AmountOfMoney("ILS","-262.73"),"ה.ק.חסכון"),null,"","COMPLETED",null,defaultFilterFormat.parse("Sun May 21 02:00:00 CEST 2017"),TransactionRequestChallenge("",0,""),TransactionRequestCharge("",AmountOfMoney("ILS","0")),"",CounterpartyId(""),"ה.ק.חסכון",BankId("10"),AccountId("3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),ViewId(""),"","","","",false))
-
-
+    getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","",""))) should be 
+    (TransactionRequest(TransactionRequestId("lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y"),"_FUTURE_STANDING_ORDER",TransactionRequestAccount("10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),TransactionRequestBody(TransactionRequestAccount("",""),AmountOfMoney("ILS","-262.73"),"ה.ק.חסכון"),null,"","COMPLETED",null,defaultFilterFormat.parse("Sun May 21 02:00:00 CEST 2017"),TransactionRequestChallenge("",0,""),TransactionRequestCharge("",AmountOfMoney("ILS","0")),"",CounterpartyId(""),"ה.ק.חסכון",BankId("10"),AccountId("3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),ViewId(""),"","","","",false))
+  }
+  
+  test("getBranch works for local test stub"){
+    getBranch(OutboundGetBranch(authInfoIsFirstTrue, "10", "957")).data should be 
+    (InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1230"), OpeningTimes("0000","0000")),List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
   }
   
 

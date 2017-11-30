@@ -271,14 +271,15 @@ object ErrorMessages {
   val InvalidRequestFormat = "ADAPTER-60006: Invalid Request Format: Parameter for Backendcall not in malformated."
   val InvalidCounterPartyId = "ADAPTER-60007: Invalid or uncached counterpartyId. "
   val MainFrameError = "ADAPTER-60008: Main Frame Error ."
-  val InvalidPassportOrNationalId = "ADAPTER-60009: Invalid Passport or National ID number"
-  val InvalidAmount = "ADAPTER-60010: Invalid Amount"
-  val InvalidIdType = "ADAPTER-60011: Invalid Id Type: valid types: 1 - National; 5- Passport"
+  val InvalidPassportOrNationalId = "ADAPTER-60009: Invalid Passport or National ID number."
+  val InvalidAmount = "ADAPTER-60010: Invalid Amount."
+  val InvalidIdType = "ADAPTER-60011: Invalid Id Type: valid types: 1 - National; 5- Passport."
   val mFTokenMatchError = "ADAPTER-60012: Session error - cbs_token from North side does not match MFTOKEN from South side."
   val EmptyUsernameError = "ADAPTER-60013: Request was sent with empty username."
   val InvalidTime = "ADAPTER-60014: Invalid time or time format."
   val CounterpartyIdNotCached = "ADAPTER-60015: CounterpartyId not in Cache."
-  val InvalidTransferType = "ADAPTER-60016: Invalid TransferType: valid types: regular, RealTime"
+  val InvalidTransferType = "ADAPTER-60016: Invalid TransferType: valid types: regular, RealTime."
+  val InvalidBranchId = "ADAPTER=60017: BranchId not found."
 
   
   
@@ -301,6 +302,7 @@ object ErrorMessages {
   class CounterpartyIdCacheEmptyException(msg: String = CounterpartyIdNotCached)extends Exception(msg: String)
   class InvalidTransferTypeException(msg:String = InvalidTransferType)extends Exception(msg: String)
   class InvalidTimeException(msg:String = InvalidTime) extends Exception(msg: String)
+  class InvalidBranchIdExecption(msg: String = InvalidBranchId) extends Exception(msg: String)
 }
 
 

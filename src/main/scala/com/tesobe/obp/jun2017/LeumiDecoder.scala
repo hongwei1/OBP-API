@@ -1518,22 +1518,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getBranches(outboundGetBranches: OutboundGetBranches): InboundGetBranches = {
-    
-    val branches = getLeumiBranches
-    val result = new ListBuffer[InboundBranchVJune2017]
-    for (i <- branches) {
-      result += mapLeumiBranchToObpBranch(i)
-    }
-    
+
     InboundGetBranches(
       outboundGetBranches.authInfo,
-      result.toList
-    )  }
+      getLeumiBranches.map(x => mapLeumiBranchToObpBranch(x))
+    )
+  }
+  
+  def getBranch(outboundGetBranch: OutboundGetBranch): InboundGetBranch = {
+    val branch = getLeumiBranches.find(x => x.branchCode == outboundGetBranch.branchId).getOrElse(throw new InvalidBranchIdExecption())
+    InboundGetBranch(outboundGetBranch.authInfo, mapLeumiBranchToObpBranch(branch))
+  }
   
   def getAtms(outboundGetAtms: OutboundGetAtms): InboundGetAtms = {
     val branchesWithAtm: List[LeumiBranch] = getLeumiBranches.filter(x => x.hasAtm)
     branchesWithAtm.map( x => mapLeumiBranchToObpAtm(x))
-    InboundGetAtms(outboundGetAtms.authInfo,"", branchesWithAtm.map(x => mapLeumiBranchToObpAtm(x)))
+    InboundGetAtms(outboundGetAtms.authInfo, branchesWithAtm.map(x => mapLeumiBranchToObpAtm(x)))
   }
 
 }
