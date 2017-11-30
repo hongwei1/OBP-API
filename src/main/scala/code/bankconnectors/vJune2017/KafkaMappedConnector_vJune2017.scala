@@ -676,7 +676,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     }}("getBankAccounts")
 
   override def getCoreBankAccountsFuture(BankIdAccountIds: List[BankIdAccountId], session: Option[SessionContext]) : Future[Box[List[CoreAccount]]] = saveConnectorMetric{
-    memoizeSync(accountsTTL seconds){
+    memoizeSync(accountsTTL second){
 
       val (userName, cbs) = session match {
         case Some(c) =>
