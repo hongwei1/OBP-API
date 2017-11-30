@@ -37,22 +37,22 @@ object LeumiBranches extends Config{
                    ce7: String
                   )
   
-case class LeumiBranch(
-                      branchCode : String,
-                      name: String,
-                      address: String,
-                      zipcode: String,
-                      city: String,
-                      phone: String,
-                      fax: String,
-                      shaot: Shaot,
-                      x: String,
-                      y: String,
-                      accessibility: Boolean,
-                      accessible_features: List[String],
-                      hasAtm : Boolean,
-                      isAnAtmUsablebyVisuallyImpaired: Boolean
-                      )
+case class LeumiBranch(branchCode: String,
+                       name: String,
+                       address: String,
+                       zipcode: String,
+                       city: String,
+                       phone: String,
+                       fax: String,
+                       shaot: Shaot, 
+                       x: String, 
+                       y: String, 
+                       accessibility: Boolean,
+                       accessible_features: String,
+                       hasAtm: Boolean,
+                       isAnAtmUsablebyVisuallyImpaired: Boolean,
+                       hasAtmWithDeposit: Boolean,
+                       hasAtmWithMobileCash: Boolean)
   
   def getLeumiBranches: List[LeumiBranch] = {
     
@@ -105,12 +105,30 @@ case class LeumiBranch(
         val x = (i \ "x").text
         val y = (i \ "y").text
         val accessibility = (i \\ "Access1").text == "נגישות לכסא גלגלים"
-        val accessible_features = List((i \\ "Access1").text, (i \\ "Access2").text, (i \\ "Access3").text,
-        (i \\ "Access4").text, (i \\ "Access5").text)
+        val accessible_features = (i \\ "Access1").text + "," + (i \\ "Access2").text + "," + (i \\ "Access3").text + "," +
+          (i \\ "Access4").text + "," + (i \\ "Access5").text
         val hasAtm = (i \\ "ATM").text == "1"
         val isAtmUsableByVisuallyImpaired = (i \\ "Access3").text == "כספומט מותאם ללקויי ראייה"
-        result += LeumiBranch(branchCode, name, address, zipcode,cityName, phone, 
-          fax, shaot, x, y, accessibility,accessible_features, hasAtm, isAtmUsableByVisuallyImpaired )
+        val hasAtmwithDeposit = (i \\ "CashDeposit").text == "1"
+        val hasAtmwithMobileCash = (i \\ "MobileCash").text == "1"
+        result += LeumiBranch(
+          branchCode,
+          name, 
+          address, 
+          zipcode,
+          cityName, 
+          phone,
+          fax,
+          shaot,
+          x, 
+          y,
+          accessibility,
+          accessible_features,
+          hasAtm, 
+          isAtmUsableByVisuallyImpaired,
+          hasAtmwithDeposit,
+          hasAtmwithMobileCash
+        )
       }
     }
     result.toList

@@ -1,6 +1,7 @@
 
 package com.tesobe.obp
 
+import com.tesobe.obp.ErrorMessages.InvalidTimeException
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp.june2017.LeumiDecoder._
@@ -23,7 +24,7 @@ class LeumiDecoderTest  extends ServerSetup {
   val authInfoIsFirstFalse = AuthInfo("", username, mfToken, false)
   
   
-  test("getBankAccounts works for Stub"){
+  test("getBankAccounts works for stub"){
     val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", username, ""),true, null)) //TODO ,need fix
 
     //getBalance is not called here
@@ -35,9 +36,20 @@ class LeumiDecoderTest  extends ServerSetup {
         InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId5, "20105505", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil))))
   }
   
-  test("getBankAccountbyAccountId works for Stub"){
+  test("getBankAccountbyAccountId works for stub"){
     val result = getBankAccountbyAccountId(OutboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),"10",accountId1))
     result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),(InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success", "0", "OK")),  mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "IBAN","IL230106160000050180963", List(AccountRules("CREDIT_LIMIT", "15000"))))))
+  }
+  
+  test("getCoreBankAccounts gives correct result for stub"){
+    getCoreBankAccounts(OutboundGetCoreBankAccounts(authInfoIsFirstTrue, List(BankIdAccountId(BankId("10"), AccountId(accountId1))))) should be
+      (InboundGetCoreBankAccounts(AuthInfo("","N7jut8d",">,?          81433020102612",true),List(InternalInboundCoreAccount("",List(InboundStatusMessage("ESB","Success","0","OK"), InboundStatusMessage("MF","Success","0","OK")),"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","10",AccountRouting("account_number","3565953")))))
+
+  }
+  
+  test("checkBankAccountExists gives correct result for stub"){
+    checkBankAccountExists(OutboundCheckBankAccountExists(authInfoIsFirstTrue, "10", accountId1)) should be
+    (InboundGetAccountbyAccountID(AuthInfo("","N7jut8d",">,?          81433020102612",true),InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success","0","OK")),">,?          81433020102612","10","616","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","3565953","330","0","ILS",List("N7jut8d"),List("Owner", "Accountant", "Auditor"),"","","","","","",List())))
   }
 
   
@@ -151,8 +163,38 @@ class LeumiDecoderTest  extends ServerSetup {
     ))
     result should be (InboundCreateTransactionId(AuthInfo("",username,mfToken),InternalTransactionId("",List(InboundStatusMessage("ESB","Success","0","OK")),"")))
   }
+
+  test("createTransaction - Transfer to Account fails with invalid futuredate"){
+    an [InvalidTimeException] should be thrownBy  createTransaction(OutboundCreateTransaction(
+      authInfo = AuthInfo("",username,mfToken),
+      fromAccountBankId = "",
+      fromAccountId = accountId1,
+      transactionRequestType= TransactionRequestTypes.TRANSFER_TO_ACCOUNT.toString,
+      transactionChargePolicy= "",
+      transactionRequestCommonBody =  TransactionRequestBodyTransferToAccount(
+        value = com.tesobe.obp.june2017.AmountOfMoneyJsonV121("ILS","10"),
+        description = "",
+        transfer_type =  "RealTime",
+        future_date = "20170743l",
+        to = ToAccountTransferToAccountJson(
+          name = "",
+          bank_code = "",
+          branch_number = "",
+          account = ToAccountTransferToAccountAccountJson(
+            number = "",
+            iban = ""
+          ))),
+      toCounterpartyId = "",
+      toCounterpartyName = "",
+      toCounterpartyCurrency = "",
+      toCounterpartyRoutingAddress = "",
+      toCounterpartyRoutingScheme = "",
+      toCounterpartyBankRoutingAddress = "",
+      toCounterpartyBankRoutingScheme = ""
+    ))
+  }
   
-  test("getCounterparties returns correct result for test stub"){
+  test("getCounterpartiesForAccount returns correct result for test stub"){
     val result = getCounterpartiesForAccount(OutboundGetCounterparties(authInfoIsFirstTrue,
       InternalOutboundGetCounterparties("10", accountId1,"")))
     
@@ -176,21 +218,20 @@ class LeumiDecoderTest  extends ServerSetup {
     ))
   }
   
-  test("getBranches returns correct result for local test stub") {
+  test("getBranches returns correct result for first branch of local test stub") {
     val result = getBranches(OutboundGetBranches(authInfoIsFirstTrue, "10"))
     result.data.head should be (
 
-      InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,None,None,Some(true),Some(List("נגישות לכסא גלגלים","לולאת השראה ללקויי שמיעה","כספומט מותאם ללקויי ראייה","עמדת מידע מותאמת ללקויי ראייה","שירותי נכים בסניף")),None,None,Some(""))
+      InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1230"), OpeningTimes("0000","0000")),List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some(""))
     )
   }
   
-  test("take a look at getTransactionRequests"){
+  test("getTransactionRequests returns correct result for first transaction request of test stub"){
     val result = getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","","")))
     println(result)
+    
+    result.data.transactionRequests.head should be (TransactionRequest(TransactionRequestId("lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y"),"_FUTURE_STANDING_ORDER",TransactionRequestAccount("10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),TransactionRequestBody(TransactionRequestAccount("",""),AmountOfMoney("ILS","-262.73"),"ה.ק.חסכון"),null,"","COMPLETED",null,defaultFilterFormat.parse("Sun May 21 02:00:00 CEST 2017"),TransactionRequestChallenge("",0,""),TransactionRequestCharge("",AmountOfMoney("ILS","0")),"",CounterpartyId(""),"ה.ק.חסכון",BankId("10"),AccountId("3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),ViewId(""),"","","","",false))
 
-/*
-    InboundGetTransactionRequests210(AuthInfo(,N7jut8d,>,?          81433020102612,true),InternalGetTransactionRequests(,List(InboundStatusMessage(ESB,Success,0,OK), InboundStatusMessage(MF,Success,0,OK)),List(TransactionRequest(lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y,_FUTURE_STANDING_ORDER,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-262.73),ה.ק.חסכון),null,,COMPLETED,null,Sun May 21 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,ה.ק.חסכון,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(XAKwiEDBEQDZ80r4ucqA_xkTtrWdxH4co_xmgZJBLR8,_FUTURE_CREDIT_CARD,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-1875.92),לאומי ויזה י),null,,COMPLETED,null,Sun Jun 11 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,לאומי ויזה י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(Fx3pZILwZYym7F9D3H5AkRC8buj9-V3LN1zpmjSlZxc,_FUTURE_CREDIT_CARD,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-140.00),ל.מסטרקארדי),null,,COMPLETED,null,Sun Jun 11 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,ל.מסטרקארדי,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(vPjL4ouJhPczssM1TwAa4eUT4L6TXkEOfJJeRu-Twkw,_FUTURE_STANDING_ORDER,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-1351.03),הוראת קבע י),null,,COMPLETED,null,Thu Jun 01 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,הוראת קבע י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(P0QEGNdl3S-5nfE0f5VRX59gnR2Z2OdwHAaiJz7LQTo,_INTRADAY,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-440.00),הע. אינטרנט י),null,,COMPLETED,null,Wed Apr 05 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,הע. אינטרנט י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(KTpZRxDj6tNnM9OhYSFyI-Eqbn4ewh9-qyhHrcX7lkk,_INTRADAY,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-1.00),הע. אינטרנט י),null,,COMPLETED,null,Wed Apr 05 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,הע. אינטרנט י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(JSmoBrYB9almyWyrx2exHpYLHi2rc1XBnWPH4ZW2Kbc,_INTRADAY,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-2.00),הע. אינטרנט י),null,,COMPLETED,null,Wed Apr 05 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,הע. אינטרנט י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(csB64WOXayYUCrbgB2DG3YVJ_HW5rlliZL110gR0kzo,_INTRADAY,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-100.00),הע. אינטרנט י),null,,COMPLETED,null,Wed May 17 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,הע. אינטרנט י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(e40-iTQOP-tiP8hgO2J2bmycZ1EANTqy6s9000yNkaE,_INTRADAY,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-667.83),חשמל עצמי י),null,,COMPLETED,null,Thu May 18 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,חשמל עצמי י,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false), TransactionRequest(jycANFm83do1WDIdDYdwtmxgXYtDcYFhXxf7kxLHlPM,_INTRADAY,TransactionRequestAccount(10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98),TransactionRequestBody(TransactionRequestAccount(,),AmountOfMoney(ILS,-126.85),בזק עצמי),null,,COMPLETED,null,Mon May 29 02:00:00 CEST 2017,TransactionRequestChallenge(,0,),TransactionRequestCharge(,AmountOfMoney(ILS,0)),,,בזק עצמי,10,3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98,,,,,,false))))
-*/
 
   }
   

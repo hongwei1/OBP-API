@@ -381,7 +381,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       // driveUpString = Option[String],
       meta = Meta(License(id = "pddl", name = "Open Data Commons Public Domain Dedication and License (PDDL)")),
       branchRouting = None,
-      lobby = None,
+      lobby = Some(getLobbyFromLeumiBranch(leumiBranch)),
       driveUp = None,
       // Easy access for people who use wheelchairs etc.
       isAccessible  = Some(leumiBranch.accessibility),
@@ -389,6 +389,77 @@ object LeumiDecoder extends Decoder with StrictLogging {
       branchType  = None,
       moreInfo  = None,
       phoneNumber  = Some("")
+    )
+  }
+  
+  def getLobbyFromLeumiBranch(leumiBranch: LeumiBranch): Lobby = {
+    Lobby(List(
+      OpeningTimes(leumiBranch.shaot.ob1,leumiBranch.shaot.cb1),
+      OpeningTimes(leumiBranch.shaot.oe1, leumiBranch.shaot.ce1)),
+      List(
+        OpeningTimes(leumiBranch.shaot.ob2,leumiBranch.shaot.cb2),
+        OpeningTimes(leumiBranch.shaot.oe2, leumiBranch.shaot.ce2)),
+      List(
+        OpeningTimes(leumiBranch.shaot.ob3,leumiBranch.shaot.cb3),
+        OpeningTimes(leumiBranch.shaot.oe3, leumiBranch.shaot.ce3)),
+      List(
+        OpeningTimes(leumiBranch.shaot.ob4,leumiBranch.shaot.cb4),
+        OpeningTimes(leumiBranch.shaot.oe4, leumiBranch.shaot.ce4)),
+      List(
+        OpeningTimes(leumiBranch.shaot.ob5,leumiBranch.shaot.cb5),
+        OpeningTimes(leumiBranch.shaot.oe5, leumiBranch.shaot.ce5)),
+      List(
+        OpeningTimes(leumiBranch.shaot.ob6,leumiBranch.shaot.cb6),
+        OpeningTimes(leumiBranch.shaot.oe6, leumiBranch.shaot.ce6)),
+      List(
+        OpeningTimes(leumiBranch.shaot.ob7,leumiBranch.shaot.cb7),
+        OpeningTimes(leumiBranch.shaot.oe7, leumiBranch.shaot.ce7))
+    )
+  }
+  
+  def mapLeumiBranchToObpAtm(leumiBranch: LeumiBranch): InboundAtmJune2017 = {
+    
+    InboundAtmJune2017(
+      atmId = AtmId(leumiBranch.branchCode),
+      bankId = BankId("10"),
+      name = leumiBranch.name,
+      address = Address(
+        line1 = leumiBranch.address,
+        line2 = "",
+        line3 = "",
+        city = leumiBranch.city,
+        county = None,
+        state = "",
+        postCode = leumiBranch.zipcode,
+        countryCode = "IL"),
+      location = Location(leumiBranch.x.toDouble,leumiBranch.y.toDouble),
+      meta = Meta(License(id = "pddl", name = "Open Data Commons Public Domain Dedication and License (PDDL)")),
+
+      OpeningTimeOnMonday = Some(leumiBranch.shaot.ob1),
+      ClosingTimeOnMonday = Some(leumiBranch.shaot.ce1),
+
+      OpeningTimeOnTuesday = Some(leumiBranch.shaot.ob2),
+      ClosingTimeOnTuesday = Some(leumiBranch.shaot.ce2),
+
+      OpeningTimeOnWednesday = Some(leumiBranch.shaot.ob3),
+      ClosingTimeOnWednesday = Some(leumiBranch.shaot.ce3),
+
+      OpeningTimeOnThursday = Some(leumiBranch.shaot.ob4),
+      ClosingTimeOnThursday = Some(leumiBranch.shaot.ce4),
+
+      OpeningTimeOnFriday = Some(leumiBranch.shaot.ob5),
+      ClosingTimeOnFriday = Some(leumiBranch.shaot.ce5),
+
+      OpeningTimeOnSaturday  = Some(leumiBranch.shaot.ob6),
+      ClosingTimeOnSaturday = Some(leumiBranch.shaot.ce6),
+
+      OpeningTimeOnSunday = Some(leumiBranch.shaot.ob7),
+      ClosingTimeOnSunday = Some(leumiBranch.shaot.ce7),
+      isAccessible = Some(leumiBranch.accessibility),
+
+      locatedAt = Some(""),
+      moreInfo = if (leumiBranch.isAnAtmUsablebyVisuallyImpaired) Some("כספומט מותאם ללקויי ראייה") else Some(""),
+      hasDepositCapability = Some(leumiBranch.hasAtmWithDeposit)
     )
   }
   
@@ -506,21 +577,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   }
 
-
   def getBankAccounts(getAccountsInput: OutboundGetAccounts): InboundGetAccounts = {
     logger.debug("Enter getBankAccounts")
     val mfAccounts = getBasicBankAccountsForUser(getAccountsInput.authInfo.username, !getAccountsInput.callMfFlag)
     mfAccounts match {
       case Right(mfAccounts) =>
-        var result = new ListBuffer[InboundAccountJune2017]()
-        for (i <- mfAccounts) {
-
-          result += mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, i, "", "0", "")
-        }
+          val result = mfAccounts.map(x => mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, x, "", "0", ""))
+        
         InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
           getAccountsInput.authInfo.username,
           mfAccounts.headOption.getOrElse(
-            throw new Exception("No Accounts for username: " + getAccountsInput.authInfo.username)).cbsToken), result.toList)
+            throw new Exception("No Accounts for username: " + getAccountsInput.authInfo.username)).cbsToken), result)
       case Left(x) =>
         InboundGetAccounts(getAccountsInput.authInfo,
           List(InboundAccountJune2017(
@@ -546,7 +613,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
   }
 
-    def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
+  def getCoreBankAccounts(getCoreBankAccounts: OutboundGetCoreBankAccounts): InboundGetCoreBankAccounts = {
       val inputAccountIds = getCoreBankAccounts.bankIdAccountIds.map(_.accountId.value)
       val accounts = getBasicBankAccountsForUser(getCoreBankAccounts.authInfo.username, true)
       accounts match {
@@ -1432,8 +1499,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
 
   }
-    
-  
+      
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
     
     val thisAccountId = cachedCounterpartyIds.get(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException() )
@@ -1463,6 +1529,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
       outboundGetBranches.authInfo,
       result.toList
     )  }
+  
+  def getAtms(outboundGetAtms: OutboundGetAtms): InboundGetAtms = {
+    val branchesWithAtm: List[LeumiBranch] = getLeumiBranches.filter(x => x.hasAtm)
+    branchesWithAtm.map( x => mapLeumiBranchToObpAtm(x))
+    InboundGetAtms(outboundGetAtms.authInfo,"", branchesWithAtm.map(x => mapLeumiBranchToObpAtm(x)))
+  }
 
 }
 

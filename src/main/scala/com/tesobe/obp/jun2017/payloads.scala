@@ -45,6 +45,7 @@ case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, ac
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
+case class OutboundGetAtms(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundCreateTransaction(
   authInfo: AuthInfo,
   
@@ -114,6 +115,7 @@ case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccoun
 case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
 case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
+case class InboundGetAtms(authInfo: AuthInfo, errorcode: String, data: List[InboundAtmJune2017])
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side
@@ -598,7 +600,7 @@ case class  InboundBranchVJune2017(
                                     driveUp: Option[DriveUp],
                                     // Easy access for people who use wheelchairs etc.
                                     isAccessible : Option[Boolean],
-                                    accessibleFeatures: Option[List[String]],
+                                    accessibleFeatures: Option[String],
                                     branchType : Option[String],
                                     moreInfo : Option[String],
                                     phoneNumber : Option[String]
@@ -658,3 +660,40 @@ case class License (
                      id : String,
                      name : String
                    )
+case class AtmId(value : String)
+
+case class InboundAtmJune2017(
+                               atmId : AtmId,
+                               bankId : BankId,
+                               name : String,
+                               address : Address,
+                               location : Location,
+                               meta : Meta,
+
+                               OpeningTimeOnMonday : Option[String],
+                               ClosingTimeOnMonday : Option[String],
+
+                               OpeningTimeOnTuesday : Option[String],
+                               ClosingTimeOnTuesday : Option[String],
+
+                               OpeningTimeOnWednesday : Option[String],
+                               ClosingTimeOnWednesday : Option[String],
+
+                               OpeningTimeOnThursday : Option[String],
+                               ClosingTimeOnThursday: Option[String],
+
+                               OpeningTimeOnFriday : Option[String],
+                               ClosingTimeOnFriday : Option[String],
+
+                               OpeningTimeOnSaturday : Option[String],
+                               ClosingTimeOnSaturday : Option[String],
+
+                               OpeningTimeOnSunday: Option[String],
+                               ClosingTimeOnSunday : Option[String],
+
+                               isAccessible : Option[Boolean],
+
+                               locatedAt : Option[String],
+                               moreInfo : Option[String],
+                               hasDepositCapability : Option[Boolean]
+                             )
