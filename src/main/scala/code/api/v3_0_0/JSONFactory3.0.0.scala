@@ -963,6 +963,7 @@ object JSONFactory300{
     )
   }
 
+
   def createCustomerJson(cInfo : Customer) : CustomerJsonV300 = {
 
     CustomerJsonV300(
