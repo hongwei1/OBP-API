@@ -1,6 +1,7 @@
 
 package com.tesobe.obp
 
+
 import com.tesobe.obp.ErrorMessages.InvalidTimeException
 import com.tesobe.obp.GetBankAccounts.base64EncodedSha256
 import com.tesobe.obp.Util.TransactionRequestTypes
@@ -42,20 +43,20 @@ class LeumiDecoderTest  extends ServerSetup {
   }
   
   test("getCoreBankAccounts gives correct result for stub"){
-    getCoreBankAccounts(OutboundGetCoreBankAccounts(authInfoIsFirstTrue, List(BankIdAccountId(BankId("10"), AccountId(accountId1))))) should be
-      (InboundGetCoreBankAccounts(AuthInfo("","N7jut8d",">,?          81433020102612",true),List(InternalInboundCoreAccount("",List(InboundStatusMessage("ESB","Success","0","OK"), InboundStatusMessage("MF","Success","0","OK")),"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","10",AccountRouting("account_number","3565953")))))
+    getCoreBankAccounts(OutboundGetCoreBankAccounts(authInfoIsFirstTrue, List(BankIdAccountId(BankId("10"), AccountId(accountId1))))) should be (
+      InboundGetCoreBankAccounts(AuthInfo("","N7jut8d",">,?          81433020102612",true),List(InternalInboundCoreAccount("",List(InboundStatusMessage("ESB","Success","0","OK"), InboundStatusMessage("MF","Success","0","OK")),"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","10",AccountRouting("account_number","3565953")))))
 
   }
   
   test("checkBankAccountExists gives correct result for stub"){
-    checkBankAccountExists(OutboundCheckBankAccountExists(authInfoIsFirstTrue, "10", accountId1)) should be
-    (InboundGetAccountbyAccountID(AuthInfo("","N7jut8d",">,?          81433020102612",true),InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success","0","OK")),">,?          81433020102612","10","616","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","3565953","330","0","ILS",List("N7jut8d"),List("Owner", "Accountant", "Auditor"),"","","","","","",List())))
+    checkBankAccountExists(OutboundCheckBankAccountExists(authInfoIsFirstTrue, "10", accountId1)) should be (
+    InboundGetAccountbyAccountID(AuthInfo("","N7jut8d",">,?          81433020102612",true),InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success","0","OK")),">,?          81433020102612","10","616","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","3565953","330","0","ILS",List("N7jut8d"),List("Owner", "Accountant", "Auditor"),"","","","","","",List())))
   }
 
   
   test("getTransactions works for Stubs first transaction"){
     val result = getTransactions(OutboundGetTransactions(AuthInfo("karlsid", username, ">,?          81433020102612"), "10", accountId1, 15, "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2017"))
-    val transactionId = base64EncodedSha256(result.data.head.amount + result.data.head.completedDate + result.data.head.newBalanceAmount)
+    val transactionId = "b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM"
     result.data.head should be (InternalTransaction(
       "",
       List(
@@ -66,7 +67,7 @@ class LeumiDecoderTest  extends ServerSetup {
       accountId1,
       "-1312.21",
       "10",
-      "20160201",
+      getUtcDatefromLeumiLocalDate("20160201"),
       "",
       "פרעון הלוואה",
       "ILS",
@@ -93,7 +94,9 @@ class LeumiDecoderTest  extends ServerSetup {
       mobileNumber = "",
       email = "",
       faceImage = CustomerFaceImage(null, "notinthiscall"),
-      dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
+      //dateOfBirth=LocalDate.parse("19481231", formatter),
+      dateOfBirth=simpleTransactionDateFormat.parse("19481231"),
+      //dateOfBirth=getUtcDateFromLocalDate(LocalDate.parse("19481231", formatter)),
       relationshipStatus = "",
       dependents = 0,
       dobOfDependents = List(null),
@@ -119,7 +122,9 @@ class LeumiDecoderTest  extends ServerSetup {
       mobileNumber = "",
       email = "",
       faceImage = CustomerFaceImage(null, "notinthiscall"),
-      dateOfBirth= simpleTransactionDateFormat.parse("19481231"),
+      //dateOfBirth= LocalDate.parse("19481231", formatter),
+      dateOfBirth=simpleTransactionDateFormat.parse("19481231"),
+      // dateOfBirth=getUtcDateFromLocalDate(LocalDate.parse("19481231", formatter)),
       relationshipStatus = "",
       dependents = 0,
       dobOfDependents = List(null),
@@ -227,13 +232,13 @@ class LeumiDecoderTest  extends ServerSetup {
   }
   
   test("getTransactionRequests returns correct result for first transaction request of test stub"){
-    getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","",""))) should be 
-    (TransactionRequest(TransactionRequestId("lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y"),"_FUTURE_STANDING_ORDER",TransactionRequestAccount("10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),TransactionRequestBody(TransactionRequestAccount("",""),AmountOfMoney("ILS","-262.73"),"ה.ק.חסכון"),null,"","COMPLETED",null,defaultFilterFormat.parse("Sun May 21 02:00:00 CEST 2017"),TransactionRequestChallenge("",0,""),TransactionRequestCharge("",AmountOfMoney("ILS","0")),"",CounterpartyId(""),"ה.ק.חסכון",BankId("10"),AccountId("3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),ViewId(""),"","","","",false))
+    getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","",""))).data.transactionRequests.head should be (
+      TransactionRequest(TransactionRequestId("lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y"),"_FUTURE_STANDING_ORDER",TransactionRequestAccount("10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),TransactionRequestBody(TransactionRequestAccount("",""),AmountOfMoney("ILS","-262.73"),"ה.ק.חסכון"),null,"","COMPLETED",null,getUtcDatefromLeumiLocalDate("20170521"),TransactionRequestChallenge("",0,""),TransactionRequestCharge("",AmountOfMoney("ILS","0")),"",CounterpartyId(""),"ה.ק.חסכון",BankId("10"),AccountId("3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),ViewId(""),"","","","",false))
   }
   
   test("getBranch works for local test stub"){
-    getBranch(OutboundGetBranch(authInfoIsFirstTrue, "10", "957")).data should be 
-    (InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1230"), OpeningTimes("0000","0000")),List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
+    getBranch(OutboundGetBranch(authInfoIsFirstTrue, "10", "957")).data should be (
+    InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1230"), OpeningTimes("0000","0000")),List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
   }
   
 

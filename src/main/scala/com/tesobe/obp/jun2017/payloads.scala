@@ -250,7 +250,7 @@ case class InternalTransaction(
   accountId: String, //accountId
   amount: String, //:"TN2_SCHUM"
   bankId: String, // 10 for now (Joni)
-  completedDate: String, //"TN2_TA_ERECH": // Date of value for
+  completedDate: Date, //"TN2_TA_ERECH": // Date of value for
   counterpartyId: String,
   counterpartyName: String,
   currency: String, //ILS 
@@ -477,28 +477,28 @@ object ViewId {
 }
 
 case class TransactionRequest(
-  id: TransactionRequestId,
-  `type` : String,
-  from: TransactionRequestAccount,
-  body: TransactionRequestBody,
-  details: JValue = null,
-  transaction_ids: String,
-  status: String,
-  start_date: Date,
-  end_date: Date,
-  challenge: TransactionRequestChallenge,
-  charge: TransactionRequestCharge,
-  charge_policy: String,
-  counterparty_id :CounterpartyId,
-  name :String,
-  this_bank_id : BankId,
-  this_account_id : AccountId,
-  this_view_id :ViewId,
-  other_account_routing_scheme : String,
-  other_account_routing_address : String,
-  other_bank_routing_scheme : String,
-  other_bank_routing_address : String,
-  is_beneficiary :Boolean
+                               id: TransactionRequestId,
+                               `type` : String,
+                               from: TransactionRequestAccount,
+                               body: TransactionRequestBody,
+                               details: JValue = null,
+                               transaction_ids: String,
+                               status: String,
+                               start_date: Date,
+                               end_date: Date,
+                               challenge: TransactionRequestChallenge,
+                               charge: TransactionRequestCharge,
+                               charge_policy: String,
+                               counterparty_id :CounterpartyId,
+                               name :String,
+                               this_bank_id : BankId,
+                               this_account_id : AccountId,
+                               this_view_id :ViewId,
+                               other_account_routing_scheme : String,
+                               other_account_routing_address : String,
+                               other_bank_routing_scheme : String,
+                               other_bank_routing_address : String,
+                               is_beneficiary :Boolean
 )
 
 case class TransactionRequestDetails(to: TransactionRequestDetailsTo, value: TransactionRequestDetailsValue)
@@ -523,7 +523,7 @@ case class InternalBasicCustomer(
   dateOfBirth: String
 )
 
-case class InternalFullCustomer(
+case class  InternalFullCustomer(
                                  status: String,
                                  errorCode: String,
                                  backendMessages: List[InboundStatusMessage],

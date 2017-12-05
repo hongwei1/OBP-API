@@ -1,8 +1,14 @@
 package com.tesobe.obp
 
 import java.text.SimpleDateFormat
+import java.time.{LocalDate,ZonedDateTime}
+import java.time.format.DateTimeFormatter
+import com.tesobe.obp.june2017.LeumiDecoder.formatterUTC
 
 import com.typesafe.scalalogging.StrictLogging
+import net.liftweb.json.JsonAST.{JNull, JString}
+import net.liftweb.json.{CustomSerializer, MappingException}
+import net.liftweb.util.Helpers.tryo
 
 
 /**
@@ -46,6 +52,38 @@ object Util extends StrictLogging {
     type TransactionRequestTypes = Value
     val SANDBOX_TAN, COUNTERPARTY, SEPA, FREE_FORM, TRANSFER_TO_PHONE, TRANSFER_TO_ATM, TRANSFER_TO_ACCOUNT = Value
   }
+
+
+
+  case object 
+  MyLocalDateSerializer extends CustomSerializer[LocalDate](x =>
+  
+
+    (
+  
+      {
+        case JString(s) => tryo(LocalDate.parse(s, DateTimeFormatter.BASIC_ISO_DATE)).openOr(throw new MappingException("Invalid date format " + s))
+        case JNull => null
+      },
+      {
+        case d: LocalDate =>
+          JString(d.format(DateTimeFormatter.ISO_LOCAL_DATE))
+      }
+    ))
+  case object MyZonedTimeDateSerializer extends CustomSerializer[ZonedDateTime](x =>
+
+
+    (
+
+      {
+        case JString(s) => tryo(ZonedDateTime.parse(s, formatterUTC)).openOr(throw new MappingException("Invalid date format " + s))
+        case JNull => null
+      },
+      {
+        case d: ZonedDateTime =>
+          JString(d.format(formatterUTC))
+      }
+    ))
   
 }
 

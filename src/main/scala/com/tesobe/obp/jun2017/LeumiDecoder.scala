@@ -1,7 +1,9 @@
 package com.tesobe.obp.june2017
 
 import java.text.SimpleDateFormat
-import java.util.TimeZone
+import java.time._
+import java.time.format.DateTimeFormatter
+import java.util.{Date, TimeZone}
 
 import com.tesobe.obp.ErrorMessages._
 import com.tesobe.obp.GetBankAccounts.{base64EncodedSha256, getBasicBankAccountsForUser}
@@ -62,13 +64,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val defaultCurrency = "ILS"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
-  simpleTransactionDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+  //simpleTransactionDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
   val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy")
   val simpleDayFormat: SimpleDateFormat = new SimpleDateFormat("dd")
   val simpleMonthFormat: SimpleDateFormat = new SimpleDateFormat("MM")
   val simpleYearFormat: SimpleDateFormat = new SimpleDateFormat("yyyy")
   val simpleLastLoginFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
+  val formatterUTC = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+  val formatterDefaultFilter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z yyyy")
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+  val formatter = DateTimeFormatter.BASIC_ISO_DATE
+ 
+  
 
   val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
   val cachedTransactionRequestIds = TTLCache[TransactionRequestIdValues](10080)
@@ -131,6 +138,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val transactionRequestId = base64EncodedSha256(amount + description + makor + asmachta)
     cachedTransactionRequestIds.set(transactionRequestId, transactionRequestIdValues)
     transactionRequestId
+  }
+
+  
+  def getUtcDatefromLeumiDateTime(leumiDate: String, leumiTime: String): Date  =  { 
+    val formatterLocalTime = DateTimeFormatter.ofPattern("HHmmss")
+    defaultFilterFormat.parse(ZonedDateTime.of(LocalDate.parse(
+      leumiDate,formatter), LocalTime.parse(leumiTime,formatterLocalTime),ZoneId.ofOffset("UTC", ZoneOffset.ofHours(2))
+    ).withZoneSameInstant(ZoneId.of("UTC")).format(formatterDefaultFilter))
+  }
+
+  def getUtcDatefromLeumiLocalDate(leumiDate: String): Date  =  {
+    defaultFilterFormat.parse(ZonedDateTime.of(LocalDate.parse(leumiDate,formatter), LocalTime.of(12,0),ZoneId.of("UTC")).format(formatterDefaultFilter))
   }
 
   def createCustomerId(username: String): String = {
@@ -224,7 +243,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       accountId = accountId, //accountId
       amount = amount,
       bankId = "10", // 10 for now (Joni)
-      completedDate = completedDate,
+      completedDate = getUtcDatefromLeumiLocalDate(completedDate),
       counterpartyId = "",
       counterpartyName = description,
       currency = defaultCurrency, //ILS 
@@ -259,7 +278,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       transaction_ids = "" ,
       status = "COMPLETED",
       start_date = null,
-      end_date = simpleTransactionDateFormat.parse(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
+      end_date = getUtcDatefromLeumiLocalDate(transactions.TA1_TNUA_BODEDET.TA1_TA_ERECH), //nt1c3 date of value for request
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
       charge_policy = "",
@@ -292,7 +311,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       transaction_ids = "",
       status = "COMPLETED",
       start_date = null,
-      end_date = simpleTransactionDateFormat.parse(transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH), //nt1c4 date of value for request
+      end_date = getUtcDatefromLeumiLocalDate(transactions.TNA_TNUA_BODEDET.TNA_TA_ERECH), //nt1c4 date of value for request
       challenge = TransactionRequestChallenge("", 0, ""),
       charge = TransactionRequestCharge("", AmountOfMoney("ILS", "0")),
       charge_policy = "",
@@ -653,13 +672,14 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val account = getBasicBankAccountByAccountIdFromCachedJoni(getTransactionsRequest.authInfo.username, getTransactionsRequest.accountId)
     account match {
       case Right(account) =>
-    
-    val fromDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
-    val fromMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
-    val fromYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.fromDate))
-    val toDay = simpleDayFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
-    val toMonth = simpleMonthFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
-    val toYear = simpleYearFormat.format(defaultFilterFormat.parse(getTransactionsRequest.toDate))
+    val fromDate = LocalDate.parse(getTransactionsRequest.fromDate, formatterDefaultFilter)
+    val toDate = LocalDate.parse(getTransactionsRequest.toDate,formatterDefaultFilter)
+        val fromDay = fromDate.getDayOfMonth.toString
+        val fromMonth = fromDate.getMonthValue.toString
+        val fromYear = fromDate.getYear.toString
+        val toDay = toDate.getDayOfMonth.toString
+        val toMonth = toDate.getMonthValue.toString
+        val toYear = toDate.getYear.toString 
     val cbsToken = if (account.cbsToken != getTransactionsRequest.authInfo.cbsToken  && 
     !getTransactionsRequest.authInfo.isFirst) {
       throw new RuntimeException(mFTokenMatchError)
@@ -686,11 +706,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
         InboundGetTransactions(getTransactionsRequest.authInfo, result.toList)
       case Left(x) => 
         InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction(MainFrameError,
-          createInboundStatusMessages(x), "","","","","","","","","","","","","","")))
+          createInboundStatusMessages(x), "","","","",null,"","","","","","","","","")))
     }
       case Left(account) =>
         InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction(MainFrameError,
-          createInboundStatusMessages(account), "","","","","","","","","","","","","","")))
+          createInboundStatusMessages(account), "","","","",null,"","","","","","","","","")))
     }
         
   }
@@ -1058,13 +1078,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
           case Right(y) =>
 
 
-            var result = new ListBuffer[TransactionRequest]
-            for (i <- x.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA) {
-              result += mapNt1c3ToTransactionRequest(i, accountId)
-            }
-            for (i <- y.TNATSHUVATAVLAIT1.TNA_SHETACH_LE_SEND_NOSAF.TNA_TNUOT.TNA_PIRTEY_TNUA) {
-              result += mapNt1c4ToTransactionRequest(i, accountId)
-            }
+               
+            val xResult = x.TA1TSHUVATAVLAIT1.TA1_SHETACH_LE_SEND_NOSAF.TA1_TNUOT.TA1_PIRTEY_TNUA.map(
+              x => mapNt1c3ToTransactionRequest(x, accountId)) ++ y.TNATSHUVATAVLAIT1.TNA_SHETACH_LE_SEND_NOSAF.TNA_TNUOT.TNA_PIRTEY_TNUA.map(
+                y => mapNt1c4ToTransactionRequest(y, accountId)
+              )
+            
 
             InboundGetTransactionRequests210(
               outboundGetTransactionRequests210.authInfo,
@@ -1074,7 +1093,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                   InboundStatusMessage("ESB", "Success", "0", "OK"),
                   InboundStatusMessage("MF", "Success", "0", "OK")
                 ),
-                result.toList))
+                xResult))
 
           case Left(y) =>
 
@@ -1353,7 +1372,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
           email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
           faceImage = CustomerFaceImage(null, ""),
-          dateOfBirth = simpleTransactionDateFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
+          dateOfBirth = getUtcDatefromLeumiLocalDate(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
           relationshipStatus = "",
           dependents = null,
           dobOfDependents = List(null),
@@ -1362,7 +1381,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
           creditRating = CreditRating("", ""),
           creditLimit = AmountOfMoney("", ""),
           kycStatus = null,
-          lastOkDate = simpleLastLoginFormat.parse(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
+          lastOkDate = getUtcDatefromLeumiDateTime(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST , joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
         )
         InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))
 

@@ -128,6 +128,7 @@ case class LeumiBranch(branchCode: String,
           isAtmUsableByVisuallyImpaired,
           hasAtmwithDeposit,
           hasAtmwithMobileCash
+          
         )
       }
     }

@@ -1,9 +1,12 @@
 package com.tesobe.obp
 
+import java.time.LocalDate
+
 import akka.kafka.ConsumerMessage.CommittableMessage
 import akka.stream.Materializer
 import com.tesobe.obp.SouthKafkaStreamsActor.Business
-import com.tesobe.obp.june2017.LeumiDecoder.simpleTransactionDateFormat
+import com.tesobe.obp.june2017.LeumiDecoder.simpleTransactionDateFormat 
+import com.tesobe.obp.Util.{MyLocalDateSerializer, MyZonedTimeDateSerializer}
 import com.tesobe.obp.june2017._
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.generic.auto._
@@ -35,7 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class LocalProcessor(implicit executionContext: ExecutionContext, materializer: Materializer) extends StrictLogging with Config {
   
-  implicit val formats = net.liftweb.json.DefaultFormats
+  implicit val formats = net.liftweb.json.DefaultFormats + MyZonedTimeDateSerializer + MyLocalDateSerializer
   
   /**
     * Processes message that comes from generic 'Request'/'Response' topics.
@@ -298,22 +301,24 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
             InboundStatusMessage("ESB","Success", "0", "OK"),
             InboundStatusMessage("MF","Success", "0", "OK")  
           ),"","","","","","",CustomerFaceImage(null,""),
-            simpleTransactionDateFormat.parse("19481231"),"",0,null,
+            simpleTransactionDateFormat.parse("19481231"),
+            //getUtcDateFromLocalDate(LocalDate.parse("19481231")),
+            "",0,null,
           "", "", CreditRating("",""),AmountOfMoney("","0"),false,null)))
         Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   }
 
 
-  def transactionsFn: Business = {msg =>
-    logger.debug(s"Processing transactionsFn ${msg.record.value}")
+  def transactionsFn: Business = { msg =>
     try {
+      logger.debug(s"Processing transactionsFn ${msg.record.value}")
       /* call Decoder for extracting data from source file */
-      val response: (OutboundGetTransactions => InboundGetTransactions) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransactions(q) }
-      val r = decode[OutboundGetTransactions](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetTransactions` case class for OBP-API and Adapter sides : ", e);
-        case Right(x) => response(x).asJson.noSpaces
-      }
+      val kafkaRecordValue = msg.record.value()
+      val outboundGetTransactions  = Extraction.extract[OutboundGetTransactions](json.parse(kafkaRecordValue))
+      val inboundGetTransactions = com.tesobe.obp.june2017.LeumiDecoder.getTransactions(outboundGetTransactions)
+      val r = prettyRender(Extraction.decompose(inboundGetTransactions))
+
       Future(msg, r)
     } catch {
       case m: Throwable =>
@@ -326,21 +331,22 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
               InboundStatusMessage("ESB","Success", "0", "OK"),
               InboundStatusMessage("MF","Success", "0", "OK")  
             ),
-            "", "","", "","", "","","","","","", "","", "")
+            "", "","", "",null, "","","","","","", "","", "")
           ))
-        Future(msg, errorBody.asJson.noSpaces)
+        Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   } 
   
   def transactionFn: Business = {msg =>
     logger.debug(s"Processing transactionFn ${msg.record.value}")
     try {
+      logger.debug(s"Processing transactionsFn ${msg.record.value}")
       /* call Decoder for extracting data from source file */
-      val response: (OutboundGetTransaction => InboundGetTransaction) = { q => com.tesobe.obp.june2017.LeumiDecoder.getTransaction(q) }
-      val r = decode[OutboundGetTransaction](msg.record.value()) match {
-        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetTransaction` case class for OBP-API and Adapter sides : ", e);
-        case Right(x) => response(x).asJson.noSpaces
-      }
+      val kafkaRecordValue = msg.record.value()
+      val outboundGetTransaction  = Extraction.extract[OutboundGetTransaction](json.parse(kafkaRecordValue))
+      val inboundGetTransaction = com.tesobe.obp.june2017.LeumiDecoder.getTransaction(outboundGetTransaction)
+      val r = prettyRender(Extraction.decompose(inboundGetTransaction))
+
       Future(msg, r)
     } catch {
       case m: Throwable =>
@@ -354,9 +360,9 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
               InboundStatusMessage("ESB","Success", "0", "OK"),
               InboundStatusMessage("MF","Success", "0", "OK")  
             ),
-            "", "","", "","", "","","","","","", "","", ""))
+            "", "","", "",null, "","","","","","", "","", ""))
       
-        Future(msg, errorBody.asJson.noSpaces)
+        Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   }
   
@@ -672,7 +678,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       Future(msg, r)
     } catch {
       case m: Throwable =>
-        logger.error("checkBankAccountExistsFn-unknown error", m)
+        logger.error("getBranchFn-unknown error", m)
         val errorBody = InboundGetBranch(
           AuthInfo("","",""),
           InboundBranchVJune2017(
