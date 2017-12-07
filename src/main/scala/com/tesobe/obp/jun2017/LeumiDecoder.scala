@@ -63,6 +63,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
   val defaultCurrency = "ILS"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
+  defaultFilterFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
   //simpleTransactionDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
   val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy")
@@ -73,6 +74,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val formatterUTC = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
   val formatterDefaultFilter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z yyyy")
   simpleLastLoginFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+  val defaultIsraelTimeFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
+  defaultIsraelTimeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Jerusalem"))
   val formatter = DateTimeFormatter.BASIC_ISO_DATE
  
   
@@ -141,15 +144,18 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   
-  def getUtcDatefromLeumiDateTime(leumiDate: String, leumiTime: String): Date  =  { 
-    val formatterLocalTime = DateTimeFormatter.ofPattern("HHmmss")
-    defaultFilterFormat.parse(ZonedDateTime.of(LocalDate.parse(
-      leumiDate,formatter), LocalTime.parse(leumiTime,formatterLocalTime),ZoneId.ofOffset("UTC", ZoneOffset.ofHours(2))
-    ).withZoneSameInstant(ZoneId.of("UTC")).format(formatterDefaultFilter))
-  }
+  def getUtcDatefromLeumiDateTime(leumiDate: String, leumiTime: String): Date  =  {
+    val dateWithIsraelTime = defaultIsraelTimeFormat.parse(leumiDate + leumiTime)
+    
+    val utcFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
+    utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+    val dateUtcAsString: String = utcFormat.format(dateWithIsraelTime)
+    val dateIUtc: Date = utcFormat.parse(dateUtcAsString)
+    dateIUtc
+    }
 
   def getUtcDatefromLeumiLocalDate(leumiDate: String): Date  =  {
-    defaultFilterFormat.parse(ZonedDateTime.of(LocalDate.parse(leumiDate,formatter), LocalTime.of(12,0),ZoneId.of("UTC")).format(formatterDefaultFilter))
+    simpleLastLoginFormat.parse(leumiDate + "120000")
   }
 
   def createCustomerId(username: String): String = {

@@ -317,7 +317,8 @@ object ErrorMessages {
   val InvalidTime = "ADAPTER-60014: Invalid time or time format."
   val CounterpartyIdNotCached = "ADAPTER-60015: CounterpartyId not in Cache."
   val InvalidTransferType = "ADAPTER-60016: Invalid TransferType: valid types: regular, RealTime."
-  val InvalidBranchId = "ADAPTER=60017: BranchId not found."
+  val InvalidBranchId = "ADAPTER-60017: BranchId not found."
+  val ZoneIdNotAvailable = "ADAPTER-60018: ZoneId for Asia/Jerusalem not available in JVM"
 
   
   
@@ -341,6 +342,7 @@ object ErrorMessages {
   class InvalidTransferTypeException(msg:String = InvalidTransferType)extends Exception(msg: String)
   class InvalidTimeException(msg:String = InvalidTime) extends Exception(msg: String)
   class InvalidBranchIdExecption(msg: String = InvalidBranchId) extends Exception(msg: String)
+  class ZoneIdNotAvailableException(msg: String = ZoneIdNotAvailable) extends Exception(msg: String)
 }
 
 
