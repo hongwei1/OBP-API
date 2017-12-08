@@ -205,11 +205,11 @@ class LeumiDecoderTest  extends ServerSetup {
     
    result should be (InboundGetCounterparties(AuthInfo("","N7jut8d",">,?          81433020102612",true),
       List(
-        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
-        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","    חבש ןר לאיחי","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","Zix0iCiIyhzHzu8UXry9uEyWqwHjdV6jONCeCfAt_HI","","122573","","10","","601",true,"                 ךורא רצק םש","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
-        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","            סכלא","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","g-K_lhH0LWAQgzfZaowpn4Nhf7blan1v8hFow5i1RyM","","100727","","12","","773",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
-        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","             טטט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","OC8wYolmHumLENu2PEQhIj9Np5cWb0bWlTX59qXHR9A","","1089","","13","","63",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
-        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","             לעי","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","5qocG1uPAq-LSFNUeXs0_ahvT3Hmw5QL6HcnNytGanI","","639257","","52","","188",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("","")))
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","    חבש ןר לאיחי","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","CWqswR6-g51DnnjhE5GEL5ijNB3x0ytTh7iO8riAPm8","","122573","","10","","601",true,"                 ךורא רצק םש","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","            סכלא","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","Q_VzYzLmPVNvmtXwH8iTjADSzr5SKmf2ELgWk0UALEk","","100727","","12","","773",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))), 
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","             טטט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","MRWD8s_VZalJvMTblRLKSu-dBAMElUliHt8oCQm1HkE","","1089","","13","","63",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
+        InternalCounterparty("",List(InboundStatusMessage("","","","")),"","             לעי","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","lymTJ1uhjH3e8ri6kujdZDPrSbdWAVf3BsmqPBR9cTw","","639257","","52","","188",true,"","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("","")))
       )))
 
 
@@ -217,9 +217,9 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getCounterpartyByCounterpartyId returns correct result for ")  {
     val result = getCounterpartyByCounterpartyId(OutboundGetCounterpartyByCounterpartyId(authInfoIsFirstTrue,
-      OutboundGetCounterpartyById("kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE")))
+      OutboundGetCounterpartyById("I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I")))
     
-    result should be (InboundGetCounterparty(authInfoIsFirstTrue, InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
+    result should be (InboundGetCounterparty(authInfoIsFirstTrue, InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
     ))
   }
   

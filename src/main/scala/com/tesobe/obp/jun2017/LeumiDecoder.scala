@@ -62,6 +62,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
 
   val defaultCurrency = "ILS"
+  val defaultBankId = "10"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
   defaultFilterFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
@@ -108,7 +109,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
                             ownerAccountId: String): String = {
     logger.debug(s"createCounterpartyId-counterpartyName($counterpartyName)")
 
-    val counterpartyId = base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr)
+    val counterpartyId = base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr + ownerAccountId)
     cachedCounterpartyIds.set(counterpartyId, ownerAccountId)
     counterpartyId
   }
@@ -1527,7 +1528,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
       
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
     
-    val thisAccountId = cachedCounterpartyIds.get(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException() )
+    val thisAccountId = cachedCounterpartyIds.get(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException())
+    if  (thisAccountId != checkBankAccountExists(
+      OutboundCheckBankAccountExists(
+        outboundGetCounterpartyByCounterpartyId.authInfo,
+        defaultBankId,
+        thisAccountId)).data.accountId) throw new InvalidCounterPartyIdException
    
     val counterparties = getCounterpartiesForAccount(OutboundGetCounterparties(
         outboundGetCounterpartyByCounterpartyId.authInfo, 
