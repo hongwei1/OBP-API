@@ -2,7 +2,7 @@ package code.api.v3_0_0.custom
 
 
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.util.{Calendar, Date}
 
 import code.api.ChargePolicy
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
@@ -316,6 +316,9 @@ trait CustomAPIMethods300 {
                   _ <- booleanToBox(transDetailsP2PJson.description.length<=20,s"$InvalidValueCharacters. Description field can only contains no more than 20 symbols")
                   _ <- booleanToBox(transDetailsP2PJson.transfer_type =="regular" || transDetailsP2PJson.transfer_type =="RealTime" ,s"$InvalidValueCharacters. Transfer type: regular=regular; RealTime=RTGS - real time")
                   _ <- booleanToBox(transDetailsP2PJson.future_date.length == 8 || transDetailsP2PJson.future_date.length == 0, s"$InvalidValueCharacters. The future_date format yyyyMMdd or leave it empty. ")
+                  futureDate <- tryo {stringToDate(transDetailsP2PJson.future_date, "yyyyMMdd")} ?~! InvalidDateFormat
+                  today <- tryo {new Date()}
+                  _ <- booleanToBox(futureDate.before(today) == false, InvalidFutureDateValue)
                   transDetailsSerialized <- tryo {write(transDetailsP2PJson)(Serialization.formats(NoTypeHints))}
                   createdTransactionRequest <- Connector.connector.vend.createTransactionRequestv300(u,
                     viewId,
