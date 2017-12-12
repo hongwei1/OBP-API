@@ -1405,7 +1405,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"regular\",\n  \"future_date\": \"20173317\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"regular\",\n  \"future_date\": \"20171230\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ACCOUNT/transaction-requests",
@@ -1872,7 +1872,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"1\",\n  \"future_date\": \"20173317\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"1\"\n  },\n  \"description\": \"Tast\",\n  \"transfer_type\": \"1\",\n  \"future_date\": \"20171230\",\n  \"to\": {\n    \"name\":   \"Tom Muller - has to be english if transfer_type = 2\", \n    \"bank_code\": \"Bank code of the target account\",\n    \"branch_number\":\"Branch number of the target account\",\n    \"account\":{\n        \"number\": \"Account number of the target account\",\n        \"iban\": \"IBAN of the target account for RTGS transfer - if presented then bank/branch/account details are ignored\"\n    }\n  }\n}"
 				},
 				"url": {
 					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/COUNTERPARTY/transaction-requests",
