@@ -86,6 +86,10 @@ class LeumiDecoderTest  extends ServerSetup {
       "karlsid"
     ))
   }
+  
+  test("getTransaction works for TransactionId b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM"){
+    val result = getTransaction(OutboundGetTransaction(authInfoIsFirstTrue, defaultBankId, accountId1, "b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM"))
+  }
 
   
   test("getCustomer gives correct result for stubs , isFirst = true"){ 

@@ -64,6 +64,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   val defaultCurrency = "ILS"
   val defaultBankId = "10"
   val defaultFilterFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy")
+  val defaultInboundFormat: SimpleDateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
   defaultFilterFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
   val simpleTransactionDateFormat = new SimpleDateFormat("yyyyMMdd")
   //simpleTransactionDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
@@ -729,7 +730,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       val transactionDate: String = cachedTransactionId.get(getTransactionRequest.transactionId).getOrElse(
         throw new Exception("Invalid TransactionId")
       ).completedDate
-      val simpleTransactionDate = defaultFilterFormat.format(simpleTransactionDateFormat.parse(transactionDate))
+      val simpleTransactionDate: String = defaultInboundFormat.format(simpleTransactionDateFormat.parse(transactionDate))
       getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
         getTransactionRequest.bankId,
         getTransactionRequest.accountId,
