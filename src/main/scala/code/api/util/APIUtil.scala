@@ -1480,6 +1480,7 @@ Returns a string showed to the developer
     import java.text.SimpleDateFormat
     import java.util.Locale
     val format = new SimpleDateFormat(dateFormat, Locale.ENGLISH)
+    format.setLenient(false)
     format.parse(value)
   }
   def validatePhoneNumber(number: String): Boolean = {
