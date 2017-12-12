@@ -2170,7 +2170,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE",
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I",
 					"protocol": "https",
 					"host": [
 						"available",
@@ -2186,7 +2186,7 @@
 						"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 						"owner",
 						"counterparties",
-						"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE"
+						"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I"
 					]
 				},
 				"description": "{\n  \"name\": \"\",\n  \"counterparty_bank_id\": \"\",\n  \"primary_routing_scheme\": \"IBAN\",\n  \"primary_routing_address\": \"7987987-2348987-234234\"\n}\n\n\n\n{\n  \"counterparty_id\": \"abd7d870-a83b-47fa-b255-91686934994d\",\n  \"display\": {\n    \"name\": \"\",\n    \"is_alias\": false\n  },\n  \"created_by_user_id\": \"77f5ae14-9723-486a-b083-a91ce921c9f8\",\n  \"used_by_account\": {\n    \"bank_id\": \"gh.29.uk\",\n    \"account_id\": \"8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0\"\n  },\n  \"primary_routing\": {\n    \"scheme\": \"IBAN\",\n    \"address\": \"7987987-2348987-234234\"\n  },\n  \"metadata\": {\n    \"public_alias\": \"\",\n    \"private_alias\": \"\",\n    \"more_info\": \"\",\n    \"URL\": \"\",\n    \"image_URL\": \"\",\n    \"open_corporates_URL\": \"\",\n    \"corporate_location\": null,\n    \"physical_location\": null\n  }\n}"
@@ -2212,7 +2212,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE",
+							"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I",
 							"protocol": "https",
 							"host": [
 								"available",
@@ -2228,7 +2228,7 @@
 								"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 								"owner",
 								"counterparties",
-								"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE"
+								"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I"
 							]
 						}
 					},
@@ -2331,7 +2331,7 @@
 						}
 					],
 					"responseTime": 280,
-					"body": "{\"name\":\"         יעכטגאט\",\"description\":\"                     יעכטגאט\",\"created_by_user_id\":\"\",\"this_bank_id\":\"10\",\"this_account_id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"this_view_id\":\"owner\",\"counterparty_id\":\"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE\",\"other_bank_routing_scheme\":\"\",\"other_bank_routing_address\":\"\",\"other_branch_routing_scheme\":\"\",\"other_branch_routing_address\":\"\",\"other_account_routing_scheme\":\"\",\"other_account_routing_address\":\"\",\"other_account_secondary_routing_scheme\":\"\",\"other_account_secondary_routing_address\":\"\",\"is_beneficiary\":true,\"bespoke\":[{\"key\":\"englishName\",\"value\":\"\"},{\"key\":\"englishDescription\",\"value\":\"\"}]}"
+					"body": "{\"name\":\"         יעכטגאט\",\"description\":\"                     יעכטגאט\",\"created_by_user_id\":\"\",\"this_bank_id\":\"10\",\"this_account_id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"this_view_id\":\"owner\",\"counterparty_id\":\"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I\",\"other_bank_routing_scheme\":\"\",\"other_bank_routing_address\":\"\",\"other_branch_routing_scheme\":\"\",\"other_branch_routing_address\":\"\",\"other_account_routing_scheme\":\"\",\"other_account_routing_address\":\"\",\"other_account_secondary_routing_scheme\":\"\",\"other_account_secondary_routing_address\":\"\",\"is_beneficiary\":true,\"bespoke\":[{\"key\":\"englishName\",\"value\":\"\"},{\"key\":\"englishDescription\",\"value\":\"\"}]}"
 				}
 			]
 		},
@@ -2406,7 +2406,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE",
+							"raw": "https://available.openbankproject.com/obp/v3.0.0/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/counterparties/I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I",
 							"protocol": "https",
 							"host": [
 								"available",
@@ -2422,7 +2422,7 @@
 								"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98",
 								"owner",
 								"counterparties",
-								"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE"
+								"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I"
 							]
 						}
 					},
@@ -2525,7 +2525,7 @@
 						}
 					],
 					"responseTime": 280,
-					"body": "{\"name\":\"         יעכטגאט\",\"description\":\"                     יעכטגאט\",\"created_by_user_id\":\"\",\"this_bank_id\":\"10\",\"this_account_id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"this_view_id\":\"owner\",\"counterparty_id\":\"kk9xisFY6zFRdKkKMSlHFwGYvEvzxT4o9wXg42O-ArE\",\"other_bank_routing_scheme\":\"\",\"other_bank_routing_address\":\"\",\"other_branch_routing_scheme\":\"\",\"other_branch_routing_address\":\"\",\"other_account_routing_scheme\":\"\",\"other_account_routing_address\":\"\",\"other_account_secondary_routing_scheme\":\"\",\"other_account_secondary_routing_address\":\"\",\"is_beneficiary\":true,\"bespoke\":[{\"key\":\"englishName\",\"value\":\"\"},{\"key\":\"englishDescription\",\"value\":\"\"}]}"
+					"body": "{\"name\":\"         יעכטגאט\",\"description\":\"                     יעכטגאט\",\"created_by_user_id\":\"\",\"this_bank_id\":\"10\",\"this_account_id\":\"3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98\",\"this_view_id\":\"owner\",\"counterparty_id\":\"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I\",\"other_bank_routing_scheme\":\"\",\"other_bank_routing_address\":\"\",\"other_branch_routing_scheme\":\"\",\"other_branch_routing_address\":\"\",\"other_account_routing_scheme\":\"\",\"other_account_routing_address\":\"\",\"other_account_secondary_routing_scheme\":\"\",\"other_account_secondary_routing_address\":\"\",\"is_beneficiary\":true,\"bespoke\":[{\"key\":\"englishName\",\"value\":\"\"},{\"key\":\"englishDescription\",\"value\":\"\"}]}"
 				}
 			]
 		},
