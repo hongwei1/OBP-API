@@ -14,11 +14,18 @@ import scala.collection.immutable.List
   */
 class LeumiDecoderTest  extends ServerSetup {
 
+  val accountId1 = "3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"
+  val accountId2 = "ahrGDvrcgX9YQFH-fpR_pPp9v9FW_l9ZGm2X3iuM698"
+  val accountId3 = "yP95NBuFMr5zC5DCCdupFw-D1YfksNUlwZ2VLRSlxQs"
+  val accountId4 = "kQWRSBnWJolR63EOBvb26MezPQXTrdQZTSZUqhQfOVM"
+  val accountId5 = "wZShrbQW6CYiQGgSUwaxMYfz0W1ee59R0yOuJNha9W0"
+/*  
+  Encoded from:
   val accountId1 = base64EncodedSha256("616" + "330" + "3565953" + "fjdsaFDSAefwfsalfid")
   val accountId2 = base64EncodedSha256("616" + "430" +"50180983" + "fjdsaFDSAefwfsalfid")
   val accountId3 = base64EncodedSha256("616" + "330" +"50180963" + "fjdsaFDSAefwfsalfid")
   val accountId4 = base64EncodedSha256("814" + "330" + "20102612" + "fjdsaFDSAefwfsalfid")
-  val accountId5 = base64EncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")
+  val accountId5 = base64EncodedSha256("814" + "330" + "20105505" + "fjdsaFDSAefwfsalfid")*/
   val mfToken = ">,?          81433020102612"
   val username = "N7jut8d"
   val authInfoIsFirstTrue = AuthInfo("", username, mfToken, true) 
