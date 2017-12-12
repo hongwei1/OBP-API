@@ -876,6 +876,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
           ) 
           callNtbdAv050 match {
             case Right(a) =>
+              
+              if (transactionRequestBodyTransferToAccountJson.value.amount.toDouble > a.P050_BDIKACHOVAOUT.P050_SCUM_MAX_LE_HAVARA.toDouble) throw new InvalidAmountException("Maximum Amount Allowed: " + a.P050_BDIKACHOVAOUT.P050_SCUM_MAX_LE_HAVARA)
 
               val transferToAccountToken = a.P050_BDIKACHOVAOUT.P050_TOKEN_OUT
 
