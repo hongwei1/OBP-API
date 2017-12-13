@@ -1408,6 +1408,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   }
 
+  override def getBranches(bankId: BankId, queryParams: OBPQueryParam*): Box[List[MappedBranch]] = {
+    Full(MappedBranch.findAll(By(MappedBranch.mBankId, bankId.value)))
+  }
+
 
 
 

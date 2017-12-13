@@ -6,7 +6,7 @@ import code.api.v3_0_0.JSONFactory300.createBranchJsonV300
 import code.api.v3_0_0.{AdapterInfoJsonV300, LobbyJsonV330, _}
 import code.bankconnectors.vMar2017.{MessageDocJson, MessageDocsJson}
 import code.branches.Branches.{DriveUpString, _}
-import code.common._
+import code.common.{OpeningTimes, _}
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 
 import scala.collection.immutable.List
@@ -879,12 +879,13 @@ object SwaggerDefinitionsJSON {
   // Use transform... to convert these to our various json formats for different API versions
 
   val meta: Meta =  Meta(license = License (id = "PDDL", name = "Open Data Commons Public Domain Dedication and License "))  // Note the meta  is V140
-  val openingTimesV300 =List(OpeningTimesV300(
-    opening_time = "10:00",
-    closing_time = "18:00"))
-  val openingTimes = List(OpeningTimes(
+  val openingTimes = OpeningTimes(
     openingTime = "10:00",
-    closingTime = "18:00")
+    closingTime = "18:00"
+  )
+  val openingTimesV300 = OpeningTimesV300(
+    opening_time = "10:00",
+    closing_time = "18:00"
   )
   
   val address : Address = Address(
@@ -899,24 +900,24 @@ object SwaggerDefinitionsJSON {
   )
 
   val lobby: Lobby = Lobby(
-    monday = openingTimes,
-    tuesday = openingTimes,
-    wednesday = openingTimes,
-    thursday = openingTimes,
-    friday = openingTimes,
-    saturday = openingTimes,
-    sunday = openingTimes
+    monday = List(openingTimes),
+    tuesday = List(openingTimes),
+    wednesday = List(openingTimes),
+    thursday = List(openingTimes),
+    friday = List(openingTimes),
+    saturday = List(openingTimes),
+    sunday = List(openingTimes)
   )
 
 
   val driveUp: DriveUp = DriveUp(
-    monday = openingTimes.head,
-    tuesday = openingTimes.head,
-    wednesday = openingTimes.head,
-    thursday =  openingTimes.head,
-    friday =  openingTimes.head,
-    saturday =  openingTimes.head,
-    sunday =  openingTimes.head
+    monday = openingTimes,
+    tuesday = openingTimes,
+    wednesday = openingTimes,
+    thursday =  openingTimes,
+    friday =  openingTimes,
+    saturday =  openingTimes,
+    sunday =  openingTimes
   )
 
   val branchRouting = Routing("OBP", "123abc")
@@ -963,6 +964,16 @@ object SwaggerDefinitionsJSON {
   
   
   val lobbyJsonV330 = LobbyJsonV330(
+    monday = List(openingTimesV300),
+    tuesday = List(openingTimesV300),
+    wednesday = List(openingTimesV300),
+    thursday =  List(openingTimesV300),
+    friday =  List(openingTimesV300),
+    saturday =  List(openingTimesV300),
+    sunday =  List(openingTimesV300)
+  )
+  
+  val driveUpJsonV330 = DriveUpJsonV330(
     monday = openingTimesV300,
     tuesday = openingTimesV300,
     wednesday = openingTimesV300,
@@ -970,16 +981,6 @@ object SwaggerDefinitionsJSON {
     friday =  openingTimesV300,
     saturday =  openingTimesV300,
     sunday =  openingTimesV300
-  )
-  
-  val driveUpJsonV330 = DriveUpJsonV330(
-    monday = openingTimesV300.head,
-    tuesday = openingTimesV300.head,
-    wednesday = openingTimesV300.head,
-    thursday =  openingTimesV300.head,
-    friday =  openingTimesV300.head,
-    saturday =  openingTimesV300.head,
-    sunday =  openingTimesV300.head
   )
 
 
@@ -1020,13 +1021,13 @@ object SwaggerDefinitionsJSON {
     address = addressJsonV300,
     location = locationJson,
     meta = metaJson,
-    monday = openingTimesV300.head,
-    tuesday = openingTimesV300.head,
-    wednesday = openingTimesV300.head,
-    thursday =  openingTimesV300.head,
-    friday =  openingTimesV300.head,
-    saturday =  openingTimesV300.head,
-    sunday =  openingTimesV300.head,
+    monday = openingTimesV300,
+    tuesday = openingTimesV300,
+    wednesday = openingTimesV300,
+    thursday =  openingTimesV300,
+    friday =  openingTimesV300,
+    saturday =  openingTimesV300,
+    sunday =  openingTimesV300,
 
     is_accessible = "true",
     located_at = "Full service store",
