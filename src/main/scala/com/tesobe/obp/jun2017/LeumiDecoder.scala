@@ -513,6 +513,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       PostCounterpartyBespoke("englishDescription", "")
     ))))
 
+  def createInboundGetBranchesError(authInfo: AuthInfo) = {
+    
+  }
+  
   //Helper functions end here--------------------------------------------------------------------------------------------
 
   //Processor functions start here---------------------------------------------------------------------------------------
@@ -525,10 +529,17 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
 
   override def getBank(getBank: OutboundGetBank) = {
-    InboundGetBank(getBank.authInfo, InboundBank(
-      "",
-      List(InboundStatusMessage("ESB", "Success", "0", "OK")),
-      "10", "leumi", "", ""))
+    if (getBank.bankId == "10")  {
+      InboundGetBank(getBank.authInfo, InboundBank(
+        "",
+        List(InboundStatusMessage("ESB", "Success", "0", "OK")),
+        "10", "leumi", "", ""))
+    } else {
+      InboundGetBank(getBank.authInfo, InboundBank(
+        "error: Bank not found: " + getBank.bankId,
+        List(InboundStatusMessage("", "", "", "")),
+        "", "", "", ""))
+    }
   }
 
 
@@ -1552,11 +1563,59 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getBranches(outboundGetBranches: OutboundGetBranches): InboundGetBranches = {
-
-    InboundGetBranches(
-      outboundGetBranches.authInfo,
-      getLeumiBranches.map(x => mapLeumiBranchToObpBranch(x))
-    )
+    
+    val leumiBranches = getLeumiBranches
+    
+    if (leumiBranches.isEmpty){
+      InboundGetBranches(
+        outboundGetBranches.authInfo,
+        List(InboundBranchVJune2017(
+          "",
+          "Brancheslist is empty",
+          List(
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")
+          ),
+          branchId = BranchId(""),
+          bankId = BankId(""),
+          name = "",
+          address =  Address(line1 = "",
+            line2 = "",
+            line3 = "",
+            city = "",
+            county = Some(""),
+            state = "",
+            postCode = "",
+            //ISO_3166-1_alpha-2
+            countryCode = ""),
+          location = Location(11,11),
+          //lobbyString = None,
+          //driveUpString = None,
+          meta = Meta(License("","")),
+          branchRouting = None,
+          lobby = Some(Lobby(monday = List(OpeningTimes("","")),
+            tuesday = List(OpeningTimes("","")),
+            wednesday = List(OpeningTimes("","")),
+            thursday = List(OpeningTimes("","")),
+            friday = List(OpeningTimes("","")),
+            saturday = List(OpeningTimes("","")),
+            sunday = List(OpeningTimes("",""))
+          )),
+          driveUp = None,
+          // Easy access for people who use wheelchairs etc.
+          isAccessible = Some(true),
+          accessibleFeatures = None,
+          branchType  = Some(""),
+          moreInfo = Some(""),
+          phoneNumber = Some("")
+        )))
+    } else {
+      InboundGetBranches(
+        outboundGetBranches.authInfo,
+        getLeumiBranches.map(x => mapLeumiBranchToObpBranch(x))
+      )
+    }
+    
   }
   
   def getBranch(outboundGetBranch: OutboundGetBranch): InboundGetBranch = {
