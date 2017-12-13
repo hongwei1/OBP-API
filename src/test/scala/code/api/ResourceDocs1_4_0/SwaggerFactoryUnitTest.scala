@@ -13,16 +13,18 @@ class SwaggerFactoryUnitTest extends FlatSpec
   with Matchers
   with MdcLoggable {
   
-  "SwaggerJSONFactory.translateEntity" should "translate simple case class not incude wired string" in {
+  "SwaggerJSONFactory.translateEntity" should "translate simple case class not include wired string" in {
       val translateCaseClassToSwaggerFormatString: String = SwaggerJSONFactory.translateEntity(SwaggerDefinitionsJSON.license )
       logger.debug("{"+translateCaseClassToSwaggerFormatString+"}")
       translateCaseClassToSwaggerFormatString should not include("$colon")
+      translateCaseClassToSwaggerFormatString should not include("Nil$")
     }
   
   it should ("Procee the List[Case Class] in translateEntity function") in{
       val translateCaseClassToSwaggerFormatString: String = SwaggerJSONFactory.translateEntity(SwaggerDefinitionsJSON.postCounterpartyJSON)
       logger.debug("{"+translateCaseClassToSwaggerFormatString+"}")
       translateCaseClassToSwaggerFormatString should not include("$colon")
+      translateCaseClassToSwaggerFormatString should not include("Nil$")
     }
 
   it should ("Test all the case classes in SwaggerDefinitionsJSON") in{
@@ -33,9 +35,9 @@ class SwaggerFactoryUnitTest extends FlatSpec
           yield {
             SwaggerJSONFactory.translateEntity(e)
           }
-      logger.debug(listNestingMissDefinition)
 
       listNestingMissDefinition.toString() should not include("$colon")
+      listNestingMissDefinition.toString() should not include("Nil$")
 
     }
 
@@ -57,9 +59,9 @@ class SwaggerFactoryUnitTest extends FlatSpec
           }
 
       listOfExampleRequestBodyDefinition.toString() should not include("$colon")
+      listOfExampleRequestBodyDefinition.toString() should not include("Nil$")
       listOfSuccessRequestBodyDefinition.toString() should not include("$colon")
-      logger.debug(listOfExampleRequestBodyDefinition)
-      logger.debug(listOfExampleRequestBodyDefinition)
+      listOfSuccessRequestBodyDefinition.toString() should not include("Nil$")
     }
   
 }
