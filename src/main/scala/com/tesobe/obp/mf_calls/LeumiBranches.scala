@@ -65,7 +65,7 @@ case class LeumiBranch(branchCode: String,
     for (y <- branchXML \\ "city") {
       val cityName = (y \ "@name").text
 
-      for (i <- branchXML \\ "branch") {
+      for (i <- y \\ "branch") {
         println(i)
         val branchCode = (i \ "@code").text
         val name = (i \ "name").text
