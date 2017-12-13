@@ -56,10 +56,11 @@ case class LeumiBranch(branchCode: String,
   
   def getLeumiBranches: List[LeumiBranch] = {
     
-    //TODO: this uses a small snippet for development only, change back to original
-    //val branchXML = xml.XML.loadString(getLeumiBranchesFromBank())
+
+    val branchXML = xml.XML.loadString(getLeumiBranchesFromBank)
+/*    //TODO: this uses a small snippet for development only, change back to original
     val resourcesPath = getClass.getResource("/someBranches.xml")
-    val branchXML = xml.XML.loadFile(resourcesPath.getPath)
+    val branchXML = xml.XML.loadFile(resourcesPath.getPath)*/
     var result = new ListBuffer[LeumiBranch]
     for (y <- branchXML \\ "city") {
       val cityName = (y \ "@name").text

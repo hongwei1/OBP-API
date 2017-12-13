@@ -47,8 +47,7 @@ object HttpClient extends StrictLogging{
   }
   def getLeumiBranchesFromBankCached(forCache: String = "1"): String = {
     val client = HttpClients.createDefault()
-    //TODO: will go to the config file
-    val url = "http://www.bankleumi.co.il/vgnprod/xml/branchesExpanded.xml"
+    val url = config.getString("branches.url")
     logger.debug(s"Getting Leumi Branch Information from {$url}")
     val response = client.execute(new HttpGet(url))
     assert(response.getStatusLine.getStatusCode equals(HttpStatus.SC_OK))
