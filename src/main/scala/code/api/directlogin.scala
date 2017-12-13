@@ -480,17 +480,23 @@ object DirectLogin extends RestHelper with MdcLoggable {
   }
 
   private def getUserId(directLoginParameters: Map[String, String]): Box[Long] = {
+    println("ENTER getUserId XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n\n\n\n\n\n\n\n\n\n")
     val username = directLoginParameters.getOrElse("username", "")
+    println(username)
     val password = directLoginParameters.getOrElse("password", "")
+    println(password)
 
     var userId = for {id <- AuthUser.getResourceUserId(username, password)} yield id
+    println("first userid:" + userId.toString)
 
     if (userId.isEmpty) {
       if ( ! AuthUser.externalUserHelper(username, password).isEmpty)
       	userId = for {id <- AuthUser.getResourceUserId(username, password)} yield id
+        println("second userid:" + userId.toString)
     }
-
+    println("final userid:" + userId.toString)
     userId
+   
   }
 
 

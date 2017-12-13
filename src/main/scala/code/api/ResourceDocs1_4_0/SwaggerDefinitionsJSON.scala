@@ -879,12 +879,12 @@ object SwaggerDefinitionsJSON {
   // Use transform... to convert these to our various json formats for different API versions
 
   val meta: Meta =  Meta(license = License (id = "PDDL", name = "Open Data Commons Public Domain Dedication and License "))  // Note the meta  is V140
-  val openingTimesV300 =OpeningTimesV300(
+  val openingTimesV300 =List(OpeningTimesV300(
     opening_time = "10:00",
-    closing_time = "18:00")
-  val openingTimes = OpeningTimes(
+    closing_time = "18:00"))
+  val openingTimes = List(OpeningTimes(
     openingTime = "10:00",
-    closingTime = "18:00"
+    closingTime = "18:00")
   )
   
   val address : Address = Address(
@@ -910,13 +910,13 @@ object SwaggerDefinitionsJSON {
 
 
   val driveUp: DriveUp = DriveUp(
-    monday = openingTimes,
-    tuesday = openingTimes,
-    wednesday = openingTimes,
-    thursday = openingTimes,
-    friday = openingTimes,
-    saturday = openingTimes,
-    sunday = openingTimes
+    monday = openingTimes.head,
+    tuesday = openingTimes.head,
+    wednesday = openingTimes.head,
+    thursday =  openingTimes.head,
+    friday =  openingTimes.head,
+    saturday =  openingTimes.head,
+    sunday =  openingTimes.head
   )
 
   val branchRouting = Routing("OBP", "123abc")
@@ -955,6 +955,7 @@ object SwaggerDefinitionsJSON {
     branchRouting = Some(branchRouting),
     // Easy access for people who use wheelchairs etc.
     isAccessible = Some(true),
+    accessibleFeatures = Some("wheelchair, atm usuable by the visually impaired"),
     branchType = Some("Full service store"),
     moreInfo = Some("short walk to the lake from here"),
     phoneNumber = Some("+381631954907")
@@ -972,13 +973,13 @@ object SwaggerDefinitionsJSON {
   )
   
   val driveUpJsonV330 = DriveUpJsonV330(
-    monday = openingTimesV300,
-    tuesday = openingTimesV300,
-    wednesday = openingTimesV300,
-    thursday =  openingTimesV300,
-    friday =  openingTimesV300,
-    saturday =  openingTimesV300,
-    sunday =  openingTimesV300
+    monday = openingTimesV300.head,
+    tuesday = openingTimesV300.head,
+    wednesday = openingTimesV300.head,
+    thursday =  openingTimesV300.head,
+    friday =  openingTimesV300.head,
+    saturday =  openingTimesV300.head,
+    sunday =  openingTimesV300.head
   )
 
 
@@ -1019,13 +1020,13 @@ object SwaggerDefinitionsJSON {
     address = addressJsonV300,
     location = locationJson,
     meta = metaJson,
-    monday = openingTimesV300,
-    tuesday = openingTimesV300,
-    wednesday = openingTimesV300,
-    thursday = openingTimesV300,
-    friday = openingTimesV300,
-    saturday = openingTimesV300,
-    sunday = openingTimesV300,
+    monday = openingTimesV300.head,
+    tuesday = openingTimesV300.head,
+    wednesday = openingTimesV300.head,
+    thursday =  openingTimesV300.head,
+    friday =  openingTimesV300.head,
+    saturday =  openingTimesV300.head,
+    sunday =  openingTimesV300.head,
 
     is_accessible = "true",
     located_at = "Full service store",

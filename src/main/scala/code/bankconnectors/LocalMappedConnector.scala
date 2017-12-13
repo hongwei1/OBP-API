@@ -1122,7 +1122,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpHours(branch.driveUpString.map(_.hours).getOrElse("")) // ok like this? only used by versions prior to v3.0.0
             .mBranchRoutingScheme(branch.branchRouting.map(_.scheme).orNull) //Added in V220
             .mBranchRoutingAddress(branch.branchRouting.map(_.address).orNull) //Added in V220
-
+            //TODO: Fix this for new BranchV300
+/*
             .mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).map(_.openingTime).orNull)
             .mLobbyClosingTimeOnMonday(branch.lobby.map(_.monday).map(_.closingTime).orNull)
 
@@ -1142,7 +1143,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLobbyClosingTimeOnSaturday(branch.lobby.map(_.saturday).map(_.closingTime).orNull)
 
             .mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).map(_.openingTime).orNull)
-            .mLobbyClosingTimeOnSunday(branch.lobby.map(_.sunday).map(_.closingTime).orNull)
+            .mLobbyClosingTimeOnSunday(branch.lobby.map(_.sunday).map(_.closingTime).orNull)*/
 
 
             // Drive Up
@@ -1167,12 +1168,6 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpOpeningTimeOnSunday(branch.driveUp.map(_.sunday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnSunday(branch.driveUp.map(_.sunday).map(_.closingTime).orNull)
 
-            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
-
-            .mBranchType(branch.branchType.orNull)
-            .mMoreInfo(branch.moreInfo.orNull)
-
-            .saveMe()
             .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
 
             .mBranchType(branch.branchType.orNull)
@@ -1205,6 +1200,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpHours(branch.driveUpString.map(_.hours).getOrElse("")) // OK like this? only used by versions prior to v3.0.0
             .mBranchRoutingScheme(branch.branchRouting.map(_.scheme).orNull) //Added in V220
             .mBranchRoutingAddress(branch.branchRouting.map(_.address).orNull) //Added in V220
+/*
             .mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).map(_.openingTime).orNull)
             .mLobbyClosingTimeOnMonday(branch.lobby.map(_.monday).map(_.closingTime).orNull)
 
@@ -1225,6 +1221,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
             .mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).map(_.openingTime).orNull)
             .mLobbyClosingTimeOnSunday(branch.lobby.map(_.sunday).map(_.closingTime).orNull)
+*/
 
 
             // Drive Up

@@ -10,6 +10,9 @@ import code.api.v2_1_0.PostCounterpartyBespoke
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
 import code.customer.{Customer, CreditLimit, CreditRating, CustomerFaceImage}
+import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
+import code.common.{Address, Location, Meta, Routing}
+
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData
@@ -34,6 +37,7 @@ case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, ac
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo,bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
+case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundCreateChallengeJune2017(
   authInfo: AuthInfo,
   bankId: String,
@@ -89,6 +93,7 @@ case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGe
 case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalCustomer])
+case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
 
 
 
@@ -274,6 +279,29 @@ case class InternalCustomer(
   lastOkDate: Date
 )extends Customer
 
+case class  InboundBranchVJune2017(
+                           status: String,
+                           errorCode: String,
+                           backendMessages: List[InboundStatusMessage],
+                           branchId: BranchId,
+                           bankId: BankId,
+                           name: String,
+                           address: Address,
+                           location: Location,
+                           lobbyString: Option[LobbyString],
+                           driveUpString: Option[DriveUpString],
+                           meta: Meta,
+                           branchRouting: Option[Routing],
+                           lobby: Option[Lobby],
+                           driveUp: Option[DriveUp],
+                           // Easy access for people who use wheelchairs etc.
+                           isAccessible : Option[Boolean],
+                           accessibleFeatures: Option[String],
+                           branchType : Option[String],
+                           moreInfo : Option[String],
+                           phoneNumber : Option[String]
+                         ) extends BranchT
+
 
 object JsonFactory_vJune2017 {
   def createCustomerJson(customer : Customer) : InternalBasicCustomer = {
@@ -289,4 +317,5 @@ object JsonFactory_vJune2017 {
   def createCustomersJson(customers : List[Customer]) : InternalBasicCustomers = {
     InternalBasicCustomers(customers.map(createCustomerJson))
   }
+
 }
