@@ -29,36 +29,41 @@ trait Decoder extends MappedDecoder with Config{
 
   def getBanks(getBanks: OutboundGetBanks) = {
     decodeLocalFile match {
-      case Left(_) => InboundGetBanks(getBanks.authInfo, List.empty[InboundBank])
-      case Right(x) => InboundGetBanks(getBanks.authInfo, x.banks.map(mapBankToInboundBank))
+      case Left(_) => InboundGetBanks(getBanks.authInfo,Status("",
+        List(
+          InboundStatusMessage("","", "", ""),
+          InboundStatusMessage("","", "", "")
+        )), List.empty[InboundBank])
+      case Right(x) => InboundGetBanks(getBanks.authInfo, Status("",
+        List(
+          InboundStatusMessage("","", "", ""),
+          InboundStatusMessage("","", "", "")
+        )),x.banks.map(mapBankToInboundBank))
     }
   }
 
   def getBank(getBank: OutboundGetBank) = {
     decodeLocalFile match {
-      case Left(_) => InboundGetBank(getBank.authInfo, InboundBank(
-        "",
-        List(
-          InboundStatusMessage("","", "", ""), 
-          InboundStatusMessage("","", "", "")  
-        ),
-        "", "","",""))
+      case Left(_) => InboundGetBank(getBank.authInfo,
+        Status("",
+          List(
+            InboundStatusMessage("","", "", ""),
+            InboundStatusMessage("","", "", "")
+          )),InboundBank("", "","",""))
       case Right(x) =>
         x.banks.filter(_.id == Some(getBank.bankId)).headOption match {
-          case Some(x) => InboundGetBank(getBank.authInfo, InboundBank(
-            "",
-            List(
-              InboundStatusMessage("","", "", ""),
-              InboundStatusMessage("","", "", "")
-            ),
-            "", "","",""))
-          case None => InboundGetBank(getBank.authInfo, InboundBank(
-            "",
-            List(
-              InboundStatusMessage("","", "", ""),
-              InboundStatusMessage("","", "", "")
-            ),
-            "", "","",""))
+          case Some(x) => InboundGetBank(getBank.authInfo,
+            Status("",
+              List(
+                InboundStatusMessage("","", "", ""),
+                InboundStatusMessage("","", "", "")
+              )),InboundBank("", "","",""))
+          case None => InboundGetBank(getBank.authInfo,
+            Status("",
+              List(
+                InboundStatusMessage("","", "", ""),
+                InboundStatusMessage("","", "", "")
+              )),InboundBank("", "","",""))
         }
     }
   }

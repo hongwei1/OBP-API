@@ -522,23 +522,24 @@ object LeumiDecoder extends Decoder with StrictLogging {
   //Processor functions start here---------------------------------------------------------------------------------------
 
   override def getBanks(getBanks: OutboundGetBanks) = {
-    InboundGetBanks(getBanks.authInfo, List(InboundBank(
-      "",
-      List(InboundStatusMessage("ESB", "Success", "0", "OK")),
-      "10", "leumi", "", "")))
+    InboundGetBanks(getBanks.authInfo,Status("",
+      List(
+        InboundStatusMessage("","", "", ""),
+        InboundStatusMessage("","", "", "")
+      )), List(InboundBank("10", "leumi", "", "")))
   }
 
   override def getBank(getBank: OutboundGetBank) = {
     if (getBank.bankId == "10")  {
-      InboundGetBank(getBank.authInfo, InboundBank(
+      InboundGetBank(getBank.authInfo, Status(
         "",
-        List(InboundStatusMessage("ESB", "Success", "0", "OK")),
-        "10", "leumi", "", ""))
+        List(InboundStatusMessage("ESB", "Success", "0", "OK"))),
+        InboundBank("10", "leumi", "", ""))
     } else {
-      InboundGetBank(getBank.authInfo, InboundBank(
+      InboundGetBank(getBank.authInfo, Status(
         "error: Bank not found: " + getBank.bankId,
-        List(InboundStatusMessage("", "", "", "")),
-        "", "", "", ""))
+        List(InboundStatusMessage("", "", "", ""))),
+        InboundBank("", "", "", ""))
     }
   }
 

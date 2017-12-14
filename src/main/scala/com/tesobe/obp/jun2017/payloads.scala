@@ -99,8 +99,8 @@ case class OutboundGetBranch(authInfo: AuthInfo, bankId: String, branchId: Strin
   */
 case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
 case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
-case class InboundGetBanks(authInfo: AuthInfo, data: List[InboundBank])
-case class InboundGetBank(authInfo: AuthInfo, data: InboundBank)
+case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
+case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
 case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
 case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
@@ -123,6 +123,11 @@ case class InboundGetAtms(authInfo: AuthInfo, data: List[InboundAtmJune2017])
   * All subsequent case classes must be the same structure as it is defined on North Side
   *
   */
+
+case class Status(
+                   errorCode: String,
+                   backendMessages: List[InboundStatusMessage]
+                 )
 
 case class CoreAccount(
   id: String,
@@ -163,8 +168,6 @@ case class OutboundCounterparty(
 case class AuthInfo(userId: String, username: String, cbsToken: String, isFirst: Boolean = true)
 
 case class InboundBank(
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
   bankId: String,
   name: String,
   logo: String,

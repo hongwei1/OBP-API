@@ -76,15 +76,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("banksFn-unknown error", m)
         val errorBody = InboundGetBanks(
           AuthInfo("","",""),
-          List(
-            InboundBank(
-              m.getMessage,
-              List(
-                InboundStatusMessage("ESB","Success", "0", "OK"),
-                InboundStatusMessage("MF","Success", "0", "OK") 
-            ),
-             "", "","","")
-          )
+          Status(m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK"))),
+          List()
         )
         
         Future(msg, errorBody.asJson.noSpaces)
@@ -107,13 +103,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("bankFn-unknown error", m)
         val errorBody = InboundGetBank(
           AuthInfo("","",""),
-            InboundBank(
-              m.getMessage,
-              List(
-                InboundStatusMessage("ESB","Success", "0", "OK"),
-                InboundStatusMessage("MF","Success", "0", "OK") 
-              ),
-              "", "","","")
+          Status(m.getMessage,
+            List(
+              InboundStatusMessage("ESB","Success", "0", "OK"),
+              InboundStatusMessage("MF","Success", "0", "OK"))),
+          null
         )
       
         Future(msg, errorBody.asJson.noSpaces)
