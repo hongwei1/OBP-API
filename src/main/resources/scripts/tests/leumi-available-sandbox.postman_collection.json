@@ -1293,7 +1293,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"100\"\n  },\n  \"description\": \"good\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"5\",\n      \"number\": \"HU68762738\"\n    },\n    \"date_of_birth\": \"100101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
+					"raw": "{\n  \"value\": {\n    \"currency\": \"ILS\",\n    \"amount\": \"100\"\n  },\n  \"description\": \"good\",\n  \"message\": \"A message from from to to.\",\n  \"from\": {\n    \"mobile_phone_number\": \"+9722398746\",\n    \"nickname\": \"Smokey\"\n  },\n  \"to\": {\n    \"legal_name\": \"Thomas Andrew Smith\",\n    \"kyc_document\": {\n      \"type\": \"5\",\n      \"number\": \"HU6876273\"\n    },\n    \"date_of_birth\": \"100101\",\n    \"mobile_phone_number\": \"+9722398746\"\n  }\n}"
 				},
 				"url": {
 					"raw": "https://available.openbankproject.com/obp/v3.0.0/custom/banks/10/accounts/3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98/owner/transaction-request-types/TRANSFER_TO_ATM/transaction-requests",
