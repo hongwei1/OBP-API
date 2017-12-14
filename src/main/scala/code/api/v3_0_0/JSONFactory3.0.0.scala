@@ -457,20 +457,31 @@ object JSONFactory300{
   }
 
   // following are create core transactions, without the meta data parts
-  def createCoreTransactionsJSON(transactions: List[ModeratedTransaction]) : CoreTransactionsJsonV300 = {
-    CoreTransactionsJsonV300(transactions.map(createCoreTransactionJSON))
+  def createCoreTransactionsJSON(transactionsCore: List[ModeratedTransactionCore]) : CoreTransactionsJsonV300 = {
+    CoreTransactionsJsonV300(transactionsCore.map(createCoreTransactionJSON))
   }
 
-  def createCoreTransactionJSON(transaction : ModeratedTransaction) : CoreTransactionJsonV300 = {
+  def createCoreTransactionJSON(transactionCore : ModeratedTransactionCore) : CoreTransactionJsonV300 = {
     CoreTransactionJsonV300(
-      id = transaction.id.value,
-      account = transaction.bankAccount.map(createThisAccountJSON).getOrElse(null),
-      counterparty = transaction.otherBankAccount.map(createCoreCounterparty).getOrElse(null),
-      details = JSONFactory200.createCoreTransactionDetailsJSON(transaction)
+      id = transactionCore.id.value,
+      account = transactionCore.bankAccount.map(createThisAccountJSON).getOrElse(null),
+      counterparty = transactionCore.otherBankAccount.map(createCoreCounterparty).getOrElse(null),
+      details = createCoreTransactionDetailsJSON(transactionCore)
+    )
+  }
+  
+  def createCoreTransactionDetailsJSON(transactionCore : ModeratedTransactionCore) : CoreTransactionDetailsJSON = {
+    CoreTransactionDetailsJSON(
+      `type` = stringOptionOrNull(transactionCore.transactionType),
+      description = stringOptionOrNull(transactionCore.description),
+      posted = transactionCore.startDate.getOrElse(null),
+      completed = transactionCore.finishDate.getOrElse(null),
+      new_balance = createAmountOfMoneyJSON(transactionCore.currency, transactionCore.balance),
+      value = createAmountOfMoneyJSON(transactionCore.currency, transactionCore.amount.map(_.toString))
     )
   }
 
-  def createCoreCounterparty(bankAccount : ModeratedOtherBankAccount) : CoreCounterpartyJsonV300 = {
+  def createCoreCounterparty(bankAccount : ModeratedOtherBankAccountCore) : CoreCounterpartyJsonV300 = {
     CoreCounterpartyJsonV300(
       id = bankAccount.id,
       bank_routing = BankRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),

@@ -31,7 +31,7 @@ class RemotedataCounterpartiesActor extends Actor with ObpActorHelper with MdcLo
                                description: String,
                                bespoke: List[PostCounterpartyBespoke]
     ) =>
-      logger.debug("createCounterparty(" + createdByUserId + ", " + thisBankId + ", " + thisAccountId + ", " + thisViewId + ", " + name + ", "
+      logger.debug("createCounterparty(" +createdByUserId + ", " + thisBankId + ", " + thisAccountId + ", " + thisViewId + ", " + name + ", "
                     + otherAccountRoutingScheme +", "+ otherAccountRoutingAddress +", "+ otherBankRoutingScheme +", "+ otherBankRoutingAddress +", "+ otherBranchRoutingScheme+
                     ", "+ otherBranchRoutingAddress+ ", "+ isBeneficiary+", "+ otherAccountSecondaryRoutingScheme+", "+ otherAccountSecondaryRoutingAddress+", "+ description+", "+ bespoke+")")
       sender ! extractResult(mapper.createCounterparty(

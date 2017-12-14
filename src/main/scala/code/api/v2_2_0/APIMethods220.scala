@@ -5,14 +5,12 @@ import java.util.{Date, Locale, UUID}
 
 import code.actorsystem.ObpActorConfig
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
-import code.api.util.APIUtil.{emptyObjectJson, _}
+import code.api.util.APIUtil._
 import code.api.util.ApiRole._
-import code.api.util.ApiSession.updateSessionContext
 import code.api.util.ErrorMessages.{BankAccountNotFound, _}
-import code.api.util.{ApiRole, ErrorMessages}
+import code.api.util.{APIUtil, ApiRole, ErrorMessages}
 import code.api.v2_1_0._
 import code.api.v2_2_0.JSONFactory220.transformV220ToBranch
-import code.api.v3_0_0.JSONFactory300
 import code.bankconnectors._
 import code.bankconnectors.vMar2017.JsonFactory_vMar2017
 import code.consumer.Consumers
@@ -31,8 +29,6 @@ import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 
 
@@ -306,6 +302,9 @@ trait APIMethods220 {
             canAddCounterparty <- booleanToBox(view.canAddCounterparty == true, s"${ViewNoPermission}canAddCounterparty")
             canUserAccessView <- Full(account.permittedViews(user).find(_ == viewId)) ?~! UserNoPermissionAccessView
             counterparties <- Connector.connector.vend.getCounterparties(bankId,accountId,viewId)
+            //Here we need create the metadata for all the explicit counterparties. maybe show them in json response.  
+            //Note: actually we need update all the counterparty metadata when they from adapter. Some counterparties may be the first time to api, there is no metadata.
+            _ <- tryo {for{counterparty <-counterparties}Counterparties.counterparties.vend.getOrCreateMetadata(bankId, accountId, counterparty.counterpartyId, counterparty.name)} ?~! CreateOrUpdateCounterpartyMetadataError 
           } yield {
             val counterpartiesJson = JSONFactory220.createCounterpartiesJSON(counterparties)
             successJsonResponse(Extraction.decompose(counterpartiesJson))
@@ -325,7 +324,7 @@ trait APIMethods220 {
          |
          |${authenticationRequiredMessage(true)}""",
       emptyObjectJson,
-      counterpartyJsonV220,
+      counterpartyWithMetadataJson,
       List(UserNotLoggedIn, BankNotFound, UnknownError),
       Catalogs(Core, PSD2, OBWG),
       List(apiTagAccount)
@@ -341,9 +340,10 @@ trait APIMethods220 {
             view <- View.fromUrl(viewId, account)?~! ViewNotFound
             canAddCounterparty <- booleanToBox(view.canAddCounterparty == true, s"${ViewNoPermission}canAddCounterparty")
             canUserAccessView <- Full(account.permittedViews(user).find(_ == viewId)) ?~! UserNoPermissionAccessView
+            counterpartyMetadata <- Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyId.value) ?~! CounterpartyMetadataNotFound
             counterparty <- Connector.connector.vend.getCounterpartyByCounterpartyId(counterpartyId)
           } yield {
-            val counterpartyJson = JSONFactory220.createCounterpartyJSON(counterparty)
+            val counterpartyJson = JSONFactory220.createCounterpartyWithMetadataJSON(counterparty,counterpartyMetadata)
             successJsonResponse(Extraction.decompose(counterpartyJson))
           }
       }
@@ -1019,7 +1019,7 @@ trait APIMethods220 {
           |${authenticationRequiredMessage(true)}
          |""",
       postCounterpartyJSON,
-      counterpartyJsonV220,
+      counterpartyWithMetadataJson,
       List(
         UserNotLoggedIn,
         InvalidAccountIdFormat,
@@ -1052,6 +1052,7 @@ trait APIMethods220 {
             checkAvailable <- tryo(assert(Counterparties.counterparties.vend.
               checkCounterpartyAvailable(postJson.name,bankId.value, accountId.value,viewId.value) == true)
             ) ?~! CounterpartyAlreadyExists
+
             counterparty <- Connector.connector.vend.createCounterparty(
               name=postJson.name,
               description=postJson.description,
@@ -1070,13 +1071,11 @@ trait APIMethods220 {
               isBeneficiary=postJson.is_beneficiary,
               bespoke=postJson.bespoke
             )
-          //            Now just comment the following lines, keep the same return tpyle of  V220 "getCounterpartiesForAccount".
-          //            metadata <- Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterparty.counterpartyId) ?~! "Cannot find the metadata"
-          //            moderated <- Connector.connector.vend.getCounterparty(bankId, accountId, counterparty.counterpartyId).flatMap(oAcc => view.moderate(oAcc))
+          
+            counterpartyMetadata <- Counterparties.counterparties.vend.getOrCreateMetadata(bankId, accountId, counterparty.counterpartyId, postJson.name) ?~! CreateOrUpdateCounterpartyMetadataError
+  
           } yield {
-            val list = JSONFactory220.createCounterpartyJSON(counterparty)
-            //            Now just comment the following lines, keep the same return tpyle of  V220 "getCounterpartiesForAccount".
-            //            val list = createCounterpartJSON(moderated, metadata, couterparty)
+            val list = JSONFactory220.createCounterpartyWithMetadataJSON(counterparty,counterpartyMetadata)
             successJsonResponse(Extraction.decompose(list))
           }
       }
@@ -1158,89 +1157,6 @@ trait APIMethods220 {
 
  */
 
-
-    resourceDocs += ResourceDoc(
-      getCustomersForUser,
-      implementedInApiVersion,
-      "getCustomersForUser",
-      "GET",
-      "/users/current/customers",
-      "Get Customers for Current User",
-      """Gets all Customers that are linked to a User.
-        |
-        |Authentication via OAuth is required.""",
-      emptyObjectJson,
-      customerJSONs, 
-      List(
-        UserNotLoggedIn,
-        UserCustomerLinksNotFoundForUser,
-        UnknownError
-      ),
-      Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagCustomer, apiTagUser))
-
-    lazy val getCustomersForUser : PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
-      case "users" :: "current" :: "customers" :: Nil JsonGet _ => {
-        _ => {
-          for {
-            (user, sessioContext) <- extractCallContext(UserNotLoggedIn)
-            u <- unboxFullAndWrapIntoFuture{ user }
-            customers <- Connector.connector.vend.getCustomersByUserIdFuture(u.userId)(sessioContext) map {
-              x => fullBoxOrException(x ?~! ConnectorEmptyResponse)
-            } map { unboxFull(_) }
-          } yield {
-            (JSONFactory210.createCustomersJson(customers), getGatewayLoginHeader(sessioContext))
-          }
-        }
-      }
-    }
-  
-    resourceDocs += ResourceDoc(
-      getCoreTransactionsForBankAccount,
-      implementedInApiVersion,
-      "getCoreTransactionsForBankAccount",
-      "GET",
-      "/my/banks/BANK_ID/accounts/ACCOUNT_ID/transactions",
-      "Get Transactions for Account (Core)",
-      """Returns transactions list (Core info) of the account specified by ACCOUNT_ID.
-        |
-        |Authentication is required.
-        |
-        |Possible custom headers for pagination:
-        |
-        |* obp_sort_by=CRITERIA ==> default value: "completed" field
-        |* obp_sort_direction=ASC/DESC ==> default value: DESC
-        |* obp_limit=NUMBER ==> default value: 50
-        |* obp_offset=NUMBER ==> default value: 0
-        |* obp_from_date=DATE => default value: date of the oldest transaction registered (format below)
-        |* obp_to_date=DATE => default value: date of the newest transaction registered (format below)
-        |
-        |**Date format parameter**: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" (2014-07-01T00:00:00.000Z) ==> time zone is UTC.""",
-      emptyObjectJson,
-      moderatedCoreAccountJsonV300,
-      List(BankAccountNotFound, UnknownError),
-      Catalogs(Core, PSD2, OBWG),
-      List(apiTagTransaction, apiTagAccount))
-  
-    //Note: we already have the method: getTransactionsForBankAccount in V121.
-    //The only difference here is "Core implies 'owner' view" 
-    lazy val getCoreTransactionsForBankAccount : PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
-      //get transactions
-      case "my" :: "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: "transactions" :: Nil JsonGet json => {
-        user =>
-        
-          for {
-            params <- getTransactionParams(json)
-            bankAccount <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            // Assume owner view was requested
-            view <- View.fromUrl( ViewId("owner"), bankAccount)
-            transactions <- bankAccount.getModeratedTransactions(user, view, params : _*)(None)
-          } yield {
-            val json = JSONFactory300.createCoreTransactionsJSON(transactions)
-            successJsonResponse(Extraction.decompose(json))
-          }
-      }
-    }
   }
 }
 
