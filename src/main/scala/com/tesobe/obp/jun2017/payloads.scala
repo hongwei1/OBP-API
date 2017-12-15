@@ -125,8 +125,11 @@ case class InboundGetAtms(authInfo: AuthInfo, data: List[InboundAtmJune2017])
   */
 
 case class Status(
-                   errorCode: String,
-                   backendMessages: List[InboundStatusMessage]
+                   errorCode: String = "",
+                   backendMessages: List[InboundStatusMessage] = List(
+                     InboundStatusMessage("ESB","Success", "0", "OK"),
+                     InboundStatusMessage("MF","Success", "0", "OK")
+                   )
                  )
 
 case class CoreAccount(
