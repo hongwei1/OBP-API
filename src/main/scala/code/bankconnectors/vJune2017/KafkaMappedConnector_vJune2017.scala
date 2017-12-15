@@ -49,7 +49,7 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.{Extraction, MappingException}
 import net.liftweb.util.Helpers.tryo
 
-import scala.collection.immutable.{List, Nil, Seq}
+import scala.collection.immutable.{List, Nil}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
