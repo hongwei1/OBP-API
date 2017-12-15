@@ -5,13 +5,11 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import code.api.util.APIUtil.InboundMessageBase
-import code.api.v1_2_1.AccountRoutingJsonV121
-import code.api.v2_1_0.PostCounterpartyBespoke
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
-import code.customer.{CreditLimit, CreditRating, Customer, CustomerFaceImage}
-import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
+import code.branches.Branches._
 import code.common.{Address, Location, Meta, Routing}
+import code.customer.{CreditLimit, CreditRating, Customer, CustomerFaceImage}
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData
@@ -212,7 +210,7 @@ case class OutboundCounterparty(
   otherBranchRoutingScheme: String,
   otherBranchRoutingAddress: String,
   isBeneficiary:Boolean,
-  bespoke: List[PostCounterpartyBespoke]
+  bespoke: List[CounterpartyBespoke]
 )
 
 case class InternalOutboundGetCounterparties(
@@ -257,7 +255,7 @@ case class InternalCounterparty(
   description: String,
   otherAccountSecondaryRoutingScheme: String,
   otherAccountSecondaryRoutingAddress: String,
-  bespoke: List[PostCounterpartyBespoke]
+  bespoke: List[CounterpartyBespoke]
 ) extends CounterpartyTrait
 
 
