@@ -40,8 +40,10 @@ import code.model._
 import code.model.dataAccess._
 import code.transactionrequests.TransactionRequests._
 import code.util.Helper.MdcLoggable
+import code.api.util.APIUtil.getSecondsCache
 import com.google.common.cache.CacheBuilder
 import net.liftweb.common.{Box, _}
+import net.liftweb.json.{Extraction, MappingException}
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.{Extraction, MappingException}
@@ -56,6 +58,7 @@ import scala.language.postfixOps
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
 import scalacache.memoization.memoizeSync
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with MdcLoggable {
   
@@ -242,11 +245,10 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         kafkaMessage <- processToBox[OutboundGetBanks](req)
         inboundGetBanks <- tryo{kafkaMessage.extract[InboundGetBanks]} ?~! s"$InboundGetBanks extract error"
         (inboundBanks, status) <- Full(inboundGetBanks.data, inboundGetBanks.status)
-      } yield{
+      } yield {
         (inboundBanks, status)
       }
-      
-      
+
       logger.debug(s"Kafka getBanks Res says:  is: $Box")
       val res = box match {
         case Full((banks, status)) if (status.errorCode=="") =>
@@ -297,7 +299,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
       logger.debug(s"Kafka getBank Req says:  is: $req")
   
-      val box = for {
+      val box: Box[(InboundBank, Status)] = for {
         kafkaMessage <- processToBox[OutboundGetBank](req)
         inboundGetBank <- tryo{kafkaMessage.extract[InboundGetBank]} ?~! s"$InboundGetBank extract error"
         (inboundBank, status) <- Full(inboundGetBank.data, inboundGetBank.status)

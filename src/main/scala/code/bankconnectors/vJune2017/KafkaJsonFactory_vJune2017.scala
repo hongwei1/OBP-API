@@ -5,13 +5,10 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import code.api.util.APIUtil.InboundMessageBase
-import code.api.v1_2_1.AccountRoutingJsonV121
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
-import code.customer.{Customer, CreditLimit, CreditRating, CustomerFaceImage}
-import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
+import code.branches.Branches._
 import code.common.{Address, Location, Meta, Routing}
-
 import code.customer.{CreditLimit, CreditRating, Customer, CustomerFaceImage}
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
