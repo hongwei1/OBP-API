@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "leumi-local-mysql",
-		"_postman_id": "4798971e-779f-4ca3-b5ca-9dad9e538366",
+		"_postman_id": "3a0204d4-5cc4-0baa-8a67-215bf0ec47cf",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -152,7 +152,7 @@
 			},
 			"response": [
 				{
-					"id": "91acbf4d-55df-47a1-b673-e5ab2d1724fc",
+					"id": "9f356e7f-dde6-4cc1-a3fb-7096d048f16b",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -346,7 +346,7 @@
 			},
 			"response": [
 				{
-					"id": "a7a45ed0-6f21-4645-8788-09c1e2f24706",
+					"id": "cb21cf51-12af-4c1e-b44e-fd850108015d",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -934,8 +934,7 @@
 						"owner",
 						"transaction-requests"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -990,8 +989,7 @@
 						"b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM",
 						"transaction"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -1053,7 +1051,7 @@
 			},
 			"response": [
 				{
-					"id": "bc70fa0f-c6d6-4e7d-9fff-69cdc83980c8",
+					"id": "b28846f9-9be1-41d7-b09a-de63aa3b18d3",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -1435,7 +1433,7 @@
 			},
 			"response": [
 				{
-					"id": "67b73e7e-dbc2-4532-91f8-cee04adb2c00",
+					"id": "e172f64d-dc4d-4bd5-9545-beced307a44e",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1698,7 +1696,7 @@
 			},
 			"response": [
 				{
-					"id": "ce058974-4fa1-481a-a768-1c0fd9644838",
+					"id": "8c3acce8-23ab-403c-b23b-8f7ced445d3d",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1901,7 +1899,7 @@
 			},
 			"response": [
 				{
-					"id": "7204bac9-bddd-47ac-80ad-e69843561cdf",
+					"id": "5973a62b-a0fb-4da1-b81f-baad5c8ae404",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2210,7 +2208,7 @@
 			},
 			"response": [
 				{
-					"id": "8403295a-9819-413e-93de-4fe618f1e3b1",
+					"id": "8fad827a-45f2-40ed-9d67-b4001165efce",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2408,7 +2406,7 @@
 			},
 			"response": [
 				{
-					"id": "77b7a5ce-7dae-458b-b04f-609176ffbeff",
+					"id": "7f9d0da2-f1e1-47bd-9e24-9e5e36a4b387",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2701,7 +2699,8 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"tests[\"Body matches string\"] = responseBody.has(\"country_code\");"
 						]
 					}
 				}
@@ -2739,8 +2738,7 @@
 						"10",
 						"branches"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2774,7 +2772,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/branches/10",
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks/10/branches/957",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -2789,10 +2787,9 @@
 						"banks",
 						"10",
 						"branches",
-						"10"
+						"957"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2842,8 +2839,7 @@
 						"10",
 						"atms"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},
@@ -2894,8 +2890,7 @@
 						"atms",
 						"10"
 					]
-				},
-				"description": ""
+				}
 			},
 			"response": []
 		},

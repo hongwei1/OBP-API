@@ -421,26 +421,26 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getLobbyFromLeumiBranch(leumiBranch: LeumiBranch): Lobby = {
     Lobby(List(
-      OpeningTimes(leumiBranch.shaot.ob1,leumiBranch.shaot.cb1),
-      OpeningTimes(leumiBranch.shaot.oe1, leumiBranch.shaot.ce1)),
+      OpeningTimes(leumiBranch.shaot.ob1.patch(2,":",0),leumiBranch.shaot.cb1.patch(2,":",0)),
+      OpeningTimes(leumiBranch.shaot.oe1.patch(2,":",0), leumiBranch.shaot.ce1.patch(2,":",0))),
       List(
-        OpeningTimes(leumiBranch.shaot.ob2,leumiBranch.shaot.cb2),
-        OpeningTimes(leumiBranch.shaot.oe2, leumiBranch.shaot.ce2)),
+        OpeningTimes(leumiBranch.shaot.ob2.patch(2,":",0),leumiBranch.shaot.cb2.patch(2,":",0)),
+        OpeningTimes(leumiBranch.shaot.oe2.patch(2,":",0), leumiBranch.shaot.ce2.patch(2,":",0))),
       List(
-        OpeningTimes(leumiBranch.shaot.ob3,leumiBranch.shaot.cb3),
-        OpeningTimes(leumiBranch.shaot.oe3, leumiBranch.shaot.ce3)),
+        OpeningTimes(leumiBranch.shaot.ob3.patch(2,":",0),leumiBranch.shaot.cb3.patch(2,":",0)),
+        OpeningTimes(leumiBranch.shaot.oe3.patch(2,":",0), leumiBranch.shaot.ce3.patch(2,":",0))),
       List(
-        OpeningTimes(leumiBranch.shaot.ob4,leumiBranch.shaot.cb4),
-        OpeningTimes(leumiBranch.shaot.oe4, leumiBranch.shaot.ce4)),
+        OpeningTimes(leumiBranch.shaot.ob4.patch(2,":",0),leumiBranch.shaot.cb4.patch(2,":",0)),
+        OpeningTimes(leumiBranch.shaot.oe4.patch(2,":",0), leumiBranch.shaot.ce4.patch(2,":",0))),
       List(
-        OpeningTimes(leumiBranch.shaot.ob5,leumiBranch.shaot.cb5),
-        OpeningTimes(leumiBranch.shaot.oe5, leumiBranch.shaot.ce5)),
+        OpeningTimes(leumiBranch.shaot.ob5.patch(2,":",0),leumiBranch.shaot.cb5.patch(2,":",0)),
+        OpeningTimes(leumiBranch.shaot.oe5.patch(2,":",0), leumiBranch.shaot.ce5.patch(2,":",0))),
       List(
-        OpeningTimes(leumiBranch.shaot.ob6,leumiBranch.shaot.cb6),
-        OpeningTimes(leumiBranch.shaot.oe6, leumiBranch.shaot.ce6)),
+        OpeningTimes(leumiBranch.shaot.ob6.patch(2,":",0),leumiBranch.shaot.cb6.patch(2,":",0)),
+        OpeningTimes(leumiBranch.shaot.oe6.patch(2,":",0), leumiBranch.shaot.ce6.patch(2,":",0))),
       List(
-        OpeningTimes(leumiBranch.shaot.ob7,leumiBranch.shaot.cb7),
-        OpeningTimes(leumiBranch.shaot.oe7, leumiBranch.shaot.ce7))
+        OpeningTimes(leumiBranch.shaot.ob7.patch(2,":",0),leumiBranch.shaot.cb7.patch(2,":",0)),
+        OpeningTimes(leumiBranch.shaot.oe7.patch(2,":",0), leumiBranch.shaot.ce7.patch(2,":",0)))
     )
   }
   
@@ -462,26 +462,26 @@ object LeumiDecoder extends Decoder with StrictLogging {
       location = Location(leumiBranch.x.toDouble,leumiBranch.y.toDouble),
       meta = Meta(License(id = "pddl", name = "Open Data Commons Public Domain Dedication and License (PDDL)")),
 
-      OpeningTimeOnMonday = Some(leumiBranch.shaot.ob1),
-      ClosingTimeOnMonday = Some(leumiBranch.shaot.ce1),
+      OpeningTimeOnMonday = Some(leumiBranch.shaot.ob1.patch(2,":",0)),
+      ClosingTimeOnMonday = Some(leumiBranch.shaot.ce1.patch(2,":",0)),
 
-      OpeningTimeOnTuesday = Some(leumiBranch.shaot.ob2),
-      ClosingTimeOnTuesday = Some(leumiBranch.shaot.ce2),
+      OpeningTimeOnTuesday = Some(leumiBranch.shaot.ob2.patch(2,":",0)),
+      ClosingTimeOnTuesday = Some(leumiBranch.shaot.ce2.patch(2,":",0)),
 
-      OpeningTimeOnWednesday = Some(leumiBranch.shaot.ob3),
-      ClosingTimeOnWednesday = Some(leumiBranch.shaot.ce3),
+      OpeningTimeOnWednesday = Some(leumiBranch.shaot.ob3.patch(2,":",0)),
+      ClosingTimeOnWednesday = Some(leumiBranch.shaot.ce3.patch(2,":",0)),
 
-      OpeningTimeOnThursday = Some(leumiBranch.shaot.ob4),
-      ClosingTimeOnThursday = Some(leumiBranch.shaot.ce4),
+      OpeningTimeOnThursday = Some(leumiBranch.shaot.ob4.patch(2,":",0)),
+      ClosingTimeOnThursday = Some(leumiBranch.shaot.ce4.patch(2,":",0)),
 
-      OpeningTimeOnFriday = Some(leumiBranch.shaot.ob5),
-      ClosingTimeOnFriday = Some(leumiBranch.shaot.ce5),
+      OpeningTimeOnFriday = Some(leumiBranch.shaot.ob5.patch(2,":",0)),
+      ClosingTimeOnFriday = Some(leumiBranch.shaot.ce5.patch(2,":",0)),
 
-      OpeningTimeOnSaturday  = Some(leumiBranch.shaot.ob6),
-      ClosingTimeOnSaturday = Some(leumiBranch.shaot.ce6),
+      OpeningTimeOnSaturday  = Some(leumiBranch.shaot.ob6.patch(2,":",0)),
+      ClosingTimeOnSaturday = Some(leumiBranch.shaot.ce6.patch(2,":",0)),
 
-      OpeningTimeOnSunday = Some(leumiBranch.shaot.ob7),
-      ClosingTimeOnSunday = Some(leumiBranch.shaot.ce7),
+      OpeningTimeOnSunday = Some(leumiBranch.shaot.ob7.patch(2,":",0)),
+      ClosingTimeOnSunday = Some(leumiBranch.shaot.ce7.patch(2,":",0)),
       isAccessible = Some(leumiBranch.accessibility),
 
       locatedAt = Some(""),
