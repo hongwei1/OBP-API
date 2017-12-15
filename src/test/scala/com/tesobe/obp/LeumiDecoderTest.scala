@@ -233,12 +233,21 @@ class LeumiDecoderTest  extends ServerSetup {
     result should be (InboundGetCounterparty(authInfoIsFirstTrue, InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
     ))
   }
+
+  test("getCounterparty returns correct result for ")  {
+    val result = getCounterparty(OutboundGetCounterparty(authInfoIsFirstTrue, "10",
+      accountId1,"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I"))
+
+    result should be (InboundGetCounterparty(authInfoIsFirstTrue, InternalCounterparty("",List(InboundStatusMessage("","","","")),"","         יעכטגאט","10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","","I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I","","7571","","10","","601",true,"                     יעכטגאט","","",List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))),
+    ))
+  }
+  
   
   test("getBranches returns correct result for first branch of local test stub") {
     val result = getBranches(OutboundGetBranches(authInfoIsFirstTrue, "10"))
     result.data.head should be (
 
-      InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1230"), OpeningTimes("0000","0000")),List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some(""))
+      InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","12:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some(""))
     )
   }
   
@@ -249,7 +258,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getBranch works for local test stub"){
     getBranch(OutboundGetBranch(authInfoIsFirstTrue, "10", "957")).data should be (
-    InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1430"), OpeningTimes("0000","0000")),List(OpeningTimes("0830","1300"), OpeningTimes("1600","1815")),List(OpeningTimes("0830","1230"), OpeningTimes("0000","0000")),List(OpeningTimes("0000","0000"), OpeningTimes("0000","0000")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
+    InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","12:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
   }
   
 

@@ -1554,6 +1554,29 @@ object LeumiDecoder extends Decoder with StrictLogging {
     InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, internalCounterparty)
       
   }
+
+  def getCounterparty(outboundGetCounterparty: OutboundGetCounterparty) = {
+    
+    val thisAccountId = outboundGetCounterparty.thisAccountId
+
+    if  (thisAccountId != checkBankAccountExists(
+      OutboundCheckBankAccountExists(
+        outboundGetCounterparty.authInfo,
+        outboundGetCounterparty.thisBankId,
+        thisAccountId)).data.accountId) throw new InvalidCounterPartyIdException
+
+    val counterparties = getCounterpartiesForAccount(OutboundGetCounterparties(
+      outboundGetCounterparty.authInfo,
+      InternalOutboundGetCounterparties(
+        "10",
+        thisAccountId,
+        ""))).data
+
+    val internalCounterparty = counterparties.find(x =>
+        x.counterpartyId == outboundGetCounterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterparty.counterpartyId}"))
+    InboundGetCounterparty(outboundGetCounterparty.authInfo, internalCounterparty)
+
+  }
   
   def getBranches(outboundGetBranches: OutboundGetBranches): InboundGetBranches = {
     

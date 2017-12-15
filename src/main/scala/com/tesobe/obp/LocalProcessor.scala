@@ -594,6 +594,59 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
 
+  def getCounterpartyFn: Business = {msg =>
+    logger.debug(s"Processing getCounterpartyFn ${msg.record.value}")
+    try {
+      /* call Decoder for extracting data from source file */
+      val response: (OutboundGetCounterparty => InboundGetCounterparty) = { q => com.tesobe.obp.june2017.LeumiDecoder.getCounterparty(q)}
+      val r = decode[OutboundGetCounterparty](msg.record.value()) match {
+        case Left(e) => throw new RuntimeException(s"Please check `$OutboundGetCounterparty` case class for OBP-API and Adapter sides : ", e);
+        case Right(x) => response(x).asJson.noSpaces
+      }
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("getCounterpartyFn-unknown error", m)
+
+        val errorBody = InboundGetCounterparty(AuthInfo("","",""), InternalCounterparty(
+          errorCode = m.getMessage,
+          backendMessages = List(InboundStatusMessage(
+            "ESB",
+            "Failure",
+            "",
+            ""),
+            InboundStatusMessage(
+              "MF",
+              "Failure",
+              "",
+              "")
+          ),
+          createdByUserId = "",
+          name = "",
+          thisBankId = "",
+          thisAccountId = "",
+          thisViewId = "",
+          counterpartyId = "",
+          otherAccountRoutingScheme= "",
+          otherAccountRoutingAddress= "",
+          otherBankRoutingScheme= "",
+          otherBankRoutingAddress= "",
+          otherBranchRoutingScheme= "",
+          otherBranchRoutingAddress= "",
+          isBeneficiary = false,
+          description = "",
+          otherAccountSecondaryRoutingScheme= "",
+          otherAccountSecondaryRoutingAddress= "",
+          bespoke = List(PostCounterpartyBespoke("englishName", ""),
+            PostCounterpartyBespoke("englishDescription", "")
+
+
+          )))
+
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
+
   def getBranchesFn: Business = { msg =>
     try {
       logger.debug(s"Processing getBranchesFn ${msg.record.value}")

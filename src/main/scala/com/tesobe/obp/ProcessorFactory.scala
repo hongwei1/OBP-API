@@ -49,6 +49,7 @@ trait ProcessorFactory {
         BusinessTopic(createTopicByClassName(OutboundGetCustomersByUserId.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCustomerFn),
         BusinessTopic(createTopicByClassName(OutboundGetCounterparties.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCounterpartiesFn),
         BusinessTopic(createTopicByClassName(OutboundGetCounterpartyByCounterpartyId.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCounterpartyByIdFn),
+        BusinessTopic(createTopicByClassName(OutboundGetCounterparty.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getCounterpartyFn),
         BusinessTopic(createTopicByClassName(OutboundGetBranches.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getBranchesFn),
         BusinessTopic(createTopicByClassName(OutboundGetBranch.getClass.getSimpleName), LocalProcessor()(executionContext, materializer).getBranchFn)
       )
