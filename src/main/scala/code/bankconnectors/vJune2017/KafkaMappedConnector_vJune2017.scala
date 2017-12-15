@@ -23,14 +23,12 @@ Osloerstrasse 16/17
 Berlin 13359, Germany
 */
 
-import java.lang
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
-import code.api.util.APIUtil.{MessageDoc, fullBoxOrException, saveConnectorMetric}
+import code.api.util.APIUtil.{MessageDoc, getSecondsCache, saveConnectorMetric}
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ApiSession, ErrorMessages, SessionContext}
-import code.api.v2_1_0.PostCounterpartyBespoke
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
 import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
@@ -40,25 +38,24 @@ import code.kafka.KafkaHelper
 import code.metadata.counterparties.CounterpartyTrait
 import code.model._
 import code.model.dataAccess._
-import code.transactionrequests.TransactionRequests.{TransactionRequest, TransactionRequestAccount, TransactionRequestBody, TransactionRequestChallenge, TransactionRequestCharge}
+import code.transactionrequests.TransactionRequests._
 import code.util.Helper.MdcLoggable
-import code.api.util.APIUtil.getSecondsCache
 import com.google.common.cache.CacheBuilder
 import net.liftweb.common.{Box, _}
-import net.liftweb.json.{Extraction, MappingException}
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json.{Extraction, MappingException}
 import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.{List, Nil, Seq}
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
 import scalacache.memoization.memoizeSync
-import scala.concurrent.ExecutionContext.Implicits.global
 
 trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with MdcLoggable {
   
@@ -223,9 +220,10 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetBanks(
         authInfoExample,
-        InboundBank(
+        Status(
           errorCode = errorCodeExample,
-          inboundStatusMessagesExample,
+          inboundStatusMessagesExample),
+        InboundBank(
           bankId = "gh.29.uk",
           name = "sushan",
           logo = "TESOBE",
@@ -240,21 +238,21 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val req = OutboundGetBanks(AuthInfo(currentResourceUserId, getUsername, getCbsToken))
       logger.info(s"Kafka getBanks Req is: $req")
       
-      val box = for {
+      val box: Box[(List[InboundBank], Status)] = for {
         kafkaMessage <- processToBox[OutboundGetBanks](req)
         inboundGetBanks <- tryo{kafkaMessage.extract[InboundGetBanks]} ?~! s"$InboundGetBanks extract error"
-        inboundBanks <- Full(inboundGetBanks.data)
+        (inboundBanks, status) <- Full(inboundGetBanks.data, inboundGetBanks.status)
       } yield{
-        inboundBanks
+        (inboundBanks, status)
       }
       
       
       logger.debug(s"Kafka getBanks Res says:  is: $Box")
       val res = box match {
-        case Full(list) if (list.head.errorCode=="") =>
-          Full(list map (new Bank2(_)))
-        case Full(list) if (list.head.errorCode!="") =>
-          Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:"+ list.head.backendMessages)
+        case Full((banks, status)) if (status.errorCode=="") =>
+          Full(banks map (new Bank2(_)))
+        case Full((banks, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse)
         case Failure(msg, e, c) =>
@@ -278,9 +276,10 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetBank(
         authInfoExample,
-        InboundBank(
+        Status(
           errorCodeExample,
-          inboundStatusMessagesExample,
+          inboundStatusMessagesExample),
+        InboundBank(
           bankId = "gh.29.uk",
           name = "sushan",
           logo = "TESOBE",
@@ -301,19 +300,19 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetBank](req)
         inboundGetBank <- tryo{kafkaMessage.extract[InboundGetBank]} ?~! s"$InboundGetBank extract error"
-        inboundBank <- Full(inboundGetBank.data)
-      } yield{
-        inboundBank
+        (inboundBank, status) <- Full(inboundGetBank.data, inboundGetBank.status)
+      } yield {
+        (inboundBank, status)
       }
       
       
       logger.debug(s"Kafka getBank Res says:  is: $Box") 
       
       box match {
-        case Full(list) if (list.errorCode=="") =>
-          Full(new Bank2(list))
-        case Full(list) if (list.errorCode!="") =>
-          Failure("INTERNAL-"+ list.errorCode+". + CoreBank-Status:"+ list.backendMessages)
+        case Full((bank, status)) if (status.errorCode=="") =>
+          Full((new Bank2(bank)))
+        case Full((_, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse)
         case Failure(msg, e, c) =>
@@ -1078,7 +1077,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           otherBranchRoutingScheme = "otherBranchRoutingScheme",
           otherBranchRoutingAddress = "otherBranchRoutingAddress",
           isBeneficiary = true,
-          bespoke = PostCounterpartyBespoke("key","value") ::Nil
+          bespoke = CounterpartyBespoke("key","value") ::Nil
         )
       )
     ),
@@ -1104,7 +1103,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           description= "String",
           otherAccountSecondaryRoutingScheme= "String",
           otherAccountSecondaryRoutingAddress= "String",
-          bespoke =  List(PostCounterpartyBespoke(
+          bespoke =  List(CounterpartyBespoke(
             key = "String",
             value = "String"
           ))
@@ -1128,7 +1127,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     otherBranchRoutingScheme: String,
     otherBranchRoutingAddress: String,
     isBeneficiary:Boolean,
-    bespoke: List[PostCounterpartyBespoke]
+    bespoke: List[CounterpartyBespoke]
   ): Box[CounterpartyTrait] = {
     val req = OutboundCreateCounterparty(
       authInfo = AuthInfo(currentResourceUserId, getUsername, getCbsToken),
@@ -1148,7 +1147,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         otherBranchRoutingScheme: String,
         otherBranchRoutingAddress: String,
         isBeneficiary:Boolean,
-        bespoke: List[PostCounterpartyBespoke]
+        bespoke: List[CounterpartyBespoke]
       )
     )
     logger.debug(s"Kafka createCounterparty Req says: is: $req")

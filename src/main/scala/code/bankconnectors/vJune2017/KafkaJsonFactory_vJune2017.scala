@@ -6,13 +6,13 @@ import java.util.{Date, Locale}
 
 import code.api.util.APIUtil.InboundMessageBase
 import code.api.v1_2_1.AccountRoutingJsonV121
-import code.api.v2_1_0.PostCounterpartyBespoke
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
 import code.customer.{Customer, CreditLimit, CreditRating, CustomerFaceImage}
 import code.branches.Branches.{Branch, BranchId, BranchT, DriveUp, DriveUpString, Lobby, LobbyString}
 import code.common.{Address, Location, Meta, Routing}
 
+import code.customer.{CreditLimit, CreditRating, Customer, CustomerFaceImage}
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData
@@ -79,8 +79,8 @@ case class OutboundGetCustomersByUserId(
 //AdapterInfo has no AuthInfo, because it just get data from Adapter, no need for AuthInfo
 case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
 case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
-case class InboundGetBanks(authInfo: AuthInfo, data: List[InboundBank])
-case class InboundGetBank(authInfo: AuthInfo, data: InboundBank)
+case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
+case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
 case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
 case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
@@ -113,7 +113,10 @@ case class InternalInboundCoreAccount(
   bank_id : String,
   account_routing: AccountRouting
 )
-
+case class Status(
+                   errorCode: String,
+                   backendMessages: List[InboundStatusMessage]
+                 )
 case class AuthInfo(userId: String, username: String, cbsToken: String, isFirst: Boolean = true)
 case class AccountRules(scheme: String, value: String)
 case class InboundAccountJune2017(
@@ -207,7 +210,7 @@ case class OutboundCounterparty(
   otherBranchRoutingScheme: String,
   otherBranchRoutingAddress: String,
   isBeneficiary:Boolean,
-  bespoke: List[PostCounterpartyBespoke]
+  bespoke: List[CounterpartyBespoke]
 )
 
 case class InternalOutboundGetCounterparties(
@@ -252,7 +255,7 @@ case class InternalCounterparty(
   description: String,
   otherAccountSecondaryRoutingScheme: String,
   otherAccountSecondaryRoutingAddress: String,
-  bespoke: List[PostCounterpartyBespoke]
+  bespoke: List[CounterpartyBespoke]
 ) extends CounterpartyTrait
 
 
