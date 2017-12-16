@@ -91,7 +91,7 @@ case class OutboundGetCounterparties(authInfo: AuthInfo, counterparty: InternalO
 case class OutboundGetCounterpartyByCounterpartyId(authInfo: AuthInfo, counterparty: OutboundGetCounterpartyById) extends TopicTrait
 case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundGetBranch(authInfo: AuthInfo, bankId: String, branchId: String) extends TopicTrait
-case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisAccountId: String, counterpartyId: String)
+case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisAccountId: String, counterpartyId: String) extends TopicTrait
 
 
 /**
