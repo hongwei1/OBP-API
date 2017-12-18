@@ -161,15 +161,14 @@ case class ThisAccountJsonV300(
   id: String,
   bank_routing: BankRoutingJsonV121,
   account_routing: AccountRoutingJsonV121,
-  holders: List[AccountHolderJSON],
-  kind: String
+  holders: List[AccountHolderJSON]
 )
 
 case class OtherAccountJsonV300(
   id: String,
+  holder: AccountHolderJSON,
   bank_routing: BankRoutingJsonV121,
   account_routing: AccountRoutingJsonV121,
-  kind: String,
   metadata: OtherAccountMetadataJSON
 )
 
@@ -191,15 +190,15 @@ case class TransactionsJsonV300(
 
 case class CoreCounterpartyJsonV300(
   id: String,
+  holder: AccountHolderJSON,
   bank_routing: BankRoutingJsonV121,
-  account_routing: AccountRoutingJsonV121,
-  kind: String
+  account_routing: AccountRoutingJsonV121
 )
 
 case class CoreTransactionJsonV300(
   id: String,
-  account: ThisAccountJsonV300,
-  counterparty: CoreCounterpartyJsonV300,
+  this_account: ThisAccountJsonV300,
+  other_account: CoreCounterpartyJsonV300,
   details: CoreTransactionDetailsJSON
 )
 
@@ -265,13 +264,13 @@ case class OpeningTimesV300(
                            )
 
 case class LobbyJsonV330(
-                          monday: List[OpeningTimesV300],
-                          tuesday: List[OpeningTimesV300],
-                          wednesday: List[OpeningTimesV300],
-                          thursday: List[OpeningTimesV300],
-                          friday: List[OpeningTimesV300],
-                          saturday: List[OpeningTimesV300],
-                          sunday: List[OpeningTimesV300]
+                        monday: OpeningTimesV300,
+                        tuesday: OpeningTimesV300,
+                        wednesday: OpeningTimesV300,
+                        thursday: OpeningTimesV300,
+                        friday: OpeningTimesV300,
+                        saturday: OpeningTimesV300,
+                        sunday: OpeningTimesV300
                         )
 
 case class DriveUpJsonV330(
@@ -324,7 +323,6 @@ case class BranchJsonV300(
                            branch_routing: BranchRoutingJsonV141,
                            // Easy access for people who use wheelchairs etc. "Y"=true "N"=false ""=Unknown
                            is_accessible : String,
-                           accessibleFeatures: String,
                            branch_type : String,
                            more_info : String,
                            phone_number : String
@@ -426,7 +424,6 @@ object JSONFactory300{
   def createThisAccountJSON(bankAccount : ModeratedBankAccount) : ThisAccountJsonV300 = {
     ThisAccountJsonV300(
       id = bankAccount.accountId.value,
-      kind = stringOptionOrNull(bankAccount.accountType),
       bank_routing = BankRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),
       account_routing = AccountRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),
       holders = bankAccount.owners.map(x => x.toList.map(holder => AccountHolderJSON(name = holder.name, is_alias = false))).getOrElse(null)
@@ -449,11 +446,16 @@ object JSONFactory300{
   def createOtherBankAccount(bankAccount : ModeratedOtherBankAccount) : OtherAccountJsonV300 = {
     OtherAccountJsonV300(
       id = bankAccount.id,
-      kind = stringOptionOrNull(bankAccount.kind),
+      holder = createAccountHolderJSON(bankAccount.label.display, bankAccount.isAlias),
       bank_routing = BankRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),
       account_routing = AccountRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),
       metadata = bankAccount.metadata.map(createOtherAccountMetaDataJSON).getOrElse(null)
     )
+  }
+  
+  def createOtherBankAccountsJson(otherBankAccounts : List[ModeratedOtherBankAccount]) : OtherAccountsJsonV300 =  {
+    val otherAccountJsonV300 : List[OtherAccountJsonV300] = otherBankAccounts.map(createOtherBankAccount)
+    OtherAccountsJsonV300(otherAccountJsonV300)
   }
 
   // following are create core transactions, without the meta data parts
@@ -464,8 +466,8 @@ object JSONFactory300{
   def createCoreTransactionJSON(transactionCore : ModeratedTransactionCore) : CoreTransactionJsonV300 = {
     CoreTransactionJsonV300(
       id = transactionCore.id.value,
-      account = transactionCore.bankAccount.map(createThisAccountJSON).getOrElse(null),
-      counterparty = transactionCore.otherBankAccount.map(createCoreCounterparty).getOrElse(null),
+      this_account = transactionCore.bankAccount.map(createThisAccountJSON).getOrElse(null),
+      other_account = transactionCore.otherBankAccount.map(createCoreCounterparty).getOrElse(null),
       details = createCoreTransactionDetailsJSON(transactionCore)
     )
   }
@@ -484,9 +486,9 @@ object JSONFactory300{
   def createCoreCounterparty(bankAccount : ModeratedOtherBankAccountCore) : CoreCounterpartyJsonV300 = {
     CoreCounterpartyJsonV300(
       id = bankAccount.id,
+      holder = createAccountHolderJSON(bankAccount.label.display, bankAccount.isAlias),
       bank_routing = BankRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),
-      account_routing = AccountRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress)),
-      kind = stringOptionOrNull(bankAccount.kind)
+      account_routing = AccountRoutingJsonV121(stringOptionOrNull(bankAccount.accountRoutingScheme),stringOptionOrNull(bankAccount.accountRoutingAddress))
     )
   }
 
