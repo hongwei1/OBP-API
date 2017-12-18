@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import code.api.util.APIUtil.InboundMessageBase
+import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
 import code.branches.Branches._
@@ -36,6 +37,7 @@ case class OutboundGetTransactions(authInfo: AuthInfo,bankId: String, accountId:
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
 case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundGetBranch(authInfo: AuthInfo, bankId: String, branchId: String)extends TopicTrait
+case class OutboundGetAtms(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundCreateChallengeJune2017(
   authInfo: AuthInfo,
   bankId: String,
@@ -94,6 +96,8 @@ case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalCustomer])
 case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo, data: InboundBranchVJune2017)
+case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
+
 
 
 
@@ -305,6 +309,42 @@ case class  InboundBranchVJune2017(
                            moreInfo : Option[String],
                            phoneNumber : Option[String]
                          ) extends BranchT
+
+case class InboundAtmJune2017(
+                               atmId : AtmId,
+                               bankId : BankId,
+                               name : String,
+                               address : Address,
+                               location : Location,
+                               meta : Meta,
+
+                               OpeningTimeOnMonday : Option[String],
+                               ClosingTimeOnMonday : Option[String],
+
+                               OpeningTimeOnTuesday : Option[String],
+                               ClosingTimeOnTuesday : Option[String],
+
+                               OpeningTimeOnWednesday : Option[String],
+                               ClosingTimeOnWednesday : Option[String],
+
+                               OpeningTimeOnThursday : Option[String],
+                               ClosingTimeOnThursday: Option[String],
+
+                               OpeningTimeOnFriday : Option[String],
+                               ClosingTimeOnFriday : Option[String],
+
+                               OpeningTimeOnSaturday : Option[String],
+                               ClosingTimeOnSaturday : Option[String],
+
+                               OpeningTimeOnSunday: Option[String],
+                               ClosingTimeOnSunday : Option[String],
+
+                               isAccessible : Option[Boolean],
+
+                               locatedAt : Option[String],
+                               moreInfo : Option[String],
+                               hasDepositCapability : Option[Boolean]
+                             ) extends AtmT
 
 
 object JsonFactory_vJune2017 {

@@ -41,6 +41,7 @@ import code.model.dataAccess._
 import code.transactionrequests.TransactionRequests._
 import code.util.Helper.MdcLoggable
 import code.api.util.APIUtil.getSecondsCache
+import code.atms.Atms.{AtmId, AtmT}
 import code.branches.MappedBranch
 import com.google.common.cache.CacheBuilder
 import net.liftweb.common.{Box, _}
@@ -84,6 +85,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   val memoryTransactionTTL = getSecondsCache("createMemoryTransaction") 
   val branchesTTL = getSecondsCache("getBranches") 
   val branchTTL = getSecondsCache("getBranch")
+  val atmsTTL = getSecondsCache("getAtms")
   
   // "Versioning" of the messages sent by this or similar connector works like this:
   // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
@@ -1773,6 +1775,97 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getBranch")
+
+
+  messageDocs += MessageDoc(
+    process = "obp.get.Atms",
+    messageFormat = messageFormat,
+    description = "getAtms",
+    exampleOutboundMessage = decompose(
+      OutboundGetBranches(authInfoExample,"bankid")
+    ),
+    exampleInboundMessage = decompose(
+      InboundGetAtms(
+        authInfoExample,
+        Status(errorCodeExample, inboundStatusMessagesExample),
+        InboundAtmJune2017(
+          atmId = AtmId("333"),
+          bankId = BankId("10"),
+          name = "",
+          address =  Address(line1 = "",
+            line2 = "",
+            line3 = "",
+            city = "",
+            county = Some(""),
+            state = "",
+            postCode = "",
+            //ISO_3166-1_alpha-2
+            countryCode = ""),
+          location = Location(11,11, None,None),
+          meta = Meta(License(id = "pddl", name = "Open Data Commons Public Domain Dedication and License (PDDL)")),
+          OpeningTimeOnMonday = Some(""),
+          ClosingTimeOnMonday = Some(""),
+
+          OpeningTimeOnTuesday = Some(""),
+          ClosingTimeOnTuesday = Some(""),
+
+          OpeningTimeOnWednesday = Some(""),
+          ClosingTimeOnWednesday = Some(""),
+
+          OpeningTimeOnThursday = Some(""),
+          ClosingTimeOnThursday = Some(""),
+
+          OpeningTimeOnFriday = Some(""),
+          ClosingTimeOnFriday = Some(""),
+
+          OpeningTimeOnSaturday  = Some(""),
+          ClosingTimeOnSaturday = Some(""),
+
+          OpeningTimeOnSunday = Some(""),
+          ClosingTimeOnSunday = Some(""),
+          isAccessible = Some(true),
+
+          locatedAt = Some(""),
+          moreInfo = Some(""),
+          hasDepositCapability = Some(true)
+        )  :: Nil
+      )
+
+    )
+  )
+  override def getAtms(bankId: BankId, queryParams: OBPQueryParam*): Box[List[AtmT]] = saveConnectorMetric {
+    memoizeSync(atmsTTL millisecond){
+      val req = OutboundGetAtms(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString)
+      logger.info(s"Kafka getAtms Req is: $req")
+
+      val box = for {
+        kafkaMessage <- processToBox[OutboundGetAtms](req)
+        inboundGetAtms <- tryo{kafkaMessage.extract[InboundGetAtms]} ?~! s"$InboundGetAtms extract error"
+        (inboundAtms, inboundStatus) <- Full(inboundGetAtms.data, inboundGetAtms.status)
+      } yield{
+        (inboundAtms, inboundStatus)
+      }
+
+
+      logger.debug(s"Kafka getAtms Res says:  is: $Box")
+      val res = box match {
+        case Full((atms, status)) if (status.errorCode=="") =>
+          Full(atms)
+        case Full((banks, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case Empty =>
+          Failure(ErrorMessages.ConnectorEmptyResponse)
+        case Failure(msg, e, c) =>
+          Failure(msg, e, c)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+      logger.info(s"Kafka getAtms says res is $res")
+      res
+    }
+  }("getAtms")
+  
+  
 
 
 
