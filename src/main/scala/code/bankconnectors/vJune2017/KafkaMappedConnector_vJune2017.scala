@@ -1619,10 +1619,9 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetBranches(
         authInfoExample,
+        Status("",
+        inboundStatusMessagesExample),
         InboundBranchVJune2017(
-          status = "",
-          errorCodeExample,
-          inboundStatusMessagesExample,
           branchId = BranchId(""),
           bankId = BankId(""),
           name = "",
@@ -1668,18 +1667,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetBranches](req)
         inboundGetBranches <- tryo{kafkaMessage.extract[InboundGetBranches]} ?~! s"$InboundGetBranches extract error"
-        inboundBranches <- Full(inboundGetBranches.data)
+        (inboundBranches, inboundStatus) <- Full(inboundGetBranches.data, inboundGetBranches.status)
       } yield{
-        inboundBranches
+        (inboundBranches, inboundStatus)
       }
-
 
       logger.debug(s"Kafka getBranches Res says:  is: $Box")
       val res = box match {
-        case Full(list) if (list.head.errorCode=="") =>
-          Full(list)
-        case Full(list) if (list.head.errorCode!="") =>
-          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ list.head.errorCode+". + CoreBank-Error:"+ list.head.backendMessages)
+        case Full((branches, status)) if (status.errorCode=="") =>
+          Full(branches)
+        case Full((branches, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ status.errorCode+". + CoreBank-Error:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse)
         case Failure(msg, e, c) =>
@@ -1702,10 +1700,9 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetBranch(
         authInfoExample,
+        Status("",
+          inboundStatusMessagesExample),
         InboundBranchVJune2017(
-          status = "",
-          errorCodeExample,
-          inboundStatusMessagesExample,
           branchId = BranchId(""),
           bankId = BankId(""),
           name = "",
@@ -1754,18 +1751,18 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetBranch](req)
         inboundGetBranch <- tryo{kafkaMessage.extract[InboundGetBranch]} ?~! s"$InboundGetBranch extract error"
-        inboundBranch <- Full(inboundGetBranch.data)
+        (inboundBranch, status) <- Full(inboundGetBranch.data, inboundGetBranch.status)
       } yield{
-        inboundBranch
+        (inboundBranch, status)
       }
 
 
       logger.debug(s"Kafka getBranch Res says:  is: $Box")
       val res = box match {
-        case Full(data) if (data.errorCode=="") =>
-          Full(data)
-        case Full(data) if (data.errorCode!="") =>
-          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ data.errorCode+". + CoreBank-Error:"+ data.backendMessages)
+        case Full((branch, status)) if (status.errorCode=="") =>
+          Full(branch)
+        case Full((branch, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ status.errorCode+". + CoreBank-Error:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse)
         case Failure(msg, e, c) =>
@@ -1837,7 +1834,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   )
   override def getAtms(bankId: BankId, queryParams: OBPQueryParam*): Box[List[AtmT]] = saveConnectorMetric {
     memoizeSync(atmsTTL millisecond){
-      val req = OutboundGetAtms(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString)
+      val req = OutboundGetAtms(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.value)
       logger.info(s"Kafka getAtms Req is: $req")
 
       val box = for {
@@ -1926,7 +1923,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
 
   override def getAtm(bankId : BankId, atmId: AtmId) : Box[AtmT] = saveConnectorMetric {
     memoizeSync(atmTTL millisecond){
-      val req = OutboundGetAtm(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString, atmId.toString)
+      val req = OutboundGetAtm(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.value, atmId.value)
       logger.info(s"Kafka getAtm Req is: $req")
 
       val box = for {
