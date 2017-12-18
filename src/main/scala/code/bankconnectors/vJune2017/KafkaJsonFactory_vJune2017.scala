@@ -65,6 +65,7 @@ case class OutboundGetCounterpartyByCounterpartyId(
   authInfo: AuthInfo,
   counterparty: OutboundGetCounterpartyById
 ) extends TopicTrait
+case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisAccountId: String, counterpartyId: String) extends TopicTrait
 
 case class OutboundGetCustomersByUserId(
   authInfo: AuthInfo
