@@ -137,8 +137,8 @@ case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFu
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
-case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
-case class InboundGetBranch(authInfo: AuthInfo, data: InboundBranchVJune2017)
+case class InboundGetBranches(authInfo: AuthInfo, status: Status, data: List[InboundBranchVJune2017])
+case class InboundGetBranch(authInfo: AuthInfo, status: Status, data: InboundBranchVJune2017)
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
 case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: InboundAtmJune2017)
 
@@ -615,9 +615,6 @@ case class InternalInboundCoreAccount(
 
 
 case class  InboundBranchVJune2017(
-                                    status: String,
-                                    errorCode: String,
-                                    backendMessages: List[InboundStatusMessage],
                                     branchId: BranchId,
                                     bankId: BankId,
                                     name: String,

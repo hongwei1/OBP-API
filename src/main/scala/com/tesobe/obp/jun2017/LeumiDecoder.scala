@@ -388,9 +388,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def mapLeumiBranchToObpBranch(leumiBranch: LeumiBranch): InboundBranchVJune2017 = {
     InboundBranchVJune2017(
-      status = "",
-      errorCode = "",
-      backendMessages = List(InboundStatusMessage("", "", "", "")),
       branchId = BranchId(leumiBranch.branchCode),
       bankId = BankId("10"),
       name = leumiBranch.name,
@@ -1580,63 +1577,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
   
   def getBranches(outboundGetBranches: OutboundGetBranches): InboundGetBranches = {
     
-    val leumiBranches = getLeumiBranches
-    
-    if (leumiBranches.isEmpty){
       InboundGetBranches(
-        outboundGetBranches.authInfo,
-        List(InboundBranchVJune2017(
-          "",
-          "Brancheslist is empty",
-          List(
-            InboundStatusMessage("ESB","Success", "0", "OK"),
-            InboundStatusMessage("MF","Success", "0", "OK")
-          ),
-          branchId = BranchId(""),
-          bankId = BankId(""),
-          name = "",
-          address =  Address(line1 = "",
-            line2 = "",
-            line3 = "",
-            city = "",
-            county = Some(""),
-            state = "",
-            postCode = "",
-            //ISO_3166-1_alpha-2
-            countryCode = ""),
-          location = Location(11,11),
-          //lobbyString = None,
-          //driveUpString = None,
-          meta = Meta(License("","")),
-          branchRouting = None,
-          lobby = Some(Lobby(monday = List(OpeningTimes("","")),
-            tuesday = List(OpeningTimes("","")),
-            wednesday = List(OpeningTimes("","")),
-            thursday = List(OpeningTimes("","")),
-            friday = List(OpeningTimes("","")),
-            saturday = List(OpeningTimes("","")),
-            sunday = List(OpeningTimes("",""))
-          )),
-          driveUp = None,
-          // Easy access for people who use wheelchairs etc.
-          isAccessible = Some(true),
-          accessibleFeatures = None,
-          branchType  = Some(""),
-          moreInfo = Some(""),
-          phoneNumber = Some("")
-        )))
-    } else {
-      InboundGetBranches(
-        outboundGetBranches.authInfo,
+        outboundGetBranches.authInfo,Status(),
         getLeumiBranches.map(x => mapLeumiBranchToObpBranch(x))
       )
     }
-    
-  }
-  
+ 
   def getBranch(outboundGetBranch: OutboundGetBranch): InboundGetBranch = {
     val branch = getLeumiBranches.find(x => x.branchCode == outboundGetBranch.branchId).getOrElse(throw new InvalidBranchIdExecption())
-    InboundGetBranch(outboundGetBranch.authInfo, mapLeumiBranchToObpBranch(branch))
+    InboundGetBranch(outboundGetBranch.authInfo, Status(),mapLeumiBranchToObpBranch(branch))
   }
   
   def getAtms(outboundGetAtms: OutboundGetAtms): InboundGetAtms = {
@@ -1646,7 +1595,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   }
   
   def getAtm(outboundGetAtm: OutboundGetAtm): InboundGetAtm = { 
-    val atm = getLeumiBranches.find(x => x.hasAtm || x.branchCode == outboundGetAtm.atmId).getOrElse(throw new InvalidAtmIdExecption(InvalidAtmId + "is: " + outboundGetAtm.atmId))
+    val atm = getLeumiBranches.find(x => x.hasAtm && x.branchCode == outboundGetAtm.atmId).getOrElse(throw new InvalidAtmIdExecption(InvalidAtmId + "is: " + outboundGetAtm.atmId))
     InboundGetAtm(outboundGetAtm.authInfo, Status(), mapLeumiBranchToObpAtm(atm))
   }
 

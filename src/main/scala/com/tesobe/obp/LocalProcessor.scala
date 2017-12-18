@@ -662,46 +662,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("checkBankAccountExistsFn-unknown error", m)
         val errorBody = InboundGetBranches(
           AuthInfo("","",""),
-          InboundBranchVJune2017(
-            "",
-            m.getMessage,
+          Status(m.getMessage,
             List(
               InboundStatusMessage("ESB","Success", "0", "OK"),
               InboundStatusMessage("MF","Success", "0", "OK")
-            ),
-            branchId = BranchId(""),
-            bankId = BankId(""),
-            name = "",
-            address =  Address(line1 = "",
-              line2 = "",
-              line3 = "",
-              city = "",
-              county = Some(""),
-              state = "",
-              postCode = "",
-              //ISO_3166-1_alpha-2
-              countryCode = ""),
-            location = Location(11,11),
-            //lobbyString = None,
-            //driveUpString = None,
-            meta = Meta(License("","")),
-            branchRouting = None,
-            lobby = Some(Lobby(monday = List(OpeningTimes("","")),
-              tuesday = List(OpeningTimes("","")),
-              wednesday = List(OpeningTimes("","")),
-              thursday = List(OpeningTimes("","")),
-              friday = List(OpeningTimes("","")),
-              saturday = List(OpeningTimes("","")),
-              sunday = List(OpeningTimes("",""))
-            )),
-            driveUp = None,
-            // Easy access for people who use wheelchairs etc.
-            isAccessible = Some(true),
-            accessibleFeatures = None,
-            branchType  = Some(""),
-            moreInfo = Some(""),
-            phoneNumber = Some("")
-          ) :: Nil
+            )),List()
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -722,46 +687,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getBranchFn-unknown error", m)
         val errorBody = InboundGetBranch(
           AuthInfo("","",""),
-          InboundBranchVJune2017(
-            "",
-            m.getMessage,
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"),
-              InboundStatusMessage("MF","Success", "0", "OK")
-            ),
-            branchId = BranchId(""),
-            bankId = BankId(""),
-            name = "",
-            address =  Address(line1 = "",
-              line2 = "",
-              line3 = "",
-              city = "",
-              county = Some(""),
-              state = "",
-              postCode = "",
-              //ISO_3166-1_alpha-2
-              countryCode = ""),
-            location = Location(11,11),
-            //lobbyString = None,
-            //driveUpString = None,
-            meta = Meta(License("","")),
-            branchRouting = None,
-            lobby = Some(Lobby(monday = List(OpeningTimes("","")),
-              tuesday = List(OpeningTimes("","")),
-              wednesday = List(OpeningTimes("","")),
-              thursday = List(OpeningTimes("","")),
-              friday = List(OpeningTimes("","")),
-              saturday = List(OpeningTimes("","")),
-              sunday = List(OpeningTimes("",""))
-            )),
-            driveUp = None,
-            // Easy access for people who use wheelchairs etc.
-            isAccessible = Some(true),
-            accessibleFeatures = None,
-            branchType  = Some(""),
-            moreInfo = Some(""),
-            phoneNumber = Some("")
-            )
+          Status(m.getMessage,
+          List(
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")
+          )),null
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
