@@ -86,7 +86,9 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   val branchesTTL = getSecondsCache("getBranches") 
   val branchTTL = getSecondsCache("getBranch")
   val atmsTTL = getSecondsCache("getAtms")
-  
+  val atmTTL = getSecondsCache("getAtm")
+
+
   // "Versioning" of the messages sent by this or similar connector works like this:
   // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
   // Each connector has a separate file like this one.
@@ -1782,7 +1784,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     messageFormat = messageFormat,
     description = "getAtms",
     exampleOutboundMessage = decompose(
-      OutboundGetBranches(authInfoExample,"bankid")
+      OutboundGetAtms(authInfoExample,"bankid")
     ),
     exampleInboundMessage = decompose(
       InboundGetAtms(
@@ -1864,6 +1866,95 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getAtms")
+
+  messageDocs += MessageDoc(
+    process = "obp.get.Atm",
+    messageFormat = messageFormat,
+    description = "getAtm",
+    exampleOutboundMessage = decompose(
+      OutboundGetAtm(authInfoExample,"bankId", "atmId")
+    ),
+    exampleInboundMessage = decompose(
+      InboundGetAtm(
+        authInfoExample,
+        Status(errorCodeExample, inboundStatusMessagesExample),
+        InboundAtmJune2017(
+          atmId = AtmId("333"),
+          bankId = BankId("10"),
+          name = "",
+          address =  Address(line1 = "",
+            line2 = "",
+            line3 = "",
+            city = "",
+            county = Some(""),
+            state = "",
+            postCode = "",
+            //ISO_3166-1_alpha-2
+            countryCode = ""),
+          location = Location(11,11, None,None),
+          meta = Meta(License(id = "pddl", name = "Open Data Commons Public Domain Dedication and License (PDDL)")),
+          OpeningTimeOnMonday = Some(""),
+          ClosingTimeOnMonday = Some(""),
+
+          OpeningTimeOnTuesday = Some(""),
+          ClosingTimeOnTuesday = Some(""),
+
+          OpeningTimeOnWednesday = Some(""),
+          ClosingTimeOnWednesday = Some(""),
+
+          OpeningTimeOnThursday = Some(""),
+          ClosingTimeOnThursday = Some(""),
+
+          OpeningTimeOnFriday = Some(""),
+          ClosingTimeOnFriday = Some(""),
+
+          OpeningTimeOnSaturday  = Some(""),
+          ClosingTimeOnSaturday = Some(""),
+
+          OpeningTimeOnSunday = Some(""),
+          ClosingTimeOnSunday = Some(""),
+          isAccessible = Some(true),
+
+          locatedAt = Some(""),
+          moreInfo = Some(""),
+          hasDepositCapability = Some(true)
+        )
+      )
+
+    )
+  )
+
+  override def getAtm(bankId : BankId, atmId: AtmId) : Box[AtmT] = saveConnectorMetric {
+    memoizeSync(atmTTL millisecond){
+      val req = OutboundGetAtm(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString, atmId.toString)
+      logger.info(s"Kafka getAtm Req is: $req")
+
+      val box = for {
+        kafkaMessage <- processToBox[OutboundGetAtm](req)
+        inboundGetAtm <- tryo{kafkaMessage.extract[InboundGetAtm]} ?~! s"$InboundGetAtm extract error"
+        (inboundAtm, inboundStatus) <- Full(inboundGetAtm.data, inboundGetAtm.status)
+      } yield{
+        (inboundAtm, inboundStatus)
+      }
+
+
+      logger.debug(s"Kafka getAtm Res says:  is: $Box")
+      val res = box match {
+        case Full((atm, status)) if (status.errorCode=="") =>
+          Full(atm)
+        case Full((banks, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case Empty =>
+          Failure(ErrorMessages.ConnectorEmptyResponse)
+        case Failure(msg, e, c) =>
+          Failure(msg, e, c)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+      logger.info(s"Kafka getAtm says res is $res")
+      res
+    }
+  }("getAtm")
   
   
 
