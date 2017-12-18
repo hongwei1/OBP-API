@@ -41,11 +41,13 @@ import code.model.dataAccess._
 import code.transactionrequests.TransactionRequests._
 import code.util.Helper.MdcLoggable
 import code.api.util.APIUtil.getSecondsCache
+import code.branches.MappedBranch
 import com.google.common.cache.CacheBuilder
 import net.liftweb.common.{Box, _}
 import net.liftweb.json.{Extraction, MappingException}
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST.JValue
+import net.liftweb.mapper.{MaxRows, StartAt}
 import net.liftweb.json.{Extraction, MappingException}
 import net.liftweb.util.Helpers.tryo
 
@@ -80,7 +82,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   val customersByUserIdBoxTTL = getSecondsCache("getCustomersByUserIdBox")
   val memoryCounterpartyTTL = getSecondsCache("createMemoryCounterparty")
   val memoryTransactionTTL = getSecondsCache("createMemoryTransaction") 
-  val branchesTTL = getSecondsCache("getBranches")  
+  val branchesTTL = getSecondsCache("getBranches") 
+  val branchTTL = getSecondsCache("getBranch")
   
   // "Versioning" of the messages sent by this or similar connector works like this:
   // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
@@ -1403,6 +1406,35 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     }
     res
   }}("getCounterpartyByCounterpartyId")
+
+
+  override def getCounterpartyTrait(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[CounterpartyTrait] = saveConnectorMetric{memoizeSync(0 second){
+    val req = OutboundGetCounterparty(authInfo = AuthInfo(currentResourceUserId, getUsername, getCbsToken), thisBankId.value, thisAccountId.value, couterpartyId)
+    logger.debug(s"Kafka getCounterpartyTrait Req says: is: $req")
+
+    val box = for {
+      kafkaMessage <- processToBox[OutboundGetCounterparty](req)
+      inboundGetCounterparty <- tryo{kafkaMessage.extract[InboundGetCounterparty]} ?~! s"$InboundGetCounterparty extract error"
+      data <- Full(inboundGetCounterparty.data)
+    } yield{
+      data
+    }
+    logger.debug(s"Kafka getCounterpartyTrait Res says: is: $box")
+
+    val res = box match {
+      case Full(x) if (x.errorCode=="")  =>
+        Full(x)
+      case Full(x) if (x.errorCode!="") =>
+        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
+      case Empty =>
+        Failure(ErrorMessages.ConnectorEmptyResponse)
+      case Failure(msg, e, c) =>
+        Failure(msg, e, c)
+      case _ =>
+        Failure(ErrorMessages.UnknownError)
+    }
+    res
+  }}("getCounterpartyTrait")
   
   
   messageDocs += MessageDoc(
@@ -1655,6 +1687,93 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getBranches")
+
+  messageDocs += MessageDoc(
+    process = "obp.get.Branch",
+    messageFormat = messageFormat,
+    description = "getBranch",
+    exampleOutboundMessage = decompose(
+      OutboundGetBranch(authInfoExample,"bankid", "branchid")
+    ),
+    exampleInboundMessage = decompose(
+      InboundGetBranch(
+        authInfoExample,
+        InboundBranchVJune2017(
+          status = "",
+          errorCodeExample,
+          inboundStatusMessagesExample,
+          branchId = BranchId(""),
+          bankId = BankId(""),
+          name = "",
+          address =  Address(line1 = "",
+            line2 = "",
+            line3 = "",
+            city = "",
+            county = Some(""),
+            state = "",
+            postCode = "",
+            //ISO_3166-1_alpha-2
+            countryCode = ""),
+          location = Location(11,11, None,None),
+          lobbyString = None,
+          driveUpString = None,
+          meta = Meta(License("","")),
+          branchRouting = None,
+          lobby = Some(Lobby(monday = List(OpeningTimes("","")),
+            tuesday = List(OpeningTimes("","")),
+            wednesday = List(OpeningTimes("","")),
+            thursday = List(OpeningTimes("","")),
+            friday = List(OpeningTimes("","")),
+            saturday = List(OpeningTimes("","")),
+            sunday = List(OpeningTimes("",""))
+          )),
+          driveUp = None,
+          // Easy access for people who use wheelchairs etc.
+          isAccessible = Some(true),
+          accessibleFeatures = None,
+          branchType  = Some(""),
+          moreInfo = Some(""),
+          phoneNumber = Some("")
+        ) 
+      )
+
+    )
+  )
+
+  override def getBranch(bankId : BankId, branchId: BranchId) : Box[BranchT] = saveConnectorMetric {
+    
+    logger.debug("Enter getBranch for: " + branchId)
+    memoizeSync(branchTTL millisecond){
+      val req = OutboundGetBranch(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString, branchId.toString)
+      logger.info(s"Kafka getBranch Req is: $req")
+
+      val box = for {
+        kafkaMessage <- processToBox[OutboundGetBranch](req)
+        inboundGetBranch <- tryo{kafkaMessage.extract[InboundGetBranch]} ?~! s"$InboundGetBranch extract error"
+        inboundBranch <- Full(inboundGetBranch.data)
+      } yield{
+        inboundBranch
+      }
+
+
+      logger.debug(s"Kafka getBranch Res says:  is: $Box")
+      val res = box match {
+        case Full(data) if (data.errorCode=="") =>
+          Full(data)
+        case Full(data) if (data.errorCode!="") =>
+          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ data.errorCode+". + CoreBank-Error:"+ data.backendMessages)
+        case Empty =>
+          Failure(ErrorMessages.ConnectorEmptyResponse)
+        case Failure(msg, e, c) =>
+          Failure(msg, e, c)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+      logger.info(s"Kafka getBranch says res is $res")
+      res
+    }
+  }("getBranch")
+
 
 
 }

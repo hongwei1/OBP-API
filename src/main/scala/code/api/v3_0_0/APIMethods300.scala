@@ -863,7 +863,7 @@ trait APIMethods300 {
               user ?~! UserNotLoggedIn
             _ <- Bank(bankId) ?~! {BankNotFound}
 
-            branch <- Box(Branches.branchesProvider.vend.getBranch(bankId, branchId)) ?~! s"${BranchNotFoundByBranchId}, or License may not be set. meta.license.id and meta.license.name can not be empty"
+            branch <- Box(Connector.connector.vend.getBranch(bankId, branchId)) ?~! s"${BranchNotFoundByBranchId}, or License may not be set. meta.license.id and meta.license.name can not be empty"
 
 
 //            branches <- { Branches.branchesProvider.vend.getBranches(bankId) match {
