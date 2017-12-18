@@ -1053,10 +1053,14 @@ trait APIMethods300 {
             // default0, start from page 0
             offset <- tryo(S.param("offset").getOrElse("0").toInt) ?~!
               s"${InvalidNumber } offset:${S.param("offset").get }"
-            atms <- Box(Connector.connector.vend.getAtms(bankId, OBPLimit(limit), OBPOffset(offset))) ~> APIFailure("No ATMs available. License may not be set.", 204)
+            atms <- Connector.connector.vend.getAtms(bankId, OBPLimit(limit), OBPOffset(offset)) ~> APIFailure("No ATMs available. License may not be set.", 204)
+            slice <- tryo {
+              atms.sortWith(_.atmId.value < _.atmId.value) // Before we slice we need to sort in order to keep consistent results
+                .slice(offset, offset + limit) // Slice the result in next way: from=offset and until=offset + limit
+            }
           } yield {
             // Format the data as json
-            val json = JSONFactory300.createAtmsJsonV300(atms)
+            val json = JSONFactory300.createAtmsJsonV300(slice)
             // Return
             successJsonResponse(Extraction.decompose(json))
           }
