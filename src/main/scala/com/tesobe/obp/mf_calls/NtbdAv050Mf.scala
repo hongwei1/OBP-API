@@ -27,7 +27,7 @@ object NtbdAv050Mf {
     val isFutureTransfer = if (transferDateInFuture.trim != "") "1" else "0"
     if (transferDateInFuture.trim != "") try {
       val localDateForTransfer = LocalDate.parse(transferDateInFuture, formatter)
-      if (localDateForTransfer.isBefore(LocalDate.now())) throw new InvalidTimeException
+      if (!localDateForTransfer.isAfter(LocalDate.now())) throw new InvalidTimeException
       } catch { case _: Throwable => throw new InvalidTimeException()}
     
 
