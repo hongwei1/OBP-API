@@ -45,7 +45,26 @@ case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, ac
 case class OutboundGetAccountbyAccountNumber(authInfo: AuthInfo, bankId: String, accountNumber: String) extends TopicTrait
 case class OutboundGetTransactions(authInfo: AuthInfo, bankId: String, accountId: String, limit: Int, fromDate: String, toDate: String) extends TopicTrait
 case class OutboundGetTransaction(authInfo: AuthInfo, bankId: String, accountId: String, transactionId: String) extends TopicTrait
-case class OutboundGetAtms(authInfo: AuthInfo,bankId: String) extends TopicTrait
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 case class OutboundCreateTransaction(
   authInfo: AuthInfo,
   
@@ -90,6 +109,7 @@ case class OutboundGetCustomersByUserId(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetCounterparties(authInfo: AuthInfo, counterparty: InternalOutboundGetCounterparties) extends TopicTrait
 case class OutboundGetCounterpartyByCounterpartyId(authInfo: AuthInfo, counterparty: OutboundGetCounterpartyById) extends TopicTrait
 case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicTrait
+case class OutboundGetAtms(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundGetBranch(authInfo: AuthInfo, bankId: String, branchId: String) extends TopicTrait
 case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisAccountId: String, counterpartyId: String) extends TopicTrait
 
@@ -118,7 +138,7 @@ case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCount
 case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
 case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo, data: InboundBranchVJune2017)
-case class InboundGetAtms(authInfo: AuthInfo, data: List[InboundAtmJune2017])
+case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side

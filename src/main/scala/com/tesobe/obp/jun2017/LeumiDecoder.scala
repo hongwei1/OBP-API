@@ -1642,7 +1642,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getAtms(outboundGetAtms: OutboundGetAtms): InboundGetAtms = {
     val branchesWithAtm: List[LeumiBranch] = getLeumiBranches.filter(x => x.hasAtm)
     branchesWithAtm.map( x => mapLeumiBranchToObpAtm(x))
-    InboundGetAtms(outboundGetAtms.authInfo, branchesWithAtm.map(x => mapLeumiBranchToObpAtm(x)))
+    InboundGetAtms(outboundGetAtms.authInfo, Status(), branchesWithAtm.map(x => mapLeumiBranchToObpAtm(x)))
   }
 
 }
