@@ -110,6 +110,7 @@ case class OutboundGetCounterparties(authInfo: AuthInfo, counterparty: InternalO
 case class OutboundGetCounterpartyByCounterpartyId(authInfo: AuthInfo, counterparty: OutboundGetCounterpartyById) extends TopicTrait
 case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundGetAtms(authInfo: AuthInfo,bankId: String) extends TopicTrait
+case class OutboundGetAtm(authInfo: AuthInfo,bankId: String, atmId: String) extends TopicTrait
 case class OutboundGetBranch(authInfo: AuthInfo, bankId: String, branchId: String) extends TopicTrait
 case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisAccountId: String, counterpartyId: String) extends TopicTrait
 
@@ -139,6 +140,7 @@ case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty
 case class InboundGetBranches(authInfo: AuthInfo,data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo, data: InboundBranchVJune2017)
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
+case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: InboundAtmJune2017)
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side

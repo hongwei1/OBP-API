@@ -792,6 +792,31 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     }
   }
 
+  def getAtmFn: Business = { msg =>
+    try {
+      logger.debug(s"Processing getAtmFn ${msg.record.value}")
+      /* call Decoder for extracting data from source file */
+      val kafkaRecordValue = msg.record.value()
+      val outboundGetAtm  = Extraction.extract[OutboundGetAtm](json.parse(kafkaRecordValue))
+      val inboundGetAtm = com.tesobe.obp.june2017.LeumiDecoder.getAtm(outboundGetAtm)
+      val r = prettyRender(Extraction.decompose(inboundGetAtm))
+
+      Future(msg, r)
+    } catch {
+      case m: Throwable =>
+        logger.error("getAtm-unknown error", m)
+        val errorBody = InboundGetAtm(
+          AuthInfo("","",""),
+          Status(m.getMessage, List(
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")
+          )),null
+
+        )
+        Future(msg, errorBody.asJson.noSpaces)
+    }
+  }
+
   
   private def getResponse(msg: CommittableMessage[String, String]): String = {
     decode[Request](msg.record.value()) match {

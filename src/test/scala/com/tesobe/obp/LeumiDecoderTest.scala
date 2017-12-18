@@ -261,6 +261,60 @@ class LeumiDecoderTest  extends ServerSetup {
     InboundBranchVJune2017("","",List(InboundStatusMessage("","","","")),BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","12:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
   }
   
+  test("getAtms returns correct results"){
+    getAtms(OutboundGetAtms(authInfoIsFirstTrue, "10")).data.head should be (
+      InboundAtmJune2017(AtmId("957"),BankId("10"),"אבן יהודה",
+        Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),
+        Location(34.88898,32.2697),
+        Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),
+        Some("00:00"),
+        Some("00:00"),
+        Some("08:30"),
+        Some("18:15"),
+        Some("08:30"),
+        Some("00:00"),
+        Some("08:30"),
+        Some("00:00"),
+        Some("08:30"),
+        Some("18:15"),
+        Some("08:30"),
+        Some("00:00"),
+        Some("00:00"),
+        Some("00:00"),
+        Some(true),
+        Some(""),
+        Some("כספומט מותאם ללקויי ראייה"),
+        Some(true))
+    )
+  }
+  
+  test("getAtm works for AtmId 957"){
+    val result = getAtm(OutboundGetAtm(authInfoIsFirstTrue, "10", "957")).data should be (
+      InboundAtmJune2017(AtmId("957"),BankId("10"),"אבן יהודה",
+        Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),
+        Location(34.88898,32.2697),
+        Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),
+        Some("00:00"),
+        Some("00:00"),
+        Some("08:30"),
+        Some("18:15"),
+        Some("08:30"),
+        Some("00:00"),
+        Some("08:30"),
+        Some("00:00"),
+        Some("08:30"),
+        Some("18:15"),
+        Some("08:30"),
+        Some("00:00"),
+        Some("00:00"),
+        Some("00:00"),
+        Some(true),
+        Some(""),
+        Some("כספומט מותאם ללקויי ראייה"),
+        Some(true))
+    )
+  }
+  
 
 
 }

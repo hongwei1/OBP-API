@@ -319,6 +319,7 @@ object ErrorMessages {
   val InvalidTransferType = "ADAPTER-60016: Invalid TransferType: valid types: regular, RealTime."
   val InvalidBranchId = "ADAPTER-60017: BranchId not found."
   val ZoneIdNotAvailable = "ADAPTER-60018: ZoneId for Asia/Jerusalem not available in JVM"
+  val InvalidAtmId = "ADAPTER-60019: AtmId not found."
 
   
   
@@ -342,6 +343,7 @@ object ErrorMessages {
   class InvalidTransferTypeException(msg:String = InvalidTransferType)extends Exception(msg: String)
   class InvalidTimeException(msg:String = InvalidTime) extends Exception(msg: String)
   class InvalidBranchIdExecption(msg: String = InvalidBranchId) extends Exception(msg: String)
+  class InvalidAtmIdExecption(msg: String = InvalidAtmId) extends Exception(msg: String)
   class ZoneIdNotAvailableException(msg: String = ZoneIdNotAvailable) extends Exception(msg: String)
 }
 

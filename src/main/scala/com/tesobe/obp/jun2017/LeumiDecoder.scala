@@ -1644,6 +1644,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
     branchesWithAtm.map( x => mapLeumiBranchToObpAtm(x))
     InboundGetAtms(outboundGetAtms.authInfo, Status(), branchesWithAtm.map(x => mapLeumiBranchToObpAtm(x)))
   }
+  
+  def getAtm(outboundGetAtm: OutboundGetAtm): InboundGetAtm = { 
+    val atm = getLeumiBranches.find(x => x.hasAtm || x.branchCode == outboundGetAtm.atmId).getOrElse(throw new InvalidAtmIdExecption(InvalidAtmId + "is: " + outboundGetAtm.atmId))
+    InboundGetAtm(outboundGetAtm.authInfo, Status(), mapLeumiBranchToObpAtm(atm))
+  }
 
 }
 
