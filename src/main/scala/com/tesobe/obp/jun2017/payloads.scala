@@ -140,7 +140,7 @@ case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: Inte
 case class InboundGetBranches(authInfo: AuthInfo, status: Status, data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo, status: Status, data: InboundBranchVJune2017)
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
-case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: InboundAtmJune2017)
+case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: Option[InboundAtmJune2017])
 
 /**
   * All subsequent case classes must be the same structure as it is defined on North Side

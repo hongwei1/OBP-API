@@ -40,7 +40,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
   
   implicit val formats = net.liftweb.json.DefaultFormats + MyZonedTimeDateSerializer + MyLocalDateSerializer
 
-  
+
   /**
     * Processes message that comes from generic 'Request'/'Response' topics.
     * It has to resolve version from request first and based on that employ corresponding Decoder to extract response.
@@ -505,8 +505,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
         val errorBody = InboundGetCounterparties(AuthInfo("","",""),Status(m.getLocalizedMessage) , List(InternalCounterparty(createdByUserId = "", name = "", thisBankId = "", thisAccountId = "", thisViewId = "", counterpartyId = "", otherAccountRoutingScheme= "", otherAccountRoutingAddress= "", otherBankRoutingScheme= "", otherBankRoutingAddress= "", otherBranchRoutingScheme= "", otherBranchRoutingAddress= "", isBeneficiary = false, description = "", otherAccountSecondaryRoutingScheme= "", otherAccountSecondaryRoutingAddress= "", bespoke = List(PostCounterpartyBespoke("englishName", ""),
                             PostCounterpartyBespoke("englishDescription", "")
-                
-                
+
+
                           ))))
 
         Future(msg, errorBody.asJson.noSpaces)
@@ -529,8 +529,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
         val errorBody = InboundGetCounterparty(AuthInfo("","",""), Status(m.getMessage), InternalCounterparty(createdByUserId = "", name = "", thisBankId = "", thisAccountId = "", thisViewId = "", counterpartyId = "", otherAccountRoutingScheme= "", otherAccountRoutingAddress= "", otherBankRoutingScheme= "", otherBankRoutingAddress= "", otherBranchRoutingScheme= "", otherBranchRoutingAddress= "", isBeneficiary = false, description = "", otherAccountSecondaryRoutingScheme= "", otherAccountSecondaryRoutingAddress= "", bespoke = List(PostCounterpartyBespoke("englishName", ""),
                             PostCounterpartyBespoke("englishDescription", "")
-                
-                
+
+
                           )))
 
         Future(msg, errorBody.asJson.noSpaces)
@@ -553,8 +553,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
 
         val errorBody = InboundGetCounterparty(AuthInfo("","",""), Status(m.getMessage), InternalCounterparty(createdByUserId = "", name = "", thisBankId = "", thisAccountId = "", thisViewId = "", counterpartyId = "", otherAccountRoutingScheme= "", otherAccountRoutingAddress= "", otherBankRoutingScheme= "", otherBankRoutingAddress= "", otherBranchRoutingScheme= "", otherBranchRoutingAddress= "", isBeneficiary = false, description = "", otherAccountSecondaryRoutingScheme= "", otherAccountSecondaryRoutingAddress= "", bespoke = List(PostCounterpartyBespoke("englishName", ""),
                             PostCounterpartyBespoke("englishDescription", "")
-                
-                
+
+
                           )))
 
         Future(msg, errorBody.asJson.noSpaces)
@@ -641,8 +641,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getAtm-unknown error", m)
         val errorBody = InboundGetAtm(
           AuthInfo("","",""),
-          Status(m.getMessage),null
-
+          Status(m.getMessage, List(
+            InboundStatusMessage("ESB","Success", "0", "OK"),
+            InboundStatusMessage("MF","Success", "0", "OK")
+          )),
+          None
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
