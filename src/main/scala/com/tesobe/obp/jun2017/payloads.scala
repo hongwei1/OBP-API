@@ -138,7 +138,7 @@ case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccoun
 case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
 case class InboundGetBranches(authInfo: AuthInfo, status: Status, data: List[InboundBranchVJune2017])
-case class InboundGetBranch(authInfo: AuthInfo, status: Status, data: InboundBranchVJune2017)
+case class InboundGetBranch(authInfo: AuthInfo, status: Status, data: Option[InboundBranchVJune2017])
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
 case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: Option[InboundAtmJune2017])
 

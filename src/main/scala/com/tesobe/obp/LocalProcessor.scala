@@ -588,7 +588,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getBranchFn-unknown error", m)
         val errorBody = InboundGetBranch(
           AuthInfo("","",""),
-          Status(m.getMessage),null
+          Status(m.getMessage),None
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
