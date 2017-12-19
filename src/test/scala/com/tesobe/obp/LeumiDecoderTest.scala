@@ -206,7 +206,7 @@ class LeumiDecoderTest  extends ServerSetup {
   }
   
   test("getTransactionRequests returns correct result for first transaction request of test stub"){
-    getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","",""))).data.transactionRequests.head should be (
+      getTransactionRequests(OutboundGetTransactionRequests210(authInfoIsFirstTrue,OutboundTransactionRequests(accountId1,"","","","","","","",""))).data.head should be (
       TransactionRequest(TransactionRequestId("lXyL7qzIwO4MEowJ8gTccddZ68jVF-Fju2DQiQBiN5Y"),"_FUTURE_STANDING_ORDER",TransactionRequestAccount("10","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),TransactionRequestBody(TransactionRequestAccount("",""),AmountOfMoney("ILS","-262.73"),"ה.ק.חסכון"),null,"","COMPLETED",null,getUtcDatefromLeumiLocalDate("20170521"),TransactionRequestChallenge("",0,""),TransactionRequestCharge("",AmountOfMoney("ILS","0")),"",CounterpartyId(""),"ה.ק.חסכון",BankId("10"),AccountId("3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98"),ViewId(""),"","","","",false))
   }
   
@@ -244,7 +244,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getAtm works for AtmId 957"){
     val result = getAtm(OutboundGetAtm(authInfoIsFirstTrue, "10", "957")).data should be (
-      InboundAtmJune2017(AtmId("957"),BankId("10"),"אבן יהודה",
+      Some(InboundAtmJune2017(AtmId("957"),BankId("10"),"אבן יהודה",
         Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),
         Location(34.88898,32.2697),
         Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),
@@ -265,7 +265,7 @@ class LeumiDecoderTest  extends ServerSetup {
         Some(true),
         Some(""),
         Some("כספומט מותאם ללקויי ראייה"),
-        Some(true))
+        Some(true)))
     )
   }
   

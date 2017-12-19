@@ -1058,46 +1058,22 @@ object LeumiDecoder extends Decoder with StrictLogging {
               )
             
 
-            InboundGetTransactionRequests210(
-              outboundGetTransactionRequests210.authInfo,
-              InternalGetTransactionRequests(
-                "",
-                List(
-                  InboundStatusMessage("ESB", "Success", "0", "OK"),
-                  InboundStatusMessage("MF", "Success", "0", "OK")
-                ),
-                xResult))
+            InboundGetTransactionRequests210(outboundGetTransactionRequests210.authInfo, Status(), xResult)
 
           case Left(y) =>
 
-            InboundGetTransactionRequests210(
-              outboundGetTransactionRequests210.authInfo,
-              InternalGetTransactionRequests(
-                MainFrameError,
-                createInboundStatusMessages(y),
-                Nil))
+            InboundGetTransactionRequests210(outboundGetTransactionRequests210.authInfo, createStatusFromCBSPapiError(y), null)
 
 
         }
       case Left(x) =>
 
-        InboundGetTransactionRequests210(
-          outboundGetTransactionRequests210.authInfo,
-          InternalGetTransactionRequests(
-            MainFrameError,
-            createInboundStatusMessages(x),
-            Nil))
+        InboundGetTransactionRequests210(outboundGetTransactionRequests210.authInfo, createStatusFromCBSPapiError(x),null)
 
 
     }
       case Left(account) =>
-        InboundGetTransactionRequests210(
-          outboundGetTransactionRequests210.authInfo,
-          InternalGetTransactionRequests(
-            MainFrameError,
-            createInboundStatusMessages(account),
-            Nil))
-
+        InboundGetTransactionRequests210(outboundGetTransactionRequests210.authInfo, createStatusFromCBSPapiError(account),null)
 
     }
         
