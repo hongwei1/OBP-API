@@ -95,7 +95,7 @@ case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: I
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
-case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalCustomer])
+case class InboundGetCustomersByUserId(authInfo: AuthInfo, status: Status, data: List[InternalCustomer])
 case class InboundGetBranches(authInfo: AuthInfo,status: Status,data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo,status: Status, data: InboundBranchVJune2017)
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
@@ -247,28 +247,7 @@ case class OutboundTransactionRequests(
 case class InternalCounterparty(createdByUserId: String, name: String, thisBankId: String, thisAccountId: String, thisViewId: String, counterpartyId: String, otherAccountRoutingScheme: String, otherAccountRoutingAddress: String, otherBankRoutingScheme: String, otherBankRoutingAddress: String, otherBranchRoutingScheme: String, otherBranchRoutingAddress: String, isBeneficiary: Boolean, description: String, otherAccountSecondaryRoutingScheme: String, otherAccountSecondaryRoutingAddress: String, bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
 
 
-case class InternalCustomer(
-  status: String,
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
-  customerId : String, 
-  bankId : String,
-  number : String,   // The Customer number i.e. the bank identifier for the customer.
-  legalName : String,
-  mobileNumber : String,
-  email : String,
-  faceImage : CustomerFaceImage,
-  dateOfBirth: Date,
-  relationshipStatus: String,
-  dependents: Integer,
-  dobOfDependents: List[Date],
-  highestEducationAttained: String,
-  employmentStatus: String,
-  creditRating : CreditRating,
-  creditLimit: CreditLimit,
-  kycStatus: lang.Boolean,
-  lastOkDate: Date
-)extends Customer
+case class InternalCustomer(customerId: String, bankId: String, number: String, legalName: String, mobileNumber: String, email: String, faceImage: CustomerFaceImage, dateOfBirth: Date, relationshipStatus: String, dependents: Integer, dobOfDependents: List[Date], highestEducationAttained: String, employmentStatus: String, creditRating: CreditRating, creditLimit: CreditLimit, kycStatus: lang.Boolean, lastOkDate: Date) extends Customer
 
 case class  InboundBranchVJune2017(
                            branchId: BranchId,

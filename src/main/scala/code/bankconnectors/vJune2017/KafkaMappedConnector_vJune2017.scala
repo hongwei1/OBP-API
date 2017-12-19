@@ -1408,28 +1408,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetCustomersByUserId(
         authInfoExample,
-        InternalCustomer(
-          status = "String",
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          customerId = "String",
-          bankId = "String",
-          number = "String",  
-          legalName = "String",
-          mobileNumber = "String",
-          email = "String",
-          faceImage = CustomerFaceImage(date = exampleDate, url = "String"),
-          dateOfBirth = exampleDate,
-          relationshipStatus= "String",
-          dependents = 1,
-          dobOfDependents = List(exampleDate),
-          highestEducationAttained= "String",
-          employmentStatus= "String",
-          creditRating = CreditRating(rating ="String", source = "String"),
-          creditLimit=  CreditLimit(currency ="String", amount= "String"),
-          kycStatus = false,
-          lastOkDate = exampleDate
-        )::Nil
+        statusExample,
+        InternalCustomer(customerId = "String", bankId = "String", number = "String", legalName = "String", mobileNumber = "String", email = "String", faceImage = CustomerFaceImage(date = exampleDate, url = "String"), dateOfBirth = exampleDate, relationshipStatus= "String", dependents = 1, dobOfDependents = List(exampleDate), highestEducationAttained= "String", employmentStatus= "String", creditRating = CreditRating(rating ="String", source = "String"), creditLimit=  CreditLimit(currency ="String", amount= "String"), kycStatus = false, lastOkDate = exampleDate)::Nil
       )
     )
   )
@@ -1456,21 +1436,19 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           } catch {
             case e: Exception => throw new MappingException(s"$InboundGetCustomersByUserId extract error", e)
           }
-      } map {
-        _.data
-      }
+      } map {x => (x.data, x.status)}
     } yield{
       res
     }
     logger.debug(s"Kafka getCustomersByUserIdFuture Res says: is: $future")
 
     val res = future map {
-      case List() =>
+      case (List(),status) =>
         Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
-      case list if (list.head.errorCode=="") =>
+      case (list, status) if (status.errorCode=="") =>
         Full(list)
-      case list if (list.head.errorCode!="") =>
-        Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:" + list.head.backendMessages)
+      case (list, status) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:" + status.backendMessages)
       case _ =>
         Failure(ErrorMessages.UnknownError)
     }
