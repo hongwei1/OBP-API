@@ -758,25 +758,22 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetTransactions(
         authInfoExample,
-        InternalTransaction(
-          errorCodeExample,
-          inboundStatusMessagesExample,
+        statusExample,
+        InternalTransaction_vJune2017(
           transactionId = "String",
-          accountId = "String",
-          amount = "String",
+          accountId = "String", 
+          amount = "String", 
           bankId = "String",
-          completedDate = "String",
-          counterpartyId = "String",
-          counterpartyName = "String",
-          currency = "String",
-          description = "String",
+          completedDate = "String", 
+          counterpartyId = "String", 
+          counterpartyName = "String", 
+          currency = "String", 
+          description = "String", 
           newBalanceAmount = "String",
-          newBalanceCurrency = "String",
-          postedDate = "String",
-          `type` = "String",
-          userId = "String"
-        )::Nil
-      ))
+          newBalanceCurrency = "String", 
+          postedDate = "String", 
+          `type` = "String", 
+          userId = "String")::Nil))
   )
   // TODO Get rid on these param lookups and document.
   override def getTransactions(bankId: BankId, accountId: AccountId, session: Option[SessionContext], queryParams: OBPQueryParam*): Box[List[Transaction]] = saveConnectorMetric{
@@ -811,22 +808,22 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetTransactions](req)
         inboundGetTransactions <- tryo{kafkaMessage.extract[InboundGetTransactions]} ?~! s"$InvalidConnectorResponseForGetTransactions $InboundGetTransactions extract error"
-        internalTransactions <- Full(inboundGetTransactions.data)
+        (internalTransactions, status) <- Full(inboundGetTransactions.data, inboundGetTransactions.status)
       } yield{
-        internalTransactions
+        (internalTransactions, status)
       }
       logger.debug(s"Kafka getTransactions says: res is: $box")
 
       box match {
-        case Full(list) if (list.head.errorCode!="") =>
-          Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:"+ list.head.backendMessages)
-        case Full(internalTransactions) if (!internalTransactions.forall(x => x.accountId == accountId.value && x.bankId == bankId.value))  =>
+        case Full((data, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case Full((data, status)) if (!data.forall(x => x.accountId == accountId.value && x.bankId == bankId.value))  =>
           Failure(InvalidConnectorResponseForGetTransactions)
-        case Full(internalTransactions) if (internalTransactions.head.errorCode=="") =>
-          val bankAccount = checkBankAccountExists(BankId(internalTransactions.head.bankId), AccountId(internalTransactions.head.accountId), session)
+        case Full((data, status)) if (status.errorCode=="") =>
+          val bankAccount = checkBankAccountExists(BankId(data.head.bankId), AccountId(data.head.accountId), session)
     
           val res = for {
-            internalTransaction <- internalTransactions
+            internalTransaction <- data
             thisBankAccount <- bankAccount ?~! ErrorMessages.BankAccountNotFound
             transaction <- createInMemoryTransaction(thisBankAccount,internalTransaction)
           } yield {
@@ -878,22 +875,22 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetTransactions](req)
         inboundGetTransactions <- tryo{kafkaMessage.extract[InboundGetTransactions]} ?~! s"$InvalidConnectorResponseForGetTransactions $InboundGetTransactions extract error"
-        internalTransactions <- Full(inboundGetTransactions.data)
+        (internalTransactions, status) <- Full(inboundGetTransactions.data, inboundGetTransactions.status)
       } yield{
-        internalTransactions
+        (internalTransactions, status)
       }
       logger.debug(s"Kafka getTransactions says: res is: $box")
       
       box match {
-        case Full(list) if (list.head.errorCode!="") =>
-          Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:"+ list.head.backendMessages)
-        case Full(internalTransactions) if (!internalTransactions.forall(x => x.accountId == accountId.value && x.bankId == bankId.value))  =>
+        case Full((data, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case Full((data, status)) if (!data.forall(x => x.accountId == accountId.value && x.bankId == bankId.value))  =>
           Failure(InvalidConnectorResponseForGetTransactions)
-        case Full(internalTransactions) if (internalTransactions.head.errorCode=="") =>
-          val bankAccount = checkBankAccountExists(BankId(internalTransactions.head.bankId), AccountId(internalTransactions.head.accountId), session)
+        case Full((data, status)) if (status.errorCode=="") =>
+          val bankAccount = checkBankAccountExists(BankId(data.head.bankId), AccountId(data.head.accountId), session)
           
           val res = for {
-            internalTransaction <- internalTransactions
+            internalTransaction <- data
             thisBankAccount <- bankAccount ?~! ErrorMessages.BankAccountNotFound
             transaction <- createInMemoryTransactionCore(thisBankAccount,internalTransaction)
           } yield {
@@ -926,27 +923,22 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = decompose(
-      InboundGetTransaction(
-        authInfoExample,
-        InternalTransaction(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          transactionId = "String",
-          accountId = "String",
-          amount = "String",
-          bankId = "String",
-          completedDate = "String",
-          counterpartyId = "String",
-          counterpartyName = "String",
-          currency = "String",
-          description = "String",
-          newBalanceAmount = "String",
-          newBalanceCurrency = "String",
-          postedDate = "String",
-          `type` = "String",
-          userId = "String"
-        )
-      )
+      InboundGetTransaction(authInfoExample, statusExample, Some(InternalTransaction_vJune2017(
+                transactionId = "String",
+                accountId = "String",
+                amount = "String",
+                bankId = "String",
+                completedDate = "String",
+                counterpartyId = "String",
+                counterpartyName = "String",
+                currency = "String",
+                description = "String",
+                newBalanceAmount = "String",
+                newBalanceCurrency = "String",
+                postedDate = "String",
+                `type` = "String",
+                userId = "String"
+              )))
     )
   )
   override def getTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId): Box[Transaction] = saveConnectorMetric{memoizeSync(transactionTTL second){
@@ -960,27 +952,27 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     val box = for {
       kafkaMessage <- processToBox[OutboundGetTransaction](req)
       inboundGetTransaction <- tryo{kafkaMessage.extract[InboundGetTransaction]} ?~! s"$InvalidConnectorResponseForGetTransaction $InboundGetTransaction extract error"
-      internalTransaction <- Full(inboundGetTransaction.data)
+      (internalTransaction, status) <- Full(inboundGetTransaction.data, inboundGetTransaction.status)
     } yield{
-      internalTransaction
+      (internalTransaction, status)
     }
     logger.debug(s"Kafka getTransaction Res says: is: $box")
     
     box match {
       // Check does the response data match the requested data
-      case Full(x) if (transactionId.value != x.transactionId) =>
+      case Full((Some(data), status)) if (transactionId.value != data.transactionId) =>
         Failure(s"$InvalidConnectorResponseForGetTransaction")
-      case Full(x) if (x.errorCode!="") =>
-        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
-      case Full(internalTransaction) if (transactionId.value == internalTransaction.transactionId && internalTransaction.errorCode=="") =>
+      case Full((data,status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+      case Full((Some(data), status)) if (transactionId.value == data.transactionId && status.errorCode=="") =>
         for {
-          bankAccount <- checkBankAccountExists(BankId(internalTransaction.bankId), AccountId(internalTransaction.accountId)) ?~! ErrorMessages.BankAccountNotFound
-          transaction: Transaction <- createInMemoryTransaction(bankAccount,internalTransaction)
+          bankAccount <- checkBankAccountExists(BankId(data.bankId), AccountId(data.accountId)) ?~! ErrorMessages.BankAccountNotFound
+          transaction: Transaction <- createInMemoryTransaction(bankAccount,data)
         } yield {
           transaction
         }
-      case Full(x) if (x.errorCode!="") =>
-        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
+      case Full((data,status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
       case Empty =>
         Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
       case Failure(msg, e, c) =>
@@ -1082,10 +1074,30 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = decompose(
-      InboundCreateCounterparty(authInfoExample, statusExample, InternalCounterparty(createdByUserId= "String", name= "String", thisBankId= "String", thisAccountId= "String", thisViewId= "String", counterpartyId= "String", otherAccountRoutingScheme= "String", otherAccountRoutingAddress= "String", otherBankRoutingScheme= "String", otherBankRoutingAddress= "String", otherBranchRoutingScheme= "String", otherBranchRoutingAddress= "String", isBeneficiary = false, description= "String", otherAccountSecondaryRoutingScheme= "String", otherAccountSecondaryRoutingAddress= "String", bespoke =  List(CounterpartyBespoke(
+      InboundCreateCounterparty(
+        authInfoExample, 
+        statusExample,
+        Some(InternalCounterparty(
+          createdByUserId= "String", 
+          name= "String", 
+          thisBankId= "String", 
+          thisAccountId= "String",
+          thisViewId= "String",
+          counterpartyId= "String", 
+          otherAccountRoutingScheme= "String", 
+          otherAccountRoutingAddress= "String", 
+          otherBankRoutingScheme= "String", 
+          otherBankRoutingAddress= "String",
+          otherBranchRoutingScheme= "String", 
+          otherBranchRoutingAddress= "String", 
+          isBeneficiary = false,
+          description= "String",
+          otherAccountSecondaryRoutingScheme= "String", 
+          otherAccountSecondaryRoutingAddress= "String",
+          bespoke =  List(CounterpartyBespoke(
                           key = "String",
                           value = "String"
-                        ))))
+                        )))))
     )
   )
   override def createCounterparty(
@@ -1139,7 +1151,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     logger.debug(s"Kafka createCounterparty Res says: is: $box")
     
     val res: Box[CounterpartyTrait] = box match {
-      case Full((data, status)) if (status.errorCode=="")  =>
+      case Full((Some(data), status)) if (status.errorCode=="")  =>
         Full(data)
       case Full((data, status)) if (status.errorCode!="") =>
         Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
@@ -1345,7 +1357,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = Extraction.decompose(
-      InboundGetCounterparty(authInfoExample, statusExample, InternalCounterparty(createdByUserId = "String", name = "String", thisBankId = "String", thisAccountId = "String", thisViewId = "String", counterpartyId = "String", otherAccountRoutingScheme = "String", otherAccountRoutingAddress = "String", otherBankRoutingScheme = "String", otherBankRoutingAddress = "String", otherBranchRoutingScheme = "String", otherBranchRoutingAddress = "String", isBeneficiary = true, description = "String", otherAccountSecondaryRoutingScheme = "String", otherAccountSecondaryRoutingAddress = "String", bespoke = Nil))
+      InboundGetCounterparty(authInfoExample, statusExample, Some(InternalCounterparty(createdByUserId = "String", name = "String", thisBankId = "String", thisAccountId = "String", thisViewId = "String", counterpartyId = "String", otherAccountRoutingScheme = "String", otherAccountRoutingAddress = "String", otherBankRoutingScheme = "String", otherBankRoutingAddress = "String", otherBranchRoutingScheme = "String", otherBranchRoutingAddress = "String", isBeneficiary = true, description = "String", otherAccountSecondaryRoutingScheme = "String", otherAccountSecondaryRoutingAddress = "String", bespoke = Nil)))
     )
   )
   override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] = saveConnectorMetric{memoizeSync(counterpartyByCounterpartyIdTTL second){
@@ -1362,7 +1374,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     logger.debug(s"Kafka getCounterpartyByCounterpartyId Res says: is: $box")
   
     val res = box match {
-      case Full((data, status)) if (status.errorCode=="")  =>
+      case Full((Some(data), status)) if (status.errorCode=="")  =>
         Full(data)
       case Full((data, status)) if (status.errorCode!="") =>
         Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
@@ -1391,7 +1403,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     logger.debug(s"Kafka getCounterpartyTrait Res says: is: $box")
 
     val res = box match {
-      case Full((data, status)) if (status.errorCode=="")  =>
+      case Full((Some(data), status)) if (status.errorCode=="")  =>
         Full(data)
       case Full((data, status)) if (status.errorCode!="") =>
         Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
@@ -1468,7 +1480,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   
   /////////////////////////////////////////////////////////////////////////////
   // Helper for creating a transaction
-  def createInMemoryTransaction(bankAccount: BankAccount,internalTransaction: InternalTransaction): Box[Transaction] =  memoizeSync(memoryTransactionTTL second){
+  def createInMemoryTransaction(bankAccount: BankAccount,internalTransaction: InternalTransaction_vJune2017): Box[Transaction] =  memoizeSync(memoryTransactionTTL second){
     for {
       datePosted <- tryo {new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).parse(internalTransaction.postedDate)} ?~!s"$InvalidConnectorResponseForGetTransaction Wrong posteDate format should be yyyyMMdd, current is ${internalTransaction.postedDate}"
       dateCompleted <- tryo {new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).parse(internalTransaction.completedDate)} ?~!s"$InvalidConnectorResponseForGetTransaction Wrong completedDate format should be yyyyMMdd, current is ${internalTransaction.completedDate}"
@@ -1495,7 +1507,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     }
   }
  
-  def createInMemoryTransactionCore(bankAccount: BankAccount,internalTransaction: InternalTransaction): Box[TransactionCore] =  memoizeSync(memoryTransactionTTL second){
+  def createInMemoryTransactionCore(bankAccount: BankAccount,internalTransaction: InternalTransaction_vJune2017): Box[TransactionCore] =  memoizeSync(memoryTransactionTTL second){
     for {
       datePosted <- tryo {new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).parse(internalTransaction.postedDate)} ?~!s"$InvalidConnectorResponseForGetTransaction Wrong posteDate format should be yyyyMMdd, current is ${internalTransaction.postedDate}"
       dateCompleted <- tryo {new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).parse(internalTransaction.completedDate)} ?~!s"$InvalidConnectorResponseForGetTransaction Wrong completedDate format should be yyyyMMdd, current is ${internalTransaction.completedDate}"
@@ -1645,7 +1657,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         authInfoExample,
         Status("",
           inboundStatusMessagesExample),
-        InboundBranchVJune2017(
+        Some(InboundBranchVJune2017(
           branchId = BranchId(""),
           bankId = BankId(""),
           name = "",
@@ -1678,7 +1690,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           branchType  = Some(""),
           moreInfo = Some(""),
           phoneNumber = Some("")
-        ) 
+        ) )
       )
 
     )
@@ -1694,7 +1706,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetBranch](req)
         inboundGetBranch <- tryo{kafkaMessage.extract[InboundGetBranch]} ?~! s"$InboundGetBranch extract error"
-        (inboundBranch, status) <- Full(inboundGetBranch.data, inboundGetBranch.status)
+          (inboundBranch, status) <- Full(inboundGetBranch.data, inboundGetBranch.status)
       } yield{
         (inboundBranch, status)
       }
@@ -1702,7 +1714,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
 
       logger.debug(s"Kafka getBranch Res says:  is: $Box")
       val res = box match {
-        case Full((branch, status)) if (status.errorCode=="") =>
+        case Full((Some(branch), status)) if (status.errorCode=="") =>
           Full(branch)
         case Full((branch, status)) if (status.errorCode!="") =>
           Failure("INTERNAL-OBP-ADAPTER-xxx: "+ status.errorCode+". + CoreBank-Error:"+ status.backendMessages)
