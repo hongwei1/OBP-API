@@ -5,7 +5,7 @@ import java.io
 import code.api.APIFailure
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
-import code.api.util.APIUtil._
+import code.api.util.APIUtil.{getGatewayLoginHeader, _}
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ApiRole, ErrorMessages}
@@ -977,25 +977,23 @@ trait APIMethods300 {
       Catalogs(notCore, notPSD2, OBWG),
       List(apiTagATM)
     )
-    // TODO Rewrite as New Style Endpoint
     lazy val getAtm: PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
       case "banks" :: BankId(bankId) :: "atms" :: AtmId(atmId) :: Nil JsonGet json => {
-        user => {
+        _ =>
           for {
-          // Get atm from the active provider
-            u <- if (getAtmsIsPublic)
-              Box(Some(1))
-            else
-              user ?~! UserNotLoggedIn
-            _ <- Bank(bankId) ?~! {BankNotFound}
-            atm <- Box(Connector.connector.vend.getAtm(bankId,atmId)) ?~! {AtmNotFoundByAtmId}
+            (user, sessioContext) <- extractCallContext()
+            _ <- Helper.booleanToFuture(failMsg = UserNotLoggedIn) {
+              canGetAtm(getAtmsIsPublic, user)
+            }
+            _ <- Future { Bank(bankId) } map {
+              x => fullBoxOrException(x ?~! BankNotFound)
+            }
+            atm <- Connector.connector.vend.getAtmFuture(bankId,atmId) map {
+              x => fullBoxOrException(x ?~! AtmNotFoundByAtmId)
+            } map { unboxFull(_) }
           } yield {
-            // Format the data as json
-            val json = JSONFactory300.createAtmJsonV300(atm)
-            // Return
-            successJsonResponse(Extraction.decompose(json))
+            (JSONFactory300.createAtmJsonV300(atm), getGatewayLoginHeader(sessioContext))
           }
-        }
       }
     }
 
@@ -1096,11 +1094,9 @@ trait APIMethods300 {
         _ =>
           val s = S
           for {
-            (user, sessioContext) <- extractCallContext(UserNotLoggedIn)
+            (user, sessioContext) <- extractCallContext()
             u <- unboxFullAndWrapIntoFuture{ user }
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
-              hasEntitlement("", u.userId, ApiRole.CanGetAnyUser)
-            }
+
             users <- Users.users.vend.getAllUsersF()
           } yield {
             (JSONFactory300.createUserJSONs (users), getGatewayLoginHeader(sessioContext))

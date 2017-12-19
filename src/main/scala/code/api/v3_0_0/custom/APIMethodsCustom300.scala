@@ -321,7 +321,7 @@ trait CustomAPIMethods300 {
                           for {
                             futureDate <- tryo {stringToDate(transDetailsP2PJson.future_date, "yyyyMMdd")} ?~! InvalidDateFormat
                             today <- tryo {new Date()}
-                            _ <- booleanToBox(futureDate.before(today) == false, InvalidFutureDateValue)
+                            _ <- booleanToBox(futureDate.after(today) == true, InvalidFutureDateValue)
                           } yield {
                             true
                           }
