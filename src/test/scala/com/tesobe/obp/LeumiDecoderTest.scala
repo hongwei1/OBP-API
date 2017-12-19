@@ -65,11 +65,6 @@ class LeumiDecoderTest  extends ServerSetup {
     val result = getTransactions(OutboundGetTransactions(AuthInfo("karlsid", username, ">,?          81433020102612"), "10", accountId1, 15, "Sat Jul 01 00:00:00 CEST 2000", "Sat Jul 01 00:00:00 CEST 2017"))
     val transactionId = "b0KL4sToinUtUN2H3be_LtYv2XRxvuRmc6PqtjFqNEM"
     result.data.head should be (InternalTransaction(
-      "",
-      List(
-        InboundStatusMessage("ESB","Success", "0", "OK"), //TODO, need to fill the coreBanking error
-        InboundStatusMessage("MF","Success", "0", "OK")   //TODO, need to fill the coreBanking error
-      ),
       transactionId,
       accountId1,
       "-1312.21",
@@ -185,7 +180,7 @@ class LeumiDecoderTest  extends ServerSetup {
     val result = getCounterpartyByCounterpartyId(OutboundGetCounterpartyByCounterpartyId(authInfoIsFirstTrue,
       OutboundGetCounterpartyById("I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I")))
     
-    result should be (InboundGetCounterparty(authInfoIsFirstTrue, Status(), InternalCounterparty("", "         יעכטגאט", "10", "3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98", "", "I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I", "", "7571", "", "10", "", "601", true, "                     יעכטגאט", "", "", List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("","")))))
+    result should be (InboundGetCounterparty(authInfoIsFirstTrue, Status(), Some(InternalCounterparty("", "         יעכטגאט", "10", "3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98", "", "I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I", "", "7571", "", "10", "", "601", true, "                     יעכטגאט", "", "", List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))))))
   }
 
   test("getCounterparty returns correct result for ")  {
@@ -193,7 +188,7 @@ class LeumiDecoderTest  extends ServerSetup {
       
       accountId1,"I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I"))
 
-    result should be (InboundGetCounterparty(authInfoIsFirstTrue, Status(), InternalCounterparty("", "         יעכטגאט", "10", "3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98", "", "I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I", "", "7571", "", "10", "", "601", true, "                     יעכטגאט", "", "", List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("","")))))
+    result should be (InboundGetCounterparty(authInfoIsFirstTrue, Status(), Some(InternalCounterparty("", "         יעכטגאט", "10", "3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98", "", "I8SSjafxp6UOiUXMda-jIRqaloepG4Mf0ECWv4pm7-I", "", "7571", "", "10", "", "601", true, "                     יעכטגאט", "", "", List(PostCounterpartyBespoke("",""), PostCounterpartyBespoke("",""))))))
   }
   
   
@@ -212,7 +207,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getBranch works for local test stub"){
     getBranch(OutboundGetBranch(authInfoIsFirstTrue, "10", "957")).data should be (
-    InboundBranchVJune2017(BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","12:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some("")))
+    Some(InboundBranchVJune2017(BranchId("957"),BankId("10"),"אבן יהודה",Address("רח' המייסדים 64","","","אבן יהודה",None,"","4050000","IL"),Location(34.88898,32.2697),Meta(License("pddl","Open Data Commons Public Domain Dedication and License (PDDL)")),None,Some(Lobby(List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","14:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("08:30","13:00"), OpeningTimes("16:00","18:15")),List(OpeningTimes("08:30","12:30"), OpeningTimes("00:00","00:00")),List(OpeningTimes("00:00","00:00"), OpeningTimes("00:00","00:00")))),None,Some(true),Some("נגישות לכסא גלגלים" + "," +"לולאת השראה ללקויי שמיעה" + "," +"כספומט מותאם ללקויי ראייה" + "," +"עמדת מידע מותאמת ללקויי ראייה" + "," +"שירותי נכים בסניף"),None,None,Some(""))))
   }
   
   test("getAtms returns correct results"){

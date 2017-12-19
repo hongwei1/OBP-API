@@ -242,11 +242,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
     val transactionProcessingDate = adapterTransaction.TN2_TNUA_BODEDET.TN2_TA_IBUD //"TN2_TA_IBUD": // Date of transaction
 
     InternalTransaction(
-      errorCode = "",
-      List(
-        InboundStatusMessage("ESB", "Success", "0", "OK"), 
-        InboundStatusMessage("MF", "Success", "0", "OK") 
-      ),
       transactionId = createTransactionId(amount, completedDate, newBalanceAmount), // Find some
       accountId = accountId, //accountId
       amount = amount,
@@ -674,14 +669,12 @@ object LeumiDecoder extends Decoder with StrictLogging {
             i
           )
         }
-        InboundGetTransactions(getTransactionsRequest.authInfo, result.toList)
+        InboundGetTransactions(getTransactionsRequest.authInfo, Status(), result.toList)
       case Left(x) => 
-        InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction(MainFrameError,
-          createInboundStatusMessages(x), "","","","",null,"","","","","","","","","")))
+        InboundGetTransactions(getTransactionsRequest.authInfo, createStatusFromCBSPapiError(x), Nil)
     }
       case Left(account) =>
-        InboundGetTransactions(getTransactionsRequest.authInfo, List(InternalTransaction(MainFrameError,
-          createInboundStatusMessages(account), "","","","",null,"","","","","","","","","")))
+        InboundGetTransactions(getTransactionsRequest.authInfo, createStatusFromCBSPapiError(account), Nil)
     }
         
   }
@@ -704,7 +697,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     }
 
     val resultTransaction = allTransactions.find(x => x.transactionId == getTransactionRequest.transactionId).getOrElse(throw new Exception("Invalid TransactionID"))
-    InboundGetTransaction(getTransactionRequest.authInfo, resultTransaction)
+    InboundGetTransaction(getTransactionRequest.authInfo,Status(), Some(resultTransaction))
 
   }
 
@@ -1107,10 +1100,9 @@ object LeumiDecoder extends Decoder with StrictLogging {
           ntg6ACall match {
             case Right(x) =>
 
-              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, Status(), InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke))
+              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, Status(), Some(InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke)))
             case Left(x) =>
-              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, createStatusFromCBSPapiError(x), InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke))
-          }
+              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, createStatusFromCBSPapiError(x), None)          }
         } else {
           val ntg6BCall = getNtg6B(
             branch = branchId,
@@ -1129,17 +1121,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
           ntg6BCall match {
             case Right(x) =>
 
-              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, Status(), InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke))
+              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, Status(), Some(InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke)))
 
             case Left(x) =>
-              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, createStatusFromCBSPapiError(x), InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke))
+              InboundCreateCounterparty(outboundCreateCounterparty.authInfo, createStatusFromCBSPapiError(x), None)
           }
 
 
         }
       case Left(account) =>
-        InboundCreateCounterparty(outboundCreateCounterparty.authInfo, Status(), InternalCreateCounterparty(status = "", createdByUserId = outboundCreateCounterparty.counterparty.createdByUserId, name = outboundCreateCounterparty.counterparty.name, thisBankId = outboundCreateCounterparty.counterparty.thisBankId, thisAccountId = outboundCreateCounterparty.counterparty.thisAccountId, thisViewId = outboundCreateCounterparty.counterparty.thisViewId, counterpartyId = "", otherAccountRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountRoutingScheme, otherAccountRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountRoutingAddress, otherBankRoutingScheme = outboundCreateCounterparty.counterparty.otherBankRoutingScheme, otherBankRoutingAddress = outboundCreateCounterparty.counterparty.otherBankRoutingAddress, otherBranchRoutingScheme = outboundCreateCounterparty.counterparty.otherBranchRoutingScheme, otherBranchRoutingAddress = outboundCreateCounterparty.counterparty.otherBranchRoutingAddress, isBeneficiary = outboundCreateCounterparty.counterparty.isBeneficiary, description = outboundCreateCounterparty.counterparty.description, otherAccountSecondaryRoutingScheme = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress = outboundCreateCounterparty.counterparty.otherAccountSecondaryRoutingAddress, bespoke = outboundCreateCounterparty.counterparty.bespoke))
-
+        InboundCreateCounterparty(outboundCreateCounterparty.authInfo, createStatusFromCBSPapiError(account),None)
 
     }
   }
@@ -1293,7 +1284,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     
     val internalCounterparty = counterparties.find(x => 
         x.counterpartyId == outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId}"))
-    InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, Status(), internalCounterparty)
+    InboundGetCounterparty(outboundGetCounterpartyByCounterpartyId.authInfo, Status(), Some(internalCounterparty))
       
   }
 
@@ -1316,7 +1307,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
     val internalCounterparty = counterparties.find(x =>
         x.counterpartyId == outboundGetCounterparty.counterpartyId).getOrElse(throw new InvalidCounterPartyIdException(s"$InvalidCounterPartyId Current CounterpartyId =${outboundGetCounterparty.counterpartyId}"))
-    InboundGetCounterparty(outboundGetCounterparty.authInfo, Status(), internalCounterparty)
+    InboundGetCounterparty(outboundGetCounterparty.authInfo, Status(), Some(internalCounterparty))
 
   }
   

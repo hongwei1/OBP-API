@@ -125,18 +125,17 @@ case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[Inbound
 case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
 case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
 case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
-case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
-case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
+case class InboundGetTransactions(authInfo: AuthInfo, status: Status, data: List[InternalTransaction])
+case class InboundGetTransaction(authInfo: AuthInfo, status: Status, data: Option[InternalTransaction])
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
-case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: InternalCreateCounterparty)
+case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: Option[InternalCreateCounterparty])
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, status: Status, data: List[TransactionRequest])
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccount])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, status: Status, data: List[InternalFullCustomer])
-case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
-case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
+case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: Option[InternalCounterparty])
 case class InboundGetBranches(authInfo: AuthInfo, status: Status, data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo, status: Status, data: Option[InboundBranchVJune2017])
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
@@ -269,9 +268,7 @@ abstract class InboundMessageBase(optionalFields: String*) {
 }
 
 case class InternalTransaction(
-  //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"                              
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
+  //Base : "TN2_TSHUVA_TAVLAIT":"TN2_SHETACH_LE_SEND_NOSAF":"TN2_TNUOT":"TN2_PIRTEY_TNUA":["TN2_TNUA_BODEDET"
   transactionId: String, // Find some
   accountId: String, //accountId
   amount: String, //:"TN2_SCHUM"
@@ -286,7 +283,7 @@ case class InternalTransaction(
   postedDate: String, //"TN2_TA_IBUD": // Date of transaction
   `type`: String, //"TN2_SUG_PEULA"
   userId: String //userId
-) extends InboundMessageBase
+)
 
 
 // these are for create transactions
