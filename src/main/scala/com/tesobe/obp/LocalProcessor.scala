@@ -434,17 +434,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       case m: Throwable =>
         logger.error("getTransactionRequestsFn-unknown error", m)
 
-        val errorBody = InboundGetTransactionRequests210(
-          AuthInfo("","",""),
-          InternalGetTransactionRequests(
-            m.getMessage,
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"),
-              InboundStatusMessage("MF","Success", "0", "OK")  
-            ),
-            Nil
-          )
-        )
+        val errorBody = InboundGetTransactionRequests210(AuthInfo("","",""), Status(m.getMessage), null)
         Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   }
