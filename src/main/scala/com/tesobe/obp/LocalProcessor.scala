@@ -39,6 +39,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class LocalProcessor(implicit executionContext: ExecutionContext, materializer: Materializer) extends StrictLogging with Config {
   
   implicit val formats = net.liftweb.json.DefaultFormats + MyZonedTimeDateSerializer + MyLocalDateSerializer
+
   
   /**
     * Processes message that comes from generic 'Request'/'Response' topics.
@@ -502,40 +503,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       case m: Throwable =>
         logger.error("getCounterpartiesFn-unknown error", m)   
 
-        val errorBody = InboundGetCounterparties(AuthInfo("","",""), List(InternalCounterparty(
-          errorCode = m.getMessage,
-          backendMessages = List(InboundStatusMessage(
-            "ESB",
-            "Failure",
-            "",
-            ""),
-            InboundStatusMessage(
-              "MF",
-              "Failure",
-              "",
-              "")
-          ),
-          createdByUserId = "",
-          name = "",
-          thisBankId = "",
-          thisAccountId = "",
-          thisViewId = "",
-          counterpartyId = "",
-          otherAccountRoutingScheme= "",
-          otherAccountRoutingAddress= "",
-          otherBankRoutingScheme= "",
-          otherBankRoutingAddress= "",
-          otherBranchRoutingScheme= "",
-          otherBranchRoutingAddress= "",
-          isBeneficiary = false,
-          description = "",
-          otherAccountSecondaryRoutingScheme= "",
-          otherAccountSecondaryRoutingAddress= "",
-          bespoke = List(PostCounterpartyBespoke("englishName", ""),
-            PostCounterpartyBespoke("englishDescription", "")
-
-
-          ))))
+        val errorBody = InboundGetCounterparties(AuthInfo("","",""),Status(m.getLocalizedMessage) , List(InternalCounterparty(createdByUserId = "", name = "", thisBankId = "", thisAccountId = "", thisViewId = "", counterpartyId = "", otherAccountRoutingScheme= "", otherAccountRoutingAddress= "", otherBankRoutingScheme= "", otherBankRoutingAddress= "", otherBranchRoutingScheme= "", otherBranchRoutingAddress= "", isBeneficiary = false, description = "", otherAccountSecondaryRoutingScheme= "", otherAccountSecondaryRoutingAddress= "", bespoke = List(PostCounterpartyBespoke("englishName", ""),
+                            PostCounterpartyBespoke("englishDescription", "")
+                
+                
+                          ))))
 
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -555,40 +527,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       case m: Throwable =>
         logger.error("getCounterpartiesFn-unknown error", m)
 
-        val errorBody = InboundGetCounterparty(AuthInfo("","",""), InternalCounterparty(
-          errorCode = m.getMessage,
-          backendMessages = List(InboundStatusMessage(
-            "ESB",
-            "Failure",
-            "",
-            ""),
-            InboundStatusMessage(
-              "MF",
-              "Failure",
-              "",
-              "")
-          ),
-          createdByUserId = "",
-          name = "",
-          thisBankId = "",
-          thisAccountId = "",
-          thisViewId = "",
-          counterpartyId = "",
-          otherAccountRoutingScheme= "",
-          otherAccountRoutingAddress= "",
-          otherBankRoutingScheme= "",
-          otherBankRoutingAddress= "",
-          otherBranchRoutingScheme= "",
-          otherBranchRoutingAddress= "",
-          isBeneficiary = false,
-          description = "",
-          otherAccountSecondaryRoutingScheme= "",
-          otherAccountSecondaryRoutingAddress= "",
-          bespoke = List(PostCounterpartyBespoke("englishName", ""),
-            PostCounterpartyBespoke("englishDescription", "")
-
-
-          )))
+        val errorBody = InboundGetCounterparty(AuthInfo("","",""), Status(m.getMessage), InternalCounterparty(createdByUserId = "", name = "", thisBankId = "", thisAccountId = "", thisViewId = "", counterpartyId = "", otherAccountRoutingScheme= "", otherAccountRoutingAddress= "", otherBankRoutingScheme= "", otherBankRoutingAddress= "", otherBranchRoutingScheme= "", otherBranchRoutingAddress= "", isBeneficiary = false, description = "", otherAccountSecondaryRoutingScheme= "", otherAccountSecondaryRoutingAddress= "", bespoke = List(PostCounterpartyBespoke("englishName", ""),
+                            PostCounterpartyBespoke("englishDescription", "")
+                
+                
+                          )))
 
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -608,40 +551,11 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       case m: Throwable =>
         logger.error("getCounterpartyFn-unknown error", m)
 
-        val errorBody = InboundGetCounterparty(AuthInfo("","",""), InternalCounterparty(
-          errorCode = m.getMessage,
-          backendMessages = List(InboundStatusMessage(
-            "ESB",
-            "Failure",
-            "",
-            ""),
-            InboundStatusMessage(
-              "MF",
-              "Failure",
-              "",
-              "")
-          ),
-          createdByUserId = "",
-          name = "",
-          thisBankId = "",
-          thisAccountId = "",
-          thisViewId = "",
-          counterpartyId = "",
-          otherAccountRoutingScheme= "",
-          otherAccountRoutingAddress= "",
-          otherBankRoutingScheme= "",
-          otherBankRoutingAddress= "",
-          otherBranchRoutingScheme= "",
-          otherBranchRoutingAddress= "",
-          isBeneficiary = false,
-          description = "",
-          otherAccountSecondaryRoutingScheme= "",
-          otherAccountSecondaryRoutingAddress= "",
-          bespoke = List(PostCounterpartyBespoke("englishName", ""),
-            PostCounterpartyBespoke("englishDescription", "")
-
-
-          )))
+        val errorBody = InboundGetCounterparty(AuthInfo("","",""), Status(m.getMessage), InternalCounterparty(createdByUserId = "", name = "", thisBankId = "", thisAccountId = "", thisViewId = "", counterpartyId = "", otherAccountRoutingScheme= "", otherAccountRoutingAddress= "", otherBankRoutingScheme= "", otherBankRoutingAddress= "", otherBranchRoutingScheme= "", otherBranchRoutingAddress= "", isBeneficiary = false, description = "", otherAccountSecondaryRoutingScheme= "", otherAccountSecondaryRoutingAddress= "", bespoke = List(PostCounterpartyBespoke("englishName", ""),
+                            PostCounterpartyBespoke("englishDescription", "")
+                
+                
+                          )))
 
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -662,11 +576,8 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("checkBankAccountExistsFn-unknown error", m)
         val errorBody = InboundGetBranches(
           AuthInfo("","",""),
-          Status(m.getMessage,
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"),
-              InboundStatusMessage("MF","Success", "0", "OK")
-            )),List()
+          Status(m.getMessage),
+          List()
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -687,11 +598,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getBranchFn-unknown error", m)
         val errorBody = InboundGetBranch(
           AuthInfo("","",""),
-          Status(m.getMessage,
-          List(
-            InboundStatusMessage("ESB","Success", "0", "OK"),
-            InboundStatusMessage("MF","Success", "0", "OK")
-          )),null
+          Status(m.getMessage),null
         )
         Future(msg, errorBody.asJson.noSpaces)
     }
@@ -712,10 +619,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getAtms-unknown error", m)
         val errorBody = InboundGetAtms(
           AuthInfo("","",""),
-          Status(m.getMessage, List(
-            InboundStatusMessage("ESB","Success", "0", "OK"),
-            InboundStatusMessage("MF","Success", "0", "OK")
-          )),List()
+          Status(m.getMessage),List()
 
         )
         Future(msg, errorBody.asJson.noSpaces)
@@ -737,10 +641,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
         logger.error("getAtm-unknown error", m)
         val errorBody = InboundGetAtm(
           AuthInfo("","",""),
-          Status(m.getMessage, List(
-            InboundStatusMessage("ESB","Success", "0", "OK"),
-            InboundStatusMessage("MF","Success", "0", "OK")
-          )),null
+          Status(m.getMessage),null
 
         )
         Future(msg, errorBody.asJson.noSpaces)

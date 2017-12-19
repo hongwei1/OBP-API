@@ -128,15 +128,15 @@ case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccount
 case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
 case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
-case class InboundCreateCounterparty(authInfo: AuthInfo, data: InternalCreateCounterparty)
+case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: InternalCreateCounterparty)
 case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransactionId)
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccount])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
-case class InboundGetCounterparties(authInfo: AuthInfo, data: List[InternalCounterparty])
-case class InboundGetCounterparty(authInfo: AuthInfo, data: InternalCounterparty)
+case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
+case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
 case class InboundGetBranches(authInfo: AuthInfo, status: Status, data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo, status: Status, data: InboundBranchVJune2017)
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
@@ -246,26 +246,23 @@ case class InboundAccountJune2017(
 )
 
 case class InternalCounterparty(
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
-  createdByUserId: String,
-  name: String,
-  thisBankId: String,
-  thisAccountId: String,
-  thisViewId: String,
-  counterpartyId: String,
-  otherAccountRoutingScheme: String,
-  otherAccountRoutingAddress: String,
-  otherBankRoutingScheme: String,
-  otherBankRoutingAddress: String,
-  otherBranchRoutingScheme: String,
-  otherBranchRoutingAddress: String,
-  isBeneficiary: Boolean,
-  description: String,
-  otherAccountSecondaryRoutingScheme: String,
-  otherAccountSecondaryRoutingAddress: String,
-  bespoke: List[PostCounterpartyBespoke]
-)
+                                 createdByUserId: String,
+                                 name: String,
+                                 thisBankId: String, 
+                                 thisAccountId: String,
+                                 thisViewId: String,
+                                 counterpartyId: String,
+                                 otherAccountRoutingScheme: String,
+                                 otherAccountRoutingAddress: String,
+                                 otherBankRoutingScheme: String, 
+                                 otherBankRoutingAddress: String, 
+                                 otherBranchRoutingScheme: String,
+                                 otherBranchRoutingAddress: String, 
+                                 isBeneficiary: Boolean, 
+                                 description: String,
+                                 otherAccountSecondaryRoutingScheme: String,
+                                 otherAccountSecondaryRoutingAddress: String,
+                                 bespoke: List[PostCounterpartyBespoke])
 
 abstract class InboundMessageBase(optionalFields: String*) {
   def errorCode: String
@@ -414,28 +411,7 @@ case class InternalCreateChallengeJune2017(
   answer : String
 )
 
-case class InternalCreateCounterparty(
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
-  status: String,
-  createdByUserId: String = "",
-  name: String  = "",
-  thisBankId: String = "",
-  thisAccountId: String= "",
-  thisViewId: String= "",
-  counterpartyId: String,
-  otherAccountRoutingScheme: String= "",
-  otherAccountRoutingAddress: String= "",
-  otherBankRoutingScheme: String= "",
-  otherBankRoutingAddress: String = "",
-  otherBranchRoutingScheme: String= "",
-  otherBranchRoutingAddress: String= "",
-  isBeneficiary: Boolean = true,
-  description: String= "",
-  otherAccountSecondaryRoutingScheme: String = "",
-  otherAccountSecondaryRoutingAddress: String = "",
-  bespoke: List[PostCounterpartyBespoke] = Nil
-)
+case class InternalCreateCounterparty(status: String, createdByUserId: String = "", name: String = "", thisBankId: String = "", thisAccountId: String = "", thisViewId: String = "", counterpartyId: String, otherAccountRoutingScheme: String = "", otherAccountRoutingAddress: String = "", otherBankRoutingScheme: String = "", otherBankRoutingAddress: String = "", otherBranchRoutingScheme: String = "", otherBranchRoutingAddress: String = "", isBeneficiary: Boolean = true, description: String = "", otherAccountSecondaryRoutingScheme: String = "", otherAccountSecondaryRoutingAddress: String = "", bespoke: List[PostCounterpartyBespoke] = Nil)
 
 case class InternalGetTransactionRequests(
   errorCode: String,
