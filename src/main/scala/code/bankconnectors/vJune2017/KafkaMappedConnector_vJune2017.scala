@@ -1830,7 +1830,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       InboundGetAtm(
         authInfoExample,
         Status(errorCodeExample, inboundStatusMessagesExample),
-        InboundAtmJune2017(
+        Some(InboundAtmJune2017(
           atmId = AtmId("333"),
           bankId = BankId("10"),
           name = "",
@@ -1871,7 +1871,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           moreInfo = Some(""),
           hasDepositCapability = Some(true)
         )
-      )
+      ))
 
     )
   )
@@ -1892,9 +1892,9 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
 
       logger.debug(s"Kafka getAtm Res says:  is: $Box")
       val res = box match {
-        case Full((atm, status)) if (status.errorCode=="") =>
+        case Full((Some(atm), status)) if (status.errorCode=="") =>
           Full(atm)
-        case Full((banks, status)) if (status.errorCode!="") =>
+        case Full((_, status)) if (status.errorCode!="") =>
           Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse)
@@ -1907,9 +1907,39 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getAtm")
-  
-  
 
+
+  override def getAtmFuture(bankId : BankId, atmId: AtmId) : Future[Box[AtmT]] = saveConnectorMetric {
+    memoizeSync(atmTTL millisecond){
+      val req = OutboundGetAtm(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.value, atmId.value)
+      logger.info(s"Kafka getAtmFuture Req is: $req")
+
+      val future: Future[(Option[InboundAtmJune2017], Status)] = for {
+        res <- processToFuture[OutboundGetAtm](req) map {
+          f =>
+            try {
+              f.extract[InboundGetAtm]
+            } catch {
+              case e: Exception => throw new MappingException(s"$InboundGetAtm extract error", e)
+            }
+        } map {
+          d => (d.data, d.status)
+        }
+      } yield {
+        res
+      }
+
+      logger.debug(s"Kafka getAtmFuture Res says:  is: $future")
+      future map {
+        case (Some(atm), status) if (status.errorCode=="") =>
+          Full(atm)
+        case (_, status) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+    }
+  }("getAtmFuture")
 
 
 }

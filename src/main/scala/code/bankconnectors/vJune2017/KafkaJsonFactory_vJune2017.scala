@@ -99,7 +99,7 @@ case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalCu
 case class InboundGetBranches(authInfo: AuthInfo,status: Status,data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo,status: Status, data: InboundBranchVJune2017)
 case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
-case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: InboundAtmJune2017)
+case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: Option[InboundAtmJune2017])
 
 
 
