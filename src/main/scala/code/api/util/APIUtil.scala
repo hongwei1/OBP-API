@@ -1463,8 +1463,8 @@ Returns a string showed to the developer
   }
 
 
-  def canGetAtm(atmsIsPublic: Boolean, user: Box[User]): Boolean = {
-    atmsIsPublic match {
+  def canGet(condition: Boolean, user: Box[User]): Boolean = {
+    condition match {
       case true =>
         true
       case false =>
@@ -1475,6 +1475,14 @@ Returns a string showed to the developer
             false
         }
     }
+  }
+
+  def canGetBranch(branchesIsPublic: Boolean, user: Box[User]): Boolean = {
+    canGet(branchesIsPublic, user)
+  }
+
+  def canGetAtm(atmsIsPublic: Boolean, user: Box[User]): Boolean = {
+    canGet(atmsIsPublic, user)
   }
 
 
