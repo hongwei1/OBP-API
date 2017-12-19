@@ -283,17 +283,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     } catch {
       case m: Throwable =>
         logger.error("getCustomerFn-unknown error", m)
-        val errorBody = InboundGetCustomersByUserId(AuthInfo("","",""),
-          List(InternalFullCustomer("",
-            m.getMessage,
-            List(
-            InboundStatusMessage("ESB","Success", "0", "OK"),
-            InboundStatusMessage("MF","Success", "0", "OK")  
-          ),"","","","","","",CustomerFaceImage(null,""),
-            simpleTransactionDateFormat.parse("19481231"),
-            //getUtcDateFromLocalDate(LocalDate.parse("19481231")),
-            "",0,null,
-          "", "", CreditRating("",""),AmountOfMoney("","0"),false,null)))
+        val errorBody = InboundGetCustomersByUserId(AuthInfo("","",""), Status(m.getMessage),null)
         Future(msg, prettyRender(Extraction.decompose(errorBody)))
     }
   }

@@ -1194,80 +1194,28 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
 
         val result = InternalFullCustomer(
-          status = "",
-          errorCode = "",
-          backendMessages = List(InboundStatusMessage("", "", "", "")),
           customerId = createCustomerId(username),
-          bankId = "10",
-          number = username,
-          legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA,
-          mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM, //first mobile (type:10) nr. in ntlv1
-          email = emailAddress.O1_MAIL_ADDRESS, //first not empty email address in ntlv1
-          faceImage = CustomerFaceImage(null, ""),
-          dateOfBirth = getUtcDatefromLeumiLocalDate(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), //JONI
+          bankId = "10", number = username, 
+          legalName = joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_PRATI + " " + joniMfCall.SDR_JONI.SDR_MANUI.SDRM_SHEM_MISHPACHA, 
+          mobileNumber = mobilePhoneData.O1_TEL_AREA + mobilePhoneData.O1_TEL_NUM,
+          email = emailAddress.O1_MAIL_ADDRESS, faceImage = CustomerFaceImage(null, ""), 
+          dateOfBirth = getUtcDatefromLeumiLocalDate(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TAR_LEIDA), 
           relationshipStatus = "",
-          dependents = null,
+          dependents = null, 
           dobOfDependents = List(null),
           highestEducationAttained = "",
           employmentStatus = "",
           creditRating = CreditRating("", ""),
-          creditLimit = AmountOfMoney("", ""),
+          creditLimit = AmountOfMoney("", ""), 
           kycStatus = null,
-          lastOkDate = getUtcDatefromLeumiDateTime(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST , joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST) //JONI
-        )
-        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, List(result))
+          lastOkDate = getUtcDatefromLeumiDateTime(joniMfCall.SDR_JONI.SDR_MANUI.SDRM_DATE_LAST , joniMfCall.SDR_JONI.SDR_MANUI.SDRM_TIME_LAST))
+        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, Status(), List(result))
 
       case Left(x)  =>
-        
-        
-        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, 
-          List(InternalFullCustomer(
-            status = "",
-            errorCode = MainFrameError,
-            backendMessages = createInboundStatusMessages(x),
-            customerId = "",
-            bankId = "",
-            number = "",
-            legalName = "",
-            mobileNumber = "",
-            email = "",
-            faceImage = null,
-            dateOfBirth = null,
-            relationshipStatus = "",
-            dependents = null,
-            dobOfDependents = List(null),
-            highestEducationAttained = "",
-            employmentStatus = "",
-            creditRating = CreditRating("", ""),
-            creditLimit = AmountOfMoney("", ""),
-            kycStatus = null,
-            lastOkDate = null
-          )))
+        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, createStatusFromCBSPapiError(x), null)
     }
       case Left(joniMfCall) =>
-        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo,
-          List(InternalFullCustomer(
-            status = "",
-            errorCode = MainFrameError,
-            backendMessages = createInboundStatusMessages(joniMfCall),
-            customerId = "",
-            bankId = "",
-            number = "",
-            legalName = "",
-            mobileNumber = "",
-            email = "",
-            faceImage = null,
-            dateOfBirth = null,
-            relationshipStatus = "",
-            dependents = null,
-            dobOfDependents = List(null),
-            highestEducationAttained = "",
-            employmentStatus = "",
-            creditRating = CreditRating("", ""),
-            creditLimit = AmountOfMoney("", ""),
-            kycStatus = null,
-            lastOkDate = null
-          )))
+        InboundGetCustomersByUserId(outboundGetCustomersByUserIdFuture.authInfo, createStatusFromCBSPapiError(joniMfCall), null)
     }
         
   }

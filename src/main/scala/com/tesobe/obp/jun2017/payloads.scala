@@ -133,7 +133,7 @@ case class InboundCreateTransactionId(authInfo: AuthInfo, data: InternalTransact
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetCoreAccounts(authInfo: AuthInfo,backendMessages: List[InboundStatusMessage], data: List[CoreAccount])
-case class InboundGetCustomersByUserId(authInfo: AuthInfo, data: List[InternalFullCustomer])
+case class InboundGetCustomersByUserId(authInfo: AuthInfo, status: Status, data: List[InternalFullCustomer])
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
@@ -529,27 +529,23 @@ case class InternalBasicCustomer(
 )
 
 case class  InternalFullCustomer(
-                                 status: String,
-                                 errorCode: String,
-                                 backendMessages: List[InboundStatusMessage],
-                                 customerId : String,
-                                 bankId : String,
-                                 number : String, // The Customer number i.e. the bank identifier for the customer.
-                                 legalName : String,
-                                 mobileNumber : String,
-                                 email : String,
-                                 faceImage : CustomerFaceImage,
-                                 dateOfBirth: Date,
-                                 relationshipStatus: String,
-                                 dependents: Integer,
-                                 dobOfDependents: List[Date],
-                                 highestEducationAttained: String,
-                                 employmentStatus: String,
-                                 creditRating : CreditRating,
-                                 creditLimit: AmountOfMoney,
-                                 kycStatus: lang.Boolean,
-                                 lastOkDate: Date
-)
+                                  customerId: String,
+                                  bankId: String, 
+                                  number: String, 
+                                  legalName: String,
+                                  mobileNumber: String,
+                                  email: String,
+                                  faceImage: CustomerFaceImage, 
+                                  dateOfBirth: Date,
+                                  relationshipStatus: String,
+                                  dependents: Integer,
+                                  dobOfDependents: List[Date],
+                                  highestEducationAttained: String, 
+                                  employmentStatus: String, 
+                                  creditRating: CreditRating,
+                                  creditLimit: AmountOfMoney,
+                                  kycStatus: lang.Boolean, 
+                                  lastOkDate: Date)
 
 case class CustomerFaceImage(date : Date, url : String)
 case class CreditRating(rating: String, source: String)
