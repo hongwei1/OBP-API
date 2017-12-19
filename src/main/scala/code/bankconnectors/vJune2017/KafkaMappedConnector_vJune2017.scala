@@ -1174,45 +1174,40 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = decompose(
-      InboundGetTransactionRequests210(
-        authInfoExample,
-        InternalGetTransactionRequests(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          List(TransactionRequest(
-            id = TransactionRequestId("id"),
-            `type` = "String",
-            from = TransactionRequestAccount("10", "12"),
-            details = null,
-            body = TransactionRequestBody(
-              TransactionRequestAccount("", ""),
-              AmountOfMoney("ILS", "0"), ""
-            ),
-            transaction_ids = "",
-            status = "COMPLETED",
-            start_date = exampleDate,
-            end_date = exampleDate,
-            challenge = TransactionRequestChallenge("", 0, ""),
-            charge = TransactionRequestCharge(
-              "", 
-              AmountOfMoney("ILS", "0")
-            ),
-            charge_policy = "",
-            counterparty_id = CounterpartyId(""),
-            name = "name",
-            this_bank_id = BankId("10"),
-            this_account_id = AccountId("1"),
-            this_view_id = ViewId(""),
-            other_account_routing_scheme = "",
-            other_account_routing_address = "",
-            other_bank_routing_scheme = "",
-            other_bank_routing_address = "",
-            is_beneficiary = false
-          )
-          )
-        )
-      )
-    )
+      InboundGetTransactionRequests210(authInfoExample, statusExample,
+                List(TransactionRequest(
+                  id = TransactionRequestId("id"),
+                  `type` = "String",
+                  from = TransactionRequestAccount("10", "12"),
+                  details = null,
+                  body = TransactionRequestBody(
+                    TransactionRequestAccount("", ""),
+                    AmountOfMoney("ILS", "0"), ""
+                  ),
+                  transaction_ids = "",
+                  status = "COMPLETED",
+                  start_date = exampleDate,
+                  end_date = exampleDate,
+                  challenge = TransactionRequestChallenge("", 0, ""),
+                  charge = TransactionRequestCharge(
+                    "", 
+                    AmountOfMoney("ILS", "0")
+                  ),
+                  charge_policy = "",
+                  counterparty_id = CounterpartyId(""),
+                  name = "name",
+                  this_bank_id = BankId("10"),
+                  this_account_id = AccountId("1"),
+                  this_view_id = ViewId(""),
+                  other_account_routing_scheme = "",
+                  other_account_routing_address = "",
+                  other_bank_routing_scheme = "",
+                  other_bank_routing_address = "",
+                  is_beneficiary = false
+                )
+                )
+              ))
+    
   )
   override def getTransactionRequests210(user : User, fromAccount : BankAccount) : Box[List[TransactionRequest]] = saveConnectorMetric{memoizeSync(transactionRequests210TTL second){
     val req = OutboundGetTransactionRequests210(
@@ -1234,24 +1229,24 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     val box = for {
       kafkaMessage <- processToBox[OutboundGetTransactionRequests210](req)
       inboundGetTransactionRequests210 <- tryo{kafkaMessage.extract[InboundGetTransactionRequests210]} ?~! s"$InvalidConnectorResponseForGetTransactionRequests210, $InboundGetTransactionRequests210 extract error"
-      internalGetTransactionRequests <- Full(inboundGetTransactionRequests210.data)
+        (internalGetTransactionRequests, status) <- Full(inboundGetTransactionRequests210.data, inboundGetTransactionRequests210.status)
     } yield{
-      internalGetTransactionRequests
+      (internalGetTransactionRequests, status)
     }
     logger.debug(s"Kafka getTransactionRequests210 Res says: is: $box")
   
     val res: Box[List[TransactionRequest]] = box match {
-      case Full(x) if (x.errorCode=="")  =>
+      case Full((data, status)) if (status.errorCode=="")  =>
         //For consistency with sandbox mode, we need combine obp transactions in database and adapter transactions  
         for{
-          adapterTransactionRequests <- Full(x.transactionRequests)
+          adapterTransactionRequests <- Full(data)
           //TODO, this will cause performance issue, we need limit the number of transaction requests. 
           obpTransactionRequests <- LocalMappedConnector.getTransactionRequestsImpl210(fromAccount) ?~! s"$ConnectorEmptyResponse, error on LocalMappedConnector.getTransactionRequestsImpl210"
         } yield {
           adapterTransactionRequests ::: obpTransactionRequests
         }
-      case Full(x) if (x.errorCode!="") =>
-        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
+      case Full((data, status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
       case Empty =>
         Failure(ErrorMessages.ConnectorEmptyResponse)
       case Failure(msg, e, c) =>
@@ -1277,16 +1272,31 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = decompose(
-      InboundGetTransactionRequests210(
-        authInfoExample,
-        InternalGetTransactionRequests(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          Nil
-        )
-      )
+      InboundGetCounterparties(authInfoExample, statusExample,
+        InternalCounterparty(
+          createdByUserId = "",
+          name = "",
+          thisBankId = "",
+          thisAccountId = "",
+          thisViewId = "",
+          counterpartyId = "",
+          otherAccountRoutingScheme = "",
+          otherAccountRoutingAddress = "",
+          otherBankRoutingScheme = "",
+          otherBankRoutingAddress = "",
+          otherBranchRoutingScheme = "",
+          otherBranchRoutingAddress = "",
+          isBeneficiary = true,
+          description = "",
+          otherAccountSecondaryRoutingScheme = "",
+          otherAccountSecondaryRoutingAddress = "",
+          bespoke =  List(
+            CounterpartyBespoke(key = "key", value = "value"))
+        ) :: Nil
     )
   )
+  )
+    
   override def getCounterparties(thisBankId: BankId, thisAccountId: AccountId,viewId :ViewId): Box[List[CounterpartyTrait]] = saveConnectorMetric{memoizeSync(counterpartiesTTL second){
     val req = OutboundGetCounterparties(
       authInfo = AuthInfo(currentResourceUserId, getUsername, getCbsToken),
