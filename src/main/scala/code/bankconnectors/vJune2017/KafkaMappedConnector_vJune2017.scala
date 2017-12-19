@@ -110,6 +110,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
   val authInfoExample = AuthInfo(userId = "userId", username = "username", cbsToken = "cbsToken")
   val inboundStatusMessagesExample = List(InboundStatusMessage("ESB", "Success", "0", "OK"))
   val errorCodeExample = "INTERNAL-OBP-ADAPTER-6001: ..."
+  val statusExample = Status(errorCodeExample, inboundStatusMessagesExample)
   
   messageDocs += MessageDoc(
     process = "obp.get.AdapterInfo",
@@ -1081,33 +1082,10 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = decompose(
-      InboundCreateCounterparty(
-        authInfoExample,
-        InternalCounterparty(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          createdByUserId= "String",
-          name= "String",
-          thisBankId= "String",
-          thisAccountId= "String",
-          thisViewId= "String",
-          counterpartyId= "String",
-          otherAccountRoutingScheme= "String",
-          otherAccountRoutingAddress= "String",
-          otherBankRoutingScheme= "String",
-          otherBankRoutingAddress= "String",
-          otherBranchRoutingScheme= "String",
-          otherBranchRoutingAddress= "String",
-          isBeneficiary = false,
-          description= "String",
-          otherAccountSecondaryRoutingScheme= "String",
-          otherAccountSecondaryRoutingAddress= "String",
-          bespoke =  List(CounterpartyBespoke(
-            key = "String",
-            value = "String"
-          ))
-        )
-      )
+      InboundCreateCounterparty(authInfoExample, statusExample, InternalCounterparty(createdByUserId= "String", name= "String", thisBankId= "String", thisAccountId= "String", thisViewId= "String", counterpartyId= "String", otherAccountRoutingScheme= "String", otherAccountRoutingAddress= "String", otherBankRoutingScheme= "String", otherBankRoutingAddress= "String", otherBranchRoutingScheme= "String", otherBranchRoutingAddress= "String", isBeneficiary = false, description= "String", otherAccountSecondaryRoutingScheme= "String", otherAccountSecondaryRoutingAddress= "String", bespoke =  List(CounterpartyBespoke(
+                          key = "String",
+                          value = "String"
+                        ))))
     )
   )
   override def createCounterparty(
@@ -1154,17 +1132,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     val box = for {
       kafkaMessage <- processToBox[OutboundCreateCounterparty](req)
       inboundCreateCounterparty <- tryo{kafkaMessage.extract[InboundCreateCounterparty]} ?~! s"$InboundCreateCounterparty extract error"
-      internalCounterparty <- Full(inboundCreateCounterparty.data)
+      (internalCounterparty, status) <- Full(inboundCreateCounterparty.data, inboundCreateCounterparty.status)
     } yield{
-      internalCounterparty
+      (internalCounterparty, status)
     }
     logger.debug(s"Kafka createCounterparty Res says: is: $box")
     
     val res: Box[CounterpartyTrait] = box match {
-      case Full(x) if (x.errorCode=="")  =>
-        Full(x)
-      case Full(x) if (x.errorCode!="") =>
-        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
+      case Full((data, status)) if (status.errorCode=="")  =>
+        Full(data)
+      case Full((data, status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
       case Empty =>
         Failure(ErrorMessages.ConnectorEmptyResponse)
       case Failure(msg, e, c) =>
@@ -1323,17 +1301,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     val box = for {
       kafkaMessage <- processToBox[OutboundGetCounterparties](req)
       inboundGetCounterparties <- tryo{kafkaMessage.extract[InboundGetCounterparties]} ?~! s"$InboundGetCounterparties extract error"
-      internalCounterparties <- Full(inboundGetCounterparties.data)
+      (internalCounterparties, status) <- Full(inboundGetCounterparties.data, inboundGetCounterparties.status)
     } yield{
-      internalCounterparties
+      (internalCounterparties, status)
     }
     logger.debug(s"Kafka getCounterparties Res says: is: $box")
   
     val res: Box[List[CounterpartyTrait]] = box match {
-      case Full(x) if (x.head.errorCode=="")  =>
-        Full(x)
-      case Full(x) if (x.head.errorCode!="") =>
-        Failure("INTERNAL-"+ x.head.errorCode+". + CoreBank-Status:"+ x.head.backendMessages)
+      case Full((data, status)) if (status.errorCode=="")  =>
+        Full(data)
+      case Full((data, status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
       case Empty =>
         Failure(ErrorMessages.ConnectorEmptyResponse)
       case Failure(msg, e, c) =>
@@ -1357,30 +1335,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       )
     ),
     exampleInboundMessage = Extraction.decompose(
-      InboundGetCounterparty(
-        authInfoExample,
-        InternalCounterparty(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          createdByUserId = "String",
-          name = "String",
-          thisBankId = "String",
-          thisAccountId = "String",
-          thisViewId = "String",
-          counterpartyId = "String",
-          otherAccountRoutingScheme = "String",
-          otherAccountRoutingAddress = "String",
-          otherBankRoutingScheme = "String",
-          otherBankRoutingAddress = "String",
-          otherBranchRoutingScheme = "String",
-          otherBranchRoutingAddress = "String",
-          isBeneficiary = true,
-          description = "String",
-          otherAccountSecondaryRoutingScheme = "String",
-          otherAccountSecondaryRoutingAddress = "String",
-          bespoke = Nil
-        )
-      )
+      InboundGetCounterparty(authInfoExample, statusExample, InternalCounterparty(createdByUserId = "String", name = "String", thisBankId = "String", thisAccountId = "String", thisViewId = "String", counterpartyId = "String", otherAccountRoutingScheme = "String", otherAccountRoutingAddress = "String", otherBankRoutingScheme = "String", otherBankRoutingAddress = "String", otherBranchRoutingScheme = "String", otherBranchRoutingAddress = "String", isBeneficiary = true, description = "String", otherAccountSecondaryRoutingScheme = "String", otherAccountSecondaryRoutingAddress = "String", bespoke = Nil))
     )
   )
   override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId): Box[CounterpartyTrait] = saveConnectorMetric{memoizeSync(counterpartyByCounterpartyIdTTL second){
@@ -1390,17 +1345,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     val box = for {
       kafkaMessage <- processToBox[OutboundGetCounterpartyByCounterpartyId](req)
       inboundGetCustomersByUserIdFuture <- tryo{kafkaMessage.extract[InboundGetCounterparty]} ?~! s"$InboundGetCustomersByUserId extract error"
-      internalCustomer <- Full(inboundGetCustomersByUserIdFuture.data)
+      (internalCustomer, status) <- Full(inboundGetCustomersByUserIdFuture.data, inboundGetCustomersByUserIdFuture.status)
     } yield{
-      internalCustomer
+      (internalCustomer, status)
     }
     logger.debug(s"Kafka getCounterpartyByCounterpartyId Res says: is: $box")
   
     val res = box match {
-      case Full(x) if (x.errorCode=="")  =>
-        Full(x)
-      case Full(x) if (x.errorCode!="") =>
-        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
+      case Full((data, status)) if (status.errorCode=="")  =>
+        Full(data)
+      case Full((data, status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
       case Empty =>
         Failure(ErrorMessages.ConnectorEmptyResponse)
       case Failure(msg, e, c) =>
@@ -1419,17 +1374,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     val box = for {
       kafkaMessage <- processToBox[OutboundGetCounterparty](req)
       inboundGetCounterparty <- tryo{kafkaMessage.extract[InboundGetCounterparty]} ?~! s"$InboundGetCounterparty extract error"
-      data <- Full(inboundGetCounterparty.data)
+      (data, status) <- Full(inboundGetCounterparty.data, inboundGetCounterparty.status)
     } yield{
-      data
+      (data, status)
     }
     logger.debug(s"Kafka getCounterpartyTrait Res says: is: $box")
 
     val res = box match {
-      case Full(x) if (x.errorCode=="")  =>
-        Full(x)
-      case Full(x) if (x.errorCode!="") =>
-        Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)
+      case Full((data, status)) if (status.errorCode=="")  =>
+        Full(data)
+      case Full((data, status)) if (status.errorCode!="") =>
+        Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
       case Empty =>
         Failure(ErrorMessages.ConnectorEmptyResponse)
       case Failure(msg, e, c) =>
