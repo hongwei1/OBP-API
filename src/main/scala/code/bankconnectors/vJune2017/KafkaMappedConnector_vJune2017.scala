@@ -1635,7 +1635,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         authInfoExample,
         Status("",
           inboundStatusMessagesExample),
-        InboundBranchVJune2017(
+        Some(InboundBranchVJune2017(
           branchId = BranchId(""),
           bankId = BankId(""),
           name = "",
@@ -1668,7 +1668,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           branchType  = Some(""),
           moreInfo = Some(""),
           phoneNumber = Some("")
-        ) 
+        ))
       )
 
     )
@@ -1692,9 +1692,9 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
 
       logger.debug(s"Kafka getBranch Res says:  is: $Box")
       val res = box match {
-        case Full((branch, status)) if (status.errorCode=="") =>
+        case Full((Some(branch), status)) if (status.errorCode=="") =>
           Full(branch)
-        case Full((branch, status)) if (status.errorCode!="") =>
+        case Full((_, status)) if (status.errorCode!="") =>
           Failure("INTERNAL-OBP-ADAPTER-xxx: "+ status.errorCode+". + CoreBank-Error:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse)
@@ -1707,6 +1707,40 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getBranch")
+
+  override def getBranchFuture(bankId : BankId, branchId: BranchId) : Future[Box[BranchT]] = saveConnectorMetric {
+
+    logger.debug("Enter getBranch for: " + branchId)
+    memoizeSync(branchTTL millisecond){
+      val req = OutboundGetBranch(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString, branchId.toString)
+      logger.info(s"Kafka getBranchFuture Req is: $req")
+
+      val future: Future[(Option[InboundBranchVJune2017], Status)] = for {
+        res <- processToFuture[OutboundGetBranch](req) map {
+          f =>
+            try {
+              f.extract[InboundGetBranch]
+            } catch {
+              case e: Exception => throw new MappingException(s"$InboundGetBranch extract error", e)
+            }
+        } map {
+          d => (d.data, d.status)
+        }
+      } yield {
+        res
+      }
+
+      logger.debug(s"Kafka getBranchFuture Res says:  is: $future")
+      future map {
+        case (Some(branch), status) if (status.errorCode=="") =>
+          Full(branch)
+        case (_, status) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+    }
+  }("getBranchFuture")
 
 
   messageDocs += MessageDoc(

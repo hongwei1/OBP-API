@@ -1108,7 +1108,10 @@ trait Connector extends MdcLoggable{
 
 
 
-  def getBranch(bankId : BankId, branchId: BranchId) : Box[BranchT] = Failure(NotImplemented + currentMethodName)
+  def getBranch(bankId : BankId, branchId: BranchId) :Box[BranchT] = Failure(NotImplemented + currentMethodName)
+  def getBranchFuture(bankId : BankId, branchId: BranchId) :  Future[Box[BranchT]] = Future {
+    Failure(NotImplemented + currentMethodName)
+  }
 
   def getBranches(bankId: BankId, queryParams: OBPQueryParam*): Box[List[BranchT]] = Failure(NotImplemented + currentMethodName)
 
