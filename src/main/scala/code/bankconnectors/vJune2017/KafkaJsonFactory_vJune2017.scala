@@ -92,7 +92,7 @@ case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransac
 case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
 case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
-case class InboundGetTransactionRequests210(authInfo: AuthInfo, data: InternalGetTransactionRequests)
+case class InboundGetTransactionRequests210(authInfo: AuthInfo, status: Status, data: List[TransactionRequest])
 case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
 case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, status: Status, data: List[InternalCustomer])
@@ -244,7 +244,24 @@ case class OutboundTransactionRequests(
 )
   
 
-case class InternalCounterparty(createdByUserId: String, name: String, thisBankId: String, thisAccountId: String, thisViewId: String, counterpartyId: String, otherAccountRoutingScheme: String, otherAccountRoutingAddress: String, otherBankRoutingScheme: String, otherBankRoutingAddress: String, otherBranchRoutingScheme: String, otherBranchRoutingAddress: String, isBeneficiary: Boolean, description: String, otherAccountSecondaryRoutingScheme: String, otherAccountSecondaryRoutingAddress: String, bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
+case class InternalCounterparty(
+                                 createdByUserId: String, 
+                                 name: String, 
+                                 thisBankId: String, 
+                                 thisAccountId: String, 
+                                 thisViewId: String, 
+                                 counterpartyId: String, 
+                                 otherAccountRoutingScheme: String,
+                                 otherAccountRoutingAddress: String, 
+                                 otherBankRoutingScheme: String, 
+                                 otherBankRoutingAddress: String,
+                                 otherBranchRoutingScheme: String, 
+                                 otherBranchRoutingAddress: String,
+                                 isBeneficiary: Boolean,
+                                 description: String,
+                                 otherAccountSecondaryRoutingScheme: String,
+                                 otherAccountSecondaryRoutingAddress: String, 
+                                 bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
 
 
 case class InternalCustomer(customerId: String, bankId: String, number: String, legalName: String, mobileNumber: String, email: String, faceImage: CustomerFaceImage, dateOfBirth: Date, relationshipStatus: String, dependents: Integer, dobOfDependents: List[Date], highestEducationAttained: String, employmentStatus: String, creditRating: CreditRating, creditLimit: CreditLimit, kycStatus: lang.Boolean, lastOkDate: Date) extends Customer
