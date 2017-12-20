@@ -36,17 +36,16 @@ class LeumiDecoderTest  extends ServerSetup {
     val result = getBankAccounts(OutboundGetAccounts(AuthInfo("karlsid", username, ""),true, null)) //TODO ,need fix
 
     //getBalance is not called here
-    result should be (InboundGetAccounts(AuthInfo("karlsid", username, mfToken),
-      List(InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId1, "3565953", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId2, "50180983", "430", "0", "ILS", List(""), List("Accountant", "Auditor"), "", "", "", "", "", "", Nil),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "616", accountId3, "50180963", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId4, "20102612", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil),
-        InboundAccountJune2017("", List(InboundStatusMessage("ESB","Success", "0", "OK")), mfToken, "10", "814", accountId5, "20105505", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil))))
+    result should be (InboundGetAccounts(AuthInfo("karlsid", username, mfToken), Status(), List(InboundAccountJune2017("",mfToken, "10", "616", accountId1, "3565953", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil),
+            InboundAccountJune2017("",mfToken, "10", "616", accountId2, "50180983", "430", "0", "ILS", List(""), List("Accountant", "Auditor"), "", "", "", "", "", "", Nil),
+            InboundAccountJune2017("",mfToken, "10", "616", accountId3, "50180963", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil),
+            InboundAccountJune2017("",mfToken, "10", "814", accountId4, "20102612", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil),
+            InboundAccountJune2017("",mfToken, "10", "814", accountId5, "20105505", "330", "0", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", Nil))))
   }
   
   test("getBankAccountbyAccountId works for stub"){
     val result = getBankAccountbyAccountId(OutboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),"10",accountId1))
-    result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),(InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success", "0", "OK")),  mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "IBAN","IL230106160000050180963", List(AccountRules("CREDIT_LIMIT", "15000"))))))
+    result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken), Status(), (Some(InboundAccountJune2017("",mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "", "IBAN", "IL230106160000050180963", List(AccountRules("CREDIT_LIMIT", "15000")))))))
   }
   
   test("getCoreBankAccounts gives correct result for stub"){
@@ -57,7 +56,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("checkBankAccountExists gives correct result for stub"){
     checkBankAccountExists(OutboundCheckBankAccountExists(authInfoIsFirstTrue, "10", accountId1)) should be (
-    InboundGetAccountbyAccountID(AuthInfo("","N7jut8d",">,?          81433020102612",true),InboundAccountJune2017("",List(InboundStatusMessage("ESB","Success","0","OK")),">,?          81433020102612","10","616","3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98","3565953","330","0","ILS",List("N7jut8d"),List("Owner", "Accountant", "Auditor"),"","","","","","",List())))
+    InboundGetAccountbyAccountID(AuthInfo("","N7jut8d",">,?          81433020102612",true), Status(), Some(InboundAccountJune2017("",">,?          81433020102612", "10", "616", "3jdVT1N-wWeawA-fTqLkr5vE0qHiQLkhjru2YvJ8F98", "3565953", "330", "0", "ILS", List("N7jut8d"), List("Owner", "Accountant", "Auditor"), "", "", "", "", "", "", List()))))
   }
 
   

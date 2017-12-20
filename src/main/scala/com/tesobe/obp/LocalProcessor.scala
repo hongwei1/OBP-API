@@ -175,16 +175,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     } catch {
       case m: Throwable =>
         logger.error("bankAccountIdFn-unknown error", m)
-        val errorBody = InboundGetAccountbyAccountID(
-            AuthInfo("","",""),
-            InboundAccountJune2017(
-              m.getMessage,
-              List(
-                InboundStatusMessage("ESB","Success", "0", "OK"),
-                InboundStatusMessage("MF","Success", "0", "OK")  
-              ),
-              "", "","", "","", "","","",List(""),List(""),"", "","", "","","",Nil)
-        )
+        val errorBody = InboundGetAccountbyAccountID(AuthInfo("","",""), Status(errorCode = m.getMessage),None)
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
@@ -202,16 +193,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     } catch {
       case m: Throwable =>
         logger.error("checkBankAccountExistsFn-unknown error", m)
-        val errorBody = InboundGetAccountbyAccountID(
-          AuthInfo("","",""),
-          InboundAccountJune2017(
-            m.getMessage,
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"),
-              InboundStatusMessage("MF","Success", "0", "OK")  
-            ),
-            "", "","", "","", "","","",List(""),List(""),"", "","", "","","",Nil)
-        )
+        val errorBody = InboundGetAccountbyAccountID(AuthInfo("","",""), Status(m.getMessage),  None)
         Future(msg, errorBody.asJson.noSpaces)
     }
   }
@@ -230,16 +212,7 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
     } catch {
       case m: Throwable =>
         logger.error("bankAccountsFn-unknown error", m)
-        val errorBody = InboundGetAccounts(
-          AuthInfo("","",""),
-          List(InboundAccountJune2017(
-            m.getMessage,
-            List(
-              InboundStatusMessage("ESB","Success", "0", "OK"),
-              InboundStatusMessage("MF","Success", "0", "OK")  
-            ),
-            "", "","", "","", "","","",List(""),List(""),"", "","", "","","",Nil)
-        ))
+        val errorBody = InboundGetAccounts(AuthInfo("","",""), Status(m.getMessage), Nil)
         Future(msg, errorBody.asJson.noSpaces)
     }
   }

@@ -123,8 +123,8 @@ case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
 case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
 case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
 case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
-case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
-case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
+case class InboundGetAccounts(authInfo: AuthInfo, status: Status, data: List[InboundAccountJune2017])
+case class InboundGetAccountbyAccountID(authInfo: AuthInfo, status: Status, data: Option[InboundAccountJune2017])
 case class InboundGetTransactions(authInfo: AuthInfo, status: Status, data: List[InternalTransaction])
 case class InboundGetTransaction(authInfo: AuthInfo, status: Status, data: Option[InternalTransaction])
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
@@ -222,27 +222,7 @@ case class InboundAdapterInfoInternal(
   date: String
 )
 case class AccountRules(scheme: String, value: String)
-case class InboundAccountJune2017(
-  errorCode: String,
-  backendMessages: List[InboundStatusMessage],
-  cbsToken: String,
-  bankId: String,
-  branchId: String,
-  accountId: String,
-  accountNumber: String,
-  accountType: String,
-  balanceAmount: String,
-  balanceCurrency: String,
-  owners: List[String],
-  viewsToGenerate: List[String],
-  bankRoutingScheme: String,
-  bankRoutingAddress: String,
-  branchRoutingScheme: String,
-  branchRoutingAddress: String,
-  accountRoutingScheme: String,
-  accountRoutingAddress: String,
-  accountRules: List[AccountRules]
-)
+case class InboundAccountJune2017(errorCode: String = "", cbsToken: String, bankId: String, branchId: String, accountId: String, accountNumber: String, accountType: String, balanceAmount: String, balanceCurrency: String, owners: List[String], viewsToGenerate: List[String], bankRoutingScheme: String, bankRoutingAddress: String, branchRoutingScheme: String, branchRoutingAddress: String, accountRoutingScheme: String, accountRoutingAddress: String, accountRules: List[AccountRules])
 
 case class InternalCounterparty(
                                  createdByUserId: String,

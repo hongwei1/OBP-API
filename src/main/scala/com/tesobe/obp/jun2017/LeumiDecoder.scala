@@ -206,26 +206,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       List("")
     }
     val accountRoutingScheme = if (iban.trim != "") "IBAN" else ""
-    InboundAccountJune2017(
-      errorCode = "",
-      List(InboundStatusMessage("ESB", "Success", "0", "OK")), 
-      x.cbsToken,
-      bankId = "10",
-      branchId = x.branchNr,
-      accountId = createAccountId(x.branchNr, x.accountType, x.accountNr),
-      accountNumber = x.accountNr,
-      accountType = x.accountType,
-      balanceAmount = balance,
-      balanceCurrency = defaultCurrency,
-      owners = accountOwner,
-      viewsToGenerate = viewsToGenerate,
-      bankRoutingScheme = "",
-      bankRoutingAddress = "",
-      branchRoutingScheme = "",
-      branchRoutingAddress = "",
-      accountRoutingScheme = accountRoutingScheme,
-      accountRoutingAddress = iban,
-      accountRules = if (creditLimit.isEmpty) List() else List(AccountRules("CREDIT_LIMIT", creditLimit)))
+    InboundAccountJune2017("",x.cbsToken, bankId = "10", branchId = x.branchNr, accountId = createAccountId(x.branchNr, x.accountType, x.accountNr), accountNumber = x.accountNr, accountType = x.accountType, balanceAmount = balance, balanceCurrency = defaultCurrency, owners = accountOwner, viewsToGenerate = viewsToGenerate, bankRoutingScheme = "", bankRoutingAddress = "", branchRoutingScheme = "", branchRoutingAddress = "", accountRoutingScheme = accountRoutingScheme, accountRoutingAddress = iban, accountRules = if (creditLimit.isEmpty) List() else List(AccountRules("CREDIT_LIMIT", creditLimit)))
   }
 
   def mapAdapterTransactionToInternalTransaction(userId: String,
@@ -519,24 +500,16 @@ object LeumiDecoder extends Decoder with StrictLogging {
             val creditLimit = y.TSHUVATAVLAIT.HH_MISGAROT_ASHRAI.HH_PIRTEY_CHESHBON.HH_MATI.HH_MISGERET_ASHRAI
             println("creditLimit - " + creditLimit)
             InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
-              getAccount.authInfo.username,
-              account.cbsToken),
-              mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance, creditLimit)
-            )
+                          getAccount.authInfo.username,
+                          account.cbsToken), Status(), Some(mapBasicBankAccountToInboundAccountJune2017(username, account, iban, balance, creditLimit)))
           case Left(y) =>
-            InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError, 
-              createInboundStatusMessages(y),
-              "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
+            InboundGetAccountbyAccountID(getAccount.authInfo, createStatusFromCBSPapiError(y), None)
         }
       case Left(x) =>
-        InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError,
-         createInboundStatusMessages(x),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
+        InboundGetAccountbyAccountID(getAccount.authInfo, createStatusFromCBSPapiError(x), None)
     }
       case Left(account) =>
-        InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError,
-          createInboundStatusMessages(account),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
+        InboundGetAccountbyAccountID(getAccount.authInfo, createStatusFromCBSPapiError(account), None)
     }
         
   }
@@ -551,14 +524,10 @@ object LeumiDecoder extends Decoder with StrictLogging {
       throw new RuntimeException(mFTokenMatchError)
     } else account.cbsToken
     InboundGetAccountbyAccountID(AuthInfo(getAccount.authInfo.userId,
-      getAccount.authInfo.username,
-      cbsToken),
-      mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, account, "", "0", "")
-    )
+          getAccount.authInfo.username,
+          cbsToken), Status(), Some(mapBasicBankAccountToInboundAccountJune2017(getAccount.authInfo.username, account, "", "0", "")))
       case Left(account) =>
-        InboundGetAccountbyAccountID(getAccount.authInfo, InboundAccountJune2017(MainFrameError
-          , createInboundStatusMessages(account),
-          "", "", "", "", "", "", "", "", List(""), List(""), "", "", "", "", "", "", Nil))
+        InboundGetAccountbyAccountID(getAccount.authInfo, createStatusFromCBSPapiError(account), None)
     }
   }
 
@@ -570,31 +539,11 @@ object LeumiDecoder extends Decoder with StrictLogging {
           val result = mfAccounts.map(x => mapBasicBankAccountToInboundAccountJune2017(getAccountsInput.authInfo.username, x, "", "0", ""))
         
         InboundGetAccounts(AuthInfo(getAccountsInput.authInfo.userId,
-          getAccountsInput.authInfo.username,
-          mfAccounts.headOption.getOrElse(
-            throw new Exception("No Accounts for username: " + getAccountsInput.authInfo.username)).cbsToken), result)
+                  getAccountsInput.authInfo.username,
+                  mfAccounts.headOption.getOrElse(
+                    throw new Exception("No Accounts for username: " + getAccountsInput.authInfo.username)).cbsToken), Status(), result)
       case Left(x) =>
-        InboundGetAccounts(getAccountsInput.authInfo,
-          List(InboundAccountJune2017(
-            errorCode = MainFrameError,
-            createInboundStatusMessages(x), 
-            "",
-            bankId = "",
-            branchId = "",
-            accountId = "",
-            accountNumber = "",
-            accountType = "",
-            balanceAmount = "",
-            balanceCurrency = "",
-            owners = List(""),
-            viewsToGenerate = List(""),
-            bankRoutingScheme = "",
-            bankRoutingAddress = "",
-            branchRoutingScheme = "",
-            branchRoutingAddress = "",
-            accountRoutingScheme = "",
-            accountRoutingAddress = "",
-            accountRules = Nil)))
+        InboundGetAccounts(getAccountsInput.authInfo, createStatusFromCBSPapiError(x),Nil)
     }
   }
 
@@ -1273,7 +1222,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       OutboundCheckBankAccountExists(
         outboundGetCounterpartyByCounterpartyId.authInfo,
         defaultBankId,
-        thisAccountId)).data.accountId) throw new InvalidCounterPartyIdException
+        thisAccountId)).data.getOrElse(throw new InvalidCounterPartyIdException).accountId) throw new InvalidCounterPartyIdException
    
     val counterparties = getCounterpartiesForAccount(OutboundGetCounterparties(
         outboundGetCounterpartyByCounterpartyId.authInfo, 
@@ -1296,7 +1245,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
       OutboundCheckBankAccountExists(
         outboundGetCounterparty.authInfo,
         outboundGetCounterparty.thisBankId,
-        thisAccountId)).data.accountId) throw new InvalidCounterPartyIdException
+        thisAccountId)).data.getOrElse(throw new InvalidCounterPartyIdException).accountId) throw new InvalidCounterPartyIdException
 
     val counterparties = getCounterpartiesForAccount(OutboundGetCounterparties(
       outboundGetCounterparty.authInfo,
