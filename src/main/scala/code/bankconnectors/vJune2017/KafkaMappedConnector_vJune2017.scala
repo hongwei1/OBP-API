@@ -1801,6 +1801,37 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getAtms")
+  override def getAtmsFuture(bankId: BankId, queryParams: OBPQueryParam*): Future[Box[List[InboundAtmJune2017]]] = saveConnectorMetric {
+    memoizeSync(atmsTTL millisecond){
+      val req = OutboundGetAtms(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.value)
+      logger.info(s"Kafka getAtmsFuture Req is: $req")
+
+      val future = for {
+        res <- processToFuture[OutboundGetAtms](req) map {
+          f =>
+            try {
+              f.extract[InboundGetAtms]
+            } catch {
+              case e: Exception => throw new MappingException(s"$InboundGetAtms extract error", e)
+            }
+        } map {
+          d => (d.data, d.status)
+        }
+      } yield {
+        res
+      }
+
+      logger.debug(s"Kafka getBranchFuture Res says:  is: $future")
+      future map {
+        case (atms, status) if (status.errorCode=="") =>
+          Full(atms)
+        case (_, status) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+    }
+  }("getAtmsFuture")
 
   messageDocs += MessageDoc(
     process = "obp.get.Atm",

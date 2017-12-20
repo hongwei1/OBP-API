@@ -1119,7 +1119,9 @@ trait Connector extends MdcLoggable{
   }
 
   def getAtms(bankId: BankId, queryParams: OBPQueryParam*): Box[List[AtmT]] = Failure(NotImplemented + currentMethodName)
-
+  def getAtmsFuture(bankId: BankId, queryParams: OBPQueryParam*): Future[Box[List[AtmT]]] = Future {
+    Failure(NotImplemented + currentMethodName)
+  }
   def getAtm(bankId : BankId, atmId: AtmId) : Box[AtmT] = Failure(NotImplemented + currentMethodName)
   def getAtmFuture(bankId : BankId, atmId: AtmId) : Future[Box[AtmT]] = Future {
     Failure(NotImplemented + currentMethodName)
