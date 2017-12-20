@@ -1644,6 +1644,37 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       res
     }
   }("getBranches")
+  override def getBranchesFuture(bankId: BankId, queryParams: OBPQueryParam*): Future[Box[List[InboundBranchVJune2017]]] = saveConnectorMetric {
+    memoizeSync(branchesTTL millisecond){
+      val req = OutboundGetBranches(AuthInfo(currentResourceUserId, getUsername, getCbsToken), bankId.toString)
+      logger.info(s"Kafka getBranchesFuture Req is: $req")
+
+      val future: Future[(List[InboundBranchVJune2017], Status)] = for {
+        res <- processToFuture[OutboundGetBranches](req) map {
+          f =>
+            try {
+              f.extract[InboundGetBranches]
+            } catch {
+              case e: Exception => throw new MappingException(s"$InboundGetBranches extract error", e)
+            }
+        } map {
+          d => (d.data, d.status)
+        }
+      } yield {
+        res
+      }
+
+      logger.debug(s"Kafka getBranchFuture Res says:  is: $future")
+      future map {
+        case (branches, status) if (status.errorCode=="") =>
+          Full(branches)
+        case (_, status) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
+        case _ =>
+          Failure(ErrorMessages.UnknownError)
+      }
+    }
+  }("getBranchesFuture")
 
   messageDocs += MessageDoc(
     process = "obp.get.Branch",

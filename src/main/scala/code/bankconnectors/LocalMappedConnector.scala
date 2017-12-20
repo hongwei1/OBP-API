@@ -1442,9 +1442,11 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   override def getBranches(bankId: BankId, queryParams: OBPQueryParam*): Box[List[MappedBranch]] = {
     Full(MappedBranch.findAll(By(MappedBranch.mBankId, bankId.value)))
   }
-
-
-
+  override def getBranchesFuture(bankId: BankId, queryParams: OBPQueryParam*): Future[Box[List[MappedBranch]]] = {
+    Future {
+      getBranches(bankId)
+    }
+  }
 
 
   override def getBranch(bankId : BankId, branchId: BranchId) : Box[MappedBranch]= {
@@ -1460,7 +1462,6 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         }
     )
   }
-
   override def getBranchFuture(bankId : BankId, branchId: BranchId) : Future[Box[MappedBranch]]= {
     Future {
       getBranch(bankId, branchId)
