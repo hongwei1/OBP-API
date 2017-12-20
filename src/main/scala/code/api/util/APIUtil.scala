@@ -42,6 +42,7 @@ import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.OAuthHandshake._
 import code.api.{DirectLogin, _}
 import code.api.util.APIUtil.ApiVersion.ApiVersion
+import code.api.util.APIUtil.canGet
 import code.api.v1_2.ErrorMessage
 import code.bankconnectors._
 import code.consumer.Consumers
@@ -1812,6 +1813,12 @@ Versions are groups of endpoints in a file
     getUserFromAuthorizationHeaderFuture() map {
       x => (fullBoxOrException(x._1 ?~! emptyUserErrorMsg), x._2)
     }
+  }
+  /**
+    * This function is used to factor out common code at endpoints regarding Authorized access
+    */
+  def extractCallContext(): Future[(Box[User], Option[SessionContext])] = {
+    getUserFromAuthorizationHeaderFuture()
   }
 
   def extractCallContext(): Future[(Box[User], Option[SessionContext])] = {

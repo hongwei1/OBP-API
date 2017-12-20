@@ -74,6 +74,7 @@ case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisA
 case class OutboundGetCustomersByUserId(
   authInfo: AuthInfo
 ) extends TopicTrait
+case class OutboundGetCounterparty(authInfo: AuthInfo, thisBankId: String, thisAccountId: String, counterpartyId: String) extends TopicTrait
 
 /**
   * case classes used in Kafka message, these are InBound Kafka messages
