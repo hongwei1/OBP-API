@@ -353,29 +353,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
           ))))
     ),
     exampleInboundMessage = decompose(
-      InboundGetAccounts(
-        authInfoExample,
-        InboundAccountJune2017(
-          errorCode = errorCodeExample,
-          inboundStatusMessagesExample,
-          cbsToken ="cbsToken",
-          bankId = "gh.29.uk",
-          branchId = "222",
-          accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
-          accountNumber = "123",
-          accountType = "AC",
-          balanceAmount = "50",
-          balanceCurrency = "EUR",
-          owners = "Susan" :: " Frank" :: Nil,
-          viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil,
-          bankRoutingScheme = "iban",
-          bankRoutingAddress = "bankRoutingAddress",
-          branchRoutingScheme = "branchRoutingScheme",
-          branchRoutingAddress = " branchRoutingAddress",
-          accountRoutingScheme = "accountRoutingScheme",
-          accountRoutingAddress = "accountRoutingAddress",
-          accountRules = Nil
-        ) :: Nil)
+      InboundGetAccounts(authInfoExample, statusExample, InboundAccountJune2017("", cbsToken ="cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRules = Nil) :: Nil)
     )
   )
   override def getBankAccounts(username: String, forceFresh: Boolean): Box[List[InboundAccountJune2017]] = saveConnectorMetric {
@@ -389,17 +367,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetAccounts](req)
         inboundGetAccounts <- tryo{kafkaMessage.extract[InboundGetAccounts]} ?~! s"$InboundGetAccounts extract error"
-        inboundAccountJune2017 <- Full(inboundGetAccounts.data)
+        (inboundAccountJune2017, status) <- Full(inboundGetAccounts.data, inboundGetAccounts.status)
       } yield{
-        inboundAccountJune2017
+        (inboundAccountJune2017, status)
       }
       logger.debug(s"Kafka getBankAccounts says res is $box")
       
       box match {
-        case Full(list) if (list.head.errorCode=="") =>
-          Full(list)
-        case Full(list) if (list.head.errorCode!="") =>
-          Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:"+ list.head.backendMessages)
+        case Full((data, status)) if (status.errorCode=="") =>
+          Full(data)
+        case Full((data, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
         case Failure(msg, e, c) =>
@@ -426,7 +404,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
               case e: Exception => throw new MappingException(s"$InboundGetAccounts extract error", e)
             }
         } map {
-          _.data
+          (x => (x.data, x.status))
         }
       } yield {
         res
@@ -434,12 +412,12 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       logger.debug(s"Kafka getBankAccounts says res is $future")
 
       future map {
-        case List() =>
+        case (List(), status) =>
           Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
-        case list if (list.head.errorCode=="") =>
-          Full(list)
-        case list if (list.head.errorCode!="") =>
-          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ list.head.errorCode+". + CoreBank-Error:"+ list.head.backendMessages)
+        case (data, status) if (status.errorCode=="") =>
+          Full(data)
+        case (data, status) if (status.errorCode!="") =>
+          Failure("INTERNAL-OBP-ADAPTER-xxx: "+ status.errorCode+". + CoreBank-Error:"+ status.backendMessages)
         case _ =>
           Failure(ErrorMessages.UnknownError)
       }
@@ -459,28 +437,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetAccountbyAccountID(
         authInfoExample,
-        InboundAccountJune2017(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          cbsToken = "cbsToken",
-          bankId = "gh.29.uk",
-          branchId = "222",
-          accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
-          accountNumber = "123",
-          accountType = "AC",
-          balanceAmount = "50",
-          balanceCurrency = "EUR",
-          owners = "Susan" :: " Frank" :: Nil,
-          viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil,
-          bankRoutingScheme = "iban",
-          bankRoutingAddress = "bankRoutingAddress",
-          branchRoutingScheme = "branchRoutingScheme",
-          branchRoutingAddress = " branchRoutingAddress",
-          accountRoutingScheme = "accountRoutingScheme",
-          accountRoutingAddress = "accountRoutingAddress",
-          accountRules = Nil
-        )
-      ))
+        statusExample,
+        Some(InboundAccountJune2017("", cbsToken = "cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRules = Nil))))
   )
   override def getBankAccount(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[BankAccountJune2017] = saveConnectorMetric{
     memoizeSync(accountTTL second){
@@ -508,17 +466,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundGetAccountbyAccountID](req)
         inboundGetAccountbyAccountID <- tryo{kafkaMessage.extract[InboundGetAccountbyAccountID]} ?~! s"$InboundGetAccountbyAccountID extract error"
-        inboundAccountJune2017 <- Full(inboundGetAccountbyAccountID.data)
+        (inboundAccountJune2017, status) <- Full(inboundGetAccountbyAccountID.data, inboundGetAccountbyAccountID.status)
       } yield{
-        inboundAccountJune2017
+        (inboundAccountJune2017, status)
       }
       
       logger.debug(s"Kafka getBankAccount says res is $box")
       box match {
-        case Full(f) if (f.errorCode=="") =>
-          Full(new BankAccountJune2017(f))
-        case Full(f) if (f.errorCode!="") =>
-          Failure("INTERNAL-"+ f.errorCode+". + CoreBank-Status:"+ f.backendMessages)
+        case Full((Some(data), status)) if (status.errorCode=="") =>
+          Full(new BankAccountJune2017(data))
+        case Full((data, status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
         case Failure(msg, e, c) =>
@@ -542,28 +500,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundCheckBankAccountExists(
         authInfoExample,
-        InboundAccountJune2017(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          cbsToken = "cbsToken",
-          bankId = "gh.29.uk",
-          branchId = "222",
-          accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
-          accountNumber = "123",
-          accountType = "AC",
-          balanceAmount = "50",
-          balanceCurrency = "EUR",
-          owners = "Susan" :: " Frank" :: Nil,
-          viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil,
-          bankRoutingScheme = "iban",
-          bankRoutingAddress = "bankRoutingAddress",
-          branchRoutingScheme = "branchRoutingScheme",
-          branchRoutingAddress = " branchRoutingAddress",
-          accountRoutingScheme = "accountRoutingScheme",
-          accountRoutingAddress = "accountRoutingAddress",
-          accountRules = Nil
-        )
-      )
+        statusExample,
+        Some(InboundAccountJune2017("", cbsToken = "cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRules = Nil)))
     )
   )
   override def checkBankAccountExists(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[BankAccountJune2017] = saveConnectorMetric{
@@ -591,17 +529,17 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
       val box = for {
         kafkaMessage <- processToBox[OutboundCheckBankAccountExists](req)
         inboundCheckBankAccountExists <- tryo{kafkaMessage.extract[InboundCheckBankAccountExists]} ?~! s"$InboundCheckBankAccountExists extract error"
-        inboundAccountJune2017 <- Full(inboundCheckBankAccountExists.data)
+        (inboundAccountJune2017, status) <- Full(inboundCheckBankAccountExists.data, inboundCheckBankAccountExists.status)
       } yield{
-        inboundAccountJune2017
+        (inboundAccountJune2017, status)
       }
       
       logger.debug(s"Kafka checkBankAccountExists says res is $box")
       box match {
-        case Full(f) if (f.errorCode=="") =>
-          Full(new BankAccountJune2017(f))
-        case Full(f) if (f.errorCode!="") =>
-          Failure("INTERNAL-"+ f.errorCode+". + CoreBank-Status:"+ f.backendMessages)
+        case Full((Some(data), status)) if (status.errorCode=="") =>
+          Full(new BankAccountJune2017(data))
+        case Full((data,status)) if (status.errorCode!="") =>
+          Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
         case Empty =>
           Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
         case Failure(msg, e, c) =>
@@ -625,28 +563,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetAccountbyAccountID(
         authInfoExample,
-        InboundAccountJune2017(
-          errorCodeExample,
-          inboundStatusMessagesExample,
-          cbsToken = "cbsToken",
-          bankId = "gh.29.uk",
-          branchId = "222",
-          accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
-          accountNumber = "123",
-          accountType = "AC",
-          balanceAmount = "50",
-          balanceCurrency = "EUR",
-          owners = "Susan" :: " Frank" :: Nil,
-          viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil,
-          bankRoutingScheme = "iban",
-          bankRoutingAddress = "bankRoutingAddress",
-          branchRoutingScheme = "branchRoutingScheme",
-          branchRoutingAddress = " branchRoutingAddress",
-          accountRoutingScheme = "accountRoutingScheme",
-          accountRoutingAddress = "accountRoutingAddress",
-          accountRules = Nil
-        )
-      ))
+        statusExample, 
+        Some(InboundAccountJune2017("", cbsToken = "cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRules = Nil))))
   )
   override def getCoreBankAccounts(BankIdAccountIds: List[BankIdAccountId], session: Option[SessionContext]) : Box[List[CoreAccount]] = saveConnectorMetric{
     memoizeSync(accountTTL second){
