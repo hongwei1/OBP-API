@@ -1821,10 +1821,6 @@ Versions are groups of endpoints in a file
     getUserFromAuthorizationHeaderFuture()
   }
 
-  def extractCallContext(): Future[(Box[User], Option[SessionContext])] = {
-    getUserFromAuthorizationHeaderFuture()
-  }
-
   /**
     * This Function is used to terminate a Future used in for-comprehension with specific message
     * Please note that boxToFailed(Empty ?~ ("Some failure message")) will be transformed to Failure("Some failure message", Empty, Empty)
