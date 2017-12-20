@@ -1088,9 +1088,11 @@ trait APIMethods300 {
         _ =>
           val s = S
           for {
-            (user, sessioContext) <- extractCallContext()
+            (user, sessioContext) <- extractCallContext(UserNotLoggedIn)
             u <- unboxFullAndWrapIntoFuture{ user }
-
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
+              hasEntitlement("", u.userId, ApiRole.CanGetAnyUser)
+            }
             users <- Users.users.vend.getAllUsersF()
           } yield {
             (JSONFactory300.createUserJSONs (users), getGatewayLoginHeader(sessioContext))
