@@ -19,7 +19,6 @@ class gateWayloginTest extends ServerSetup with BeforeAndAfter with DefaultUsers
   //fake this: Connector.connector.vend.getBankAccounts(username)
   val fakeResultFromAdapter =  Full(InboundAccountJune2017(
     errorCode = "",
-    List(InboundStatusMessage("ESB", "Success", "0", "OK")),
     cbsToken ="cbsToken1",
     bankId = "gh.29.uk",
     branchId = "222",
@@ -39,7 +38,6 @@ class gateWayloginTest extends ServerSetup with BeforeAndAfter with DefaultUsers
     accountRules = Nil
   ) :: InboundAccountJune2017(
     errorCode = "",
-    List(InboundStatusMessage("ESB", "Success", "0", "OK")),
     cbsToken ="cbsToken2",
     bankId = "gh.29.uk",
     branchId = "222",

@@ -1,16 +1,13 @@
 package code.api.v3_0_0
 
-import java.io
-
 import code.api.APIFailure
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil.{getGatewayLoginHeader, _}
+import code.api.util.APIUtil.{canGetAtm, _}
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
-import code.api.util.{APIUtil, ApiRole, ErrorMessages}
-import code.api.util.ApiSession.updateSessionContext
-import code.api.v2_1_0.JSONFactory210
+import code.api.util.{ApiRole, ErrorMessages}
 import code.api.v3_0_0.JSONFactory300._
 import code.atms.Atms
 import code.atms.Atms.AtmId
@@ -26,7 +23,7 @@ import code.util.Helper
 import code.util.Helper.booleanToBox
 import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.{Box, Full}
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.http.{JsonResponse, Req, S}
 import net.liftweb.json.Extraction
@@ -852,7 +849,6 @@ trait APIMethods300 {
       Catalogs(notCore, notPSD2, OBWG),
       List(apiTagBranch, apiTagBank)
     )
-    // TODO Rewrite as New Style Endpoint
     lazy val getBranch: PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
       case "banks" :: BankId(bankId) :: "branches" :: BranchId(branchId) :: Nil JsonGet _ => {
         _ => {
@@ -1252,7 +1248,71 @@ trait APIMethods300 {
           }
       }
     }
-    
+
+    resourceDocs += ResourceDoc(
+      getOtherAccountsForBankAccount,
+      implementedInApiVersion,
+      "getOtherAccountsForBankAccount",
+      "GET",
+      "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/other_accounts",
+      "Get Other Accounts of one Account.",
+      s"""Returns data about all the other accounts that have shared at least one transaction with the ACCOUNT_ID at BANK_ID.
+         |${authenticationRequiredMessage(false)}
+         |Authentication is required if the view VIEW_ID is not public.""",
+      emptyObjectJson,
+      otherAccountsJsonV300,
+      List(
+        BankAccountNotFound,
+        UnknownError
+      ),
+      Catalogs(notCore, PSD2, OBWG),
+      List(apiTagCounterparty, apiTagAccount))
+
+    lazy val getOtherAccountsForBankAccount : PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
+      case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "other_accounts" :: Nil JsonGet json => {
+        user =>
+          for {
+            account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
+            view <- View.fromUrl(viewId, account)
+            otherBankAccounts <- account.moderatedOtherBankAccounts(view, user)
+          } yield {
+            val otherBankAccountsJson = createOtherBankAccountsJson(otherBankAccounts)
+            successJsonResponse(Extraction.decompose(otherBankAccountsJson))
+          }
+      }
+    }
+
+    resourceDocs += ResourceDoc(
+      getOtherAccountByIdForBankAccount,
+      implementedInApiVersion,
+      "getOtherAccountByIdForBankAccount",
+      "GET",
+      "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/other_accounts/OTHER_ACCOUNT_ID",
+      "Get Other Account by Id.",
+      s"""Returns data about the Other Account that has shared at least one transaction with ACCOUNT_ID at BANK_ID.
+         |${authenticationRequiredMessage(false)}
+         |Authentication is required if the view is not public.""",
+      emptyObjectJson,
+      otherAccountJsonV300,
+      List(BankAccountNotFound, UnknownError),
+      Catalogs(notCore, PSD2, OBWG),
+      List(apiTagCounterparty, apiTagAccount))
+
+    lazy val getOtherAccountByIdForBankAccount : PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
+      case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "other_accounts":: other_account_id :: Nil JsonGet json => {
+        user =>
+          for {
+            account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
+            view <- View.fromUrl(viewId, account)
+            otherBankAccount <- account.moderatedOtherBankAccount(other_account_id, view, user)
+          } yield {
+            val otherBankAccountJson = createOtherBankAccount(otherBankAccount)
+            successJsonResponse(Extraction.decompose(otherBankAccountJson))
+          }
+      }
+    }
+
+
 /* WIP
     resourceDocs += ResourceDoc(
       getOtherAccountsForBank,

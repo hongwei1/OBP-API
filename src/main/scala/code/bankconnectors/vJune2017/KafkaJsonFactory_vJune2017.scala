@@ -84,9 +84,9 @@ case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
 case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
 case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
 case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
-case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2017])
-case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
-case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
+case class InboundGetAccounts(authInfo: AuthInfo, status: Status, data: List[InboundAccountJune2017])
+case class InboundGetAccountbyAccountID(authInfo: AuthInfo, status: Status, data: Option[InboundAccountJune2017])
+case class InboundCheckBankAccountExists(authInfo: AuthInfo, status: Status, data: Option[InboundAccountJune2017])
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetTransactions(authInfo: AuthInfo, status: Status, data: List[InternalTransaction_vJune2017])
 case class InboundGetTransaction(authInfo: AuthInfo, status: Status, data: Option[InternalTransaction_vJune2017])
@@ -129,7 +129,6 @@ case class AuthInfo(userId: String, username: String, cbsToken: String, isFirst:
 case class AccountRules(scheme: String, value: String)
 case class InboundAccountJune2017(
   errorCode: String,
-  backendMessages: List[InboundStatusMessage],
   cbsToken: String, //TODO, this maybe move to AuthInfo, but it is used in GatewayLogin
   bankId: String,
   branchId: String,
