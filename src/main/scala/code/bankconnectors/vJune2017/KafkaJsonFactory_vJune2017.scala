@@ -88,13 +88,13 @@ case class InboundGetAccounts(authInfo: AuthInfo, data: List[InboundAccountJune2
 case class InboundGetAccountbyAccountID(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundCheckBankAccountExists(authInfo: AuthInfo, data: InboundAccountJune2017)
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
-case class InboundGetTransactions(authInfo: AuthInfo, data: List[InternalTransaction])
-case class InboundGetTransaction(authInfo: AuthInfo, data: InternalTransaction)
+case class InboundGetTransactions(authInfo: AuthInfo, status: Status, data: List[InternalTransaction_vJune2017])
+case class InboundGetTransaction(authInfo: AuthInfo, status: Status, data: Option[InternalTransaction_vJune2017])
 case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
-case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
+case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: Option[InternalCounterparty])
 case class InboundGetTransactionRequests210(authInfo: AuthInfo, status: Status, data: List[TransactionRequest])
 case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
-case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: InternalCounterparty)
+case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: Option[InternalCounterparty])
 case class InboundGetCustomersByUserId(authInfo: AuthInfo, status: Status, data: List[InternalCustomer])
 case class InboundGetBranches(authInfo: AuthInfo,status: Status,data: List[InboundBranchVJune2017])
 case class InboundGetBranch(authInfo: AuthInfo,status: Status, data: Option[InboundBranchVJune2017])
@@ -321,6 +321,23 @@ case class InboundAtmJune2017(
                                moreInfo : Option[String],
                                hasDepositCapability : Option[Boolean]
                              ) extends AtmT
+
+case class InternalTransaction_vJune2017(
+                                transactionId: String,
+                                accountId: String,
+                                amount: String,
+                                bankId: String,
+                                completedDate: String,
+                                counterpartyId: String,
+                                counterpartyName: String,
+                                currency: String,
+                                description: String,
+                                newBalanceAmount: String,
+                                newBalanceCurrency: String,
+                                postedDate: String,
+                                `type`: String,
+                                userId: String
+                              )
 
 
 object JsonFactory_vJune2017 {
