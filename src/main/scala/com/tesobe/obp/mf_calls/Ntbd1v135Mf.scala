@@ -6,12 +6,14 @@ import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.{JValue, parse}
 
+import scala.util.control.NoStackTrace
+
 object Ntbd1v135Mf extends StrictLogging{
   
   def checkMobileNumber(mobileNumber: String): String = {
     val result = mobileNumber.replace("+972", "0")
-    if (result.length > 10) throw new InvalidMobilNumberException(s"$InvalidMobilNumber Current mobile number = $mobileNumber") else result
-    if (!mobileNumber.startsWith("+972")) throw new InvalidMobilNumberException(s"$InvalidMobilNumber Current mobile number = $mobileNumber") else result
+    if (result.length > 10) throw new InvalidMobilNumberException(s"$InvalidMobilNumber Current mobile number = $mobileNumber") with NoStackTrace else result
+    if (!mobileNumber.startsWith("+972")) throw new InvalidMobilNumberException(s"$InvalidMobilNumber Current mobile number = $mobileNumber") with NoStackTrace else result
   }
 
   def getNtbd1v135Mf(branch: String,

@@ -9,6 +9,8 @@ import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 
+import scala.util.control.NoStackTrace
+
 object NtbdAv050Mf {
 
   def getNtbdAv050(branch: String,
@@ -23,12 +25,12 @@ object NtbdAv050Mf {
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
     val cbsTransferType =
-    if (transferType == "regular") "1" else if (transferType == "RealTime") "2" else throw new InvalidTransferTypeException()
+    if (transferType == "regular") "1" else if (transferType == "RealTime") "2" else throw new InvalidTransferTypeException() with NoStackTrace
     val isFutureTransfer = if (transferDateInFuture.trim != "") "1" else "0"
     if (transferDateInFuture.trim != "") try {
       val localDateForTransfer = LocalDate.parse(transferDateInFuture, formatter)
-      if (!localDateForTransfer.isAfter(LocalDate.now())) throw new InvalidTimeException
-      } catch { case _: Throwable => throw new InvalidTimeException()}
+      if (!localDateForTransfer.isAfter(LocalDate.now())) throw new InvalidTimeException  with NoStackTrace
+      } catch { case _: Throwable => throw new InvalidTimeException() with NoStackTrace}
     
 
     val json: JValue =parse(s"""

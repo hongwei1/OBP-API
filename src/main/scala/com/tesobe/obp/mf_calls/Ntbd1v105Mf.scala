@@ -6,6 +6,8 @@ import com.tesobe.obp.ErrorMessages._
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.{JValue, parse}
 
+import scala.util.control.NoStackTrace
+
 
 object Ntbd1v105Mf extends StrictLogging{
 
@@ -29,9 +31,9 @@ object Ntbd1v105Mf extends StrictLogging{
     val constrainedMobileNumberOfMoneyReceiver = checkMobileNumber(mobileNumberOfMoneyReceiver)
     val constrainedDescription = if (description.length <= 20) description else description.substring(0,20)
     val constrainedNameOfMoneyReceiver = if (description.length <= 30) description else description.substring(0,30)
-    if (idNumber.length > 9) throw new InvalidPassportOrNationalIdException()
-    if (amount.length > 5 || amount.toInt % 100 != 0) throw new InvalidAmountException()
-    if (idType.toInt != 1 && idType.toInt != 5) throw new InvalidIdTypeException()
+    if (idNumber.length > 9) throw new InvalidPassportOrNationalIdException() with NoStackTrace
+    if (amount.length > 5 || amount.toInt % 100 != 0) throw new InvalidAmountException() with NoStackTrace
+    if (idType.toInt != 1 && idType.toInt != 5) throw new InvalidIdTypeException() with NoStackTrace
     
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/105/01.01"

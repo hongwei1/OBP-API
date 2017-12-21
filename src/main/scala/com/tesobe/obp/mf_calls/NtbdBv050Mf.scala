@@ -6,6 +6,8 @@ import com.tesobe.obp.ErrorMessages._
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
+import scala.util.control.NoStackTrace
+
 object NtbdBv050Mf {
   def getNtbdBv050(branch: String,
                    accountType: String,
@@ -29,7 +31,7 @@ object NtbdBv050Mf {
    
       val constrainedTransactionAmount =  try { f"${transactionAmount.toDouble}%1.2f"
     } catch {
-      case _: Throwable => throw new RuntimeException(InvalidAmount)
+      case _: Throwable => throw new RuntimeException(InvalidAmount) with NoStackTrace
     }
       val constrainedDescription = if (description.length <= 28) description else description.substring(0,28)
 

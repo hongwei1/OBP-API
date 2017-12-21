@@ -6,6 +6,8 @@ import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
+import scala.util.control.NoStackTrace
+
 object NtbdIv050Mf {
   
     def getNtbdIv050(branch: String,
@@ -20,7 +22,7 @@ object NtbdIv050Mf {
 
       val constrainedTransactionAmount =  try { f"${transactionAmount.toDouble}%1.2f"
       } catch {
-        case _: Throwable => throw new RuntimeException(InvalidAmount)
+        case _: Throwable => throw new RuntimeException(InvalidAmount) with NoStackTrace
       }
 
 
