@@ -232,13 +232,10 @@ class LocalProcessor(implicit executionContext: ExecutionContext, materializer: 
       case m: Throwable =>
         logger.error("getCoreBankAccountsFn-unknown error", m)
         val errorBody = InboundGetCoreBankAccounts(
-          AuthInfo("","",""),List(InternalInboundCoreAccount(
-            m.getMessage,
-          List(
-            InboundStatusMessage("ESB","Success", "0", "OK"),
-            InboundStatusMessage("MF","Success", "0", "OK")  
-          ),
-          "","", "", AccountRouting("",""))))
+          AuthInfo("","",""),List(InternalInboundCoreAccount(m.getMessage, List(
+                      InboundStatusMessage("ESB","Success", "0", "OK"),
+                      InboundStatusMessage("MF","Success", "0", "OK")  
+                    ), "", "", "", AccountRouting("",""))))
         
         Future(msg, errorBody.asJson.noSpaces)
     }

@@ -222,7 +222,23 @@ case class InboundAdapterInfoInternal(
   date: String
 )
 case class AccountRules(scheme: String, value: String)
-case class InboundAccountJune2017(errorCode: String = "", cbsToken: String, bankId: String, branchId: String, accountId: String, accountNumber: String, accountType: String, balanceAmount: String, balanceCurrency: String, owners: List[String], viewsToGenerate: List[String], bankRoutingScheme: String, bankRoutingAddress: String, branchRoutingScheme: String, branchRoutingAddress: String, accountRoutingScheme: String, accountRoutingAddress: String, accountRules: List[AccountRules])
+case class InboundAccountJune2017(errorCode: String = "",
+                                  cbsToken: String, 
+                                  bankId: String, 
+                                  branchId: String, 
+                                  accountId: String, 
+                                  accountNumber: String, 
+                                  accountType: String,
+                                  balanceAmount: String,
+                                  balanceCurrency: String, 
+                                  owners: List[String], 
+                                  viewsToGenerate: List[String],
+                                  bankRoutingScheme: String,
+                                  bankRoutingAddress: String, 
+                                  branchRoutingScheme: String, 
+                                  branchRoutingAddress: String,
+                                  accountRouting: List[AccountRouting], 
+                                  accountRules: List[AccountRules])
 
 case class InternalCounterparty(
                                  createdByUserId: String,

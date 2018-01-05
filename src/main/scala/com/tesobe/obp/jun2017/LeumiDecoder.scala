@@ -180,33 +180,59 @@ object LeumiDecoder extends Decoder with StrictLogging {
         x.PAPIErrorResponse.MFAdminResponse.messageText.getOrElse(""))
     )
   }
+  
+  def mapCbsPermissionsToObpViews(hasOwnerRights: Boolean, hasAccountantRights:Boolean, hasAuditorRights:Boolean): List[String] = {
+    if (hasOwnerRights) {
+      List("Owner","Accountant", "Auditor")
+    } else if (hasAccountantRights) {
+      List("Accountant", "Auditor")
+    } else if (hasAuditorRights){
+      List("Auditor")
+    } else {
+      List("")
+    }
+  }
+  
+  def mapCbsPermissionsToObpAccountOwnership(username: String, hasOwnerRights: Boolean): List[String] = {
+    if (hasOwnerRights) {
+      List(username)
+    } else {
+      List("")
+    }
+  }
 
 
   def mapBasicBankAccountToInboundAccountJune2017(username: String, x: BasicBankAccount, iban: String, balance: String, creditLimit: String): InboundAccountJune2017 = {
 
     //Create OwnerRights and accountViewer for result InboundAccount2017 creation
     val hasOwnerRights: Boolean = x.accountPermissions.canMakeExternalPayments
-    val hasAccountantRights = x.accountPermissions.canMakeInternalPayments
-    val hasAuditorRights = x.accountPermissions.canSee
-    val viewsToGenerate = {
-      if (hasOwnerRights) {
-        List("Owner","Accountant", "Auditor")
-      } else if (hasAccountantRights) {
-        List("Accountant", "Auditor")
-      } else if (hasAuditorRights){
-        List("Auditor")
-      } else {
-        List("")
-      }
-    }
-    //Create Owner for result InboundAccount2017 creation
-    val accountOwner = if (hasOwnerRights) {
-      List(username)
+    val hasAccountantRights:Boolean = x.accountPermissions.canMakeInternalPayments
+    val hasAuditorRights:Boolean = x.accountPermissions.canSee
+    val accountRoutingScheme = if (iban.trim != "") {
+      List(AccountRouting("Israel Domestic", "10-" + x.branchNr + "-" + x.accountNr), AccountRouting("IBAN", iban))
     } else {
-      List("")
+      List(AccountRouting("Israel Domestic", "10-" + x.branchNr + "-" + x.accountNr))
     }
-    val accountRoutingScheme = if (iban.trim != "") "IBAN" else ""
-    InboundAccountJune2017("",x.cbsToken, bankId = "10", branchId = x.branchNr, accountId = createAccountId(x.branchNr, x.accountType, x.accountNr), accountNumber = x.accountNr, accountType = x.accountType, balanceAmount = balance, balanceCurrency = defaultCurrency, owners = accountOwner, viewsToGenerate = viewsToGenerate, bankRoutingScheme = "", bankRoutingAddress = "", branchRoutingScheme = "", branchRoutingAddress = "", accountRoutingScheme = accountRoutingScheme, accountRoutingAddress = iban, accountRules = if (creditLimit.isEmpty) List() else List(AccountRules("CREDIT_LIMIT", creditLimit)))
+        InboundAccountJune2017("",
+        x.cbsToken,
+        bankId = "10",
+        branchId = x.branchNr,
+        accountId = createAccountId(x.branchNr, x.accountType, x.accountNr),
+        accountNumber = x.accountNr,
+        accountType = x.accountType,
+        balanceAmount = balance,
+        balanceCurrency = defaultCurrency,
+        owners = mapCbsPermissionsToObpAccountOwnership(username, hasOwnerRights),
+        viewsToGenerate = mapCbsPermissionsToObpViews(hasOwnerRights, hasAccountantRights, hasAuditorRights),
+        bankRoutingScheme = "",
+        bankRoutingAddress = "",
+        branchRoutingScheme = "",
+        branchRoutingAddress = "",
+        //accountRoutingScheme = accountRoutingScheme, 
+        //accountRoutingAddress = iban,
+        accountRouting = accountRoutingScheme, 
+        accountRules = if (creditLimit.isEmpty) List() else List(AccountRules("CREDIT_LIMIT", creditLimit)))
+    
   }
 
   def mapAdapterTransactionToInternalTransaction(userId: String,
@@ -556,28 +582,15 @@ object LeumiDecoder extends Decoder with StrictLogging {
 
           val result = new ListBuffer[InternalInboundCoreAccount]
           for (i <- inputAccountIds) {
-            result += InternalInboundCoreAccount(
-              errorCode = "",
-              backendMessages = List(
-                InboundStatusMessage("ESB", "Success", "0", "OK"),
-                InboundStatusMessage("MF", "Success", "0", "OK")),
-              id = i,
-              label = "",
-              bank_id = "10",
-              account_routing = AccountRouting(scheme = "account_number", address =
-                accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist")).accountNr)
-            )
+            val account = accounts.find(x => (base64EncodedSha256(x.branchNr + x.accountType + x.accountNr + config.getString("salt.global")) == i)).getOrElse(throw new Exception("AccountId does not exist"))
+            result += InternalInboundCoreAccount(errorCode = "", backendMessages = List(
+                            InboundStatusMessage("ESB", "Success", "0", "OK"),
+                            InboundStatusMessage("MF", "Success", "0", "OK")), id = i, label = "", bank_id = "10", account_routing = AccountRouting(scheme = "Israel Domestic",
+                            address = "10-" + account.branchNr + "-" + account.accountNr))
           }
           InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, result.toList)
         case Left(x) =>
-          InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, List(InternalInboundCoreAccount(
-            errorCode = "",
-            backendMessages = createInboundStatusMessages(x),
-            id = "",
-            label = "",
-            bank_id = "",
-            account_routing = AccountRouting(scheme = "", address = "")
-          )))
+          InboundGetCoreBankAccounts(getCoreBankAccounts.authInfo, List(InternalInboundCoreAccount(errorCode = "", backendMessages = createInboundStatusMessages(x), id = "", label = "", bank_id = "", account_routing = AccountRouting(scheme = "", address = ""))))
       }
           
   }
