@@ -33,6 +33,7 @@ object NtbdBv050Mf {
     } catch {
       case _: Throwable => throw new RuntimeException(InvalidAmount) with NoStackTrace
     }
+    if (constrainedTransactionAmount.length > 16) throw new InvalidAmountException() with NoStackTrace
       val constrainedDescription = if (description.length <= 28) description else description.substring(0,28)
 
       val json: JValue =parse(s"""

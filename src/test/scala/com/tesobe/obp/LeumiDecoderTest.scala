@@ -45,7 +45,7 @@ class LeumiDecoderTest  extends ServerSetup {
   
   test("getBankAccountbyAccountId works for stub"){
     val result = getBankAccountbyAccountId(OutboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken),"10",accountId1))
-    result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken), Status(), (Some(InboundAccountJune2017("", mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "",  List(AccountRouting("Israel Domestic","10-616-3565953"),AccountRouting("IBAN","IL230106160000050180963")), List(AccountRules("CREDIT_LIMIT", "15000")))))))
+    result should be (InboundGetAccountbyAccountID(AuthInfo("karlsid", username, mfToken), Status(), (Some(InboundAccountJune2017("", mfToken, "10", "616", accountId1, "3565953", "330", "5541.28", "ILS", List(username), List("Owner", "Accountant", "Auditor"), "", "", "", "",  List(AccountRouting("Israel Domestic","10-616-3565953"),AccountRouting("IBAN","IL230106160000050180963")), List(AccountRule("CREDIT_LIMIT", "15000")))))))
   }
   
   test("getCoreBankAccounts gives correct result for stub"){

@@ -1,8 +1,11 @@
 package com.tesobe.obp
+import com.tesobe.obp.ErrorMessages.InputTooLongException
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.{JValue, parse}
+
+import scala.util.control.NoStackTrace
 
 
 object Ntbd2v105Mf extends StrictLogging{
@@ -15,6 +18,9 @@ object Ntbd2v105Mf extends StrictLogging{
                      nicknameOfSender: String,
                      messageToReceiver: String
                     ): Either[PAPIErrorResponse,Ntbd2v105] = {
+    
+    if (nicknameOfSender.length > 20) throw new InputTooLongException() with NoStackTrace
+    if (messageToReceiver.length > 50) throw new InputTooLongException() with NoStackTrace
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/105/01.01"
 

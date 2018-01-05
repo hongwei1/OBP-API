@@ -231,7 +231,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
         //accountRoutingScheme = accountRoutingScheme, 
         //accountRoutingAddress = iban,
         accountRouting = accountRoutingScheme, 
-        accountRules = if (creditLimit.isEmpty) List() else List(AccountRules("CREDIT_LIMIT", creditLimit)))
+        accountRules = if (creditLimit.isEmpty) List() else List(AccountRule("CREDIT_LIMIT", creditLimit)))
     
   }
 

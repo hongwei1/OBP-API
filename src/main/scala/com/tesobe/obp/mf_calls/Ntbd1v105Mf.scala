@@ -34,6 +34,7 @@ object Ntbd1v105Mf extends StrictLogging{
     if (idNumber.length > 9) throw new InvalidPassportOrNationalIdException() with NoStackTrace
     if (amount.length > 5 || amount.toInt % 100 != 0) throw new InvalidAmountException() with NoStackTrace
     if (idType.toInt != 1 && idType.toInt != 5) throw new InvalidIdTypeException() with NoStackTrace
+    if (birthDateOfMoneyReceiver.length > 6) throw new InvalidTimeException with NoStackTrace
     
 
     val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/105/01.01"

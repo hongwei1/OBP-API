@@ -320,6 +320,7 @@ object ErrorMessages {
   val InvalidBranchId = "ADAPTER-60017: BranchId not found."
   val ZoneIdNotAvailable = "ADAPTER-60018: ZoneId for Asia/Jerusalem not available in JVM"
   val InvalidAtmId = "ADAPTER-60019: AtmId not found."
+  val InputTooLong = "ADAPTER-60020: Input too long."
 
   
   
@@ -345,6 +346,7 @@ object ErrorMessages {
   class InvalidBranchIdExecption(msg: String = InvalidBranchId) extends Exception(msg: String)
   class InvalidAtmIdExecption(msg: String = InvalidAtmId) extends Exception(msg: String)
   class ZoneIdNotAvailableException(msg: String = ZoneIdNotAvailable) extends Exception(msg: String)
+  class InputTooLongException(msg: String = InputTooLong) extends Exception(msg: String)
 }
 
 

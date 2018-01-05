@@ -221,7 +221,7 @@ case class InboundAdapterInfoInternal(
   git_commit: String,
   date: String
 )
-case class AccountRules(scheme: String, value: String)
+case class AccountRule(scheme: String, value: String)
 case class InboundAccountJune2017(errorCode: String = "",
                                   cbsToken: String, 
                                   bankId: String, 
@@ -238,7 +238,7 @@ case class InboundAccountJune2017(errorCode: String = "",
                                   branchRoutingScheme: String, 
                                   branchRoutingAddress: String,
                                   accountRouting: List[AccountRouting], 
-                                  accountRules: List[AccountRules])
+                                  accountRules: List[AccountRule])
 
 case class InternalCounterparty(
                                  createdByUserId: String,
