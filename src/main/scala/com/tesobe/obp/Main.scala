@@ -29,7 +29,14 @@ object Main extends App with StrictLogging with Config with ProcessorFactory {
 
   logger.debug("The Adapter's current commit is : "+Util.gitCommit)
   logger.debug("The Adapter's complete props is : "+config)
-  
+  print("Enter the Password for the SSL Client Certificate: ")
+  //As most IDEs do not provide a Console, we fall back to readLine
+  val clientCertificatePw:String =  try {
+    System.console.readPassword().toString
+  } catch {
+    case e: NullPointerException => scala.io.StdIn.readLine()
+  }
+  println("this is pw: " + clientCertificatePw)
   if (config.getBoolean("mockserver.run")) {
     startMockServer
   }

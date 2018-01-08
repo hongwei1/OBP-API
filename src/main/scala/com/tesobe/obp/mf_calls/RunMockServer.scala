@@ -18,7 +18,7 @@ import scala.util.parsing.json.JSON
 object RunMockServer extends StrictLogging{
   val mockServer = startClientAndServer(1080)
   
-  def jsonToString(filename: String): String = {
+  def textFileToString(filename: String): String = {
     val source = scala.io.Source.fromResource(filename)
     val lines = try source.mkString finally source.close()
     lines
@@ -32,7 +32,7 @@ object RunMockServer extends StrictLogging{
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-          .withBody(jsonToString("joni_request.json").replace(" ","").replace("\n",""))
+          .withBody(textFileToString("joni_request.json").replace(" ","").replace("\n",""))
       )
       .respond(
         response()
@@ -40,7 +40,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("joni_result.json"))
+          .withBody(textFileToString("joni_result.json"))
           //.withBody(jsonToString("error_result.json"))
       )
 
@@ -51,7 +51,7 @@ object RunMockServer extends StrictLogging{
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-          .withBody(jsonToString("joni_4cwwtzq_request.json").replace(" ","").replace("\n",""))
+          .withBody(textFileToString("joni_4cwwtzq_request.json").replace(" ","").replace("\n",""))
       )
       .respond(
         response()
@@ -59,7 +59,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("joni_4cwwtzq_result.json").replace(" ","").replace("\n",""))
+          .withBody(textFileToString("joni_4cwwtzq_result.json").replace(" ","").replace("\n",""))
         //.withBody(jsonToString("error_result.json"))
       )
 
@@ -70,7 +70,7 @@ object RunMockServer extends StrictLogging{
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-          .withBody(jsonToString("joni_fm4dzde_request.json").replace(" ","").replace("\n",""))
+          .withBody(textFileToString("joni_fm4dzde_request.json").replace(" ","").replace("\n",""))
       )
       .respond(
         response()
@@ -78,7 +78,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("joni_fm4dzde_result.json").replace(" ","").replace("\n",""))
+          .withBody(textFileToString("joni_fm4dzde_result.json").replace(" ","").replace("\n",""))
         //.withBody(jsonToString("error_result.json"))
       )
 
@@ -89,7 +89,7 @@ object RunMockServer extends StrictLogging{
           .withMethod("POST")
           .withHeader("Content-Type","application/json;charset=utf-8")
           .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
-          .withBody(jsonToString("joni_p747xtf_request.json").replace(" ","").replace("\n",""))
+          .withBody(textFileToString("joni_p747xtf_request.json").replace(" ","").replace("\n",""))
       )
       .respond(
         response()
@@ -97,7 +97,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("joni_p747xtf_result.json"))
+          .withBody(textFileToString("joni_p747xtf_result.json"))
         //.withBody(jsonToString("error_result.json"))
       )
     //2 Nt1cB
@@ -118,7 +118,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("nt1c_B_result.json"))
+          .withBody(textFileToString("nt1c_B_result.json"))
       )
     //3 Nt1cT
     mockServer
@@ -135,7 +135,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("nt1c_T_result.json"))
+          .withBody(textFileToString("nt1c_T_result.json"))
       )
     //4 Nt1c3
     mockServer
@@ -152,7 +152,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("nt1c_3_result.json"))
+          .withBody(textFileToString("nt1c_3_result.json"))
       )
     //5 Nt1c4
     mockServer
@@ -169,7 +169,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("nt1c_4_result.json"))
+          .withBody(textFileToString("nt1c_4_result.json"))
       )
     
     //6 NtIb2
@@ -187,7 +187,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntib_result.json"))
+          .withBody(textFileToString("ntib_result.json"))
       )
     
     //7 Ntlv1
@@ -205,7 +205,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntlv_1_result.json")) 
+          .withBody(textFileToString("ntlv_1_result.json")) 
       )
     
     //8 Ntbd1v135
@@ -223,7 +223,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbd1_135_result.json"))
+          .withBody(textFileToString("ntbd1_135_result.json"))
       )
     
     //9 Ntbd2v135
@@ -241,7 +241,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbd2_135_result.json"))
+          .withBody(textFileToString("ntbd2_135_result.json"))
       )
 
     //10 Ntlv7
@@ -259,7 +259,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntlv7_result.json"))
+          .withBody(textFileToString("ntlv7_result.json"))
       )
 
     //11 NttfW
@@ -277,7 +277,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("nttfW_result.json"))
+          .withBody(textFileToString("nttfW_result.json"))
       )
     //12 Ntbd1v105
     mockServer
@@ -294,7 +294,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbd1_105_result.json"))
+          .withBody(textFileToString("ntbd1_105_result.json"))
       )
     
     //13 Ntbd2v105
@@ -312,7 +312,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbd2_105_result.json"))
+          .withBody(textFileToString("ntbd2_105_result.json"))
       )
 
 
@@ -331,7 +331,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbdA_050_result.json"))
+          .withBody(textFileToString("ntbdA_050_result.json"))
       )
     
     //15 NtbdBv050
@@ -349,7 +349,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbdB_050_result.json"))
+          .withBody(textFileToString("ntbdB_050_result.json"))
       )
     
     //16 NtbdIv050
@@ -367,7 +367,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbdI_050_result.json"))
+          .withBody(textFileToString("ntbdI_050_result.json"))
       )
     
     //17 NtbdGv050
@@ -385,7 +385,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbdG_050_result.json"))
+          .withBody(textFileToString("ntbdG_050_result.json"))
       )
     
     //18 Ntvd2v050
@@ -403,7 +403,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntbd2_050_result.json"))
+          .withBody(textFileToString("ntbd2_050_result.json"))
       )
 
     //19 Ntg6A
@@ -421,7 +421,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntg6_A_result.json"))
+          .withBody(textFileToString("ntg6_A_result.json"))
           //.withBody(jsonToString("error_result.json"))
       )
     //20 Ntg6B
@@ -439,7 +439,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntg6_B_result.json"))
+          .withBody(textFileToString("ntg6_B_result.json"))
       )
     
     //21 Ntg6C
@@ -457,7 +457,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntg6_C_result.json"))
+          .withBody(textFileToString("ntg6_C_result.json"))
       )
     //22 Ntg6D
     mockServer
@@ -474,7 +474,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntg6_D_result.json"))
+          .withBody(textFileToString("ntg6_D_result.json"))
       )
     
     //23 Ntg6I
@@ -492,7 +492,7 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntg6_I_result.json"))
+          .withBody(textFileToString("ntg6_I_result.json"))
         //.withBody(jsonToString("errorB_result.json"))
 
       )
@@ -513,8 +513,26 @@ object RunMockServer extends StrictLogging{
           .withHeaders(
             new Header("Content-Type", "application/json; charset=utf-8")
           )
-          .withBody(jsonToString("ntg6_K_result.json"))
+          .withBody(textFileToString("ntg6_K_result.json"))
         //.withBody(jsonToString("errorB_result.json"))
+
+      )
+    
+    //getBranches
+    mockServer
+      .when(
+        request()
+          .withMethod("GET")
+          .withPath("/getBranches")
+        //.withBody("body")
+      )
+      .respond(
+        response()
+          .withStatusCode(200)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(textFileToString("branchesExpanded.xml"))
 
       )
 

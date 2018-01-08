@@ -9,7 +9,7 @@ class JoniMfTest extends ServerSetup {
 
   val username = "N7jut8d"
   val mfToken = ">,?          81433020102612"
-  val mfresult: String = jsonToString("joni_result.json")
+  val mfresult: String = textFileToString("joni_result.json")
   val sane_result: String = replaceEmptyObjects(mfresult)
   implicit val formats = net.liftweb.json.DefaultFormats
   
