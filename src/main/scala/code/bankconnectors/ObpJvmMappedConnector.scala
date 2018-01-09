@@ -9,12 +9,9 @@ import java.util.{Date, Locale, Optional, UUID}
 import code.accountholder.{AccountHolders, MapperAccountHolders}
 import code.api.util.{ErrorMessages, SessionContext}
 import code.api.v2_1_0.TransactionRequestCommonBodyJSON
-import code.atms.Atms.AtmId
-import code.atms.MappedAtm
-import code.bankconnectors.vJune2017.AccountRules
+import code.bankconnectors.vJune2017.AccountRule
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
-import code.branches.Branches.{Branch, BranchId, BranchT}
-import code.branches.MappedBranch
+import code.branches.Branches.{Branch, BranchT}
 import code.fx.{FXRate, fx}
 import code.management.ImporterAPI.ImporterTransaction
 import code.metadata.comments.Comments
@@ -27,7 +24,6 @@ import code.model._
 import code.model.dataAccess._
 import code.products.Products.{Product, ProductCode}
 import code.transaction.MappedTransaction
-import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.transactionrequests.TransactionRequests._
 import code.transactionrequests._
 import code.util.Helper
@@ -63,8 +59,6 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   type JHashMap = java.util.HashMap[String, Object]
   type JResponse = com.tesobe.obp.transport.Decoder.Response
   type JTransport = com.tesobe.obp.transport.Transport
-
-  type AccountType = ObpJvmBankAccount
 
   implicit override val nameOfConnector = ObpJvmMappedConnector.getClass.getSimpleName
 
@@ -387,7 +381,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     //TODO is this needed updateAccountTransactions(bankId, accountId)
   }
 
-  override def getBankAccount(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[ObpJvmBankAccount] = memoizeSync(getAccountTTL millisecond) {
+  override def getBankAccount(bankId: BankId, accountId: AccountId, session: Option[SessionContext]): Box[BankAccount] = memoizeSync(getAccountTTL millisecond) {
     val parameters = new JHashMap
 
     //val primaryUserIdentifier = AuthUser.getCurrentUserUsername
@@ -432,7 +426,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     }
   }
 
-  override def getBankAccounts(accts: List[(BankId, AccountId)]): List[ObpJvmBankAccount] = {
+  override def getBankAccounts(accts: List[(BankId, AccountId)]): List[BankAccount] = {
 
     logger.info(s"hello from ObpJvmMappedConnnector.getBankAccounts accts is $accts")
 
@@ -487,7 +481,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       new ObpJvmBankAccount(t) }
   }
 
-  private def getAccountByNumber(bankId : BankId, number : String, userName: String) : Box[AccountType] = {
+  private def getAccountByNumber(bankId : BankId, number : String, userName: String) : Box[BankAccount] = {
     val primaryUserIdentifier = userName
     val parameters = new JHashMap
 
@@ -581,9 +575,9 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
 
-  protected override def makePaymentImpl(fromAccount: ObpJvmBankAccount,
-                                         toAccount: ObpJvmBankAccount,
-                                         toCounterparty: CounterpartyTrait,
+  protected override def makePaymentImpl(fromAccount: BankAccount,
+                                         toAccount: BankAccount,
+                                         transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
                                          amt: BigDecimal,
                                          description: String,
                                          transactionRequestType: TransactionRequestType,
@@ -591,7 +585,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
 
     val sentTransactionId = saveTransaction(fromAccount,
                                             toAccount,
-                                            toCounterparty,
+                                            transactionRequestCommonBody,
                                             amt,
                                             description,
                                             transactionRequestType,
@@ -604,42 +598,26 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
    * Saves a transaction with amount @amt and counterparty @counterparty for account @account. Returns the id
    * of the saved transaction.
    */
-  private def saveTransaction( fromAccount: ObpJvmBankAccount,
-                               toAccount: ObpJvmBankAccount,
-                               toCounterparty: CounterpartyTrait,
+  private def saveTransaction( fromAccount: BankAccount,
+                               toAccount: BankAccount,
+                               transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
                                amount: BigDecimal,
                                description: String,
                                transactionRequestType: TransactionRequestType,
                                chargePolicy: String): Box[TransactionId] = {
-
-
+  
     val parameters = new JHashMap
     val fields = new JHashMap
 
     parameters.put("type", "obp.mar.2017")
-
-    // toCounterparty
-    if( transactionRequestType.value == SANDBOX_TAN.toString ) {
-      fields.put("toCounterpartyId",                 toAccount.accountId.value)//not used 
-      fields.put("toCounterpartyName",               toAccount.name)//optional name, no need to be correct
-      fields.put("toCounterpartyCurrency",           toAccount.currency)
-      fields.put("toCounterpartyRoutingAddress",     toAccount.accountId.value) //BENEFICIARY_ACCOUNT_NUMBER
-      fields.put("toCounterpartyRoutingScheme",      "BKCOM_ACCOUNT")
-      fields.put("toCounterpartyBankRoutingAddress", toAccount.bankId.value)
-      fields.put("toCounterpartyBankRoutingScheme",  "BKCOM_ACCOUNT")
-    } else if(  transactionRequestType.value == SEPA.toString ||
-                transactionRequestType.value == COUNTERPARTY.toString) {
-      fields.put("toCounterpartyId",                 toCounterparty.counterpartyId)
-      fields.put("toCounterpartyName",               toCounterparty.name)
-      fields.put("toCounterpartyCurrency",           fromAccount.currency) // TODO toCounterparty.currency
-      fields.put("toCounterpartyRoutingAddress",     toCounterparty.otherAccountRoutingAddress)
-      fields.put("toCounterpartyRoutingScheme",      toCounterparty.otherAccountRoutingScheme)
-      fields.put("toCounterpartyBankRoutingAddress", toCounterparty.otherBankRoutingAddress)
-      fields.put("toCounterpartyBankRoutingScheme",  toCounterparty.otherBankRoutingScheme)
-    } else {
-      logger.error(s"error calling saveTransaction: transactionRequestType=${transactionRequestType.value}")
-      return Empty
-    }
+  
+    fields.put("toCounterpartyId", toAccount.accountId.value)
+    fields.put("toCounterpartyName", toAccount.name)
+    fields.put("toCounterpartyCurrency", fromAccount.currency) // TODO toCounterparty.currency
+    fields.put("toCounterpartyRoutingAddress", toAccount.accountRoutingAddress)
+    fields.put("toCounterpartyRoutingScheme", toAccount.accountRoutingScheme)
+    fields.put("toCounterpartyBankRoutingAddress", toAccount.bankRoutingAddress)
+    fields.put("toCounterpartyBankRoutingScheme", toAccount.bankRoutingScheme)
 
     val userId = AuthUser.getCurrentResourceUserUserId
     val postedDate = ZonedDateTime.now
@@ -722,28 +700,6 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
       body,
       status,
       charge)
-  }
-
-  //Note: now call the local mapper to store data
-  protected override def createTransactionRequestImpl210(transactionRequestId: TransactionRequestId,
-                                                         transactionRequestType: TransactionRequestType,
-                                                         fromAccount: BankAccount,
-                                                         toAccount: BankAccount,
-                                                         toCounterparty: CounterpartyTrait,
-                                                         transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
-                                                         details: String, status: String,
-                                                         charge: TransactionRequestCharge,
-                                                         chargePolicy: String): Box[TransactionRequest] = {
-
-    LocalMappedConnector.createTransactionRequestImpl210(transactionRequestId: TransactionRequestId,
-                                                         transactionRequestType: TransactionRequestType,
-                                                         fromAccount: BankAccount, toAccount: BankAccount,
-                                                         toCounterparty: CounterpartyTrait,
-                                                         transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
-                                                         details: String,
-                                                         status: String,
-                                                         charge: TransactionRequestCharge,
-                                                         chargePolicy: String)
   }
 
   override def saveTransactionRequestTransactionImpl(transactionRequestId: TransactionRequestId, transactionId: TransactionId): Box[Boolean] = {
@@ -1132,7 +1088,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
   // Helper for creating other bank account
-  def createCounterparty(c: ObpJvmInboundTransactionCounterparty, o: ObpJvmBankAccount, alreadyFoundMetadata : Option[CounterpartyMetadata]) = {
+  def createCounterparty(c: ObpJvmInboundTransactionCounterparty, o: BankAccount, alreadyFoundMetadata : Option[CounterpartyMetadata]) = {
     new Counterparty(
       counterpartyId = alreadyFoundMetadata.map(_.getCounterpartyId).getOrElse(""),
       counterpartyName = c.account_number.getOrElse(c.name.getOrElse("")),
@@ -1165,8 +1121,9 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     def accountHolder : String      = r.owners.head
     def accountRoutingScheme: String = r.account_routing_scheme
     def accountRoutingAddress: String = r.account_routing_address
+    def accountRoutings: List[AccountRouting] = List()
     def branchId: String = r.branchId
-    def accountRules: List[AccountRules] = List()
+    def accountRules: List[AccountRule] = List()
 
     // Fields modifiable from OBP are stored in mapper
     def label : String              = (for {
@@ -1435,7 +1392,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     LocalMappedConnector.getCounterparties(thisBankId: BankId, thisAccountId: AccountId,viewId :ViewId)
   }
 
-  override def getEmptyBankAccount(): Box[AccountType] = {
+  override def getEmptyBankAccount(): Box[BankAccount] = {
     Full(new ObpJvmBankAccount(ObpJvmInboundAccount(id = "",
                                                     bank = "",
                                                     label = "",

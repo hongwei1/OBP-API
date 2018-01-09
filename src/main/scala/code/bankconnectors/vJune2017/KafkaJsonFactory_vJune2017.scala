@@ -126,7 +126,7 @@ case class Status(
                    backendMessages: List[InboundStatusMessage]
                  )
 case class AuthInfo(userId: String, username: String, cbsToken: String, isFirst: Boolean = true)
-case class AccountRules(scheme: String, value: String)
+case class AccountRule(scheme: String, value: String)
 case class InboundAccountJune2017(
   errorCode: String,
   cbsToken: String, //TODO, this maybe move to AuthInfo, but it is used in GatewayLogin
@@ -145,11 +145,12 @@ case class InboundAccountJune2017(
   branchRoutingAddress: String,
   accountRoutingScheme: String,
   accountRoutingAddress: String,
-  accountRules: List[AccountRules]
+  accountRouting: List[AccountRouting],
+  accountRules: List[AccountRule]
 ) extends InboundMessageBase with InboundAccountCommon
 
 case class BankAccountJune2017(r: InboundAccountJune2017) extends BankAccount {
-  
+
   def accountId: AccountId = AccountId(r.accountId)
   def accountType: String = r.accountType
   def balance: BigDecimal = BigDecimal(r.balanceAmount)
@@ -163,19 +164,20 @@ case class BankAccountJune2017(r: InboundAccountJune2017) extends BankAccount {
   def bankId: BankId = BankId(r.bankId)
   def lastUpdate: Date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH).parse(today.getTime.toString)
   def accountHolder: String = r.owners.head
-  
+
   // Fields modifiable from OBP are stored in mapper
   def label: String = (for {
     d <- MappedBankAccountData.find(By(MappedBankAccountData.accountId, r.accountId))
   } yield {
     d.getLabel
   }).getOrElse(r.accountNumber)
-  
+
   def accountRoutingScheme: String = r.accountRoutingScheme
   def accountRoutingAddress: String = r.accountRoutingAddress
+  def accountRoutings: List[AccountRouting] = List()
   def branchId: String = r.branchId
 
-  def accountRules: List[AccountRules] = r.accountRules
+  def accountRules: List[AccountRule] = r.accountRules
   
 }
 

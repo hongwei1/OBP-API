@@ -35,10 +35,10 @@ import java.util.Date
 
 import code.accountholder.AccountHolders
 import code.api.util.SessionContext
-import code.bankconnectors.vJune2017.AccountRules
+import code.bankconnectors.vJune2017.AccountRule
 import code.bankconnectors.{Connector, OBPQueryParam}
 import code.metadata.comments.Comments
-import code.metadata.counterparties.Counterparties
+import code.metadata.counterparties.{Counterparties, CounterpartyTrait}
 import code.metadata.narrative.Narrative
 import code.metadata.tags.Tags
 import code.metadata.transactionimages.TransactionImages
@@ -299,7 +299,8 @@ trait BankAccount extends MdcLoggable {
   def branchId: String
   def accountRoutingScheme: String
   def accountRoutingAddress: String
-  def accountRules: List[AccountRules]
+  def accountRoutings: List[AccountRouting] // Introduced in v3.0.0
+  def accountRules: List[AccountRule]
 
   @deprecated("Get the account holder(s) via owners")
   def accountHolder : String
@@ -638,7 +639,53 @@ object BankAccount {
   def apply(bankId: BankId, accountId: AccountId, sessionContext: Option[SessionContext]) : Box[BankAccount] = {
     Connector.connector.vend.getBankAccount(bankId, accountId, sessionContext)
   }
-
+  
+  def apply(counterpartyTrait: CounterpartyTrait) : Box[BankAccount] = {
+    Full(
+      BankAccountInMemory(
+        //BankAccount Trait
+        bankId = BankId(counterpartyTrait.otherBankRoutingAddress),
+        accountId = AccountId(counterpartyTrait.otherAccountRoutingAddress),
+        accountType = null,
+        balance = 0, //TODO double check, we can not get balance from CounterpartyTrait, so just use default 0.
+        currency = "EUR", //TODO, this need get from CounterpartyTrait, should add crrency there.
+        lastUpdate = null,
+        accountHolder = counterpartyTrait.name,
+        label = counterpartyTrait.name,
+        accountRoutingScheme = counterpartyTrait.otherAccountRoutingScheme,
+        accountRoutingAddress = counterpartyTrait.otherAccountRoutingAddress,
+        branchId = counterpartyTrait.counterpartyId,
+        swift_bic = Option(counterpartyTrait.otherAccountRoutingAddress),
+        iban = Option(counterpartyTrait.otherAccountSecondaryRoutingAddress),
+        number = counterpartyTrait.otherAccountRoutingAddress,
+        accountRoutings = List(
+          AccountRouting(counterpartyTrait.otherAccountRoutingScheme, counterpartyTrait.otherAccountRoutingAddress),
+          AccountRouting(counterpartyTrait.otherAccountSecondaryRoutingScheme, counterpartyTrait.otherAccountSecondaryRoutingAddress)
+        ),
+        accountRules = Nil,
+        
+        //Counterparty Trait
+        createdByUserId= counterpartyTrait.createdByUserId,
+        description = counterpartyTrait.description ,
+        name=counterpartyTrait.name,
+        thisBankId=counterpartyTrait.thisBankId,
+        thisAccountId = counterpartyTrait.thisAccountId,
+        thisViewId = counterpartyTrait.thisViewId,
+        counterpartyId=counterpartyTrait.counterpartyId,
+        otherAccountRoutingScheme = counterpartyTrait.otherAccountRoutingScheme,
+        otherAccountRoutingAddress = counterpartyTrait.otherAccountRoutingAddress,
+        otherAccountSecondaryRoutingScheme = counterpartyTrait.otherAccountSecondaryRoutingScheme,
+        otherAccountSecondaryRoutingAddress = counterpartyTrait.otherAccountSecondaryRoutingAddress,
+        otherBankRoutingScheme = counterpartyTrait.otherBankRoutingScheme,
+        otherBankRoutingAddress = counterpartyTrait.otherBankRoutingAddress,
+        otherBranchRoutingScheme = counterpartyTrait.otherBranchRoutingScheme,
+        otherBranchRoutingAddress = counterpartyTrait.otherBranchRoutingAddress,
+        isBeneficiary=counterpartyTrait.isBeneficiary,
+        bespoke=counterpartyTrait.bespoke
+      )
+    )
+  }
+  
   def publicAccounts : List[BankAccount] = {
     Views.views.vend.getAllPublicAccounts.flatMap { a =>
       BankAccount(a.bankId, a.accountId)
@@ -657,6 +704,47 @@ object BankAccount {
     }
   }
 }
+
+//This class is used for propagate the BankAccount as the parameters over different methods.
+case class BankAccountInMemory(
+                                //BankAccount Trait
+                                bankId: BankId,
+                                accountId: AccountId,
+                                accountType: String,
+                                balance: BigDecimal,
+                                currency: String,
+                                name: String,
+                                lastUpdate: Date,
+                                accountHolder: String,
+                                label: String,
+                                accountRoutingScheme: String,
+                                accountRoutingAddress: String,
+                                branchId: String,
+                                swift_bic: Option[String],
+                                iban: Option[String],
+                                number: String,
+                                accountRoutings: List[AccountRouting],
+                                accountRules: List[AccountRule],
+
+                                //Counterparty Trait
+                                createdByUserId: String,
+                                description: String,
+                                thisBankId: String,
+                                thisAccountId: String,
+                                thisViewId: String,
+                                counterpartyId: String,
+                                otherAccountRoutingScheme: String,
+                                otherAccountRoutingAddress: String,
+                                otherAccountSecondaryRoutingScheme: String,
+                                otherAccountSecondaryRoutingAddress: String,
+                                otherBankRoutingScheme: String,
+                                otherBankRoutingAddress: String,
+                                otherBranchRoutingScheme: String,
+                                otherBranchRoutingAddress: String,
+                                isBeneficiary : Boolean,
+                                bespoke: List[CounterpartyBespoke]
+  
+) extends BankAccount with CounterpartyTrait
 
 /*
 The other bank account or counterparty in a transaction

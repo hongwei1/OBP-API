@@ -35,6 +35,7 @@ class gateWayloginTest extends ServerSetup with BeforeAndAfter with DefaultUsers
     branchRoutingAddress = " branchRoutingAddress",
     accountRoutingScheme = "accountRoutingScheme",
     accountRoutingAddress = "accountRoutingAddress",
+    accountRouting = Nil,
     accountRules = Nil
   ) :: InboundAccountJune2017(
     errorCode = "",
@@ -54,6 +55,7 @@ class gateWayloginTest extends ServerSetup with BeforeAndAfter with DefaultUsers
     branchRoutingAddress = " branchRoutingAddress",
     accountRoutingScheme = "accountRoutingScheme",
     accountRoutingAddress = "accountRoutingAddress",
+    accountRouting = Nil,
     accountRules = Nil
   ) ::Nil)
 

@@ -8,6 +8,7 @@ import code.bankconnectors.vMar2017.{MessageDocJson, MessageDocsJson}
 import code.branches.Branches.{DriveUpString, _}
 import code.common.{OpeningTimes, _}
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
+import net.liftweb.json
 
 import scala.collection.immutable.List
 
@@ -1082,7 +1083,9 @@ object SwaggerDefinitionsJSON {
     is_core = true,
     is_psd2 = true,
     is_obwg = true,
-    tags = List("String")
+    tags = List("String"),
+    typed_request_body = json.parse("""{"request": { "type" :"string" }}"""),
+    typed_success_reponse_body = json.parse("""{"response": { "type" :"string" }}""")
   )
 
   val resourceDocsJson = ResourceDocsJson(resource_docs = List(resourceDocJson))
@@ -2131,7 +2134,7 @@ object SwaggerDefinitionsJSON {
     owners =  List(userJSONV121),
     `type`= "String",
     balance = amountOfMoneyJsonV121,
-    account_routing = accountRoutingJsonV121,
+    account_routings = List(accountRoutingJsonV121),
     account_rules = List(accountRuleJsonV300)
   )
   
