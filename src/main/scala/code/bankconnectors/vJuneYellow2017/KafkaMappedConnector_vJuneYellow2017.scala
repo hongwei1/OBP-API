@@ -40,7 +40,7 @@ import code.model.dataAccess.MappedBankAccount
 import code.transactionChallenge.ExpectedChallengeAnswer
 import code.transactionrequests.TransactionRequests
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes.{TRANSFER_TO_ACCOUNT, TRANSFER_TO_ATM, TRANSFER_TO_PHONE}
-import code.transactionrequests.TransactionRequests.{TransactionRequest, TransactionRequestChallenge, TransactionRequestCharge, TransactionRequestTypes}
+import code.transactionrequests.TransactionRequests.{TransactionChallengeTypes, TransactionRequest, TransactionRequestChallenge, TransactionRequestCharge, TransactionRequestStatus, TransactionRequestTypes}
 import code.util.Helper.MdcLoggable
 import net.liftweb.common._
 import net.liftweb.json.Extraction._
@@ -182,13 +182,13 @@ object KafkaMappedConnector_vJuneYellow2017 extends KafkaMappedConnector_vJune20
       
       didSaveTransId <- saveTransactionRequestTransaction(transReqId, transId)
       
-      didSaveStatus <- saveTransactionRequestStatusImpl(transReqId, TransactionRequests.STATUS_COMPLETED)
+      didSaveStatus <- saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.COMPLETED.toString)
       
     } yield {
       var tr = getTransactionRequestImpl(transReqId).openOrThrowException("Exception: Couldn't create transaction")
       //update the return value, getTransactionRequestImpl is not in real-time. need update the data manually.
       tr=tr.copy(transaction_ids =transId.value)
-      tr=tr.copy(status =TransactionRequests.STATUS_COMPLETED)
+      tr=tr.copy(status = TransactionRequestStatus.COMPLETED.toString)
       tr
     }
   }
@@ -214,11 +214,11 @@ object KafkaMappedConnector_vJuneYellow2017 extends KafkaMappedConnector_vJune20
           // can be empty in the props file. Otherwise, the status will be set to STATUS_PENDING
           // and getTransactionRequestStatusesImpl needs to be run periodically to update the transaction request status.
           if (Props.getLong("transaction_status_scheduler_delay").isEmpty )
-            TransactionRequests.STATUS_COMPLETED
+            TransactionRequestStatus.COMPLETED.toString
           else
-            TransactionRequests.STATUS_PENDING
+            TransactionRequestStatus.PENDING.toString
         } else {
-          TransactionRequests.STATUS_INITIATED
+          TransactionRequestStatus.INITIATED.toString
         }
       )
     
@@ -274,7 +274,6 @@ object KafkaMappedConnector_vJuneYellow2017 extends KafkaMappedConnector_vJune20
         transactionRequestType,
         fromAccount,
         toAccount,
-        toCounterparty,
         transactionRequestCommonBody,
         detailsPlain,
         status,
@@ -284,7 +283,7 @@ object KafkaMappedConnector_vJuneYellow2017 extends KafkaMappedConnector_vJune20
       
       // If no challenge necessary, create Transaction immediately and put in data store and object to return
       newTransactionRequest: TransactionRequest <-
-      if(status == TransactionRequests.STATUS_COMPLETED) {
+      if(status == TransactionRequestStatus.COMPLETED.toString) {
         for {
           createdTransactionId <- makePaymentv300(
             initiator,
@@ -305,7 +304,7 @@ object KafkaMappedConnector_vJuneYellow2017 extends KafkaMappedConnector_vJune20
           logger.debug(s"createTransactionRequestv300.createdTransactionId return: $transactionRequest")
           transactionRequest
         }
-      }else if (status == TransactionRequests.STATUS_INITIATED ) {
+      }else if (status == TransactionRequestStatus.INITIATED.toString ) {
         for {
         //if challenge necessary, create a new one
           challengeAnswer <- createChallenge(fromAccount.bankId,
@@ -322,7 +321,7 @@ object KafkaMappedConnector_vJuneYellow2017 extends KafkaMappedConnector_vJune20
           _<- ExpectedChallengeAnswer.expectedChallengeAnswerProvider.vend.saveExpectedChallengeAnswer(challengeId, salt, challengeAnswerHashed)
           
           // TODO: challenge_type should not be hard coded here. Rather it should be sent as a parameter to this function createTransactionRequestv300
-          newChallenge = TransactionRequestChallenge(challengeId, allowed_attempts = 3, challenge_type = TransactionRequests.CHALLENGE_SANDBOX_TAN)
+          newChallenge = TransactionRequestChallenge(challengeId, allowed_attempts = 3, challenge_type = TransactionChallengeTypes.SANDBOX_TAN.toString)
           _<- Full(saveTransactionRequestChallenge(transactionRequest.id, newChallenge))
           transactionRequest<- Full(transactionRequest.copy(challenge = newChallenge))
         } yield {

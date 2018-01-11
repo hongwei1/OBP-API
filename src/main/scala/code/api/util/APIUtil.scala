@@ -40,9 +40,9 @@ import java.util.{Date, UUID}
 import code.api.Constant._
 import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.OAuthHandshake._
-import code.api.{DirectLogin, _}
 import code.api.util.APIUtil.ApiVersion.ApiVersion
 import code.api.v1_2.ErrorMessage
+import code.api.{DirectLogin, _}
 import code.bankconnectors._
 import code.consumer.Consumers
 import code.customer.Customer
@@ -109,12 +109,13 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val InvalidISOCurrencyCode = "OBP-10003: Invalid Currency Value. It should be three letters ISO Currency Code. "
   val FXCurrencyCodeCombinationsNotSupported = "OBP-10004: ISO Currency code combination not supported for FX. Please modify the FROM_CURRENCY_CODE or TO_CURRENCY_CODE. "
   val InvalidDateFormat = "OBP-10005: Invalid Date Format. Could not convert value to a Date."
-  val InvalidInputJsonFormat = "OBP-10006: Invalid input JSON format." // Why do we need this as well as InvalidJsonFormat?
+  val InvalidCurrency = "OBP-10006: Invalid Currency Value."
   val IncorrectRoleName = "OBP-10007: Incorrect Role name: "
   val CouldNotTransformJsonToInternalModel = "OBP-10008: Could not transform Json to internal model."
   val CountNotSaveOrUpdateResource = "OBP-10009: Could not save or update resource."
   val NotImplemented = "OBP-10010: Not Implemented "
   val InvalidFutureDateValue = "OBP-10011: future_date has to be in future."
+  val maximumLimitExceeded = "OBP-10012: Invalid value. Maximum number is 10000."
 
   // General Sort and Paging
   val FilterSortDirectionError = "OBP-10023: obp_sort_direction parameter can only take two values: DESC or ASC!" // was OBP-20023
@@ -267,6 +268,14 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val EntitlementNotFound = "OBP-30212: EntitlementId not found"
   val EntitlementDoesNotBelongsToUser = "OBP-30213: ENTITLEMENT_ID does not belongs to USER_ID"
 
+  // Branch related messages
+  val branchesNotFoundLicense = "OBP-32001: No branches available. License may not be set."
+  val BranchesNotFound = "OBP-32002: No branches available."
+
+  // ATM related messages
+  val atmsNotFoundLicense = "OBP-33001: No ATMs available. License may not be set."
+  val atmsNotFound = "OBP-33002: No ATMs available."
+
   // General Resource related messages above here
 
 
@@ -311,12 +320,23 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val InvalidConnectorResponseForGetTransaction = "OBP-50203: Connector did not return the transaction we requested."  // was OBP-30203
   val InvalidConnectorResponseForGetTransactions = "OBP-50204: Connector did not return the set of transactions we requested."  // was OBP-30204
   val InvalidConnectorResponseForGetTransactionRequests210 = "OBP-50205: Connector did not return the set of transaction requests we requested." 
+  val InvalidConnectorResponseForGetChallengeThreshold = "OBP-50206: Connector did not return the set of challenge threshold we requested." 
+  val InvalidConnectorResponseForGetChargeLevel = "OBP-50207: Connector did not return the set of challenge level we requested." 
+  val InvalidConnectorResponseForCreateTransactionRequestImpl210 = "OBP-50208: Connector did not return the set of transactions requests we requested." 
+  val InvalidConnectorResponseForMakePaymentImpl = "OBP-50209: Connector did not return the set of transactions we requested." 
+  val InvalidConnectorResponseForMakePaymentv200 = "OBP-50210: Connector did not return the set of transaction id we requested." 
 
 
   // Adapter Exceptions (OBP-6XXXX)
   // Reserved for adapter (south of Kafka) messages
-
-
+  // Also used for connector == mapped, and show it as the Internal errors. 
+  val GetStatusException = "INTERNAL-OBP-60001: Save Transaction Exception. " 
+  val GetChargeValueException = "INTERNAL-OBP-60002: Get ChargeValue Exception. " 
+  val CreateTransactionsException = "INTERNAL-OBP-60003: Create transaction Exception. " 
+  val UpdateBankAccountException = "INTERNAL-OBP-60004: Update bank account Exception. " 
+  val SaveTransactionRequestTransactionException = "INTERNAL-OBP-60005: Save Transaction Request Transaction Exception. " 
+  val SaveTransactionRequestChallengeException = "INTERNAL-OBP-60006: Save Transaction Request Challenge Exception. " 
+  val SaveTransactionRequestStatusException = "INTERNAL-OBP-60007: Save Transaction Request Status Exception. " 
 
 
   ///////////
@@ -1463,6 +1483,28 @@ Returns a string showed to the developer
   }
 
 
+  def canGet(condition: Boolean, user: Box[User]): Boolean = {
+    condition match {
+      case true =>
+        true
+      case false =>
+        user match {
+          case Full(_) =>
+            true
+          case _ =>
+            false
+        }
+    }
+  }
+
+  def canGetBranch(branchesIsPublic: Boolean, user: Box[User]): Boolean = {
+    canGet(branchesIsPublic, user)
+  }
+
+  def canGetAtm(atmsIsPublic: Boolean, user: Box[User]): Boolean = {
+    canGet(atmsIsPublic, user)
+  }
+
 
   def getDisabledVersions() : List[String] = Props.get("api_disabled_versions").getOrElse("").replace("[", "").replace("]", "").split(",").toList.filter(_.nonEmpty)
 
@@ -1790,6 +1832,12 @@ Versions are groups of endpoints in a file
     getUserFromAuthorizationHeaderFuture() map {
       x => (fullBoxOrException(x._1 ?~! emptyUserErrorMsg), x._2)
     }
+  }
+  /**
+    * This function is used to factor out common code at endpoints regarding Authorized access
+    */
+  def extractCallContext(): Future[(Box[User], Option[SessionContext])] = {
+    getUserFromAuthorizationHeaderFuture()
   }
 
   /**

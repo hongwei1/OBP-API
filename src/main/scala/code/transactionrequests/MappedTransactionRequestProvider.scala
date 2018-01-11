@@ -1,8 +1,9 @@
 package code.transactionrequests
 
+import code.api.util.ErrorMessages._
 import code.api.v2_1_0.TransactionRequestCommonBodyJSON
 import code.bankconnectors.Connector
-import code.metadata.counterparties.CounterpartyTrait
+import code.metadata.counterparties.{CounterpartyTrait, MappedCounterparty}
 import code.model._
 import code.transactionrequests.TransactionRequests._
 import code.util.{AccountIdString, UUIDString}
@@ -26,7 +27,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
   }
 
   override def updateAllPendingTransactionRequests: Box[Option[Unit]] = {
-    val transactionRequests = MappedTransactionRequest.find(By(MappedTransactionRequest.mStatus, TransactionRequests.STATUS_PENDING))
+    val transactionRequests = MappedTransactionRequest.find(By(MappedTransactionRequest.mStatus, TransactionRequestStatus.PENDING.toString))
     logger.debug("Updating status of all pending transactions: ")
     val statuses = Connector.connector.vend.getTransactionRequestStatuses
     transactionRequests.map{ tr =>
@@ -34,8 +35,8 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
         transactionRequest <- tr.toTransactionRequest
         if (statuses.exists(_ == transactionRequest.id -> "APVD"))
       } yield {
-        tr.updateStatus(TransactionRequests.STATUS_COMPLETED)
-        logger.debug(s"updated ${transactionRequest.id} status: ${TransactionRequests.STATUS_COMPLETED}")
+        tr.updateStatus(TransactionRequestStatus.COMPLETED.toString)
+        logger.debug(s"updated ${transactionRequest.id} status: ${TransactionRequestStatus.COMPLETED}")
       }
     }
   }
@@ -71,7 +72,6 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
                                                transactionRequestType: TransactionRequestType,
                                                fromAccount: BankAccount,
                                                toAccount: BankAccount,
-                                               toCounterparty: CounterpartyTrait,
                                                transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
                                                details: String,
                                                status: String,
@@ -102,16 +102,16 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
       .mTo_AccountId(toAccount.accountId.value)
 
       //toCounterparty fields
-      .mName(toCounterparty.name)
-      .mThisBankId(toCounterparty.thisBankId)
-      .mThisAccountId(toCounterparty.thisAccountId)
-      .mThisViewId(toCounterparty.thisViewId)
-      .mCounterpartyId(toCounterparty.counterpartyId)
-      .mOtherAccountRoutingScheme(toCounterparty.otherAccountRoutingScheme)
-      .mOtherAccountRoutingAddress(toCounterparty.otherAccountRoutingAddress)
-      .mOtherBankRoutingScheme(toCounterparty.otherBankRoutingScheme)
-      .mOtherBankRoutingAddress(toCounterparty.otherBankRoutingAddress)
-      .mIsBeneficiary(toCounterparty.isBeneficiary)
+      .mName(toAccount.name)
+      .mThisBankId(toAccount.bankId.value)
+      .mThisAccountId(toAccount.accountId.value)
+//      .mThisViewId(toAccount.v) //TODO, now it is an account, not useful viewId
+      .mCounterpartyId(toAccount.branchId)//TODO, this mapping is wrong, we need get counterpartyId here.
+      .mOtherAccountRoutingScheme(toAccount.accountRoutingScheme)
+      .mOtherAccountRoutingAddress(toAccount.accountRoutingAddress)
+      .mOtherBankRoutingScheme(toAccount.bankRoutingScheme)
+      .mOtherBankRoutingAddress(toAccount.bankRoutingAddress)
+//      .mIsBeneficiary(toAccount.isBeneficiary)//TODO, now it is an account, not useful isBeneficiary
 
       //Body from http request: SANDBOX_TAN, FREE_FORM, SEPA and COUNTERPARTY should have the same following fields:
       .mBody_Value_Currency(transactionRequestCommonBody.value.currency)
@@ -129,7 +129,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
     val mappedTransactionRequest = MappedTransactionRequest.find(By(MappedTransactionRequest.mTransactionRequestId, transactionRequestId.value))
     mappedTransactionRequest match {
       case Full(tr: MappedTransactionRequest) => Full(tr.mTransactionIDs(transactionId.value).save)
-      case _ => Failure("Couldn't find transaction request ${transactionRequestId}")
+      case _ => Failure(s"$SaveTransactionRequestTransactionException Couldn't find transaction request ${transactionRequestId}")
     }
   }
 
@@ -142,7 +142,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
         tr.mChallenge_AllowedAttempts(challenge.allowed_attempts)
         tr.mChallenge_ChallengeType(challenge.challenge_type).save
       }
-      case _ => Failure(s"Couldn't find transaction request ${transactionRequestId} to set transactionId")
+      case _ => Failure(s"$SaveTransactionRequestChallengeException Couldn't find transaction request ${transactionRequestId} to set transactionId")
     }
   }
 
@@ -151,7 +151,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
     val mappedTransactionRequest = MappedTransactionRequest.find(By(MappedTransactionRequest.mTransactionRequestId, transactionRequestId.value))
     mappedTransactionRequest match {
       case Full(tr: MappedTransactionRequest) => Full(tr.mStatus(status).save)
-      case _ => Failure(s"Couldn't find transaction request ${transactionRequestId} to set status")
+      case _ => Failure(s"$SaveTransactionRequestStatusException Couldn't find transaction request ${transactionRequestId} to set status")
     }
   }
 
@@ -193,7 +193,9 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
   object mFrom_AccountId extends AccountIdString(this)
 
   //toAccount fields
+  @deprecated("use mOtherBankRoutingAddress instead","2017-12-25")
   object mTo_BankId extends UUIDString(this)
+  @deprecated("use mOtherAccountRoutingAddress instead","2017-12-25")
   object mTo_AccountId extends AccountIdString(this)
 
   //toCounterparty fields

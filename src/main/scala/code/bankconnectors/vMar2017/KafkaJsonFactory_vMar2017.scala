@@ -36,7 +36,7 @@ import java.util.{Date, Locale}
 
 import code.api.util.APIUtil.{InboundMessageBase, MessageDoc, OutboundMessageBase}
 import code.bankconnectors.InboundUser
-import code.bankconnectors.vJune2017.AccountRules
+import code.bankconnectors.vJune2017.AccountRule
 import code.fx.FXRate
 import code.metadata.counterparties.CounterpartyTrait
 import code.model._
@@ -329,7 +329,7 @@ case class InboundAdapterInfoInternal(
 ) extends InboundMessageBase
 
 
-case class Bank2(r: InboundBank) extends Bank { //CM maybe kafka message
+case class Bank2(r: InboundBank) extends Bank {
   
   def fullName = r.name
   def shortName = r.name
@@ -390,9 +390,10 @@ case class BankAccount2(r: InboundAccount) extends BankAccount {
   
   def accountRoutingScheme: String = r.accountRoutingScheme
   def accountRoutingAddress: String = r.accountRoutingAddress
+  def accountRoutings: List[AccountRouting] = List()
   def branchId: String = r.branchId
 
-  def accountRules: List[AccountRules] = List()
+  def accountRules: List[AccountRule] = List()
   
 }
 

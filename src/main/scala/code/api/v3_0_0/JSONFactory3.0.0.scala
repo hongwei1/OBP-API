@@ -34,10 +34,11 @@ import code.api.util.APIUtil._
 import code.api.v1_2_1.JSONFactory._
 import code.api.v1_2_1.{UserJSONV121, _}
 import code.api.v1_4_0.JSONFactory1_4_0._
+import code.api.v1_2_1.{UserJSONV121, _}
 import code.api.v2_0_0.JSONFactory200.{UserJsonV200, UsersJsonV200}
 import code.api.v2_1_0.CustomerCreditRatingJSON
 import code.atms.Atms.{Atm, AtmId, AtmT}
-import code.bankconnectors.vJune2017.AccountRules
+import code.bankconnectors.vJune2017.AccountRule
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
 import code.branches.Branches._
 import code.customer.Customer
@@ -240,15 +241,15 @@ case class AccountsIdsJsonV300(accounts: List[AccountIdJson])
 case class AccountRuleJsonV300(scheme: String, value: String)
 
 case class ModeratedCoreAccountJsonV300(
-  id: String,
-  bank_id: String,
-  label: String,
-  number: String,
-  owners: List[UserJSONV121],
-  `type`: String,
-  balance: AmountOfMoneyJsonV121,
-  account_routing: AccountRoutingJsonV121,
-  account_rules: List[AccountRuleJsonV300]
+                                         id: String,
+                                         bank_id: String,
+                                         label: String,
+                                         number: String,
+                                         owners: List[UserJSONV121],
+                                         `type`: String,
+                                         balance: AmountOfMoneyJsonV121,
+                                         account_routings: List[AccountRoutingJsonV121],
+                                         account_rules: List[AccountRuleJsonV300]
 )
 
 case class ElasticSearchJSON(es_uri_part: String, es_body_part: Any)
@@ -264,13 +265,13 @@ case class OpeningTimesV300(
                            )
 
 case class LobbyJsonV330(
-                        monday: OpeningTimesV300,
-                        tuesday: OpeningTimesV300,
-                        wednesday: OpeningTimesV300,
-                        thursday: OpeningTimesV300,
-                        friday: OpeningTimesV300,
-                        saturday: OpeningTimesV300,
-                        sunday: OpeningTimesV300
+                          monday: List[OpeningTimesV300],
+                          tuesday: List[OpeningTimesV300],
+                          wednesday: List[OpeningTimesV300],
+                          thursday: List[OpeningTimesV300],
+                          friday: List[OpeningTimesV300],
+                          saturday: List[OpeningTimesV300],
+                          sunday: List[OpeningTimesV300]
                         )
 
 case class DriveUpJsonV330(
@@ -323,6 +324,7 @@ case class BranchJsonV300(
                            branch_routing: BranchRoutingJsonV141,
                            // Easy access for people who use wheelchairs etc. "Y"=true "N"=false ""=Unknown
                            is_accessible : String,
+                           accessibleFeatures: String,
                            branch_type : String,
                            more_info : String,
                            phone_number : String
@@ -355,7 +357,7 @@ case class AtmJsonV300 (
                  has_deposit_capability : String
                )
 
-case class AtmsJsonV300(branches : List[AtmJsonV300])
+case class AtmsJsonV300(atms : List[AtmJsonV300])
 
 
 case class AdapterInfoJsonV300(
@@ -633,8 +635,11 @@ object JSONFactory300{
       AccountRoutingJsonV121(stringOptionOrNull(account.accountRoutingScheme),stringOptionOrNull(account.accountRoutingAddress))
     )
   }
-  def createAccountRulesJSON(rules: List[AccountRules]): List[AccountRuleJsonV300] = {
+  def createAccountRulesJSON(rules: List[AccountRule]): List[AccountRuleJsonV300] = {
     rules.map(i => AccountRuleJsonV300(scheme = i.scheme, value = i.value))
+  }
+  def createAccountRoutingsJSON(routings: List[AccountRouting]): List[AccountRoutingJsonV121] = {
+    routings.map(i => AccountRoutingJsonV121(scheme = i.scheme, address = i.address))
   }
 
   def createCoreBankAccountJSON(account : ModeratedBankAccount, viewsAvailable : List[ViewJsonV300]) : ModeratedCoreAccountJsonV300 =  {
@@ -647,7 +652,7 @@ object JSONFactory300{
       createOwnersJSON(account.owners.getOrElse(Set()), bankName),
       stringOptionOrNull(account.accountType),
       createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance),
-      AccountRoutingJsonV121(stringOptionOrNull(account.accountRoutingScheme),stringOptionOrNull(account.accountRoutingAddress)),
+      createAccountRoutingsJSON(account.accountRoutings),
       createAccountRulesJSON(account.accountRules)
     )
   }

@@ -13,6 +13,7 @@ import code.bankconnectors.Connector
 import code.fx.fx
 import code.model.{AccountId, BankAccount, TransactionRequestId}
 import code.setup.{APIResponse, DefaultUsers}
+import code.transactionrequests.TransactionRequests.TransactionRequestStatus
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import net.liftweb.json.JsonAST.{JField, JObject, JString}
 import net.liftweb.json.Serialization.write
@@ -48,7 +49,6 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
         this.toCurrency = toCurrency
         this.amt = BigDecimal(amt)
         updateAccountCurrency(bankId, accountId2, toCurrency)
-        toAccount = getToAccount
       }
 
       createAccountAndOwnerView(Some(resourceUser1), bankId, accountId1, fromCurrency)
@@ -62,8 +62,8 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
         BankAccount(bankId, accountId2).getOrElse(fail("couldn't get to account"))
       }
 
-      var fromAccount = getFromAccount
-      var toAccount = getToAccount
+      val fromAccount = getFromAccount
+      val toAccount = getToAccount
 
       var totalTransactionsBefore = transactionCount(fromAccount, toAccount)
 
@@ -139,7 +139,7 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
 
         if (withChallenge) {
           Then("We should have the INITIATED status in response body")
-          (createTransactionRequestResponse.body \ "status").values.toString should equal(code.transactionrequests.TransactionRequests.STATUS_INITIATED)
+          (createTransactionRequestResponse.body \ "status").values.toString should equal(TransactionRequestStatus.INITIATED.toString)
           Then("The transaction_ids filed should be empty")
           (createTransactionRequestResponse.body \ "transaction_ids").values.toString should equal("List()")
           Then("Challenge should have body, this is the with challenge scenario")
@@ -148,7 +148,7 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
           challengeId should not equal ("")
         } else {
           Then("We should have the COMPLETED status in response body")
-          (createTransactionRequestResponse.body \ "status").values.toString should equal(code.transactionrequests.TransactionRequests.STATUS_COMPLETED)
+          (createTransactionRequestResponse.body \ "status").values.toString should equal(TransactionRequestStatus.COMPLETED.toString)
           Then("The transaction_ids filed should be not empty")
           (createTransactionRequestResponse.body \ "transaction_ids").values.toString should not equal ("List()")
           Then("Challenge should be null, this is the no challenge scenario")
@@ -177,7 +177,7 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
 
         if (withChellenge) {
           And("We should have the INITIATED status in response body")
-          (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "status").values.toString should equal(code.transactionrequests.TransactionRequests.STATUS_INITIATED)
+          (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "status").values.toString should equal(TransactionRequestStatus.INITIATED.toString)
 
           And("Challenge should be not null, this is the no challenge scenario")
           (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "challenge").children.size should not equal (0)
@@ -186,7 +186,7 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
           (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "transaction_ids").values.toString should equal("List()")
         } else {
           And("We should have the COMPLETED status in response body")
-          (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "status").values.toString should equal(code.transactionrequests.TransactionRequests.STATUS_COMPLETED)
+          (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "status").values.toString should equal(TransactionRequestStatus.COMPLETED.toString)
 
           And("Challenge should be null, this is the no challenge scenario")
           (getTransactionRequestResponse.body \ "transaction_requests_with_charges" \ "challenge").children.size should equal(0)
@@ -224,12 +224,12 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
         * @param finishedTranscation : finished the transaction or not ? If finished it is true, if it is not it is false.
         */
       def checkBankAccountBalance(finishedTranscation: Boolean): Unit = {
-        var rate = fx.exchangeRate(fromAccount.currency, toAccount.currency)
-        var convertedAmount = fx.convert(amt, rate)
-        var fromAccountBalance = getFromAccount.balance
-        var toAccountBalance = getToAccount.balance
-        toAccount = getToAccount
-        fromAccount = getFromAccount
+        val toAccount = getToAccount
+        val fromAccount = getFromAccount
+        val rate = fx.exchangeRate(fromAccount.currency, toAccount.currency)
+        val convertedAmount = fx.convert(amt, rate)
+        val fromAccountBalance = fromAccount.balance
+        val toAccountBalance = toAccount.balance
 
 
         if (finishedTranscation ) {
@@ -251,8 +251,8 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
             And("the account receiving the payment should have a new balance plus the amount paid")
             //TODO for now, sepa, counterparty can not clear the toAccount and toAccount Currency so just test the fromAccount
             //toAccountBalance should equal(beforeToBalance + convertedAmount)
-            And("there should now be 2 new transactions in the database (one for the sender, one for the receiver")
-            transactionCount(fromAccount, toAccount) should equal(totalTransactionsBefore + 2)
+            And("there should now be 1 new transactions in the database (one for the sender, one for the receiver")
+            transactionCount(fromAccount, toAccount) should equal(totalTransactionsBefore + 1)
           }
 
         } else {
@@ -285,7 +285,7 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
         (ansTransReqResponse.body \ "transaction_ids").values.toString should not equal ("")
 
         Then("We should have the COMPLETED status in response body")
-        (ansTransReqResponse.body \ "status").values.toString should equal(code.transactionrequests.TransactionRequests.STATUS_COMPLETED)
+        (ansTransReqResponse.body \ "status").values.toString should equal(TransactionRequestStatus.COMPLETED.toString)
       }
     }
 
@@ -538,6 +538,17 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
 
         When("We checked all the data in database, we need check the account amount info")
         helper.checkBankAccountBalance(false)
+  
+        Then("We call 'Answer Transaction Request Challenge - V210' to finish the request")
+        And("we prepare the parameters for it")
+        helper.setAnswerTransactionRequest()
+        And("we call the endpoint")
+        val ansReqResponse = helper.makeAnswerRequest
+        And("We check the all the fields of getAnsReqResponse body ")
+        helper.checkAllAnsTransReqBodyFields(ansReqResponse, true)
+  
+        Then("we need check the account amount info")
+        helper.checkBankAccountBalance(true)
       }
     }
   }
@@ -696,6 +707,17 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
 
         When("We checked all the data in database, we need check the account amount info")
         helper.checkBankAccountBalance(false)
+  
+        Then("We call 'Answer Transaction Request Challenge - V210' to finish the request")
+        And("we prepare the parameters for it")
+        helper.setAnswerTransactionRequest()
+        And("we call the endpoint")
+        val ansReqResponse = helper.makeAnswerRequest
+        And("We check the all the fields of getAnsReqResponse body ")
+        helper.checkAllAnsTransReqBodyFields(ansReqResponse, true)
+  
+        Then("we need check the account amount info")
+        helper.checkBankAccountBalance(true)
       }
     }
   }
@@ -854,6 +876,17 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
 
         When("We checked all the data in database, we need check the account amount info")
         helper.checkBankAccountBalance(false)
+  
+        Then("We call 'Answer Transaction Request Challenge - V210' to finish the request")
+        And("we prepare the parameters for it")
+        helper.setAnswerTransactionRequest()
+        And("we call the endpoint")
+        val ansReqResponse = helper.makeAnswerRequest
+        And("We check the all the fields of getAnsReqResponse body ")
+        helper.checkAllAnsTransReqBodyFields(ansReqResponse, true)
+  
+        Then("we need check the account amount info")
+        helper.checkBankAccountBalance(true)
       }
     }
   }
@@ -1012,6 +1045,17 @@ class TransactionRequestsTest extends V210ServerSetup with DefaultUsers {
 
         When("We checked all the data in database, we need check the account amount info")
         helper.checkBankAccountBalance(false)
+  
+        Then("We call 'Answer Transaction Request Challenge - V210' to finish the request")
+        And("we prepare the parameters for it")
+        helper.setAnswerTransactionRequest()
+        And("we call the endpoint")
+        val ansReqResponse = helper.makeAnswerRequest
+        And("We check the all the fields of getAnsReqResponse body ")
+        helper.checkAllAnsTransReqBodyFields(ansReqResponse, true)
+  
+        Then("we need check the account amount info")
+        helper.checkBankAccountBalance(true)
       }
     }
   }
