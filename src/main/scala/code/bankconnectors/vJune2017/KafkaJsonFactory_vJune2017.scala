@@ -246,22 +246,22 @@ case class OutboundTransactionRequests(
   
 
 case class InternalCounterparty(
-                                 createdByUserId: String, 
-                                 name: String, 
-                                 thisBankId: String, 
-                                 thisAccountId: String, 
-                                 thisViewId: String, 
-                                 counterpartyId: String, 
+                                 createdByUserId: String,
+                                 name: String,
+                                 thisBankId: String,
+                                 thisAccountId: String,
+                                 thisViewId: String,
+                                 counterpartyId: String,
                                  otherAccountRoutingScheme: String,
-                                 otherAccountRoutingAddress: String, 
-                                 otherBankRoutingScheme: String, 
+                                 otherAccountRoutingAddress: String,
+                                 otherBankRoutingScheme: String,
                                  otherBankRoutingAddress: String,
-                                 otherBranchRoutingScheme: String, 
+                                 otherBranchRoutingScheme: String,
                                  otherBranchRoutingAddress: String,
                                  isBeneficiary: Boolean,
                                  description: String,
                                  otherAccountSecondaryRoutingScheme: String,
-                                 otherAccountSecondaryRoutingAddress: String, 
+                                 otherAccountSecondaryRoutingAddress: String,
                                  bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
 
 
@@ -355,5 +355,4 @@ object JsonFactory_vJune2017 {
   def createCustomersJson(customers : List[Customer]) : InternalBasicCustomers = {
     InternalBasicCustomers(customers.map(createCustomerJson))
   }
-
 }

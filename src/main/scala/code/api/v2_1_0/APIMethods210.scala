@@ -602,7 +602,7 @@ trait APIMethods210 {
               view <- tryo(fromAccount.permittedViews(user).find(_ == viewId)) ?~ {UserNoPermissionAccessView}
 
               // Check transReqId is valid
-              existingTransactionRequest <- Connector.connector.vend.getTransactionRequestImpl(transReqId) ?~! {InvalidTransactionRequestId}
+              existingTransactionRequest <- Connector.connector.vend.getTransactionRequestImpl(transReqId) ?~! s"${InvalidTransactionRequestId} : $transReqId"
 
               // Check the Transaction Request is still INITIATED
               isTransReqStatueInitiated <- booleanToBox(existingTransactionRequest.status.equals("INITIATED"),TransactionRequestStatusNotInitiated)
@@ -1017,7 +1017,7 @@ trait APIMethods210 {
             }
             users <- Users.users.vend.getAllUsersF()
           } yield {
-            (JSONFactory210.createUserJSONs (users), getGatewayLoginHeader(sessioContext))
+            (JSONFactory210.createUserJSONs (users), sessioContext)
           }
       }
     }

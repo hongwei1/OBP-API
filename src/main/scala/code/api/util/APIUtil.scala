@@ -60,7 +60,7 @@ import net.liftweb.http.js.JsExp
 import net.liftweb.http.rest.RestContinuation
 import net.liftweb.json.JsonAST.{JField, JValue}
 import net.liftweb.json.JsonParser.ParseException
-import net.liftweb.json.{Extraction, MappingException, parse}
+import net.liftweb.json.{Extraction, JsonAST, MappingException, parse}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.{Props, StringHelpers}
 
@@ -320,23 +320,24 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val InvalidConnectorResponseForGetTransaction = "OBP-50203: Connector did not return the transaction we requested."  // was OBP-30203
   val InvalidConnectorResponseForGetTransactions = "OBP-50204: Connector did not return the set of transactions we requested."  // was OBP-30204
   val InvalidConnectorResponseForGetTransactionRequests210 = "OBP-50205: Connector did not return the set of transaction requests we requested." 
-  val InvalidConnectorResponseForGetChallengeThreshold = "OBP-50206: Connector did not return the set of challenge threshold we requested." 
-  val InvalidConnectorResponseForGetChargeLevel = "OBP-50207: Connector did not return the set of challenge level we requested." 
-  val InvalidConnectorResponseForCreateTransactionRequestImpl210 = "OBP-50208: Connector did not return the set of transactions requests we requested." 
-  val InvalidConnectorResponseForMakePaymentImpl = "OBP-50209: Connector did not return the set of transactions we requested." 
-  val InvalidConnectorResponseForMakePaymentv200 = "OBP-50210: Connector did not return the set of transaction id we requested." 
+  val InvalidConnectorResponseForGetChallengeThreshold = "OBP-50206: Connector did not return the set of challenge threshold we requested."
+  val InvalidConnectorResponseForGetChargeLevel = "OBP-50207: Connector did not return the set of challenge level we requested."
+  val InvalidConnectorResponseForCreateTransactionRequestImpl210 = "OBP-50208: Connector did not return the set of transactions requests we requested."
+  val InvalidConnectorResponseForMakePayment = "OBP-50209: Connector did not return the set of transactions we requested."
+  val InvalidConnectorResponseForMakePaymentv200 = "OBP-50210: Connector did not return the set of transaction id we requested."
 
 
   // Adapter Exceptions (OBP-6XXXX)
   // Reserved for adapter (south of Kafka) messages
-  // Also used for connector == mapped, and show it as the Internal errors. 
-  val GetStatusException = "INTERNAL-OBP-60001: Save Transaction Exception. " 
-  val GetChargeValueException = "INTERNAL-OBP-60002: Get ChargeValue Exception. " 
-  val CreateTransactionsException = "INTERNAL-OBP-60003: Create transaction Exception. " 
-  val UpdateBankAccountException = "INTERNAL-OBP-60004: Update bank account Exception. " 
-  val SaveTransactionRequestTransactionException = "INTERNAL-OBP-60005: Save Transaction Request Transaction Exception. " 
-  val SaveTransactionRequestChallengeException = "INTERNAL-OBP-60006: Save Transaction Request Challenge Exception. " 
-  val SaveTransactionRequestStatusException = "INTERNAL-OBP-60007: Save Transaction Request Status Exception. " 
+  // Also used for connector == mapped, and show it as the Internal errors.
+  val GetStatusException = "OBP-60001: Save Transaction Exception. "
+  val GetChargeValueException = "OBP-60002: Get ChargeValue Exception. "
+  val CreateTransactionsException = "OBP-60003: Create transaction Exception. "
+  val UpdateBankAccountException = "OBP-60004: Update bank account Exception. "
+  val SaveTransactionRequestTransactionException = "OBP-60005: Save Transaction Request Transaction Exception. "
+  val SaveTransactionRequestChallengeException = "OBP-60006: Save Transaction Request Challenge Exception. "
+  val SaveTransactionRequestStatusException = "OBP-60007: Save Transaction Request Status Exception. "
+  val TransactionRequestDetailsExtractException = "OBP-60008: Transaction detail body extract exception. "
 
 
   ///////////
@@ -536,6 +537,14 @@ object APIUtil extends MdcLoggable {
     }
   }
 
+  /** This function provide a name of parameter used to define different spelling of some words
+    * E.g. if we provide an URL obp/v2.1.0/users/current/customers?format=ISO20022
+    * JSON response is changed from "currency":"EUR" to "ccy":"EUR"
+    *
+    * @return A name of the parameter
+    */
+  def nameOfSpellingParam(): String = "spelling"
+
   def getHeadersCommonPart() = headers ::: List(("Correlation-Id", getCorrelationId()))
 
   def getHeaders() = getHeadersCommonPart() ::: getGatewayResponseHeader()
@@ -546,17 +555,28 @@ object APIUtil extends MdcLoggable {
   def noContentJsonResponse(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
     JsonResponse(JsRaw(""), getHeaders() ::: headers.list, Nil, 204)
 
-  def successJsonResponse(json: JsExp, httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
-    JsonResponse(json, getHeaders() ::: headers.list, Nil, httpCode)
+  def successJsonResponse(json: JsonAST.JValue, httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
+    val sc = ApiSession.updateSessionContext(Spelling(S.param(nameOfSpellingParam())), None)
+    val jsonAst = ApiSession.processJson(json, sc)
+    JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
+  }
 
-  def createdJsonResponse(json: JsExp, httpCode : Int = 201)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
-    JsonResponse(json, getHeaders() ::: headers.list, Nil, httpCode)
+  def createdJsonResponse(json: JsonAST.JValue, httpCode : Int = 201)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
+    val sc = ApiSession.updateSessionContext(Spelling(S.param(nameOfSpellingParam())), None)
+    val jsonAst = ApiSession.processJson(json, sc)
+    JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
+  }
 
-  def successJsonResponseFromCaseClass(cc: Any, httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
-    JsonResponse(snakify(Extraction.decompose(cc)), getHeaders() ::: headers.list, Nil, httpCode)
+  def successJsonResponseFromCaseClass(cc: Any, sc: Option[SessionContext], httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
+    val jsonAst = ApiSession.processJson(snakify(Extraction.decompose(cc)), sc)
+    JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
+  }
 
-  def acceptedJsonResponse(json: JsExp, httpCode : Int = 202)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse =
-    JsonResponse(json, getHeaders() ::: headers.list, Nil, httpCode)
+  def acceptedJsonResponse(json: JsonAST.JValue, httpCode : Int = 202)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
+    val sc = ApiSession.updateSessionContext(Spelling(S.param(nameOfSpellingParam())), None)
+    val jsonAst = ApiSession.processJson(json, sc)
+    JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
+  }
 
   def errorJsonResponse(message : String = "error", httpCode : Int = 400)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
     val code =
@@ -1482,6 +1502,28 @@ Returns a string showed to the developer
     case JField(name, x) => JField(StringHelpers.camelifyMethod(name), x)
   }
 
+  /**
+    * Turn a string which is in OBP format into ISO20022 formatting
+    *
+    * @param json the JValue
+    *
+    * @return the JValue
+    */
+  def useISO20022Spelling(json: JValue): JValue = json transformField {
+    case JField("currency", x) => JField("ccy", x)
+  }
+
+  /**
+    * Turn a string which is in ISO20022 format into OBP formatting
+    *
+    * @param json the JValue
+    *
+    * @return the JValue
+    */
+  def useOBPSpelling(json: JValue): JValue = json transformField {
+    case JField("ccy", x) => JField("currency", x)
+  }
+
 
   def canGet(condition: Boolean, user: Box[User]): Boolean = {
     condition match {
@@ -1650,7 +1692,7 @@ Versions are groups of endpoints in a file
       yield item.partialFunction
     routes.toList
     }
-  
+
   def extractToCaseClass[T](in: String)(implicit ev: Manifest[T]): Box[T] = {
     implicit val formats = net.liftweb.json.DefaultFormats
     try {
@@ -1683,7 +1725,7 @@ Versions are groups of endpoints in a file
   }
 
   /**
-    * @param in LAFuture with a useful payload. Payload is tuple(Case Class, Custom Response Header)
+    * @param in LAFuture with a useful payload. Payload is tuple(Case Class, Option[SessionContext])
     * @return value of type JsonResponse
     *
     * Process a request asynchronously. The thread will not
@@ -1700,9 +1742,9 @@ Versions are groups of endpoints in a file
     * body will be executed in the scope of the current request (the
     * current session and the current Req object).
     */
-  def futureToResponse[T](in: LAFuture[(T, CustomResponseHeaders)]): JsonResponse = {
+  def futureToResponse[T](in: LAFuture[(T, Option[SessionContext])]): JsonResponse = {
     RestContinuation.async(reply => {
-      in.onSuccess(t => reply.apply(successJsonResponseFromCaseClass(t._1)(t._2)))
+      in.onSuccess(t => reply.apply(successJsonResponseFromCaseClass(cc = t._1, t._2)(getGatewayLoginHeader(t._2))))
       in.onFail {
         case Failure(msg, _, _) => reply.apply(errorJsonResponse(msg))
         case _                  => reply.apply(errorJsonResponse("Error"))
@@ -1712,7 +1754,7 @@ Versions are groups of endpoints in a file
 
 
   /**
-    * @param in LAFuture with a useful payload. Payload is tuple(Case Class, Custom Response Header)
+    * @param in LAFuture with a useful payload. Payload is tuple(Case Class, Option[SessionContext])
     * @return value of type Box[JsonResponse]
     *
     * Process a request asynchronously. The thread will not
@@ -1729,9 +1771,9 @@ Versions are groups of endpoints in a file
     * body will be executed in the scope of the current request (the
     * current session and the current Req object).
     */
-  def futureToBoxedResponse[T](in: LAFuture[(T, CustomResponseHeaders)]): Box[JsonResponse] = {
+  def futureToBoxedResponse[T](in: LAFuture[(T, Option[SessionContext])]): Box[JsonResponse] = {
     RestContinuation.async(reply => {
-      in.onSuccess(t => Full(reply.apply(successJsonResponseFromCaseClass(t._1)(t._2))))
+      in.onSuccess(t => Full(reply.apply(successJsonResponseFromCaseClass(t._1, t._2)(getGatewayLoginHeader(t._2)))))
       in.onFail {
         case Failure(msg, _, _) => Full(reply.apply(errorJsonResponse(msg)))
         case _                  => Full(reply.apply(errorJsonResponse("Error")))
@@ -1739,7 +1781,7 @@ Versions are groups of endpoints in a file
     })
   }
 
-  implicit def scalaFutureToJsonResponse[T](scf: Future[(T, CustomResponseHeaders)])(implicit m: Manifest[T]): JsonResponse = {
+  implicit def scalaFutureToJsonResponse[T](scf: Future[(T, Option[SessionContext])])(implicit m: Manifest[T]): JsonResponse = {
     futureToResponse(scalaFutureToLaFuture(scf))
   }
 
@@ -1763,7 +1805,7 @@ Versions are groups of endpoints in a file
     * @tparam T
     * @return
     */
-  implicit def scalaFutureToBoxedJsonResponse[T](scf: Future[(T, CustomResponseHeaders)])(implicit m: Manifest[T]): Box[JsonResponse] = {
+  implicit def scalaFutureToBoxedJsonResponse[T](scf: Future[(T, Option[SessionContext])])(implicit m: Manifest[T]): Box[JsonResponse] = {
     futureToBoxedResponse(scalaFutureToLaFuture(scf))
   }
 
@@ -1772,9 +1814,12 @@ Versions are groups of endpoints in a file
     * This function is planed to be used at an endpoint in order to get a User based on Authorization Header data
     * It has to do the same thing as function OBPRestHelper.failIfBadAuthorizationHeader does
     * The only difference is that this function use Akka's Future in non-blocking way i.e. without using Await.result
-    * @return An User wrapped into a Future
+    * @return A Tuple of an User wrapped into a Future and optional session context data
     */
-  def getUserFromAuthorizationHeaderFuture(): Future[(Box[User], Option[SessionContext])] = {
+  def getUseAndSessionContextFuture(): Future[(Box[User], Option[SessionContext])] = {
+    val s = S
+    val format = s.param(nameOfSpellingParam())
+    val res =
     if (hasAnOAuthHeader) {
       getUserFromOAuthHeaderFuture()
     } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
@@ -1782,7 +1827,6 @@ Versions are groups of endpoints in a file
     } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
       Props.get("gateway.host") match {
         case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == true) => // Only addresses from white list can use this feature
-          val s = S
           val (httpCode, message, parameters) = GatewayLogin.validator(s.request)
           httpCode match {
             case 200 =>
@@ -1822,6 +1866,9 @@ Versions are groups of endpoints in a file
     } else {
       Future { (Empty, None) }
     }
+    res map {
+      x => (x._1, ApiSession.updateSessionContext(Spelling(format), x._2))
+    }
   }
 
   /**
@@ -1829,7 +1876,7 @@ Versions are groups of endpoints in a file
     * @param emptyUserErrorMsg is a message which will be provided as a response in case that Box[User] = Empty
     */
   def extractCallContext(emptyUserErrorMsg: String): Future[(Box[User], Option[SessionContext])] = {
-    getUserFromAuthorizationHeaderFuture() map {
+    getUseAndSessionContextFuture() map {
       x => (fullBoxOrException(x._1 ?~! emptyUserErrorMsg), x._2)
     }
   }
@@ -1837,7 +1884,7 @@ Versions are groups of endpoints in a file
     * This function is used to factor out common code at endpoints regarding Authorized access
     */
   def extractCallContext(): Future[(Box[User], Option[SessionContext])] = {
-    getUserFromAuthorizationHeaderFuture()
+    getUseAndSessionContextFuture()
   }
 
   /**
