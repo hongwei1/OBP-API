@@ -433,6 +433,11 @@ object APIUtil extends MdcLoggable {
             case Full(u) => Full(u)
             case _ => Empty
           }
+        } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
+          GatewayLogin.getUser match {
+            case Full(u) => Full(u)
+            case _ => Empty
+          }
         } else {
             Empty
         }
@@ -448,6 +453,9 @@ object APIUtil extends MdcLoggable {
             case Full(c) => Full(c)
             case _ => Empty
           }
+        } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
+          //TODO, here is not clear now, the gateway_login do not have any consumers. it is always from gateway. maybe change later. 
+          Empty
         } else {
           Empty
         }
@@ -459,9 +467,9 @@ object APIUtil extends MdcLoggable {
 
       val c: Consumer = consumer.orNull
       //The consumerId, not key
-      val consumerId = if (u != null) c.id.toString() else "null"
-      var appName = if (u != null) c.name.toString() else "null"
-      var developerEmail = if (u != null) c.developerEmail.toString() else "null"
+      val consumerId = if (u != null && c != null) c.id.toString() else "null"
+      var appName = if (u != null && c != null) c.name.toString() else "null"
+      var developerEmail = if (u != null && c != null) c.developerEmail.toString() else "null"
       val implementedByPartialFunction = rd match {
         case Some(r) => r.partialFunctionName
         case _       => ""
