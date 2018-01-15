@@ -1,4 +1,6 @@
 package com.tesobe.obp
+import java.io.{File, FileInputStream}
+import java.security.KeyStore
 import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.CacheBuilder
@@ -10,8 +12,10 @@ import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import com.tesobe.obp.ErrorMessages._
-import com.tesobe.obp.Ntlv1Mf.underlyingGuavaCache
+import org.apache.commons.io.IOUtils
 import org.apache.http.HttpStatus
+import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStrategy}
+import org.apache.http.ssl.SSLContexts
 
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
@@ -22,11 +26,33 @@ object HttpClient extends StrictLogging{
   val underlyingGuavaCache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build[String, Object]
   implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
   import scalacache.memoization.memoizeSync
-
-
-  def makePostRequest(json: JValue, path: String): String = {
+  
+  val clientToCbs = if (config.getBoolean("sslToCbs.use.ssl")) {
     
-    val client = HttpClients.createDefault()
+    val keyStorePassword = com.tesobe.obp.Main.clientCertificatePw
+    logger.debug("keystore password is: " + keyStorePassword)
+    val keyStore = KeyStore.getInstance(KeyStore.getDefaultType)
+    val keyStorePath = config.getString("sslToCbs.keystore")
+    logger.debug("keystore path is: " + keyStorePath)
+    val inputStream = new FileInputStream(keyStorePath)
+    keyStore.load(inputStream, keyStorePassword.toArray)
+    IOUtils.closeQuietly(inputStream)
+    
+    logger.debug("initialized keystore")
+
+
+    val sslcontext = SSLContexts.custom().loadTrustMaterial(
+      new TrustSelfSignedStrategy()).loadKeyMaterial(keyStore, keyStorePassword.toCharArray()).build()
+    
+    logger.debug("set sslcontext")
+    val sslsf = new SSLConnectionSocketFactory(sslcontext)
+    logger.debug("set sslconnectionsocket")
+    HttpClients.custom().setSSLSocketFactory(sslsf).build()
+  } else {
+    HttpClients.createDefault()
+  }
+  def makePostRequest(json: JValue, path: String): String = {
+    logger.debug("entering makePostRequest")
     val url = config.getString("bankserver.url")
     val post = new HttpPost(url + path)
     post.addHeader("Content-Type", "application/json;charset=utf-8")
@@ -35,7 +61,7 @@ object HttpClient extends StrictLogging{
 
     logger.debug(s"$path--Request : "+post.toString +"\n Body is :" + compactRender(json) +
     "/n RealBody is: " + jsonBody.getContent().toString)
-    val response = client.execute(post)
+    val response = clientToCbs.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
