@@ -38,7 +38,20 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
   import SouthKafkaStreamsActor._
   import context.dispatcher
 
-  private val consumerSettings: ConsumerSettings[String, String] = {
+  private val consumerSettings:  ConsumerSettings[String, String] = if (config.getBoolean("ssl.use.ssl.kafka"))
+  {
+    ConsumerSettings(context.system, new StringDeserializer, new StringDeserializer)
+      .withBootstrapServers(bootstrapServers)
+      .withGroupId(groupId)
+      .withClientId(clientId)
+      .withMaxWakeups(50)
+      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetResetConfig)
+      .withProperty("security.protocol","SSL")
+      .withProperty("ssl.truststore.location", config.getString("ssl.truststore"))
+      .withProperty("ssl.truststore.password", com.tesobe.obp.Main.clientCertificatePw)
+      .withProperty("ssl.keystore.location",config.getString("ssl.keystore"))
+      .withProperty("ssl.keystore.password", com.tesobe.obp.Main.clientCertificatePw)
+  } else {
     ConsumerSettings(context.system, new StringDeserializer, new StringDeserializer)
       .withBootstrapServers(bootstrapServers)
       .withGroupId(groupId)
@@ -47,9 +60,21 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetResetConfig)
   }
 
-  private val producerSettings = ProducerSettings(context.system, new StringSerializer, new StringSerializer)
-    .withBootstrapServers(bootstrapServers)
-    .withProperty("batch.size", "0")
+  private val producerSettings = if (config.getBoolean("ssl.use.ssl.kafka"))
+    {
+      ProducerSettings(context.system, new StringSerializer, new StringSerializer)
+        .withBootstrapServers(bootstrapServers)
+        .withProperty("batch.size", "0")
+        .withProperty("security.protocol","SSL")
+        .withProperty("ssl.truststore.location", config.getString("ssl.truststore"))
+        .withProperty("ssl.truststore.password", com.tesobe.obp.Main.clientCertificatePw)
+        .withProperty("ssl.keystore.location",config.getString("ssl.keystore"))
+        .withProperty("ssl.keystore.password", com.tesobe.obp.Main.clientCertificatePw)
+    } else {
+    ProducerSettings(context.system, new StringSerializer, new StringSerializer)
+      .withBootstrapServers(bootstrapServers)
+      .withProperty("batch.size", "0")
+  }
 
   // Here will send the message to kafka broker:
   // (topic, key, value, offset) --> ProducerMessage.Message(new ProducerRecord(topic, partition, key, value),offset)

@@ -27,21 +27,24 @@ object HttpClient extends StrictLogging{
   implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
   import scalacache.memoization.memoizeSync
   
-  val clientToCbs = if (config.getBoolean("sslToCbs.use.ssl")) {
+  val clientToCbs = if (config.getBoolean("ssl.use.ssl.cbs")) {
     
     val keyStorePassword = com.tesobe.obp.Main.clientCertificatePw
     logger.debug("keystore password is: " + keyStorePassword)
     val keyStore = KeyStore.getInstance(KeyStore.getDefaultType)
-    val keyStorePath = config.getString("sslToCbs.keystore")
-    logger.debug("keystore path is: " + keyStorePath)
-    val inputStream = new FileInputStream(keyStorePath)
+    val inputStream = new FileInputStream(config.getString("ssl.keystore"))
     keyStore.load(inputStream, keyStorePassword.toArray)
-    IOUtils.closeQuietly(inputStream)
+    inputStream.close()
+    
+    val trustStore = KeyStore.getInstance(KeyStore.getDefaultType)
+    val trustInputStream = new FileInputStream(config.getString("ssl.truststore"))
+    trustStore.load(trustInputStream, keyStorePassword.toArray)
+    trustInputStream.close()
     
     logger.debug("initialized keystore")
 
 
-    val sslcontext = SSLContexts.custom().loadTrustMaterial(
+    val sslcontext = SSLContexts.custom().loadTrustMaterial(trustStore,
       new TrustSelfSignedStrategy()).loadKeyMaterial(keyStore, keyStorePassword.toCharArray()).build()
     
     logger.debug("set sslcontext")
@@ -52,7 +55,6 @@ object HttpClient extends StrictLogging{
     HttpClients.createDefault()
   }
   def makePostRequest(json: JValue, path: String): String = {
-    logger.debug("entering makePostRequest")
     val url = config.getString("bankserver.url")
     val post = new HttpPost(url + path)
     post.addHeader("Content-Type", "application/json;charset=utf-8")
