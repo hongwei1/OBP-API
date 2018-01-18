@@ -32,7 +32,7 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 import code.api.Constant._
-import code.api.util.{APIUtil, ErrorMessages, SessionContext}
+import code.api.util.{APIUtil, ErrorMessages, CallContext}
 import code.consumer.Consumers
 import code.model.dataAccess.ResourceUserCaseClass
 import code.model.{Consumer, TokenType, User}
@@ -891,6 +891,18 @@ object OAuthHandshake extends RestHelper with MdcLoggable {
     consumer
   }
 
+  def getConsumer(sc: CallContext): Box[Consumer] = {
+    import code.model.Token
+    val consumer: Option[Consumer] = for {
+      tokenId: String <- sc.oAuthParams.get("oauth_token")
+      token: Token <- Tokens.tokens.vend.getTokenByKey(tokenId)
+      consumer: Consumer <- token.consumer
+    } yield {
+      consumer
+    }
+    consumer
+  }
+
 
   def getUser : Box[User] = {
     val httpMethod = S.request match {
@@ -927,7 +939,7 @@ object OAuthHandshake extends RestHelper with MdcLoggable {
     else
       Empty
 
-  def getUserFromOAuthHeaderFuture(): Future[(Box[User], Option[SessionContext])] = {
+  def getUserFromOAuthHeaderFuture(sc: CallContext): Future[(Box[User], Option[CallContext])] = {
     val httpMethod = S.request match {
       case Full(r) => r.request.method
       case _ => "GET"
@@ -937,14 +949,14 @@ object OAuthHandshake extends RestHelper with MdcLoggable {
       _ <- Future { if (httpCode == 200) Full("ok") else Empty } map { x => APIUtil.fullBoxOrException(x ?~! message) }
       user <- getUserFromTokenFuture(httpCode, oAuthParameters.get("oauth_token"))
     } yield {
-      (user, None)
+      (user, Some(sc.copy(user = user, oAuthParams = oAuthParameters)))
     }
   }
   def getUserFromTokenFuture(httpCode : Int, key: Box[String]) : Future[Box[User]] = {
     httpCode match {
       case 200 =>
         for {
-          c <- Tokens.tokens.vend.getTokenByKeyFuture(key.openOrThrowException("Attempted to open an empty Box.")) map (_.map(_.userForeignKey.get))
+          c: Box[Long] <- Tokens.tokens.vend.getTokenByKeyFuture(key.openOrThrowException("Attempted to open an empty Box.")) map (_.map(_.userForeignKey.get))
           u <- c match {
             case Full(id) =>
               Users.users.vend.getResourceUserByResourceUserIdFuture(id)

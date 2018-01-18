@@ -58,11 +58,12 @@ import net.liftweb.http._
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.js.JsExp
 import net.liftweb.http.rest.RestContinuation
+import net.liftweb.json
 import net.liftweb.json.JsonAST.{JField, JValue}
 import net.liftweb.json.JsonParser.ParseException
 import net.liftweb.json.{Extraction, JsonAST, MappingException, parse}
 import net.liftweb.util.Helpers._
-import net.liftweb.util.{Props, StringHelpers}
+import net.liftweb.util.{Helpers, Props, StringHelpers}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
@@ -375,7 +376,7 @@ object APIUtil extends MdcLoggable {
   implicit val formats = net.liftweb.json.DefaultFormats
   implicit def errorToJson(error: ErrorMessage): JValue = Extraction.decompose(error)
   val headers = ("Access-Control-Allow-Origin","*") :: Nil
-  val defaultJValue = Extraction.decompose(Nil)(APIUtil.formats)
+  val defaultJValue = json.parse("""{"JsonObject":"OBP"}""")
   val exampleDateString: String = "22/08/2013"
   val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
   val exampleDate = simpleDateFormat.parse(exampleDateString)
@@ -390,18 +391,15 @@ object APIUtil extends MdcLoggable {
       case _ => "GET"
     }
 
-  def hasDirectLoginHeader : Boolean = hasHeader("DirectLogin")
+  def hasDirectLoginHeader(authorization: Box[String]): Boolean = hasHeader("DirectLogin", authorization)
 
-  def hasAnOAuthHeader : Boolean = hasHeader("OAuth")
+  def hasAnOAuthHeader(authorization: Box[String]): Boolean = hasHeader("OAuth", authorization)
 
-  def hasGatewayHeader() = hasHeader("GatewayLogin")
+  def hasGatewayHeader(authorization: Box[String]) = hasHeader("GatewayLogin", authorization)
 
-  def hasHeader(`type`: String) : Boolean = {
-    S.request match {
-      case Full(a) =>  a.header("Authorization") match {
-        case Full(parameters) => parameters.contains(`type`)
-        case _ => false
-      }
+  def hasHeader(`type`: String, authorization: Box[String]) : Boolean = {
+    authorization match {
+      case Full(a) if a.contains(`type`) => true
       case _ => false
     }
   }
@@ -420,15 +418,78 @@ object APIUtil extends MdcLoggable {
     }
   }
 
+  def logAPICall(callContext: Option[CallContext]) = {
+    callContext match {
+      case Some(cc) =>
+        if(Props.getBool("write_metrics", false)) {
+          val u: User = cc.user.orNull
+          val userId = if (u != null) u.userId else "null"
+          val userName = if (u != null) u.name else "null"
+
+          val implementedByPartialFunction = cc.resourceDocument match {
+            case Some(r) => r.partialFunctionName
+            case _       => ""
+          }
+
+          val duration =
+            (cc.startTime, cc.endTime)  match {
+              case (Some(s), Some(e)) => (e.getTime - s.getTime)
+              case _       => -1
+            }
+
+          //execute saveMetric in future, as we do not need to know result of the operation
+          Future {
+            val consumer =
+              if (hasAnOAuthHeader(cc.authorization)) {
+                getConsumer(cc) match {
+                  case Full(c) => Full(c)
+                  case _ => Empty
+                }
+              } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(cc.authorization)) {
+                DirectLogin.getConsumer(cc) match {
+                  case Full(c) => Full(c)
+                  case _ => Empty
+                }
+              } else {
+                Empty
+              }
+            val c: Consumer = consumer.orNull
+            //The consumerId, not key
+            val consumerId = if (u != null) c.id.toString() else "null"
+            val appName = if (u != null) c.name.toString() else "null"
+            val developerEmail = if (u != null) c.developerEmail.toString() else "null"
+
+            APIMetrics.apiMetrics.vend.saveMetric(
+              userId,
+              cc.url,
+              cc.startTime.getOrElse(null),
+              duration,
+              userName,
+              appName,
+              developerEmail,
+              consumerId,
+              implementedByPartialFunction,
+              cc.implementedInVersion,
+              cc.verb,
+              cc.correlationId
+            )
+          }
+        }
+      case _ =>
+        logger.error("SessionContext is not defined. Metrics cannot be saved.")
+    }
+  }
+
   def logAPICall(date: TimeSpan, duration: Long, rd: Option[ResourceDoc]) = {
+    val authorization = S.request.map(_.header("Authorization")).flatten
     if(Props.getBool("write_metrics", false)) {
       val user =
-        if (hasAnOAuthHeader) {
+        if (hasAnOAuthHeader(authorization)) {
           getUser match {
             case Full(u) => Full(u)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
+        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
           DirectLogin.getUser match {
             case Full(u) => Full(u)
             case _ => Empty
@@ -443,12 +504,12 @@ object APIUtil extends MdcLoggable {
         }
 
       val consumer =
-        if (hasAnOAuthHeader) {
+        if (hasAnOAuthHeader(authorization)) {
           getConsumer match {
             case Full(c) => Full(c)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
+        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
           DirectLogin.getConsumer match {
             case Full(c) => Full(c)
             case _ => Empty
@@ -530,7 +591,7 @@ object APIUtil extends MdcLoggable {
     * Example of the Header in Response generated by this function:
     * GatewayLogin: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiIxMjMiLCJhcHBfbmFtZSI6Ik5hbWUgb2YgQ29uc3VtZXIiLCJ0aW1lc3RhbXAiOiIiLCJjYnNfdG9rZW4iOiI-LD8gICAgICAgICAgODE0MzMwMjAxMDI2MTIiLCJ0ZW1lbm9zX2lkIjoiIn0.saE7W-ydZcwbjxfWx7q6HeQ1q4LMLYZiuYSx7qdP0k8
     */
-  def getGatewayLoginHeader(jwt: Option[SessionContext]) = {
+  def getGatewayLoginHeader(jwt: Option[CallContext]) = {
     jwt match {
       case Some(v) =>
        v.gatewayLoginResponseHeader match {
@@ -578,25 +639,26 @@ object APIUtil extends MdcLoggable {
     JsonResponse(JsRaw(""), getHeaders() ::: headers.list, Nil, 204)
 
   def successJsonResponse(json: JsonAST.JValue, httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
-    val sc = ApiSession.updateSessionContext(Spelling(getSpellingParam()), None)
-    val jsonAst = ApiSession.processJson(json, sc)
+    val cc = ApiSession.updateCallContext(Spelling(getSpellingParam()), None)
+    val jsonAst = ApiSession.processJson(json, cc)
     JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
   }
 
   def createdJsonResponse(json: JsonAST.JValue, httpCode : Int = 201)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
-    val sc = ApiSession.updateSessionContext(Spelling(getSpellingParam()), None)
-    val jsonAst = ApiSession.processJson(json, sc)
+    val cc = ApiSession.updateCallContext(Spelling(getSpellingParam()), None)
+    val jsonAst = ApiSession.processJson(json, cc)
     JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
   }
 
-  def successJsonResponseFromCaseClass(cc: Any, sc: Option[SessionContext], httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
-    val jsonAst = ApiSession.processJson(snakify(Extraction.decompose(cc)), sc)
+  def successJsonResponseFromCaseClass(cc: Any, callContext: Option[CallContext], httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
+    val jsonAst = ApiSession.processJson(snakify(Extraction.decompose(cc)), callContext)
+    logAPICall(callContext.map(_.copy(endTime = Some(Helpers.now))))
     JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
   }
 
   def acceptedJsonResponse(json: JsonAST.JValue, httpCode : Int = 202)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
-    val sc = ApiSession.updateSessionContext(Spelling(getSpellingParam()), None)
-    val jsonAst = ApiSession.processJson(json, sc)
+    val cc = ApiSession.updateCallContext(Spelling(getSpellingParam()), None)
+    val jsonAst = ApiSession.processJson(json, cc)
     JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
   }
 
@@ -1123,15 +1185,15 @@ object APIUtil extends MdcLoggable {
 
   // Define relations between API end points. Used to create _links in the JSON and maybe later for API Explorer browsing
   case class ApiRelation(
-    fromPF : PartialFunction[Req, Box[User] => Box[JsonResponse]],
-    toPF : PartialFunction[Req, Box[User] => Box[JsonResponse]],
+    fromPF : OBPEndpoint,
+    toPF : OBPEndpoint,
     rel : String
   )
 
   // Populated from Resource Doc and ApiRelation
   case class InternalApiLink(
-    fromPF : PartialFunction[Req, Box[User] => Box[JsonResponse]],
-    toPF : PartialFunction[Req, Box[User] => Box[JsonResponse]],
+    fromPF : OBPEndpoint,
+    toPF : OBPEndpoint,
     rel : String,
     requestUrl: String
     )
@@ -1147,7 +1209,7 @@ object APIUtil extends MdcLoggable {
 )
 
   case class CallerContext(
-    caller : PartialFunction[Req, Box[User] => Box[JsonResponse]]
+    caller : OBPEndpoint
   )
 
   case class CodeContext(
@@ -1652,7 +1714,7 @@ Returns a string showed to the developer
   }
 
 
-  type OBPEndpoint = PartialFunction[Req, Box[User] => Box[JsonResponse]]
+  type OBPEndpoint = PartialFunction[Req, CallContext => Box[JsonResponse]]
 
 /*
 Versions are groups of endpoints in a file
@@ -1764,7 +1826,7 @@ Versions are groups of endpoints in a file
     * body will be executed in the scope of the current request (the
     * current session and the current Req object).
     */
-  def futureToResponse[T](in: LAFuture[(T, Option[SessionContext])]): JsonResponse = {
+  def futureToResponse[T](in: LAFuture[(T, Option[CallContext])]): JsonResponse = {
     RestContinuation.async(reply => {
       in.onSuccess(t => reply.apply(successJsonResponseFromCaseClass(cc = t._1, t._2)(getGatewayLoginHeader(t._2))))
       in.onFail {
@@ -1793,7 +1855,7 @@ Versions are groups of endpoints in a file
     * body will be executed in the scope of the current request (the
     * current session and the current Req object).
     */
-  def futureToBoxedResponse[T](in: LAFuture[(T, Option[SessionContext])]): Box[JsonResponse] = {
+  def futureToBoxedResponse[T](in: LAFuture[(T, Option[CallContext])]): Box[JsonResponse] = {
     RestContinuation.async(reply => {
       in.onSuccess(t => Full(reply.apply(successJsonResponseFromCaseClass(t._1, t._2)(getGatewayLoginHeader(t._2)))))
       in.onFail {
@@ -1803,7 +1865,7 @@ Versions are groups of endpoints in a file
     })
   }
 
-  implicit def scalaFutureToJsonResponse[T](scf: Future[(T, Option[SessionContext])])(implicit m: Manifest[T]): JsonResponse = {
+  implicit def scalaFutureToJsonResponse[T](scf: Future[(T, Option[CallContext])])(implicit m: Manifest[T]): JsonResponse = {
     futureToResponse(scalaFutureToLaFuture(scf))
   }
 
@@ -1827,7 +1889,7 @@ Versions are groups of endpoints in a file
     * @tparam T
     * @return
     */
-  implicit def scalaFutureToBoxedJsonResponse[T](scf: Future[(T, Option[SessionContext])])(implicit m: Manifest[T]): Box[JsonResponse] = {
+  implicit def scalaFutureToBoxedJsonResponse[T](scf: Future[(T, Option[CallContext])])(implicit m: Manifest[T]): Box[JsonResponse] = {
     futureToBoxedResponse(scalaFutureToLaFuture(scf))
   }
 
@@ -1838,15 +1900,20 @@ Versions are groups of endpoints in a file
     * The only difference is that this function use Akka's Future in non-blocking way i.e. without using Await.result
     * @return A Tuple of an User wrapped into a Future and optional session context data
     */
-  def getUserAndSessionContextFuture(): Future[(Box[User], Option[SessionContext])] = {
+  def getUserAndSessionContextFuture(cc: CallContext): Future[(Box[User], Option[CallContext])] = {
     val s = S
+    val authorization = S.request.map(_.header("Authorization")).flatten
     val spelling = getSpellingParam()
+    val implementedInVersion = S.request.openOrThrowException("Attempted to open an empty Box.").view
+    val verb = S.request.openOrThrowException("Attempted to open an empty Box.").requestType.method
+    val url = S.uriAndQueryString.getOrElse("")
+    val correlationId = getCorrelationId()
     val res =
-    if (hasAnOAuthHeader) {
-      getUserFromOAuthHeaderFuture()
-    } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader) {
-      DirectLogin.getUserFromDirectLoginHeaderFuture()
-    } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
+    if (hasAnOAuthHeader(authorization)) {
+      getUserFromOAuthHeaderFuture(cc)
+    } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
+      DirectLogin.getUserFromDirectLoginHeaderFuture(cc)
+    } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader(authorization)) {
       Props.get("gateway.host") match {
         case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == true) => // Only addresses from white list can use this feature
           val (httpCode, message, parameters) = GatewayLogin.validator(s.request)
@@ -1859,10 +1926,10 @@ Versions are groups of endpoints in a file
                     case Full((u, cbsToken)) => // Authentication is successful
                       GatewayLogin.getOrCreateConsumer(payload, u)
                       val payloadJson = parse(payload).extract[PayloadOfJwtJSON]
-                      val sessionContextForRequest = ApiSession.updateSessionContext(GatewayLoginRequestPayload(Some(payloadJson)), None)
+                      val callContextForRequest = ApiSession.updateCallContext(GatewayLoginRequestPayload(Some(payloadJson)), Some(cc))
                       val jwt = GatewayLogin.createJwt(payload, cbsToken)
-                      val sessionContext = ApiSession.updateSessionContext(GatewayLoginResponseHeader(Some(jwt)), sessionContextForRequest)
-                      (Full(u), sessionContext)
+                      val callContext = ApiSession.updateCallContext(GatewayLoginResponseHeader(Some(jwt)), callContextForRequest)
+                      (Full(u), callContext)
                     case Failure(msg, t, c) =>
                       (Failure(msg, t, c), None)
                     case _ =>
@@ -1888,25 +1955,36 @@ Versions are groups of endpoints in a file
     } else {
       Future { (Empty, None) }
     }
+    // Update Session Context
     res map {
-      x => (x._1, ApiSession.updateSessionContext(Spelling(spelling), x._2))
+      x => (x._1, ApiSession.updateCallContext(Spelling(spelling), x._2))
+    } map {
+      x => (x._1, x._2.map(_.copy(implementedInVersion = implementedInVersion)))
+    } map {
+      x => (x._1, x._2.map(_.copy(verb = verb)))
+    } map {
+      x => (x._1, x._2.map(_.copy(url = url)))
+    } map {
+      x => (x._1, x._2.map(_.copy(correlationId = correlationId)))
+    } map {
+      x => (x._1, x._2.map(_.copy(authorization = authorization)))
     }
-  }
 
+  }
   /**
     * This function is used to factor out common code at endpoints regarding Authorized access
     * @param emptyUserErrorMsg is a message which will be provided as a response in case that Box[User] = Empty
     */
-  def extractCallContext(emptyUserErrorMsg: String): Future[(Box[User], Option[SessionContext])] = {
-    getUserAndSessionContextFuture() map {
+  def extractCallContext(emptyUserErrorMsg: String, cc: CallContext): Future[(Box[User], Option[CallContext])] = {
+    getUserAndSessionContextFuture(cc) map {
       x => (fullBoxOrException(x._1 ?~! emptyUserErrorMsg), x._2)
     }
   }
   /**
     * This function is used to factor out common code at endpoints regarding Authorized access
     */
-  def extractCallContext(): Future[(Box[User], Option[SessionContext])] = {
-    getUserAndSessionContextFuture()
+  def extractCallContext(cc: CallContext): Future[(Box[User], Option[CallContext])] = {
+    getUserAndSessionContextFuture(cc)
   }
 
   /**
