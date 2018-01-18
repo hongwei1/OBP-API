@@ -494,11 +494,6 @@ object APIUtil extends MdcLoggable {
             case Full(u) => Full(u)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
-          GatewayLogin.getUser match {
-            case Full(u) => Full(u)
-            case _ => Empty
-          }
         } else {
             Empty
         }
@@ -514,9 +509,6 @@ object APIUtil extends MdcLoggable {
             case Full(c) => Full(c)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader) {
-          //TODO, here is not clear now, the gateway_login do not have any consumers. it is always from gateway. maybe change later. 
-          Empty
         } else {
           Empty
         }

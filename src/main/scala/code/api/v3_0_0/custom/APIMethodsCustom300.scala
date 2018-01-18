@@ -239,13 +239,13 @@ trait CustomAPIMethods300 {
     lazy val createTransactionRequestTransferToPhone = createTransactionRequestCustom
     lazy val createTransactionRequestTransferToATM = createTransactionRequestCustom
     lazy val createTransactionRequestTransferToAccount = createTransactionRequestCustom
-    lazy val createTransactionRequestCustom: PartialFunction[Req, Box[User] => Box[JsonResponse]] = {
+    lazy val createTransactionRequestCustom: OBPEndpoint = {
       case "custom" :: "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "transaction-request-types" ::
         TransactionRequestType(transactionRequestType) :: "transaction-requests" :: Nil JsonPost json -> _ => {
-        user =>
+        cc =>
           for {
             _ <- booleanToBox(Props.getBool("transactionRequests_enabled", false)) ?~ TransactionDisabled
-            u <- user ?~ UserNotLoggedIn
+            u <- cc.user ?~ UserNotLoggedIn
             _ <- tryo(assert(isValidID(accountId.value))) ?~! InvalidAccountIdFormat
             _ <- tryo(assert(isValidID(bankId.value))) ?~! InvalidBankIdFormat
             _ <- Bank(bankId) ?~! {BankNotFound}
