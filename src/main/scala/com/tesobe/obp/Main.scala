@@ -33,7 +33,7 @@ object Main extends App with StrictLogging with Config with ProcessorFactory {
   //As most IDEs do not provide a Console, we fall back to readLine
   val clientCertificatePw:String =  if (config.getBoolean("ssl.use.ssl.cbs") || config.getBoolean("ssl.use.ssl.kafka")) { 
     try {
-      System.console.readPassword().toString
+      scala.io.StdIn.readLine()//System.console.readPassword().toString
     } catch {
       case e: NullPointerException => scala.io.StdIn.readLine()
     }
