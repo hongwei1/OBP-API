@@ -87,6 +87,7 @@ import net.liftweb.util.{Helpers, Props, Schedule, _}
 import code.api.util.APIUtil.{ApiVersion, enableVersionIfAllowed}
 import code.bankconnectors.Connector
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
+import code.entitlementrequest.MappedEntitlementRequest
 
 
 /**
@@ -94,7 +95,7 @@ import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
  * to modify lift's environment
  */
 class Boot extends MdcLoggable {
-
+  
   def boot {
 
     val contextPath = LiftRules.context.path
@@ -129,7 +130,6 @@ class Boot extends MdcLoggable {
      * Looks third in the war file, following the normal lift naming rules
      *
      */
-
     val firstChoicePropsDir = for {
       propsPath <- propsPath
     } yield {
@@ -181,6 +181,16 @@ class Boot extends MdcLoggable {
 
       DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
     }
+    
+    print("Enter the Password for the SSL Certificate Stores: ")
+    //As most IDEs do not provide a Console, we fall back to readLine
+    code.api.util.APIUtil.initPasswd =  if (Props.get("kafka.use.ssl").getOrElse("") == "true") {
+      try {
+        System.console.readPassword().toString
+      } catch {
+        case e: NullPointerException => scala.io.StdIn.readLine()
+      }
+    } else {"notused"}
 
     // ensure our relational database's tables are created/fit the schema
     val connector = Props.get("connector").openOrThrowException("no connector set")
@@ -499,7 +509,8 @@ object ToSchemify {
     MapperAccountHolders,
     MappedEntitlement,
     MappedConnectorMetric,
-    MappedExpectedChallengeAnswer
+    MappedExpectedChallengeAnswer,
+    MappedEntitlementRequest
   )
 
   // The following tables are accessed directly via Mapper / JDBC

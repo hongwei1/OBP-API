@@ -7,6 +7,7 @@ import java.util.{Calendar, Date}
 import code.api.ChargePolicy
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil._
+import code.api.util.ApiRole
 import code.api.util.ApiRole.CanCreateAnyTransactionRequest
 import code.api.util.ErrorMessages.{InvalidFutureDateValue, _}
 import code.api.v1_2_1.AmountOfMoneyJsonV121
@@ -252,7 +253,7 @@ trait CustomAPIMethods300 {
             fromAccount <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! {AccountNotFound}
             _ <- View.fromUrl(viewId, fromAccount) ?~! {ViewNotFound}
             isOwnerOrHasEntitlement <- booleanToBox(u.ownerAccess(fromAccount) == true ||
-              hasEntitlement(fromAccount.bankId.value, u.userId, CanCreateAnyTransactionRequest) == true, InsufficientAuthorisationToCreateTransactionRequest)
+              hasEntitlement(fromAccount.bankId.value, u.userId, ApiRole.canCreateAnyTransactionRequest) == true, InsufficientAuthorisationToCreateTransactionRequest)
             _ <- tryo(assert(Props.get("transactionRequests_supported_types", "").split(",").contains(transactionRequestType.value))) ?~!
               s"${InvalidTransactionRequestType}: '${transactionRequestType.value}'"
           
