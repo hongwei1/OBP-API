@@ -479,7 +479,7 @@ trait Connector extends MdcLoggable{
     // Always create a new Transaction Request
     val request = for {
       fromAccountType <- getBankAccount(fromAccount.bankId, fromAccount.accountId) ?~ s"account ${fromAccount.accountId} not found at bank ${fromAccount.bankId}"
-      isOwner <- booleanToBox(initiator.ownerAccess(fromAccount) == true || hasEntitlement(fromAccount.bankId.value, initiator.userId, CanCreateAnyTransactionRequest) == true , ErrorMessages.InsufficientAuthorisationToCreateTransactionRequest)
+      isOwner <- booleanToBox(initiator.ownerAccess(fromAccount) == true || hasEntitlement(fromAccount.bankId.value, initiator.userId, canCreateAnyTransactionRequest) == true , ErrorMessages.InsufficientAuthorisationToCreateTransactionRequest)
       toAccountType <- getBankAccount(toAccount.bankId, toAccount.accountId) ?~ s"account ${toAccount.accountId} not found at bank ${toAccount.bankId}"
       rawAmt <- tryo { BigDecimal(body.value.amount) } ?~! s"amount ${body.value.amount} not convertible to number"
        // isValidTransactionRequestType is checked at API layer. Maybe here too.
@@ -979,7 +979,7 @@ trait Connector extends MdcLoggable{
     accountRoutingAddress: String
   ): Box[BankAccount] = {
     val uniqueAccountNumber = {
-      def exists(number : String) = Connector.connector.vend.accountExists(bankId, number).openOrThrowException("Attempted to open an empty Box.")
+      def exists(number : String) = Connector.connector.vend.accountExists(bankId, number).openOrThrowException(attemptedToOpenAnEmptyBox)
 
       def appendUntilOkay(number : String) : String = {
         val newNumber = number + Random.nextInt(10)
@@ -1042,7 +1042,7 @@ trait Connector extends MdcLoggable{
       val resourceUserOwner = Users.users.vend.getUserByUserName(owner)
       resourceUserOwner match {
         case Full(owner) => {
-          if ( ! accountOwnerExists(owner, bankId, accountId).openOrThrowException("Attempted to open an empty Box.")) {
+          if ( ! accountOwnerExists(owner, bankId, accountId).openOrThrowException(attemptedToOpenAnEmptyBox)) {
             val holder = AccountHolders.accountHolders.vend.createAccountHolder(owner.resourceUserId.value, bankId.value, accountId.value)
             logger.debug(s"Connector.setAccountHolder create account holder: $holder")
           }

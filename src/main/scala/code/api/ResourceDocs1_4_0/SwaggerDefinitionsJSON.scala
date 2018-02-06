@@ -2,6 +2,7 @@ package code.api.ResourceDocs1_4_0
 
 import code.api.util.APIUtil
 import code.api.util.APIUtil.{defaultJValue, _}
+import code.api.util.ApiRole._
 import code.api.v3_0_0.JSONFactory300.createBranchJsonV300
 import code.api.v3_0_0.{LobbyJsonV330, _}
 import code.bankconnectors.vMar2017.{MessageDocJson, MessageDocsJson}
@@ -1085,7 +1086,8 @@ object SwaggerDefinitionsJSON {
     is_obwg = true,
     tags = List("String"),
     typed_request_body = json.parse("""{"request": { "type" :"string" }}"""),
-    typed_success_response_body = json.parse("""{"response": { "type" :"string" }}""")
+    typed_success_response_body = json.parse("""{"response": { "type" :"string" }}"""),
+    roles = Some(List(canCreateCustomer))
   )
 
   val resourceDocsJson = ResourceDocsJson(resource_docs = List(resourceDocJson))
@@ -1230,6 +1232,18 @@ object SwaggerDefinitionsJSON {
     username = "robert.x.0.gh",
     entitlements = entitlementJSONs
   )
+
+  val entitlementRequestJSON =
+    code.api.v3_0_0.EntitlementRequestJSON(
+      user = userJsonV200,
+      entitlement_request_id = "6fb17583-1e49-4435-bb74-a14fe0996723",
+      role_name = "CanQueryOtherUser",
+      bank_id = "gh.29.uk",
+      created = exampleDate
+    )
+
+  val entitlementRequestsJSON = EntitlementRequestsJSON(entitlement_requests = List(entitlementRequestJSON))
+
 
   val coreTransactionDetailsJSON = CoreTransactionDetailsJSON(
     `type` = "AC",
@@ -2055,7 +2069,7 @@ object SwaggerDefinitionsJSON {
     name = "String",
     version = "String",
     git_commit = "String",
-    date = "String"
+    date = "2013-01-21T23:08:00Z"
   )
   
   val thisAccountJsonV300 = ThisAccountJsonV300(

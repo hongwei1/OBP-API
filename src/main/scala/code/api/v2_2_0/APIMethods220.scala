@@ -18,10 +18,11 @@ import code.metadata.counterparties.Counterparties
 import code.metrics.{ConnectorMetric, ConnectorMetricsProvider}
 import code.model.dataAccess.BankAccountCreation
 import code.model.{BankId, ViewId, _}
+import code.util.Helper
 import code.util.Helper._
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.Full
+import net.liftweb.http.S
 import net.liftweb.http.rest.RestHelper
-import net.liftweb.http.{JsonResponse, Req, S}
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.util.Helpers.tryo
@@ -29,6 +30,7 @@ import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 
@@ -37,33 +39,29 @@ trait APIMethods220 {
   self: RestHelper =>
 
   // helper methods begin here
-  private def getConfigInfoJSON(): JValue = {
-    val apiConfiguration: JValue = {
+  private def getConfigInfoJSON(): ConfigurationJSON = {
 
-      val f1 = CachedFunctionJSON("getBank", Props.get("connector.cache.ttl.seconds.getBank", "0").toInt)
-      val f2 = CachedFunctionJSON("getBanks", Props.get("connector.cache.ttl.seconds.getBanks", "0").toInt)
-      val f3 = CachedFunctionJSON("getAccount", Props.get("connector.cache.ttl.seconds.getAccount", "0").toInt)
-      val f4 = CachedFunctionJSON("getAccounts", Props.get("connector.cache.ttl.seconds.getAccounts", "0").toInt)
-      val f5 = CachedFunctionJSON("getTransaction", Props.get("connector.cache.ttl.seconds.getTransaction", "0").toInt)
-      val f6 = CachedFunctionJSON("getTransactions", Props.get("connector.cache.ttl.seconds.getTransactions", "0").toInt)
-      val f7 = CachedFunctionJSON("getCounterpartyFromTransaction", Props.get("connector.cache.ttl.seconds.getCounterpartyFromTransaction", "0").toInt)
-      val f8 = CachedFunctionJSON("getCounterpartiesFromTransaction", Props.get("connector.cache.ttl.seconds.getCounterpartiesFromTransaction", "0").toInt)
+    val f1 = CachedFunctionJSON("getBank", Props.get("connector.cache.ttl.seconds.getBank", "0").toInt)
+    val f2 = CachedFunctionJSON("getBanks", Props.get("connector.cache.ttl.seconds.getBanks", "0").toInt)
+    val f3 = CachedFunctionJSON("getAccount", Props.get("connector.cache.ttl.seconds.getAccount", "0").toInt)
+    val f4 = CachedFunctionJSON("getAccounts", Props.get("connector.cache.ttl.seconds.getAccounts", "0").toInt)
+    val f5 = CachedFunctionJSON("getTransaction", Props.get("connector.cache.ttl.seconds.getTransaction", "0").toInt)
+    val f6 = CachedFunctionJSON("getTransactions", Props.get("connector.cache.ttl.seconds.getTransactions", "0").toInt)
+    val f7 = CachedFunctionJSON("getCounterpartyFromTransaction", Props.get("connector.cache.ttl.seconds.getCounterpartyFromTransaction", "0").toInt)
+    val f8 = CachedFunctionJSON("getCounterpartiesFromTransaction", Props.get("connector.cache.ttl.seconds.getCounterpartiesFromTransaction", "0").toInt)
 
-      val akkaPorts = PortJSON("remotedata.local.port", ObpActorConfig.localPort.toString) :: PortJSON("remotedata.port", ObpActorConfig.remotePort) :: Nil
-      val akka = AkkaJSON(akkaPorts, ObpActorConfig.akka_loglevel)
-      val cache = f1::f2::f3::f4::f5::f6::f7::f8::Nil
+    val akkaPorts = PortJSON("remotedata.local.port", ObpActorConfig.localPort.toString) :: PortJSON("remotedata.port", ObpActorConfig.remotePort) :: Nil
+    val akka = AkkaJSON(akkaPorts, ObpActorConfig.akka_loglevel)
+    val cache = f1::f2::f3::f4::f5::f6::f7::f8::Nil
 
-      val metrics = MetricsJSON("es.metrics.port.tcp", Props.get("es.metrics.port.tcp", "9300")) ::
-                    MetricsJSON("es.metrics.port.http", Props.get("es.metrics.port.tcp", "9200")) ::
+    val metrics = MetricsJSON("es.metrics.port.tcp", Props.get("es.metrics.port.tcp", "9300")) ::
+                  MetricsJSON("es.metrics.port.http", Props.get("es.metrics.port.tcp", "9200")) ::
+                  Nil
+    val warehouse = WarehouseJSON("es.warehouse.port.tcp", Props.get("es.warehouse.port.tcp", "9300")) ::
+                    WarehouseJSON("es.warehouse.port.http", Props.get("es.warehouse.port.http", "9200")) ::
                     Nil
-      val warehouse = WarehouseJSON("es.warehouse.port.tcp", Props.get("es.warehouse.port.tcp", "9300")) ::
-                      WarehouseJSON("es.warehouse.port.http", Props.get("es.warehouse.port.http", "9200")) ::
-                      Nil
 
-      val apiConfigJSON = ConfigurationJSON(akka, ElasticSearchJSON(metrics, warehouse), cache)
-      Extraction.decompose(apiConfigJSON)
-    }
-    apiConfiguration
+    ConfigurationJSON(akka, ElasticSearchJSON(metrics, warehouse), cache)
   }
   // helper methods end here
 
@@ -259,7 +257,7 @@ trait APIMethods220 {
             isValidCurrencyISOCodeFrom <- tryo(assert(isValidCurrencyISOCode(fromCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
             isValidCurrencyISOCodeTo <- tryo(assert(isValidCurrencyISOCode(toCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
             u <- cc.user ?~! UserNotLoggedIn
-            fxRate <- tryo(Connector.connector.vend.getCurrentFxRate(bankId, fromCurrencyCode, toCurrencyCode).openOrThrowException("Attempted to open an empty Box.")) ?~! ErrorMessages.FXCurrencyCodeCombinationsNotSupported
+            fxRate <- tryo(Connector.connector.vend.getCurrentFxRate(bankId, fromCurrencyCode, toCurrencyCode).openOrThrowException(attemptedToOpenAnEmptyBox)) ?~! ErrorMessages.FXCurrencyCodeCombinationsNotSupported
           } yield {
             val viewJSON = JSONFactory220.createFXRateJSON(fxRate)
             successJsonResponse(Extraction.decompose(viewJSON))
@@ -277,7 +275,10 @@ trait APIMethods220 {
       s"""Get the counterparties for the account / view.
           |
           |${authenticationRequiredMessage(true)}
-          |""",
+          |
+          |This endpoint works with firehose.
+          |
+          |""".stripMargin,
       emptyObjectJson,
       counterpartiesJsonV220,
       List(
@@ -322,7 +323,11 @@ trait APIMethods220 {
       "Get Counterparty by Counterparty Id.",
       s"""Information returned about the Counterparty specified by COUNTERPARTY_ID:
          |
-         |${authenticationRequiredMessage(true)}""",
+         |${authenticationRequiredMessage(true)}
+         |
+         |This endpoint works with firehose.
+         |
+         |""".stripMargin,
       emptyObjectJson,
       counterpartyWithMetadataJson,
       List(UserNotLoggedIn, BankNotFound, UnknownError),
@@ -404,7 +409,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, OBWG),
-      List(apiTagBank)
+      List(apiTagBank),
+      Some(List(canCreateBank))
     )
 
     lazy val createBank: OBPEndpoint = {
@@ -413,7 +419,7 @@ trait APIMethods220 {
           for {
             bank <- tryo{ json.extract[BankJSONV220] } ?~! ErrorMessages.InvalidJsonFormat
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            canCreateBank <- booleanToBox(hasEntitlement("", u.userId, CanCreateBank) == true, ErrorMessages.InsufficientAuthorisationToCreateBank)
+            canCreateBank <- booleanToBox(hasEntitlement("", u.userId, canCreateBank) == true, ErrorMessages.InsufficientAuthorisationToCreateBank)
             success <- Connector.connector.vend.createOrUpdateBank(
               bank.id,
               bank.full_name,
@@ -464,7 +470,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, OBWG),
-      Nil
+      Nil,
+      Some(List(canCreateBranch,canCreateBranchAtAnyBank))
     )
 
     lazy val createBranch: OBPEndpoint = {
@@ -473,9 +480,9 @@ trait APIMethods220 {
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
             bank <- Bank(bankId)?~! BankNotFound
-            canCreateBranch <- booleanToBox(hasEntitlement(bank.bankId.value, u.userId, CanCreateBranch) == true
+            canCreateBranch <- booleanToBox(hasEntitlement(bank.bankId.value, u.userId, canCreateBranch) == true
               ||
-              hasEntitlement("", u.userId, CanCreateBranchAtAnyBank)
+              hasEntitlement("", u.userId, canCreateBranchAtAnyBank)
               , createBranchEntitlementsRequiredText)
             branchJsonV220 <- tryo {json.extract[BranchJsonV220]} ?~! ErrorMessages.InvalidJsonFormat
             branch <- transformV220ToBranch(branchJsonV220)
@@ -488,8 +495,8 @@ trait APIMethods220 {
     }
 
 
-    val createAtmEntitlementsRequiredForSpecificBank = CanCreateAtm ::  Nil
-    val createAtmEntitlementsRequiredForAnyBank = CanCreateAtmAtAnyBank ::  Nil
+    val createAtmEntitlementsRequiredForSpecificBank = canCreateAtm ::  Nil
+    val createAtmEntitlementsRequiredForAnyBank = canCreateAtmAtAnyBank ::  Nil
 
     val createAtmEntitlementsRequiredText = UserHasMissingRoles + createAtmEntitlementsRequiredForSpecificBank.mkString(" and ") + " OR " + createAtmEntitlementsRequiredForAnyBank.mkString(" and ")
 
@@ -515,7 +522,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, OBWG),
-      List(apiTagATM)
+      List(apiTagATM),
+      Some(List(canCreateAtm,canCreateAtmAtAnyBank))
     )
 
 
@@ -542,8 +550,8 @@ trait APIMethods220 {
 
 
 
-    val createProductEntitlementsRequiredForSpecificBank = CanCreateProduct ::  Nil
-    val createProductEntitlementsRequiredForAnyBank = CanCreateProductAtAnyBank ::  Nil
+    val createProductEntitlementsRequiredForSpecificBank = canCreateProduct ::  Nil
+    val createProductEntitlementsRequiredForAnyBank = canCreateProductAtAnyBank ::  Nil
 
     val createProductEntitlementsRequiredText = UserHasMissingRoles + createProductEntitlementsRequiredForSpecificBank.mkString(" and ") + " OR " + createProductEntitlementsRequiredForAnyBank.mkString(" and ")
 
@@ -569,7 +577,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, OBWG),
-      List(apiTagProduct)
+      List(apiTagProduct),
+      Some(List(canCreateProduct, canCreateProductAtAnyBank))
     )
 
 
@@ -607,8 +616,8 @@ trait APIMethods220 {
 
 
 
-    val createFxEntitlementsRequiredForSpecificBank = CanCreateFxRate ::  Nil
-    val createFxEntitlementsRequiredForAnyBank = CanCreateFxRateAtAnyBank ::  Nil
+    val createFxEntitlementsRequiredForSpecificBank = canCreateFxRate ::  Nil
+    val createFxEntitlementsRequiredForAnyBank = canCreateFxRateAtAnyBank ::  Nil
 
     val createFxEntitlementsRequiredText = UserHasMissingRoles + createFxEntitlementsRequiredForSpecificBank.mkString(" and ") + " OR " + createFxEntitlementsRequiredForAnyBank.mkString(" and ")
 
@@ -634,7 +643,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, OBWG),
-      Nil
+      Nil,
+      Some(List(canCreateFxRate, canCreateFxRateAtAnyBank))
     )
 
 
@@ -704,7 +714,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagAccount)
+      List(apiTagAccount),
+      Some(List(canCreateAccount))
     )
 
 
@@ -721,7 +732,7 @@ trait APIMethods220 {
             isValidBankId <- tryo(assert(isValidID(accountId.value)))?~! InvalidBankIdFormat
             postedOrLoggedInUser <- User.findByUserId(user_id) ?~! UserNotFoundById
             // User can create account for self or an account for another user if they have CanCreateAccount role
-            isAllowed <- booleanToBox(hasEntitlement(bankId.value, loggedInUser.userId, CanCreateAccount) == true || (user_id == loggedInUser.userId) ,
+            isAllowed <- booleanToBox(hasEntitlement(bankId.value, loggedInUser.userId, canCreateAccount) == true || (user_id == loggedInUser.userId) ,
               s"${UserHasMissingRoles} CanCreateAccount or create account for self")
             initialBalanceAsString <- tryo (jsonBody.balance.amount) ?~! InvalidAccountBalanceAmount
             accountType <- tryo(jsonBody.`type`) ?~! InvalidAccountType
@@ -776,15 +787,21 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(Core, notPSD2, OBWG),
-      apiTagApi :: Nil)
+      apiTagApi :: Nil,
+      Some(List(canGetConfig)))
 
-    lazy val config : OBPEndpoint = {
-      case "config" :: Nil JsonGet _ => cc =>for {
-        u <- cc.user ?~! ErrorMessages.UserNotLoggedIn
-        _ <- booleanToBox(hasEntitlement("", u.userId, CanGetConfig), s"$UserHasMissingRoles $CanGetConfig")
-      } yield {
-        successJsonResponse(getConfigInfoJSON(), 200)
-      }
+    lazy val config: OBPEndpoint = {
+      case "config" :: Nil JsonGet _ =>
+        cc =>
+          for {
+            (user, callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            u <- unboxFullAndWrapIntoFuture{ user }
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetConfig) {
+              hasEntitlement("", u.userId, ApiRole.canGetConfig)
+            }
+          } yield {
+            (getConfigInfoJSON(), callContext)
+          }
     }
 
 
@@ -832,14 +849,15 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagApi))
+      List(apiTagApi),
+      Some(List(canGetConnectorMetrics)))
 
     lazy val getConnectorMetrics : OBPEndpoint = {
       case "management" :: "connector" :: "metrics" :: Nil JsonGet _ => {
         cc => {
           for {
             u <- cc.user ?~! ErrorMessages.UserNotLoggedIn
-            _ <- booleanToBox(hasEntitlement("", u.userId, ApiRole.CanGetConnectorMetrics), s"$CanGetConnectorMetrics entitlement required")
+            _ <- booleanToBox(hasEntitlement("", u.userId, ApiRole.canGetConnectorMetrics), s"$CanGetConnectorMetrics entitlement required")
 
             //TODO , these paging can use the def getPaginationParams(req: Req) in APIUtil scala
             //Note: Filters Part 1:
@@ -955,7 +973,8 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
-      Nil)
+      Nil,
+      Some(List(canCreateConsumer)))
 
 
     lazy val createConsumer: OBPEndpoint = {
@@ -963,7 +982,7 @@ trait APIMethods220 {
         cc =>
           for {
             u <- cc.user ?~! UserNotLoggedIn
-            _ <- booleanToBox(hasEntitlement("", u.userId, ApiRole.CanCreateConsumer), UserHasMissingRoles + CanCreateConsumer )
+            _ <- booleanToBox(hasEntitlement("", u.userId, ApiRole.canCreateConsumer), UserHasMissingRoles + CanCreateConsumer )
             postedJson <- tryo {json.extract[ConsumerPostJSON]} ?~! InvalidJsonFormat
             consumer <- Consumers.consumers.vend.createConsumer(Some(UUID.randomUUID().toString),
                                                                 Some(UUID.randomUUID().toString),
@@ -1017,7 +1036,10 @@ trait APIMethods220 {
           |The view specified by VIEW_ID must have the canAddCounterparty permission
          |
           |${authenticationRequiredMessage(true)}
-         |""",
+          |
+          |This endpoint works with firehose.
+          |
+         |""".stripMargin,
       postCounterpartyJSON,
       counterpartyWithMetadataJson,
       List(
