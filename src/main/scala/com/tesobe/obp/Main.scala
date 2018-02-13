@@ -29,16 +29,17 @@ object Main extends App with StrictLogging with Config with ProcessorFactory {
 
   logger.debug("The Adapter's current commit is : "+Util.gitCommit)
   logger.debug("The Adapter's complete props is : "+config)
-  print("Enter the Password for the SSL Certificate Stores: ")
+  //print("Enter the Password for the SSL Certificate Stores: ")
   //As most IDEs do not provide a Console, we fall back to readLine
   val clientCertificatePw:String =  if (config.getBoolean("ssl.use.ssl.cbs") || config.getBoolean("ssl.use.ssl.kafka")) { 
-    try {
+/*    try {
       scala.io.StdIn.readLine()//System.console.readPassword().toString
     } catch {
       case e: NullPointerException => scala.io.StdIn.readLine()
-    }
+    }*/
+    
+    config.getString("ssl.unlockPassword")
   } else {"notused"}
-  
   if (config.getBoolean("mockserver.run")) {
     startMockServer
   }
