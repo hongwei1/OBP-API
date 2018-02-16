@@ -24,6 +24,7 @@ import code.transactionrequests.TransactionRequests
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.util.Helper.booleanToBox
+import code.views.Views
 import net.liftweb.common.{Box, Full}
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.http.{JsonResponse, Req}
@@ -251,7 +252,7 @@ trait CustomAPIMethods300 {
             _ <- tryo(assert(isValidID(bankId.value))) ?~! InvalidBankIdFormat
             _ <- Bank(bankId) ?~! {BankNotFound}
             fromAccount <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! {AccountNotFound}
-            _ <- View.fromUrl(viewId, fromAccount) ?~! {ViewNotFound}
+            _ <- Views.views.vend.view(viewId, BankIdAccountId(fromAccount.bankId, fromAccount.accountId)) ?~! {ViewNotFound}
             isOwnerOrHasEntitlement <- booleanToBox(u.ownerAccess(fromAccount) == true ||
               hasEntitlement(fromAccount.bankId.value, u.userId, ApiRole.canCreateAnyTransactionRequest) == true, InsufficientAuthorisationToCreateTransactionRequest)
             _ <- tryo(assert(Props.get("transactionRequests_supported_types", "").split(",").contains(transactionRequestType.value))) ?~!
