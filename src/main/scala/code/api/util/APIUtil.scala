@@ -33,7 +33,7 @@
 package code.api.util
 
 import java.io.InputStream
-import java.nio.charset.Charset
+import java.nio.charset.{Charset, StandardCharsets}
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 
@@ -41,6 +41,7 @@ import code.api.Constant._
 import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.OAuthHandshake._
 import code.api.util.APIUtil.ApiVersion.ApiVersion
+import code.api.util.CertificateUtil.{decrypt, privateKey}
 import code.api.v1_2.ErrorMessage
 import code.api.{DirectLogin, _}
 import code.bankconnectors._
@@ -101,6 +102,7 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
 
   val ApiVersionNotSupported = "OBP-00008: The API version you called is not enabled on this server. Please contact your API administrator or use another version."
 
+  val FirehoseViewsNotAllowedOnThisInstance = "OBP-00009: Firehose views not allowed on this instance. Please set allow_firehose_views = true in props files. "
 
   // General messages (OBP-10XXX)
   val InvalidJsonFormat = "OBP-10001: Incorrect json format."
@@ -116,6 +118,7 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val InvalidFutureDateValue = "OBP-10011: future_date has to be in future."
   val maximumLimitExceeded = "OBP-10012: Invalid value. Maximum number is 10000."
   val attemptedToOpenAnEmptyBox = "OBP-10013: Attempted to open an empty Box."
+  val cannotDecryptValueOfProperty = "OBP-10014: Could not decrypt value of property "
 
   // General Sort and Paging
   val FilterSortDirectionError = "OBP-10023: obp_sort_direction parameter can only take two values: DESC or ASC!" // was OBP-20023
@@ -232,6 +235,10 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val CreateOrUpdateCounterpartyMetadataError = "OBP-30036: Could not create or update CounterpartyMetadata"
   val CounterpartyMetadataNotFound = "OBP-30037: CounterpartyMetadata not found. Please specify valid values for BANK_ID, ACCOUNT_ID and COUNTERPARTY_ID. "
 
+  val CreateFxRateError = "OBP-30032: Could not insert the Fx Rate"
+  val UpdateFxRateError = "OBP-30033: Could not update the Fx Rate"
+  val UnknownFxRateError = "OBP-30033: Unknown Fx Rate error"
+
 
   // Meetings
   val MeetingsNotSupported = "OBP-30101: Meetings are not supported on this server."
@@ -270,6 +277,7 @@ val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val EntitlementRequestAlreadyExists = "OBP-30214: Entitlement Request already exists for the user."
   val EntitlementRequestCannotBeAdded = "OBP-30214: Entitlement Request cannot be added."
   val EntitlementRequestNotFound = "OBP-30215: EntitlementRequestId not found"
+  val EntitlementAlreadyExists = "OBP-30216: Entitlement already exists for the user."
 
   // Branch related messages
   val branchesNotFoundLicense = "OBP-32001: No branches available. License may not be set."
@@ -424,7 +432,7 @@ object APIUtil extends MdcLoggable {
   def logAPICall(callContext: Option[CallContext]) = {
     callContext match {
       case Some(cc) =>
-        if(Props.getBool("write_metrics", false)) {
+        if(getPropsAsBoolValue("write_metrics", false)) {
           val u: User = cc.user.orNull
           val userId = if (u != null) u.userId else "null"
           val userName = if (u != null) u.name else "null"
@@ -448,7 +456,7 @@ object APIUtil extends MdcLoggable {
                   case Full(c) => Full(c)
                   case _ => Empty
                 }
-              } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(cc.authorization)) {
+              } else if (getPropsAsBoolValue("allow_direct_login", true) && hasDirectLoginHeader(cc.authorization)) {
                 DirectLogin.getConsumer(cc) match {
                   case Full(c) => Full(c)
                   case _ => Empty
@@ -485,14 +493,14 @@ object APIUtil extends MdcLoggable {
 
   def logAPICall(date: TimeSpan, duration: Long, rd: Option[ResourceDoc]) = {
     val authorization = S.request.map(_.header("Authorization")).flatten
-    if(Props.getBool("write_metrics", false)) {
+    if(getPropsAsBoolValue("write_metrics", false)) {
       val user =
         if (hasAnOAuthHeader(authorization)) {
           getUser match {
             case Full(u) => Full(u)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
+        } else if (getPropsAsBoolValue("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
           DirectLogin.getUser match {
             case Full(u) => Full(u)
             case _ => Empty
@@ -507,7 +515,7 @@ object APIUtil extends MdcLoggable {
             case Full(c) => Full(c)
             case _ => Empty
           }
-        } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
+        } else if (getPropsAsBoolValue("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
           DirectLogin.getConsumer match {
             case Full(c) => Full(c)
             case _ => Empty
@@ -1092,6 +1100,7 @@ object APIUtil extends MdcLoggable {
   val apiTagApi = ResourceDocTag("API")
   val apiTagBank = ResourceDocTag("Bank")
   val apiTagAccount = ResourceDocTag("Account")
+  val apiTagFirehoseData = ResourceDocTag("FirehoseData")
   val apiTagPublicData = ResourceDocTag("PublicData")
   val apiTagPrivateData = ResourceDocTag("PrivateData")
   val apiTagTransaction = ResourceDocTag("Transaction")
@@ -1455,7 +1464,7 @@ Returns a string showed to the developer
     val result = blockOfCode
     // call-by-name
     val t1 = System.currentTimeMillis()
-    if (Props.getBool("write_metrics", false)){
+    if (getPropsAsBoolValue("write_metrics", false)){
       val correlationId = getCorrelationId()
       Future {
         ConnectorMetricsProvider.metrics.vend.saveConnectorMetric(nameOfConnector, nameOfFunction, correlationId, now, t1 - t0)
@@ -1465,7 +1474,7 @@ Returns a string showed to the developer
   }
 
   def akkaSanityCheck (): Box[Boolean] = {
-    Props.getBool("use_akka", false) match {
+    getPropsAsBoolValue("use_akka", false) match {
       case true =>
         val remotedataSecret = Props.get("remotedata.secret").openOrThrowException("Cannot obtain property remotedata.secret")
         SanityCheck.sanityCheck.vend.remoteAkkaSanityCheck(remotedataSecret)
@@ -1915,9 +1924,9 @@ Versions are groups of endpoints in a file
     val res =
     if (hasAnOAuthHeader(authorization)) {
       getUserFromOAuthHeaderFuture(cc)
-    } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
+    } else if (getPropsAsBoolValue("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
       DirectLogin.getUserFromDirectLoginHeaderFuture(cc)
-    } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader(authorization)) {
+    } else if (getPropsAsBoolValue("allow_gateway_login", false) && hasGatewayHeader(authorization)) {
       Props.get("gateway.host") match {
         case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == true) => // Only addresses from white list can use this feature
           val (httpCode, message, parameters) = GatewayLogin.validator(s.request)
@@ -2006,7 +2015,7 @@ Versions are groups of endpoints in a file
       case ParamFailure(msg,_,_,_) =>
         throw new Exception(msg)
       case obj@Failure(msg, _, c) =>
-        val failuresMsg = Props.getBool("display_internal_errors").openOr(false) match {
+        val failuresMsg = getPropsAsBoolValue("display_internal_errors", false) match {
           case true => // Show all error in a chain
             obj.messageChain
           case false => // Do not display internal errors
@@ -2080,4 +2089,50 @@ Versions are groups of endpoints in a file
   )= createOBPId(s"$thisBankId$thisAccountId$counterpartyName")
   
   val isSandboxMode: Boolean = (Props.get("connector").openOrThrowException(attemptedToOpenAnEmptyBox).toString).equalsIgnoreCase("mapped")
+
+  /**
+    * This function is implemented in order to support encrypted values in props file.
+    * Please note that some value is considered as encrypted if has an encryption mark property in addition to regular props value in props file e.g
+    *  db.url=Helpers.base64Encode(SOME_ENCRYPTED_VALUE)
+    *  db.url.is_encrypted=true
+    *  getDecryptedPropsValue("db.url") = jdbc:postgresql://localhost:5432/han_obp_api_9?user=han_obp_api&password=mypassword
+    *  Encrypt/Decrypt workflow:
+    *  Encrypt: Array[Byte] -> Helpers.base64Encode(encrypted) -> Props file: String -> Helpers.base64Decode(encryptedValue) -> Decrypt: Array[Byte]
+    * @param nameOfProperty Name of property which value should be decrypted
+    * @return Decrypted value of a property
+    */
+  def getPropsValue(nameOfProperty: String): Box[String] = {
+    (Props.get(nameOfProperty), Props.get(nameOfProperty + ".is_encrypted")) match {
+      case (Full(base64PropsValue), Full(isEncrypted))  if isEncrypted == "true" =>
+        val decryptedValueAsArray = decrypt(privateKey, Helpers.base64Decode(base64PropsValue), CryptoSystem.RSA)
+        val decryptedValueAsString = new String(decryptedValueAsArray)
+        Full(decryptedValueAsString)
+      case (Full(property), Full(isEncrypted))  if isEncrypted == "false" =>
+        Full(property)
+      case (Full(property), Empty) =>
+        Full(property)
+      case (Empty, Empty) =>
+        Empty
+      case _ =>
+        logger.error(cannotDecryptValueOfProperty + nameOfProperty)
+        Failure(cannotDecryptValueOfProperty + nameOfProperty)
+    }
+  }
+
+  def getPropsAsBoolValue(nameOfProperty: String, defaultValue: Boolean): Boolean = {
+    getPropsValue(nameOfProperty) map(toBoolean) openOr(defaultValue)
+  }
+  def getPropsAsIntValue(nameOfProperty: String): Box[Int] = {
+    getPropsValue(nameOfProperty) map(toInt)
+  }
+  def getPropsAsIntValue(nameOfProperty: String, defaultValue: Int): Int = {
+    getPropsAsIntValue(nameOfProperty) openOr(defaultValue)
+  }
+  def getPropsAsLongValue(nameOfProperty: String): Box[Long] = {
+    getPropsValue(nameOfProperty) flatMap(asLong)
+  }
+  def getPropsAsLongValue(nameOfProperty: String, defaultValue: Long): Long = {
+    getPropsAsLongValue(nameOfProperty) openOr(defaultValue)
+  }
+
 }

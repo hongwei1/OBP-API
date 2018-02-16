@@ -266,9 +266,9 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       account <- getBankAccount(bankId, accountId).map(_.asInstanceOf[MappedBankAccount])
     } {
       Future{
-        val useMessageQueue = Props.getBool("messageQueue.updateBankAccountsTransaction", false)
+        val useMessageQueue = APIUtil.getPropsAsBoolValue("messageQueue.updateBankAccountsTransaction", false)
         val outDatedTransactions = Box!!account.accountLastUpdate.get match {
-          case Full(l) => now after time(l.getTime + hours(Props.getInt("messageQueue.updateTransactionsInterval", 1)))
+          case Full(l) => now after time(l.getTime + hours(APIUtil.getPropsAsIntValue("messageQueue.updateTransactionsInterval", 1)))
           case _ => true
         }
         if(outDatedTransactions && useMessageQueue) {
@@ -1463,6 +1463,47 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
     // if the result of normal order is empty, then return the reverse order result
     fxRateFromTo.orElse(fxRateToFrom)
+  }
+
+  override def createOrUpdateFXRate(
+                                     bankId: String,
+                                     fromCurrencyCode: String,
+                                     toCurrencyCode: String,
+                                     conversionValue: Double,
+                                     inverseConversionValue: Double,
+                                     effectiveDate: Date
+                                   ): Box[FXRate] = {
+    val fxRateFromTo = MappedFXRate.find(
+      By(MappedFXRate.mBankId, bankId),
+      By(MappedFXRate.mFromCurrencyCode, fromCurrencyCode),
+      By(MappedFXRate.mToCurrencyCode, toCurrencyCode)
+    )
+    fxRateFromTo match {
+      case Full(x) =>
+        tryo {
+          x
+            .mBankId(bankId)
+            .mFromCurrencyCode(fromCurrencyCode)
+            .mToCurrencyCode(toCurrencyCode)
+            .mConversionValue(conversionValue)
+            .mInverseConversionValue(inverseConversionValue)
+            .mEffectiveDate(effectiveDate)
+            .saveMe()
+        } ?~! UpdateFxRateError
+      case Empty =>
+        tryo {
+          MappedFXRate.create
+            .mBankId(bankId)
+            .mFromCurrencyCode(fromCurrencyCode)
+            .mToCurrencyCode(toCurrencyCode)
+            .mConversionValue(conversionValue)
+            .mInverseConversionValue(inverseConversionValue)
+            .mEffectiveDate(effectiveDate)
+            .saveMe()
+        } ?~! CreateFxRateError
+      case _ =>
+        Failure("UnknownFxRateError")
+    }
   }
 
   /**

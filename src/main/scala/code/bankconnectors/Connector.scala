@@ -3,10 +3,11 @@ package code.bankconnectors
 import java.util.{Date, UUID}
 
 import code.accountholder.{AccountHolders, MapperAccountHolders}
+import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.accountId
 import code.api.util.APIUtil._
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
-import code.api.util.{APIUtil, ErrorMessages, CallContext}
+import code.api.util.{APIUtil, CallContext, ErrorMessages}
 import code.api.v2_1_0.{TransactionRequestCommonBodyJSON, _}
 import code.atms.Atms
 import code.atms.Atms.{AtmId, AtmT}
@@ -18,7 +19,7 @@ import code.fx.FXRate
 import code.management.ImporterAPI.ImporterTransaction
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.ResourceUser
-import code.model.{Transaction, TransactionRequestType, User, _}
+import code.model.{BankAccount, Transaction, TransactionRequestType, User, _}
 import code.products.Products.{Product, ProductCode}
 import code.transactionChallenge.ExpectedChallengeAnswer
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
@@ -206,6 +207,9 @@ trait Connector extends MdcLoggable{
       a <- getBankAccount(acc._1, acc._2)
     } yield a
   }
+  
+
+  
   
   /**
     * 
@@ -566,7 +570,7 @@ trait Connector extends MdcLoggable{
           // i.e. if we are certain that saveTransaction will be honored immediately by the backend, then transaction_status_scheduler_delay
           // can be empty in the props file. Otherwise, the status will be set to STATUS_PENDING
           // and getTransactionRequestStatusesImpl needs to be run periodically to update the transaction request status.
-          if (Props.getLong("transaction_status_scheduler_delay").isEmpty )
+          if (APIUtil.getPropsAsLongValue("transaction_status_scheduler_delay").isEmpty )
           TransactionRequestStatus.COMPLETED
           else
             TransactionRequestStatus.PENDING
@@ -1111,12 +1115,13 @@ trait Connector extends MdcLoggable{
 
 
   def createOrUpdateFXRate(
-  bankId : String,
-  fromCurrencyCode: String,
-  toCurrencyCode: String,
-  conversionValue: Double,
-  inverseConversionValue: Double,
-  effectiveDate: Date): Box[FXRate] = Failure(NotImplemented + currentMethodName)
+                            bankId: String,
+                            fromCurrencyCode: String,
+                            toCurrencyCode: String,
+                            conversionValue: Double,
+                            inverseConversionValue: Double,
+                            effectiveDate: Date
+                          ): Box[FXRate] = Failure(NotImplemented + currentMethodName)
 
 
 

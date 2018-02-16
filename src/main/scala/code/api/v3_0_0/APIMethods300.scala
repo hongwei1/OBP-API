@@ -5,7 +5,8 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil.{canGetAtm, _}
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
-import code.api.util.{ApiRole, CallContext, ErrorMessages}
+import code.api.util.{APIUtil, ApiRole, CallContext, ErrorMessages}
+import code.api.v2_0_0.JSONFactory200
 import code.api.v3_0_0.JSONFactory300._
 import code.atms.Atms.AtmId
 import code.bankconnectors.Connector
@@ -19,7 +20,7 @@ import code.search.elasticsearchWarehouse
 import code.users.Users
 import code.util.Helper
 import code.util.Helper.booleanToBox
-import code.views.Views
+import code.views.{MapperViews, Views}
 import com.github.dwickern.macros.NameOf.nameOf
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.S
@@ -393,7 +394,106 @@ trait APIMethods300 {
           }
       }
     }
-
+  
+    resourceDocs += ResourceDoc(
+      getFirehoseAccountsAtOneBank,
+      implementedInApiVersion,
+      "getFirehoseAccountsAtOneBank",
+      "GET",
+      "/banks/BANK_ID/firehose/accounts/views/VIEW_ID",
+      "Get Firehose Accounts at one Bank (Firehose)",
+      s"""
+         |Get firehose accounts at one bank. 
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""".stripMargin,
+      emptyObjectJson,
+      moderatedCoreAccountsJsonV300,
+      List(UserNotLoggedIn,UnknownError),
+      Catalogs(Core, PSD2, OBWG),
+      List(apiTagAccount, apiTagFirehoseData))
+  
+    lazy val getFirehoseAccountsAtOneBank : OBPEndpoint = {
+      //get private accounts for all banks
+      case "banks" :: BankId(bankId):: "firehose" :: "accounts"  :: "views" :: ViewId(viewId):: Nil JsonGet json => {
+        cc =>
+          for {
+            (user, callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            u <- unboxFullAndWrapIntoFuture{ user }
+            _ <- Helper.booleanToFuture(failMsg = FirehoseViewsNotAllowedOnThisInstance +" or " + UserHasMissingRoles + CanUseFirehoseAtAnyBank  ) {
+               MapperViews.canUseFirehose(u)
+            }
+            bankBox <- Future { Bank(bankId) } map {x => fullBoxOrException(x ?~! BankNotFound)}
+            bank<- unboxFullAndWrapIntoFuture(bankBox)
+            availableBankIdAccountIdList <- Future { MapperViews.getAllFirehoseAccounts(bank, u) }
+            moderatedAccounts = for {
+              //Here is a new for-loop to get the moderated accouts for the firehose user, according to the viewId.
+              //1 each accountId-> find a proper bankAccount object.
+              //2 each bankAccount object find the proper view.
+              //3 use view and user to moderate the bankaccount object.
+              bankIdAccountId <- availableBankIdAccountIdList
+              bankAccount <- Connector.connector.vend.getBankAccount(bankIdAccountId.bankId, bankIdAccountId.accountId) ?~! s"$BankAccountNotFound Current Bank_Id(${bankIdAccountId.bankId}), Account_Id(${bankIdAccountId.accountId}) "
+              view <- Views.views.vend.view(viewId, bankIdAccountId) ?~! s"$ViewNotFound Current View_Id($viewId), Bank_Id(${bankIdAccountId.bankId}), Account_Id(${bankIdAccountId.accountId}) "
+              moderatedAccount <- bankAccount.moderatedBankAccount(view, user) //Error handling is in lower method
+            } yield {
+              moderatedAccount
+            }
+          } yield {
+            (JSONFactory300.createFirehoseCoreBankAccountJSON(moderatedAccounts), callContext)
+          }
+      }
+    }
+  
+  
+    resourceDocs += ResourceDoc(
+      getFirehoseTransactionsForBankAccount,
+      implementedInApiVersion,
+      "getFirehoseTransactionsForBankAccount",
+      "GET",
+      "/banks/BANK_ID/firehose/accounts/ACCOUNT_ID/views/VIEW_ID/transactions",
+      "Get Firehose Transactions for Account (Firehose)",
+      s"""
+         |Get firehose transactions for Account. 
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""".stripMargin,
+      emptyObjectJson,
+      transactionsJsonV300,
+      List(UserNotLoggedIn, FirehoseViewsNotAllowedOnThisInstance, UserHasMissingRoles, UnknownError),
+      Catalogs(Core, PSD2, OBWG),
+      List(apiTagAccount, apiTagFirehoseData))
+  
+    lazy val getFirehoseTransactionsForBankAccount : OBPEndpoint = {
+      //get private accounts for all banks
+      case "banks" :: BankId(bankId):: "firehose" :: "accounts" ::  AccountId(accountId) :: "views" :: ViewId(viewId) :: "transactions" :: Nil JsonGet json => {
+        cc =>
+          val res =
+            for {
+              (user, callContext) <-  extractCallContext(UserNotLoggedIn, cc)
+              u <- unboxFullAndWrapIntoFuture{ user }
+              _ <- Helper.booleanToFuture(failMsg = FirehoseViewsNotAllowedOnThisInstance +" or " + UserHasMissingRoles + CanUseFirehoseAtAnyBank  ) {
+               MapperViews.canUseFirehose(u)
+              }
+              bankAccount <- Future { BankAccount(bankId, accountId, callContext) } map {
+                x => fullBoxOrException(x ?~! BankAccountNotFound)
+              } map { unboxFull(_) }
+              view <- Views.views.vend.viewFuture(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId)) map {
+                x => fullBoxOrException(x ?~! ViewNotFound)
+              } map { unboxFull(_) }
+            } yield {
+              for {
+              //Note: error handling and messages for getTransactionParams are in the sub method
+                params <- getTransactionParams(json)
+                transactions <- bankAccount.getModeratedTransactions(user, view, params: _*)(callContext)
+              } yield {
+                (createTransactionsJson(transactions), callContext)
+              }
+            }
+          res map { fullBoxOrException(_) } map { unboxFull(_) }
+      }
+    }
 
     resourceDocs += ResourceDoc(
       getCoreTransactionsForBankAccount,
@@ -862,7 +962,7 @@ trait APIMethods300 {
 
 
 
-    val getBranchesIsPublic = Props.getBool("apiOptions.getBranchesIsPublic", true)
+    val getBranchesIsPublic = APIUtil.getPropsAsBoolValue("apiOptions.getBranchesIsPublic", true)
 
     resourceDocs += ResourceDoc(
       getBranch,
@@ -996,7 +1096,7 @@ trait APIMethods300 {
       }
     }
 
-    val getAtmsIsPublic = Props.getBool("apiOptions.getAtmsIsPublic", true)
+    val getAtmsIsPublic = APIUtil.getPropsAsBoolValue("apiOptions.getAtmsIsPublic", true)
 
     resourceDocs += ResourceDoc(
       getAtm,
@@ -1340,7 +1440,7 @@ trait APIMethods300 {
         cc =>
           for {
             account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            view <- View.fromUrl(viewId, account)
+            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
             otherBankAccounts <- account.moderatedOtherBankAccounts(view, cc.user)
           } yield {
             val otherBankAccountsJson = createOtherBankAccountsJson(otherBankAccounts)
@@ -1371,7 +1471,7 @@ trait APIMethods300 {
         cc =>
           for {
             account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            view <- View.fromUrl(viewId, account)
+            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
             otherBankAccount <- account.moderatedOtherBankAccount(other_account_id, view, cc.user)
           } yield {
             val otherBankAccountJson = createOtherBankAccount(otherBankAccount)
@@ -1623,6 +1723,46 @@ trait APIMethods300 {
       }
     }
 
+    resourceDocs += ResourceDoc(
+      getEntitlementsForCurrentUser,
+      implementedInApiVersion,
+      "getEntitlementsForCurrentUser",
+      "GET",
+      "/my/entitlements",
+      "Get Entitlements for the current User.",
+      s"""Get Entitlements for the current User.
+         |
+        |
+        |${authenticationRequiredMessage(true)}
+         |
+        """.stripMargin,
+      emptyObjectJson,
+      entitlementJSONs,
+      List(
+        UserNotLoggedIn,
+        UserNotSuperAdmin,
+        ConnectorEmptyResponse,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagRole, apiTagEntitlement, apiTagUser),
+      None)
+
+    lazy val getEntitlementsForCurrentUser : OBPEndpoint = {
+      case "my" :: "entitlements" :: Nil JsonGet _ => {
+        cc =>
+          for {
+            (user, callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            u <- unboxFullAndWrapIntoFuture(user)
+            getEntitlements <- Entitlement.entitlement.vend.getEntitlementsByUserIdFuture(u.userId) map {
+              x => fullBoxOrException(x ?~! ConnectorEmptyResponse)
+            } map { unboxFull(_) }
+          } yield {
+            (JSONFactory200.createEntitlementJSONs(getEntitlements), callContext)
+          }
+      }
+    }
+
 
 
     /* WIP
@@ -1653,7 +1793,7 @@ trait APIMethods300 {
               for {
                 _ <- Bank(bankId) ?~! {ErrorMessages.BankNotFound}
                 account <- BankAccount(bankId, accountId) ?~! BankAccountNotFound
-                view <- View.fromUrl(viewId, account)
+                view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
                 otherBankAccounts <- account.moderatedOtherBankAccounts(view, user)
               } yield {
                 val otherBankAccountsJson = JSONFactory.createOtherBankAccountsJSON(otherBankAccounts)

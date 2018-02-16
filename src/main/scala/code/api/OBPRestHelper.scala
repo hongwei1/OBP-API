@@ -113,7 +113,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
         errorJsonResponse(apiFailure.msg, apiFailure.responseCode)
       }
       case obj@Failure(msg, _, c) => {
-        val failuresMsg = Props.getBool("display_internal_errors").openOr(false) match {
+        val failuresMsg = APIUtil.getPropsAsBoolValue("display_internal_errors", false) match {
           case true => // Show all error in a chain
             obj.messageChain
           case false => // Do not display internal errors
@@ -182,6 +182,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
     (nameOf(Implementations3_0_0.getAllEntitlementRequests), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.getEntitlementRequests), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.getEntitlementRequestsForCurrentUser), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.getEntitlementsForCurrentUser), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.deleteEntitlementRequest), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.createViewForBankAccount), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.updateViewForBankAccount), ApiVersion.v3_0_0.toString),
@@ -215,7 +216,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
         case Failure(msg, t, c) => Failure(msg, t, c)
         case _ => Failure("oauth error")
       }
-    } else if (Props.getBool("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
+    } else if (APIUtil.getPropsAsBoolValue("allow_direct_login", true) && hasDirectLoginHeader(authorization)) {
       DirectLogin.getUser match {
         case Full(u) => fn(cc.copy(user = Full(u)))// Authentication is successful
         case _ => {
@@ -223,7 +224,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
           Full(errorJsonResponse(message, httpCode))
         }
       }
-    } else if (Props.getBool("allow_gateway_login", false) && hasGatewayHeader(authorization)) {
+    } else if (APIUtil.getPropsAsBoolValue("allow_gateway_login", false) && hasGatewayHeader(authorization)) {
       logger.info("allow_gateway_login-getRemoteIpAddress: " + getRemoteIpAddress() )
       Props.get("gateway.host") match {
         case Full(h) if h.split(",").toList.exists(_.equalsIgnoreCase(getRemoteIpAddress()) == true) => // Only addresses from white list can use this feature

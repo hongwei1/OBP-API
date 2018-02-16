@@ -3,7 +3,7 @@ package code.views
 import bootstrap.liftweb.ToSchemify
 import code.accountholder.{AccountHolders, MapperAccountHolders}
 import code.api.APIFailure
-import code.api.util.ApiRole
+import code.api.util.{APIUtil, ApiRole}
 import code.model.dataAccess.ViewImpl.create
 import code.model.dataAccess.{ResourceUser, ViewImpl, ViewPrivileges}
 import code.model.{CreateViewJson, Permission, UpdateViewJSON, User, _}
@@ -11,6 +11,7 @@ import net.liftweb.common._
 import net.liftweb.mapper.{By, Schemifier}
 import net.liftweb.util.Helpers._
 import code.api.util.ErrorMessages._
+
 import scala.collection.immutable.List
 import code.util.Helper.MdcLoggable
 import net.liftweb.util.Props
@@ -27,8 +28,8 @@ object MapperViews extends Views with MdcLoggable {
 
   Schemifier.schemify(true, Schemifier.infoF _, ToSchemify.modelsRemotedata: _*)
   
-  val ALLOW_PUBLIC_VIEWS: Boolean = Props.getBool("allow_public_views").openOr(false)
-  val ALLOW_FIREHOSE_VIEWS: Boolean = Props.getBool("allow_firehose_views").openOr(false)
+  val ALLOW_PUBLIC_VIEWS: Boolean = APIUtil.getPropsAsBoolValue("allow_public_views", false)
+  val ALLOW_FIREHOSE_VIEWS: Boolean = APIUtil.getPropsAsBoolValue("allow_firehose_views", false)
 
   def permissions(account : BankIdAccountId) : List[Permission] = {
 
@@ -221,14 +222,6 @@ object MapperViews extends Views with MdcLoggable {
     Future {
       view(viewId, account)
     }
-  }
-
-  def view(viewUID : ViewIdBankIdAccountId) : Box[View] = {
-    val view=ViewImpl.find(viewUID)
-
-    if(view.isDefined && view.openOrThrowException(attemptedToOpenAnEmptyBox).isPublic && !ALLOW_PUBLIC_VIEWS) return Failure(PublicViewsNotAllowedOnThisInstance)
-
-    view
   }
 
   /*
@@ -558,6 +551,13 @@ object MapperViews extends Views with MdcLoggable {
       case Full(v) => Full(v)
     }
   }
+  
+  def getOrCreateFirehoseView(bankId: BankId, accountId: AccountId, description: String = "Firehose View") : Box[View] = {
+    getExistingView(bankId, accountId, "Firehose") match {
+      case Empty => createDefaultOwnerView(bankId, accountId, description)
+      case Full(v) => Full(v)
+    }
+  }
 
   def getOwners(view: View) : Set[User] = {
     val viewUid = ViewImpl.find(view.uid)
@@ -590,6 +590,7 @@ object MapperViews extends Views with MdcLoggable {
   def createRandomView(bankId: BankId, accountId: AccountId) : Box[View] = {
     Full(ViewImpl.create.
       isSystem_(false).
+      isFirehose_(false).
       name_(randomString(5)).
       description_(randomString(3)).
       permalink_(randomString(3)).
@@ -716,30 +717,10 @@ object MapperViews extends Views with MdcLoggable {
       false
   }
   
-  /**
-    * Find view by bankId , accountId and viewName. If it is exsting in ViewImple table, return true.
-    * Otherwise, return false.
-    * 
-    * But not used yet !
-    */
-  def viewExists(bankId: BankId, accountId: AccountId, name: String): Boolean = {
-    val res =
-      if (ALLOW_PUBLIC_VIEWS)
-        ViewImpl.findAll(
-          By(ViewImpl.bankPermalink, bankId.value),
-          By(ViewImpl.accountPermalink, accountId.value),
-          By(ViewImpl.name_, name)
-        )
-      else
-        ViewImpl.findAll(
-          By(ViewImpl.bankPermalink, bankId.value),
-          By(ViewImpl.accountPermalink, accountId.value),
-          By(ViewImpl.name_, name),
-          By(ViewImpl.isPublic_, false)
-        )
-    res.nonEmpty
+  def createDefaultFirehoseView(bankId: BankId, accountId: AccountId, name: String): Box[View] = {
+    createAndSaveFirehoseView(bankId, accountId, "Firehose View")
   }
-
+  
   def createDefaultOwnerView(bankId: BankId, accountId: AccountId, name: String): Box[View] = {
     createAndSaveOwnerView(bankId, accountId, "Owner View")
   }
@@ -797,6 +778,7 @@ object MapperViews extends Views with MdcLoggable {
   def unsavedOwnerView(bankId : BankId, accountId: AccountId, description: String) : ViewImpl = {
     create
       .isSystem_(true)
+      .isFirehose_(true)
       .bankPermalink(bankId.value)
       .accountPermalink(accountId.value)
       .name_("Owner")
@@ -879,7 +861,99 @@ object MapperViews extends Views with MdcLoggable {
       .canAddTransactionRequestToOwnAccount_(true) //added following two for payments
       .canAddTransactionRequestToAnyAccount_(true)
   }
-
+  
+  def unsavedFirehoseView(bankId : BankId, accountId: AccountId, description: String) : ViewImpl = {
+    create
+      .isSystem_(true)
+      .isFirehose_(true)
+      .bankPermalink(bankId.value)
+      .accountPermalink(accountId.value)
+      .name_("Firehose")
+      .permalink_("firehose")
+      .description_(description)
+      .isPublic_(false) //(default is false anyways)
+      .usePrivateAliasIfOneExists_(false) //(default is false anyways)
+      .usePublicAliasIfOneExists_(false) //(default is false anyways)
+      .hideOtherAccountMetadataIfAlias_(false) //(default is false anyways)
+      .canSeeTransactionThisBankAccount_(true)
+      .canSeeTransactionOtherBankAccount_(true)
+      .canSeeTransactionMetadata_(true)
+      .canSeeTransactionDescription_(true)
+      .canSeeTransactionAmount_(true)
+      .canSeeTransactionType_(true)
+      .canSeeTransactionCurrency_(true)
+      .canSeeTransactionStartDate_(true)
+      .canSeeTransactionFinishDate_(true)
+      .canSeeTransactionBalance_(true)
+      .canSeeComments_(true)
+      .canSeeOwnerComment_(true)
+      .canSeeTags_(true)
+      .canSeeImages_(true)
+      .canSeeBankAccountOwners_(true)
+      .canSeeBankAccountType_(true)
+      .canSeeBankAccountBalance_(true)
+      .canSeeBankAccountCurrency_(true)
+      .canSeeBankAccountLabel_(true)
+      .canSeeBankAccountNationalIdentifier_(true)
+      .canSeeBankAccountSwift_bic_(true)
+      .canSeeBankAccountIban_(true)
+      .canSeeBankAccountNumber_(true)
+      .canSeeBankAccountBankName_(true)
+      .canSeeBankAccountBankPermalink_(true)
+      .canSeeOtherAccountNationalIdentifier_(true)
+      .canSeeOtherAccountSWIFT_BIC_(true)
+      .canSeeOtherAccountIBAN_(true)
+      .canSeeOtherAccountBankName_(true)
+      .canSeeOtherAccountNumber_(true)
+      .canSeeOtherAccountMetadata_(true)
+      .canSeeOtherAccountKind_(true)
+      .canSeeMoreInfo_(true)
+      .canSeeUrl_(true)
+      .canSeeImageUrl_(true)
+      .canSeeOpenCorporatesUrl_(true)
+      .canSeeCorporateLocation_(true)
+      .canSeePhysicalLocation_(true)
+      .canSeePublicAlias_(true)
+      .canSeePrivateAlias_(true)
+      .canAddMoreInfo_(true)
+      .canAddURL_(true)
+      .canAddImageURL_(true)
+      .canAddOpenCorporatesUrl_(true)
+      .canAddCorporateLocation_(true)
+      .canAddPhysicalLocation_(true)
+      .canAddPublicAlias_(true)
+      .canAddPrivateAlias_(true)
+      .canAddCounterparty_(true)
+      .canDeleteCorporateLocation_(true)
+      .canDeletePhysicalLocation_(true)
+      .canEditOwnerComment_(true)
+      .canAddComment_(true)
+      .canDeleteComment_(true)
+      .canAddTag_(true)
+      .canDeleteTag_(true)
+      .canAddImage_(true)
+      .canDeleteImage_(true)
+      .canAddWhereTag_(true)
+      .canSeeWhereTag_(true)
+      .canDeleteWhereTag_(true)
+      .canInitiateTransaction_(true)
+      .canSeeBankRoutingScheme_(true) //added following in V300
+      .canSeeBankRoutingAddress_(true)
+      .canSeeBankAccountRoutingScheme_(true)
+      .canSeeBankAccountRoutingAddress_(true)
+      .canSeeOtherBankRoutingScheme_(true)
+      .canSeeOtherBankRoutingAddress_(true)
+      .canSeeOtherAccountRoutingScheme_(true)
+      .canSeeOtherAccountRoutingAddress_(true)
+      .canAddTransactionRequestToOwnAccount_(true) //added following two for payments
+      .canAddTransactionRequestToAnyAccount_(true)
+  }
+  
+  def createAndSaveFirehoseView(bankId : BankId, accountId: AccountId, description: String) : Box[View] = {
+    val res = unsavedFirehoseView(bankId, accountId, description).saveMe
+    Full(res)
+  }
+  
   def createAndSaveOwnerView(bankId : BankId, accountId: AccountId, description: String) : Box[View] = {
     val res = unsavedOwnerView(bankId, accountId, description).saveMe
     Full(res)
@@ -888,6 +962,7 @@ object MapperViews extends Views with MdcLoggable {
   def unsavedDefaultPublicView(bankId : BankId, accountId: AccountId, description: String) : ViewImpl = {
     create.
       isSystem_(true).
+      isFirehose_(true).
       name_("Public").
       description_(description).
       permalink_("public").
@@ -984,6 +1059,7 @@ object MapperViews extends Views with MdcLoggable {
   def unsavedDefaultAccountantsView(bankId : BankId, accountId: AccountId, description: String) : ViewImpl = {
     create.
       isSystem_(true).
+      isFirehose_(true).
       name_("Accountant"). // Use the singular form
       description_(description).
       permalink_("accountant"). // Use the singular form
@@ -1079,6 +1155,7 @@ Auditors
   def unsavedDefaultAuditorsView(bankId : BankId, accountId: AccountId, description: String) : ViewImpl = {
     create.
       isSystem_(true).
+      isFirehose_(true).
       name_("Auditor"). // Use the singular form
       description_(description).
       permalink_("auditor"). // Use the singular form

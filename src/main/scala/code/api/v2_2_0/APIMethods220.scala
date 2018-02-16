@@ -20,6 +20,7 @@ import code.model.dataAccess.BankAccountCreation
 import code.model.{BankId, ViewId, _}
 import code.util.Helper
 import code.util.Helper._
+import code.views.Views
 import net.liftweb.common.Full
 import net.liftweb.http.S
 import net.liftweb.http.rest.RestHelper
@@ -223,7 +224,7 @@ trait APIMethods220 {
             updateJson <- tryo{json.extract[UpdateViewJSON]} ?~!InvalidJsonFormat
             //customer views are started ith `_`,eg _life, _work, and System views startWith letter, eg: owner
             _ <- booleanToBox(viewId.value.startsWith("_"), InvalidCustomViewFormat)
-            view <- View.fromUrl(viewId, accountId, bankId)?~! ViewNotFound
+            view <- Views.views.vend.view(viewId, BankIdAccountId(bankId, accountId))?~! ViewNotFound
             _ <- booleanToBox(!view.isSystem, SystemViewsCanNotBeModified)
             u <- cc.user ?~!UserNotLoggedIn
             account <- BankAccount(bankId, accountId) ?~!BankAccountNotFound
@@ -250,14 +251,14 @@ trait APIMethods220 {
       List(apiTagFx))
 
     lazy val getCurrentFxRate: OBPEndpoint = {
-      case "banks" :: BankId(bankid) :: "fx" :: fromCurrencyCode :: toCurrencyCode :: Nil JsonGet json => {
+      case "banks" :: BankId(bankId) :: "fx" :: fromCurrencyCode :: toCurrencyCode :: Nil JsonGet json => {
         cc =>
           for {
-            bank <- Bank(bankId)?~! BankNotFound
-            isValidCurrencyISOCodeFrom <- tryo(assert(isValidCurrencyISOCode(fromCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
-            isValidCurrencyISOCodeTo <- tryo(assert(isValidCurrencyISOCode(toCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
-            u <- cc.user ?~! UserNotLoggedIn
-            fxRate <- tryo(Connector.connector.vend.getCurrentFxRate(bankId, fromCurrencyCode, toCurrencyCode).openOrThrowException(attemptedToOpenAnEmptyBox)) ?~! ErrorMessages.FXCurrencyCodeCombinationsNotSupported
+            _ <- Bank(bankId)?~! BankNotFound
+            _ <- tryo(assert(isValidCurrencyISOCode(fromCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
+            _ <- tryo(assert(isValidCurrencyISOCode(toCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
+            _ <- cc.user ?~! UserNotLoggedIn
+            fxRate <- Connector.connector.vend.getCurrentFxRate(bankId, fromCurrencyCode, toCurrencyCode) ?~! ErrorMessages.FXCurrencyCodeCombinationsNotSupported
           } yield {
             val viewJSON = JSONFactory220.createFXRateJSON(fxRate)
             successJsonResponse(Extraction.decompose(viewJSON))
@@ -299,9 +300,9 @@ trait APIMethods220 {
           for {
             u <- cc.user ?~! UserNotLoggedIn
             account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            view <- View.fromUrl(viewId, account)?~! ViewNotFound
-            canAddCounterparty <- booleanToBox(view.canAddCounterparty == true, s"${ViewNoPermission}canAddCounterparty")
-            canUserAccessView <- Full(account.permittedViews(cc.user).find(_ == viewId)) ?~! UserNoPermissionAccessView
+            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))?~! ViewNotFound
+            _ <- booleanToBox(view.canAddCounterparty == true, s"${ViewNoPermission}canAddCounterparty")
+            _ <- Full(account.permittedViews(cc.user).find(_ == viewId)) ?~! UserNoPermissionAccessView
             counterparties <- Connector.connector.vend.getCounterparties(bankId,accountId,viewId)
             //Here we need create the metadata for all the explicit counterparties. maybe show them in json response.  
             //Note: actually we need update all the counterparty metadata when they from adapter. Some counterparties may be the first time to api, there is no metadata.
@@ -340,11 +341,11 @@ trait APIMethods220 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "counterparties" :: CounterpartyId(counterpartyId) :: Nil JsonGet json => {
         cc =>
           for {
-            u <- cc.user ?~! UserNotLoggedIn
+            _ <- cc.user ?~! UserNotLoggedIn
             account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            view <- View.fromUrl(viewId, account)?~! ViewNotFound
-            canAddCounterparty <- booleanToBox(view.canAddCounterparty == true, s"${ViewNoPermission}canAddCounterparty")
-            canUserAccessView <- Full(account.permittedViews(cc.user).find(_ == viewId)) ?~! UserNoPermissionAccessView
+            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))?~! ViewNotFound
+            _ <- booleanToBox(view.canAddCounterparty == true, s"${ViewNoPermission}canAddCounterparty")
+            _ <- Full(account.permittedViews(cc.user).find(_ == viewId)) ?~! UserNoPermissionAccessView
             counterpartyMetadata <- Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyId.value) ?~! CounterpartyMetadataNotFound
             counterparty <- Connector.connector.vend.getCounterpartyTrait(bankId, accountId, counterpartyId.value)
           } yield {
@@ -419,7 +420,7 @@ trait APIMethods220 {
           for {
             bank <- tryo{ json.extract[BankJSONV220] } ?~! ErrorMessages.InvalidJsonFormat
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            canCreateBank <- booleanToBox(hasEntitlement("", u.userId, canCreateBank) == true, ErrorMessages.InsufficientAuthorisationToCreateBank)
+            _ <- booleanToBox(hasEntitlement("", u.userId, canCreateBank) == true, ErrorMessages.InsufficientAuthorisationToCreateBank)
             success <- Connector.connector.vend.createOrUpdateBank(
               bank.id,
               bank.full_name,
@@ -589,7 +590,7 @@ trait APIMethods220 {
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
             bank <- Bank(bankId)?~! BankNotFound
-            canCreateProduct <- booleanToBox(hasAllEntitlements(bank.bankId.value, u.userId, createProductEntitlementsRequiredForSpecificBank) == true
+            _ <- booleanToBox(hasAllEntitlements(bank.bankId.value, u.userId, createProductEntitlementsRequiredForSpecificBank) == true
               ||
               hasAllEntitlements("", u.userId, createProductEntitlementsRequiredForAnyBank),
               createProductEntitlementsRequiredText)
@@ -643,7 +644,7 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, OBWG),
-      Nil,
+      List(apiTagFx),
       Some(List(canCreateFxRate, canCreateFxRateAtAnyBank))
     )
 
@@ -725,22 +726,22 @@ trait APIMethods220 {
         cc =>{
           for {
             jsonBody <- tryo (json.extract[CreateAccountJSONV220]) ?~! InvalidJsonFormat
-            bank <- Bank(bankId) ?~! BankNotFound
+            _ <- Bank(bankId) ?~! BankNotFound
             loggedInUser <- cc.user ?~! UserNotLoggedIn
             user_id <- tryo (if (jsonBody.user_id.nonEmpty) jsonBody.user_id else loggedInUser.userId) ?~! InvalidUserId
-            isValidAccountIdFormat <- tryo(assert(isValidID(accountId.value)))?~! InvalidAccountIdFormat
-            isValidBankId <- tryo(assert(isValidID(accountId.value)))?~! InvalidBankIdFormat
+            _ <- tryo(assert(isValidID(accountId.value)))?~! InvalidAccountIdFormat
+            _ <- tryo(assert(isValidID(accountId.value)))?~! InvalidBankIdFormat
             postedOrLoggedInUser <- User.findByUserId(user_id) ?~! UserNotFoundById
             // User can create account for self or an account for another user if they have CanCreateAccount role
-            isAllowed <- booleanToBox(hasEntitlement(bankId.value, loggedInUser.userId, canCreateAccount) == true || (user_id == loggedInUser.userId) ,
+            _ <- booleanToBox(hasEntitlement(bankId.value, loggedInUser.userId, canCreateAccount) == true || (user_id == loggedInUser.userId) ,
               s"${UserHasMissingRoles} CanCreateAccount or create account for self")
             initialBalanceAsString <- tryo (jsonBody.balance.amount) ?~! InvalidAccountBalanceAmount
             accountType <- tryo(jsonBody.`type`) ?~! InvalidAccountType
             accountLabel <- tryo(jsonBody.label) //?~! ErrorMessages.InvalidAccountLabel
             initialBalanceAsNumber <- tryo {BigDecimal(initialBalanceAsString)} ?~! InvalidAccountInitialBalance
-            isTrue <- booleanToBox(0 == initialBalanceAsNumber) ?~! InitialBalanceMustBeZero
+            _ <- booleanToBox(0 == initialBalanceAsNumber) ?~! InitialBalanceMustBeZero
             currency <- tryo (jsonBody.balance.currency) ?~!ErrorMessages.InvalidAccountBalanceCurrency
-            accountDoesNotExist <- booleanToBox(BankAccount(bankId, accountId).isEmpty, AccountIdAlreadyExsits)
+            _ <- booleanToBox(BankAccount(bankId, accountId).isEmpty, AccountIdAlreadyExsits)
             bankAccount <- Connector.connector.vend.createSandboxBankAccount(
               bankId,
               accountId,
@@ -1062,16 +1063,16 @@ trait APIMethods220 {
         cc =>
           for {
             u <- cc.user ?~! UserNotLoggedIn
-            isValidAccountIdFormat <- tryo(assert(isValidID(accountId.value)))?~! InvalidAccountIdFormat
-            isValidBankIdFormat <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
-            bank <- Bank(bankId) ?~! BankNotFound
+            _ <- tryo(assert(isValidID(accountId.value)))?~! InvalidAccountIdFormat
+            _ <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
+            _ <- Bank(bankId) ?~! BankNotFound
             account <- Connector.connector.vend.checkBankAccountExists(bankId, AccountId(accountId.value)) ?~! {AccountNotFound}
             postJson <- tryo {json.extract[PostCounterpartyJSON]} ?~! {InvalidJsonFormat+PostCounterpartyJSON}
             availableViews <- Full(account.permittedViews(cc.user))
-            view <- View.fromUrl(viewId, account) ?~! {ViewNotFound}
-            canUserAccessView <- tryo(availableViews.find(_ == viewId)) ?~! {"Current user does not have access to the view " + viewId}
-            canAddCounterparty <- booleanToBox(view.canAddCounterparty == true, "The current view does not have can_add_counterparty permission. Please use a view with that permission or add the permission to this view.")
-            checkAvailable <- tryo(assert(Counterparties.counterparties.vend.
+            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId)) ?~! {ViewNotFound}
+            _ <- tryo(availableViews.find(_ == viewId)) ?~! {"Current user does not have access to the view " + viewId}
+            _ <- booleanToBox(view.canAddCounterparty == true, "The current view does not have can_add_counterparty permission. Please use a view with that permission or add the permission to this view.")
+            _ <- tryo(assert(Counterparties.counterparties.vend.
               checkCounterpartyAvailable(postJson.name,bankId.value, accountId.value,viewId.value) == true)
             ) ?~! CounterpartyAlreadyExists
 
@@ -1138,7 +1139,7 @@ trait APIMethods220 {
           for {
             bank <- Bank(bankId) ?~ BankNotFound
             account <- BankAccount(bank.bankId, accountId) ?~ ErrorMessages.AccountNotFound
-            view <- View.fromUrl(viewId, account) ?~! {ErrorMessages.ViewNotFound}
+            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId)) ?~! {ErrorMessages.ViewNotFound}
             availableViews <- Full(account.permittedViews(user))
             canUserAccessView <- tryo(availableViews.find(_ == viewId)) ?~! UserNoPermissionAccessView
             moderatedAccount <- account.moderatedBankAccount(view, user)
