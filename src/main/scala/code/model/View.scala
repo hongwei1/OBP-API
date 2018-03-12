@@ -807,7 +807,10 @@ trait View extends AccountView with ViewDefinition{
       Failure(s"${ErrorMessages.ViewDoesNotPermitAccess} You need the `canSeeTransactionOtherBankAccount` access for the view(${this.viewId.value})")
   }
   
-  //We map one by one :  ViewImpl <---> MappedAccountView
+  //This is a temporary  way for now: ViewImpl <---> MappedAccountView (not one by one mapping)
+  //Each time we create ViewImpl, we need create MappedAccountView. 
+  //But MappedAccountView also support the System Views, which are not in ViewImpl tables(Use the scala code...).
+  //TODO, how to maintance this relation more clearly, for now, we need call this varible explict when we create the ViewImpl. If it is not `lazy`, it will throw `ExceptionInInitializerError` when Start OBP-API.
   lazy val mappedAccountView: MappedAccountView = MappedAccountView
     .getOrCreate(ViewIdBankIdAccountId(viewId, bankId, accountId))
     .openOrThrowException(s"Can not MappedAccountView.getOrCreate($viewId, $bankId, $accountId) !")

@@ -33,7 +33,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers {
   
   
   feature("Test the updateUserAccountViews method") {
-    scenario("we fack the output from getBankAccounts(), and check the functions there") {
+    scenario("we mocked the output from getBankAccounts(), and check the functions there") {
 
       When("We call the method use resourceUser1")
       AuthUser.updateUserAccountViews(resourceUser1)
@@ -47,17 +47,17 @@ class AuthUserTest extends ServerSetup with DefaultUsers {
       accountholders.length should equal(2)
 
       Then("We check the views")  //"Owner"::"Public" :: "Accountant" :: "Auditor"
-      val allViewsForAccount1 = MapperViews.viewsForAccount(bankIdAccountId)
-      val allViewsForAccount2 = MapperViews.viewsForAccount(bankIdAccountId)
-      val allViews = ViewImpl.findAll()
-      allViewsForAccount1.toString().contains("owner") should equal(true)
-      allViewsForAccount1.toString().contains("public") should equal(true)
-      allViewsForAccount1.toString().contains("accountant") should equal(true)
-      allViewsForAccount1.toString().contains("auditor") should equal(true)
-      allViewsForAccount2.toString().contains("owner") should equal(true)
-      allViewsForAccount2.toString().contains("public") should equal(true)
-      allViewsForAccount2.toString().contains("accountant") should equal(true)
-      allViewsForAccount2.toString().contains("auditor") should equal(true)
+      val allViewIdsForAccount1: List[ViewId] = MapperViews.viewsForAccount(bankIdAccountId).map(_.viewId)
+      val allViewsIdsForAccount2 = MapperViews.viewsForAccount(bankIdAccountId).map(_.viewId)
+      val allViews = MappedAccountView.findAll()
+      allViewIdsForAccount1.toString().contains("owner") should equal(true)
+      allViewIdsForAccount1.toString().contains("public") should equal(true)
+      allViewIdsForAccount1.toString().contains("accountant") should equal(true)
+      allViewIdsForAccount1.toString().contains("auditor") should equal(true)
+      allViewsIdsForAccount2.toString().contains("owner") should equal(true)
+      allViewsIdsForAccount2.toString().contains("public") should equal(true)
+      allViewsIdsForAccount2.toString().contains("accountant") should equal(true)
+      allViewsIdsForAccount2.toString().contains("auditor") should equal(true)
       allViews.length should equal(8)
 
       Then("We check the ViewPrivileges")
