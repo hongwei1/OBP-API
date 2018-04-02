@@ -2,7 +2,7 @@ package code.api.v1_4_0
 
 import code.api.util.APIUtil.isValidCurrencyISOCode
 import code.api.util.ApiRole._
-import code.api.util.{APIUtil, ApiRole}
+import code.api.util.{APIUtil, ApiRole, ApiVersion}
 import code.api.v1_2_1.Akka
 import code.api.v1_4_0.JSONFactory1_4_0._
 import code.api.v2_0_0.CreateCustomerJson
@@ -32,7 +32,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.text.SimpleDateFormat
 
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
-import code.api.util.APIUtil.{ResourceDoc, authenticationRequiredMessage, noV, _}
+import code.api.util.APIUtil.{ResourceDoc, authenticationRequiredMessage, _}
 import code.api.util.ErrorMessages
 import code.api.util.ErrorMessages._
 import code.atms.Atms
@@ -52,7 +52,7 @@ trait APIMethods140 extends MdcLoggable with APIMethods130 with APIMethods121{
 
     val resourceDocs = ArrayBuffer[ResourceDoc]()
     val emptyObjectJson = EmptyClassJson()
-    val apiVersion : String = noV(ApiVersion.v1_4_0) //  "1_4_0"
+    val apiVersion : ApiVersion = ApiVersion.v1_4_0 // was noV i.e.  "1_4_0"
     val apiVersionStatus : String = "STABLE"
 
     val exampleDateString : String ="22/08/2013"
@@ -759,12 +759,12 @@ trait APIMethods140 extends MdcLoggable with APIMethods130 with APIMethods121{
 
 
 
-    def dummy(apiVersion : String, apiVersionStatus: String) : OBPEndpoint = {
+    def dummy(apiVersion : ApiVersion, apiVersionStatus: String) : OBPEndpoint = {
       case "dummy" :: Nil JsonGet req => {
         cc =>
           val apiDetails: JValue = {
             val hostedBy = new HostedBy("Dummy Org", "contact@example.com", "12345", "https://www.example.com")
-            val apiInfoJSON = new APIInfoJSON(apiVersion, apiVersionStatus, gitCommit, "DUMMY", hostedBy, Akka(APIUtil.akkaSanityCheck()))
+            val apiInfoJSON = new APIInfoJSON(apiVersion.vDottedApiVersion, apiVersionStatus, gitCommit, "DUMMY", hostedBy, Akka(APIUtil.akkaSanityCheck()))
             Extraction.decompose(apiInfoJSON)
           }
 

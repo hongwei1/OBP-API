@@ -1,17 +1,16 @@
 package code.api.sandbox
 
-import code.api.{APIFailure, OBPRestHelper}
+import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil._
-import code.api.util.{APIUtil, ErrorMessages}
+import code.api.util.{APIUtil, ApiVersion, ErrorMessages}
+import code.api.{APIFailure, OBPRestHelper}
 import code.sandbox.{OBPDataImport, SandboxDataImport}
 import code.util.Helper
-import net.liftweb.http.S
-import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
-import net.liftweb.http.rest.RestHelper
-import net.liftweb.util.Helpers._
-import net.liftweb.util.Props
 import code.util.Helper.MdcLoggable
+import net.liftweb.http.S
+import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.Extraction
+import net.liftweb.util.Helpers._
 
 
 object SandboxApiCalls extends OBPRestHelper with MdcLoggable {
@@ -19,7 +18,7 @@ object SandboxApiCalls extends OBPRestHelper with MdcLoggable {
   //needs to be a RestHelper to get access to JsonGet, JsonPost, etc.
   self: RestHelper =>
   logger.debug("Hello from SandboxApiCalls")
-  val version = "sandbox"
+  val version = ApiVersion.sandbox // "sandbox"
   val versionStatus = "DEPRECIATED"
 
   oauthServe(apiPrefix{

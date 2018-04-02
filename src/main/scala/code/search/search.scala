@@ -18,10 +18,11 @@ import java.util.Date
 
 import code.api.util.APIUtil
 import code.api.util.ErrorMessages._
+import com.sksamuel.elastic4s.ElasticsearchClientUri
 import org.elasticsearch.common.settings.Settings
-import com.sksamuel.elastic4s.TcpClient
+import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.mappings.FieldType._
-import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import dispatch.as.String.charset
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.provider.HTTPCookie
@@ -74,10 +75,32 @@ class elasticsearch extends MdcLoggable {
       Full(JsonResponse(json.JsonParser.parse("""{"error":"elasticsearch disabled"}"""), ("Access-Control-Allow-Origin", "*") :: Nil, Nil, 404))
     }
   }
+  def searchProxyAsyncV300(userId: String, uri: String, body: String, statsOnly: Boolean = false): Future[APIResponse] = {
+      val httpHost = ("http://" +  esHost + ":" +  esPortHTTP)
+      val esUrl = s"${httpHost}${uri.replaceAll("\"" , "")}"
+      logger.debug(esUrl)
+      logger.debug(body)
+      val request: Req = (url(esUrl).<<(body).GET).setContentType("application/json", Charset.forName("UTF-8")) // Note that WE ONLY do GET - Keep it this way!
+      val response = getAPIResponseAsync(request)
+      response
+
+  }
+
+  def parseResponse(response: APIResponse, statsOnly: Boolean = false) = {
+    if (APIUtil.getPropsAsBoolValue("allow_elasticsearch", false) ) {
+      if (statsOnly) (ESJsonResponse(privacyCheckStatistics(response.body), ("Access-Control-Allow-Origin", "*") :: Nil, Nil, response.code))
+      else (ESJsonResponse(response.body, ("Access-Control-Allow-Origin", "*") :: Nil, Nil, response.code))
+    } else {
+      Full(JsonResponse(json.JsonParser.parse("""{"error":"elasticsearch disabled"}"""), ("Access-Control-Allow-Origin", "*") :: Nil, Nil, 404))
+    }
+  }
 
 
   def searchProxyStatsV300(userId: String, uriPart: String, bodyPart:String, field: String): Box[LiftResponse] = {
     searchProxyV300(userId, uriPart, addAggregation(bodyPart,field), true)
+  }
+  def searchProxyStatsAsyncV300(userId: String, uriPart: String, bodyPart:String, field: String): Future[APIResponse] = {
+    searchProxyAsyncV300(userId, uriPart, addAggregation(bodyPart,field), true)
   }
 
   private def addAggregation(bodyPart: String, field: String): String = {
@@ -99,12 +122,16 @@ class elasticsearch extends MdcLoggable {
   
   private def getAPIResponse(req: Req): APIResponse = {
     Await.result(
-      for (response <- Http(req > as.Response(p => p)))
-        yield {
-          val body = if (response.getResponseBody().isEmpty) "{}" else response.getResponseBody()
-          APIResponse(response.getStatusCode, json.parse(body))
-        }
+      getAPIResponseAsync(req)
       , Duration.Inf)
+  }
+
+  private def getAPIResponseAsync(req: Req): Future[APIResponse] = {
+    for (response <- Http.default(req > as.Response(p => p)))
+      yield {
+        val body = if (response.getResponseBody().isEmpty) "{}" else response.getResponseBody()
+        APIResponse(response.getStatusCode, json.parse(body))
+      }
   }
 
   private def constructQuery(userId: String, params: Map[String, String]): Req = {
@@ -213,11 +240,11 @@ class elasticsearchMetrics extends elasticsearch {
 
   if (esIndex.contains(",")) throw new RuntimeException("Props error: es.metrics.index can not be a list")
 
-  var client:TcpClient = null
+  var client:HttpClient = null
 
   if (APIUtil.getPropsAsBoolValue("allow_elasticsearch", false) && APIUtil.getPropsAsBoolValue("allow_elasticsearch_metrics", false) ) {
     val settings = Settings.builder().put("cluster.name", APIUtil.getPropsValue("es.cluster.name", "elasticsearch")).build()
-    client = TcpClient.transport(settings, "elasticsearch://" + esHost + ":" + esPortTCP + ",")
+    client = HttpClient(ElasticsearchClientUri(esHost,  esPortTCP.toInt))
     try {
       client.execute {
         createIndex(esIndex).mappings(
@@ -267,10 +294,10 @@ class elasticsearchWarehouse extends elasticsearch {
   override val esPortTCP  = APIUtil.getPropsValue("es.warehouse.port.tcp","9300")
   override val esPortHTTP = APIUtil.getPropsValue("es.warehouse.port.http","9200")
   override val esIndex    = APIUtil.getPropsValue("es.warehouse.index", "warehouse")
-  var client:TcpClient = null
+  var client:HttpClient = null
   if (APIUtil.getPropsAsBoolValue("allow_elasticsearch", false) && APIUtil.getPropsAsBoolValue("allow_elasticsearch_warehouse", false) ) {
     val settings = Settings.builder().put("cluster.name", APIUtil.getPropsValue("es.cluster.name", "elasticsearch")).build()
-    client = TcpClient.transport(settings, "elasticsearch://" + esHost + ":" + esPortTCP + ",")
+    client = HttpClient(ElasticsearchClientUri(esHost,  esPortTCP.toInt))
   }
 }
 

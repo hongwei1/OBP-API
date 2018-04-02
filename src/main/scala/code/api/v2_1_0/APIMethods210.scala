@@ -4,8 +4,9 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import code.TransactionTypes.TransactionType
-import code.api.util.{APIUtil, ApiRole}
+import code.api.util
 import code.api.util.ErrorMessages.TransactionDisabled
+import code.api.util.{APIUtil, ApiRole}
 import code.api.v1_2_1.AmountOfMoneyJsonV121
 import code.api.v1_3_0.{JSONFactory1_3_0, _}
 import code.api.v1_4_0.JSONFactory1_4_0
@@ -21,9 +22,10 @@ import code.consumer.Consumers
 import code.customer.{CreditLimit, CreditRating, Customer, CustomerFaceImage}
 import code.entitlement.Entitlement
 import code.fx.fx
-import code.metrics.{APIMetric, APIMetrics}
+import code.metrics.APIMetrics
 import code.model.{BankAccount, BankId, ViewId, _}
 import code.products.Products.ProductCode
+import code.sandbox.SandboxData
 import code.transactionChallenge.ExpectedChallengeAnswer
 import code.transactionrequests.TransactionRequests.{TransactionChallengeTypes, TransactionRequestTypes}
 import code.usercustomerlinks.UserCustomerLink
@@ -33,7 +35,6 @@ import code.views.Views
 import net.liftweb.http.S
 import net.liftweb.json.Extraction
 import net.liftweb.util.Helpers.tryo
-import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
@@ -68,7 +69,7 @@ trait APIMethods210 {
     val apiRelations = ArrayBuffer[ApiRelation]()
 
     val emptyObjectJson = EmptyClassJson()
-    val apiVersion: String = "2_1_0"
+    val apiVersion: util.ApiVersion = util.ApiVersion.v2_1_0 // was String "2_1_0"
 
     val exampleDateString: String = "22/08/2013"
     val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
@@ -95,7 +96,7 @@ trait APIMethods210 {
           |An example of an import set of data (json) can be found [here](https://raw.githubusercontent.com/OpenBankProject/OBP-API/develop/src/main/scala/code/api/sandbox/example_data/2016-04-28/example_import.json)
          |${authenticationRequiredMessage(true)}
           |""",
-      emptyObjectJson,
+      SandboxData.importJson,
       successMessage,
       List(
         UserNotLoggedIn,
@@ -532,7 +533,7 @@ trait APIMethods210 {
         |
         |3) `id` :  is `challenge.id` field in createTransactionRequest response body. 
         |
-        |4) `answer` : is `challenge.answer` can be any Interge in sandbox mode.  
+        |4) `answer` : must be `123`. if it is in sandbox mode. If it kafka mode, the answer can be got by phone message or other security ways.
         |
       """.stripMargin,
       challengeAnswerJSON,
@@ -921,6 +922,7 @@ trait APIMethods210 {
       List(
         UserNotLoggedIn,
         UserHasMissingRoles,
+        AllowedValuesAre,
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
@@ -938,8 +940,9 @@ trait APIMethods210 {
             postJson <- tryo {json.extract[PostPhysicalCardJSON]} ?~! {InvalidJsonFormat}
             _ <- postJson.allows match {
               case List() => booleanToBox(true)
-              case _ => booleanToBox(postJson.allows.forall(a => CardAction.availableValues.contains(a))) ?~! {"Allowed values are: " + CardAction.availableValues.mkString(", ")}
+              case _ => booleanToBox(postJson.allows.forall(a => CardAction.availableValues.contains(a))) ?~! {AllowedValuesAre + CardAction.availableValues.mkString(", ")}
             }
+            _ <- tryo {CardReplacementReason.valueOf(postJson.replacement.reason_requested)} ?~! {AllowedValuesAre + CardReplacementReason.availableValues.mkString(", ")}
             _ <- BankAccount(bankId, AccountId(postJson.account_id)) ?~! {AccountNotFound}
             card <- Connector.connector.vend.createOrUpdatePhysicalCard(
                                 bankCardNumber=postJson.bank_card_number,
@@ -949,15 +952,15 @@ trait APIMethods210 {
                                 validFrom=postJson.valid_from_date,
                                 expires=postJson.expires_date,
                                 enabled=postJson.enabled,
-                                cancelled=postJson.cancelled,
-                                onHotList=postJson.on_hot_list,
+                                cancelled=false,
+                                onHotList=false,
                                 technology=postJson.technology,
                                 networks= postJson.networks,
                                 allows= postJson.allows,
                                 accountId= postJson.account_id,
                                 bankId=bankId.value,
-                                replacement= None,
-                                pinResets= List(),
+                                replacement= Some(CardReplacementInfo(requestedDate = postJson.replacement.requested_date, CardReplacementReason.valueOf(postJson.replacement.reason_requested))),
+                                pinResets= postJson.pin_reset.map(e => PinResetInfo(e.requested_date, PinResetReason.valueOf(e.reason_requested.toUpperCase))),
                                 collected= Option(CardCollectionInfo(postJson.collected)),
                                 posted= Option(CardPostedInfo(postJson.posted))
                               )
@@ -1266,7 +1269,7 @@ trait APIMethods210 {
     val createCustomerEntitlementsRequiredForAnyBank = canCreateCustomerAtAnyBank ::
       canCreateUserCustomerLinkAtAnyBank ::
       Nil
-    val createCustomeEntitlementsRequiredText = createCustomerEntitlementsRequiredForSpecificBank.mkString(" and ") + " OR " + createCustomerEntitlementsRequiredForAnyBank.mkString(" and ") + " entitlements required."
+    val createCustomeEntitlementsRequiredText = createCustomerEntitlementsRequiredForSpecificBank.mkString(" and ") + " OR " + createCustomerEntitlementsRequiredForAnyBank.mkString(" and ")
 
     resourceDocs += ResourceDoc(
       createCustomer,
@@ -1314,10 +1317,11 @@ trait APIMethods210 {
             _ <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
             _ <- Bank(bankId) ?~! {BankNotFound}
             postedData <- tryo{json.extract[PostCustomerJsonV210]} ?~! InvalidJsonFormat
-            _ <- booleanToBox(hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
-                                            ||
-                                            hasAllEntitlements("", u.userId, createCustomerEntitlementsRequiredForAnyBank),
-                                            s"$createCustomeEntitlementsRequiredText")
+            _ <- booleanToBox(
+              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+                ||
+                hasAllEntitlements("", u.userId, createCustomerEntitlementsRequiredForAnyBank),
+              s"$UserHasMissingRoles$createCustomeEntitlementsRequiredText")
             _ <- tryo(assert(Customer.customerProvider.vend.checkCustomerNumberAvailable(bankId, postedData.customer_number) == true)) ?~! CustomerNumberAlreadyExists
             user_id <- tryo (if (postedData.user_id.nonEmpty) postedData.user_id else u.userId) ?~! s"Problem getting user_id"
             customer_user <- User.findByUserId(user_id) ?~! UserNotFoundById

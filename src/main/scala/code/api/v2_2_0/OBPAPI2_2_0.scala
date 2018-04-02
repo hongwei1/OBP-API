@@ -32,24 +32,19 @@
 package code.api.v2_2_0
 
 import code.api.OBPRestHelper
-import code.api.util.APIUtil
 import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
+import code.api.util.{APIUtil, ApiVersion}
 import code.api.v1_3_0.APIMethods130
 import code.api.v1_4_0.APIMethods140
 import code.api.v2_0_0.APIMethods200
 import code.api.v2_1_0.APIMethods210
-import code.model.User
-import net.liftweb.common.Box
 import code.util.Helper.MdcLoggable
-import net.liftweb.http.{JsonResponse, Req}
-import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 
 object OBPAPI2_2_0 extends OBPRestHelper with APIMethods130 with APIMethods140 with APIMethods200 with APIMethods210 with APIMethods220 with MdcLoggable {
 
-  
-  val version = "2.2.0"
+  val version : ApiVersion = ApiVersion.v2_2_0 //  "2.2.0"
   val versionStatus = "DRAFT"
 
   // Get disabled API versions from props
@@ -219,8 +214,8 @@ object OBPAPI2_2_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_2_0.createViewForBankAccount ::
                           Implementations2_2_0.updateViewForBankAccount ::
                           Implementations2_2_0.getCurrentFxRate ::
-                          Implementations2_2_0.getCounterpartiesForAccount ::
-                          Implementations2_2_0.getCounterpartyById ::
+                          Implementations2_2_0.getExplictCounterpartiesForAccount ::
+                          Implementations2_2_0.getExplictCounterpartyById ::
                           Implementations2_2_0.getMessageDocs ::
                           Implementations2_2_0.createBank ::
                           Implementations2_2_0.createAccount ::

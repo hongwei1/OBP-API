@@ -11,11 +11,11 @@
   <name>Open Bank Project API</name>
   <inceptionYear>2011</inceptionYear>
   <properties>
-    <scala.version>2.11</scala.version>
-    <scala.compiler>2.11.8</scala.compiler>
+    <scala.version>2.12</scala.version>
+    <scala.compiler>2.12.4</scala.compiler>
     <akka.version>2.5.1</akka.version>
     <akka-streams-kafka.version>0.16</akka-streams-kafka.version>
-    <avro.version>1.7.0</avro.version>
+    <avro.version>1.8.3</avro.version>
     <lift.version>3.1.0</lift.version>
     <obp-ri.version>2016.11-RC6-SNAPSHOT</obp-ri.version>
     <!-- Common plugin settings -->
@@ -97,6 +97,16 @@
       <groupId>org.slf4j</groupId>
       <artifactId>log4j-over-slf4j</artifactId>
       <version>1.7.25</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.6.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.6.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
@@ -234,12 +244,12 @@
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
-      <version>5.3.0</version>
+      <version>6.1.1</version>
     </dependency>
     <dependency>
       <groupId>com.sksamuel.elastic4s</groupId>
-      <artifactId>elastic4s-tcp_${scala.version}</artifactId>
-      <version>5.3.0</version>
+      <artifactId>elastic4s-http_${scala.version}</artifactId>
+      <version>6.1.1</version>
       <!-- TODO try to switch to slf4j from log4j
       <exclusions>
         <exclusion>

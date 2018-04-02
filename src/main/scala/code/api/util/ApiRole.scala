@@ -148,6 +148,9 @@ object ApiRole {
   case class CanUseFirehoseAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
   lazy val canUseFirehoseAtAnyBank = CanUseFirehoseAtAnyBank()
 
+  case class CanReadAggregateMetrics (requiresBankId: Boolean = false) extends ApiRole
+  lazy val canReadAggregateMetrics = CanReadAggregateMetrics()
+
   private val roles =
     canSearchAllTransactions ::
     canSearchAllAccounts ::
@@ -196,13 +199,16 @@ object ApiRole {
     canGetEntitlementRequestsAtOneBank ::
     canGetEntitlementRequestsAtAnyBank ::
     canUseFirehoseAtAnyBank ::
+    canReadAggregateMetrics ::
     Nil
+
+  lazy val rolesMappedToClasses = roles.map(_.getClass)
 
   def valueOf(value: String): ApiRole = {
     roles.filter(_.toString == value) match {
       case x :: Nil => x // We find exactly one Role
       case x :: _ => throw new Exception("Duplicated role: " + x) // We find more than one Role
-      case _ => throw new IllegalArgumentException() // There is no Role
+      case _ => throw new IllegalArgumentException("Incorrect ApiRole value: " + value) // There is no Role
     }
   }
 

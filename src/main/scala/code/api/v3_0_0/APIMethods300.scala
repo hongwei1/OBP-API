@@ -1,5 +1,9 @@
 package code.api.v3_0_0
 
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.util.{Date, Locale}
+
 import code.accountholder.AccountHolders
 import code.api.APIFailureNewStyle
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
@@ -7,34 +11,39 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil.{canGetAtm, _}
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
-import code.api.util.{APIUtil, ApiRole, CallContext, ErrorMessages}
+import code.api.util.Glossary.GlossaryItem
+import code.api.util._
 import code.api.v2_0_0.JSONFactory200
 import code.api.v3_0_0.JSONFactory300._
 import code.atms.Atms.AtmId
-import code.bankconnectors.Connector
+import code.bankconnectors.{Connector, OBPFromDate, OBPQueryParam, OBPToDate}
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
 import code.branches.Branches
 import code.branches.Branches.BranchId
 import code.entitlement.Entitlement
 import code.entitlementrequest.EntitlementRequest
+import code.metrics.MappedMetric
 import code.model.{BankId, ViewId, _}
 import code.search.elasticsearchWarehouse
 import code.users.Users
 import code.util.Helper
-import code.util.Helper.booleanToBox
-import code.views.{MapperViews, Views}
+import code.util.Helper.{DateFormatWithCurrentTimeZone, booleanToBox}
+import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
-import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.{JsonResponse, S}
+import net.liftweb.common.{Empty, Full}
+import net.liftweb.http.S
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.{Extraction, compactRender}
-import net.liftweb.util.Helpers.tryo
-import net.liftweb.util.Props
+import net.liftweb.mapper.DB
+import net.liftweb.util.Helpers.{now, tryo}
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import code.metrics.AggregateMetrics
+import net.liftweb.util.Helpers._
+
 
 
 
@@ -44,7 +53,7 @@ trait APIMethods300 {
 
   val Implementations3_0_0 = new Object() {
 
-    val implementedInApiVersion: String = "3_0_0" // TODO Use ApiVersions enumeration
+    val implementedInApiVersion: ApiVersion = ApiVersion.v3_0_0 // was noV
 
     val resourceDocs = ArrayBuffer[ResourceDoc]()
     val apiRelations = ArrayBuffer[ApiRelation]()
@@ -89,7 +98,7 @@ trait APIMethods300 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagAccount, apiTagView))
+      List(apiTagView, apiTagAccount))
 
     lazy val getViewsForBankAccount : OBPEndpoint = {
       //get the available views on an bank account
@@ -138,7 +147,7 @@ trait APIMethods300 {
         |
         | The 'allowed_actions' field is a list containing the name of the actions allowed on this view, all the actions contained will be set to `true` on the view creation, the rest will be set to `false`.
         |
-        | You should use a leading _ (underscore) for the view name because other view names may become reserved by OBP internally
+        | You MUST use a leading _ (underscore) in the view name because other view names are reserved for OBP system views.
         | """,
       SwaggerDefinitionsJSON.createViewJson,
       viewJsonV300,
@@ -468,7 +477,7 @@ trait APIMethods300 {
       emptyObjectJson,
       moderatedCoreAccountsJsonV300,
       List(UserNotLoggedIn,UnknownError),
-      Catalogs(Core, PSD2, OBWG),
+      Catalogs(notCore, notPSD2, notOBWG),
       List(apiTagAccountFirehose, apiTagAccount, apiTagFirehoseData),
       Some(List(canUseFirehoseAtAnyBank))
     )
@@ -689,148 +698,138 @@ trait APIMethods300 {
 
     // TODO Put message into doc below if not enabled (but continue to show API Doc)
     resourceDocs += ResourceDoc(
-      elasticSearchWarehouseV300,
+      dataWarehouseSearch,
       implementedInApiVersion,
-      "elasticSearchWarehouseV300",
+      "dataWarehouseSearch",
       "POST",
       "/search/warehouse/INDEX",
-      "Search Warehouse Data Via Elasticsearch",
+      "Data Warehouse Search",
       s"""
-        |Search warehouse data via Elastic Search.
+        |Search the data warehouse and get row level results.
         |
         |${authenticationRequiredMessage(true)}
         |
-        |CanSearchWarehouse entitlement is required to search warehouse data!
-        |
-        |Send your email, name, project name and user_id to the admins to get access.
+        |CanSearchWarehouse entitlement is required. You can request the Role below.
         |
         |Elastic (search) is used in the background. See links below for syntax.
         |
-        |This version differs from v2.0.0
+        |Examples of usage:
         |
         |
+        |POST /search/warehouse/THE_INDEX_YOU_WANT_TO_USE
         |
-        |Example of usage:
+        |POST /search/warehouse/INDEX1,INDEX2
         |
-        |POST /search/warehouse/THE_INDEX_YOU_WANT_TO_USE 
-        |POST /search/warehouse/INDEX1,INDEX2 
-        |POST /search/warehouse/All 
+        |POST /search/warehouse/ALL
+        |
+        |{ Any valid elasticsearch query DSL in the body }
         |
         |
-        |{
-        |    "query": {
-        |      "range": {
-        |        "postDate": {
-        |          "from": "2011-12-10",
-        |          "to": "2011-12-12"
-        |        
-        |      }
-        |    }
-        |  }
-        |}
+        |[Elasticsearch query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html)
         |
-        |Elastic simple query: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-request-body.html
+        |[Elastic simple query](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-request-body.html)
         |
-        |Elastic JSON query: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-filter-context.html
-        |
-        |Elastic aggregations: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-aggregations.html
+        |[Elastic aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-aggregations.html)
         |
         |
         """,
-      ElasticSearchJSON(es_uri_part = "/_search", es_body_part = EmptyClassJson()),
+      ElasticSearchJSON(ElasticSearchQuery(EmptyElasticSearch())),
       emptyObjectJson, //TODO what is output here?
       List(UserNotLoggedIn, UserHasMissingRoles, UnknownError),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagDataWarehouse),
+      List(apiTagSearchWarehouse),
       Some(List(canSearchWarehouse)))
     // TODO Rewrite as New Style Endpoint
     val esw = new elasticsearchWarehouse
-    lazy val elasticSearchWarehouseV300: OBPEndpoint = {
+    lazy val dataWarehouseSearch: OBPEndpoint = {
       case "search" :: "warehouse" :: index :: Nil JsonPost json -> _ => {
         cc =>
           for {
-            u <- cc.user ?~! ErrorMessages.UserNotLoggedIn
-            _ <- Entitlement.entitlement.vend.getEntitlement("", u.userId, ApiRole.CanSearchWarehouse.toString) ?~! {UserHasMissingRoles + CanSearchWarehouse}
-            indexPart <- esw.getElasticSearchUri(index) ?~! ElasticSearchIndexNotFound
-            bodyPart <- tryo(compactRender(json)) ?~! ElasticSearchEmptyQueryBody
-            result <- esw.searchProxyV300(u.userId, indexPart, bodyPart)
+            (user, callContext) <-  extractCallContext(UserNotLoggedIn, cc)
+            u <- unboxFullAndWrapIntoFuture{ user }
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanSearchWarehouse) {
+              hasEntitlement("", u.userId, ApiRole.canSearchWarehouse)
+            }
+            indexPart <- Future { esw.getElasticSearchUri(index) } map {
+              x => fullBoxOrException(x ~> APIFailureNewStyle(ElasticSearchIndexNotFound, 400, Some(cc.toLight)))
+            } map { unboxFull(_) }
+            bodyPart <- Future { tryo(compactRender(json)) } map {
+              x => fullBoxOrException(x ~> APIFailureNewStyle(ElasticSearchEmptyQueryBody, 400, Some(cc.toLight)))
+            } map { unboxFull(_) }
+            result: esw.APIResponse <- esw.searchProxyAsyncV300(u.userId, indexPart, bodyPart)
           } yield {
-            successJsonResponse(Extraction.decompose(result))
+            (esw.parseResponse(result), callContext)
           }
       }
     }
   
-    
+    case class Query(query: String)
     
     resourceDocs += ResourceDoc(
-      aggregateWarehouse,
+      dataWarehouseStatistics,
       implementedInApiVersion,
-      "elasticSearchWarehouseV300",
+      "dataWarehouseStatistics",
       "POST",
       "/search/warehouse/statistics/FIELD",
-      "Search Warehouse Data Via Elasticsearch and return only stats aggregation over one specific numeric field",
+      "Data Warehouse Statistics",
       s"""
-         |Aggregate warehouse data via Elastic Search.
+         |Search the data warehouse and get statistical aggregations over a warehouse field
          |
-        |${authenticationRequiredMessage(true)}
+         |Does a stats aggregation over some numeric field:
          |
-        |CanSearchWarehouseStats entitlement is required to search warehouse data!
+         |https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-stats-aggregation.html
          |
-        |Send your email, name, project name and user_id to the admins to get access.
+         |${authenticationRequiredMessage(true)}
          |
-        |Elastic (search) is used in the background. See links below for syntax.
+         |CanSearchWarehouseStats Role is required. You can request this below.
          |
-        |This version differs from v2.0.0
+         |Elastic (search) is used in the background. See links below for syntax.
          |
-        |
-        |
-        |Example of usage:
+         |Examples of usage:
          |
-        |POST /search/warehouse/statistics/INDEX/FIELD
+         |POST /search/warehouse/statistics/INDEX/FIELD
          |
-        |POST /search/warehouse/statistics/ALL/FIELD|
+         |POST /search/warehouse/statistics/ALL/FIELD
          |
-         | 
-         |{  
-         |    "query": {
-         |      "range": {
-         |        "postDate": {
-         |          "from": "2011-12-10",
-         |          "to": "2011-12-12"
-         |        }
-         |      }
-         |    }
-         |}
+         |{ Any valid elasticsearch query DSL in the body }
          |
          |
-        |Elastic simple query: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-request-body.html
-         |         |
-        |Elastic JSON query: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-filter-context.html
+         |[Elasticsearch query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html)
          |
-        |Elastic aggregations: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-aggregations.html
+         |[Elastic simple query](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-request-body.html)
          |
-        |
+         |[Elastic aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/search-aggregations.html)
+         |
+         |
         """,
-      ElasticSearchJSON(es_uri_part = "/_search", es_body_part = EmptyClassJson()),
+      ElasticSearchJSON(ElasticSearchQuery(EmptyElasticSearch())),
       emptyObjectJson, //TODO what is output here?
       List(UserNotLoggedIn, UserHasMissingRoles, UnknownError),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagDataWarehouse),
+      List(apiTagSearchWarehouse),
       Some(List(canSearchWarehouseStatistics))
     )
-    lazy val aggregateWarehouse: OBPEndpoint = {
+    lazy val dataWarehouseStatistics: OBPEndpoint = {
       case "search" :: "warehouse" :: "statistics" :: index :: field :: Nil JsonPost json -> _ => {
         cc =>
+          //if (field == "/") throw new RuntimeException("No aggregation field supplied") with NoStackTrace
           for {
-            u <- cc.user ?~! ErrorMessages.UserNotLoggedIn
-            _ <- Entitlement.entitlement.vend.getEntitlement("", u.userId, ApiRole.CanSearchWarehouseStatistics.toString) ?~! {UserHasMissingRoles + CanSearchWarehouseStatistics}
-            indexPart <- esw.getElasticSearchUri(index) ?~! ElasticSearchIndexNotFound
-            bodyPart <- tryo(compactRender(json)) ?~! ElasticSearchEmptyQueryBody
-            result <- esw.searchProxyStatsV300(u.userId, indexPart, bodyPart, field)
-          } yield {
-            successJsonResponse(Extraction.decompose(result))
+            (user, callContext) <-  extractCallContext(UserNotLoggedIn, cc)
+            u <- unboxFullAndWrapIntoFuture{ user }
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanSearchWarehouseStatistics) {
+              hasEntitlement("", u.userId, ApiRole.canSearchWarehouseStatistics)
             }
+            indexPart <- Future { esw.getElasticSearchUri(index) } map {
+              x => fullBoxOrException(x ~> APIFailureNewStyle(ElasticSearchIndexNotFound, 400, Some(cc.toLight)))
+            } map { unboxFull(_) }
+            bodyPart <- Future { tryo(compactRender(json)) } map {
+              x => fullBoxOrException(x ~> APIFailureNewStyle(ElasticSearchEmptyQueryBody, 400, Some(cc.toLight)))
+            } map { unboxFull(_) }
+            result <- esw.searchProxyStatsAsyncV300(u.userId, indexPart, bodyPart, field)
+          } yield {
+            (esw.parseResponse(result), callContext)
           }
+      }
     }
     
 
@@ -1676,6 +1675,9 @@ trait APIMethods300 {
               _ <- Helper.booleanToFuture(failMsg = IncorrectRoleName + postedData.role_name + ". Possible roles are " + ApiRole.availableRoles.sorted.mkString(", ")) {
                 availableRoles.exists(_ == postedData.role_name)
               }
+              _ <- Helper.booleanToFuture(failMsg = if (ApiRole.valueOf(postedData.role_name).requiresBankId) EntitlementIsBankRole else EntitlementIsSystemRole) {
+                ApiRole.valueOf(postedData.role_name).requiresBankId == postedData.bank_id.nonEmpty
+              }
               _ <- Helper.booleanToFuture(failMsg = EntitlementRequestAlreadyExists) {
                 EntitlementRequest.entitlementRequest.vend.getEntitlementRequest(postedData.bank_id, u.userId, postedData.role_name).isEmpty
               }
@@ -1980,6 +1982,83 @@ trait APIMethods300 {
           } yield {
             (JSONFactory300.createCoreAccountsByCoreAccountsJSON(accounts), callContext)
           }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      getAggregateMetrics,
+      implementedInApiVersion,
+      "getAggregateMetrics",
+      "GET",
+      "/management/aggregate-metrics",
+      "Get Aggregate Metrics",
+      s"""Returns aggregate metrics on api usage eg. total count, response time (in ms), etc.
+        |
+        |Should be able to filter on the following fields
+        |
+        |eg: /management/aggregate-metrics?start_date=2018-03-26&end_date=2018-03-29
+        |
+        |1 start_date (defaults to the day before the current date): eg:start_date=2018-03-26
+        |
+        |2 end_date (defaults to the current date) eg:end_date=2018-03-29
+        |
+        |${authenticationRequiredMessage(true)}
+        |
+      """.stripMargin,
+      emptyObjectJson,
+      aggregateMetricsJSONV300,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(Core, notPSD2, OBWG),
+      List(apiTagMetric, apiTagAggregateMetrics),
+      Some(List(canReadAggregateMetrics)))
+
+      lazy val getAggregateMetrics : OBPEndpoint = {
+        case "management" :: "aggregate-metrics" :: Nil JsonGet _ => {
+          cc => {
+            for {
+              u <- cc.user ?~! UserNotLoggedIn
+              _ <- booleanToBox(hasEntitlement("", u.userId, ApiRole.canReadAggregateMetrics), UserHasMissingRoles + CanReadAggregateMetrics )
+
+              // Filter by date // eg: /management/aggregate-metrics?start_date=2010-05-22&end_date=2017-05-22
+
+              inputDateFormat <- Full(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH))
+
+              // Date format of now.getTime
+              nowDateFormat <- Full(new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy", Locale.ENGLISH))
+
+              defaultStartDate <- Full("0000-00-00")
+
+              // Get tomorrow's date
+
+              tomorrowDate <- Full(new Date(now.getTime + 1000 * 60 * 60 * 24 * 1).toString)
+
+              // Parse tomorrow's date
+
+              tomorrowUnformatted <- Full(nowDateFormat.parse(tomorrowDate))
+
+              //Format tomorrow's date with the inputDateFormat
+              tomorrowDate <- Full(inputDateFormat.format(tomorrowUnformatted))
+
+              //(defaults to one week before current date
+              startDate <- tryo(inputDateFormat.parse(S.param("start_date").getOrElse(defaultStartDate))) ?~!
+                s"${InvalidDateFormat } start_date:${S.param("start_date").get }. Supported format is yyyy-MM-dd HH:mm:ss"
+              // defaults to current date
+              endDate <- tryo(inputDateFormat.parse(S.param("end_date").getOrElse(tomorrowDate))) ?~!
+                s"${InvalidDateFormat } end_date:${S.param("end_date").get }. Supported format is yyyy-MM-dd HH:mm:ss"
+
+              aggregatemetrics <- Full(AggregateMetrics.aggregateMetrics.vend.getAllAggregateMetrics(startDate, endDate))
+
+            } yield {
+              val json = getAggregateMetricJSON(aggregatemetrics)
+              successJsonResponse(Extraction.decompose(json)(DateFormatWithCurrentTimeZone))
+            }
+          }
+
       }
     }
 

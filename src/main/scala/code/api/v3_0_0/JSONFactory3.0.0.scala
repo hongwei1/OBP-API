@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import code.api.util.APIUtil._
+import code.api.util.Glossary.GlossaryItem
 import code.api.v1_2_1.JSONFactory._
 import code.api.v1_2_1.{UserJSONV121, _}
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchesJsonV300, _}
@@ -258,7 +259,10 @@ case class ModeratedCoreAccountsJsonV300(
   accounts: List[ModeratedCoreAccountJsonV300]
 )
 
-case class ElasticSearchJSON(es_uri_part: String, es_body_part: Any)
+case class ElasticSearchJSON(query: ElasticSearchQuery)
+case class ElasticSearchQuery(match_all: EmptyElasticSearch)
+case class EmptyElasticSearch(none:Option[String] = None)
+
 
 //ended -- account relevant case classes /////
 
@@ -407,7 +411,6 @@ case class GlossaryItemsJsonV300 (glossary_items: List[GlossaryItemJsonV300])
 
 
 
-import code.api.util.APIUtil.GlossaryItem
 
 object JSONFactory300{
 
@@ -431,7 +434,7 @@ object JSONFactory300{
     GlossaryItemJsonV300(
       title = glossaryItem.title,
       description = GlossaryDescriptionJsonV300 (markdown = glossaryItem.description.stripMargin, //.replaceAll("\n", ""),
-                                                  html = pegDownProcessor.markdownToHtml(glossaryItem.description.stripMargin).replaceAll("\n", "")
+                                                  html = pegDownProcessor.markdownToHtml(glossaryItem.description.stripMargin)// .replaceAll("\n", "")
       )
     )
   }
@@ -1078,5 +1081,12 @@ object JSONFactory300{
   def createEntitlementRequestsJSON(list : List[EntitlementRequest]) : EntitlementRequestsJSON = {
     EntitlementRequestsJSON(list.map(createEntitlementRequestJSON))
   }
+
+  case class AggregateMetricJSON(
+                                  count: Int,
+                                  average_response_time: Double,
+                                  minimum_response_time: Double,
+                                  maximum_response_time: Double
+                                )
 
 }

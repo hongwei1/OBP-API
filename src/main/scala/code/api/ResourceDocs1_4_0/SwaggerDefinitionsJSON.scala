@@ -1,13 +1,15 @@
 package code.api.ResourceDocs1_4_0
 
+import code.api.berlin.group.v1.JSONFactory_BERLIN_GROUP_1.{Balances, CoreAccountJson_v1, CoreAccountsJson_v1, Transactions}
 import code.api.util.APIUtil
 import code.api.util.APIUtil.{defaultJValue, _}
 import code.api.util.ApiRole._
-import code.api.v3_0_0.JSONFactory300.createBranchJsonV300
+import code.api.v3_0_0.JSONFactory300.{AggregateMetricJSON, createBranchJsonV300}
 import code.api.v3_0_0.{LobbyJsonV330, _}
 import code.bankconnectors.vMar2017.{MessageDocJson, MessageDocsJson}
 import code.branches.Branches.{DriveUpString, _}
 import code.common._
+import code.model.PinResetReason.{FORGOT, GOOD_SECURITY_PRACTICE}
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import net.liftweb.json
 
@@ -61,9 +63,9 @@ object SwaggerDefinitionsJSON {
   
   val createViewJson = CreateViewJson(
     name = "_test",
-    description = "good",
+    description = "This view is for family",
     is_public = true,
-    which_alias_to_use = "good",
+    which_alias_to_use = "family",
     hide_metadata_if_alias_used = false,
     allowed_actions = List(
       "can_see_transaction_this_bank_account",
@@ -139,9 +141,9 @@ object SwaggerDefinitionsJSON {
   )
   
   val updateViewJSON = UpdateViewJSON(
-    description = "good",
+    description = "this is for family",
     is_public = true,
-    which_alias_to_use = "good",
+    which_alias_to_use = "family",
     hide_metadata_if_alias_used = true,
     allowed_actions = List(
       "can_see_transaction_this_bank_account",
@@ -237,8 +239,8 @@ object SwaggerDefinitionsJSON {
     id = transactionTypeId,
     bankId = bankId,
     shortCode = "80080",
-    summary = "good",
-    description = "good",
+    summary = "SANSANDBOX_TAN",
+    description = "This is the sandbox mode, charging litter money.",
     charge = amountOfMoney
   )
   
@@ -315,9 +317,9 @@ object SwaggerDefinitionsJSON {
   import code.api.v1_2_1._
   
   val makePaymentJson = MakePaymentJson(
-    bank_id = "String",
-    account_id = "String",
-    amount = "String"
+    bank_id = "gh.29.uk",
+    account_id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
+    amount = "10"
   )
   
   val transactionIdJson = TransactionIdJson(
@@ -342,6 +344,13 @@ object SwaggerDefinitionsJSON {
     hosted_by = hostedBy,
     akka = akka
   )
+
+  /*  val aggregateMetricsJSON = AggregateMetricJSON(
+    total_api_calls = 591,
+    average_duration = {"_1":["avg"],"_2":[["164.4940778341793570"]]},
+    minimum_duration = {"_1":["min"],"_2":[["0"]]},
+    maximum_duration = {"_1":["max"],"_2":[["2847"]]}
+  )*/
   
   val errorMessage = ErrorMessage(
     error = "String"
@@ -558,7 +567,7 @@ object SwaggerDefinitionsJSON {
 
   val transactionDetailsJSON = TransactionDetailsJSON(
     `type` = "AC",
-    description = "GOOD",
+    description = "this is for family",
     posted = exampleDate,
     completed = exampleDate,
     new_balance = amountOfMoneyJsonV121,
@@ -651,7 +660,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val viewIdsJson = ViewIdsJson(
-    views = List("good")
+    views = List("_family" ,"_work")
   )
 
   val locationPlainJSON = LocationPlainJSON(
@@ -677,16 +686,20 @@ object SwaggerDefinitionsJSON {
 
   val pinResetJSON = PinResetJSON(
     requested_date = exampleDate,
-    reason_requested = "forgot"
+    reason_requested = FORGOT.toString
+  )
+  val pinResetJSON1 = PinResetJSON(
+    requested_date = exampleDate,
+    reason_requested = GOOD_SECURITY_PRACTICE.toString
   )
 
   val replacementJSON = ReplacementJSON(
     requested_date = exampleDate,
-    reason_requested = "Good Point"
+    reason_requested = CardReplacementReason.RENEW.toString
   )
 
   val physicalCardJSON = PhysicalCardJSON(
-    bank_id = "String",
+    bank_id = "gh.29.uk",
     bank_card_number = "String",
     name_on_card = "String",
     issue_number = "String",
@@ -718,14 +731,12 @@ object SwaggerDefinitionsJSON {
     valid_from_date = exampleDate,
     expires_date = exampleDate,
     enabled = true,
-    cancelled = true,
-    on_hot_list = true,
     technology = "String",
-    networks = List("String"),
-    allows = List("credit"),
+    networks = List("network1", "network2"),
+    allows = List("credit", "debit"),
     account_id = "String",
     replacement = replacementJSON,
-    pin_reset = List(pinResetJSON),
+    pin_reset = List(pinResetJSON, pinResetJSON1),
     collected = exampleDate,
     posted = exampleDate
   )
@@ -746,7 +757,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val transactionRequestChargeJsonV140 = TransactionRequestChargeJsonV140(
-    summary = "Good",
+    summary = "The bank fixed charge",
     value = amountOfMoneyJsonV121 //amountOfMoneyJSON
   )
 
@@ -793,8 +804,8 @@ object SwaggerDefinitionsJSON {
     country = "DE"
   )
   val challengeAnswerJSON = ChallengeAnswerJSON(
-    id = "b20dd004-93e3-494f-8773-69e3ff8c205e",
-    answer = "good"
+    id = "This is challenge.id, you can get it from `Create Transaction Request.` response, only is useful if status ==`INITIATED` there.",
+    answer = "123"
   )
 
   val postCustomerJson = PostCustomerJson(
@@ -835,7 +846,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val customerMessageJson = CustomerMessageJson(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     date = exampleDate,
     message = "String",
     from_department = "String",
@@ -858,7 +869,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val branchJson = BranchJson(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     name = "String",
     address = addressJsonV140,
     location = locationJson,
@@ -992,7 +1003,7 @@ object SwaggerDefinitionsJSON {
 
 
   val atmJson = AtmJson(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     name = "String",
     address = addressJsonV140,
     location = locationJson,
@@ -1051,8 +1062,8 @@ object SwaggerDefinitionsJSON {
 
 
   val crmEventJson = CrmEventJson(
-    id = "String",
-    bank_id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
+    bank_id = "gh.29.uk",
     customer_name = "String",
     customer_number = "String",
     category = "String",
@@ -1087,7 +1098,9 @@ object SwaggerDefinitionsJSON {
     tags = List("String"),
     typed_request_body = json.parse("""{"request": { "type" :"string" }}"""),
     typed_success_response_body = json.parse("""{"response": { "type" :"string" }}"""),
-    roles = Some(List(canCreateCustomerSwagger))
+    roles = Some(List(canCreateCustomerSwagger)),
+    is_featured = false,
+    special_instructions = ""
   )
 
   val resourceDocsJson = ResourceDocsJson(resource_docs = List(resourceDocJson))
@@ -1099,7 +1112,7 @@ object SwaggerDefinitionsJSON {
     challenge_type = "String"
   )
   val transactionRequestJSON = TransactionRequestJsonV140(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     `type` = "String",
     from = transactionRequestAccountJsonV140,
     body = transactionRequestBodyJsonV140,
@@ -1259,7 +1272,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val createEntitlementJSON = CreateEntitlementJSON(
-    bank_id = "String",
+    bank_id = "gh.29.uk",
     role_name = "String"
   )
 
@@ -1285,7 +1298,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val transactionRequestChargeJsonV200 = TransactionRequestChargeJsonV200(
-    summary = "Good",
+    summary = "Rent the flat",
     value = amountOfMoneyJsonV121
   )
 
@@ -1305,7 +1318,7 @@ object SwaggerDefinitionsJSON {
   val transactionRequestBodyJsonV200 = TransactionRequestBodyJsonV200(
     to = transactionRequestAccountJsonV140,
     value = amountOfMoneyJsonV121,
-    description = "Good"
+    description = "this is for work"
   )
 
   val transactionTypeJsonV200 = TransactionTypeJsonV200(
@@ -1367,7 +1380,7 @@ object SwaggerDefinitionsJSON {
     meeting_id = "String",
     provider_id = "String",
     purpose_id = "String",
-    bank_id = "String",
+    bank_id = "gh.29.uk",
     present = meetingPresentJSON,
     keys = meetingKeysJSON,
     when = exampleDate
@@ -1454,7 +1467,7 @@ object SwaggerDefinitionsJSON {
   )
 
   val transactionRequestJsonV200 = TransactionRequestJsonV200(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     `type` = "String",
     from = transactionRequestAccountJsonV140,
     body = transactionRequestBodyJsonV200,
@@ -1801,14 +1814,14 @@ object SwaggerDefinitionsJSON {
     this_view_id = "owner",
     counterparty_id = "1d65db7c-a7b2-4839-af41-958276ab7790",
     other_bank_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_bank_routing_address = postCounterpartyJSON.other_bank_routing_scheme,
-    other_branch_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_branch_routing_address = postCounterpartyJSON.other_bank_routing_scheme,
-    other_account_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_account_routing_address = postCounterpartyJSON.other_bank_routing_scheme,
+    other_bank_routing_address = postCounterpartyJSON.other_bank_routing_address,
+    other_branch_routing_scheme = postCounterpartyJSON.other_branch_routing_scheme,
+    other_branch_routing_address = postCounterpartyJSON.other_branch_routing_address,
+    other_account_routing_scheme = postCounterpartyJSON.other_account_routing_scheme,
+    other_account_routing_address = postCounterpartyJSON.other_account_routing_address,
     is_beneficiary = true,
-    other_account_secondary_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_account_secondary_routing_address= postCounterpartyJSON.other_bank_routing_scheme,
+    other_account_secondary_routing_scheme = "accountId",
+    other_account_secondary_routing_address= "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
     bespoke = postCounterpartyJSON.bespoke
   )
   
@@ -1823,14 +1836,14 @@ object SwaggerDefinitionsJSON {
     this_view_id = "owner",
     counterparty_id = "1d65db7c-a7b2-4839-af41-958276ab7790",
     other_bank_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_bank_routing_address = postCounterpartyJSON.other_bank_routing_scheme,
-    other_branch_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_branch_routing_address = postCounterpartyJSON.other_bank_routing_scheme,
-    other_account_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_account_routing_address = postCounterpartyJSON.other_bank_routing_scheme,
+    other_bank_routing_address = postCounterpartyJSON.other_bank_routing_address,
+    other_branch_routing_scheme = postCounterpartyJSON.other_branch_routing_scheme,
+    other_branch_routing_address = postCounterpartyJSON.other_branch_routing_address,
+    other_account_routing_scheme = postCounterpartyJSON.other_account_routing_scheme,
+    other_account_routing_address = postCounterpartyJSON.other_account_routing_address,
     is_beneficiary = true,
-    other_account_secondary_routing_scheme = postCounterpartyJSON.other_bank_routing_scheme,
-    other_account_secondary_routing_address= postCounterpartyJSON.other_bank_routing_scheme,
+    other_account_secondary_routing_scheme = "accountId",
+    other_account_secondary_routing_address= "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
     bespoke = postCounterpartyJSON.bespoke,
     metadata = counterpartyMetadataJson
   )
@@ -2054,15 +2067,28 @@ object SwaggerDefinitionsJSON {
   )
 
   val coreAccountJsonV300 = CoreAccountJsonV300(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     label = "String",
-    bank_id = "String",
+    bank_id = "gh.29.uk",
     account_routing = accountRoutingJsonV121
   )
   val coreAccountsJsonV300 = CoreAccountsJsonV300(accounts = List(coreAccount))
+
+  val coreAccountJson_v1 = CoreAccountJson_v1(
+    id = "3dc3d5b3-7023-4848-9853-f5400a64e80f",
+    iban = "DE2310010010123456789",
+    currency = "EUR",
+    accountType = "Girokonto",
+    cashAccountType = "CurrentAccount",
+    _links = List(
+      Balances("/v1/accounts/3dc3d5b3-7023-4848-9853-f5400a64e80f/balances"),
+      Transactions("/v1/accounts/3dc3d5b3-7023-4848-9853-f5400a64e80f/transactions")),
+    name = "Main Account"
+  )
+  val coreAccountsJson_v1 = CoreAccountsJson_v1(List(coreAccountJson_v1))
   
   val accountIdJson = AccountIdJson(
-    id = "String"
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf"
   )
   
   val accountsIdsJsonV300 = AccountsIdsJsonV300(accounts = List(accountIdJson))
@@ -2082,7 +2108,7 @@ object SwaggerDefinitionsJSON {
   )
   
   val otherAccountJsonV300 = OtherAccountJsonV300(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     holder = accountHolderJSON,
     bank_routing = bankRoutingJsonV121,
     account_routing = accountRoutingJsonV121,
@@ -2106,14 +2132,14 @@ object SwaggerDefinitionsJSON {
   )
   
   val coreCounterpartyJsonV300 = CoreCounterpartyJsonV300(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     holder = accountHolderJSON,
     bank_routing = bankRoutingJsonV121,
     account_routing = accountRoutingJsonV121
   )
   
   val coreTransactionJsonV300 = CoreTransactionJsonV300(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     this_account = thisAccountJsonV300,
     other_account = coreCounterpartyJsonV300,
     details = coreTransactionDetailsJSON
@@ -2133,8 +2159,8 @@ object SwaggerDefinitionsJSON {
   
   
   val accountHeld = AccountHeld(
-    id = "String",
-    bank_id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
+    bank_id = "gh.29.uk",
     number = "String",
     account_routing = accountRouting
   )
@@ -2145,7 +2171,7 @@ object SwaggerDefinitionsJSON {
   )
   val moderatedAccountJsonV300 = ModeratedAccountJsonV300(
     id= "String",
-    bank_id = "String",
+    bank_id = "gh.29.uk",
     label = "String",
     number = "String",
     owners = List(userJSONV121),
@@ -2156,7 +2182,7 @@ object SwaggerDefinitionsJSON {
   )
   
   val moderatedCoreAccountJsonV300 = ModeratedCoreAccountJsonV300(
-    id = "String",
+    id = "5995d6a2-01b3-423c-a173-5481df49bdaf",
     bank_id= "String",
     label= "String",
     number= "String",
@@ -2168,6 +2194,13 @@ object SwaggerDefinitionsJSON {
   )
   
   val moderatedCoreAccountsJsonV300 = ModeratedCoreAccountsJsonV300(List(moderatedCoreAccountJsonV300))
+
+  val aggregateMetricsJSONV300 = AggregateMetricJSON(
+    count = 7076,
+    average_response_time = 65.21,
+    minimum_response_time = 1,
+    maximum_response_time = 9039
+  )
   
   //The common error or success format.
   //Just some helper format to use in Json 

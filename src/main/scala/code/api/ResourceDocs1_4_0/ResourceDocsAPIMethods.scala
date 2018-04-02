@@ -1,9 +1,9 @@
 package code.api.ResourceDocs1_4_0
 
-import code.api.util.APIUtil
-import code.api.util.APIUtil.ApiVersion._
+import code.api.berlin.group.v1.OBP_BERLIN_GROUP_1
 import code.api.util.APIUtil._
 import code.api.util.ApiRole._
+import code.api.util.{APIUtil, ApiVersion}
 import code.api.v1_2_1.Akka
 import code.api.v1_4_0.{APIMethods140, JSONFactory1_4_0, OBPAPI1_4_0}
 import code.api.v2_2_0.{APIMethods220, OBPAPI2_2_0}
@@ -11,7 +11,7 @@ import code.api.v3_0_0.OBPAPI3_0_0
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.rest.RestHelper
-import net.liftweb.http.{JsonResponse, S}
+import net.liftweb.http.{JsonResponse, LiftRules, S}
 import net.liftweb.json.JsonAST.{JField, JString, JValue}
 import net.liftweb.json._
 import net.liftweb.util.Props
@@ -45,7 +45,9 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
 
     val localResourceDocs = ArrayBuffer[ResourceDoc]()
     val emptyObjectJson = EmptyClassJson()
-    val statedApiVersion : String = "1_4_0"
+    // val statedApiVersion : String = "1_4_0"
+
+    val statedApiVersion : ApiVersion = ApiVersion.v1_4_0
 
     val exampleDateString : String ="22/08/2013"
     val simpleDateFormat : SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
@@ -53,66 +55,60 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
   
     implicit val formats = new Formats {
       val dateFormat = net.liftweb.json.DefaultFormats.dateFormat
-      override val typeHints = ShortTypeHints(List(
-        classOf[CanSearchAllTransactions],
-        classOf[CanSearchAllAccounts],
-        classOf[CanQueryOtherUser],
-        classOf[CanSearchWarehouse],
-        classOf[CanSearchMetrics],
-        classOf[CanCreateCustomer],
-        classOf[CanCreateCustomerAtAnyBank],
-        classOf[CanCreateUserCustomerLink],
-        classOf[CanCreateUserCustomerLinkAtAnyBank],
-        classOf[CanCreateAccount],
-        classOf[CanGetAnyUser],
-        classOf[CanCreateAnyTransactionRequest],
-        classOf[CanAddSocialMediaHandle],
-        classOf[CanGetSocialMediaHandles],
-        classOf[CanCreateSandbox],
-        classOf[CanGetEntitlementsForAnyUserAtOneBank],
-        classOf[CanCreateEntitlementAtOneBank],
-        classOf[CanDeleteEntitlementAtOneBank],
-        classOf[CanGetEntitlementsForAnyUserAtAnyBank],
-        classOf[CanCreateEntitlementAtAnyBank],
-        classOf[CanDeleteEntitlementAtAnyBank],
-        classOf[CanGetConsumers],
-        classOf[CanDisableConsumers],
-        classOf[CanEnableConsumers],
-        classOf[CanUpdateConsumerRedirectUrl],
-        classOf[CanCreateConsumer],
-        classOf[CanCreateTransactionType],
-        classOf[CanCreateCardsForBank],
-        classOf[CanCreateBranch],
-        classOf[CanCreateBranchAtAnyBank],
-        classOf[CanCreateAtm],
-        classOf[CanCreateAtmAtAnyBank],
-        classOf[CanCreateProduct],
-        classOf[CanCreateProductAtAnyBank],
-        classOf[CanCreateFxRate],
-        classOf[CanCreateFxRateAtAnyBank],
-        classOf[CanCreateBank],
-        classOf[CanReadMetrics],
-        classOf[CanGetConfig],
-        classOf[CanGetConnectorMetrics],
-        classOf[CanGetOtherAccountsAtBank],
-        classOf[CanDeleteEntitlementRequestsAtOneBank],
-        classOf[CanDeleteEntitlementRequestsAtAnyBank],
-        classOf[CanGetEntitlementRequestsAtOneBank],
-        classOf[CanGetEntitlementRequestsAtAnyBank],
-        classOf[CanUseFirehoseAtAnyBank],
-        classOf[CanSearchWarehouseStatistics]
-        )
-      )
+
+      override val typeHints = ShortTypeHints(rolesMappedToClasses)
     }
 
     def getResourceDocsList(requestedApiVersion : ApiVersion) : Option[List[ResourceDoc]] =
     {
+
+      // Determine if the partialFunctionName is due to be "featured" in API Explorer etc.
+      def getIsFeaturedApi(partialFunctionName: String) : Boolean = {
+        val partialFunctionNames = APIUtil.getPropsValue("featured_apis") match {
+          case Full(v) =>
+            v.split(",").map(_.trim).toList
+          case _ =>
+            List()
+        }
+        partialFunctionNames.filter(_ == partialFunctionName).length > 0
+      }
+
+
+
+
+
+      // Find any special instructions for partialFunctionName
+      def getSpecialInstructions(partialFunctionName: String): Option[String] = {
+
+        // The files should be placed in a folder called special_instructions_for_resources folder inside the src resources folder
+        // Each file should match a partial function name or it will be ignored.
+        // The format of the file should be mark down.
+        val filename = s"/special_instructions_for_resources/${partialFunctionName}.md"
+          logger.debug(s"getSpecialInstructions getting $filename")
+          val source = LiftRules.loadResourceAsString(filename)
+          logger.debug(s"getSpecialInstructions source is $source")
+          val result = source match {
+            case Full(payload) =>
+              logger.debug(s"getSpecialInstructions payload is $payload")
+              Some(payload)
+            case _ =>
+              logger.debug(s"getSpecialInstructions Could not find / load $filename")
+              None
+          }
+        result
+        }
+
+
+
+
+
       // Return a different list of resource docs depending on the version being called.
       // For instance 1_3_0 will have the docs for 1_3_0 and 1_2_1 (when we started adding resource docs) etc.
 
       logger.debug(s"getResourceDocsList says requestedApiVersion is $requestedApiVersion")
 
       val resourceDocs = requestedApiVersion match {
+        case ApiVersion.`berlinGroupV1`     => OBP_BERLIN_GROUP_1.allResourceDocs
         case ApiVersion.v3_0_0 => OBPAPI3_0_0.allResourceDocs
         case ApiVersion.v2_2_0 => OBPAPI2_2_0.allResourceDocs
         case ApiVersion.v2_1_0 => OBPAPI2_1_0.allResourceDocs
@@ -125,6 +121,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       logger.debug(s"There are ${resourceDocs.length} resource docs available to $requestedApiVersion")
 
       val versionRoutes = requestedApiVersion match {
+        case ApiVersion.`berlinGroupV1`     => OBP_BERLIN_GROUP_1.routes
         case ApiVersion.v3_0_0 => OBPAPI3_0_0.routes
         case ApiVersion.v2_2_0 => OBPAPI2_2_0.routes
         case ApiVersion.v2_1_0 => OBPAPI2_1_0.routes
@@ -153,10 +150,24 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       activePlusLocalResourceDocs ++= localResourceDocs
 
 
-      logger.debug(s"There are ${activePlusLocalResourceDocs.length} resource docs (including local) available to $requestedApiVersion")
+      // Add any featured status and special instructions from Props
+      // Overwrite the requestUrl adding /obp
+      val theResourceDocs = for {
+        x <- activePlusLocalResourceDocs
+        url = x.implementedInApiVersion match {
+          case ApiVersion.`berlinGroupV1` =>  s"/berlin-group/${x.implementedInApiVersion.vDottedApiVersion}${x.requestUrl}"
+          case _ =>  s"/obp/${x.implementedInApiVersion.vDottedApiVersion}${x.requestUrl}"
+        }
+        y = x.copy(isFeatured = getIsFeaturedApi(x.partialFunctionName),
+                    specialInstructions = getSpecialInstructions(x.partialFunctionName),
+          requestUrl = url)
+      } yield y
+
+
+      logger.debug(s"There are ${theResourceDocs.length} resource docs (including local) available to $requestedApiVersion")
 
       // Sort by endpoint, verb. Thus / is shown first then /accounts and /banks etc. Seems to read quite well like that.
-      Some(activePlusLocalResourceDocs.toList.sortBy(rd => (rd.requestUrl, rd.requestVerb)))
+      Some(theResourceDocs.toList.sortBy(rd => (rd.requestUrl, rd.requestVerb)))
     }
 
 
@@ -286,7 +297,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
 
 
     val exampleResourceDoc =  ResourceDoc(
-      dummy(statedApiVersion, "DUMMY"),
+      dummy(statedApiVersion.toString, "DUMMY"),
       statedApiVersion,
       "testResourceDoc",
       "GET",
@@ -380,7 +391,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       cc =>{
 
        for {
-         requestedApiVersion <- convertToApiVersion(requestedApiVersionString) ?~! InvalidApiVersionString
+         requestedApiVersion <- Full(ApiVersion.valueOf(requestedApiVersionString)) ?~! InvalidApiVersionString
          _ <- booleanToBox(versionIsAllowed(requestedApiVersion), ApiVersionNotSupported)
          json <- getResourceDocsObpCached(showCore, showPSD2, showOBWG, requestedApiVersion, tags, partialFunctions)
         }
@@ -397,7 +408,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       statedApiVersion,
       "getResourceDocsSwagger",
       "GET",
-      "/resource-docs/v.2.2.0/swagger",
+      "/resource-docs/API_VERSION/swagger",
       "Get Resource Docs in Swagger format.",
       """Returns documentation about the RESTful resources on this server in Swagger format.
         |
@@ -527,7 +538,7 @@ def filterResourceDocs(allResources: List[ResourceDoc], showCore: Option[Boolean
       memoizeSync (getResourceDocsTTL millisecond) {
         logger.debug(s"Generating Swagger showCore is $showCore showPSD2 is $showPSD2 showOBWG is $showOBWG requestedApiVersion is $requestedApiVersionString")
         val jsonOut = for {
-            requestedApiVersion <- convertToApiVersion(requestedApiVersionString) ?~! InvalidApiVersionString
+            requestedApiVersion <- Full(ApiVersion.valueOf(requestedApiVersionString)) ?~! InvalidApiVersionString
             _ <- booleanToBox(versionIsAllowed(requestedApiVersion), ApiVersionNotSupported)
           rd <- getResourceDocsList(requestedApiVersion)
         } yield {
@@ -551,7 +562,7 @@ def filterResourceDocs(allResources: List[ResourceDoc], showCore: Option[Boolean
 
     if (Props.devMode) {
       localResourceDocs += ResourceDoc(
-        dummy(statedApiVersion, "DUMMY"),
+        dummy(statedApiVersion.vDottedApiVersion, "DUMMY"),
         statedApiVersion,
         "testResourceDoc",
         "GET",

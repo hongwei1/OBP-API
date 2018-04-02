@@ -32,17 +32,15 @@
 package code.api.v3_0_0
 
 import code.api.OBPRestHelper
-import code.api.util.APIUtil.{ApiVersion, OBPEndpoint, ResourceDoc, dottedApiVersion, getAllowedEndpoints}
+import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
+import code.api.util.ApiVersion
 import code.api.v1_3_0.APIMethods130
 import code.api.v1_4_0.APIMethods140
 import code.api.v2_0_0.APIMethods200
 import code.api.v2_1_0.APIMethods210
 import code.api.v2_2_0.APIMethods220
 import code.api.v3_0_0.custom.CustomAPIMethods300
-import code.model.User
 import code.util.Helper.MdcLoggable
-import net.liftweb.common.Box
-import net.liftweb.http.{JsonResponse, Req}
 
 import scala.collection.immutable.Nil
 
@@ -56,9 +54,10 @@ This file defines which endpoints from all the versions are available in v3.0.0
 object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 with APIMethods200 with APIMethods210 with APIMethods220 with APIMethods300 with CustomAPIMethods300 with MdcLoggable {
   
 
-  // Note discrepancy between Resource Docs and this _ vs .
-  val version = dottedApiVersion(ApiVersion.v3_0_0)    // Previously "3.0.0"
-  val versionStatus = "BLEEDING-EDGE"
+
+  val version : ApiVersion = ApiVersion.v3_0_0
+
+  val versionStatus = "BLEEDING-EDGE" // TODO this should be a property of ApiVersion.
 
 
   // Possible Endpoints from 1.2.1
@@ -215,8 +214,8 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
   // Possible Endpoints from 2.1.0
   val endpointsOf2_2_0 =  Implementations2_2_0.getCurrentFxRate ::
                           Implementations2_2_0.createFx ::
-                          Implementations2_2_0.getCounterpartiesForAccount ::
-                          Implementations2_2_0.getCounterpartyById ::
+                          Implementations2_2_0.getExplictCounterpartiesForAccount ::
+                          Implementations2_2_0.getExplictCounterpartyById ::
                           Implementations2_2_0.getMessageDocs ::
                           Implementations2_2_0.createBank ::
                           Implementations2_2_0.createAccount ::
@@ -240,7 +239,7 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations3_0_0.createViewForBankAccount ::
                           Implementations3_0_0.updateViewForBankAccount ::
                           Implementations3_0_0.corePrivateAccountsAllBanks ::
-                          Implementations3_0_0.elasticSearchWarehouseV300 ::
+                          Implementations3_0_0.dataWarehouseSearch ::
                           Implementations3_0_0.getUser ::
                           Implementations3_0_0.getUserByUserId ::
                           Implementations3_0_0.getUserByUsername ::
@@ -262,13 +261,14 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations3_0_0.getAllEntitlementRequests ::
                           Implementations3_0_0.getEntitlementRequests ::
                           Implementations3_0_0.deleteEntitlementRequest ::
-                          Implementations3_0_0.aggregateWarehouse ::
+                          Implementations3_0_0.dataWarehouseStatistics ::
                           Implementations3_0_0.getEntitlementRequestsForCurrentUser ::
                           Implementations3_0_0.getFirehoseAccountsAtOneBank ::
                           Implementations3_0_0.getEntitlementsForCurrentUser ::
                           Implementations3_0_0.getFirehoseTransactionsForBankAccount ::
                           Implementations3_0_0.getApiGlossary ::
                           Implementations3_0_0.getAccountsHeld ::
+                          Implementations3_0_0.getAggregateMetrics ::
                           Nil
 
 

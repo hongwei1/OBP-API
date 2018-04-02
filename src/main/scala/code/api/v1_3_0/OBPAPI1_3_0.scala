@@ -2,12 +2,9 @@ package code.api.v1_3_0
 
 import code.api.OBPRestHelper
 import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
+import code.api.util.ApiVersion
 import code.api.v1_2_1.APIMethods121
-import code.api.v2_1_0.OBPAPI2_1_0.findResourceDoc
-import code.model.User
 import code.util.Helper.MdcLoggable
-import net.liftweb.common.Box
-import net.liftweb.http.{JsonResponse, Req}
 
 
 // Added so we can add resource docs for this version of the API
@@ -16,7 +13,7 @@ import net.liftweb.http.{JsonResponse, Req}
 //implementation
 object OBPAPI1_3_0 extends OBPRestHelper with APIMethods130 with APIMethods121 with MdcLoggable {
 
-  val version = "1.3.0"
+  val version : ApiVersion = ApiVersion.v1_3_0 //  "1.3.0"
   val versionStatus = "STABLE"
 
   //TODO: check all these calls to see if they should really have the same behaviour as 1.2.1

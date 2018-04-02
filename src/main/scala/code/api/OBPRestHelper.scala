@@ -32,23 +32,22 @@ Berlin 13359, Germany
 
 package code.api
 
-import code.api.util.{APIUtil, CallContext, CallContextLight, ErrorMessages}
+import code.api.Constant._
+import code.api.OAuthHandshake._
+import code.api.util.APIUtil._
+import code.api.util.ErrorMessages.attemptedToOpenAnEmptyBox
+import code.api.util._
+import code.api.v2_0_0.OBPAPI2_0_0.Implementations2_0_0
+import code.api.v2_2_0.OBPAPI2_2_0.Implementations2_2_0
+import code.api.v3_0_0.OBPAPI3_0_0.Implementations3_0_0
+import code.util.Helper.MdcLoggable
+import com.github.dwickern.macros.NameOf.nameOf
+import net.liftweb.common._
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.http.{JsonResponse, LiftResponse, Req, S}
-import net.liftweb.common._
-import APIUtil._
-import code.model.User
-import code.api.OAuthHandshake._
-import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.Extraction
-import net.liftweb.util.{Helpers, Props}
-import code.api.Constant._
-import code.api.util.ErrorMessages.attemptedToOpenAnEmptyBox
-import code.api.v3_0_0.OBPAPI3_0_0.Implementations3_0_0
-import code.api.v2_2_0.OBPAPI2_2_0.Implementations2_2_0
-import code.api.v2_0_0.OBPAPI2_0_0.Implementations2_0_0
-import com.github.dwickern.macros.NameOf.nameOf
-import code.util.Helper.MdcLoggable
+import net.liftweb.json.JsonAST.JValue
+import net.liftweb.util.Helpers
 
 trait APIFailure{
   val msg : String
@@ -87,11 +86,11 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
 
   implicit def errorToJson(error: ErrorMessage): JValue = Extraction.decompose(error)
 
-  val version : String
-  val versionStatus : String
-  def vPlusVersion = "v" + version
+  val version : ApiVersion
+  val versionStatus : String // TODO this should be property of ApiVersion
+  //def vDottedVersion = vDottedApiVersion(version)
 
-  def apiPrefix = (ApiPathZero / vPlusVersion).oPrefix(_)
+ def apiPrefix = (ApiPathZero / version.vDottedApiVersion).oPrefix(_)
 
   /*
   An implicit function to convert magically between a Boxed JsonResponse and a JsonResponse
@@ -190,6 +189,8 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
     (nameOf(Implementations3_0_0.deleteEntitlementRequest), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.createViewForBankAccount), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations3_0_0.updateViewForBankAccount), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.dataWarehouseSearch), ApiVersion.v3_0_0.toString),
+    (nameOf(Implementations3_0_0.dataWarehouseStatistics), ApiVersion.v3_0_0.toString),
     (nameOf(Implementations2_2_0.config), ApiVersion.v2_2_0.toString),
     (nameOf(Implementations2_0_0.getAllEntitlements), ApiVersion.v2_0_0.toString)
   )
@@ -200,7 +201,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
     */
   def newStyleEndpoints(rd: Option[ResourceDoc]) : Boolean = {
     rd match {
-      case Some(e) if newStyleEndpoints.exists(_ == (e.partialFunctionName, "v" + e.implementedInApiVersion)) =>
+      case Some(e) if newStyleEndpoints.exists(_ == (e.partialFunctionName, e.implementedInApiVersion)) =>
         true
       case _ =>
         false

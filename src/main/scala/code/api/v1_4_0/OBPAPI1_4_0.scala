@@ -2,16 +2,13 @@ package code.api.v1_4_0
 
 import code.api.OBPRestHelper
 import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
-import code.api.v2_1_0.OBPAPI2_1_0.findResourceDoc
-import code.model.User
+import code.api.util.ApiVersion
 import code.util.Helper.MdcLoggable
-import net.liftweb.common.Box
-import net.liftweb.http.{JsonResponse, Req}
 
 
 object OBPAPI1_4_0 extends OBPRestHelper with APIMethods140 with MdcLoggable {
 
-  val version = "1.4.0"
+  val version : ApiVersion = ApiVersion.v1_4_0 //"1.4.0"
   val versionStatus = "STABLE"
 
   val endpointsOf1_2_1 = List(

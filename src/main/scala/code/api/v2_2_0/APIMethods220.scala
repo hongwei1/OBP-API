@@ -8,7 +8,7 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil._
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages.{BankAccountNotFound, _}
-import code.api.util.{APIUtil, ApiRole, ErrorMessages}
+import code.api.util.{APIUtil, ApiRole, ApiVersion, ErrorMessages}
 import code.api.v2_1_0._
 import code.api.v2_2_0.JSONFactory220.transformV220ToBranch
 import code.bankconnectors._
@@ -25,9 +25,7 @@ import net.liftweb.common.Full
 import net.liftweb.http.S
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.Extraction
-import net.liftweb.json.JsonAST.JValue
 import net.liftweb.util.Helpers.tryo
-import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
@@ -72,7 +70,7 @@ trait APIMethods220 {
     val apiRelations = ArrayBuffer[ApiRelation]()
 
     val emptyObjectJson = EmptyClassJson()
-    val implementedInApiVersion: String = "2_2_0"
+    val implementedInApiVersion: ApiVersion = ApiVersion.v2_2_0 // was String "2_2_0"
 
     val exampleDateString: String = "22/08/2013"
     val simpleDateFormat: SimpleDateFormat = new SimpleDateFormat("dd/mm/yyyy")
@@ -268,13 +266,13 @@ trait APIMethods220 {
     }
 
     resourceDocs += ResourceDoc(
-      getCounterpartiesForAccount,
+      getExplictCounterpartiesForAccount,
       implementedInApiVersion,
-      "getCounterpartiesForAccount",
+      "getExplictCounterpartiesForAccount",
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/counterparties",
-      "Get Counterparties of one Account.",
-      s"""Get the counterparties for the account / view.
+      "Get Counterparties (Explicit).",
+      s"""Get the Counterparties (Explicit) for the account / view.
           |
           |${authenticationRequiredMessage(true)}
           |""".stripMargin,
@@ -291,8 +289,7 @@ trait APIMethods220 {
       Catalogs(Core, PSD2, OBWG),
       List(apiTagCounterparty, apiTagAccount))
 
-    lazy val getCounterpartiesForAccount : OBPEndpoint = {
-      //get other accounts for one account
+    lazy val getExplictCounterpartiesForAccount : OBPEndpoint = {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "counterparties" :: Nil JsonGet req => {
         cc =>
           for {
@@ -314,12 +311,12 @@ trait APIMethods220 {
 
   
     resourceDocs += ResourceDoc(
-      getCounterpartyById,
+      getExplictCounterpartyById,
       implementedInApiVersion,
-      "getCounterpartyById",
+      "getExplictCounterpartyById",
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/counterparties/COUNTERPARTY_ID",
-      "Get Counterparty by Counterparty Id.",
+      "Get Counterparty by Counterparty Id.(Explicit).",
       s"""Information returned about the Counterparty specified by COUNTERPARTY_ID:
          |
          |${authenticationRequiredMessage(true)}
@@ -331,8 +328,7 @@ trait APIMethods220 {
       List(apiTagCounterparty, apiTagCounterpartyMetaData)
     )
   
-    lazy val getCounterpartyById : OBPEndpoint = {
-      //get private accounts for a single bank
+    lazy val getExplictCounterpartyById : OBPEndpoint = {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "counterparties" :: CounterpartyId(counterpartyId) :: Nil JsonGet req => {
         cc =>
           for {
@@ -710,7 +706,7 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagAccount),
+      List(apiTagAccount,apiTagOnboarding),
       Some(List(canCreateAccount))
     )
 
@@ -812,7 +808,7 @@ trait APIMethods220 {
       "Get Connector Metrics",
       """Get the all metrics
         |
-        |require $CanGetConnectorMetrics role
+        |require CanGetConnectorMetrics role
         |
         |Filters Part 1.*filtering* (no wilde cards etc.) parameters to GET /management/connector/metrics
         |
@@ -1006,34 +1002,84 @@ trait APIMethods220 {
       "createCounterparty",
       "POST",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/counterparties",
-      "Create counterparty for an account",
-      s"""Create counterparty.
+      "Create Counterparty (Explicit)",
+      s"""Create Counterparty (Explicit) for an Account.
          |
-          |Counterparties are created for the account / view
+         |In OBP, there are two types of Counterparty.
+         |
+         |* Explicit Counterparties (those here) which we create explicitly and are used in COUNTERPARTY Transaction Requests
+         |
+         |* Implicit Counterparties (AKA Other Accounts) which are generated automatically from the other sides of Transactions.
+         |
+          |Explicit Counterparties are created for the account / view
          |They are how the user of the view (e.g. account owner) refers to the other side of the transaction
          |
-          |name is the human readable name (e.g. Piano teacher, Miss Nipa)
+         |name : the human readable name (e.g. Piano teacher, Miss Nipa)
          |
-          |other_bank_id is an (internal) ID for the bank of the bank of the counterparty (if known)
+         |description : the human readable name (e.g. Piano teacher, Miss Nipa)
          |
-          |other_account_id is an (internal) ID for the bank account of the counterparty (if known)
+         |bank_routing_scheme : eg: bankId or bankCode or any other strings
          |
-          |other_account_provider is a code that tells the system where that bank is hosted. Will be OBP if its known to the API. Usage of this flag (in API / connectors) is work in progress.
+         |bank_routing_address : eg: `gh.29.uk`, must be valid sandbox bankIds
          |
-          |account_routing_scheme is a code that dictates the nature of the account_routing_address e.g. IBAN
+         |account_routing_scheme : eg: AccountId or AccountNumber or any other strings
          |
-          |account_routing_address is an instance of account_routing_scheme that can be used to route payments to external systems. e.g. an IBAN number
+         |account_routing_address : eg: `1d65db7c-a7b2-4839-af41-95`, must be valid accountIds
          |
-          |bank_routing_scheme is a code that dictates the nature of the bank_routing_address e.g. "BIC",
+         |other_account_secondary_routing_scheme : eg: IBan or any other strings
          |
-          |bank_routing_address is an instance of bank_routing_scheme
+         |other_account_secondary_routing_address : if it is IBan, it should be unique for each counterparty. 
          |
-          |is_beneficiary must be set to true in order to send payments to this counterparty
+         |other_branch_routing_scheme : eg: branchId or any other strings or you can leave it empty, not useful in sandbox mode.
          |
-          |The view specified by VIEW_ID must have the canAddCounterparty permission
+         |other_branch_routing_address : eg: `branch-id-123` or you can leave it empty, not useful in sandbox mode.
          |
-          |${authenticationRequiredMessage(true)}
-          |
+         |is_beneficiary : must be set to `true` in order to send payments to this counterparty
+         |
+         |bespoke: It support list of key-value, you can add it to the counterarty.
+         |
+         |bespoke.key : any info-key you want to add to this counerparty
+         | 
+         |bespoke.value : any info-value you want to add to this counerparty
+         |
+         |The view specified by VIEW_ID must have the canAddCounterparty permission
+         |
+         |A minimal example for TransactionRequestType == COUNTERPARTY
+         | {
+         |  "name": "Tesobe1",
+         |  "description": "Good Company",
+         |  "other_bank_routing_scheme": "bankId",
+         |  "other_bank_routing_address": "gh.29.uk",
+         |  "other_account_routing_scheme": "accountId",
+         |  "other_account_routing_address": "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
+         |  "is_beneficiary": true,
+         |  "other_account_secondary_routing_scheme": "",
+         |  "other_account_secondary_routing_address": "",
+         |  "other_branch_routing_scheme": "",
+         |  "other_branch_routing_address": "",
+         |  "bespoke": []
+         |}
+         |
+         | 
+         |A minimal example for TransactionRequestType == SEPA
+         | 
+         | {
+         |  "name": "Tesobe2",
+         |  "description": "Good Company",
+         |  "other_bank_routing_scheme": "bankId",
+         |  "other_bank_routing_address": "gh.29.uk",
+         |  "other_account_routing_scheme": "accountId",
+         |  "other_account_routing_address": "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
+         |  "other_account_secondary_routing_scheme": "IBAN",
+         |  "other_account_secondary_routing_address": "DE89 3704 0044 0532 0130 00",
+         |  "is_beneficiary": true,
+         |  "other_branch_routing_scheme": "",
+         |  "other_branch_routing_address": "",
+         |  "bespoke": []
+         |}
+         |
+         |${authenticationRequiredMessage(true)}
+         |
          |""".stripMargin,
       postCounterpartyJSON,
       counterpartyWithMetadataJson,

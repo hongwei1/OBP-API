@@ -40,9 +40,11 @@ import java.util.{Date, UUID}
 import code.api.Constant._
 import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.OAuthHandshake._
-import code.api.util.APIUtil.ApiVersion.ApiVersion
+import code.api.berlin.group.v1.OBP_BERLIN_GROUP_1
 import code.api.util.CertificateUtil.{decrypt, privateKey}
+import code.api.util.Glossary.GlossaryItem
 import code.api.v1_2.ErrorMessage
+import code.api.v3_0_0.JSONFactory300.AggregateMetricJSON
 import code.api.{DirectLogin, _}
 import code.bankconnectors._
 import code.consumer.Consumers
@@ -71,331 +73,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.xml.{Elem, XML}
-
-
-object ErrorMessages {
-import code.api.util.APIUtil._
-
-val dateformat = new java.text.SimpleDateFormat("yyyy-MM-dd")
-
-  // Notes to developers. Please:
-  // 1) Follow (the existing) grouping of messages
-  // 2) Stick to existing terminology e.g. use "invalid" or "incorrect" rather than "wrong"
-  // 3) Before adding a new message, check that you can't use one that already exists.
-  // 4) Use Proper Names for OBP Resources.
-  // 5) Don't use abbreviations.
-  // 6) Any messaage defined here should be considered "fair game" to return over the API. Thus:
-  // 7) Since the existance of "OBP-..." in a message is used to determine if we should display to a user if display_internal_errors=false, do *not* concatenate internal or core banking system error messages to these strings.
-
-  // Infrastructure / config level messages (OBP-00XXX)
-  val HostnameNotSpecified = "OBP-00001: Hostname not specified. Could not get hostname from Props. Please edit your props file. Here are some example settings: hostname=http://127.0.0.1:8080 or hostname=https://www.example.com"
-  val DataImportDisabled  = "OBP-00002: Data import is disabled for this API instance."
-  val TransactionDisabled = "OBP-00003: Transaction Requests is disabled in this API instance."
-
-  @deprecated("This is too generic","25-06-2017")
-  val ServerAddDataError = "OBP-00004: Server error: could not add message" // Do not use this
-
-  val PublicViewsNotAllowedOnThisInstance = "OBP-00005: Public views not allowed on this instance. Please set allow_public_views = true in props files. "
-
-
-  val RemoteDataSecretMatchError = "OBP-00006: Remote data secret cannot be matched! Check OBP-API and OBP-Storage Props values for remotedata.hostname, remotedata.port and remotedata.secret." // (was OBP-20021)
-  val RemoteDataSecretObtainError = "OBP-00007: Remote data secret cannot be obtained! Check OBP-API and OBP-Storage Props values for remotedata.hostname, remotedata.port and remotedata.secret." // (was OBP-20022)
-
-  val ApiVersionNotSupported = "OBP-00008: The API version you called is not enabled on this server. Please contact your API administrator or use another version."
-
-  val FirehoseViewsNotAllowedOnThisInstance = "OBP-00009: Firehose views not allowed on this instance. Please set allow_firehose_views = true in props files. "
-  val MissingPropsValueAtThisInstance = "OBP-00010: Missing props value at this API instance - "
-  val NoValidElasticsearchIndicesConfigured = "OBP-00011: No elasticsearch indices are allowed on this instance. Please set es.warehouse.allowed.indices = index1,index2 (or = ALL for all). "
-
-  // General messages (OBP-10XXX)
-  val InvalidJsonFormat = "OBP-10001: Incorrect json format."
-  val InvalidNumber = "OBP-10002: Invalid Number. Could not convert value to a number."
-  val InvalidISOCurrencyCode = "OBP-10003: Invalid Currency Value. It should be three letters ISO Currency Code. "
-  val FXCurrencyCodeCombinationsNotSupported = "OBP-10004: ISO Currency code combination not supported for FX. Please modify the FROM_CURRENCY_CODE or TO_CURRENCY_CODE. "
-  val InvalidDateFormat = "OBP-10005: Invalid Date Format. Could not convert value to a Date."
-  val InvalidCurrency = "OBP-10006: Invalid Currency Value."
-  val IncorrectRoleName = "OBP-10007: Incorrect Role name: "
-  val CouldNotTransformJsonToInternalModel = "OBP-10008: Could not transform Json to internal model."
-  val CountNotSaveOrUpdateResource = "OBP-10009: Could not save or update resource."
-  val NotImplemented = "OBP-10010: Not Implemented "
-  val InvalidFutureDateValue = "OBP-10011: future_date has to be in future."
-  val maximumLimitExceeded = "OBP-10012: Invalid value. Maximum number is 10000."
-  val attemptedToOpenAnEmptyBox = "OBP-10013: Attempted to open an empty Box."
-  val cannotDecryptValueOfProperty = "OBP-10014: Could not decrypt value of property "
-
-  // General Sort and Paging
-  val FilterSortDirectionError = "OBP-10023: obp_sort_direction parameter can only take two values: DESC or ASC!" // was OBP-20023
-  val FilterOffersetError = "OBP-10024: wrong value for obp_offset parameter. Please send a positive integer (=>0)!" // was OBP-20024
-  val FilterLimitError = "OBP-10025: wrong value for obp_limit parameter. Please send a positive integer (=>1)!" // was OBP-20025
-  val FilterDateFormatError = s"OBP-10026: Failed to parse date string. Please use this format ${defaultFilterFormat.toPattern} or that one ${fallBackFilterFormat.toPattern}!" // OBP-20026
-
-  val InvalidApiVersionString = "OBP-00027: Invalid API Version string. We could not find the version specified."
-
-
-
-
-  // Authentication / Authorisation / User messages (OBP-20XXX)
-  val UserNotLoggedIn = "OBP-20001: User not logged in. Authentication is required!"
-  val DirectLoginMissingParameters = "OBP-20002: These DirectLogin parameters are missing: "
-  val DirectLoginInvalidToken = "OBP-20003: This DirectLogin token is invalid or expired: "
-  val InvalidLoginCredentials = "OBP-20004: Invalid login credentials. Check username/password."
-  val UserNotFoundById = "OBP-20005: User not found. Please specify a valid value for USER_ID."
-  val UserHasMissingRoles = "OBP-20006: User is missing one or more roles: "
-  val UserNotFoundByEmail = "OBP-20007: User not found by email."
-
-  val InvalidConsumerKey = "OBP-20008: Invalid Consumer Key."
-  val InvalidConsumerCredentials = "OBP-20009: Invalid consumer credentials"
-
-  val InvalidValueLength = "OBP-20010: Value too long"
-  val InvalidValueCharacters = "OBP-20011: Value contains invalid characters"
-
-  val InvalidDirectLoginParameters = "OBP-20012: Invalid direct login parameters"
-
-  val UsernameHasBeenLocked = "OBP-20013: The account has been locked, please contact administrator !"
-
-  val InvalidConsumerId = "OBP-20014: Invalid Consumer ID. Please specify a valid value for CONSUMER_ID."
-
-  val UserNoPermissionUpdateConsumer = "OBP-20015: Only the developer that created the consumer key should be able to edit it, please login with the right user."
-
-  val UnexpectedErrorDuringLogin = "OBP-20016: An unexpected login error occurred. Please try again."
-
-  val UserNoPermissionAccessView = "OBP-20017: Current user does not have access to the view. Please specify a valid value for VIEW_ID."
-
-
-  val InvalidInternalRedirectUrl = "OBP-20018: Login failed, invalid internal redirectUrl."
-  val UserNoOwnerView = "OBP-20019: User does not have access to owner view. "
-  val InvalidCustomViewFormat = "OBP-20020: View name must start with `_`. eg: _work, _life "
-  val SystemViewsCanNotBeModified = "OBP-20021: System Views can not be modified. Only the created views can be modified."
-  val ViewDoesNotPermitAccess = "OBP-20022: View does not permit the access."
-
-
-
-  val UserNotFoundByUsername = "OBP-20027: User not found by username."
-  val GatewayLoginMissingParameters = "OBP-20028: These GatewayLogin parameters are missing: "
-  val GatewayLoginUnknownError = "OBP-20029: Unknown Gateway login error."
-  val GatewayLoginHostPropertyMissing = "OBP-20030: Property gateway.host is not defined."
-  val GatewayLoginWhiteListAddresses = "OBP-20031: Gateway login can be done only from allowed addresses."
-  val GatewayLoginJwtTokenIsNotValid = "OBP-20040: The JWT is corrupted/changed during a transport."
-  val GatewayLoginCannotExtractJwtToken = "OBP-20041: Header, Payload and Signature cannot be extracted from the JWT."
-  val GatewayLoginNoNeedToCallCbs = "OBP-20042: There is no need to call CBS"
-  val GatewayLoginCannotFindUser = "OBP-20043: User cannot be found. Please initiate CBS communication in order to create it."
-  val GatewayLoginCannotGetCbsToken = "OBP-20044: Cannot get the CBSToken response from South side"
-  val GatewayLoginCannotGetOrCreateUser = "OBP-20045: Cannot get or create user during GatewayLogin process."
-  val GatewayLoginNoJwtForResponse = "OBP-20046: There is no useful value for JWT."
-
-  val UserNotSuperAdmin = "OBP-20050: Logged user is not super admin!"
-
-  val ElasticSearchIndexNotFound = "OBP-20051: Elasticsearch index or indices not found."
-  val NotEnoughtSearchStatisticsResults = "OBP-20052: Result set too small. Will not be displayed for reasons of privacy."
-  val ElasticSearchEmptyQueryBody = "OBP-20053: The Elasticsearch query body cannot be empty"
-
-  // OAuth 2
-  val Oauth2IsNotAllowed = "OBP-20201: OAuth2 is not allowed at this instance."
-  val Oauth2IJwtCannotBeVerified = "OBP-20202: OAuth2's Access Token cannot be verified."
-  val Oauth2ThereIsNoUrlOfJwkSet = "OBP-20203: There is no an URL of OAuth 2.0 server's JWK set, published at a well-known URL."
-  val Oauth2BadJWTException = "OBP-20204: Bad JWT error. "
-  val Oauth2ParseException = "OBP-20205: Parse error. "
-
-
-
-  
-  // Resource related messages (OBP-30XXX)
-  val BankNotFound = "OBP-30001: Bank not found. Please specify a valid value for BANK_ID."
-  val CustomerNotFound = "OBP-30002: Customer not found. Please specify a valid value for CUSTOMER_NUMBER."
-  val CustomerNotFoundByCustomerId = "OBP-30002: Customer not found. Please specify a valid value for CUSTOMER_ID."
-
-  val AccountNotFound = "OBP-30003: Account not found. Please specify a valid value for ACCOUNT_ID."
-  val CounterpartyNotFound = "OBP-30004: Counterparty not found. The BANK_ID / ACCOUNT_ID specified does not exist on this server."
-
-  val ViewNotFound = "OBP-30005: View not found for Account. Please specify a valid value for VIEW_ID"
-
-  val CustomerNumberAlreadyExists = "OBP-30006: Customer Number already exists. Please specify a different value for BANK_ID or CUSTOMER_NUMBER."
-  val CustomerAlreadyExistsForUser = "OBP-30007: The User is already linked to a Customer at the bank specified by BANK_ID"
-  val UserCustomerLinksNotFoundForUser = "OBP-30008: User Customer Link not found by USER_ID"
-  val AtmNotFoundByAtmId = "OBP-30009: ATM not found. Please specify a valid value for ATM_ID."
-  val BranchNotFoundByBranchId = "OBP-300010: Branch not found. Please specify a valid value for BRANCH_ID."
-  val ProductNotFoundByProductCode = "OBP-30011: Product not found. Please specify a valid value for PRODUCT_CODE."
-  val CounterpartyNotFoundByIban = "OBP-30012: Counterparty not found. Please specify a valid value for IBAN."
-  val CounterpartyBeneficiaryPermit = "OBP-30013: The account can not send money to the Counterparty. Please set the Counterparty 'isBeneficiary' true first"
-  val CounterpartyAlreadyExists = "OBP-30014: Counterparty already exists. Please specify a different value for BANK_ID or ACCOUNT_ID or VIEW_ID or NAME."
-  val CreateBranchError = "OBP-30015: Could not insert the Branch"
-  val UpdateBranchError = "OBP-30016: Could not update the Branch"
-  val CounterpartyNotFoundByCounterpartyId = "OBP-30017: Counterparty not found. Please specify a valid value for COUNTERPARTY_ID."
-  val BankAccountNotFound = "OBP-30018: Bank Account not found. Please specify valid values for BANK_ID and ACCOUNT_ID. "
-  val ConsumerNotFoundByConsumerId = "OBP-30019: Consumer not found. Please specify a valid value for CONSUMER_ID."
-
-  val CreateBankError = "OBP-30020: Could not create the Bank"
-  val UpdateBankError = "OBP-30021: Could not update the Bank"
-  val ViewNoPermission = "OBP-30022: The current view does not have the permission: "
-  val UpdateConsumerError = "OBP-30023: Cannot update Consumer "
-  val CreateConsumerError = "OBP-30024: Could not create Consumer "
-  val CreateUserCustomerLinksError = "OBP-30025: Could not create user_customer_links "
-  val ConsumerKeyAlreadyExists = "OBP-30026: Consumer Key already exists. Please specify a different value."
-  val NoExistingAccountHolders = "OBP-30027: Account Holders not found. The BANK_ID / ACCOUNT_ID specified for account holder does not exist on this server"
-
-
-  val CreateAtmError = "OBP-30028: Could not insert the ATM"
-  val UpdateAtmError = "OBP-30029: Could not update the ATM"
-
-  val CreateProductError = "OBP-30030: Could not insert the Product"
-  val UpdateProductError = "OBP-30031: Could not update the Product"
-
-  val CreateCardError = "OBP-30032: Could not insert the Card"
-  val UpdateCardError = "OBP-30033: Could not update the Card"
-
-  val ViewIdNotSupported = "OBP-30034: This ViewId is do not supported. Only support four now: Owner, Public, Accountant, Auditor."
-
-  val UserCustomerLinkNotFound = "OBP-30035: User Customer Link not found"
-
-  val CreateOrUpdateCounterpartyMetadataError = "OBP-30036: Could not create or update CounterpartyMetadata"
-  val CounterpartyMetadataNotFound = "OBP-30037: CounterpartyMetadata not found. Please specify valid values for BANK_ID, ACCOUNT_ID and COUNTERPARTY_ID. "
-
-  val CreateFxRateError = "OBP-30032: Could not insert the Fx Rate"
-  val UpdateFxRateError = "OBP-30033: Could not update the Fx Rate"
-  val UnknownFxRateError = "OBP-30033: Unknown Fx Rate error"
-
-
-  // Meetings
-  val MeetingsNotSupported = "OBP-30101: Meetings are not supported on this server."
-  val MeetingApiKeyNotConfigured = "OBP-30102: Meeting provider API Key is not configured."
-  val MeetingApiSecretNotConfigured = "OBP-30103: Meeting provider Secret is not configured."
-  val MeetingNotFound = "OBP-30104: Meeting not found."
-
-
-  val InvalidAccountBalanceCurrency = "OBP-30105: Invalid Balance Currency."
-  val InvalidAccountBalanceAmount = "OBP-30106: Invalid Balance Amount."
-
-  val InvalidUserId = "OBP-30107: Invalid User Id."
-  val InvalidAccountType = "OBP-30108: Invalid Account Type."
-  val InitialBalanceMustBeZero = "OBP-30109: Initial Balance of Account must be Zero (0)."
-  val InvalidAccountIdFormat = "OBP-30110: Invalid Account Id. The ACCOUNT_ID should only contain 0-9/a-z/A-Z/'-'/'.'/'_', the length should be smaller than 255."
-  val InvalidBankIdFormat = "OBP-30111: Invalid Bank Id. The BANK_ID should only contain 0-9/a-z/A-Z/'-'/'.'/'_', the length should be smaller than 255."
-  val InvalidAccountInitialBalance = "OBP-30112: Invalid Number. Initial balance must be a number, e.g 1000.00"
-
-
-  val EntitlementIsBankRole = "OBP-30205: This entitlement is a Bank Role. Please set bank_id to a valid bank id."
-  val EntitlementIsSystemRole = "OBP-30206: This entitlement is a System Role. Please set bank_id to empty string."
-
-
-  val InvalidStrongPasswordFormat = "OBP-30207: Invalid Password Format. Your password should EITHER be at least 10 characters long and contain mixed numbers and both upper and lower case letters and at least one special character, OR be longer than 16 characters."
-
-  val AccountIdAlreadyExsits = "OBP-30208: Account_ID already exists at the Bank."
-
-
-  val InsufficientAuthorisationToCreateBranch  = "OBP-30209: Insufficient authorisation to Create Branch. You do not have the role CanCreateBranch." // was OBP-20019
-  val InsufficientAuthorisationToCreateBank  = "OBP-30210: Insufficient authorisation to Create Bank. You do not have the role CanCreateBank." // was OBP-20020
-
-  val InvalidConnector = "OBP-30211: Invalid Connector Version. Please specify a valid value for CONNECTOR."
-
-  val EntitlementNotFound = "OBP-30212: EntitlementId not found"
-  val EntitlementDoesNotBelongsToUser = "OBP-30213: ENTITLEMENT_ID does not belongs to USER_ID"
-  val EntitlementRequestAlreadyExists = "OBP-30214: Entitlement Request already exists for the user."
-  val EntitlementRequestCannotBeAdded = "OBP-30214: Entitlement Request cannot be added."
-  val EntitlementRequestNotFound = "OBP-30215: EntitlementRequestId not found"
-  val EntitlementAlreadyExists = "OBP-30216: Entitlement already exists for the user."
-
-  // Branch related messages
-  val branchesNotFoundLicense = "OBP-32001: No branches available. License may not be set."
-  val BranchesNotFound = "OBP-32002: No branches available."
-
-  // ATM related messages
-  val atmsNotFoundLicense = "OBP-33001: No ATMs available. License may not be set."
-  val atmsNotFound = "OBP-33002: No ATMs available."
-
-  // General Resource related messages above here
-
-
-  // Transaction Request related messages (OBP-40XXX)
-  val InvalidTransactionRequestType = "OBP-40001: Invalid value for TRANSACTION_REQUEST_TYPE"
-  val InsufficientAuthorisationToCreateTransactionRequest  = "OBP-40002: Insufficient authorisation to create TransactionRequest. The Transaction Request could not be created because you don't have access to the owner view of the from account or you don't have access to canCreateAnyTransactionRequest."
-  val InvalidTransactionRequestCurrency = "OBP-40003: Transaction Request Currency must be the same as From Account Currency."
-  val InvalidTransactionRequestId = "OBP-40004: Transaction Request Id not found."
-  val InsufficientAuthorisationToCreateTransactionType  = "OBP-40005: Insufficient authorisation to Create Transaction Type offered by the bank. The Request could not be created because you don't have access to CanCreateTransactionType."
-  val CreateTransactionTypeInsertError  = "OBP-40006: Could not insert Transaction Type: Non unique BANK_ID / SHORT_CODE"
-  val CreateTransactionTypeUpdateError  = "OBP-40007: Could not update Transaction Type: Non unique BANK_ID / SHORT_CODE"
-  val NotPositiveAmount = "OBP-40008: Can't send a payment with a value of 0 or less."
-  val TransactionRequestTypeHasChanged = "OBP-40009: The TRANSACTION_REQUEST_TYPE has changed."
-  val InvalidTransactionRequesChallengeId = "OBP-40010: Invalid Challenge Id. Please specify a valid value for CHALLENGE_ID."
-  val TransactionRequestStatusNotInitiated = "OBP-40011: Transaction Request Status is not INITIATED."
-  val CounterpartyNotFoundOtherAccountProvider = "OBP-40012: Please set up the otherAccountRoutingScheme and otherBankRoutingScheme fields of the Counterparty to 'OBP'"
-  val InvalidChargePolicy = "OBP-40013: Invalid Charge Policy. Please specify a valid value for Charge_Policy: SHARED, SENDER or RECEIVER. "
-  val AllowedAttemptsUsedUp = "OBP-40014: Sorry, you've used up your allowed attempts. "
-  val InvalidChallengeType = "OBP-40015: Invalid Challenge Type. Please specify a valid value for CHALLENGE_TYPE, when you create the transaction request."
-  val InvalidChallengeAnswer = "OBP-40016: Invalid Challenge Answer. Please specify a valid value for answer in Json body."
-  val InvalidPhoneNumber = "OBP-40017: Invalid Phone Number. Please specify a valid value for PHONE_NUMBER. Eg:+9722398746 "
-
-
-
-  // Exceptions (OBP-50XXX)
-  val UnknownError = "OBP-50000: Unknown Error."
-  val FutureTimeoutException = "OBP-50001: Future Timeout Exception."
-  val KafkaMessageClassCastException = "OBP-50002: Kafka Response Message Class Cast Exception."
-  val AdapterOrCoreBankingSystemException = "OBP-50003: Adapter Or Core Banking System Exception. Failed to get a valid response from the south side Adapter or Core Banking System."
-  // This error may not be shown to user, just for debugging.
-  val CurrentUserNotFoundException = "OBP-50004: Method (AuthUser.getCurrentUser) can not find the current user in the current context!"
-  val AnUnspecifiedOrInternalErrorOccurred = "OBP-50005: An unspecified or internal error occurred."
-  val KafkaInterruptedException = "OBP-50006: Kafka interrupted exception."
-  val KafkaExecutionException = "OBP-50007: Kafka execution exception."
-  val KafkaStreamTimeoutException = "OBP-50008: Akka Kafka stream timeout exception."
-  val KafkaUnknownError = "OBP-50009: Kafka unknown error."
-  val ScalaEmptyBoxToLiftweb = "OBP-50010: Scala return Empty box to Liftweb."
-
-  // Connector Data Exceptions (OBP-502XX)
-  val ConnectorEmptyResponse = "OBP-50200: Connector cannot return the data we requested." // was OBP-30200
-  val InvalidConnectorResponseForGetBankAccounts = "OBP-50201: Connector did not return the set of accounts we requested."  // was OBP-30201
-  val InvalidConnectorResponseForGetBankAccount = "OBP-50202: Connector did not return the account we requested."  // was OBP-30202
-  val InvalidConnectorResponseForGetTransaction = "OBP-50203: Connector did not return the transaction we requested."  // was OBP-30203
-  val InvalidConnectorResponseForGetTransactions = "OBP-50204: Connector did not return the set of transactions we requested."  // was OBP-30204
-  val InvalidConnectorResponseForGetTransactionRequests210 = "OBP-50205: Connector did not return the set of transaction requests we requested." 
-  val InvalidConnectorResponseForGetChallengeThreshold = "OBP-50206: Connector did not return the set of challenge threshold we requested." 
-  val InvalidConnectorResponseForGetChargeLevel = "OBP-50207: Connector did not return the set of challenge level we requested." 
-  val InvalidConnectorResponseForCreateTransactionRequestImpl210 = "OBP-50208: Connector did not return the set of transactions requests we requested." 
-  val InvalidConnectorResponseForMakePayment = "OBP-50209: Connector did not return the set of transactions we requested." 
-  val InvalidConnectorResponseForMakePaymentv200 = "OBP-50210: Connector did not return the set of transaction id we requested." 
-
-
-  // Adapter Exceptions (OBP-6XXXX)
-  // Reserved for adapter (south of Kafka) messages
-  // Also used for connector == mapped, and show it as the Internal errors. 
-  val GetStatusException = "OBP-60001: Save Transaction Exception. " 
-  val GetChargeValueException = "OBP-60002: Get ChargeValue Exception. " 
-  val CreateTransactionsException = "OBP-60003: Create transaction Exception. " 
-  val UpdateBankAccountException = "OBP-60004: Update bank account Exception. " 
-  val SaveTransactionRequestTransactionException = "OBP-60005: Save Transaction Request Transaction Exception. " 
-  val SaveTransactionRequestChallengeException = "OBP-60006: Save Transaction Request Challenge Exception. " 
-  val SaveTransactionRequestStatusException = "OBP-60007: Save Transaction Request Status Exception. " 
-  val TransactionRequestDetailsExtractException = "OBP-60008: Transaction detail body extract exception. " 
-
-
-  ///////////
-
-
-
-  //For Swagger, used reflect to  list all the varible names and values.
-  // eg : val InvalidUserId = "OBP-30107: Invalid User Id."
-  //   -->(InvalidUserId, "OBP-30107: Invalid User Id.")
-  val allFields =
-    for (
-      v <- this.getClass.getDeclaredFields
-      //add guard, ignore the SwaggerJSONsV220.this and allFieldsAndValues fields
-      if (APIUtil.notExstingBaseClass(v.getName()))
-    ) yield {
-      v.setAccessible(true)
-      v.getName() -> v.get(this)
-    }
-
-  //For Swagger, get varible name by value:
-  // eg: val InvalidUserId = "OBP-30107: Invalid User Id."
-  //  getFildNameByValue("OBP-30107: Invalid User Id.") return InvalidUserId
-  def getFildNameByValue(value: String) = {
-    val strings = for (e <- allFields if (e._2 == (value))) yield e._1
-    strings.head
-  }
-
-}
-
-
-
 
 object APIUtil extends MdcLoggable {
 
@@ -1168,7 +845,7 @@ object APIUtil extends MdcLoggable {
 
   // Use the *singular* case. for both the variable name and string.
   // e.g. "This call is Payment related"
-  val apiTagTransactionRequest = ResourceDocTag("TransactionRequest")
+  val apiTagTransactionRequest = ResourceDocTag("Transaction-Request")
   val apiTagApi = ResourceDocTag("API")
   val apiTagBank = ResourceDocTag("Bank")
   val apiTagAccount = ResourceDocTag("Account")
@@ -1179,32 +856,34 @@ object APIUtil extends MdcLoggable {
   val apiTagPrivateData = ResourceDocTag("PrivateData")
   val apiTagTransaction = ResourceDocTag("Transaction")
   val apiTagTransactionFirehose = ResourceDocTag("Transaction-Firehose")
-  val apiTagCounterpartyMetaData = ResourceDocTag("CounterpartyMetaData")
-  val apiTagTransactionMetaData = ResourceDocTag("TransactionMetaData")
-  val apiTagView = ResourceDocTag("View")
+  val apiTagCounterpartyMetaData = ResourceDocTag("Counterparty-Metadata")
+  val apiTagTransactionMetaData = ResourceDocTag("Transaction-Metadata")
+  val apiTagView = ResourceDocTag("Account-View")
   val apiTagEntitlement = ResourceDocTag("Entitlement")
-  val apiTagRole = ResourceDocTag("Role")
+  val apiTagRole = ResourceDocTag("API-Role")
   val apiTagOwnerRequired = ResourceDocTag("OwnerViewRequired")
   val apiTagCounterparty = ResourceDocTag("Counterparty")
   val apiTagKyc = ResourceDocTag("KYC")
   val apiTagCustomer = ResourceDocTag("Customer")
   val apiTagOnboarding = ResourceDocTag("Onboarding")
   val apiTagUser = ResourceDocTag("User")
-  val apiTagMeeting = ResourceDocTag("Meeting")
+  val apiTagMeeting = ResourceDocTag("Customer-Meeting")
   val apiTagExperimental = ResourceDocTag("Experimental")
   val apiTagPerson = ResourceDocTag("Person")
   val apiTagCard = ResourceDocTag("Card")
-  val apiTagSandbox = ResourceDocTag("Sandbox")
-  val apiTagBranch = ResourceDocTag("Branch")
-  val apiTagATM = ResourceDocTag("ATM")
-  val apiTagProduct = ResourceDocTag("Product")
-  val apiTagOpenData = ResourceDocTag("Open Data")
-  val apiTagConsumer = ResourceDocTag("Consumer")
-  val apiTagDataWarehouse = ResourceDocTag("Data Warehouse")
-  val apiTagFx = ResourceDocTag("FX")
-  val apiTagMessage = ResourceDocTag("Message")
-  val apiTagMetric = ResourceDocTag("Metric")
-  val apiTagDocumentation = ResourceDocTag("Documentation")
+  val apiTagSandbox = ResourceDocTag("API-Sandbox")
+  val apiTagBranch = ResourceDocTag("Bank-Branch")
+  val apiTagATM = ResourceDocTag("Bank-ATM")
+  val apiTagProduct = ResourceDocTag("Bank-Product")
+  val apiTagOpenData = ResourceDocTag("Open-Data")
+  val apiTagConsumer = ResourceDocTag("API-Consumer")
+  val apiTagSearchWarehouse = ResourceDocTag("Data-Warehouse")
+  val apiTagFx = ResourceDocTag("Bank-FX")
+  val apiTagMessage = ResourceDocTag("Customer-Message")
+  val apiTagMetric = ResourceDocTag("API-Metric")
+  val apiTagDocumentation = ResourceDocTag("API-Documentation")
+  val apiTagBerlinGroup = ResourceDocTag("Berlin-Group")
+  val apiTagAggregateMetrics = ResourceDocTag("Aggregate-Metrics")
 
   case class Catalogs(core: Boolean = false, psd2: Boolean = false, obwg: Boolean = false)
 
@@ -1230,7 +909,7 @@ object APIUtil extends MdcLoggable {
   // Used to document the API calls
   case class ResourceDoc(
                           partialFunction : OBPEndpoint, // PartialFunction[Req, Box[User] => Box[JsonResponse]],
-                          implementedInApiVersion: String, // TODO: Use ApiVersion enumeration instead of string
+                          implementedInApiVersion: ApiVersion, // TODO: Use ApiVersion enumeration instead of string
                           partialFunctionName: String, // The string name of the partial function that implements this resource. Could use it to link to the source code that implements the call
                           requestVerb: String, // GET, POST etc. TODO: Constrain to GET, POST etc.
                           requestUrl: String, // The URL (not including /obp/vX.X). Starts with / No trailing slash. TODO Constrain the string?
@@ -1241,261 +920,36 @@ object APIUtil extends MdcLoggable {
                           errorResponseBodies: List[String], // Possible error responses
                           catalogs: Catalogs,
                           tags: List[ResourceDocTag],
-                          roles: Option[List[ApiRole]] = None
+                          roles: Option[List[ApiRole]] = None,
+                          isFeatured: Boolean = false,
+                          specialInstructions: Option[String] = None
   )
-
-
-  case class GlossaryItem(
-                           title: String,
-                           description: String
-                       )
-
-
-
-
-
-  val glossaryItems = ArrayBuffer[GlossaryItem]()
-
-
-
-
-
-  glossaryItems += GlossaryItem(
-    title = "Account",
-    description =
-      """The thing that tokens of value (money) come in and out of.
-        |An account has one or more `owners` which are `Users`.
-        |In the future, `Customers` may also be `owners`.
-        |An account has a balance in a specified currency and zero or more `transactions` which are records of successful movements of money.
-        |"""
-  )
-
-  glossaryItems += GlossaryItem(
-    title = "Account.account_id",
-    description =
-    """
-      |An identifier for the account that MUST NOT leak the account number or other identifier nomrally used by the customer or bank staff.
-      |It SHOULD be a UUID. It MUST be unique in combination with the BANK_ID. ACCOUNT_ID is used in many URLS so it should be considered public.
-      |(We do NOT use account number in URLs since URLs are cached and logged all over the internet.)
-      |In local / sandbox mode, ACCOUNT_ID is generated as a UUID and stored in the database.
-      |In non sandbox modes (Kafka etc.), ACCOUNT_ID is mapped to core banking account numbers / identifiers at the South Side Adapter level.
-      |ACCOUNT_ID is used to link Metadata and Views so it must be persistant and known to the North Side (OBP-API).
-    """)
-
-  glossaryItems += GlossaryItem(
-    title = "Bank",
-    description =
-    """
-      |The entity that represents the financial institution or bank within a financial group.
-      |Open Bank Project is a multi-bank API. Each bank resource contains basic identifying information such as name, logo and website.
-    """)
-
-
-  glossaryItems += GlossaryItem(
-    title = "Bank.bank_id",
-    description =
-    """
-      |An identifier that uniquely identifies the bank or financial institution on the OBP-API instance.
-      |
-      |It is typically a human (developer) friendly string for ease of identification.
-      |In sandbox mode it typically has the form financialinstitutuion.sequenceno.region.language. e.g. "bnpp-irb.01.it.it" however for production it could be the BIC of the institution.
-     """)
-
-  glossaryItems += GlossaryItem(
-    title = "Consumer",
-    description =
-    """
-      |The "consumer" of the API, i.e. the web, mobile or serverside "App" that calls on the OBP API on behalf of the end user (or system).
-      |
-      |Each Consumer has a consumer key and secrect which allows it to enter into secure communication with the API server.
-    """)
-
-  glossaryItems += GlossaryItem(
-    title = "Customer",
-    description =
-      """
-        |The legal entity that has the relationship to the bank. Customers are linked to Users via `User Customer Links`. Customer attributes include Date of Birth, Customer Number etc.
-        |
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "Customer.customer_id",
-    description =
-      """
-        |The identifier that MUST NOT leak the customer number or other identifier nomrally used by the customer or bank staff. It SHOULD be a UUID and MUST be unique in combination with BANK_ID.
-        |
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "Transaction",
-    description =
-      """
-        |Records of successful movements of money from / to an `Account`. OBP Transactions don't contain any "draft" or "pending" Transactions. (see Transaction Requests). Transactions contain infomration including type, description, from, to, currency, amount and new balance information.
-        |
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "Transaction Requests",
-    description =
-      """
-        |Transaction Requests are records of transaction / payment requests coming to the API. They may or may not result in Transactions (following authorisation, security challenges and sufficient funds etc.)
-        |
-        |A successful Transaction Request results in a Transaction.
-        |
-        |For more information [see here](https://github.com/OpenBankProject/OBP-API/wiki/Transaction-Requests)
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "User",
-    description =
-      """
-        |The entity that accesses the API with a login / authorisation token and has access to zero or more resources on the OBP API. The User is linked to the core banking user / customer at the South Side Adapter layer.
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "User.user_id",
-    description =
-      """
-        |An identifier that MUST NOT leak the user name or other identifier nomrally used by the customer or bank staff. It SHOULD be a UUID and MUST be unique on the OBP instance.
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "User.provider",
-    description =
-      """
-        |The name of the authentication service. e.g. the OBP hostname or kafka if users are authenticated over Kafka.
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "User.provider_id",
-    description =
-      """
-        |The id of the user given by the authenticaiton provider.
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "User Customer Links",
-    description =
-      """
-        |Link Users and Customers in a many to many relationship. A User can represent many Customers (e.g. the bank may have several Customer records for the same individual or a dependant). In this way Customers can easily be attached / detached from Users.
-      """)
-
-  glossaryItems += GlossaryItem(
-    title = "Direct Login",
-    description =
-      s"""
-        |## TL;DR
-        |
-        |Direct Login is a simple authentication process to be used at hackathons and trusted environments:
-        |
-        |
-        |### 1) Get your App key
-        |
-        |[Sign up]($getServerUrl/user_mgt/sign_up) or [login]($getServerUrl/user_mgt/login) as a developer.
-        |
-        |Register your App key [HERE]($getServerUrl/consumer-registration)
-        |
-        |Copy and paste the consumer key for step two below.
-        |
-        |### 2) Authenticate
-        |
-        |
-        |Using your favorite http client:
-        |
-        |	POST $getServerUrl/my/logins/direct
-        |
-        |Body
-        |
-        |	Leave Empty!
-        |
-        |
-        |Headers:
-        |
-        |	Content-Type:  application/json
-        |
-        |
-        |    Authorization: DirectLogin username="janeburel",
-        |                    password="the-password-of-jane",
-        |                    consumer_key="your-consumer-key-from-step-one"
-        |
-        |Here is it all together:
-        |
-        |	POST $getServerUrl/my/logins/direct HTTP/1.1
-        |	Authorization: DirectLogin username="janeburel",   password="686876",  consumer_key="GET-YOUR-OWN-API-KEY-FROM-THE-OBP"
-        |	Content-Type: application/json
-        |	Host: 127.0.0.1:8080
-        |	Connection: close
-        |	User-Agent: Paw/2.3.3 (Macintosh; OS X/10.11.3) GCDHTTPRequest
-        |	Content-Length: 0
-        |
-        |
-        |
-        |
-        |You should receive a token:
-        |
-        |	{"token":"a-long-token-string"}
-        |
-        |### 3) Make authenticated API calls
-        |
-        |In subsequent calls you can use the token received in step 2
-        |
-        |e.g.
-        |
-        |
-        |Action:
-        |
-        |	PUT $getObpApiRoot/v2.0.0/banks/obp-bankx-n/accounts/my-new-account-id
-        |
-        |Body:
-        |
-        |	{  "type":"CURRENT",  "balance":{    "currency":"USD",    "amount":"0"  }}
-        |
-        |Headers:
-        |
-        |	Content-Type:  application/json
-        |
-        |	Authorization: DirectLogin token="your-token-from-step-2"
-        |
-        |Here is another example:
-        |
-        |	PUT $getObpApiRoot/v2.0.0/banks/enbd-egy--p3/accounts/newaccount1 HTTP/1.1
-        |	Authorization: DirectLogin token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyIiOiIifQ.C8hJZNPDI59OOu78pYs4BWp0YY_21C6r4A9VbgfZLMA"
-        |	Content-Type: application/json
-        |	Cookie: JSESSIONID=7h1ssu6d7j151u08p37a6tsx1
-        |	Host: 127.0.0.1:8080
-        |	Connection: close
-        |	User-Agent: Paw/2.3.3 (Macintosh; OS X/10.11.3) GCDHTTPRequest
-        |	Content-Length: 60
-        |
-        |	{"type":"CURRENT","balance":{"currency":"USD","amount":"0"}}
-        |
-        |
-        |### More information
-        |
-        |   Parameter names and values are case sensitive.
-        |   The following parameters must be sent by the client to the server:
-        |
-        |       username
-        |         The name of the user to authenticate.
-        |
-        |       password
-        |         The password used to authenticate user. Alphanumeric string.
-        |
-        |       consumer_key
-        |         The application identifier. Generated on OBP side via
-        |         $getServerUrl/consumer-registration endpoint.
-        |
-        |
-        |  Each parameter MUST NOT appear more than once per request.
-        |
-      """)
-
-
-
 
 
   def getGlossaryItems : List[GlossaryItem] = {
-    glossaryItems.toList.sortBy(_.title)
+    Glossary.glossaryItems.toList.sortBy(_.title)
+  }
+
+/*  def getAggregateMetricJSON(count: Long, avg_duration: (List[String],List[List[String]]), min_duration: (List[String],List[List[String]]), max_duration: (List[String],List[List[String]])) = {
+    val aggregateMetricJVALUE: JValue = {
+      val aggregateMetricJSON = new AggregateMetricJSON(
+        count,
+        avg_duration._2.headOr(Nil).headOr("null"),
+        min_duration._2.headOr(Nil).headOr("null"),
+        max_duration._2.headOr(Nil).headOr("null"))
+      Extraction.decompose(aggregateMetricJSON)
+    }
+
+    aggregateMetricJVALUE
+  }*/
+
+//  def getAggregateMetricJSON(count:Long, avg_duration: String, min_duration: String, max_duration: String) = {
+  def getAggregateMetricJSON(aggregatemetrics: List[Double]) = {
+    val aggregateMetricJVALUE: JValue = {
+      val aggregateMetricJSON = new AggregateMetricJSON(aggregatemetrics(0).toInt, aggregatemetrics(1), aggregatemetrics(2), aggregatemetrics(3))
+      Extraction.decompose(aggregateMetricJSON)
+    }
+    aggregateMetricJVALUE
   }
 
 
@@ -1524,7 +978,9 @@ object APIUtil extends MdcLoggable {
     messageFormat: String,
     description: String,
     exampleOutboundMessage: JValue,
-    exampleInboundMessage: JValue
+    exampleInboundMessage: JValue,
+    outboundAvroSchema: Option[JValue] = None,
+    inboundAvroSchema: Option[JValue] = None
   )
 
   // Define relations between API end points. Used to create _links in the JSON and maybe later for API Explorer browsing
@@ -1599,12 +1055,6 @@ Returns a string showed to the developer
     }
 
 
-
-  def apiVersionWithV(apiVersion : String) : String = {
-    // TODO Define a list of supported versions (put in Constant) and constrain the input
-    // Append v and replace _ with .
-    s"v${apiVersion.replaceAll("_",".")}"
-  }
 
   def fullBaseUrl : String = {
     val crv = CurrentReq.value
@@ -1681,7 +1131,7 @@ Returns a string showed to the developer
         toResourceDoc.partialFunction,
         relation.rel,
         // Add the vVersion to the documented url
-        s"/${apiVersionWithV(toResourceDoc.implementedInApiVersion)}${toResourceDoc.requestUrl}"
+        s"/${toResourceDoc.implementedInApiVersion.vDottedApiVersion}${toResourceDoc.requestUrl}"
       )
     internalApiLinks
   }
@@ -1738,6 +1188,12 @@ Returns a string showed to the developer
     }
     user_ids.filter(_ == user_id).length > 0
   }
+
+
+
+
+
+
 
   def hasEntitlement(bankId: String, userId: String, role: ApiRole): Boolean = {
     !Entitlement.entitlement.vend.getEntitlement(bankId, userId, role.toString).isEmpty
@@ -1925,6 +1381,8 @@ Returns a string showed to the developer
     * @return the underscored JValue
     */
   def snakify(json: JValue): JValue = json mapField {
+    //IBAN is a speical value in bank, should not be convert to iban
+    case JField("IBAN", x) => JField("IBAN", x)
     case JField(name, x) => JField(StringHelpers.snakify(name), x)
   }
 
@@ -2068,6 +1526,7 @@ Returns a string showed to the developer
         case ApiVersion.v2_1_0 => LiftRules.statelessDispatch.append(v2_1_0.OBPAPI2_1_0)
         case ApiVersion.v2_2_0 => LiftRules.statelessDispatch.append(v2_2_0.OBPAPI2_2_0)
         case ApiVersion.v3_0_0 => LiftRules.statelessDispatch.append(v3_0_0.OBPAPI3_0_0)
+        case ApiVersion.`berlinGroupV1` => LiftRules.statelessDispatch.append(OBP_BERLIN_GROUP_1)
       }
 
       logger.info(s"${version.toString} was ENABLED")
@@ -2082,41 +1541,6 @@ Returns a string showed to the developer
 
 
   type OBPEndpoint = PartialFunction[Req, CallContext => Box[JsonResponse]]
-
-/*
-Versions are groups of endpoints in a file
- */
-  object ApiVersion extends Enumeration {
-    type ApiVersion = Value
-    val v1_0, v1_1, v1_2, v1_2_1, v1_3_0, v1_4_0, v2_0_0, v2_1_0, v2_2_0, v3_0_0, importerApi, accountsApi, bankMockApi = Value
-  }
-
-
-
-  def convertToApiVersion (apiVersionString: String) : Box[ApiVersion] = {
-
-    // Make sure the string has the "v" prefix
-    try {
-      val apiVersionStringWithV: String = if (apiVersionString.take(1).toLowerCase != "v") {
-        s"v$apiVersionString"
-      } else
-        apiVersionString
-
-      // replace dots with _
-      Full(ApiVersion.withName(apiVersionStringWithV.replace(".", "_")))
-    } catch {
-      case e: Exception => Failure(InvalidApiVersionString)
-    }
-
-
-
-  }
-
-  def dottedApiVersion (apiVersion: ApiVersion) : String = apiVersion.toString.replace("_", ".").replace("v","")
-  def vDottedApiVersion (apiVersion: ApiVersion) : String = apiVersion.toString.replace("_", ".")
-
-  // TODO make this a method of the ApiVersion object so its easier to call
-  def noV (apiVersion: ApiVersion) : String = apiVersion.toString.replace("v", "").replace("V","")
 
 
   def getAllowedEndpoints (endpoints : List[OBPEndpoint], resourceDocs: ArrayBuffer[ResourceDoc]) : List[OBPEndpoint] = {
@@ -2390,11 +1814,17 @@ Versions are groups of endpoints in a file
   }
 
   def filterMessage(obj: Failure) = {
+    logger.debug("Failure: " + obj)
+
+    def messageIsNotNull(x: Failure, obj: Failure) = {
+      if (x.msg != null) true else { logger.info("Failure: " + obj); false }
+    }
+
     getPropsAsBoolValue("display_internal_errors", false) match {
       case true => // Show all error in a chain
         obj.messageChain
       case false => // Do not display internal errors
-        val obpFailures = obj.failureChain.filter(_.msg.contains("OBP-"))
+        val obpFailures = obj.failureChain.filter(x => messageIsNotNull(x, obj) && x.msg.contains("OBP-"))
         obpFailures match {
           case Nil => ErrorMessages.AnUnspecifiedOrInternalErrorOccurred
           case _ => obpFailures.map(_.msg).mkString(" <- ")
@@ -2414,8 +1844,11 @@ Versions are groups of endpoints in a file
         Full(v)
       case Empty => // Just forwarding
         throw new Exception("Empty Box not allowed")
-      case ParamFailure(m,e,c,af: APIFailureNewStyle) =>
-        val obj = Failure(m, e, c) ?~! af.failMsg
+      case obj1@ParamFailure(m,e,c,af: APIFailureNewStyle) =>
+        val obj = (m,e, c) match {
+          case ("", Empty, Empty) => Empty ?~! af.failMsg
+          case _ => Failure (m, e, c) ?~! af.failMsg
+        }
         val failuresMsg = filterMessage(obj)
         val callContext = af.ccl.map(_.copy(httpCode = Some(af.failCode)))
         val apiFailure = af.copy(failMsg = failuresMsg).copy(ccl = callContext)
