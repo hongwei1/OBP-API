@@ -1213,11 +1213,10 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         InternalGetTransactionRequests(
           errorCodeExample,
           inboundStatusMessagesExample,
-          List(TransactionRequest(
+          List(InboundTransactionRequest(
             id = TransactionRequestId("id"),
             `type` = "String",
             from = TransactionRequestAccount("10", "12"),
-            details = null,
             body = TransactionRequestBody(
               TransactionRequestAccount("", ""),
               AmountOfMoney("ILS", "0"), ""
@@ -1281,10 +1280,12 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
         //For consistency with sandbox mode, we need combine obp transactions in database and adapter transactions  
         for{
           adapterTransactionRequests <- Full(x.transactionRequests)
+          //There is difference between KafkaTransactionRequest and MappedTransactionRequest. We can not get the JValue from Kafka.
+          adapterCompleteTransactionRequests <- Full(JsonFactory_vJune2017.createTransactionRequests(adapterTransactionRequests))
           //TODO, this will cause performance issue, we need limit the number of transaction requests. 
           obpTransactionRequests <- LocalMappedConnector.getTransactionRequestsImpl210(fromAccount) ?~! s"$ConnectorEmptyResponse, error on LocalMappedConnector.getTransactionRequestsImpl210"
         } yield {
-          adapterTransactionRequests ::: obpTransactionRequests
+          adapterCompleteTransactionRequests ::: obpTransactionRequests
         }
       case Full(x) if (x.errorCode!="") =>
         Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages)

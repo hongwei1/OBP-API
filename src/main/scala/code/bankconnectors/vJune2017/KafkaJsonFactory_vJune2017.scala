@@ -12,7 +12,7 @@ import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData
 import code.model.{AmountOfMoney => _, _}
-import code.transactionrequests.TransactionRequests.TransactionRequest
+import code.transactionrequests.TransactionRequests._
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.today
 
@@ -186,7 +186,33 @@ case class InternalCreateChallengeJune2017(
 case class InternalGetTransactionRequests(
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
-  transactionRequests:List[TransactionRequest]
+  transactionRequests:List[InboundTransactionRequest]
+)
+
+//also check the @code.transactionrequests.TransactionRequests.TransactionRequest
+//Only difference is the `details: JValue`, we do not get the JValue from Kafka.
+case class InboundTransactionRequest (
+  id: TransactionRequestId,
+  `type` : String,
+  from: TransactionRequestAccount,
+  body: TransactionRequestBody, // Note: This is structured with one "to" account etc.
+  transaction_ids: String,
+  status: String,
+  start_date: Date,
+  end_date: Date,
+  challenge: TransactionRequestChallenge,
+  charge: TransactionRequestCharge,
+  charge_policy: String,
+  counterparty_id :CounterpartyId,
+  name :String,
+  this_bank_id : BankId,
+  this_account_id : AccountId,
+  this_view_id :ViewId,
+  other_account_routing_scheme : String,
+  other_account_routing_address : String,
+  other_bank_routing_scheme : String,
+  other_bank_routing_address : String,
+  is_beneficiary :Boolean
 )
 
 case class OutboundCounterparty(
@@ -291,5 +317,36 @@ object JsonFactory_vJune2017 {
   
   def createCustomersJson(customers : List[Customer]) : InternalBasicCustomers = {
     InternalBasicCustomers(customers.map(createCustomerJson))
+  }
+  
+  def createTransactionRequest(inboundTransactionRequest : InboundTransactionRequest) : TransactionRequest = {
+    TransactionRequest(
+      id = inboundTransactionRequest.id,
+      `type` = inboundTransactionRequest.`type`,
+      from = inboundTransactionRequest.from,
+      details = null, // Note: This is unstructured! (allows multiple "to" accounts etc.)
+      body = inboundTransactionRequest.body,
+      transaction_ids = inboundTransactionRequest.transaction_ids,
+      status = inboundTransactionRequest.status,
+      start_date = inboundTransactionRequest.start_date,
+      end_date = inboundTransactionRequest.end_date,
+      challenge = inboundTransactionRequest.challenge,
+      charge = inboundTransactionRequest.charge,
+      charge_policy = inboundTransactionRequest.charge_policy,
+      counterparty_id = inboundTransactionRequest.counterparty_id,
+      name = inboundTransactionRequest.name,
+      this_bank_id = inboundTransactionRequest.this_bank_id,
+      this_account_id = inboundTransactionRequest.this_account_id,
+      this_view_id = inboundTransactionRequest.this_view_id,
+      other_account_routing_scheme = inboundTransactionRequest.other_account_routing_scheme,  
+      other_account_routing_address = inboundTransactionRequest.other_account_routing_address,  
+      other_bank_routing_scheme = inboundTransactionRequest.other_bank_routing_scheme,  
+      other_bank_routing_address = inboundTransactionRequest.other_bank_routing_address,  
+      is_beneficiary = inboundTransactionRequest.is_beneficiary 
+    )
+  }
+  
+  def createTransactionRequests(inboundTransactionRequests : List[InboundTransactionRequest]) : List[TransactionRequest]= {
+    inboundTransactionRequests.map(createTransactionRequest)
   }
 }
