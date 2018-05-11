@@ -2,14 +2,16 @@ package com.tesobe.obp
 
 
 
+import java.util.UUID.randomUUID
+
 import com.google.common.cache.CacheBuilder
+import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonAST.{JArray, JField, JObject}
 import net.liftweb.json.JsonParser._
-
 import com.tesobe.obp.HttpClient.makePostRequest
-
+import com.tesobe.obp.cache.Caching
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
 
@@ -18,10 +20,6 @@ import scalacache.guava.GuavaCache
 
 
 object JoniMf extends Config with StrictLogging{
-
-  val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
-  implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
-
 
    def getJoniMfCore(username: String): Either[PAPIErrorResponse,JoniMfUser] = {
 
@@ -50,10 +48,12 @@ object JoniMf extends Config with StrictLogging{
   def getJoniMf(username: String, isFirst: Boolean = true): Either[PAPIErrorResponse, JoniMfUser] = {
 
     import scalacache.Flags
-    import scalacache.memoization.{cacheKeyExclude, memoizeSync}
-
-    def getJoniMfCached(username: String)(implicit @cacheKeyExclude flags: Flags): Either[PAPIErrorResponse,JoniMfUser]  = memoizeSync {
-      getJoniMfCore(username)
+    def getJoniMfCached(username: String)(implicit @CacheKeyOmit flags: Flags): Either[PAPIErrorResponse,JoniMfUser]  = {
+      var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
+      CacheKeyFromArguments.buildCacheKey{
+        Caching.memoizeSyncWithProvider(Some(cacheKey.toString())){
+          getJoniMfCore(username)
+        }}
     }
 
     isFirst == true match {

@@ -1,7 +1,11 @@
 package com.tesobe.obp
+import java.util.UUID
+
 import com.google.common.cache.CacheBuilder
+import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
+import com.tesobe.obp.cache.Caching
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
@@ -56,11 +60,13 @@ object Ntg6IMf extends StrictLogging{
                   isFirst: Boolean = true) = {
 
     import scalacache.Flags
-    import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
-    def getNtg6IMfCached(branch: String, accountType: String, accountNumber: String, cbsToken: String)(implicit @cacheKeyExclude flags: Flags): Either[PAPIErrorResponse,Ntg6IandK]  = memoizeSync {
-      getNtg6IMfCore(branch, accountType, accountNumber, cbsToken)
-    }
+    def getNtg6IMfCached(branch: String, accountType: String, accountNumber: String, cbsToken: String)(implicit @CacheKeyOmit flags: Flags): Either[PAPIErrorResponse,Ntg6IandK]  = {
+      var cacheKey = (UUID.randomUUID().toString, UUID.randomUUID().toString, UUID.randomUUID().toString)
+      CacheKeyFromArguments.buildCacheKey{
+        Caching.memoizeSyncWithProvider(Some(cacheKey.toString())){
+          getNtg6IMfCore(branch, accountType, accountNumber, cbsToken)
+        }}}
 
     isFirst == true match {
       case true => // Call MF

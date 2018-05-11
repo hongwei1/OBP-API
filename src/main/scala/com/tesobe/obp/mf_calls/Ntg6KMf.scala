@@ -1,20 +1,17 @@
 package com.tesobe.obp
 
-import com.google.common.cache.CacheBuilder
+import java.util.UUID
+
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
+import com.tesobe.obp.cache.Caching
+import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
-import scalacache.ScalaCache
-import scalacache.guava.GuavaCache
-
 object Ntg6KMf extends StrictLogging{
 
-  val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
-  implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
-  
     def getNtg6KMfCore(branch: String, accountType: String, accountNumber: String, cbsToken: String): Either[PAPIErrorResponse,Ntg6IandK] = {
 
       val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/K/000/01.04"
@@ -52,11 +49,13 @@ object Ntg6KMf extends StrictLogging{
                   isFirst: Boolean = true) = {
 
     import scalacache.Flags
-    import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
-    def getNtg6KMfCached(branch: String, accountType: String, accountNumber: String, cbsToken: String)(implicit @cacheKeyExclude flags: Flags): Either[PAPIErrorResponse,Ntg6IandK]  = memoizeSync {
-      getNtg6KMfCore(branch, accountType, accountNumber, cbsToken)
-    }
+    def getNtg6KMfCached(branch: String, accountType: String, accountNumber: String, cbsToken: String)(implicit @CacheKeyOmit flags: Flags): Either[PAPIErrorResponse,Ntg6IandK]  = {
+      var cacheKey = (UUID.randomUUID().toString, UUID.randomUUID().toString, UUID.randomUUID().toString)
+      CacheKeyFromArguments.buildCacheKey{
+        Caching.memoizeSyncWithProvider(Some(cacheKey.toString())){
+          getNtg6KMfCore(branch, accountType, accountNumber, cbsToken)
+       }}}
 
     isFirst == true match {
       case true => // Call MF

@@ -644,7 +644,7 @@ case class Address(
 
 case class Location(
                      latitude: Double,
-                     longitude: Double,
+                     longitude: Double
                    )
 
 case class Meta (

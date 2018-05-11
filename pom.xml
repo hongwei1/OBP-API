@@ -52,6 +52,10 @@
             <name>bintray</name>
             <url>http://dl.bintray.com/unisay/maven</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
@@ -304,6 +308,29 @@
             <groupId>com.github.cb372</groupId>
             <artifactId>scalacache-guava_${scala.library}</artifactId>
             <version>0.9.3</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.github.cb372</groupId>
+            <artifactId>scalacache-redis_${scala.library}</artifactId>
+            <version>0.9.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.OpenBankProject</groupId>
+            <artifactId>scala-macros</artifactId>
+            <version>v1.0.0-alpha.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill-akka_${scala.library}</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill-bijection_${scala.library}</artifactId>
+            <version>0.9.1</version>
         </dependency>
 
     </dependencies>

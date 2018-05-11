@@ -1,32 +1,28 @@
 package com.tesobe.obp
-import java.io.{File, FileInputStream}
+import java.io.FileInputStream
 import java.security.KeyStore
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.CacheBuilder
-import com.tesobe.obp.ErrorMessages.InvalidRequestFormatException
+import com.tesobe.CacheKeyFromArguments
+import com.tesobe.obp.ErrorMessages.{InvalidRequestFormatException, _}
 import com.tesobe.obp.JoniMf.config
+import com.tesobe.obp.cache.Caching
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JsonAST.{JValue, compactRender}
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStrategy}
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
-import com.tesobe.obp.ErrorMessages._
-import org.apache.commons.io.IOUtils
-import org.apache.http.HttpStatus
-import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStrategy}
 import org.apache.http.ssl.SSLContexts
-
-import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
+import scalacache.{Flags, ScalaCache}
 
 
 object HttpClient extends StrictLogging{
 
-  val underlyingGuavaCache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build[String, Object]
-  implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
-  import scalacache.memoization.memoizeSync
-  
   val clientToCbs = if (config.getBoolean("ssl.use.ssl.cbs")) {
     
     val keyStorePassword = com.tesobe.obp.Main.clientCertificatePw
@@ -70,9 +66,14 @@ object HttpClient extends StrictLogging{
     logger.debug(s"$path--Response : "+response.toString+ "\n Body is :"+result)
     if (result.startsWith("<")) throw new InvalidRequestFormatException(s"$InvalidRequestFormat, current Request is $result") else result
   }
-  def getLeumiBranchesFromBank: String = memoizeSync {
-    getLeumiBranchesFromBankCached("1")
-  }
+  def getLeumiBranchesFromBank: String = {
+    var cacheKey = (UUID.randomUUID().toString, UUID.randomUUID().toString, UUID.randomUUID().toString)
+    implicit val flags = Flags(readsEnabled = true)
+    CacheKeyFromArguments.buildCacheKey{
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString())){
+        getLeumiBranchesFromBankCached("1")
+      }}}
+  
   def getLeumiBranchesFromBankCached(forCache: String = "1"): String = {
     val client = HttpClients.createDefault()
     val url = config.getString("branches.url")

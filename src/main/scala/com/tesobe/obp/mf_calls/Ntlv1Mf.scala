@@ -1,21 +1,17 @@
 package com.tesobe.obp
 
+import java.util.UUID
 import com.google.common.cache.CacheBuilder
+import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
 import com.tesobe.obp.ErrorMessages.{InvalidAmountException, InvalidIdTypeException, InvalidPassportOrNationalIdException}
 import com.tesobe.obp.HttpClient.makePostRequest
 import com.tesobe.obp.JoniMf.replaceEmptyObjects
+import com.tesobe.obp.cache.Caching
 import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 
-import scalacache.ScalaCache
-import scalacache.guava.GuavaCache
-
 object Ntlv1Mf extends StrictLogging{
-
-  val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
-  implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
-
 
   def getNtlv1MfCore(username: String, idNumber: String, idType: String, cbsToken: String): Either[PAPIErrorResponse,Ntlv1]  = {
 
@@ -56,11 +52,13 @@ object Ntlv1Mf extends StrictLogging{
   def getNtlv1Mf(username: String, idNumber: String, idType: String, cbsToken: String, isFirst: Boolean = true) = {
 
     import scalacache.Flags
-    import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
-    def getNtlv1MfCached(username: String, idNumber: String, idType: String, cbsToken: String)(implicit @cacheKeyExclude flags: Flags): Either[PAPIErrorResponse,Ntlv1]  = memoizeSync {
-      getNtlv1MfCore(username, idNumber, idType, cbsToken)
-    }
+    def getNtlv1MfCached(username: String, idNumber: String, idType: String, cbsToken: String)(implicit @CacheKeyOmit flags: Flags): Either[PAPIErrorResponse,Ntlv1]  = {
+      var cacheKey = (UUID.randomUUID().toString, UUID.randomUUID().toString, UUID.randomUUID().toString)
+      CacheKeyFromArguments.buildCacheKey{
+        Caching.memoizeSyncWithProvider(Some(cacheKey.toString())){
+          getNtlv1MfCore(username, idNumber, idType, cbsToken)
+       }}}
 
     isFirst == true match {
       case true => // Call MF
