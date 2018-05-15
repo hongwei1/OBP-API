@@ -13,7 +13,7 @@ import net.liftweb.json.JsonParser.parse
 import scalacache.ScalaCache
 import scalacache.guava.GuavaCache
 
-object Ntg6IMf extends StrictLogging{
+object Ntg6IMf extends Config with StrictLogging{
   val underlyingGuavaCache = CacheBuilder.newBuilder().maximumSize(10000L).build[String, Object]
   implicit val scalaCache  = ScalaCache(GuavaCache(underlyingGuavaCache))
   
@@ -24,7 +24,7 @@ object Ntg6IMf extends StrictLogging{
                  cbsToken: String
                ): Either[PAPIErrorResponse, Ntg6IandK] = {
 
-      val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/I/000/01.04"
+      val path = config.getString("backendCalls.NTG6_I_000")
       logger.debug("parsing json for getNtg6I")
       val json: JValue = parse(s"""
       {

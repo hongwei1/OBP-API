@@ -8,7 +8,7 @@ import net.liftweb.json.JsonParser.parse
 
 import scala.util.control.NoStackTrace
 
-object NtbdBv050Mf {
+object NtbdBv050Mf extends Config {
   def getNtbdBv050(branch: String,
                    accountType: String,
                    accountNumber: String,
@@ -23,7 +23,7 @@ object NtbdBv050Mf {
                    referenceNameOfTo: String
                   ): Either[PAPIErrorResponse, NtbdBv050] = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/B/050/01.03"
+    val path = config.getString("backend.Calls.NTBD_B_050")
     
     //TODO: reference name has to be in english for RTGS transfer. Ask leumi for definition of "english".
     val finalReferenceNameOfTo = if (referenceNameOfTo == "") "TargetAccount" else referenceNameOfTo

@@ -23,7 +23,7 @@ object JoniMf extends Config with StrictLogging{
 
    def getJoniMfCore(username: String): Either[PAPIErrorResponse,JoniMfUser] = {
 
-     val path = "/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01"
+     val path = config.getString("backendCalls.JONI_0_000")
      val json: JValue =parse(s"""
      {
        "JONI_0_000": {

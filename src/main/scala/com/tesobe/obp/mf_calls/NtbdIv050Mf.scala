@@ -8,7 +8,7 @@ import net.liftweb.json.JsonParser.parse
 
 import scala.util.control.NoStackTrace
 
-object NtbdIv050Mf {
+object NtbdIv050Mf extends Config {
   
     def getNtbdIv050(branch: String,
                      accountType: String,
@@ -18,7 +18,7 @@ object NtbdIv050Mf {
                      transactionAmount: String
                     ): Either[PAPIErrorResponse, NtbdIv050] = {
 
-      val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/I/050/01.03"
+      val path = config.getString("backendCalls.NTBD_I_050")
 
       val constrainedTransactionAmount =  try { f"${transactionAmount.toDouble}%1.2f"
       } catch {

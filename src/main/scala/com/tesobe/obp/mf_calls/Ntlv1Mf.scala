@@ -11,11 +11,11 @@ import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 
-object Ntlv1Mf extends StrictLogging{
+object Ntlv1Mf extends Config with StrictLogging{
 
   def getNtlv1MfCore(username: String, idNumber: String, idType: String, cbsToken: String): Either[PAPIErrorResponse,Ntlv1]  = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/1/000/01.01"
+    val path = config.getString("backendCalls.NTLV_1_000")
 
     if (idNumber.length > 9) throw new InvalidPassportOrNationalIdException()
     if (idType != "1" && idType != "5") throw new InvalidIdTypeException()

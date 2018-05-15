@@ -7,7 +7,7 @@ import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 
 
-object Ntlv7Mf extends StrictLogging{
+object Ntlv7Mf extends Config with StrictLogging{
 
   def getNtlv7Mf(branch: String,
                  accountType: String,
@@ -18,7 +18,7 @@ object Ntlv7Mf extends StrictLogging{
                  ntlv1TargetMobileNumber: String
                               ): Ntlv7 = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTLV/7/000/01.01"
+    val path = config.getString("backendCalls.NTLV_7_000")
 
     val json: JValue =parse(s"""
     { 

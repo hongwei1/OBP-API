@@ -50,20 +50,19 @@ object HttpClient extends StrictLogging{
   } else {
     HttpClients.createDefault()
   }
-  def makePostRequest(json: JValue, path: String): String = {
-    val url = config.getString("bankserver.url")
-    val post = new HttpPost(url + path)
+  def makePostRequest(json: JValue, url: String): String = {
+    val post = new HttpPost(url)
     post.addHeader("Content-Type", "application/json;charset=utf-8")
     val jsonBody = new StringEntity(compactRender(json), "UTF-8")
     post.setEntity(jsonBody)
 
-    logger.debug(s"$path--Request : "+post.toString +"\n Body is :" + compactRender(json) +
+    logger.debug(s"$url--Request : "+post.toString +"\n Body is :" + compactRender(json) +
     "/n RealBody is: " + jsonBody.getContent().toString)
     val response = clientToCbs.execute(post)
     val inputStream = response.getEntity.getContent
     val result = scala.io.Source.fromInputStream(inputStream).mkString
     response.close()
-    logger.debug(s"$path--Response : "+response.toString+ "\n Body is :"+result)
+    logger.debug(s"$url--Response : "+response.toString+ "\n Body is :"+result)
     if (result.startsWith("<")) throw new InvalidRequestFormatException(s"$InvalidRequestFormat, current Request is $result") else result
   }
   def getLeumiBranchesFromBank: String = {

@@ -29,7 +29,7 @@ object Nt1cTMf extends Config with StrictLogging{
                            maxNumberOfTransactions: String): Either[PAPIErrorResponse, Nt1cT] = {
     
     //OBP-Adapter_Leumi/Doc/MFServices/NT1C_T_000 Sample.txt
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/T/000/01.02"
+    val path = config.getString("backendCalls.NT1C_T_000")
     val json: JValue =parse(s"""
     { 
        "NT1C_T_000": {

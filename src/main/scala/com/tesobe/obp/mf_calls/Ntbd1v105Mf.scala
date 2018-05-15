@@ -9,7 +9,7 @@ import net.liftweb.json.{JValue, parse}
 import scala.util.control.NoStackTrace
 
 
-object Ntbd1v105Mf extends StrictLogging{
+object Ntbd1v105Mf extends Config with StrictLogging{
 
   def getNtbd1v105Mf(branch: String,
                      accountType: String,
@@ -37,7 +37,7 @@ object Ntbd1v105Mf extends StrictLogging{
     if (birthDateOfMoneyReceiver.length > 6) throw new InvalidTimeException with NoStackTrace
     
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/105/01.01"
+    val path = config.getString("backendCalls.NTBD_1_105")
     
     val json: JValue =parse(s"""
 {

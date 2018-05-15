@@ -7,7 +7,7 @@ import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 
 
-package object Ntbd2v135Mf extends StrictLogging{
+package object Ntbd2v135Mf extends Config with StrictLogging{
 
   def getNtbd2v135Mf(branch: String,
                      accountType: String,
@@ -19,7 +19,7 @@ package object Ntbd2v135Mf extends StrictLogging{
                      messageToMoneyReceiver: String
                                ): Either[PAPIErrorResponse,Ntbd2v135] = {
     
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/135/01.01"
+    val path = config.getString("backendCallsNTBD_2_135")
     val constrainedNickname = if (nicknameOfMoneySender.length <= 20) nicknameOfMoneySender else nicknameOfMoneySender.substring(0,20)
     val constrainedMessage = if (messageToMoneyReceiver.length <= 50) messageToMoneyReceiver else messageToMoneyReceiver.substring(0,50)
     val json: JValue = parse(s"""{

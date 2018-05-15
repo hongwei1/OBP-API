@@ -5,7 +5,7 @@ import com.tesobe.obp.JoniMf.replaceEmptyObjects
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
-object Ntbd2v050Mf {
+object Ntbd2v050Mf extends Config {
   
     def getNtbd2v050(branch: String,
                      accountType: String,
@@ -16,7 +16,7 @@ object Ntbd2v050Mf {
                      ntbdAv050fromAccountOwnerName: String
                     ): Either[PAPIErrorResponse,Ntbd2v050] = {
 
-      val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/050/01.01"
+      val path = config.getString("backendCalls.NTBD_2_050")
       
       val finalFromAccountOwnerName = if (ntbdAv050fromAccountOwnerName.trim == "") "CustomerName" else ntbdAv050fromAccountOwnerName
       

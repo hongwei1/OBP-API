@@ -14,7 +14,7 @@ object Ntib2Mf extends Config with StrictLogging{
 
   def getNtib2Mf(branch: String, accountType: String, accountNumber: String, username: String, cbsToken: String): Either[PAPIErrorResponse,Ntib2] = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTIB/2/000/01.01"
+    val path = config.getString("backendCalls.NTIB_2_000")
 
     val json: JValue = parse(s"""
     {

@@ -8,7 +8,7 @@ import net.liftweb.json.{JValue, parse}
 import scala.util.control.NoStackTrace
 
 
-object Ntbd2v105Mf extends StrictLogging{
+object Ntbd2v105Mf extends Config with StrictLogging{
 
   def getNtbd2v105Mf(branch: String,
                      accountType: String,
@@ -22,7 +22,7 @@ object Ntbd2v105Mf extends StrictLogging{
     if (nicknameOfSender.length > 20) throw new InputTooLongException() with NoStackTrace
     if (messageToReceiver.length > 50) throw new InputTooLongException() with NoStackTrace
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/2/105/01.01"
+    val path = config.getString("backendCalls.NTBD_2_105")
 
     val json: JValue =parse(s"""
       {

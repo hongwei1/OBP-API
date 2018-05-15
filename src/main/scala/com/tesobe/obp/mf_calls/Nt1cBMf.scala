@@ -16,7 +16,7 @@ object Nt1cBMf extends Config with StrictLogging{
   def getNt1cB(username: String, branch: String, accountType: String, accountNumber: String, cbsToken: String): Either[PAPIErrorResponse,Nt1cB] = {
 
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/B/000/01.02"
+    val path = config.getString("backendCalls.NT1C_B_000")
     val json: JValue =parse(s"""
     {
       "NT1C_B_000": {

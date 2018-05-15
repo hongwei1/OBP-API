@@ -8,7 +8,7 @@ import net.liftweb.json.JsonParser.parse
 
 import scala.util.control.NoStackTrace
 
-object NtbdGv050Mf {
+object NtbdGv050Mf extends Config {
 
   def getNtbdGv050(branch: String,
                    accountType: String,
@@ -18,7 +18,7 @@ object NtbdGv050Mf {
                    bankTypeOfTo: String
                   ): Either[PAPIErrorResponse, NtbdGv050] = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/G/050/01.03"
+    val path = config.getString("backendCalls.NTBD_G_050")
     if (bankTypeOfTo != "0" && bankTypeOfTo != "1") throw new Exception("invalid bank type") with NoStackTrace
     val json: JValue = parse(s"""
     {

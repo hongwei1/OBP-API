@@ -8,7 +8,7 @@ import net.liftweb.json.{JValue, parse}
 
 import scala.util.control.NoStackTrace
 
-object Ntbd1v135Mf extends StrictLogging{
+object Ntbd1v135Mf extends Config with StrictLogging{
   
   def checkMobileNumber(mobileNumber: String): String = {
     val result = mobileNumber.replace("+972", "0")
@@ -26,7 +26,7 @@ object Ntbd1v135Mf extends StrictLogging{
                      description: String,
                      transferAmount: String): Either[PAPIErrorResponse,Ntbd1v135] = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/1/135/01.01"
+    val path = config.getString("backendCalls.NTBD_1_135")
     val constrainedMobileNumberOfMoneySender = checkMobileNumber(mobileNumberOfMoneySender)
     val constrainedMobileNumberOfMoneyReceiver = checkMobileNumber(mobileNumberOfMoneyReceiver)
     val constrainedDescription = if (description.length <= 20) description else description.substring(0,20)

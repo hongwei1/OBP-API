@@ -11,7 +11,7 @@ import net.liftweb.json.JsonParser._
 
 import scala.util.control.NoStackTrace
 
-object NtbdAv050Mf {
+object NtbdAv050Mf extends Config {
 
   def getNtbdAv050(branch: String,
                  accountType: String,
@@ -23,7 +23,7 @@ object NtbdAv050Mf {
     val formatter = DateTimeFormatter.BASIC_ISO_DATE
 
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTBD/A/050/01.03"
+    val path = config.getString("backendCalls.NTBD_A_050")
     val cbsTransferType =
     if (transferType == "regular") "1" else if (transferType == "RealTime") "2" else throw new InvalidTransferTypeException() with NoStackTrace
     val isFutureTransfer = if (transferDateInFuture.trim != "") "1" else "0"

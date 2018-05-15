@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
-object Ntg6CMf extends StrictLogging{
+object Ntg6CMf extends Config with StrictLogging{
   
     def getNtg6C(
                  branch: String,
@@ -22,7 +22,7 @@ object Ntg6CMf extends StrictLogging{
                  counterpartyDescriptionInEnglish: String
                ): Either[PAPIErrorResponse, Ntg6C] = {
 
-      val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTG6/C/000/01.02"
+      val path = config.getString("backendCalls.NTG6_C_000")
       logger.debug("parsing json for getNtg6C")
       val json: JValue = parse(s"""
       {

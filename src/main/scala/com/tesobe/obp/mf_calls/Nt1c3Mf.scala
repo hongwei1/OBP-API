@@ -13,7 +13,7 @@ object Nt1c3Mf extends Config with StrictLogging {
 
 
     //OBP-Adapter_Leumi/Doc/MFServices/NT1C_4_000 Sample.txt
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NT1C/3/000/01.02"
+    val path = config.getString("backendCalls.NT1C_3_000")
 
     val json: JValue = parse(s"""
     {

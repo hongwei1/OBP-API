@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.StrictLogging
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser.parse
 
-object NttfWMf extends StrictLogging{
+object NttfWMf extends Config with StrictLogging{
 
   def getNttfWMf(branch: String,
                  accountType: String,
@@ -14,7 +14,7 @@ object NttfWMf extends StrictLogging{
                  cbsToken: String
                           ) = {
 
-    val path = "/ESBLeumiDigitalBank/PAPI/v1.0/NTTF/W/000/01.01"
+    val path = config.getString("backendCalls.NTTF_W_000")
 
     val json: JValue =parse(s"""
      {
