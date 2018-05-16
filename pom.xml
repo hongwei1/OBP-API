@@ -166,7 +166,21 @@
                     <failOnNoGitDirectory>false</failOnNoGitDirectory>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.scalaxb</groupId>
+                <artifactId>scalaxb-maven-plugin</artifactId>
+                <configuration>
+                    <packageName>ipo</packageName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scalaxb</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
