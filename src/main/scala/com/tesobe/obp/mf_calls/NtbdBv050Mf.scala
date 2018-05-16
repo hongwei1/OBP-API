@@ -23,7 +23,7 @@ object NtbdBv050Mf extends Config {
                    referenceNameOfTo: String
                   ): Either[PAPIErrorResponse, NtbdBv050] = {
 
-    val path = config.getString("backend.Calls.NTBD_B_050")
+    val path = config.getString("backendCalls.NTBD_B_050")
     
     //TODO: reference name has to be in english for RTGS transfer. Ask leumi for definition of "english".
     val finalReferenceNameOfTo = if (referenceNameOfTo == "") "TargetAccount" else referenceNameOfTo

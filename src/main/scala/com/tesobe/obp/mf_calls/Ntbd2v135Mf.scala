@@ -19,7 +19,7 @@ package object Ntbd2v135Mf extends Config with StrictLogging{
                      messageToMoneyReceiver: String
                                ): Either[PAPIErrorResponse,Ntbd2v135] = {
     
-    val path = config.getString("backendCallsNTBD_2_135")
+    val path = config.getString("backendCalls.NTBD_2_135")
     val constrainedNickname = if (nicknameOfMoneySender.length <= 20) nicknameOfMoneySender else nicknameOfMoneySender.substring(0,20)
     val constrainedMessage = if (messageToMoneyReceiver.length <= 50) messageToMoneyReceiver else messageToMoneyReceiver.substring(0,50)
     val json: JValue = parse(s"""{
