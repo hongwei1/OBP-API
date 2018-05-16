@@ -35,9 +35,8 @@ trait Config {
   }
 
   val kafkaPartitions = config.getInt("kafka.partitions")
-  val clientId = UUID.randomUUID().toString
-  val groupId = config.getString("kafka.groupId")  //"obp-adapter-south" //UUID.randomUUID().toString
-
+  val clientId = config.getString("kafka.clientId") 
+  val groupId = config.getString("kafka.groupId") 
   val autoOffsetResetConfig = "earliest"
 
   val targetSource = config.getString("kafka.request.target.source")
