@@ -10,7 +10,6 @@ import akka.stream.scaladsl.Source
 import com.typesafe.scalalogging.StrictLogging
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 
 import scala.concurrent.Future
@@ -80,11 +79,9 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
   // (topic, key, value, offset) --> ProducerMessage.Message(new ProducerRecord(topic, partition, key, value),offset)
   private val eventualMessage: ((String, String, String, CommittableOffset) => Future[Message[String, String, CommittableOffset]]) = { (topic, key, value, offset) =>
     // key is from North Side and With the same key, partition and share the same TopicPair to send the message back . 
-    val partition = key.split("_")(0).toInt 
-    logger.debug(s"partition: $partition")
     Future(
       ProducerMessage.Message(
-        new ProducerRecord(topic, partition, key, value),
+        new ProducerRecord(topic, key, value),
         offset)
     )
   }
@@ -104,11 +101,10 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
   private val process: ((TopicPair, Business) => Source[Message[String, String, CommittableOffset], Consumer.Control]) = { (topicPair, business) =>
     val topicRequest = topicPair.request
     val topicResponse = topicPair.response
-    val topicAndItsPartitions = buildAllPartitionsForOneTopic(topicRequest)
     Consumer
       .committableSource(
         consumerSettings, 
-        Subscriptions.assignment(topicAndItsPartitions)//The consumer need subscribe all the partitions for one topic
+        Subscriptions.topics(topicRequest)
       )
       .mapAsync(3) { consumerMessage =>
         logger.debug(s"Kafka-get-message : TopicRequest(${topicRequest}): ${consumerMessage.record.value()}")
@@ -124,17 +120,6 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
           logger.debug(s"Kafka-send-message : ${topicResponse}: ${consumerMessageBusiness._2}")
           eventualAuditedMessage(topicResponse, consumerMessageBusiness._1, consumerMessageBusiness._2)
       }
-  }
-  
-  
-  
-  /**
-    * Create the partition list according to the input requestTopic and kafkaPartitions(from props application.conf)
-    * @param requestTopic the requestTopic is create from North Side, in South side, only Consumer the topic
-    * @return a set contains all the partitions from the input requestTopic
-    */
-  private def buildAllPartitionsForOneTopic(requestTopic: String): Set[TopicPartition] = {
-    ((0 to (kafkaPartitions - 1)) map (new TopicPartition(requestTopic, _))).toSet
   }
   
   /**

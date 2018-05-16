@@ -34,7 +34,6 @@ trait Config {
     }
   }
 
-  val kafkaPartitions = config.getInt("kafka.partitions")
   val clientId = config.getString("kafka.clientId") 
   val groupId = config.getString("kafka.groupId") 
   val autoOffsetResetConfig = "earliest"
