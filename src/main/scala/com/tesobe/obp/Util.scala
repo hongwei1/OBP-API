@@ -306,7 +306,7 @@ object ErrorMessages {
   val SessionError = "ADAPTER-60003: Invalid Session. "
   val InvalidMobilNumber = "ADAPTER-60004: Invalid Mobile Number, we only support Israel country code. It should start as :+972xxxxxxxxx ."
   val InvalidAccountId = "ADAPTER-60005: Invalid AccountId, the following Account Id is not in Joni cache. "
-  val InvalidRequestFormat = "ADAPTER-60006: Invalid Request Format: Parameter for Backendcall not in malformated."
+  val InvalidRequestFormat = "ADAPTER-60006: Invalid Request Format: Parameter for Backendcall not in the right format."
   val InvalidCounterPartyId = "ADAPTER-60007: Invalid or uncached counterpartyId. "
   val MainFrameError = "ADAPTER-60008: Main Frame Error ."
   val InvalidPassportOrNationalId = "ADAPTER-60009: Invalid Passport or National ID number."

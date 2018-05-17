@@ -100,6 +100,25 @@ object RunMockServer extends StrictLogging{
           .withBody(textFileToString("joni_p747xtf_result.json"))
         //.withBody(jsonToString("error_result.json"))
       )
+
+    //1e FAILED JONI 
+    mockServer
+      .when(
+        request()
+          .withMethod("POST")
+          .withHeader("Content-Type","application/json;charset=utf-8")
+          .withPath("/ESBLeumiDigitalBank/PAPI/V1.0/JONI/0/000/01.01")
+          .withBody(textFileToString("joni_failed_request.json").replace(" ","").replace("\n",""))
+      )
+      .respond(
+        response()
+          .withStatusCode(401)
+          .withHeaders(
+            new Header("Content-Type", "application/json; charset=utf-8")
+          )
+          .withBody(textFileToString("joni_failed_result.json").replace(" ","").replace("\n",""))
+        //.withBody(jsonToString("error_result.json"))
+      )
     //2 Nt1cB
     mockServer
       .when(

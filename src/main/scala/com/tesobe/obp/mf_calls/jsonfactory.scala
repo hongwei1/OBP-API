@@ -83,6 +83,12 @@ case class SdrJoni(
                   )
 case class JoniMfUser(SDR_JONI: SdrJoni)
 
+case class JoniErrorResponse(SDR_JONI: JoniError)
+
+case class JoniError(
+                      esbHeaderResponse: EsbHeaderResponse,
+                     MFAdminResponse: MfAdminResponse)
+
 case class AccountPermissions(
                                canSee: Boolean,
                                canMakeInternalPayments: Boolean,
