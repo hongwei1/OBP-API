@@ -2,9 +2,9 @@ package com.tesobe.obp.cache
 
 import com.tesobe.obp.Config
 import com.typesafe.scalalogging.StrictLogging
-import scalacache._
+import scalacache.{Flags, ScalaCache, sync}
 import scalacache.memoization.{cacheKeyExclude, memoizeSync}
-import scalacache.redis._
+import scalacache.redis.RedisCache
 import scalacache.serialization.Codec
 
 import scala.language.postfixOps
@@ -30,11 +30,15 @@ object Redis extends StrictLogging with Config {
 
     def deserialize(data: Array[Byte]): T = {
       import scala.util.{Failure, Success}
+      logger.debug("Kryo deserialize started")
       val tryDecode: scala.util.Try[Any] = KryoInjection.invert(data)
       tryDecode match {
-        case Success(v) => v.asInstanceOf[T]
+        case Success(v) => {
+          logger.debug("Kryo deserialize finished")
+          v.asInstanceOf[T]
+        }
         case Failure(e) =>
-          println(e)
+          logger.debug(s"Kryo deserialize error:$e")
           "NONE".asInstanceOf[T]
       }
     }
@@ -42,6 +46,14 @@ object Redis extends StrictLogging with Config {
 
   def memoizeSyncWithRedis[A](cacheKey: Option[String])(@cacheKeyExclude f: => A)(implicit @cacheKeyExclude m: Manifest[A], flags: Flags): A = {
     memoizeSync(f)
+  }
+  
+  def syncCachingWithRedis[V, Repr](keyParts: String*)(f: => V)(implicit m: Manifest[V], flags: Flags): V = {
+    sync.caching(keyParts)(f)
+  }
+  
+  def syncGetWithRedis[V](keyParts: String*)(implicit m: Manifest[V], flags: Flags): Option[V] = {
+    sync.get(keyParts)
   }
 
 }

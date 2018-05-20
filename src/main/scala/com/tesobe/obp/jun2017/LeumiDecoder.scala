@@ -33,6 +33,7 @@ import com.tesobe.obp.Ntlv7Mf.getNtlv7Mf
 import com.tesobe.obp.NttfWMf.getNttfWMf
 import com.tesobe.obp.Util.TransactionRequestTypes
 import com.tesobe.obp._
+import com.tesobe.obp.cache.Caching
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.immutable.List
@@ -80,12 +81,6 @@ object LeumiDecoder extends Decoder with StrictLogging {
   defaultIsraelTimeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Jerusalem"))
   val formatter = DateTimeFormatter.BASIC_ISO_DATE
  
-  
-
-  val cachedTransactionId = TTLCache[TransactionIdValues](10080)//1 week in minutes for now
-  val cachedTransactionRequestIds = TTLCache[TransactionRequestIdValues](10080)
-  val cachedCounterpartyIds = TTLCache[String](10080) 
-
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
   case class TransactionRequestIdValues(amount: String, description: String, makor: String, asmachta: String)
@@ -111,7 +106,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"createCounterpartyId-counterpartyName($counterpartyName)")
 
     val counterpartyId = base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr + ownerAccountId)
-    cachedCounterpartyIds.set(counterpartyId, ownerAccountId)
+    Caching.syncCachingWithProvider(counterpartyId){ownerAccountId}
     counterpartyId
   }
   
@@ -133,7 +128,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"getOrCreateTransactionId for ($amount)($completedDate)($newBalanceAmount)")
     val transactionIdValues = TransactionIdValues(amount, completedDate, newBalanceAmount)
       val transactionId = base64EncodedSha256(amount + completedDate + newBalanceAmount)
-     cachedTransactionId.set(transactionId,transactionIdValues)
+      Caching.syncCachingWithProvider(transactionId){transactionIdValues}
       transactionId
       }
   
@@ -141,7 +136,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"createTransactionRequestId for ($amount) ($description) ($makor) ($asmachta)")
     val transactionRequestIdValues = TransactionRequestIdValues(amount, description, makor, asmachta)
     val transactionRequestId = base64EncodedSha256(amount + description + makor + asmachta)
-    cachedTransactionRequestIds.set(transactionRequestId, transactionRequestIdValues)
+    Caching.syncCachingWithProvider(transactionRequestId){transactionRequestIdValues}
     transactionRequestId
   }
 
@@ -644,10 +639,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
   def getTransaction(getTransactionRequest: OutboundGetTransaction): InboundGetTransaction = {
     logger.debug(s"get Transaction for ($getTransactionRequest)")
     val allTransactions: List[InternalTransaction] = {
-
-      val transactionDate: String = cachedTransactionId.get(getTransactionRequest.transactionId).getOrElse(
-        throw new Exception("Invalid TransactionId")
-      ).completedDate
+      val transactionDate = Caching.syncGetWithProvider(getTransactionRequest.transactionId).getOrElse(TransactionIdValues("-1", "-1", "-1")).completedDate
+      //TODO Error handling :before:  throw new Exception("Invalid TransactionId") 
       val simpleTransactionDate: String = defaultInboundFormat.format(simpleTransactionDateFormat.parse(transactionDate))
       getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
         getTransactionRequest.bankId,
@@ -1230,7 +1223,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
       
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
     
-    val thisAccountId = cachedCounterpartyIds.get(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException())
+    val thisAccountId = Caching.syncGetWithProvider(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException())
+    
     if  (thisAccountId != checkBankAccountExists(
       OutboundCheckBankAccountExists(
         outboundGetCounterpartyByCounterpartyId.authInfo,

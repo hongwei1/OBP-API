@@ -1,7 +1,7 @@
 package com.tesobe.obp.cache
 
 import com.google.common.cache.CacheBuilder
-import scalacache.{Flags, ScalaCache}
+import scalacache.{Flags, ScalaCache, sync}
 import scalacache.guava.GuavaCache
 import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
@@ -16,4 +16,12 @@ object InMemory {
     memoizeSync(f)
   }
 
+  def syncCachingWithInMemory[V, Repr](keyParts: String*)(f: => V)(implicit m: Manifest[V], flags: Flags): V = {
+    sync.caching(keyParts)(f)
+  }
+  
+  def syncGetWithInMemory[V](keyParts: String*)(implicit m: Manifest[V], flags: Flags): Option[V] = {
+    sync.get(keyParts)
+  }
+  
 }
