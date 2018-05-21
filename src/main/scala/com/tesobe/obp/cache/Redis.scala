@@ -40,7 +40,7 @@ object Redis extends StrictLogging with Config {
     }
   }
 
-  def memoizeSyncWithRedis[A](unique: Option[String])(@cacheKeyExclude f: => A)(implicit @cacheKeyExclude m: Manifest[A], flags: Flags): A = {
+  def memoizeSyncWithRedis[A](cacheKey: Option[String])(@cacheKeyExclude f: => A)(implicit @cacheKeyExclude m: Manifest[A], flags: Flags): A = {
     memoizeSync(f)
   }
 
