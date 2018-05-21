@@ -34,13 +34,9 @@ class JoniMfTest extends ServerSetup {
     }
 
   }
+
   
-  test("getJoniFailsforFalseUSername"){
-    val joniCall = getJoniMf("THISWILLFAIL", true)
-    println(joniCall)
-  }
-  
-/*   test("getBasicBankAccountsForUser"){
+   test("getBasicBankAccountsForUser"){
     val accounts = getBasicBankAccountsForUser(username, false)
    accounts should be (Right(List(
      BasicBankAccount("3565953", "616", "330", mfToken, AccountPermissions(false,true,true)), 
@@ -75,5 +71,5 @@ class JoniMfTest extends ServerSetup {
       BasicBankAccount("20105505", "814", "330", mfToken, AccountPermissions(false,true,true))
     )))
 
-  }*/
+  }
 }

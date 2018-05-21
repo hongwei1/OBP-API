@@ -29,6 +29,8 @@ object Main extends App with StrictLogging with Config with ProcessorFactory {
 
   logger.debug("The Adapter's current commit is : "+Util.gitCommit)
   logger.debug("The Adapter's complete props is : "+config)
+  //println("This is the nonexisting config: " + config.getString("does.not.exist"))
+  
   //print("Enter the Password for the SSL Certificate Stores: ")
   //As most IDEs do not provide a Console, we fall back to readLine
   val clientCertificatePw:String =  if (config.getBoolean("ssl.use.ssl.cbs") || config.getBoolean("ssl.use.ssl.kafka")) { 
