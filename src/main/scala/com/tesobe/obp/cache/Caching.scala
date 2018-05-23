@@ -27,14 +27,14 @@ object Caching extends Config{
 
   }
   
-  def syncCachingWithProvider[A](cacheKey: String)(f: => A)(implicit m: Manifest[A]): A = {
+  def syncCachingWithProvider[A](cacheKey: String)(ttl: Duration)(f: => A)(implicit m: Manifest[A]): A = {
     GUAVA_CACHE_TYPE match {
       case value if value.toLowerCase == "redis" =>
-        Redis.syncCachingWithRedis(cacheKey)(f)
+        Redis.syncCachingWithRedis(cacheKey)(ttl)(f)
       case value if value.toLowerCase == "in-memory" =>
-        InMemory.syncCachingWithInMemory(cacheKey)(f)
+        InMemory.syncCachingWithInMemory(cacheKey)(ttl)(f)
       case _ =>
-        InMemory.syncCachingWithInMemory(cacheKey)(f)
+        InMemory.syncCachingWithInMemory(cacheKey)(ttl)(f)
     }
   }
   

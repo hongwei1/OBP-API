@@ -5,6 +5,7 @@ import scalacache.{Flags, ScalaCache, sync}
 import scalacache.guava.GuavaCache
 import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 
+import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 
 object InMemory {
@@ -16,8 +17,8 @@ object InMemory {
     memoizeSync(f)
   }
 
-  def syncCachingWithInMemory[V, Repr](keyParts: String*)(f: => V)(implicit m: Manifest[V], flags: Flags): V = {
-    sync.caching(keyParts)(f)
+  def syncCachingWithInMemory[V, Repr](keyParts: String*)(ttl: Duration)(f: => V)(implicit m: Manifest[V], flags: Flags): V = {
+    sync.cachingWithTTL(keyParts)(ttl)(f)
   }
   
   def syncGetWithInMemory[V](keyParts: String*)(implicit m: Manifest[V], flags: Flags): Option[V] = {

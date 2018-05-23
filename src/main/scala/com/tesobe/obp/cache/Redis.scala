@@ -7,6 +7,7 @@ import scalacache.memoization.{cacheKeyExclude, memoizeSync}
 import scalacache.redis.RedisCache
 import scalacache.serialization.Codec
 
+import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 
 object Redis extends StrictLogging with Config {
@@ -48,8 +49,8 @@ object Redis extends StrictLogging with Config {
     memoizeSync(f)
   }
   
-  def syncCachingWithRedis[V, Repr](keyParts: String*)(f: => V)(implicit m: Manifest[V], flags: Flags): V = {
-    sync.caching(keyParts)(f)
+  def syncCachingWithRedis[V, Repr](keyParts: String*)(ttl: Duration)(f: => V)(implicit m: Manifest[V], flags: Flags): V = {
+    sync.cachingWithTTL(keyParts)(ttl)(f)
   }
   
   def syncGetWithRedis[V](keyParts: String*)(implicit m: Manifest[V], flags: Flags): Option[V] = {

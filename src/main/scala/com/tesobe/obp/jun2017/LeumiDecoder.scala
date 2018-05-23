@@ -38,8 +38,7 @@ import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.immutable.List
 import scala.collection.mutable.ListBuffer
-
-
+import scala.concurrent.duration.{Duration, _}
 /**
   * Responsible for processing requests based on local example json files.
   *
@@ -81,6 +80,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
   defaultIsraelTimeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Jerusalem"))
   val formatter = DateTimeFormatter.BASIC_ISO_DATE
  
+  val ttlDuration: Duration = 7 days
   case class AccountIdValues(branchId: String, accountType: String, accountNumber: String)
   case class TransactionIdValues(amount: String, completedDate: String, newBalanceAmount: String)
   case class TransactionRequestIdValues(amount: String, description: String, makor: String, asmachta: String)
@@ -106,7 +106,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"createCounterpartyId-counterpartyName($counterpartyName)")
 
     val counterpartyId = base64EncodedSha256(counterpartyName + counterpartyBankCode + counterpartyBranchNr + counterpartyAccountType + counterpartyAccountNr + ownerAccountId)
-    Caching.syncCachingWithProvider(counterpartyId){ownerAccountId}
+    Caching.syncCachingWithProvider(counterpartyId)(ttlDuration){ownerAccountId}
     counterpartyId
   }
   
@@ -128,7 +128,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"getOrCreateTransactionId for ($amount)($completedDate)($newBalanceAmount)")
     val transactionIdValues = TransactionIdValues(amount, completedDate, newBalanceAmount)
       val transactionId = base64EncodedSha256(amount + completedDate + newBalanceAmount)
-      Caching.syncCachingWithProvider(transactionId){transactionIdValues}
+      Caching.syncCachingWithProvider(transactionId)(ttlDuration){transactionIdValues}
       transactionId
       }
   
@@ -136,7 +136,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"createTransactionRequestId for ($amount) ($description) ($makor) ($asmachta)")
     val transactionRequestIdValues = TransactionRequestIdValues(amount, description, makor, asmachta)
     val transactionRequestId = base64EncodedSha256(amount + description + makor + asmachta)
-    Caching.syncCachingWithProvider(transactionRequestId){transactionRequestIdValues}
+    Caching.syncCachingWithProvider(transactionRequestId)(ttlDuration){transactionRequestIdValues}
     transactionRequestId
   }
 
@@ -640,7 +640,7 @@ object LeumiDecoder extends Decoder with StrictLogging {
     logger.debug(s"get Transaction for ($getTransactionRequest)")
     val allTransactions: List[InternalTransaction] = {
       val transactionDate = Caching.syncGetWithProvider(getTransactionRequest.transactionId).getOrElse(TransactionIdValues("-1", "-1", "-1")).completedDate
-      //TODO Error handling :before:  throw new Exception("Invalid TransactionId") 
+      if (transactionDate == "-1") throw new Exception("Invalid TransactionId")
       val simpleTransactionDate: String = defaultInboundFormat.format(simpleTransactionDateFormat.parse(transactionDate))
       getTransactions(OutboundGetTransactions(getTransactionRequest.authInfo,
         getTransactionRequest.bankId,
@@ -1223,8 +1223,8 @@ object LeumiDecoder extends Decoder with StrictLogging {
       
   def getCounterpartyByCounterpartyId(outboundGetCounterpartyByCounterpartyId: OutboundGetCounterpartyByCounterpartyId) = {
     
-    val thisAccountId = Caching.syncGetWithProvider(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse(throw new CounterpartyIdCacheEmptyException())
-    
+    val thisAccountId: String = Caching.syncGetWithProvider(outboundGetCounterpartyByCounterpartyId.counterparty.counterpartyId).getOrElse("")
+    if (thisAccountId == "") throw new CounterpartyIdCacheEmptyException()
     if  (thisAccountId != checkBankAccountExists(
       OutboundCheckBankAccountExists(
         outboundGetCounterpartyByCounterpartyId.authInfo,
