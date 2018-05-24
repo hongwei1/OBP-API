@@ -15,8 +15,8 @@ import scala.util.parsing.json.JSON
 
 
 
-object RunMockServer extends StrictLogging{
-  val mockServer = startClientAndServer(1080)
+object RunMockServer extends Config with StrictLogging{
+  val mockServer = startClientAndServer(config.getInt("mockserver.port"))
   
   def textFileToString(filename: String): String = {
     val source = scala.io.Source.fromResource(filename)
