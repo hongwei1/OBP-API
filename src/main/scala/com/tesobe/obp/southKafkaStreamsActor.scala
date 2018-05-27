@@ -79,9 +79,11 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
   // (topic, key, value, offset) --> ProducerMessage.Message(new ProducerRecord(topic, partition, key, value),offset)
   private val eventualMessage: ((String, String, String, CommittableOffset) => Future[Message[String, String, CommittableOffset]]) = { (topic, key, value, offset) =>
     // key is from North Side and With the same key, partition and share the same TopicPair to send the message back . 
+    val partition = key.split("_")(0).toInt 
+    logger.debug(s"partition: $partition")
     Future(
       ProducerMessage.Message(
-        new ProducerRecord(topic, key, value),
+        new ProducerRecord(topic, partition, key, value),
         offset)
     )
   }
@@ -107,7 +109,7 @@ class SouthKafkaStreamsActor(implicit val materializer: ActorMaterializer) exten
         Subscriptions.topics(topicRequest)
       )
       .mapAsync(3) { consumerMessage =>
-        logger.debug(s"Kafka-get-message : TopicRequest(${topicRequest}): ${consumerMessage.record.value()}")
+        logger.debug(s"Kafka-get-message : TopicRequest(${topicRequest}): ${consumerMessage}")
         val future = business(consumerMessage)
         future.recover { //TODO need to know when this will be hit ? read more about Future error handling
           case e: Throwable => {
