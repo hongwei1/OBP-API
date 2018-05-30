@@ -79,6 +79,7 @@ object Connector extends SimpleInjector {
       case "kafka_JVMcompatible" => KafkaMappedConnector_JVMcompatible
       case "kafka_vJune2017" => KafkaMappedConnector_vJune2017
       case "kafka_vMar2017" => KafkaMappedConnector_vMar2017
+      case "kafka_vJuneYellow2017" => code.bankconnectors.vJuneYellow2017.KafkaMappedConnector_vJuneYellow2017
       case matchKafkaVersion(version) => getObjectInstance(s"""code.bankconnectors.KafkaMappedConnector_v${version}""")
     }
   }
@@ -202,9 +203,13 @@ trait Connector extends MdcLoggable{
 
   //gets a particular bank handled by this connector
   def getBank(bankId : BankId) : Box[Bank] = Failure(NotImplemented + currentMethodName)
+  
+  def getBankFuture(bankId : BankId) : Future[Box[Bank]] = Future(Failure(NotImplemented + currentMethodName))
 
   //gets banks handled by this connector
   def getBanks(): Box[List[Bank]] = Failure(NotImplemented + currentMethodName)
+  
+  def getBanksFuture(): Future[Box[List[Bank]]] = Future {Failure(NotImplemented + currentMethodName)}
 
   def getBankAccounts(accounts: List[(BankId, AccountId)]) : List[BankAccount] = {
     for {
