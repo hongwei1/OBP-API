@@ -46,6 +46,7 @@ import scala.concurrent.Future
 import code.metrics.AggregateMetrics
 import code.scope.Scope
 import net.liftweb.http.js.JE.JsRaw
+import net.liftweb.json.JsonAST.JValue
 import net.liftweb.util.Helpers._
 
 
