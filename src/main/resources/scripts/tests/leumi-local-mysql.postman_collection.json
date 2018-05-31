@@ -89,7 +89,132 @@
 			"response": []
 		},
 		{
-			"name": "Get Banks",
+			"name": "Get Banks -old",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v1.2.1/banks",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v1.2.1",
+						"banks"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Banks -new style-notoken",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Banks -isFirt=true - new style",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.CivLnLzJEapNacbD926x-bRj2E3_XC2zTfTCwV-rLj0"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/banks",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"banks"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Banks -isFirt=false - new style",
 			"event": [
 				{
 					"listen": "test",
@@ -138,7 +263,7 @@
 			"response": []
 		},
 		{
-			"name": "1.1Get Customers for Current User -new Style",
+			"name": "1.1Get Customers for Current User -new Style - N7jut8d",
 			"event": [
 				{
 					"listen": "test",
@@ -185,7 +310,148 @@
 			"response": []
 		},
 		{
-			"name": "1.2Get Customers for Current User -isFirst=false -new Style",
+			"name": "1.1Get Customers for Current User -new Style - FM4FZDE",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJGTTRGWkRFIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.jn4fxCUmdPvp7ETc2R2xR06u63zmi8-C4c6i0FU4rvU"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.1Get Customers for Current User -new Style - P747XTF",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJQNzQ3WFRGIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.2XyQqJJxf62zDq9xjl3sCVcTE_wnzGYEG4CQb_CXCJM"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.1Get Customers for Current User -new Style - 4CWWTZQ",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiI0Q1dXVFpRIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.AVRq-XFFFdPqmf71zCAJ2sVyPNbLXQF5o6rCFs3vgac"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - N7jut8d",
 			"event": [
 				{
 					"listen": "test",
@@ -203,6 +469,147 @@
 					{
 						"key": "Authorization",
 						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsImNic19pZCI6IiJ9.A5uLSv6hr5SbHh3clQhnkMIODesy6OHL4a-42mHawfA"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - FM4FZDE",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJGTTRGWkRFIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij3XmlI5NTIzMzA3MDUyMjYxOSIsImNic19pZCI6IiJ9.M3cbFi0prrLHes4-BUGR_M2eJzW6jncJbghrMGsYdP8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - P747XTF",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJQNzQ3WFRGIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij1UPjYxNjMzMDAyNDA2Nzg5IiwiY2JzX2lkIjoiIn0.L9vkpJp-IG_Jf1rJMXAmHOi-zOZuiAunkvEHbJz-tow"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.0.0/users/current/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style -4CWWTZQ",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiI0Q1dXVFpRIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij3XmlU4MTQzMzAzMjExMzk4MCIsImNic19pZCI6IiJ9.jRgW5J0DUIp8Znv9L4nJuDqMYYABPyIyytiF7DsRn1U"
 					}
 				],
 				"body": {
@@ -283,7 +690,7 @@
 			},
 			"response": [
 				{
-					"id": "df1498b6-7c5e-49fe-93a2-973fb623611c",
+					"id": "4cec9e2c-c8bf-476e-a588-568bb9ec3abe",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -475,7 +882,7 @@
 			},
 			"response": [
 				{
-					"id": "55620627-7b66-449c-868d-d8bb0f7d2a07",
+					"id": "ac2f824d-8865-4dbe-8381-7463482f0cb0",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -1190,7 +1597,7 @@
 			},
 			"response": [
 				{
-					"id": "39dcd9a1-d5ee-4671-a1be-2001a78e6821",
+					"id": "a202c2c2-e1bd-453d-bc91-a51c7c735d3e",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -1606,7 +2013,7 @@
 			},
 			"response": [
 				{
-					"id": "d2e8d53e-8979-48c7-a65a-5df5876ec0cc",
+					"id": "4dcb89c4-2088-40b8-9561-2f0d56d6bb7f",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1873,7 +2280,7 @@
 			},
 			"response": [
 				{
-					"id": "29f491f0-e521-45ca-997f-4bd6d97fb70a",
+					"id": "5d9fef17-6ede-4226-b470-5ac4bd5cd3a1",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2074,7 +2481,7 @@
 			},
 			"response": [
 				{
-					"id": "a867cb80-4f88-4cc2-a81c-e8a1aa937814",
+					"id": "ef5376da-4607-4c5e-9c4d-e29a8645cad7",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2381,7 +2788,7 @@
 			},
 			"response": [
 				{
-					"id": "1c8b110c-a467-40e2-84eb-87c5159605d2",
+					"id": "b9856f4b-3928-4631-9852-233c7e621df0",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2577,7 +2984,7 @@
 			},
 			"response": [
 				{
-					"id": "59a93027-0694-47ba-9928-af482fa08a95",
+					"id": "fa4102c7-6244-4756-938a-8d775bd765a6",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2924,7 +3331,7 @@
 			"response": []
 		},
 		{
-			"name": "25Get Bank",
+			"name": "25Get Bank -v300- new",
 			"event": [
 				{
 					"listen": "test",
@@ -2956,6 +3363,47 @@
 					"path": [
 						"obp",
 						"v3.0.0",
+						"banks",
+						"10"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "25Get Bank -v121-old",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v1.2.1/banks/10",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v1.2.1",
 						"banks",
 						"10"
 					]

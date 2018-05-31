@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c2052d84-a51e-49f2-a553-7bceccb09eaa",
+		"_postman_id": "fe0e59e0-d806-4abc-a79a-ac2823f88e77",
 		"name": "leumi-available-sandbox",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -123,7 +123,7 @@
 			"response": []
 		},
 		{
-			"name": "1.1Get Customers for Current User -new Style",
+			"name": "1.1Get Customers for Current User -new Style- N7jut8d",
 			"event": [
 				{
 					"listen": "test",
@@ -168,7 +168,142 @@
 			"response": []
 		},
 		{
-			"name": "1.2Get Customers for Current User -isFirst=false -new Style",
+			"name": "1.1Get Customers for Current User -new Style -FM4FZDE",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJGTTRGWkRFIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.jn4fxCUmdPvp7ETc2R2xR06u63zmi8-C4c6i0FU4rvU"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current/customers",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.1Get Customers for Current User -new Style - P747XTF",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJQNzQ3WFRGIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.2XyQqJJxf62zDq9xjl3sCVcTE_wnzGYEG4CQb_CXCJM"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current/customers",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.1Get Customers for Current User -new Style - 4CWWTZQ",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiI0Q1dXVFpRIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.AVRq-XFFFdPqmf71zCAJ2sVyPNbLXQF5o6rCFs3vgac"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current/customers",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - N7jut8d",
 			"event": [
 				{
 					"listen": "test",
@@ -186,6 +321,141 @@
 					{
 						"key": "Authorization",
 						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJON2p1dDhkIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij4sPyAgICAgICAgICA4MTQzMzAyMDEwMjYxMiIsImNic19pZCI6IiJ9.A5uLSv6hr5SbHh3clQhnkMIODesy6OHL4a-42mHawfA"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current/customers",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - FM4FZDE",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJGTTRGWkRFIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij3XmlI5NTIzMzA3MDUyMjYxOSIsImNic19pZCI6IiJ9.M3cbFi0prrLHes4-BUGR_M2eJzW6jncJbghrMGsYdP8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current/customers",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - P747XTF",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiJQNzQ3WFRGIiwiaXNfZmlyc3QiOnRydWUsImFwcF9pZCI6IjU5MzQ1MDczNDU4NzM0NSIsImFwcF9uYW1lIjoibXlhcHA0IiwidGltZV9zdGFtcCI6IjE5LTA2LTIwMTc6MjI6Mjc6MTE6MTAwIiwiY2JzX3Rva2VuIjoiIiwiY2JzX2lkIjoiIn0.2XyQqJJxf62zDq9xjl3sCVcTE_wnzGYEG4CQb_CXCJM"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://available.openbankproject.com/obp/v3.0.0/users/current/customers",
+					"protocol": "https",
+					"host": [
+						"available",
+						"openbankproject",
+						"com"
+					],
+					"path": [
+						"obp",
+						"v3.0.0",
+						"users",
+						"current",
+						"customers"
+					]
+				},
+				"description": "\nInformation about the currently authenticated user.\n\nAuthentication via OAuth is required."
+			},
+			"response": []
+		},
+		{
+			"name": "1.2Get Customers for Current User -isFirst=false -new Style - 4CWWTZQ",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "GatewayLogin token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbl91c2VyX25hbWUiOiI0Q1dXVFpRIiwiaXNfZmlyc3QiOmZhbHNlLCJhcHBfaWQiOiI1OTM0NTA3MzQ1ODczNDUiLCJhcHBfbmFtZSI6Im15YXBwNCIsInRpbWVfc3RhbXAiOiIxOS0wNi0yMDE3OjIyOjI3OjExOjEwMCIsImNic190b2tlbiI6Ij3XmlU4MTQzMzAzMjExMzk4MCIsImNic19pZCI6IiJ9.jRgW5J0DUIp8Znv9L4nJuDqMYYABPyIyytiF7DsRn1U"
 					}
 				],
 				"body": {
@@ -262,7 +532,7 @@
 			},
 			"response": [
 				{
-					"id": "98bf6b0a-64fe-4606-a4ca-ab4c3a9cfaba",
+					"id": "34f8f87c-4419-4eac-82c0-4f7775706624",
 					"name": "Get private accounts at one bank. -V300",
 					"originalRequest": {
 						"method": "GET",
@@ -450,7 +720,7 @@
 			},
 			"response": [
 				{
-					"id": "ad1abb5d-ba7b-4215-99ab-ed71e87b7e48",
+					"id": "96feed32-4a7d-4306-9198-25cf24f7156a",
 					"name": "Get private accounts ids at one bank. -v300",
 					"originalRequest": {
 						"method": "GET",
@@ -1145,7 +1415,7 @@
 			},
 			"response": [
 				{
-					"id": "6a979750-4a28-469a-9a80-b8eab173e385",
+					"id": "29f1be2a-f300-470b-a6de-d0df50714140",
 					"name": "Create Transaction Request. -- TRANSFER_TO_PHONE",
 					"originalRequest": {
 						"method": "POST",
@@ -1551,7 +1821,7 @@
 			},
 			"response": [
 				{
-					"id": "f912a7d0-671e-4493-aec5-b162373f384f",
+					"id": "47ef5c59-f357-4c8c-aa7c-b62deb60e584",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -1812,7 +2082,7 @@
 			},
 			"response": [
 				{
-					"id": "ec0b7d16-053b-4176-b45c-6e3098348b30",
+					"id": "06dcc5b0-344a-46cb-b4ad-c5673fc0c57d",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2009,7 +2279,7 @@
 			},
 			"response": [
 				{
-					"id": "8db950f6-f5c5-46f1-959d-12e922df7288",
+					"id": "e7d87479-3dbe-4b4c-b695-f83bb88378fd",
 					"name": "Create Transaction Request. --TRANSFER_TO_ACCOUNT",
 					"originalRequest": {
 						"method": "POST",
@@ -2308,7 +2578,7 @@
 			},
 			"response": [
 				{
-					"id": "8a5dc444-0c64-47e2-8ad9-a429d0b475fb",
+					"id": "1ca11216-702b-41fa-ad9b-c3f2713ebfc8",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
@@ -2500,7 +2770,7 @@
 			},
 			"response": [
 				{
-					"id": "4cb558c3-23f9-45a2-8cc1-2490d6a6da6e",
+					"id": "be7f9a5c-a1ac-4795-b17b-b9ce3513f24c",
 					"name": "Get Counterparty by Id",
 					"originalRequest": {
 						"method": "GET",
