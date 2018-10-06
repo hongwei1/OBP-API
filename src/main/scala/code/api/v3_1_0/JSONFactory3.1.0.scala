@@ -30,9 +30,9 @@ import java.util.Date
 
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.util.APIUtil
-import code.api.v1_2_1.AccountRoutingJsonV121
-import code.api.v1_4_0.JSONFactory1_4_0.BranchRoutingJsonV141
-import code.api.v2_1_0.ResourceUserJSON
+import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
+import code.api.v1_4_0.JSONFactory1_4_0.{BranchRoutingJsonV141, CustomerFaceImageJson}
+import code.api.v2_1_0.{CustomerCreditRatingJSON, ResourceUserJSON}
 import code.api.v2_2_0._
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
@@ -169,6 +169,62 @@ case class AccountWebHookPostJson(account_id: String,
 case class AccountWebHooksJson(web_hooks: List[AccountWebHookJson])
 
 case class ConfigurationJsonV310(default_bank_id: String, akka: AkkaJSON, elastic_search: ElasticSearchJSON, cache: List[CachedFunctionJSON])
+
+case class Number1JsonV310(value: Int)
+case class CredentialsJsonV310(
+                              name: String,
+                              pin: String
+                              )
+case class AddressJsonV310(
+                          identifier: String,
+                          number: Int
+                          )
+
+case class CustomerStepJsonV310(
+                                 famname: String,
+                                 firstname: String,
+                                 title: String,
+                                 mobiltel: String,
+                                 emailadr: String,
+                                 store: String,
+                                 titelnach: String,
+                                 kundnr: Int,
+                                 hint: Int
+                               )
+case class PostCustomerJsonV310(
+                                 number: String,
+                                 customer_number : String,
+                                 legal_name : String,
+                                 mobile_phone_number : String,
+                                 email : String,
+                                 face_image : CustomerFaceImageJson,
+                                 date_of_birth: Date,
+                                 relationship_status: String,
+                                 dependants: Int,
+                                 dob_of_dependants: List[Date],
+                                 credit_rating: CustomerCreditRatingJSON,
+                                 credit_limit: AmountOfMoneyJsonV121,
+                                 higheeducation_attained: String,
+                                 employment_status: String,
+                                 kyc_status: Boolean,
+                                 last_ok_date: Date,
+                                // From Disposer API
+                                 number1: Number1JsonV310,
+                                 credentials: CredentialsJsonV310,
+                                 status: String,
+                                 language: String,
+                                 `type`: String,
+                                 customerNr: Int,
+                                 address: AddressJsonV310,
+                                 bankSupervisorId: String,
+                                 bankAdvisorId: String,
+                               // From Private customers Contacts
+                                 patterncallnumber: Int,
+                                 customer_step: CustomerStepJsonV310,
+                                 uuid: String
+
+
+                               )
 
 object JSONFactory310{
   def createCheckbookOrdersJson(checkbookOrders: CheckbookOrdersJson): CheckbookOrdersJson =

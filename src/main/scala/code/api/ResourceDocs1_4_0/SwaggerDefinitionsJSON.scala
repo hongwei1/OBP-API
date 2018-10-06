@@ -1908,6 +1908,55 @@ object SwaggerDefinitionsJSON {
       last_ok_date = DateWithDayExampleObject
     )
 
+  val number1JsonV310 = Number1JsonV310(value = 4)
+  val credentialsJsonV310 = CredentialsJsonV310(name = "string", pin = "123123" )
+  val addressJsonV310 = AddressJsonV310(identifier = "string", number = 0)
+  val customerStepJosnV310 = CustomerStepJsonV310(
+    famname = "li",
+    firstname = "Aron",
+    title = "string",
+    mobiltel = "string",
+    emailadr = "string",
+    store = "string",
+    titelnach = "string",
+    kundnr = 0,
+    hint = 0
+  )
+
+  val postCustomerJsonV310 =
+    PostCustomerJsonV310(
+      number = "string",
+      customer_number = "new customer number 687687678",
+      legal_name = "NONE",
+      mobile_phone_number = "+44 07972 444 876",
+      email = "person@example.com",
+      face_image = customerFaceImageJson,
+      date_of_birth = DateWithDayExampleObject,
+      relationship_status = "Single",
+      dependants = 5,
+      dob_of_dependants = List(DateWithDayExampleObject),
+      credit_rating = customerCreditRatingJSON,
+      credit_limit = amountOfMoneyJsonV121,
+      higheeducation_attained = "string",
+      employment_status = "Employed",
+      kyc_status = true,
+      last_ok_date = DateWithDayExampleObject,
+      // From Disposer API
+      number1 = number1JsonV310,
+      credentials = credentialsJsonV310,
+      status = "ACTIVE",
+      language = "DE",
+      `type` = "FULL",
+      customerNr = 0,
+      address = addressJsonV310,
+      bankSupervisorId = "string",
+      bankAdvisorId = "string",
+      // From  Private customers Contacts
+      patterncallnumber = 0,
+      customer_step =customerStepJosnV310,
+      uuid = "string"
+
+    )
   val transactionRequestWithChargeJSON210 = TransactionRequestWithChargeJSON210(
     id = "4050046c-63b3-4868-8a22-14b4181d33a6",
     `type` = SANDBOX_TAN.toString,
