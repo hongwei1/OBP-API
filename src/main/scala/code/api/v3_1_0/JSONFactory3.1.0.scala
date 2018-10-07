@@ -204,7 +204,7 @@ case class PostCustomerJsonV310(
                                  dob_of_dependants: List[Date],
                                  credit_rating: CustomerCreditRatingJSON,
                                  credit_limit: AmountOfMoneyJsonV121,
-                                 higheeducation_attained: String,
+                                 highest_education_attained: String,
                                  employment_status: String,
                                  kyc_status: Boolean,
                                  last_ok_date: Date,

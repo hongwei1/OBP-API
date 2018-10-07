@@ -12,6 +12,7 @@ import code.api.v3_1_0.JSONFactory310._
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
 import code.bankconnectors.{Connector, OBPBankId}
 import code.consumer.Consumers
+import code.customer.{CreditRating, CreditLimit, CustomerFaceImage}
 import code.loginattempts.LoginAttempt
 import code.metrics.APIMetrics
 import code.model._
@@ -1062,6 +1063,23 @@ trait APIMethods310 {
 //              postedData.last_ok_date,
 //              Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
 //              Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount))) ?~! CreateConsumerError
+            customer <- Connector.connector.vend.createCustomer(
+              postedData.customer_number,
+              postedData.legal_name,
+              postedData.mobile_phone_number,
+              postedData.email,
+              CustomerFaceImage(postedData.face_image.date, postedData.face_image.url),
+              postedData.date_of_birth,
+              postedData.relationship_status,
+              postedData.dependants,
+              postedData.dob_of_dependants,
+              postedData.highest_education_attained,
+              postedData.employment_status,
+              postedData.kyc_status,
+              postedData.last_ok_date,
+              Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
+              Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount)),
+              Some(cc))
 
           } yield {
             val successJson = Extraction.decompose(json)

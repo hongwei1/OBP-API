@@ -33,6 +33,7 @@ import code.api.util.{APIUtil, CallContext, ErrorMessages}
 import code.api.v2_1_0._
 import code.bankconnectors._
 import code.branches.Branches.{Branch, BranchT}
+import code.customer.{AmountOfMoneyTrait, CreateCustomerRequest, CreditRatingTrait, CustomerFaceImageTrait}
 import code.fx.{FXRate, fx}
 import code.kafka.KafkaHelper
 import code.management.ImporterAPI.ImporterTransaction
@@ -59,7 +60,7 @@ import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Props
 
-import scala.collection.immutable.{Nil, Seq}
+import scala.collection.immutable.{List, Nil, Seq}
 import scala.collection.mutable.ArrayBuffer
 
 
@@ -1715,6 +1716,28 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
       otherAccountProvider = "obp",
       isBeneficiary = true
     )
+  }
+
+  override def createCustomer(
+                               number: String,
+                               legalName: String,
+                               mobileNumber: String,
+                               email: String,
+                               faceImage:
+                               CustomerFaceImageTrait,
+                               dateOfBirth: Date,
+                               relationshipStatus: String,
+                               dependents: Int,
+                               dobOfDependents: List[Date],
+                               highestEducationAttained: String,
+                               employmentStatus: String,
+                               kycStatus: Boolean,
+                               lastOkDate: Date,
+                               creditRating: Option[CreditRatingTrait],
+                               creditLimit: Option[AmountOfMoneyTrait],
+                               callContext: Option[CallContext] = None): Box[CreateCustomerRequest] = {
+
+    return null
   }
 
 }

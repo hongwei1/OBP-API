@@ -1937,7 +1937,7 @@ object SwaggerDefinitionsJSON {
       dob_of_dependants = List(DateWithDayExampleObject),
       credit_rating = customerCreditRatingJSON,
       credit_limit = amountOfMoneyJsonV121,
-      higheeducation_attained = "string",
+      highest_education_attained = "string",
       employment_status = "Employed",
       kyc_status = true,
       last_ok_date = DateWithDayExampleObject,
