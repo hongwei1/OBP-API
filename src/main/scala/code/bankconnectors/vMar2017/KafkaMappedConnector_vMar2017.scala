@@ -1718,28 +1718,6 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
     )
   }
 
-  override def createCustomer(
-                               number: String,
-                               legalName: String,
-                               mobileNumber: String,
-                               email: String,
-                               faceImage:
-                               CustomerFaceImageTrait,
-                               dateOfBirth: Date,
-                               relationshipStatus: String,
-                               dependents: Int,
-                               dobOfDependents: List[Date],
-                               highestEducationAttained: String,
-                               employmentStatus: String,
-                               kycStatus: Boolean,
-                               lastOkDate: Date,
-                               creditRating: Option[CreditRatingTrait],
-                               creditLimit: Option[AmountOfMoneyTrait],
-                               callContext: Option[CallContext] = None): Box[CreateCustomerRequest] = {
-
-    return null
-  }
-
 }
 
 object KafkaMappedConnector_vMar2017 extends KafkaMappedConnector_vMar2017{

@@ -17,6 +17,7 @@ import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors.vJune2017.KafkaMappedConnector_vJune2017
 import code.bankconnectors.vMar2017.{InboundAdapterInfoInternal, KafkaMappedConnector_vMar2017}
 import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
+import code.bankconnectors.vARZ.Connector_vARZ
 import code.branches.Branches.{Branch, BranchId, BranchT}
 import code.customer._
 import code.fx.FXRate
@@ -82,6 +83,7 @@ object Connector extends SimpleInjector {
       case "kafka_vMar2017" => KafkaMappedConnector_vMar2017
       case "kafka_vJune2017" => KafkaMappedConnector_vJune2017
       case "kafka_vSept2018" => KafkaMappedConnector_vSept2018
+      case "arz" => Connector_vARZ
       case matchKafkaVersion(version) => getObjectInstance(s"""code.bankconnectors.KafkaMappedConnector_v${version}""")
     }
   }
@@ -1350,6 +1352,7 @@ trait Connector extends MdcLoggable{
 
 
   def createCustomer(
+                      bankId: BankId,
                       number: String,
                       legalName: String,
                       mobileNumber: String,
@@ -1367,7 +1370,7 @@ trait Connector extends MdcLoggable{
                       creditRating: Option[CreditRatingTrait],
                       creditLimit: Option[AmountOfMoneyTrait],
                       callContext: Option[CallContext] = None
-                    ): Box[CreateCustomerRequest] = Failure(NotImplemented + currentMethodName())
+                    ): Box[Customer] = Failure(NotImplemented + currentMethodName())
   
   def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[List[Customer]]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")}
 

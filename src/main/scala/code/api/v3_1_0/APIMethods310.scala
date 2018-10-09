@@ -995,12 +995,9 @@ trait APIMethods310 {
 
 
     val createCustomerEntitlementsRequiredForSpecificBank = canCreateCustomer ::
-      canCreateUserCustomerLink ::
+      canCreateCustomerAtAnyBank ::
       Nil
-    val createCustomerEntitlementsRequiredForAnyBank = canCreateCustomerAtAnyBank ::
-      canCreateUserCustomerLinkAtAnyBank ::
-      Nil
-    val createCustomerEntitlementsRequiredText = createCustomerEntitlementsRequiredForSpecificBank.mkString(" and ") + " OR " + createCustomerEntitlementsRequiredForAnyBank.mkString(" and ")
+    val createCustomerEntitlementsRequiredText = createCustomerEntitlementsRequiredForSpecificBank.mkString(" and ")
 
     resourceDocs += ResourceDoc(
       createCustomer,
@@ -1013,9 +1010,9 @@ trait APIMethods310 {
          |The Customer resource stores the customer number, legal name, email, phone number, their date of birth, relationship status, education attained, a url for a profile image, KYC status etc.
          |Dates need to be in the format 2013-01-21T23:08:00Z
          |
-          |${authenticationRequiredMessage(true)}
+         |${authenticationRequiredMessage(true)}
          |
-          |$createCustomerEntitlementsRequiredText
+         |$createCustomerEntitlementsRequiredForSpecificBank
          |""",
       postCustomerJsonV310,
       customerJsonV210,
@@ -1043,27 +1040,10 @@ trait APIMethods310 {
             _ <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
             _ <- Bank(bankId) ?~! {BankNotFound}
             postedData <- tryo{json.extract[PostCustomerJsonV310]} ?~! InvalidJsonFormat
-//            _ <- booleanToBox(
-//              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
-//              s"$UserHasMissingRoles$createCustomerEntitlementsRequiredText")
-//            _ <- tryo(assert(Customer.customerProvider.vend.checkCustomerNumberAvailable(bankId, postedData.customer_number) == true)) ?~! CustomerNumberAlreadyExists
-//            customer <- Customer.customerProvider.vend.addCustomer(bankId,
-//              postedData.customer_number,
-//              postedData.legal_name,
-//              postedData.mobile_phone_number,
-//              postedData.email,
-//              CustomerFaceImage(postedData.face_image.date, postedData.face_image.url),
-//              postedData.date_of_birth,
-//              postedData.relationship_status,
-//              postedData.dependants,
-//              postedData.dob_of_dependants,
-//              postedData.highest_education_attained,
-//              postedData.employment_status,
-//              postedData.kyc_status,
-//              postedData.last_ok_date,
-//              Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
-//              Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount))) ?~! CreateConsumerError
-            customer <- Connector.connector.vend.createCustomer(
+            _ <- Helper.booleanToBox(
+              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank),
+              s"$UserHasMissingRoles$createCustomerEntitlementsRequiredText")
+            customer <- Connector.connector.vend.createCustomer(bankId,
               postedData.customer_number,
               postedData.legal_name,
               postedData.mobile_phone_number,
