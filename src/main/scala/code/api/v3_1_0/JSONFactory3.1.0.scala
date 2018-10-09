@@ -34,6 +34,7 @@ import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchRoutingJsonV141, CustomerFaceImageJson}
 import code.api.v2_1_0.{CustomerCreditRatingJSON, ResourceUserJSON}
 import code.api.v2_2_0._
+import code.customer.Customer
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
 import code.model.{Consumer, User}
@@ -323,6 +324,10 @@ object JSONFactory310{
     val configurationJson: ConfigurationJSON = JSONFactory220.getConfigInfoJSON()
     val defaultBankId= APIUtil.defaultBankId
     ConfigurationJsonV310(defaultBankId,configurationJson.akka,configurationJson.elastic_search, configurationJson.cache)
+  }
+  
+  def createCustomerJson(customer: Customer) = {
+    SwaggerDefinitionsJSON.postCustomerJsonV310.copy(customer_number=customer.number,legal_name =customer.legalName, mobile_phone_number= customer.mobileNumber)
   }
 
 }

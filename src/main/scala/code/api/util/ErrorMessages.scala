@@ -202,6 +202,7 @@ object ErrorMessages {
 
   val CreateWebHookError = "OBP-30047: Cannot create Web Hook"
   val GetWebHooksError = "OBP-30048: Cannot get Web Hooks"
+  val CreateCustomerError = "OBP-30049: Cannot create Customer"
 
 
   // Meetings

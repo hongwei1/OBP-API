@@ -37,6 +37,7 @@ import code.api.v3_1_0.{AccountV310Json, CardObjectJson, CheckbookOrdersJson}
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
+import code.bankconnectors.vSept2018.InternalCustomer
 import code.branches.Branches.{BranchId, BranchT, Lobby}
 import code.common._
 import code.customer._
@@ -366,40 +367,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(bankTTL second) {
-        val req = OutboundGetBank(
-          authInfo = AuthInfo(),
-          bankId = bankId.toString
-        )
-        logger.debug(s"Kafka getBank Req says:  is: $req")
-
-        val box: Box[(InboundBank, Status)] = for {
-          kafkaMessage <- processToBox[OutboundGetBank](req)
-          inboundGetBank <- tryo {
-            kafkaMessage.extract[InboundGetBank]
-          } ?~! s"$InboundGetBank extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
-          (inboundBank, status) <- Full(inboundGetBank.data, inboundGetBank.status)
-        } yield {
-          (inboundBank, status)
-        }
-
-
-        logger.debug(s"Kafka getBank Res says:  is: $Box")
-
-        box match {
-          case Full((bank, status)) if (status.errorCode == "") =>
-            Full((new Bank2(bank)))
-          case Full((_, status)) if (status.errorCode != "") =>
-            Failure("INTERNAL-" + status.errorCode + ". + CoreBank-Status:" + status.backendMessages)
-          case Empty =>
-            Failure(ErrorMessages.ConnectorEmptyResponse)
-          case Failure(msg, e, c) =>
-            logger.error(msg, e)
-            logger.error(msg)
-            Failure(msg, e, c)
-          case _ =>
-            Failure(ErrorMessages.UnknownError)
-        }
-
+        Full(Bank2(InboundBank("bankId","name","logo","url")))
       }
     }
   }("getBank")
@@ -414,36 +382,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(banksTTL second){
-        val req = OutboundGetBank(authInfo = AuthInfo(), bankId.toString)
-        logger.debug(s"Kafka getBankFuture Req is: $req")
-
-        val future = for {
-          res <- processToFuture[OutboundGetBank](req) map {
-            f =>
-              try {
-                f.extract[InboundGetBank]
-              } catch {
-                case e: Exception => throw new MappingException(s"$InboundGetBank extract error. Both check API and Adapter Inbound Case Classes need be the same ! ", e)
-              }
-          } map {
-            (x => (x.data, x.status))
-          }
-        } yield {
-          Full(res)
-        }
-
-        val res = future map {
-          case Full((bank, status)) if (status.errorCode=="") =>
-            val bankResponse =  (new Bank2(bank))
-            logger.debug(s"Kafka getBankFuture Res says:  is: $bankResponse")
-            Full(bankResponse)
-          case Full((bank, status)) if (status.errorCode!="") =>
-            Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
-          case _ =>
-            Failure(ErrorMessages.UnknownError)
-        }
-        logger.debug(s"Kafka getBankFuture says res is $res")
-        res
+        Future{Full(Bank2(InboundBank("bankId", "name", "logo", "url")))}
       }
     }
   }("getBank")
@@ -1272,9 +1211,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     
   )
 
-
-
-  override def createCustomer(
+  override def createCustomerFuture(
                                bankId: BankId,
                                number: String,
                                legalName: String,
@@ -1292,7 +1229,30 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
                                lastOkDate: Date,
                                creditRating: Option[CreditRatingTrait],
                                creditLimit: Option[AmountOfMoneyTrait],
-                               callContext: Option[CallContext] = None) = Empty
+                               callContext: Option[CallContext] = None) = saveConnectorMetric{
+    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
+    CacheKeyFromArguments.buildCacheKey {
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(createCustomerFutureTTL second){
+        Future
+        {
+          Full(InternalCustomer(
+            customerId = "String", bankId = bankId.value, number = number,
+            legalName = legalName, mobileNumber = mobileNumber, email = "String",
+            faceImage = CustomerFaceImage(date = DateWithSecondsExampleObject,
+                                          url = "String"),
+            dateOfBirth = DateWithSecondsExampleObject,
+            relationshipStatus = "String",
+            dependents = 1,
+            dobOfDependents = List(DateWithSecondsExampleObject),
+            highestEducationAttained = "String", employmentStatus = "String",
+            creditRating = CreditRating(rating = "String", source = "String"),
+            creditLimit = CreditLimit(currency = "String", amount = "String"),
+            kycStatus = false, lastOkDate = DateWithSecondsExampleObject)
+          )
+        }
+      }
+    }
+  }("createCustomerFuture")
   
   
   override def getTransactionRequests210(user : User, fromAccount : BankAccount, callContext: Option[CallContext] = None) : Box[List[TransactionRequest]] = saveConnectorMetric{

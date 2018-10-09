@@ -1717,7 +1717,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       bespoke = bespoke
     )
 
-  override def createCustomer(
+  override def createCustomerFuture(
                                bankId: BankId,
                                number: String,
                                legalName: String,
@@ -1736,7 +1736,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                creditRating: Option[CreditRatingTrait],
                                creditLimit: Option[AmountOfMoneyTrait],
                                callContext: Option[CallContext] = None) = {
-    Customer.customerProvider.vend.addCustomer(
+    val customer = Customer.customerProvider.vend.addCustomer(
       bankId: BankId,
       number: String,
       legalName: String,
@@ -1755,6 +1755,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       creditRating: Option[CreditRatingTrait],
       creditLimit: Option[AmountOfMoneyTrait]
     ) 
+    Future{customer}
   }
   
   override def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[List[Customer]]] =

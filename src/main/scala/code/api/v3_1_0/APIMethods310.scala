@@ -1036,14 +1036,16 @@ trait APIMethods310 {
       case ("banks" :: BankId(bankId) :: "customers" :: Nil) JsonPost json -> _ => {
         cc =>
           for {
-            u <- cc.user ?~! UserNotLoggedIn // TODO. CHECK user has role to create a customer / create a customer for another user id.
-            _ <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
-            _ <- Bank(bankId) ?~! {BankNotFound}
-            postedData <- tryo{json.extract[PostCustomerJsonV310]} ?~! InvalidJsonFormat
-            _ <- Helper.booleanToBox(
-              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank),
-              s"$UserHasMissingRoles$createCustomerEntitlementsRequiredText")
-            customer <- Connector.connector.vend.createCustomer(bankId,
+            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
+              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+            }
+            _ <- NewStyle.function.getBank(bankId, callContext)
+            failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerJsonV310 "
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
+              json.extract[PostCustomerJsonV310]
+            }
+            customer <- Connector.connector.vend.createCustomerFuture(bankId,
               postedData.customer_number,
               postedData.legal_name,
               postedData.mobile_phone_number,
@@ -1059,11 +1061,12 @@ trait APIMethods310 {
               postedData.last_ok_date,
               Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
               Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount)),
-              Some(cc))
-
+              Some(cc)
+            ) map {
+              unboxFullOrFail(_, callContext, CreateCustomerError, 400)
+            }
           } yield {
-            val successJson = Extraction.decompose(json)
-            successJsonResponse(successJson, 201)
+            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(callContext))
           }
       }
     }
