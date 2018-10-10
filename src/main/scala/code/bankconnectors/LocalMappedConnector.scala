@@ -1717,47 +1717,6 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       bespoke = bespoke
     )
 
-  override def createCustomerFuture(
-                               bankId: BankId,
-                               number: String,
-                               legalName: String,
-                               mobileNumber: String,
-                               email: String,
-                               faceImage:
-                               CustomerFaceImageTrait,
-                               dateOfBirth: Date,
-                               relationshipStatus: String,
-                               dependents: Int,
-                               dobOfDependents: List[Date],
-                               highestEducationAttained: String,
-                               employmentStatus: String,
-                               kycStatus: Boolean,
-                               lastOkDate: Date,
-                               creditRating: Option[CreditRatingTrait],
-                               creditLimit: Option[AmountOfMoneyTrait],
-                               callContext: Option[CallContext] = None) = {
-    val customer = Customer.customerProvider.vend.addCustomer(
-      bankId: BankId,
-      number: String,
-      legalName: String,
-      mobileNumber: String,
-      email: String,
-      faceImage:
-      CustomerFaceImageTrait,
-      dateOfBirth: Date,
-      relationshipStatus: String,
-      dependents: Int,
-      dobOfDependents: List[Date],
-      highestEducationAttained: String,
-      employmentStatus: String,
-      kycStatus: Boolean,
-      lastOkDate: Date,
-      creditRating: Option[CreditRatingTrait],
-      creditLimit: Option[AmountOfMoneyTrait]
-    ) 
-    Future{customer}
-  }
-  
   override def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[List[Customer]]] =
     Customer.customerProvider.vend.getCustomersByUserIdFuture(userId)
 

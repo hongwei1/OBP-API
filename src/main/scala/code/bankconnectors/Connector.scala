@@ -9,9 +9,9 @@ import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, CallContext, ErrorMessages}
 import code.api.v1_2_1.AmountOfMoneyJsonV121
-import code.api.v1_4_0.JSONFactory1_4_0.{TransactionRequestAccountJsonV140}
+import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0.{TransactionRequestCommonBodyJSON, _}
-import code.api.v3_1_0.{CardObjectJson, CheckbookOrdersJson}
+import code.api.v3_1_0.{CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310}
 import code.atms.Atms
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors.vJune2017.KafkaMappedConnector_vJune2017
@@ -1354,47 +1354,12 @@ trait Connector extends MdcLoggable{
 
 
   def createCustomerFuture(
-                      bankId: BankId,
-                      number: String,
-                      legalName: String,
-                      mobileNumber: String,
-                      email: String,
-                      faceImage:
-                      CustomerFaceImageTrait,
-                      dateOfBirth: Date,
-                      relationshipStatus: String,
-                      dependents: Int,
-                      dobOfDependents: List[Date],
-                      highestEducationAttained: String,
-                      employmentStatus: String,
-                      kycStatus: Boolean,
-                      lastOkDate: Date,
-                      creditRating: Option[CreditRatingTrait],
-                      creditLimit: Option[AmountOfMoneyTrait],
-                      callContext: Option[CallContext] = None
-                    ): Future[Box[Customer]] = Future{Failure(NotImplemented + currentMethodName())}
+    postCustomer: PostCustomerJsonV310
+  ): Future[Box[PostCustomerJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
   
   def updateCustomerFuture(
-                      customerId:CustomerId,
-                      bankId: BankId,
-                      number: String,
-                      legalName: String,
-                      mobileNumber: String,
-                      email: String,
-                      faceImage:
-                      CustomerFaceImageTrait,
-                      dateOfBirth: Date,
-                      relationshipStatus: String,
-                      dependents: Int,
-                      dobOfDependents: List[Date],
-                      highestEducationAttained: String,
-                      employmentStatus: String,
-                      kycStatus: Boolean,
-                      lastOkDate: Date,
-                      creditRating: Option[CreditRatingTrait],
-                      creditLimit: Option[AmountOfMoneyTrait],
-                      callContext: Option[CallContext] = None
-                    ): Future[Box[Customer]] = Future{Failure(NotImplemented + currentMethodName())}
+    postCustomer: PostCustomerJsonV310
+  ): Future[Box[PostCustomerJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
   
   def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[List[Customer]]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")}
 

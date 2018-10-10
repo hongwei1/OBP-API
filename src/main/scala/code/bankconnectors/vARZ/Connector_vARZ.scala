@@ -33,7 +33,7 @@ import code.api.util.APIUtil.{MessageDoc, getSecondsCache, saveConnectorMetric}
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ApiSession, CallContext, ErrorMessages}
 import code.api.util.APIUtil._
-import code.api.v3_1_0.{AccountV310Json, CardObjectJson, CheckbookOrdersJson}
+import code.api.v3_1_0.{AccountV310Json, CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310}
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
@@ -122,33 +122,16 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     inboundAvroSchema = Some(parse(SchemaFor[InboundAdapterInfoInternal]().toString(true)))
   )
   override def getAdapterInfo: Box[InboundAdapterInfoInternal] = {
-    val req = OutboundGetAdapterInfo(DateWithSecondsExampleString)
-    
-    logger.debug(s"Kafka getAdapterInfo Req says:  is: $req")
-  
-    val box = for {
-      kafkaMessage <- processToBox[OutboundGetAdapterInfo](req)
-      inboundAdapterInfo <- tryo{kafkaMessage.extract[InboundAdapterInfo]} ?~! s"$InboundAdapterInfo extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
-      inboundAdapterInfoInternal <- Full(inboundAdapterInfo.data)
-    } yield{
-      inboundAdapterInfoInternal
-    }
-    
-    
-    logger.debug(s"Kafka getAdapterInfo Res says:  is: $Box")
-    
-    val res = box match {
-      case Full(list) if (list.errorCode=="") =>
-        Full(list)
-      case Full(list) if (list.errorCode!="") =>
-        Failure("INTERNAL-"+ list.errorCode+". + CoreBank-Status:"+ list.backendMessages)
-      case Failure(msg, e, c)  =>
-        Failure(msg, e, c)
-      case _ =>
-        Failure(ErrorMessages.UnknownError)
-    }
-    
-    res
+    Full(InboundAdapterInfo(
+        InboundAdapterInfoInternal(
+          errorCodeExample,
+          inboundStatusMessagesExample,
+          name = "Obp-Kafka-South",
+          version = "June2017",
+          git_commit = "...",
+          date = DateWithSecondsExampleString
+        )
+      ))
   }
   
   messageDocs += MessageDoc(
@@ -255,36 +238,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(banksTTL second){
-        val req = OutboundGetBanks(AuthInfo())
-        logger.debug(s"Kafka getBanks Req is: $req")
-
-        val box: Box[(List[InboundBank], Status)] = for {
-         _ <- Full(logger.debug("Enter GetBanks BOX1: prekafka") )
-          kafkaMessage <- processToBox[OutboundGetBanks](req)
-         _ <- Full(logger.debug(s"Enter GetBanks BOX2: postkafka: $kafkaMessage") )
-         inboundGetBanks <- tryo{kafkaMessage.extract[InboundGetBanks]} ?~! s"$InboundGetBanks extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
-         _ <- Full(logger.debug(s"Enter GetBanks BOX3 : $inboundGetBanks") )
-         (inboundBanks, status) <- Full(inboundGetBanks.data, inboundGetBanks.status)
-         _ <- Full(logger.debug(s"Enter GetBanks BOX4: $inboundBanks") )
-        } yield {
-          (inboundBanks, status)
-        }
-
-        logger.debug(s"Kafka getBanks Res says:  is: $Box")
-        val res = box match {
-          case Full((banks, status)) if (status.errorCode=="") =>
-            Full(banks map (new Bank2(_)))
-          case Full((banks, status)) if (status.errorCode!="") =>
-            Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
-          case Empty =>
-            Failure(ErrorMessages.ConnectorEmptyResponse)
-          case Failure(msg, e, c) =>
-            Failure(msg, e, c)
-          case _ =>
-            Failure(ErrorMessages.UnknownError)
-        }
-        logger.debug(s"Kafka getBanks says res is $res")
-        res
+        Full(List(Bank2(InboundBank("bankId","name","logo","url"))))
       }
     }
   }("getBanks")
@@ -299,36 +253,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(banksTTL second){
-        val req = OutboundGetBanks(AuthInfo())
-        logger.debug(s"Kafka getBanksFuture Req is: $req")
-
-        val future = for {
-          res <- processToFuture[OutboundGetBanks](req) map {
-            f =>
-              try {
-                f.extract[InboundGetBanks]
-              } catch {
-                case e: Exception => throw new MappingException(s"$InboundGetBanks extract error. Both check API and Adapter Inbound Case Classes need be the same ! ", e)
-              }
-          } map {
-            (x => (x.data, x.status))
-          }
-        } yield {
-          Full(res)
-        }
-
-        val res = future map {
-          case Full((banks, status)) if (status.errorCode=="") =>
-            val banksResponse =  banks map (new Bank2(_))
-            logger.debug(s"Kafka getBanksFuture Res says:  is: $banksResponse")
-            Full(banksResponse)
-          case Full((banks, status)) if (status.errorCode!="") =>
-            Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
-          case _ =>
-            Failure(ErrorMessages.UnknownError)
-        }
-        logger.debug(s"Kafka getBanksFuture says res is $res")
-        res
+        Full(List(Bank2(InboundBank("bankId","name","logo","url"))))
       }
     }
   }("getBanks")
@@ -1211,88 +1136,25 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     
   )
 
-  override def createCustomerFuture(
-                               bankId: BankId,
-                               number: String,
-                               legalName: String,
-                               mobileNumber: String,
-                               email: String,
-                               faceImage:
-                               CustomerFaceImageTrait,
-                               dateOfBirth: Date,
-                               relationshipStatus: String,
-                               dependents: Int,
-                               dobOfDependents: List[Date],
-                               highestEducationAttained: String,
-                               employmentStatus: String,
-                               kycStatus: Boolean,
-                               lastOkDate: Date,
-                               creditRating: Option[CreditRatingTrait],
-                               creditLimit: Option[AmountOfMoneyTrait],
-                               callContext: Option[CallContext] = None) = saveConnectorMetric{
+  override def createCustomerFuture(postCustomer: PostCustomerJsonV310) = saveConnectorMetric{
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(createCustomerFutureTTL second){
         Future
         {
-          Full(InternalCustomer(
-            customerId = "String", bankId = bankId.value, number = number,
-            legalName = legalName, mobileNumber = mobileNumber, email = "String",
-            faceImage = CustomerFaceImage(date = DateWithSecondsExampleObject,
-                                          url = "String"),
-            dateOfBirth = DateWithSecondsExampleObject,
-            relationshipStatus = "String",
-            dependents = 1,
-            dobOfDependents = List(DateWithSecondsExampleObject),
-            highestEducationAttained = "String", employmentStatus = "String",
-            creditRating = CreditRating(rating = "String", source = "String"),
-            creditLimit = CreditLimit(currency = "String", amount = "String"),
-            kycStatus = false, lastOkDate = DateWithSecondsExampleObject)
-          )
+          Full(postCustomer)
         }
       }
     }
   }("createCustomerFuture")
   
-  override def updateCustomerFuture(
-                               customerId:CustomerId,
-                               bankId: BankId,
-                               number: String,
-                               legalName: String,
-                               mobileNumber: String,
-                               email: String,
-                               faceImage:
-                               CustomerFaceImageTrait,
-                               dateOfBirth: Date,
-                               relationshipStatus: String,
-                               dependents: Int,
-                               dobOfDependents: List[Date],
-                               highestEducationAttained: String,
-                               employmentStatus: String,
-                               kycStatus: Boolean,
-                               lastOkDate: Date,
-                               creditRating: Option[CreditRatingTrait],
-                               creditLimit: Option[AmountOfMoneyTrait],
-                               callContext: Option[CallContext] = None) = saveConnectorMetric{
+  override def updateCustomerFuture(postCustomer: PostCustomerJsonV310) = saveConnectorMetric{
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(updateCustomerFutureTTL second){
         Future
         {
-          Full(InternalCustomer(
-            customerId = "String", bankId = bankId.value, number = number,
-            legalName = legalName, mobileNumber = mobileNumber, email = "String",
-            faceImage = CustomerFaceImage(date = DateWithSecondsExampleObject,
-                                          url = "String"),
-            dateOfBirth = DateWithSecondsExampleObject,
-            relationshipStatus = "String",
-            dependents = 1,
-            dobOfDependents = List(DateWithSecondsExampleObject),
-            highestEducationAttained = "String", employmentStatus = "String",
-            creditRating = CreditRating(rating = "String", source = "String"),
-            creditLimit = CreditLimit(currency = "String", amount = "String"),
-            kycStatus = false, lastOkDate = DateWithSecondsExampleObject)
-          )
+          Full(postCustomer)
         }
       }
     }

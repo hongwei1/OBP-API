@@ -326,8 +326,8 @@ object JSONFactory310{
     ConfigurationJsonV310(defaultBankId,configurationJson.akka,configurationJson.elastic_search, configurationJson.cache)
   }
   
-  def createCustomerJson(customer: Customer) = {
-    SwaggerDefinitionsJSON.postCustomerJsonV310.copy(customer_number=customer.number,legal_name =customer.legalName, mobile_phone_number= customer.mobileNumber)
+  def createCustomerJson(postCustomer: PostCustomerJsonV310) = {
+    postCustomer
   }
 
 }

@@ -1041,24 +1041,7 @@ trait APIMethods310 {
             postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
               json.extract[PostCustomerJsonV310]
             }
-            customer <- Connector.connector.vend.createCustomerFuture(bankId,
-              postedData.customer_number,
-              postedData.legal_name,
-              postedData.mobile_phone_number,
-              postedData.email,
-              CustomerFaceImage(postedData.face_image.date, postedData.face_image.url),
-              postedData.date_of_birth,
-              postedData.relationship_status,
-              postedData.dependants,
-              postedData.dob_of_dependants,
-              postedData.highest_education_attained,
-              postedData.employment_status,
-              postedData.kyc_status,
-              postedData.last_ok_date,
-              Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
-              Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount)),
-              Some(cc)
-            ) map {
+            customer <- Connector.connector.vend.createCustomerFuture(postedData) map {
               unboxFullOrFail(_, callContext, CreateCustomerError, 400)
             }
           } yield {
@@ -1106,26 +1089,7 @@ trait APIMethods310 {
             postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
               json.extract[PostCustomerJsonV310]
             }
-            customer <- Connector.connector.vend.updateCustomerFuture(
-              customerId,
-              bankId,
-              postedData.customer_number,
-              postedData.legal_name,
-              postedData.mobile_phone_number,
-              postedData.email,
-              CustomerFaceImage(postedData.face_image.date, postedData.face_image.url),
-              postedData.date_of_birth,
-              postedData.relationship_status,
-              postedData.dependants,
-              postedData.dob_of_dependants,
-              postedData.highest_education_attained,
-              postedData.employment_status,
-              postedData.kyc_status,
-              postedData.last_ok_date,
-              Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
-              Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount)),
-              Some(cc)
-            ) map {
+            customer <- Connector.connector.vend.updateCustomerFuture(postedData) map {
               unboxFullOrFail(_, callContext, UpdateCustomerError, 400)
             }
           } yield {
