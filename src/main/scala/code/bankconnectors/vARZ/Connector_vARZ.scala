@@ -33,9 +33,10 @@ import code.api.util.APIUtil.{MessageDoc, getSecondsCache, saveConnectorMetric}
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ApiSession, CallContext, ErrorMessages}
 import code.api.util.APIUtil._
-import code.api.v3_1_0.{AccountV310Json, CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310}
+import code.api.v3_1_0._
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors._
+import code.bankconnectors.vARZ.mf_calls.{MfUtil, PostDisposers, PostPrivatkundenkontakte}
 import code.bankconnectors.vMar2017._
 import code.bankconnectors.vSept2018.InternalCustomer
 import code.branches.Branches.{BranchId, BranchT, Lobby}
@@ -1142,15 +1143,11 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(createCustomerFutureTTL second){
         Future
         {
+            val tuple = MfUtil.mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(postCustomer)
+            val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(tuple._1)
+            val disposerResult = PostDisposers.postDisposers(tuple._2)
           Full(
-            
-           //1st
-          
-          //2rd
-          // 
-          // 
-          //
-            postCustomer
+            PostCustomerResponseJsonV310(kundenResult,disposerResult)
           )
         }
       }
@@ -1163,7 +1160,12 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(updateCustomerFutureTTL second){
         Future
         {
-          Full(postCustomer)
+          val tuple = MfUtil.mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(postCustomer)
+
+          val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(tuple._1)
+          val disposerResult = PostDisposers.postDisposers(tuple._2)
+          
+          Full(PostCustomerResponseJsonV310(kundenResult,disposerResult))
         }
       }
     }

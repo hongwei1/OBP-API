@@ -34,6 +34,7 @@ import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchRoutingJsonV141, CustomerFaceImageJson}
 import code.api.v2_1_0.{CustomerCreditRatingJSON, ResourceUserJSON}
 import code.api.v2_2_0._
+import code.bankconnectors.vARZ.mf_calls.{PostDisposersResponse, PostkundenkontakteResult}
 import code.customer.Customer
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
@@ -193,7 +194,6 @@ case class ConfigurationJsonV310(default_bank_id: String, akka: AkkaJSON, elasti
 //                                 hint: Int
 //                               )
 case class PostCustomerJsonV310(
-                                 number: String,
                                  customer_number : String,
                                  legal_name : String,
                                  mobile_phone_number : String,
@@ -224,6 +224,11 @@ case class PostCustomerJsonV310(
 //                                 customer_step: CustomerStepJsonV310,
 //                                 uuid: String
                                )
+case class PostCustomerResponseJsonV310(
+  postkundenkontakteResult: PostkundenkontakteResult,
+  postDisposersResponse: PostDisposersResponse
+)
+
 
 object JSONFactory310{
   def createCheckbookOrdersJson(checkbookOrders: CheckbookOrdersJson): CheckbookOrdersJson =
@@ -324,7 +329,7 @@ object JSONFactory310{
     ConfigurationJsonV310(defaultBankId,configurationJson.akka,configurationJson.elastic_search, configurationJson.cache)
   }
   
-  def createCustomerJson(postCustomer: PostCustomerJsonV310) = {
+  def createCustomerJson(postCustomer: PostCustomerResponseJsonV310) = {
     postCustomer
   }
 

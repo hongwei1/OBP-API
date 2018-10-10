@@ -1925,7 +1925,6 @@ object SwaggerDefinitionsJSON {
 
   val postCustomerJsonV310 =
     PostCustomerJsonV310(
-      number = "string",
       customer_number = "new customer number 687687678",
       legal_name = "NONE",
       mobile_phone_number = "+44 07972 444 876",

@@ -11,7 +11,7 @@ import code.api.util.{APIUtil, CallContext, ErrorMessages}
 import code.api.v1_2_1.AmountOfMoneyJsonV121
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0.{TransactionRequestCommonBodyJSON, _}
-import code.api.v3_1_0.{CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310}
+import code.api.v3_1_0.{CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310,PostCustomerResponseJsonV310 }
 import code.atms.Atms
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors.vJune2017.KafkaMappedConnector_vJune2017
@@ -1355,11 +1355,11 @@ trait Connector extends MdcLoggable{
 
   def createCustomerFuture(
     postCustomer: PostCustomerJsonV310
-  ): Future[Box[PostCustomerJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
+  ): Future[Box[PostCustomerResponseJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
   
   def updateCustomerFuture(
     postCustomer: PostCustomerJsonV310
-  ): Future[Box[PostCustomerJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
+  ): Future[Box[PostCustomerResponseJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
   
   def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[List[Customer]]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")}
 
