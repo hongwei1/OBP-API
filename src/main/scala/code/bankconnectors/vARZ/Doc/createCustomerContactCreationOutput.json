@@ -1,0 +1,20 @@
+{
+  "kundennummer": 0,
+  "messages": [
+    "string"
+  ],
+  "problem": {
+    "title": "flexrail Service ",
+    "detail": "Some error occured: Data input invalid",
+    "type": "https://arz.at/api-error/ERRVAL001",
+    "status": 412,
+    "errId": "d47f473a-005e-40c1-8663-18ec88940580",
+    "errors": [
+      {
+        "title": "Data input invalid",
+        "detail": "country code has to be ISO 3166 ALPHA-2 compliant",
+        "type": "addLegitimation.arg1.exhibitionCountry"
+      }
+    ]
+  }
+}

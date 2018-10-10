@@ -1,0 +1,104 @@
+{
+	"info": {
+		"_postman_id": "122e8e21-2a95-43c8-90c6-2fd5cf8aa9fb",
+		"name": "ARZ1",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/privatkundenkontakte",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "51d2ddf7-ef72-4dae-95f3-3cd613f9a566",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"kundenstamm\": {\n    \"famname\": \"Mustermann\",\n    \"vorname\": \"Max\",\n    \"mobiltel\": \"+4365012345678\",\n    \"emailadr\": \"max.m@max.com\"\n  },\n  \"uuid\": \"da6c30a7-daee-42f4-844e-f451a954331c\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/api-builder/b1/kundenstamm",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"api-builder",
+						"b1",
+						"kundenstamm"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		},
+		{
+			"name": "/v1/disposers",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "51d2ddf7-ef72-4dae-95f3-3cd613f9a566",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"credentials\": {\n    \"name\": \"Max123456\",\n    \"pin\": 123456\n  },\n  \"status\": \"ACTIVE\",\n  \"language\": \"DE\",\n  \"type\": \"MINI\",\n  \"customerNr\": 29686,\n  \"address\": {\n    \"identifier\": \"H\",\n    \"number\": 1\n  },\n  \"bankSupervisorId\": \"FLEXAPI\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/api-builder/b1/v1/disposers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"api-builder",
+						"b1",
+						"v1",
+						"disposers"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,11 @@
+//--> URL :  /privatkundenkontakte
+
+{
+  "kundenstamm": {
+    "famname": "Mustermann",
+    "vorname": "Max",
+    "mobiltel": "+4365012345678",
+    "emailadr": "max.m@max.com"
+  },
+  "uuid": "da6c30a7-daee-42f4-844e-f451a954331c"
+}

@@ -1,16 +1,19 @@
 package code.api.builder
 import java.util.UUID
-import code.api.builder.JsonFactory_APIBuilder._
+
+import code.api.builder.JsonFactory_APIBuilder.{createTemplateJson, _}
 import code.api.util.APIUtil._
 import code.api.util.ApiVersion
 import code.api.util.ErrorMessages._
 import net.liftweb.common.Full
+import net.liftweb.http.S
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json
 import net.liftweb.json.Extraction._
 import net.liftweb.json._
 import net.liftweb.mapper.By
-import net.liftweb.util.Helpers.tryo
+import net.liftweb.util.Helpers.{tryo, urlDecode}
+
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
 trait APIMethods_APIBuilder { self: RestHelper =>
@@ -21,44 +24,58 @@ trait APIMethods_APIBuilder { self: RestHelper =>
     val codeContext = CodeContext(resourceDocs, apiRelations)
     implicit val formats = net.liftweb.json.DefaultFormats
     val TemplateNotFound = "OBP-31001: Template not found. Please specify a valid value for TEMPLATE_ID."
-    def endpointsOfBuilderAPI = getTemplates :: getTemplate :: createTemplate :: deleteTemplate :: Nil
-    resourceDocs += ResourceDoc(getTemplates, apiVersion, "getTemplates", "GET", "/templates", "Get Templates", "Return All Templates", emptyObjectJson, templatesJson, List(UserNotLoggedIn, UnknownError), Catalogs(notCore, notPSD2, notOBWG), apiTagApiBuilder :: Nil)
-    lazy val getTemplates: OBPEndpoint = {
-      case ("templates" :: Nil) JsonGet req =>
+    def endpointsOfBuilderAPI = createCustomerContact :: createDisposer :: Nil
+
+    resourceDocs += ResourceDoc(
+      createCustomerContact,
+      apiVersion,
+      "createCustomerContact",
+      "POST",
+      "/kundenstamm",
+      "Create Customer Contact",
+      "CUSTOMER CONTACT CREATION",
+      createTemplateJson,
+      templateJson,
+      List(UnknownError),
+      Catalogs(notCore, notPSD2, notOBWG),
+      apiTagApiBuilder :: Nil
+    )
+    lazy val createCustomerContact: OBPEndpoint = {
+      case ("kundenstamm" :: Nil) JsonPost json -> _ =>
         cc => {
-          for (u <- cc.user ?~ UserNotLoggedIn; templates <- APIBuilder_Connector.getTemplates; templatesJson = JsonFactory_APIBuilder.createTemplates(templates); jsonObject: JValue = decompose(templatesJson)) yield {
+          for
+            {
+            createTemplateJson <- tryo(json.extract[CreateCustomerContact]) ?~! InvalidJsonFormat
+            jsonObject = JsonFactory_APIBuilder.createTemplate(createTemplateJson)
+          }yield {
             successJsonResponse(jsonObject)
           }
         }
     }
-    resourceDocs += ResourceDoc(getTemplate, apiVersion, "getTemplate", "GET", "/templates/TEMPLATE_ID", "Get Template", "Return One Template By Id", emptyObjectJson, templateJson, List(UserNotLoggedIn, UnknownError), Catalogs(notCore, notPSD2, notOBWG), apiTagApiBuilder :: Nil)
-    lazy val getTemplate: OBPEndpoint = {
-      case ("templates" :: templateId :: Nil) JsonGet _ =>
+    
+    resourceDocs += ResourceDoc(
+      createDisposer,
+      apiVersion,
+      "createCustomerContact",
+      "POST",
+      "/kundenstamm",
+      "Create Customer Contact",
+      "CUSTOMER CONTACT CREATION",
+      createTemplateJson,
+      templateJson,
+      List(UnknownError),
+      Catalogs(notCore, notPSD2, notOBWG),
+      apiTagApiBuilder :: Nil
+    )
+    lazy val createDisposer: OBPEndpoint = {
+      case ("v1"::"disposers" :: Nil) JsonPost json -> _ =>
         cc => {
-          for (u <- cc.user ?~ UserNotLoggedIn; template <- APIBuilder_Connector.getTemplateById(templateId) ?~! TemplateNotFound; templateJson = JsonFactory_APIBuilder.createTemplate(template); jsonObject: JValue = decompose(templateJson)) yield {
+          for
+            {
+            createTemplateJson <- tryo(json.extract[CreateDisposer]) ?~! InvalidJsonFormat
+            jsonObject = JsonFactory_APIBuilder.createDisposer(createTemplateJson)
+          }yield {
             successJsonResponse(jsonObject)
-          }
-        }
-    }
-    resourceDocs += ResourceDoc(createTemplate, apiVersion, "createTemplate", "POST", "/templates", "Create Template", "Create One Template", createTemplateJson, templateJson, List(UnknownError), Catalogs(notCore, notPSD2, notOBWG), apiTagApiBuilder :: Nil)
-    lazy val createTemplate: OBPEndpoint = {
-      case ("templates" :: Nil) JsonPost json -> _ =>
-        cc => {
-          for (createTemplateJson <- tryo(json.extract[CreateTemplateJson]) ?~! InvalidJsonFormat; u <- cc.user ?~ UserNotLoggedIn; template <- APIBuilder_Connector.createTemplate(createTemplateJson); templateJson = JsonFactory_APIBuilder.createTemplate(template); jsonObject: JValue = decompose(templateJson)) yield {
-            successJsonResponse(jsonObject)
-          }
-        }
-    }
-    resourceDocs += ResourceDoc(deleteTemplate, apiVersion, "deleteTemplate", "DELETE", "/templates/TEMPLATE_ID", "Delete Template", "Delete One Template", emptyObjectJson, emptyObjectJson.copy("true"), List(UserNotLoggedIn, UnknownError), Catalogs(notCore, notPSD2, notOBWG), apiTagApiBuilder :: Nil)
-    lazy val deleteTemplate: OBPEndpoint = {
-      case ("templates" :: templateId :: Nil) JsonDelete _ =>
-        cc => {
-          for (
-            u <- cc.user ?~ UserNotLoggedIn; 
-            template <- APIBuilder_Connector.getTemplateById(templateId) ?~! TemplateNotFound;
-            deleted <- APIBuilder_Connector.deleteTemplate(templateId)
-          ) yield {
-            if (deleted) noContentJsonResponse else errorJsonResponse("Delete not completed")
           }
         }
     }
@@ -66,10 +83,10 @@ trait APIMethods_APIBuilder { self: RestHelper =>
 }
 object APIBuilder_Connector {
   val allAPIBuilderModels = List(MappedTemplate_4824100653501473508)
-  def createTemplate(createTemplateJson: CreateTemplateJson) = Full(MappedTemplate_4824100653501473508.create.mTemplateId(UUID.randomUUID().toString).mAuthor(createTemplateJson.author).mPages(createTemplateJson.pages).mPoints(createTemplateJson.points).saveMe())
-  def getTemplates() = Full(MappedTemplate_4824100653501473508.findAll())
-  def getTemplateById(templateId: String) = MappedTemplate_4824100653501473508.find(By(MappedTemplate_4824100653501473508.mTemplateId, templateId))
-  def deleteTemplate(templateId: String) = MappedTemplate_4824100653501473508.find(By(MappedTemplate_4824100653501473508.mTemplateId, templateId)).map(_.delete_!)
+//  def createTemplate(createTemplateJson: R00tJsonObject) = Full(MappedTemplate_4824100653501473508.create.mTemplateId(UUID.randomUUID().toString).mAuthor(createTemplateJson.author).mPages(createTemplateJson.pages).mPoints(createTemplateJson.points).saveMe())
+//  def getTemplates() = Full(MappedTemplate_4824100653501473508.findAll())
+//  def getTemplateById(templateId: String) = MappedTemplate_4824100653501473508.find(By(MappedTemplate_4824100653501473508.mTemplateId, templateId))
+//  def deleteTemplate(templateId: String) = MappedTemplate_4824100653501473508.find(By(MappedTemplate_4824100653501473508.mTemplateId, templateId)).map(_.delete_!)
 }
 import net.liftweb.mapper._
 class MappedTemplate_4824100653501473508 extends Template with LongKeyedMapper[MappedTemplate_4824100653501473508] with IdPK {
