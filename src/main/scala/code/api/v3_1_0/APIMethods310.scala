@@ -1006,9 +1006,8 @@ trait APIMethods310 {
       "POST",
       "/banks/BANK_ID/customers",
       "Create Customer.",
-      s"""Add a customer linked to the user specified by user_id
-         |The Customer resource stores the customer number, legal name, email, phone number, their date of birth, relationship status, education attained, a url for a profile image, KYC status etc.
-         |Dates need to be in the format 2013-01-21T23:08:00Z
+      s"""
+         |Create Customer.
          |
          |${authenticationRequiredMessage(true)}
          |
@@ -1029,17 +1028,14 @@ trait APIMethods310 {
       Catalogs(notCore, notPSD2, notOBWG),
       List(apiTagCustomer, apiTagPerson),
       Some(List(canCreateCustomer,canCreateUserCustomerLink,canCreateCustomerAtAnyBank,canCreateUserCustomerLinkAtAnyBank)))
-
-
-
     lazy val createCustomer : OBPEndpoint = {
-      case ("banks" :: BankId(bankId) :: "customers" :: Nil) JsonPost json -> _ => {
+      case "banks" :: BankId(bankId) :: "customers" :: Nil JsonPost json -> _ => {
         cc =>
           for {
             (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
-              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
-            }
+//            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
+//              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+//            }
             _ <- NewStyle.function.getBank(bankId, callContext)
             failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerJsonV310 "
             postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
@@ -1071,6 +1067,72 @@ trait APIMethods310 {
       }
     }
 
+    resourceDocs += ResourceDoc(
+      updateCustomer,
+      implementedInApiVersion,
+      "updateCustomer",
+      "PUT",
+      "/banks/BANK_ID/customers/CUSTOMER_ID",
+      "Update Customer.",
+      s"""Update Customer. 
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      postCustomerJsonV310,
+      customerJsonV210,
+      List(
+        UserNotLoggedIn,
+        BankNotFound,
+        InvalidJsonFormat,
+        CustomerNumberAlreadyExists,
+        UserNotFoundById,
+        CustomerAlreadyExistsForUser,
+        CreateConsumerError,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagPerson),
+      Some(List(canCreateCustomer,canCreateUserCustomerLink,canCreateCustomerAtAnyBank,canCreateUserCustomerLinkAtAnyBank)))
+    lazy val updateCustomer : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: CustomerId(customerId) :: Nil JsonPut json -> _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+//            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
+//              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+//            }
+            _ <- NewStyle.function.getBank(bankId, callContext)
+            failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerJsonV310 "
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
+              json.extract[PostCustomerJsonV310]
+            }
+            customer <- Connector.connector.vend.updateCustomerFuture(
+              customerId,
+              bankId,
+              postedData.customer_number,
+              postedData.legal_name,
+              postedData.mobile_phone_number,
+              postedData.email,
+              CustomerFaceImage(postedData.face_image.date, postedData.face_image.url),
+              postedData.date_of_birth,
+              postedData.relationship_status,
+              postedData.dependants,
+              postedData.dob_of_dependants,
+              postedData.highest_education_attained,
+              postedData.employment_status,
+              postedData.kyc_status,
+              postedData.last_ok_date,
+              Option(CreditRating(postedData.credit_rating.rating, postedData.credit_rating.source)),
+              Option(CreditLimit(postedData.credit_limit.currency, postedData.credit_limit.amount)),
+              Some(cc)
+            ) map {
+              unboxFullOrFail(_, callContext, UpdateCustomerError, 400)
+            }
+          } yield {
+            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(callContext))
+          }
+      }
+    }
 
   }
 }

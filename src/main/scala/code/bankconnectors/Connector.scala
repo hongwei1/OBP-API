@@ -167,6 +167,7 @@ trait Connector extends MdcLoggable{
   val transactionsTTL = getSecondsCache("getTransactions")
   val transactionRequests210TTL = getSecondsCache("getTransactionRequests210")
   val createCustomerFutureTTL = getSecondsCache("createCustomerFuture")
+  val updateCustomerFutureTTL = getSecondsCache("updateCustomerFuture")
   val counterpartiesTTL = getSecondsCache("getCounterparties")
   val counterpartyByCounterpartyIdTTL = getSecondsCache("getCounterpartyByCounterpartyId")
   val counterpartyTrait = getSecondsCache("getCounterpartyTrait")
@@ -1353,6 +1354,28 @@ trait Connector extends MdcLoggable{
 
 
   def createCustomerFuture(
+                      bankId: BankId,
+                      number: String,
+                      legalName: String,
+                      mobileNumber: String,
+                      email: String,
+                      faceImage:
+                      CustomerFaceImageTrait,
+                      dateOfBirth: Date,
+                      relationshipStatus: String,
+                      dependents: Int,
+                      dobOfDependents: List[Date],
+                      highestEducationAttained: String,
+                      employmentStatus: String,
+                      kycStatus: Boolean,
+                      lastOkDate: Date,
+                      creditRating: Option[CreditRatingTrait],
+                      creditLimit: Option[AmountOfMoneyTrait],
+                      callContext: Option[CallContext] = None
+                    ): Future[Box[Customer]] = Future{Failure(NotImplemented + currentMethodName())}
+  
+  def updateCustomerFuture(
+                      customerId:CustomerId,
                       bankId: BankId,
                       number: String,
                       legalName: String,

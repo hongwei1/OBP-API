@@ -1254,6 +1254,50 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     }
   }("createCustomerFuture")
   
+  override def updateCustomerFuture(
+                               customerId:CustomerId,
+                               bankId: BankId,
+                               number: String,
+                               legalName: String,
+                               mobileNumber: String,
+                               email: String,
+                               faceImage:
+                               CustomerFaceImageTrait,
+                               dateOfBirth: Date,
+                               relationshipStatus: String,
+                               dependents: Int,
+                               dobOfDependents: List[Date],
+                               highestEducationAttained: String,
+                               employmentStatus: String,
+                               kycStatus: Boolean,
+                               lastOkDate: Date,
+                               creditRating: Option[CreditRatingTrait],
+                               creditLimit: Option[AmountOfMoneyTrait],
+                               callContext: Option[CallContext] = None) = saveConnectorMetric{
+    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
+    CacheKeyFromArguments.buildCacheKey {
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(updateCustomerFutureTTL second){
+        Future
+        {
+          Full(InternalCustomer(
+            customerId = "String", bankId = bankId.value, number = number,
+            legalName = legalName, mobileNumber = mobileNumber, email = "String",
+            faceImage = CustomerFaceImage(date = DateWithSecondsExampleObject,
+                                          url = "String"),
+            dateOfBirth = DateWithSecondsExampleObject,
+            relationshipStatus = "String",
+            dependents = 1,
+            dobOfDependents = List(DateWithSecondsExampleObject),
+            highestEducationAttained = "String", employmentStatus = "String",
+            creditRating = CreditRating(rating = "String", source = "String"),
+            creditLimit = CreditLimit(currency = "String", amount = "String"),
+            kycStatus = false, lastOkDate = DateWithSecondsExampleObject)
+          )
+        }
+      }
+    }
+  }("updateCustomerFuture")
+  
   
   override def getTransactionRequests210(user : User, fromAccount : BankAccount, callContext: Option[CallContext] = None) : Box[List[TransactionRequest]] = saveConnectorMetric{
     /**
