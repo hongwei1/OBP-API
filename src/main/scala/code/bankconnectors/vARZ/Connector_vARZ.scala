@@ -122,7 +122,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     inboundAvroSchema = Some(parse(SchemaFor[InboundAdapterInfoInternal]().toString(true)))
   )
   override def getAdapterInfo: Box[InboundAdapterInfoInternal] = {
-    Full(InboundAdapterInfo(
+    Full(
         InboundAdapterInfoInternal(
           errorCodeExample,
           inboundStatusMessagesExample,
@@ -131,7 +131,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
           git_commit = "...",
           date = DateWithSecondsExampleString
         )
-      ))
+      )
   }
   
   messageDocs += MessageDoc(
@@ -253,7 +253,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(banksTTL second){
-        Full(List(Bank2(InboundBank("bankId","name","logo","url"))))
+        Future{Full(List(Bank2(InboundBank("bankId","name","logo","url"))))}
       }
     }
   }("getBanks")
