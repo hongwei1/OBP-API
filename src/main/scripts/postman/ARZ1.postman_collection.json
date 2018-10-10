@@ -99,6 +99,56 @@
 				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
 			},
 			"response": []
+		},
+		{
+			"name": "Create Customer.-v310",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "51d2ddf7-ef72-4dae-95f3-3cd613f9a566",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"number\": \"1231\",\n  \"customer_number\": \"new customer number 687687678111\",\n  \"legal_name\": \"NONE\",\n  \"mobile_phone_number\": \"+44 07972 444 8761\",\n  \"email\": \"person@example.com\",\n  \"face_image\": {\n    \"url\": \"www.openbankproject\",\n    \"date\": \"2017-09-18T22:00:00Z\"\n  },\n  \"date_of_birth\": \"2017-09-18T22:00:00Z\",\n  \"relationship_status\": \"Single\",\n  \"dependants\": 5,\n  \"dob_of_dependants\": [\n    \"2017-09-18T22:00:00Z\"\n  ],\n  \"credit_rating\": {\n    \"rating\": \"OBP\",\n    \"source\": \"OBP\"\n  },\n  \"credit_limit\": {\n    \"currency\": \"EUR\",\n    \"amount\": \"10\"\n  },\n  \"highest_education_attained\": \"string\",\n  \"employment_status\": \"Employed\",\n  \"kyc_status\": true,\n  \"last_ok_date\": \"2017-09-18T22:00:00Z\",\n  \"number1\": {\n    \"value\": 4\n  },\n  \"credentials\": {\n    \"name\": \"string\",\n    \"pin\": \"123123\"\n  },\n  \"status\": \"ACTIVE\",\n  \"language\": \"DE\",\n  \"type\": \"FULL\",\n  \"customerNr\": 0,\n  \"address\": {\n    \"identifier\": \"string\",\n    \"number\": 0\n  },\n  \"bankSupervisorId\": \"string\",\n  \"bankAdvisorId\": \"string\",\n  \"patterncallnumber\": 0,\n  \"customer_step\": {\n    \"famname\": \"li\",\n    \"firstname\": \"Aron\",\n    \"title\": \"string\",\n    \"mobiltel\": \"string\",\n    \"emailadr\": \"string\",\n    \"store\": \"string\",\n    \"titelnach\": \"string\",\n    \"kundnr\": 0,\n    \"hint\": 0\n  },\n  \"uuid\": \"string\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8080/obp/v3.1.0/banks/{{BANK_ID}}/customers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"obp",
+						"v3.1.0",
+						"banks",
+						"{{BANK_ID}}",
+						"customers"
+					]
+				},
+				"description": "Get the bank specified by BANK_ID Returns information about a single bank specified by BANK_ID including:\n\nShort and full name of bank\nLogo URL\nWebsite\n\nfrom kafka\n{\n  \"banks\": [\n    {\n      \"id\": \"obp-bank-x-gh\",\n      \"short_name\": \"The Bank of X\",\n      \"full_name\": \"The Bank of X\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_x.png\",\n      \"website\": \"https://www.example.com\"\n    },\n    {\n      \"id\": \"obp-bank-y-gh\",\n      \"short_name\": \"The Bank of Y\",\n      \"full_name\": \"The Bank of Y\",\n      \"logo\": \"https://static.openbankproject.com/images/sandbox/bank_y.png\",\n      \"website\": \"https://www.example.com\"\n    }\n  ]\n}"
+			},
+			"response": []
 		}
 	]
 }

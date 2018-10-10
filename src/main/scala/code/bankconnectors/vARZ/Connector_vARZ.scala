@@ -1142,7 +1142,17 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(createCustomerFutureTTL second){
         Future
         {
-          Full(postCustomer)
+          Full(
+          
+           //1st
+          
+          
+          //2rd
+          // 
+          // 
+          //
+            postCustomer
+          )
         }
       }
     }
