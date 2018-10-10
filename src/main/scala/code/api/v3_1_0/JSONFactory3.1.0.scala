@@ -171,27 +171,27 @@ case class AccountWebHooksJson(web_hooks: List[AccountWebHookJson])
 
 case class ConfigurationJsonV310(default_bank_id: String, akka: AkkaJSON, elastic_search: ElasticSearchJSON, cache: List[CachedFunctionJSON])
 
-case class Number1JsonV310(value: Int)
-case class CredentialsJsonV310(
-                              name: String,
-                              pin: String
-                              )
-case class AddressJsonV310(
-                          identifier: String,
-                          number: Int
-                          )
-
-case class CustomerStepJsonV310(
-                                 famname: String,
-                                 firstname: String,
-                                 title: String,
-                                 mobiltel: String,
-                                 emailadr: String,
-                                 store: String,
-                                 titelnach: String,
-                                 kundnr: Int,
-                                 hint: Int
-                               )
+//case class Number1JsonV310(value: Int)
+//case class CredentialsJsonV310(
+//                              name: String,
+//                              pin: String
+//                              )
+//case class AddressJsonV310(
+//                          identifier: String,
+//                          number: Int
+//                          )
+//
+//case class CustomerStepJsonV310(
+//                                 famname: String,
+//                                 firstname: String,
+//                                 title: String,
+//                                 mobiltel: String,
+//                                 emailadr: String,
+//                                 store: String,
+//                                 titelnach: String,
+//                                 kundnr: Int,
+//                                 hint: Int
+//                               )
 case class PostCustomerJsonV310(
                                  number: String,
                                  customer_number : String,
@@ -209,22 +209,20 @@ case class PostCustomerJsonV310(
                                  employment_status: String,
                                  kyc_status: Boolean,
                                  last_ok_date: Date,
-                                // From Disposer API
-                                 number1: Number1JsonV310,
-                                 credentials: CredentialsJsonV310,
-                                 status: String,
-                                 language: String,
-                                 `type`: String,
-                                 customerNr: Int,
-                                 address: AddressJsonV310,
-                                 bankSupervisorId: String,
-                                 bankAdvisorId: String,
-                               // From Private customers Contacts
-                                 patterncallnumber: Int,
-                                 customer_step: CustomerStepJsonV310,
-                                 uuid: String
-
-
+//                                // From Disposer API
+//                                 number1: Number1JsonV310,
+//                                 credentials: CredentialsJsonV310,
+//                                 status: String,
+//                                 language: String,
+//                                 `type`: String,
+//                                 customerNr: Int,//not useful
+//                                 address: AddressJsonV310,
+//                                 bankSupervisorId: String,
+//                                 bankAdvisorId: String,
+//                               // From Private customers Contacts
+//                                 patterncallnumber: Int,
+//                                 customer_step: CustomerStepJsonV310,
+//                                 uuid: String
                                )
 
 object JSONFactory310{

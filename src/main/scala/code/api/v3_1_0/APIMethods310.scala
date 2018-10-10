@@ -1080,20 +1080,20 @@ trait APIMethods310 {
       case "banks" :: BankId(bankId) :: "customers" :: CustomerId(customerId) :: Nil JsonPut json -> _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+//            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
 //            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
 //              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
 //            }
-            _ <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.getBank(bankId, Some(cc))
             failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerJsonV310 "
-            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
+            postedData <- NewStyle.function.tryons(failMsg, 400, Some(cc)) {
               json.extract[PostCustomerJsonV310]
             }
             customer <- Connector.connector.vend.updateCustomerFuture(postedData) map {
-              unboxFullOrFail(_, callContext, UpdateCustomerError, 400)
+              unboxFullOrFail(_, Some(cc), UpdateCustomerError, 400)
             }
           } yield {
-            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(callContext))
+            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(Some(cc)))
           }
       }
     }

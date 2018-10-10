@@ -1,39 +1,41 @@
 package code.bankconnectors.vARZ.mf_calls
 
 import java.util.UUID
-
 import code.api.v3_1_0.PostCustomerJsonV310
 
-object Util {
+object MfUtil {
   
   def mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(customer: PostCustomerJsonV310) = {
   val postkundenkontakteRequest = PostPrivatkundenkontakteRequest(
-    musterkundnr = 0,
+    uuid = UUID.randomUUID().toString,
     kundenstamm = Kundenstamm(
-      famname = "",
-      vorname = "",
-      titel = "",
-      mobiltel = "",
-      emailadr = "",
-      filiale = "",
-      titelnach = "",
-      kundnr = 0,
-      hilfszahl = 0),
-    uuid = UUID.randomUUID().toString)
+      famname = customer.legal_name,
+      vorname = customer.legal_name,
+      mobiltel = customer.mobile_phone_number,
+      emailadr = customer.email,
+      
+      titel = None,
+      filiale = None,
+      titelnach = None,
+      kundnr = None,
+      hilfszahl = None),
+    musterkundnr = None
+  )
   val postDisposersRequest = PostDisposersRequest(
-    number = 0,
     credentials = Credentials(
-      name = "",
-      pin = ""),
+      name = "HARDCODE-Simon",
+      pin = "HARDCODE-123456"),
     status = "ACTIVE",
     language = "DE",
-    `type` = "FULL",
-    customerNr = 0,
+    `type` = "MINI",
+    customerNr = customer.customer_number.toInt,
     address = DisposerAddress(
       identifier = "H",
       number = 1),
     bankSupervisorId = "POCOBP",
-    bankAdvisorId = ""
+    
+    bankAdvisorId = None,
+    number = None
   )
   (postkundenkontakteRequest, postDisposersRequest)
 }

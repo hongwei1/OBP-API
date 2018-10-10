@@ -1143,9 +1143,8 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         Future
         {
           Full(
-          
+            
            //1st
-          
           
           //2rd
           // 
