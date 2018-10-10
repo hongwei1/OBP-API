@@ -24,7 +24,7 @@ object MfUtil {
   val postDisposersRequest = PostDisposersRequest(
     credentials = Credentials(
       name = "HARDCODE-Simon",
-      pin = "HARDCODE-123456"),
+      pin = "123456"),
     status = "ACTIVE",
     language = "DE",
     `type` = "MINI",

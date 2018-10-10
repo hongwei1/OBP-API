@@ -16,18 +16,18 @@ case class CreateCustomerContact(
 
 case class Credentials(
   name: String,
-  pin: Double
+  pin: String
 )
 case class Address(
   identifier: String,
-  number: Double
+  number: Int
 )
 case class CreateDisposer(
   credentials: Credentials,
   status: String,
   language: String,
   `type`: String,
-  customerNr: Double,
+  customerNr: Int,
   address: Address,
   bankSupervisorId: String
 )
