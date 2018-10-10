@@ -225,8 +225,13 @@ case class PostCustomerJsonV310(
 //                                 uuid: String
                                )
 case class PostCustomerResponseJsonV310(
-  postkundenkontakteResult: PostkundenkontakteResult,
+  postkundenkontakteResult: PostkundenkontakteResultJson,
   postDisposersResponse: PostDisposersResponse
+)
+
+case class PostkundenkontakteResultJson(
+  kundennummer: Int,
+  messages: List[String],
 )
 
 
@@ -330,6 +335,11 @@ object JSONFactory310{
   }
   
   def createCustomerJson(postCustomer: PostCustomerResponseJsonV310) = {
+    postCustomer
+  }
+  
+  
+  def updateCustomerJson(postCustomer: PostCustomerResponseJsonV310) = {
     postCustomer
   }
 

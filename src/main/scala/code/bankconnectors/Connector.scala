@@ -1359,7 +1359,7 @@ trait Connector extends MdcLoggable{
   
   def updateCustomerFuture(
     postCustomer: PostCustomerJsonV310
-  ): Future[Box[PostCustomerResponseJsonV310]] = Future{Failure(NotImplemented + currentMethodName())}
+  ): Future[Box[PostCustomerResponseJsonV310]] = createCustomerFuture(postCustomer)//Future{Failure(NotImplemented + currentMethodName())}
   
   def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[List[Customer]]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")}
 

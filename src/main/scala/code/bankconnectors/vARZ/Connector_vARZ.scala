@@ -1147,30 +1147,12 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
             val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(tuple._1)
             val disposerResult = PostDisposers.postDisposers(tuple._2)
           Full(
-            PostCustomerResponseJsonV310(kundenResult,disposerResult)
+            PostCustomerResponseJsonV310(PostkundenkontakteResultJson(kundenResult.kundennummer, kundenResult.messages),disposerResult)
           )
         }
       }
     }
   }("createCustomerFuture")
-  
-  override def updateCustomerFuture(postCustomer: PostCustomerJsonV310) = saveConnectorMetric{
-    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-    CacheKeyFromArguments.buildCacheKey {
-      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(updateCustomerFutureTTL second){
-        Future
-        {
-          val tuple = MfUtil.mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(postCustomer)
-
-          val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(tuple._1)
-          val disposerResult = PostDisposers.postDisposers(tuple._2)
-          
-          Full(PostCustomerResponseJsonV310(kundenResult,disposerResult))
-        }
-      }
-    }
-  }("updateCustomerFuture")
-  
   
   override def getTransactionRequests210(user : User, fromAccount : BankAccount, callContext: Option[CallContext] = None) : Box[List[TransactionRequest]] = saveConnectorMetric{
     /**
