@@ -1032,20 +1032,23 @@ trait APIMethods310 {
       case "banks" :: BankId(bankId) :: "customers" :: Nil JsonPost json -> _ => {
         cc =>
           for {
-//            (_, callContext) <- extractCallContext(UserNotLoggedIn, cc)
-//            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
-//              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
-//            }
-            _ <- NewStyle.function.getBank(bankId, Some(cc))
+            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
+              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+            }
+            _ <- NewStyle.function.getBank(bankId, callContext)
+            
             failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerJsonV310 "
-            postedData <- NewStyle.function.tryons(failMsg, 400, Some(cc)) {
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
               json.extract[PostCustomerJsonV310]
             }
+            
             customer <- Connector.connector.vend.createCustomerFuture(postedData) map {
               unboxFullOrFail(_, Some(cc), CreateCustomerError, 400)
             }
           } yield {
-            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(Some(cc)))
+            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(callContext))
           }
       }
     }
@@ -1080,20 +1083,25 @@ trait APIMethods310 {
       case "banks" :: BankId(bankId) :: "customers" :: CustomerId(customerId) :: Nil JsonPut json -> _ => {
         cc =>
           for {
-//            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-//            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
-//              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
-//            }
-            _ <- NewStyle.function.getBank(bankId, Some(cc))
+            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            
+            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
+              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+            }
+            
+            _ <- NewStyle.function.getBank(bankId, callContext)
+            
             failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerJsonV310 "
-            postedData <- NewStyle.function.tryons(failMsg, 400, Some(cc)) {
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
               json.extract[PostCustomerJsonV310]
             }
+            
             customer <- Connector.connector.vend.updateCustomerFuture(postedData) map {
               unboxFullOrFail(_, Some(cc), UpdateCustomerError, 400)
             }
+            
           } yield {
-            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(Some(cc)))
+            (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(callContext))
           }
       }
     }

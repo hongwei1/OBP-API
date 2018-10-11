@@ -1143,10 +1143,17 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(createCustomerFutureTTL second){
         Future
         {
-            val tuple = MfUtil.mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(postCustomer)
-            val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(tuple._1)
-            val disposerResult = PostDisposers.postDisposers(tuple._2)
+            // 1 Build ARZ Json from OBP Json 
+            val postkundenkontakteRequestJson = MfUtil.mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(postCustomer)._1
+            val postDisposersRequestJson = MfUtil.mapPostCustomerJsonV310ToKundeRequestAndDisposerRequest(postCustomer)._2
+          
+            // 2 Call ARZ create `postPrivatenkundenkontakte` service
+            val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(postkundenkontakteRequestJson)
+            
+            // 3 Call ARZ `postDisposers` service
+            val disposerResult = PostDisposers.postDisposers(postDisposersRequestJson)
           Full(
+            //4 Prepare the OBP response 
             PostCustomerResponseJsonV310(PostkundenkontakteResultJson(kundenResult.kundennummer, kundenResult.messages),disposerResult)
           )
         }

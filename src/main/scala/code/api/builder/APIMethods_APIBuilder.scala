@@ -34,8 +34,8 @@ trait APIMethods_APIBuilder { self: RestHelper =>
       "/kundenstamm",
       "Create Customer Contact",
       "CUSTOMER CONTACT CREATION",
-      createTemplateJson,
-      templateJson,
+      createCustomerContactJson,
+      postkundenkontakteResult,
       List(UnknownError),
       Catalogs(notCore, notPSD2, notOBWG),
       apiTagApiBuilder :: Nil
@@ -48,7 +48,7 @@ trait APIMethods_APIBuilder { self: RestHelper =>
             createTemplateJson <- tryo(json.extract[CreateCustomerContact]) ?~! InvalidJsonFormat
             jsonObject = JsonFactory_APIBuilder.createTemplate(createTemplateJson)
           }yield {
-            successJsonResponse(jsonObject)
+            createdJsonResponse(jsonObject)
           }
         }
     }
@@ -56,13 +56,13 @@ trait APIMethods_APIBuilder { self: RestHelper =>
     resourceDocs += ResourceDoc(
       createDisposer,
       apiVersion,
-      "createCustomerContact",
+      "createDisposer",
       "POST",
-      "/kundenstamm",
-      "Create Customer Contact",
-      "CUSTOMER CONTACT CREATION",
-      createTemplateJson,
-      templateJson,
+      "/v1/disposers",
+      "Create Disposer",
+      "Create Disposer",
+      createDisposerJson,
+      postDisposersResponse,
       List(UnknownError),
       Catalogs(notCore, notPSD2, notOBWG),
       apiTagApiBuilder :: Nil
@@ -75,7 +75,7 @@ trait APIMethods_APIBuilder { self: RestHelper =>
             createTemplateJson <- tryo(json.extract[CreateDisposer]) ?~! InvalidJsonFormat
             jsonObject = JsonFactory_APIBuilder.createDisposer(createTemplateJson)
           }yield {
-            successJsonResponse(jsonObject)
+            createdJsonResponse(jsonObject)
           }
         }
     }
