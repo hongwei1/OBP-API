@@ -997,7 +997,7 @@ trait APIMethods310 {
     val createCustomerEntitlementsRequiredForSpecificBank = canCreateCustomer ::
       canCreateCustomerAtAnyBank ::
       Nil
-    val createCustomerEntitlementsRequiredText = createCustomerEntitlementsRequiredForSpecificBank.mkString(" and ")
+    val createCustomerEntitlementsRequiredText = createCustomerEntitlementsRequiredForSpecificBank.mkString(" or ")
 
     resourceDocs += ResourceDoc(
       createCustomer,
@@ -1035,7 +1035,7 @@ trait APIMethods310 {
             (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
             
             _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
-              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+              hasAtLeastOneEntitlement(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
             }
             _ <- NewStyle.function.getBank(bankId, callContext)
             
@@ -1086,7 +1086,7 @@ trait APIMethods310 {
             (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
             
             _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + createCustomerEntitlementsRequiredText) {
-              hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
+              hasAtLeastOneEntitlement(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank)
             }
             
             _ <- NewStyle.function.getBank(bankId, callContext)
