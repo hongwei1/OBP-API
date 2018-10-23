@@ -20,7 +20,9 @@ object HttpClient extends MdcLoggable {
     post.addHeader("arz-request-thread", UUID.randomUUID().toString)
     post.addHeader("arz-tenant", "499")
     post.addHeader("arz-variante", "0")
-    post.addHeader("arz-accounting-id", "TESOBEPOC")
+    post.addHeader("arz-accounting-id", "TESOBE")
+    post.addHeader("arz-request-origin", "1")
+    post.addHeader("idempotency-key", UUID.randomUUID().toString)
     val jsonBody = new StringEntity(compactRender(json), "UTF-8")
     post.setEntity(jsonBody)
 

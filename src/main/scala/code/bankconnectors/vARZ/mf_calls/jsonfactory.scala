@@ -32,7 +32,6 @@ case class Problem(
   detail: String,
   `type`: String,
   status: Int,
-  errId: String,
   errors: List[Error]
 )
 
@@ -71,7 +70,7 @@ case class Disposer(
 
 case class Credentials(
   name: String,
-  pin: String
+  pin: Long
 )
 
 case class DisposerAddress(

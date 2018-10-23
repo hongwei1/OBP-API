@@ -17,7 +17,7 @@ case class CreateCustomerContact(
 
 case class Credentials(
   name: String="",
-  pin: String=""
+  pin: Long=12345678
 )
 case class Address(
   identifier: String ="",
@@ -47,7 +47,6 @@ object JsonFactory_APIBuilder {
     detail = "",
     `type`= "",
     status = 1,
-    errId = "",
     errors= List(Error("","","")
   )))
   val postDisposersResponse = PostDisposersResponse(12)
