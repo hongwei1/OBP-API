@@ -26,23 +26,23 @@ Berlin 13359, Germany
  */
 package code.api.v3_1_0
 
+import java.lang
 import java.util.Date
 
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.util.APIUtil
 import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchRoutingJsonV141, CustomerFaceImageJson}
-import code.api.v2_1_0.{CustomerCreditRatingJSON, ResourceUserJSON}
+import code.api.v2_1_0.{CustomerCreditRatingJSON, CustomerJsonV210, ResourceUserJSON}
 import code.api.v2_2_0._
-import code.bankconnectors.vARZ.mf_calls.{PostDisposersResponse, PostkundenkontakteResult}
-import code.customer.Customer
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
 import code.model.{Consumer, User}
-import code.webhook.AccountWebHook
+import code.webhook.AccountWebhook
 import net.liftweb.common.{Box, Full}
 
 import scala.collection.immutable.List
+import code.customer.Customer
 
 case class CheckbookOrdersJson(
   account: AccountV310Json ,
@@ -151,7 +151,7 @@ case class ConsumerJson(consumer_id: String,
                        )
 case class ConsumersJson(consumers: List[ConsumerJson])
 
-case class AccountWebHookJson(account_web_hook_id: String,
+case class AccountWebhookJson(account_webhook_id: String,
                               bank_id: String,
                               account_id: String,
                               trigger_name: String,
@@ -161,79 +161,68 @@ case class AccountWebHookJson(account_web_hook_id: String,
                               is_active: Boolean
                              )
 
-case class AccountWebHookPostJson(account_id: String,
+case class AccountWebhookPostJson(account_id: String,
                                   trigger_name: String,
                                   url: String,
                                   http_method: String,
                                   is_active: String
                                   )
+case class AccountWebhookPutJson(account_webhook_id: String,
+                                 is_active: String
+                                 )
 
-case class AccountWebHooksJson(web_hooks: List[AccountWebHookJson])
+case class AccountWebhooksJson(web_hooks: List[AccountWebhookJson])
 
 case class ConfigurationJsonV310(default_bank_id: String, akka: AkkaJSON, elastic_search: ElasticSearchJSON, cache: List[CachedFunctionJSON])
 
-//case class Number1JsonV310(value: Int)
-//case class CredentialsJsonV310(
-//                              name: String,
-//                              pin: String
-//                              )
-//case class AddressJsonV310(
-//                          identifier: String,
-//                          number: Int
-//                          )
-//
-//case class CustomerStepJsonV310(
-//                                 famname: String,
-//                                 firstname: String,
-//                                 title: String,
-//                                 mobiltel: String,
-//                                 emailadr: String,
-//                                 store: String,
-//                                 titelnach: String,
-//                                 kundnr: Int,
-//                                 hint: Int
-//                               )
+
 case class PostCustomerJsonV310(
-                                 customer_number : String,
-                                 legal_name : String,
-                                 mobile_phone_number : String,
-                                 email : String,
-                                 face_image : CustomerFaceImageJson,
-                                 date_of_birth: Date,
-                                 relationship_status: String,
-                                 dependants: Int,
-                                 dob_of_dependants: List[Date],
-                                 credit_rating: CustomerCreditRatingJSON,
-                                 credit_limit: AmountOfMoneyJsonV121,
-                                 highest_education_attained: String,
-                                 employment_status: String,
-                                 kyc_status: Boolean,
-                                 last_ok_date: Date,
-//                                // From Disposer API
-//                                 number1: Number1JsonV310,
-//                                 credentials: CredentialsJsonV310,
-//                                 status: String,
-//                                 language: String,
-//                                 `type`: String,
-//                                 customerNr: Int,//not useful
-//                                 address: AddressJsonV310,
-//                                 bankSupervisorId: String,
-//                                 bankAdvisorId: String,
-//                               // From Private customers Contacts
-//                                 patterncallnumber: Int,
-//                                 customer_step: CustomerStepJsonV310,
-//                                 uuid: String
-                               )
+  customer_number: String,
+  legal_name: String,
+  mobile_phone_number: String,
+  email: String,
+  face_image: CustomerFaceImageJson,
+  date_of_birth: Date,
+  relationship_status: String,
+  dependants: Int,
+  dob_of_dependants: List[Date],
+  credit_rating: CustomerCreditRatingJSON,
+  credit_limit: AmountOfMoneyJsonV121,
+  highest_education_attained: String,
+  employment_status: String,
+  kyc_status: Boolean,
+  last_ok_date: Date,
+  title: String,
+  branchId: String,
+  nameSuffix: String
+)
+
+case class CustomerJsonV310(
+  bank_id: String,
+  customer_id: String,
+  customer_number : String,
+  legal_name : String,
+  mobile_phone_number : String,
+  email : String,
+  face_image : CustomerFaceImageJson,
+  date_of_birth: Date,
+  relationship_status: String,
+  dependants: Integer,
+  dob_of_dependants: List[Date],
+  credit_rating: Option[CustomerCreditRatingJSON],
+  credit_limit: Option[AmountOfMoneyJsonV121],
+  highest_education_attained: String,
+  employment_status: String,
+  kyc_status: lang.Boolean,
+  last_ok_date: Date,
+  title: String,
+  branchId: String,
+  nameSuffix: String
+)
+
 case class PostCustomerResponseJsonV310(
-  postkundenkontakteResult: PostkundenkontakteResultJson,
-  postDisposersResponse: PostDisposersResponse
-)
-
-case class PostkundenkontakteResultJson(
-  kundennummer: Int,
-  messages: List[String],
-)
-
+                                         messages: List[String]
+                                       )
 
 object JSONFactory310{
   def createCheckbookOrdersJson(checkbookOrders: CheckbookOrdersJson): CheckbookOrdersJson =
@@ -311,9 +300,9 @@ object JSONFactory310{
     ConsumersJson(cs)
   }
 
-  def createAccountWebHookJson(wh: AccountWebHook) = {
-    AccountWebHookJson(
-      account_web_hook_id = wh.accountWebHookId,
+  def createAccountWebhookJson(wh: AccountWebhook) = {
+    AccountWebhookJson(
+      account_webhook_id = wh.accountWebhookId,
       bank_id = wh.bankId,
       account_id = wh.accountId,
       trigger_name = wh.triggerName,
@@ -324,8 +313,8 @@ object JSONFactory310{
     )
   }
 
-  def createAccountWebHooksJson(whs: List[AccountWebHook]) = {
-    AccountWebHooksJson(whs.map(createAccountWebHookJson(_)))
+  def createAccountWebhooksJson(whs: List[AccountWebhook]) = {
+    AccountWebhooksJson(whs.map(createAccountWebhookJson(_)))
   }
   
   def getConfigInfoJSON(): ConfigurationJsonV310 = {
@@ -333,14 +322,32 @@ object JSONFactory310{
     val defaultBankId= APIUtil.defaultBankId
     ConfigurationJsonV310(defaultBankId,configurationJson.akka,configurationJson.elastic_search, configurationJson.cache)
   }
-  
-  def createCustomerJson(postCustomer: PostCustomerResponseJsonV310) = {
-    postCustomer
+
+  def createCustomerJson(cInfo : Customer) : CustomerJsonV310 = {
+    CustomerJsonV310(
+      bank_id = cInfo.bankId.toString,
+      customer_id = cInfo.customerId,
+      customer_number = cInfo.number,
+      legal_name = cInfo.legalName,
+      mobile_phone_number = cInfo.mobileNumber,
+      email = cInfo.email,
+      face_image = CustomerFaceImageJson(url = cInfo.faceImage.url,
+        date = cInfo.faceImage.date),
+      date_of_birth = cInfo.dateOfBirth,
+      relationship_status = cInfo.relationshipStatus,
+      dependants = cInfo.dependents,
+      dob_of_dependants = cInfo.dobOfDependents,
+      credit_rating = Option(CustomerCreditRatingJSON(rating = cInfo.creditRating.rating, source = cInfo.creditRating.source)),
+      credit_limit = Option(AmountOfMoneyJsonV121(currency = cInfo.creditLimit.currency, amount = cInfo.creditLimit.amount)),
+      highest_education_attained = cInfo.highestEducationAttained,
+      employment_status = cInfo.employmentStatus,
+      kyc_status = cInfo.kycStatus,
+      last_ok_date = cInfo.lastOkDate,
+      title = cInfo.title,
+      branchId = cInfo.branchId,
+      nameSuffix = cInfo.nameSuffix
+    )
   }
-  
-  
-  def updateCustomerJson(postCustomer: PostCustomerResponseJsonV310) = {
-    postCustomer
-  }
+
 
 }

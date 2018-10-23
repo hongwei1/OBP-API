@@ -200,10 +200,12 @@ object ErrorMessages {
 
   val DefaultBankIdNotSet = "OBP-30044: Default BankId is not set on this instance. Please set defaultBank.bank_id in props files. "
 
-  val CreateWebHookError = "OBP-30047: Cannot create Web Hook"
-  val GetWebHooksError = "OBP-30048: Cannot get Web Hooks"
-  val CreateCustomerError = "OBP-30049: Cannot create Customer"
-  val UpdateCustomerError = "OBP-30050: Cannot update Customer"
+  val CreateWebhookError = "OBP-30047: Cannot create Webhook"
+  val GetWebhooksError = "OBP-30048: Cannot get Webhooks"
+  val UpdateWebhookError = "OBP-30049: Cannot create Webhook"
+  val WebhookNotFound = "OBP-30050: Webhook not found. Please specify a valid value for account_webhook_id."
+  val CreateCustomerError = "OBP-30051: Cannot create Customer"
+  val CheckCustomerError = "OBP-30052: Cannot check Customer"
 
 
   // Meetings
@@ -274,6 +276,7 @@ object ErrorMessages {
   val InvalidChallengeType = "OBP-40015: Invalid Challenge Type. Please specify a valid value for CHALLENGE_TYPE, when you create the transaction request."
   val InvalidChallengeAnswer = "OBP-40016: Invalid Challenge Answer. Please specify a valid value for answer in Json body. If it is sandbox mode, the answer must be `123`. If it kafka mode, the answer can be got by phone message or other security ways."
   val InvalidPhoneNumber = "OBP-40017: Invalid Phone Number. Please specify a valid value for PHONE_NUMBER. Eg:+9722398746 "
+  val TransactionRequestsNotEnabled = "OBP-40018: Sorry, Transaction Requests are not enabled in this API instance."
 
 
 
@@ -319,6 +322,8 @@ object ErrorMessages {
   val SaveTransactionRequestChallengeException = "OBP-60006: Save Transaction Request Challenge Exception. "
   val SaveTransactionRequestStatusException = "OBP-60007: Save Transaction Request Status Exception. "
   val TransactionRequestDetailsExtractException = "OBP-60008: Transaction detail body extract exception. "
+  val GetTransactionsException = "OBP-60009: Get Transaction Exception. "
+  val GetTransactionRequestsException = "OBP-60010: Get Transaction Requests Exception. "
 
 
   ///////////

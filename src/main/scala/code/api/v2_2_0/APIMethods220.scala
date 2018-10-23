@@ -4,11 +4,14 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale, UUID}
 
 import code.actorsystem.ObpActorConfig
+import code.api.APIFailureNewStyle
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil._
+import code.api.util.ApiTag._
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages.{BankAccountNotFound, _}
-import code.api.util.{APIUtil, ApiRole, ApiVersion, ErrorMessages}
+import code.api.util.NewStyle.HttpCode
+import code.api.util._
 import code.api.v1_2_1.{CreateViewJsonV121, UpdateViewJsonV121}
 import code.api.v2_1_0._
 import code.api.v2_2_0.JSONFactory220.transformV220ToBranch
@@ -28,9 +31,10 @@ import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.Extraction
 import net.liftweb.util.Helpers.tryo
 
-import scala.collection.immutable.Nil
+import scala.collection.immutable.{List, Nil}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 
@@ -88,20 +92,22 @@ trait APIMethods220 {
         UnknownError
       ),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagView, apiTagAccount))
+      List(apiTagView, apiTagAccount, apiTagNewStyle))
 
     lazy val getViewsForBankAccount : OBPEndpoint = {
       //get the available views on an bank account
-      case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: "views" :: Nil JsonGet req => {
+      case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: "views" :: Nil JsonGet _ => {
         cc =>
           for {
-            u <- cc.user ?~ UserNotLoggedIn
-            account <- BankAccount(bankId, accountId) ?~! BankAccountNotFound
-            _ <- booleanToBox(u.hasOwnerViewAccess(BankIdAccountId(account.bankId, account.accountId)), UserNoOwnerView +"userId : " + u.userId + ". account : " + accountId)
-            views <- Full(Views.views.vend.viewsForAccount(BankIdAccountId(account.bankId, account.accountId)))
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
+            _ <- Helper.booleanToFuture(failMsg = UserNoOwnerView +"userId : " + u.userId + ". account : " + accountId) {
+              u.hasOwnerViewAccess(BankIdAccountId(account.bankId, account.accountId))
+            }
+            views <- Future(Views.views.vend.viewsForAccount(BankIdAccountId(account.bankId, account.accountId)))
           } yield {
             val viewsJSON = JSONFactory220.createViewsJSON(views)
-            successJsonResponse(Extraction.decompose(viewsJSON))
+            (viewsJSON, HttpCode.`200`(callContext))
           }
       }
     }
@@ -234,21 +240,28 @@ trait APIMethods220 {
       fXRateJSON,
       List(InvalidISOCurrencyCode,UserNotLoggedIn,FXCurrencyCodeCombinationsNotSupported, UnknownError),
       Catalogs(notCore, notPSD2, notOBWG),
-      List(apiTagFx))
+      List(apiTagFx, apiTagNewStyle))
 
     lazy val getCurrentFxRate: OBPEndpoint = {
-      case "banks" :: BankId(bankId) :: "fx" :: fromCurrencyCode :: toCurrencyCode :: Nil JsonGet req => {
+      case "banks" :: BankId(bankId) :: "fx" :: fromCurrencyCode :: toCurrencyCode :: Nil JsonGet _ => {
         cc =>
           for {
-            _ <- Bank(bankId)?~! BankNotFound
-            _ <- tryo(assert(isValidCurrencyISOCode(fromCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
-            _ <- tryo(assert(isValidCurrencyISOCode(toCurrencyCode))) ?~! ErrorMessages.InvalidISOCurrencyCode
-            _ <- cc.user ?~! UserNotLoggedIn
-            fxRate <- Connector.connector.vend.getCurrentFxRate(bankId, fromCurrencyCode, toCurrencyCode) ?~! ErrorMessages.FXCurrencyCodeCombinationsNotSupported
+            (_, callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.tryons(failMsg = InvalidISOCurrencyCode,400, callContext) {
+              assert(isValidCurrencyISOCode(fromCurrencyCode))
+            }
+            _ <- NewStyle.function.tryons(failMsg = InvalidISOCurrencyCode,400, callContext) {
+              assert(isValidCurrencyISOCode(toCurrencyCode))
+            }
+            fxRate <- Future(Connector.connector.vend.getCurrentFxRate(bankId, fromCurrencyCode, toCurrencyCode)) map {
+              unboxFullOrFail(_, callContext, FXCurrencyCodeCombinationsNotSupported,400)
+            }
           } yield {
             val viewJSON = JSONFactory220.createFXRateJSON(fxRate)
-            successJsonResponse(Extraction.decompose(viewJSON))
+            (viewJSON, HttpCode.`200`(callContext))
           }
+
       }
     }
 
@@ -280,18 +293,33 @@ trait APIMethods220 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "counterparties" :: Nil JsonGet req => {
         cc =>
           for {
-            u <- cc.user ?~! UserNotLoggedIn
-            account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId, Some(cc)) ?~! BankAccountNotFound
-            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-            _ <- booleanToBox(view.canAddCounterparty == true, s"${NoViewPermission}canAddCounterparty")
-            _ <- booleanToBox(u.hasViewAccess(view), UserNoPermissionAccessView)
-            counterparties <- Connector.connector.vend.getCounterparties(bankId,accountId,viewId, Some(cc))
-            //Here we need create the metadata for all the explicit counterparties. maybe show them in json response.  
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
+            view <- NewStyle.function.view(viewId, BankIdAccountId(account.bankId, account.accountId), callContext)
+            _ <- Helper.booleanToFuture(failMsg = s"${NoViewPermission}canAddCounterparty") {
+              view.canAddCounterparty == true
+            }
+            _ <- Helper.booleanToFuture(failMsg = UserNoPermissionAccessView) {
+              u.hasViewAccess(view)
+            }
+            (counterparties, callContext) <- NewStyle.function.getCounterparties(bankId,accountId,viewId, callContext)
+            //Here we need create the metadata for all the explicit counterparties. maybe show them in json response.
             //Note: actually we need update all the counterparty metadata when they from adapter. Some counterparties may be the first time to api, there is no metadata.
-            _ <- tryo {for{counterparty <-counterparties}Counterparties.counterparties.vend.getOrCreateMetadata(bankId, accountId, counterparty.counterpartyId, counterparty.name)} ?~! CreateOrUpdateCounterpartyMetadataError 
+            _ <- Helper.booleanToFuture(CreateOrUpdateCounterpartyMetadataError, 400) {
+              {
+                for {
+                  counterparty <- counterparties
+                } yield {
+                  Counterparties.counterparties.vend.getOrCreateMetadata(bankId, accountId, counterparty.counterpartyId, counterparty.name) match {
+                    case Full(_) => true
+                    case _ => false
+                  }
+                }
+              }.forall(_ == true)
+            }
           } yield {
             val counterpartiesJson = JSONFactory220.createCounterpartiesJSON(counterparties)
-            successJsonResponse(Extraction.decompose(counterpartiesJson))
+            (counterpartiesJson, HttpCode.`200`(callContext))
           }
       }
     }
@@ -319,16 +347,20 @@ trait APIMethods220 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "counterparties" :: CounterpartyId(counterpartyId) :: Nil JsonGet req => {
         cc =>
           for {
-            u <- cc.user ?~! UserNotLoggedIn
-            account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId, Some(cc)) ?~! BankAccountNotFound
-            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-            _ <- booleanToBox(view.canAddCounterparty == true, s"${NoViewPermission}canAddCounterparty")
-            _ <- booleanToBox(u.hasViewAccess(view), UserNoPermissionAccessView)
-            counterpartyMetadata <- Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyId.value) ?~! CounterpartyMetadataNotFound
-            counterparty <- Connector.connector.vend.getCounterpartyTrait(bankId, accountId, counterpartyId.value, Some(cc))
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
+            view <- NewStyle.function.view(viewId, BankIdAccountId(account.bankId, account.accountId), callContext)
+            _ <- Helper.booleanToFuture(failMsg = s"${NoViewPermission}canAddCounterparty") {
+              view.canAddCounterparty == true
+            }
+            _ <- Helper.booleanToFuture(failMsg = UserNoPermissionAccessView) {
+              u.hasViewAccess(view)
+            }
+            counterpartyMetadata <- NewStyle.function.getMetadata(bankId, accountId, counterpartyId.value, callContext)
+            (counterparty, callContext) <- NewStyle.function.getCounterpartyTrait(bankId, accountId, counterpartyId.value, callContext)
           } yield {
             val counterpartyJson = JSONFactory220.createCounterpartyWithMetadataJSON(counterparty,counterpartyMetadata)
-            successJsonResponse(Extraction.decompose(counterpartyJson))
+            (counterpartyJson, HttpCode.`200`(callContext))
           }
       }
     }
@@ -459,7 +491,7 @@ trait APIMethods220 {
         cc =>
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             canCreateBranch <- booleanToBox(hasEntitlement(bank.bankId.value, u.userId, canCreateBranch) == true
               ||
               hasEntitlement("", u.userId, canCreateBranchAtAnyBank)
@@ -513,7 +545,7 @@ trait APIMethods220 {
         cc =>
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             canCreateAtm <- booleanToBox(hasAllEntitlements(bank.bankId.value, u.userId, createAtmEntitlementsRequiredForSpecificBank) == true
               ||
               hasAllEntitlements("", u.userId, createAtmEntitlementsRequiredForAnyBank),
@@ -568,7 +600,7 @@ trait APIMethods220 {
         cc =>
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             _ <- booleanToBox(hasAllEntitlements(bank.bankId.value, u.userId, createProductEntitlementsRequiredForSpecificBank) == true
               ||
               hasAllEntitlements("", u.userId, createProductEntitlementsRequiredForAnyBank),
@@ -634,7 +666,7 @@ trait APIMethods220 {
         cc =>
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             canCreateFx <- booleanToBox(hasAllEntitlements(bank.bankId.value, u.userId, createFxEntitlementsRequiredForSpecificBank) == true
               ||
               hasAllEntitlements("", u.userId, createFxEntitlementsRequiredForAnyBank),
@@ -705,7 +737,7 @@ trait APIMethods220 {
         cc =>{
           for {
             jsonBody <- tryo (json.extract[CreateAccountJSONV220]) ?~! InvalidJsonFormat
-            _ <- Bank(bankId) ?~! BankNotFound
+            (bank, callContext ) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             loggedInUser <- cc.user ?~! UserNotLoggedIn
             user_id <- tryo (if (jsonBody.user_id.nonEmpty) jsonBody.user_id else loggedInUser.userId) ?~! InvalidUserId
             _ <- tryo(assert(isValidID(accountId.value)))?~! InvalidAccountIdFormat
@@ -775,10 +807,8 @@ trait APIMethods220 {
       case "config" :: Nil JsonGet _ =>
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetConfig) {
-              hasEntitlement("", u.userId, ApiRole.canGetConfig)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetConfig)("", u.userId, ApiRole.canGetConfig)
           } yield {
             (JSONFactory220.getConfigInfoJSON(), callContext)
           }
@@ -898,8 +928,8 @@ trait APIMethods220 {
             u <- cc.user ?~! UserNotLoggedIn
             _ <- booleanToBox(hasEntitlement("", u.userId, ApiRole.canCreateConsumer), UserHasMissingRoles + CanCreateConsumer )
             postedJson <- tryo {json.extract[ConsumerPostJSON]} ?~! InvalidJsonFormat
-            consumer <- Consumers.consumers.vend.createConsumer(Some(UUID.randomUUID().toString),
-                                                                Some(UUID.randomUUID().toString),
+            consumer <- Consumers.consumers.vend.createConsumer(Some(generateUUID()),
+                                                                Some(generateUUID()),
                                                                 Some(postedJson.enabled),
                                                                 Some(postedJson.app_name),
                                                                 None,
@@ -1026,8 +1056,8 @@ trait APIMethods220 {
             u <- cc.user ?~! UserNotLoggedIn
             _ <- tryo(assert(isValidID(accountId.value)))?~! InvalidAccountIdFormat
             _ <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
-            _ <- Bank(bankId) ?~! s"$BankNotFound Current BANK_ID = $bankId"
-            account <- Connector.connector.vend.checkBankAccountExists(bankId, AccountId(accountId.value), Some(cc)) ?~! s"$AccountNotFound Current ACCOUNT_ID = ${accountId.value}"
+            (bank, callContext ) <- Bank(bankId, Some(cc)) ?~! s"$BankNotFound Current BANK_ID = $bankId"
+            (account, callContext) <- Connector.connector.vend.checkBankAccountExists(bankId, AccountId(accountId.value), Some(cc)) ?~! s"$AccountNotFound Current ACCOUNT_ID = ${accountId.value}"
             postJson <- tryo {json.extract[PostCounterpartyJSON]} ?~! {InvalidJsonFormat+PostCounterpartyJSON}
             view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
             _ <- booleanToBox(u.hasViewAccess(view), UserNoPermissionAccessView)
@@ -1041,7 +1071,7 @@ trait APIMethods220 {
             _<- if (APIUtil.isSandboxMode){
               for{
                 _ <- booleanToBox(postJson.description.length <= 36, s"$InvalidValueLength. The maxsinec length of `description` filed is ${MappedCounterparty.mDescription.maxLen}")
-                _ <- Bank(BankId(postJson.other_bank_routing_address)) ?~! s"$CounterpartyNotFound Current BANK_ID = ${postJson.other_bank_routing_address}."
+                (bank, callContext) <- Bank(BankId(postJson.other_bank_routing_address), Some(cc)) ?~! s"$CounterpartyNotFound Current BANK_ID = ${postJson.other_bank_routing_address}."
                 account <- Connector.connector.vend.checkBankAccountExists(BankId(postJson.other_bank_routing_address), AccountId(postJson.other_account_routing_address),Some(cc)) ?~! s"$CounterpartyNotFound Current BANK_ID = ${postJson.other_bank_routing_address}. and Current ACCOUNT_ID = ${postJson.other_account_routing_address}. "
               } yield {
                 account
@@ -1050,7 +1080,7 @@ trait APIMethods220 {
             else
               Full()
               
-            counterparty <- Connector.connector.vend.createCounterparty(
+            (counterparty, callConext) <- Connector.connector.vend.createCounterparty(
               name=postJson.name,
               description=postJson.description,
               createdByUserId=u.userId,
@@ -1111,7 +1141,7 @@ trait APIMethods220 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "customer-views" :: Nil JsonGet req => {
         cc =>
           for {
-            bank <- Bank(bankId) ?~ BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~ BankNotFound
             account <- BankAccount(bank.bankId, accountId) ?~ ErrorMessages.AccountNotFound
             view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
             availableViews <- Full(account.permittedViews(user))

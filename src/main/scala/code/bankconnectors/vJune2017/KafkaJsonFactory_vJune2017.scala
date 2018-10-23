@@ -27,11 +27,10 @@ import scala.collection.immutable.List
   * case classes used to define topics, these are outbound kafka messages
   */
 
-case class OutboundGetAdapterInfo(date: String) extends TopicTrait
+case class OutboundGetAdapterInfo(authInfo: AuthInfo, date: String) extends TopicTrait
 case class OutboundGetBanks(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetBank(authInfo: AuthInfo, bankId: String) extends TopicTrait
-case class OutboundGetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicTrait
-case class OutboundGetAccounts(authInfo: AuthInfo, callMfFlag: Boolean, customers:InternalBasicCustomers) extends TopicTrait
+case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalBasicCustomers) extends TopicTrait
 case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String)extends TopicTrait
 case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, accountId: String)extends TopicTrait
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
@@ -101,8 +100,7 @@ case class OutboundGetCreditCardOrderStatus(
   * case classes used in Kafka message, these are InBound Kafka messages
   */
 
-//AdapterInfo has no AuthInfo, because it just get data from Adapter, no need for AuthInfo
-case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
+case class InboundAdapterInfo(authInfo: AuthInfo, data: InboundAdapterInfoInternal)
 case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
 case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
 case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
@@ -142,7 +140,7 @@ case class Status(
                    errorCode: String,
                    backendMessages: List[InboundStatusMessage]
                  )
-case class AuthInfo(userId: String = "", username: String ="", cbsToken: String ="", isFirst: Boolean = true, correlationId: String="")
+case class AuthInfo(userId: String = "", username: String ="", cbsToken: String ="", isFirst: Boolean = true, correlationId: String="", sessionId :String = "")
 
 case class InboundAccountJune2017(
   errorCode: String,
@@ -282,7 +280,48 @@ case class InternalCounterparty(
                                  bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
 
 
-case class InternalCustomer(customerId: String, bankId: String, number: String, legalName: String, mobileNumber: String, email: String, faceImage: CustomerFaceImage, dateOfBirth: Date, relationshipStatus: String, dependents: Integer, dobOfDependents: List[Date], highestEducationAttained: String, employmentStatus: String, creditRating: CreditRating, creditLimit: CreditLimit, kycStatus: lang.Boolean, lastOkDate: Date) extends Customer
+case class InternalCustomer(
+  customerId: String,
+  bankId: String,
+  number: String,
+  legalName: String,
+  mobileNumber: String,
+  email: String,
+  faceImage: CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Integer,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating: CreditRating,
+  creditLimit: CreditLimit,
+  kycStatus: lang.Boolean,
+  lastOkDate: Date
+)
+
+case class ObpCustomer(
+  customerId: String,
+  bankId: String,
+  number: String,
+  legalName: String,
+  mobileNumber: String,
+  email: String,
+  faceImage: CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Integer,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating: CreditRating,
+  creditLimit: CreditLimit,
+  kycStatus: lang.Boolean,
+  lastOkDate: Date,
+  title: String = "", //These new fields for V310, not from Connector for now. 
+  branchId: String = "", //These new fields for V310, not from Connector for now. 
+  nameSuffix: String = "", //These new fields for V310, not from Connector for now. 
+) extends Customer
 
 case class  InboundBranchVJune2017(
                            branchId: BranchId,
@@ -378,8 +417,33 @@ object JsonFactory_vJune2017 {
       dateOfBirth = customer.dateOfBirth
     )
   }
+  def createObpCustomer(customer : InternalCustomer) : Customer = {
+    ObpCustomer(
+      customerId = customer.customerId,
+      bankId = customer.bankId,
+      number = customer.number,
+      legalName = customer.legalName,
+      mobileNumber = customer.mobileNumber,
+      email = customer.email,
+      faceImage = customer.faceImage,
+      dateOfBirth = customer.dateOfBirth,
+      relationshipStatus = customer.relationshipStatus,
+      dependents = customer.dependents,
+      dobOfDependents = customer.dobOfDependents,
+      highestEducationAttained = customer.highestEducationAttained,
+      employmentStatus = customer.employmentStatus,
+      creditRating = customer.creditRating,
+      creditLimit = customer.creditLimit,
+      kycStatus = customer.kycStatus,
+      lastOkDate = customer.lastOkDate,
+      )
+  }
   
   def createCustomersJson(customers : List[Customer]) : InternalBasicCustomers = {
     InternalBasicCustomers(customers.map(createCustomerJson))
+  }
+  
+  def createObpCustomers(customers : List[InternalCustomer]) : List[Customer] = {
+    customers.map(createObpCustomer)
   }
 }

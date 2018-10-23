@@ -7,6 +7,7 @@ import com.tesobe.CacheKeyFromArguments
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.cache.Caching
 import code.api.util.APIUtil._
+import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util._
 import code.bankconnectors._
@@ -75,9 +76,9 @@ trait APIMethods121 {
 
   private def moderatedTransactionMetadata(bankId : BankId, accountId : AccountId, viewId : ViewId, transactionID : TransactionId, user : Box[User], callContext: Option[CallContext]) : Box[ModeratedTransactionMetadata] ={
     for {
-      account <- BankAccount(bankId, accountId, callContext) ?~! BankAccountNotFound
+      (account, callContext) <- BankAccount(bankId, accountId, callContext) ?~! BankAccountNotFound
       view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-      moderatedTransaction <- account.moderatedTransaction(transactionID, view, user, callContext)
+      (moderatedTransaction, callContext) <- account.moderatedTransaction(transactionID, view, user, callContext)
       metadata <- Box(moderatedTransaction.metadata) ?~ { s"$NoViewPermission can_see_transaction_metadata. Current ViewId($viewId)" }
     } yield metadata
   }
@@ -167,7 +168,7 @@ trait APIMethods121 {
             val banks = new BanksJSON(banksJSON)
             Extraction.decompose(banks)
           }
-          for(banks <- Bank.all) 
+          for((banks, callContext)<- Connector.connector.vend.getBanks(Some(cc))) 
             yield(successJsonResponse(banksToJson(banks)))
       }
     }
@@ -201,7 +202,7 @@ trait APIMethods121 {
             val bankJSON = JSONFactory.createBankJSON(bank)
             Extraction.decompose(bankJSON)
           }
-          for(bank <- Bank(bankId) ?~! BankNotFound)
+          for((bank, callContext)<- Bank(bankId, Some(cc)) ?~! BankNotFound)
           yield successJsonResponse(bankToJson(bank))
       }
     }
@@ -332,7 +333,7 @@ trait APIMethods121 {
         cc =>
           for{
             u <- cc.user ?~! ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
           } yield {
             val privateViewsUserCanAccessAtOneBank = Views.views.vend.privateViewsUserCanAccess(u).filter(_.bankId == bankId)
             val availablePrivateAccounts = bank.privateAccounts(privateViewsUserCanAccessAtOneBank)
@@ -366,7 +367,7 @@ trait APIMethods121 {
         cc =>
           for {
             u <- cc.user ?~  UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
           } yield {
             val privateViewsUserCanAccessAtOneBank = Views.views.vend.privateViewsUserCanAccess(u).filter(_.bankId == bankId)
             val availablePrivateAccounts = bank.privateAccounts(privateViewsUserCanAccessAtOneBank)
@@ -398,7 +399,7 @@ trait APIMethods121 {
       case "banks" :: BankId(bankId) :: "accounts" :: "public" :: Nil JsonGet req => {
         cc =>
           for {
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             publicViewsForBank <- Full(Views.views.vend.publicViewsForBank(bank.bankId))
             publicAccounts<- Full(bank.publicAccounts(publicViewsForBank))
           } yield {
@@ -443,7 +444,7 @@ trait APIMethods121 {
         cc =>
           for {
             u <- cc.user ?~  UserNotLoggedIn
-            account <- BankAccount(bankId, accountId, Some(cc)) ?~! BankAccountNotFound
+            (account, callContext) <- BankAccount(bankId, accountId, Some(cc)) ?~! BankAccountNotFound
             availableviews <- Full(Views.views.vend.privateViewsUserCanAccessForAccount(u, BankIdAccountId(account.bankId, account.accountId)))
             view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
             moderatedAccount <- account.moderatedBankAccount(view, cc.user)
@@ -2144,7 +2145,7 @@ trait APIMethods121 {
             params <- paramsBox
             bankAccount <- BankAccount(bankId, accountId)
             view <- Views.views.vend.view(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId))
-            transactions <- bankAccount.getModeratedTransactions(user, view, None, params: _* )
+            (transactions, callContext) <- bankAccount.getModeratedTransactions(user, view, None, params: _* )
           } yield {
             val json = JSONFactory.createTransactionsJSON(transactions)
             successJsonResponse(Extraction.decompose(json))
@@ -2192,9 +2193,9 @@ trait APIMethods121 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "transactions" :: TransactionId(transactionId) :: "transaction" :: Nil JsonGet req => {
         cc =>
           for {
-            account <- BankAccount(bankId, accountId, Some(cc)) ?~! BankAccountNotFound
+            (account, callContext) <- BankAccount(bankId, accountId, Some(cc)) ?~! BankAccountNotFound
             view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-            moderatedTransaction <- account.moderatedTransaction(transactionId, view, cc.user, Some(cc))
+            (moderatedTransaction, callContext) <- account.moderatedTransaction(transactionId, view, cc.user, Some(cc))
           } yield {
             val json = JSONFactory.createTransactionJSON(moderatedTransaction)
             successJsonResponse(Extraction.decompose(json))
@@ -2877,7 +2878,7 @@ trait APIMethods121 {
           for {
             account <- BankAccount(bankId, accountId) ?~! BankAccountNotFound
             view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-            transaction <- account.moderatedTransaction(transactionId, view, cc.user, Some(cc))
+            (transaction, callerContext) <- account.moderatedTransaction(transactionId, view, cc.user, Some(cc))
             moderatedOtherBankAccount <- transaction.otherBankAccount
           } yield {
             val otherBankAccountJson = JSONFactory.createOtherBankAccount(moderatedOtherBankAccount)

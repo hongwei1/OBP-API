@@ -103,7 +103,7 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.getCounterpartyPublicAlias ::
                           Implementations1_2_1.getImagesForViewOnTransaction ::
                           Implementations1_2_1.getTagsForViewOnTransaction ::
-                          Implementations1_2_1.getTransactionByIdForBankAccount ::
+                          // Implementations1_2_1.getTransactionByIdForBankAccount ::
                           Implementations1_2_1.getTransactionNarrative ::
                           //now in V300      
                           //Implementations1_2_1.getTransactionsForBankAccount ::
@@ -187,7 +187,7 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_1_0.getTransactionRequestTypesSupportedByBank ::
                           Implementations2_1_0.createTransactionRequest ::
                           Implementations2_1_0.answerTransactionRequestChallenge ::
-                          Implementations2_1_0.getTransactionRequests ::
+                          // Implementations2_1_0.getTransactionRequests ::
                           Implementations2_1_0.getRoles ::
                           Implementations2_1_0.getEntitlementsByBankAndUser ::
                           Implementations2_1_0.getConsumer ::
@@ -201,7 +201,7 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_1_0.updateBranch ::
                           Implementations2_1_0.getProduct ::
                           Implementations2_1_0.getProducts ::
-                          //Implementations2_1_0.createCustomer ::
+                          // Implementations2_1_0.createCustomer ::
                           Implementations2_1_0.getCustomersForCurrentUserAtBank ::
                           // Implementations2_1_0.getCustomersForUser ::
                           Implementations2_1_0.updateConsumerRedirectUrl ::
@@ -296,12 +296,14 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           // Implementations3_1_0.getConsumer ::
                           Implementations3_1_0.getConsumersForCurrentUser ::
                           // Implementations3_1_0.getConsumers ::
-                          Implementations3_1_0.createAccountWebHook ::
-                          Implementations3_1_0.getAccountWebHooks ::
+                          Implementations3_1_0.createAccountWebhook ::
+                          Implementations3_1_0.enableDisableAccountWebhook ::
+                          Implementations3_1_0.getAccountWebhooks ::
                           Implementations3_1_0.config ::
                           Implementations3_1_0.getAdapterInfo ::
+                          Implementations3_1_0.getTransactionByIdForBankAccount ::
+                          Implementations3_1_0.getTransactionRequests ::
                           Implementations3_1_0.createCustomer ::
-                          Implementations3_1_0.updateCustomer ::
                           Nil
   
   val allResourceDocs = Implementations3_1_0.resourceDocs ++

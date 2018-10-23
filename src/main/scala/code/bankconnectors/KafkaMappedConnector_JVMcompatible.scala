@@ -99,8 +99,6 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   val primaryUserIdentifier = AuthUser.getCurrentUserUsername
 
 
-  override def getAdapterInfo: Box[InboundAdapterInfoInternal] = Empty
-  
   // "Versioning" of the messages sent by this or similar connector might work like this:
   // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
   // Probably should be in a separate file e.g. Nov2016_messages.scala
@@ -172,7 +170,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   // TODO Create and use a case class for each Map so we can document each structure.
 
   //gets banks handled by this connector
-  override def getBanks(): Box[List[Bank]] = saveConnectorMetric {
+  override def getBanks(callContext: Option[CallContext]) = saveConnectorMetric {
     /**
       * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
       * is just a temporary value filed with UUID values in order to prevent any ambiguity.
@@ -199,6 +197,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
             yield {
               KafkaBank(r)
             }
+            ,callContext
           )
         } catch {
           case m: MappingException =>
@@ -219,7 +218,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   }("getBanks")
 
   // Gets bank identified by bankId
-  override def getBank(id: BankId): Box[Bank] = saveConnectorMetric {
+  override def getBank(bankId: BankId, callContext: Option[CallContext]) = saveConnectorMetric {
     /**
       * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
       * is just a temporary value filed with UUID values in order to prevent any ambiguity.
@@ -234,12 +233,12 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
           "version" -> formatVersion,
           "name" -> "get",
           "target" -> "bank",
-          "bankId" -> id.value
+          "bankId" -> bankId.value
         )
         try {
           val r = process(req).extract[KafkaInboundBank]
           // Return result
-          Full(new KafkaBank(r))
+          Full(new KafkaBank(r), callContext)
         } catch {
           case m: MappingException =>
             logger.error("getBank-MappingException",m)
@@ -317,7 +316,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider (Some(cacheKey.toString()))(updateUserAccountViewsTTL millisecond){
         //1 getAccounts from Kafka
-        val accounts: List[KafkaInboundAccount] = getBanks.getOrElse(List.empty).flatMap { bank => {
+        val accounts: List[KafkaInboundAccount] = getBanks(None).map(_._1).getOrElse(List.empty).flatMap { bank => {
           val bankId = bank.bankId.value
           val username = user.name
           logger.debug(s"JVMCompatible updateUserAccountViews for user.email ${user.email} user.name ${user.name} at bank ${bankId}")
@@ -433,8 +432,10 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   }("getChargeLevel")
   
   //TODO, not implement in Adapter, just fake the response 
-  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, callContext: Option[CallContext] = None) = saveConnectorMetric{
-    LocalMappedConnector.createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String)}("createChallenge")
+  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, callContext: Option[CallContext]) = saveConnectorMetric{
+    LocalMappedConnector
+      .createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String)
+    }("createChallenge")
   
   //TODO, not implement in Adapter, just fake the response 
   override def validateChallengeAnswer(
@@ -452,7 +453,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
                                bankId: BankId,
                                accountId: AccountId,
                                transactionId: TransactionId,
-                               callContext: Option[CallContext] = None): Box[Transaction] =
+                               callContext: Option[CallContext] = None) =
     saveConnectorMetric {
       /**
         * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
@@ -478,7 +479,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
             r match {
               // Check does the response data match the requested data
               case Some(x) if transactionId.value != x.transactionId => Failure(ErrorMessages.InvalidConnectorResponseForGetTransaction, Empty, Empty)
-              case Some(x) if transactionId.value == x.transactionId => createNewTransaction(x)
+              case Some(x) if transactionId.value == x.transactionId => createNewTransaction(x).map(transaction =>(transaction, callContext))
               case _ => Failure(ErrorMessages.ConnectorEmptyResponse, Empty, Empty)
             }
           } catch {
@@ -526,7 +527,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
                                 accountId: AccountId,
                                 callContext: Option[CallContext],
                                 queryParams: OBPQueryParam*
-  ): Box[List[Transaction]] = 
+  ) = 
     saveConnectorMetric 
     {
       try {
@@ -589,7 +590,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
           }
         }
       }
-        getTransactionsCached(bankId,accountId,accountHolder , AuthUser.getCurrentUserUsername)
+        getTransactionsCached(bankId,accountId,accountHolder , AuthUser.getCurrentUserUsername).map(transactions => (transactions, callContext))
       } catch {
         case m: MappingException =>
           logger.error("getTransactions-MappingException",m)
@@ -613,7 +614,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
                                bankId: BankId,
                                accountId: AccountId,
                                callContext: Option[CallContext]
-                             ): Box[BankAccount] = saveConnectorMetric {
+                             )= saveConnectorMetric {
     try {
       val accountHolder = getAccountHolderCached(bankId,accountId)
 
@@ -622,7 +623,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
                                 accountId: AccountId,
                                 userId : String,
                                 loginUser: String // added the login user here ,is just for cache
-                              ): Box[BankAccount] = {
+                              ): Box[(BankAccount, Option[CallContext])] = {
         /**
           * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
           * is just a temporary value filed with UUID values in order to prevent any ambiguity.
@@ -644,7 +645,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
             )
             val r = process(req).extract[KafkaInboundAccount]
             logger.debug(s"getBankAccount says ! account.isPresent and userId is ${userId}")
-            Full(new KafkaBankAccount(r))
+            Full(new KafkaBankAccount(r), callContext)
           }
         }}
       getBankAccountCached(bankId: BankId, accountId: AccountId, accountHolder, AuthUser.getCurrentUserUsername)
@@ -736,7 +737,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   private def updateAccountTransactions(bankId : BankId, accountId : AccountId) = {
 
     for {
-      bank <- getBank(bankId)
+      (bank, _)<- getBank(bankId, None)
       account <- getBankAccountType(bankId, accountId)
     } {
       spawn{
@@ -759,10 +760,6 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     LocalMappedConnector.getCounterparty(thisBankId, thisAccountId, couterpartyId)
   }
 
-  // Get one counterparty by the Counterparty Id
-  override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext] = None): Box[CounterpartyTrait] = 
-    LocalMappedConnector.getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId)
-  
   override def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] =
     LocalMappedConnector.getCounterpartyByIban(iban: String)
   
@@ -876,7 +873,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
         fromAccountBankId = fromAccount.bankId.value , //"00100", //need fill 3
         fromAccountCurrency = fromAccount.currency,//"XAF", //need fill 4
         //transaction detail
-        transactionId = UUID.randomUUID().toString.take(35), //need fill 5
+        transactionId = APIUtil.generateUUID().take(35), //need fill 5
         transactionRequestType = transactionRequestType.value,
         transactionCurrency = "XAF", //need fill 6
         transactionAmount = amount.toString(), //"3001", //need fill 7
@@ -1014,7 +1011,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     //TODO: pass in currency as a parameter?
     val account = createAccountIfNotExisting(
       bank.bankId,
-      AccountId(UUID.randomUUID().toString),
+      AccountId(APIUtil.generateUUID()),
       accountNumber,
       accountType,
       accountLabel,
@@ -1092,7 +1089,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   ): Box[BankAccount] = {
 
     for {
-      bank <- getBank(bankId) //bank is not really used, but doing this will ensure account creations fails if the bank doesn't
+      (bank, _)<- getBank(bankId, None) //bank is not really used, but doing this will ensure account creations fails if the bank doesn't
     } yield {
 
       val balanceInSmallestCurrencyUnits = Helper.convertToSmallestCurrencyUnits(initialBalance, currency)
@@ -1155,7 +1152,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     //this will be Full(true) if everything went well
     val result = for {
       acc <- getBankAccount(bankId, accountId)
-      bank <- getBank(bankId)
+      (bank, _)<- getBank(bankId, None)
     } yield {
       //acc.balance = newBalance
       setBankAccountLastUpdated(bank.nationalIdentifier, acc.number, now).openOrThrowException(attemptedToOpenAnEmptyBox)
@@ -1267,7 +1264,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     //this will be Full(true) if everything went well
     val result = for {
       acc <- getBankAccount(bankId, accountId)
-      bank <- getBank(bankId)
+      (bank, _)<- getBank(bankId, None)
       d <- MappedBankAccountData.find(By(MappedBankAccountData.accountId, accountId.value), By(MappedBankAccountData.bankId, bank.bankId.value))
     } yield {
       d.setLabel(label)
@@ -1303,14 +1300,6 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     LocalMappedConnector.createOrUpdateBranch(branch)
   }
 
-  override def getBranch(bankId : BankId, branchId: BranchId) : Box[BranchT]= {
-    LocalMappedConnector.getBranch(bankId, branchId)
-  }
-
-  override def getBranchFuture(bankId : BankId, branchId: BranchId) : Future[Box[BranchT]]= {
-    LocalMappedConnector.getBranchFuture(bankId, branchId)
-  }
-
   override def createOrUpdateAtm(atm: Atms.Atm): Box[AtmT] = {
     LocalMappedConnector.createOrUpdateAtm(atm)
   }
@@ -1318,9 +1307,7 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
   override def getAtm(bankId: BankId, atmId: AtmId): Box[MappedAtm] = {
     LocalMappedConnector.getAtm(bankId, atmId)
   }
-  override def getAtmFuture(bankId: BankId, atmId: AtmId): Future[Box[MappedAtm]] = {
-    LocalMappedConnector.getAtmFuture(bankId, atmId)
-  }
+  
 
   override def getCurrentFxRate(bankId : BankId, fromCurrencyCode: String, toCurrencyCode: String): Box[FXRate] = Empty
   
@@ -1352,8 +1339,6 @@ object KafkaMappedConnector_JVMcompatible extends Connector with KafkaHelper wit
     transactionRequestTypeCharge
   }
   
-  override def getCounterparties(thisBankId: BankId, thisAccountId: AccountId,viewId :ViewId, callContext: Option[CallContext] = None): Box[List[CounterpartyTrait]] =
-    LocalMappedConnector.getCounterparties(thisBankId: BankId, thisAccountId: AccountId,viewId :ViewId)
   
   override def getEmptyBankAccount(): Box[BankAccount] = {
     Full(

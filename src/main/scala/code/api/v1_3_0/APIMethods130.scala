@@ -2,6 +2,7 @@ package code.api.v1_3_0
 
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil._
+import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ApiVersion, ErrorMessages}
 import code.bankconnectors.Connector
@@ -72,7 +73,7 @@ trait APIMethods130 {
         cc => {
           for {
             u <- cc.user ?~! ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId) ?~! {ErrorMessages.BankNotFound}
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! {ErrorMessages.BankNotFound}
             cards <- Connector.connector.vend.getPhysicalCardsForBank(bank, u)
           } yield {
              val cardsJson = JSONFactory1_3_0.createPhysicalCardsJSON(cards, u)

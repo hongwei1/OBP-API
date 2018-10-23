@@ -1745,6 +1745,9 @@ object SwaggerDefinitionsJSON {
   )
 
   val createCustomerJson = CreateCustomerJson(
+    title = "String",
+    branchId = "String",
+    nameSuffix = "String",
     user_id = "String",
     customer_number = "String",
     legal_name = "String",
@@ -1908,24 +1911,32 @@ object SwaggerDefinitionsJSON {
       last_ok_date = DateWithDayExampleObject
     )
 
-//  val number1JsonV310 = Number1JsonV310(value = 4)
-//  val credentialsJsonV310 = CredentialsJsonV310(name = "string", pin = "123123" )
-//  val addressJsonV310 = AddressJsonV310(identifier = "string", number = 0)
-//  val customerStepJosnV310 = CustomerStepJsonV310(
-//    famname = "li",
-//    firstname = "Aron",
-//    title = "string",
-//    mobiltel = "string",
-//    emailadr = "string",
-//    store = "string",
-//    titelnach = "string",
-//    kundnr = 0,
-//    hint = 0
-//  )
-
+  val customerJsonV300 = CustomerJsonV300(
+    bank_id = "bankid1234",
+    customer_id = "123",
+    customer_number = "123",
+    legal_name = "legal_name",
+    mobile_phone_number = "123",
+    email = "contact@tesobe.com",
+    face_image = customerFaceImageJson,
+    date_of_birth = "19900101",
+    relationship_status = "123",
+    dependants = 123,
+    dob_of_dependants = List("19900101"),
+    credit_rating = Option(customerCreditRatingJSON),
+    credit_limit = Option(amountOfMoneyJsonV121),
+    highest_education_attained = "123",
+    employment_status = "123",
+    kyc_status = true,
+    last_ok_date = DateWithDayExampleObject,
+    title  = "Dr.",
+    branchId = "12314",
+    nameSuffix = "Sr"
+  )
+  
   val postCustomerJsonV310 =
     PostCustomerJsonV310(
-      customer_number = "687687678",
+      customer_number = "new customer number 687687678",
       legal_name = "NONE",
       mobile_phone_number = "+44 07972 444 876",
       email = "person@example.com",
@@ -1940,21 +1951,35 @@ object SwaggerDefinitionsJSON {
       employment_status = "Employed",
       kyc_status = true,
       last_ok_date = DateWithDayExampleObject,
-//      // From Disposer API
-//      number1 = number1JsonV310,
-//      credentials = credentialsJsonV310,
-//      status = "ACTIVE",
-//      language = "DE",
-//      `type` = "FULL",
-//      customerNr = 0,
-//      address = addressJsonV310,
-//      bankSupervisorId = "string",
-//      bankAdvisorId = "string",
-//      // From  Private customers Contacts
-//      patterncallnumber = 0,
-//      customer_step =customerStepJosnV310,
-//      uuid = "string"
+      title  = "Dr.",
+      branchId = "12314",
+      nameSuffix = "Sr"
     )
+  
+  val customerJsonV310 = CustomerJsonV310(
+    bank_id = "bankid1234",
+    customer_id = "123",
+    customer_number = "123",
+    legal_name = "legal_name",
+    mobile_phone_number = "123",
+    email = "contact@tesobe.com",
+    face_image = customerFaceImageJson,
+    date_of_birth = DateWithDayExampleObject,
+    relationship_status = "123",
+    dependants = 123,
+    dob_of_dependants = List(DateWithDayExampleObject),
+    credit_rating = Option(customerCreditRatingJSON),
+    credit_limit = Option(amountOfMoneyJsonV121),
+    highest_education_attained = "123",
+    employment_status = "123",
+    kyc_status = true,
+    last_ok_date = DateWithDayExampleObject,
+    title  = "Dr.",
+    branchId = "12314",
+    nameSuffix = "Sr"
+  )
+
+
   val transactionRequestWithChargeJSON210 = TransactionRequestWithChargeJSON210(
     id = "4050046c-63b3-4868-8a22-14b4181d33a6",
     `type` = SANDBOX_TAN.toString,
@@ -2858,15 +2883,19 @@ object SwaggerDefinitionsJSON {
     per_month_call_limit = "-1"
   )
 
-  val accountWebHookPostJson = AccountWebHookPostJson(
+  val accountWebhookPostJson = AccountWebhookPostJson(
     account_id = "fc23a7e2-7dd2-4bdf-a0b4-ae31232a4762",
     trigger_name = ApiTrigger.onBalanceChange.toString(),
     url = "https://localhost.openbankproject.com",
     http_method = "POST",
     is_active = "true"
   )
-  val accountWebHookJson =  AccountWebHookJson(
-    account_web_hook_id = "613c83ea-80f9-4560-8404-b9cd4ec42a7f",
+  val accountWebhookPutJson = AccountWebhookPutJson(
+    account_webhook_id = "fc23a7e2-7dd2-4bdf-a0b4-ae31232a4762",
+    is_active = "true"
+  )
+  val accountWebhookJson =  AccountWebhookJson(
+    account_webhook_id = "613c83ea-80f9-4560-8404-b9cd4ec42a7f",
     bank_id = "obp-x",
     account_id = "fc23a7e2-7dd2-4bdf-a0b4-ae31232a4762",
     trigger_name = ApiTrigger.onBalanceChange.toString(),
@@ -2876,7 +2905,7 @@ object SwaggerDefinitionsJSON {
     is_active = true
   )
 
-  val accountWebHooksJson = AccountWebHooksJson(List(accountWebHookJson))
+  val accountWebhooksJson = AccountWebhooksJson(List(accountWebhookJson))
 
   //The common error or success format.
   //Just some helper format to use in Json 

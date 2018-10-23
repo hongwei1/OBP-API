@@ -7,7 +7,7 @@ import code.api.util.{APIUtil, ApiTrigger}
 import code.bankconnectors.Connector
 import code.model._
 import code.util._
-import code.webhook.WebHookActor
+import code.webhook.WebhookActor
 import net.liftweb.common._
 import net.liftweb.common.Box.tryo
 import net.liftweb.mapper._
@@ -21,7 +21,7 @@ class MappedTransaction extends LongKeyedMapper[MappedTransaction] with IdPK wit
   object bank extends MappedString(this, 255)
   object account extends AccountIdString(this)
   object transactionId extends MappedString(this, 255) {
-    override def defaultValue = UUID.randomUUID().toString
+    override def defaultValue = APIUtil.generateUUID()
   }
   
   //TODO: review the need for this
@@ -222,13 +222,13 @@ object MappedTransaction extends MappedTransaction with LongKeyedMetaMapper[Mapp
   override def afterSave = List(
     t =>
       tryo {
-        val eventId = UUID.randomUUID().toString()
-        val actor = ObpLookupSystem.getWebHookActor()
-        actor ! WebHookActor.Request(
+        val eventId = APIUtil.generateUUID()
+        val actor = ObpLookupSystem.getWebhookActor()
+        actor ! WebhookActor.Request(
           ApiTrigger.onBalanceChange,
           eventId,
           t.theBankId.value,
-          t.theBankId.value,
+          t.theAccountId.value,
           t.amount.get.toString,
           t.newAccountBalance.get.toString
         )

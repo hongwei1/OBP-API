@@ -600,7 +600,7 @@ import net.liftweb.util.Helpers._
               .email(extEmail)
               .username(extUsername)
               // No need to store password, so store dummy string instead
-              .password(UUID.randomUUID().toString)
+              .password(generateUUID())
               .provider(extProvider)
               .validated(true)
             // Save the user in order to be able to log in
@@ -839,10 +839,10 @@ import net.liftweb.util.Helpers._
     */
   def updateUserAccountViews(user: User): Unit = {
     //get all accounts from Kafka
-    val accounts = Connector.connector.vend.getBankAccounts(user.name, false).openOrThrowException(attemptedToOpenAnEmptyBox)
+    val accounts = Connector.connector.vend.getBankAccounts(user.name, None).openOrThrowException(attemptedToOpenAnEmptyBox)
     debug(s"-->AuthUser.updateUserAccountViews.accounts : ${accounts} ")
 
-    updateUserAccountViews(user, accounts)
+    updateUserAccountViews(user, accounts._1)
   }
 
   /**

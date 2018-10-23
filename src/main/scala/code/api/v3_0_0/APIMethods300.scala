@@ -1,21 +1,17 @@
 package code.api.v3_0_0
 
-import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatter
-import java.util.{Date, Locale}
-
 import code.accountholder.AccountHolders
 import code.api.APIFailureNewStyle
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.{bankJSON, banksJSON, _}
 import code.api.util.APIUtil.{canGetAtm, _}
 import code.api.util.ApiRole._
+import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
-import code.api.util.Glossary.GlossaryItem
 import code.api.util.NewStyle.HttpCode
 import code.api.util._
-import code.api.v1_2_1.{BankJSON, BanksJSON, JSONFactory}
-import code.api.v2_0_0.{CreateEntitlementJSON, JSONFactory200}
+import code.api.v1_2_1.JSONFactory
+import code.api.v2_0_0.JSONFactory200
 import code.api.v3_0_0.JSONFactory300._
 import code.atms.Atms.AtmId
 import code.bankconnectors._
@@ -23,32 +19,27 @@ import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
 import code.branches.Branches
 import code.branches.Branches.BranchId
 import code.consumer.Consumers
-import code.entitlement.Entitlement
 import code.entitlementrequest.EntitlementRequest
-import code.metrics.{APIMetrics, MappedMetric, OBPUrlQueryParams}
+import code.metrics.APIMetrics
 import code.model.{BankId, ViewId, _}
+import code.scope.Scope
 import code.search.elasticsearchWarehouse
 import code.users.Users
 import code.util.Helper
-import code.util.Helper.{DateFormatWithCurrentTimeZone, booleanToBox}
+import code.util.Helper.booleanToBox
 import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.{Empty, Full}
 import net.liftweb.http.S
+import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.{Extraction, compactRender}
-import net.liftweb.mapper.DB
-import net.liftweb.util.Helpers.{now, tryo}
+import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import code.scope.Scope
-import net.liftweb.http.js.JE.JsRaw
-import net.liftweb.http.provider.HTTPParam
-import net.liftweb.json.JsonAST.JValue
-import net.liftweb.util.Helpers._
 
 
 
@@ -112,10 +103,8 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-              account <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+              (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
               _ <- Helper.booleanToFuture(failMsg = UserNoOwnerView +"userId : " + u.userId + ". account : " + accountId){
                 u.hasOwnerViewAccess(BankIdAccountId(account.bankId, account.accountId))
               }
@@ -171,7 +160,7 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
+              (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
               createViewJson <- Future { tryo{json.extract[CreateViewJson]} } map {
                 val msg = s"$InvalidJsonFormat The Json body should be the $CreateViewJson "
                 x => fullBoxOrException(x ~> APIFailureNewStyle(msg, 400, callContext.map(_.toLight)))
@@ -180,9 +169,7 @@ trait APIMethods300 {
               _ <- Helper.booleanToFuture(failMsg = InvalidCustomViewFormat) {
                 createViewJson.name.startsWith("_")
               }
-              account <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
             } yield {
               for {
                 view <- account createView (u, createViewJson)
@@ -218,13 +205,9 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: "permissions" :: provider :: providerId :: Nil JsonGet req => {
         cc =>
           for {
-            (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-            bank <- Future { Bank(bankId) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))
-            } map { unboxFull(_) }
-            account <- Future { BankAccount(bankId, accountId, callContext) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(AccountNotFound, 400, callContext.map(_.toLight)))
-            } map { unboxFull(_) }
+            (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
             permission <- Future { account permission(u, provider, providerId) } map {
               x => fullBoxOrException(x ~> APIFailureNewStyle(UserNoOwnerView, 400, callContext.map(_.toLight)))
             } map { unboxFull(_) }
@@ -265,7 +248,7 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
+              (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
               updateJson <- Future { tryo{json.extract[UpdateViewJSON]} } map {
                 val msg = s"$InvalidJsonFormat The Json body should be the $UpdateViewJSON "
                 x => fullBoxOrException(x ~> APIFailureNewStyle(msg, 400, callContext.map(_.toLight)))
@@ -278,15 +261,11 @@ trait APIMethods300 {
                 x => fullBoxOrException(
                   x ~> APIFailureNewStyle(s"$ViewNotFound. Check your post json body, metadata_view = ${updateJson.metadata_view}. It should be an existing VIEW_ID, eg: owner", 400, callContext.map(_.toLight)))
               } map { unboxFull(_) }
-              view <- Views.views.vend.viewFuture(viewId, BankIdAccountId(bankId, accountId)) map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(ViewNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              view <- NewStyle.function.view(viewId, BankIdAccountId(bankId, accountId), callContext)
               _ <- Helper.booleanToFuture(failMsg = SystemViewsCanNotBeModified) {
                 !view.isSystem
               }
-              account <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
             } yield {
               for {
                 updatedView <- account.updateView(u, viewId, updateJson)
@@ -331,13 +310,9 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-              account <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
-              view <- Views.views.vend.viewFuture(viewId, BankIdAccountId(account.bankId, account.accountId)) map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(ViewNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+              (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
+              view <- NewStyle.function.view(viewId, BankIdAccountId(account.bankId, account.accountId), callContext)
               _ <- Helper.booleanToFuture(failMsg = UserNoPermissionAccessView) {
                 (u.hasViewAccess(view))
               }
@@ -387,18 +362,13 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "public" :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "account" :: Nil JsonGet req => {
         cc =>
           for {
-            account <- Future { BankAccount(bankId, accountId) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, Some(cc.toLight)))
-            } map { unboxFull(_) }
-            view <- Views.views.vend.viewFuture(viewId, BankIdAccountId(account.bankId, account.accountId)) map {
-              val msg = s"$ViewNotFound(${viewId.value})"
-              x => fullBoxOrException(x ~> APIFailureNewStyle(msg, 400, Some(cc.toLight)))
-            } map { unboxFull(_) }
+            (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, Some(cc))
+            view <- NewStyle.function.view(viewId, BankIdAccountId(account.bankId, account.accountId), callContext)
             moderatedAccount <- Future {account.moderatedBankAccount(view, Empty) } map {
               x => fullBoxOrException(x)
             } map { unboxFull(_) }
           } yield {
-            (createCoreBankAccountJSON(moderatedAccount), None)
+            (createCoreBankAccountJSON(moderatedAccount), HttpCode.`200`(callContext))
           }
       }
     }
@@ -438,14 +408,10 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-            (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-            account <- Future { BankAccount(bankId, accountId, callContext) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-            } map { unboxFull(_) }
+            (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+            (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
             // Assume owner view was requested
-            view <- Views.views.vend.viewFuture(ViewId("owner"), BankIdAccountId(account.bankId, account.accountId)) map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(ViewNotFound, 400, callContext.map(_.toLight)))
-            } map { unboxFull(_) }
+            view <- NewStyle.function.view(ViewId("owner"), BankIdAccountId(account.bankId, account.accountId), callContext)
             _ <- Helper.booleanToFuture(failMsg = UserNoPermissionAccessView) {(u.hasViewAccess(view))}
           } yield {
             for {
@@ -484,14 +450,14 @@ trait APIMethods300 {
 
     lazy val corePrivateAccountsAllBanks : OBPEndpoint = {
       //get private accounts for all banks
-      case "my" :: "accounts" :: Nil JsonGet req => {
+      case "my" :: "accounts" :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
             availablePrivateAccounts <- Views.views.vend.getPrivateBankAccountsFuture(u)
-            coreAccounts <- {Connector.connector.vend.getCoreBankAccountsFuture(availablePrivateAccounts, callContext)}
+            Full((coreAccounts, callContext)) <- {Connector.connector.vend.getCoreBankAccountsFuture(availablePrivateAccounts, callContext)}
           } yield {
-            (JSONFactory300.createCoreAccountsByCoreAccountsJSON(coreAccounts.getOrElse(Nil)), HttpCode.`200`(callContext))
+            (JSONFactory300.createCoreAccountsByCoreAccountsJSON(coreAccounts), HttpCode.`200`(callContext))
           }
       }
     }
@@ -528,15 +494,14 @@ trait APIMethods300 {
 
     lazy val getFirehoseAccountsAtOneBank : OBPEndpoint = {
       //get private accounts for all banks
-      case "banks" :: BankId(bankId):: "firehose" :: "accounts"  :: "views" :: ViewId(viewId):: Nil JsonGet req => {
+      case "banks" :: BankId(bankId):: "firehose" :: "accounts"  :: "views" :: ViewId(viewId):: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
             _ <- Helper.booleanToFuture(failMsg = FirehoseViewsNotAllowedOnThisInstance +" or " + UserHasMissingRoles + CanUseFirehoseAtAnyBank  ) {
                canUseFirehose(u)
             }
-            bankBox <- Future { Bank(bankId) } map {x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))}
-            bank<- unboxFullAndWrapIntoFuture(bankBox)
+            (bank, callContext) <- NewStyle.function.getBank(bankId, callContext)
             availableBankIdAccountIdList <- Future {Views.views.vend.getAllFirehoseAccounts(bank.bankId, u) }
             moderatedAccounts = for {
               //Here is a new for-loop to get the moderated accouts for the firehose user, according to the viewId.
@@ -590,21 +555,17 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
+              (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
               _ <- Helper.booleanToFuture(failMsg = FirehoseViewsNotAllowedOnThisInstance +" or " + UserHasMissingRoles + CanUseFirehoseAtAnyBank  ) {
                canUseFirehose(u)
               }
-              bankAccount <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
-              view <- Views.views.vend.viewFuture(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId)) map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(ViewNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (bankAccount, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
+              view <- NewStyle.function.view(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId), callContext)
             } yield {
               for {
               //Note: error handling and messages for getTransactionParams are in the sub method
                 params <- createQueriesByHttpParams(callContext.get.requestHeaders)
-                transactions <- bankAccount.getModeratedTransactions(Full(u), view, callContext, params: _*)
+                (transactions, callContext) <- bankAccount.getModeratedTransactions(Full(u), view, callContext, params: _*)
               } yield {
                 (createTransactionsJson(transactions), HttpCode.`200`(callContext))
               }
@@ -654,19 +615,15 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (user, callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-              bankAccount <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (user, callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+              (bankAccount, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
               // Assume owner view was requested
-              view <- Views.views.vend.viewFuture(ViewId("owner"), BankIdAccountId(bankAccount.bankId, bankAccount.accountId)) map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(ViewNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              view <- NewStyle.function.view(ViewId("owner"), BankIdAccountId(bankAccount.bankId, bankAccount.accountId), callContext)
             } yield {
               for {
                 //Note: error handling and messages for getTransactionParams are in the sub method
                 params <- createQueriesByHttpParams(callContext.get.requestHeaders)
-                transactionsCore <- bankAccount.getModeratedTransactionsCore(user, view, callContext, params: _*)
+                (transactionsCore, callContext) <- bankAccount.getModeratedTransactionsCore(user, view, callContext, params: _*)
               } yield {
                 (createCoreTransactionsJSON(transactionsCore), HttpCode.`200`(callContext))
               }
@@ -719,19 +676,14 @@ trait APIMethods300 {
         cc =>
           val res =
             for {
-              (user, callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-              bankAccount <- Future { BankAccount(bankId, accountId, callContext) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankAccountNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
-              // Assume owner view was requested
-              view <- Views.views.vend.viewFuture(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId)) map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(ViewNotFound, 400, callContext.map(_.toLight)))
-              } map { unboxFull(_) }
+              (user, callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+              (bankAccount, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
+              view <- NewStyle.function.view(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId), callContext)
             } yield {
               for {
               //Note: error handling and messages for getTransactionParams are in the sub method
                 params <- createQueriesByHttpParams(callContext.get.requestHeaders)
-                transactions <- bankAccount.getModeratedTransactions(user, view, callContext, params: _*)
+                (transactions, callContext) <- bankAccount.getModeratedTransactions(user, view, callContext, params: _*)
               } yield {
                 (createTransactionsJson(transactions), HttpCode.`200`(callContext))
               }
@@ -789,10 +741,8 @@ trait APIMethods300 {
       case "search" :: "warehouse" :: index :: Nil JsonPost json -> _ => {
         cc =>
           for {
-            (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanSearchWarehouse) {
-              hasEntitlement("", u.userId, ApiRole.canSearchWarehouse)
-            }
+            (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanSearchWarehouse)("", u.userId, ApiRole.canSearchWarehouse)
             _ <- Helper.booleanToFuture(failMsg = ElasticSearchDisabled) {
               esw.isEnabled()
             }
@@ -860,10 +810,8 @@ trait APIMethods300 {
         cc =>
           //if (field == "/") throw new RuntimeException("No aggregation field supplied") with NoStackTrace
           for {
-            (Full(u), callContext) <-  extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanSearchWarehouseStatistics) {
-              hasEntitlement("", u.userId, ApiRole.canSearchWarehouseStatistics)
-            }
+            (Full(u), callContext) <-  authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanSearchWarehouseStatistics)("", u.userId, ApiRole.canSearchWarehouseStatistics)
             _ <- Helper.booleanToFuture(failMsg = ElasticSearchDisabled) {
               esw.isEnabled()
             }
@@ -906,10 +854,8 @@ trait APIMethods300 {
       case "users" :: "email" :: email :: "terminator" :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
-              hasEntitlement("", u.userId, ApiRole.canGetAnyUser)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetAnyUser)("", u.userId, ApiRole.canGetAnyUser)
             users <- Users.users.vend.getUserByEmailFuture(email)
           } yield {
             (JSONFactory300.createUserJSONs (users), HttpCode.`200`(callContext))
@@ -942,16 +888,14 @@ trait APIMethods300 {
       case "users" :: "user_id" :: userId :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
-              hasEntitlement("", u.userId, ApiRole.canGetAnyUser)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetAnyUser)("", u.userId, ApiRole.canGetAnyUser)
             user <- Users.users.vend.getUserByUserIdFuture(userId) map {
               x => fullBoxOrException(x ~> APIFailureNewStyle(UserNotFoundByUsername, 400, callContext.map(_.toLight)))
             } map { unboxFull(_) }
-            entitlements <- Entitlement.entitlement.vend.getEntitlementsByUserIdFuture(user.userId)
+            entitlements <- NewStyle.function.getEntitlementsByUserId(user.userId, callContext)
           } yield {
-            (JSONFactory300.createUserJSON (Full(user), entitlements), HttpCode.`200`(callContext))
+            (JSONFactory300.createUserJSON (user, entitlements), HttpCode.`200`(callContext))
           }
       }
     }
@@ -982,16 +926,14 @@ trait APIMethods300 {
       case "users" :: "username" :: username :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
-              hasEntitlement("", u.userId, ApiRole.canGetAnyUser)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetAnyUser)("", u.userId, ApiRole.canGetAnyUser)
             user <- Users.users.vend.getUserByUserNameFuture(username) map {
               x => fullBoxOrException(x ~> APIFailureNewStyle(UserNotFoundByUsername, 400, callContext.map(_.toLight)))
             } map { unboxFull(_) }
-            entitlements <- Entitlement.entitlement.vend.getEntitlementsByUserIdFuture(user.userId)
+            entitlements <- NewStyle.function.getEntitlementsByUserId(user.userId, callContext)
           } yield {
-            (JSONFactory300.createUserJSON (Full(user), entitlements), HttpCode.`200`(callContext))
+            (JSONFactory300.createUserJSON (user, entitlements), HttpCode.`200`(callContext))
           }
       }
     }
@@ -1021,11 +963,11 @@ trait APIMethods300 {
           cc =>
             for {
               _ <- NewStyle.function.getBank(bankId, Some(cc))
-              ai: InboundAdapterInfoInternal <- Future(Connector.connector.vend.getAdapterInfo()) map {
+              (ai, cc) <- Future(Connector.connector.vend.getAdapterInfo(Some(cc))) map {
                 unboxFullOrFail(_, Some(cc), ConnectorEmptyResponse, 400)
               }
             } yield {
-              (createAdapterInfoJson(ai), Some(cc))
+              (createAdapterInfoJson(ai), cc)
             }
       }
     }
@@ -1070,7 +1012,7 @@ trait APIMethods300 {
         cc =>
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             _ <- booleanToBox(
               hasEntitlement(bank.bankId.value, u.userId, canCreateBranch) == true
               ||
@@ -1127,7 +1069,7 @@ trait APIMethods300 {
         cc =>
           for {
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
-            bank <- Bank(bankId)?~! BankNotFound
+            (bank, callContext) <- Bank(bankId, Some(cc)) ?~! BankNotFound
             _ <- booleanToBox(hasAllEntitlements(bank.bankId.value, u.userId, createAtmEntitlementsRequiredForSpecificBank) == true
               ||
               hasAllEntitlements("", u.userId, createAtmEntitlementsRequiredForAnyBank),
@@ -1176,17 +1118,12 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "branches" :: BranchId(branchId) :: Nil JsonGet _ => {
         cc => {
           for {
-            (user, callContext) <- extractCallContext(cc)
+            (user, callContext) <- authorizeEndpoint(cc)
             _ <- Helper.booleanToFuture(failMsg = UserNotLoggedIn) {
               canGetBranch(getBranchesIsPublic, user)
             }
-            _ <- Future { Bank(bankId) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))
-            }
-            branch <- Connector.connector.vend.getBranchFuture(bankId, branchId) map {
-              val msg: String = s"${BranchNotFoundByBranchId}, or License may not be set. meta.license.id and meta.license.name can not be empty"
-              x => fullBoxOrException(x ~> APIFailureNewStyle(msg, 400, callContext.map(_.toLight)))
-            } map { unboxFull(_) }
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            (branch, callContext) <- NewStyle.function.getBranch(bankId, branchId, callContext)
           } yield {
             (JSONFactory300.createBranchJsonV300(branch), HttpCode.`200`(callContext))
           }
@@ -1236,7 +1173,7 @@ trait APIMethods300 {
           val limit = S.param("limit")
           val offset = S.param("offset")
           for {
-            (user, callContext) <- extractCallContext(cc)
+            (user, callContext) <- authorizeEndpoint(cc)
             _ <- Helper.booleanToFuture(failMsg = UserNotLoggedIn) {
               canGetBranch(getBranchesIsPublic, user)
             }
@@ -1258,19 +1195,21 @@ trait APIMethods300 {
                 case _ => true
               }
             }
-            _ <- Future { Bank(bankId) } map { x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight))) }
-            branches <- Connector.connector.vend.getBranchesFuture(bankId) map {
-              case Full(List()) | Empty =>
+            (_, callContext)<- NewStyle.function.getBank(bankId, callContext)
+            (branches, callContext) <- Connector.connector.vend.getBranchesFuture(bankId, callContext) map {
+              case Full((List(), _)) | Empty =>
                 fullBoxOrException(Empty ?~! BranchesNotFound)
-              case Full(list) =>
+              case Full((list, callContext)) =>
                 val branchesWithLicense = for { branch <- list if branch.meta.license.name.size > 3 } yield branch
                 if (branchesWithLicense.size == 0) fullBoxOrException(Empty ?~! branchesNotFoundLicense)
                 else Full(branchesWithLicense)
             } map { unboxFull(_) } map {
+              branches =>
               // Before we slice we need to sort in order to keep consistent results
-              _.sortWith(_.branchId.value < _.branchId.value)
+                (branches.sortWith(_.branchId.value < _.branchId.value)
               // Slice the result in next way: from=offset and until=offset + limit
                .slice(offset.getOrElse("0").toInt, offset.getOrElse("0").toInt + limit.getOrElse("100").toInt)
+              , callContext)
             }
           } yield {
             (JSONFactory300.createBranchesJson(branches), HttpCode.`200`(callContext))
@@ -1307,16 +1246,12 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "atms" :: AtmId(atmId) :: Nil JsonGet req => {
         cc =>
           for {
-            (user, callContext) <- extractCallContext(cc)
+            (user, callContext) <- authorizeEndpoint(cc)
             _ <- Helper.booleanToFuture(failMsg = UserNotLoggedIn) {
               canGetAtm(getAtmsIsPublic, user)
             }
-            _ <- Future { Bank(bankId) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))
-            }
-            atm <- Connector.connector.vend.getAtmFuture(bankId,atmId) map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(AtmNotFoundByAtmId, 400, callContext.map(_.toLight)))
-            } map { unboxFull(_) }
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            (atm, callContext) <- NewStyle.function.getAtm(bankId,atmId, callContext)
           } yield {
             (JSONFactory300.createAtmJsonV300(atm), HttpCode.`200`(callContext))
           }
@@ -1359,7 +1294,7 @@ trait APIMethods300 {
           val limit = S.param("limit")
           val offset = S.param("offset")
           for {
-            (user, callContext) <- extractCallContext(cc)
+            (user, callContext) <- authorizeEndpoint(cc)
             _ <- Helper.booleanToFuture(failMsg = UserNotLoggedIn) {
               canGetBranch(getBranchesIsPublic, user)
             }
@@ -1381,19 +1316,21 @@ trait APIMethods300 {
                 case _ => true
               }
             }
-            _ <- Future { Bank(bankId) } map { x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight))) }
-            atms <- Connector.connector.vend.getAtmsFuture(bankId) map {
-              case Full(List()) | Empty =>
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            (atms, callContext) <- Connector.connector.vend.getAtmsFuture(bankId, callContext) map {
+              case Full((List(),_)) | Empty =>
                 fullBoxOrException(Empty ?~! atmsNotFound)
-              case Full(list) =>
+              case Full((list, _)) =>
                 val branchesWithLicense = for { branch <- list if branch.meta.license.name.size > 3 } yield branch
                 if (branchesWithLicense.size == 0) fullBoxOrException(Empty ?~! atmsNotFoundLicense)
                 else Full(branchesWithLicense)
             } map { unboxFull(_) } map {
-              // Before we slice we need to sort in order to keep consistent results
-              _.sortWith(_.atmId.value < _.atmId.value)
+              branch =>
+                // Before we slice we need to sort in order to keep consistent results
+                (branch.sortWith(_.atmId.value < _.atmId.value)
                 // Slice the result in next way: from=offset and until=offset + limit
                 .slice(offset.getOrElse("0").toInt, offset.getOrElse("0").toInt + limit.getOrElse("100").toInt)
+                ,callContext)
             }
           } yield {
             (JSONFactory300.createAtmsJsonV300(atms), HttpCode.`200`(callContext))
@@ -1431,12 +1368,10 @@ trait APIMethods300 {
       case "users" :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanGetAnyUser) {
-              hasEntitlement("", u.userId, ApiRole.canGetAnyUser)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetAnyUser)("", u.userId, ApiRole.canGetAnyUser)
             
-            httpParams <- createHttpParamsByUrlFuture(cc.url) map { unboxFull(_) }
+            httpParams <- NewStyle.function.createHttpParams(cc.url)
               
             obpQueryParams <- createQueriesByHttpParamsFuture(httpParams) map {
               x => fullBoxOrException(x ~> APIFailureNewStyle(InvalidFilterParameterFormat, 400, callContext.map(_.toLight)))
@@ -1464,7 +1399,7 @@ trait APIMethods300 {
         |
         |""",
       emptyObjectJson,
-      customerJsonV210,
+      customerJsonV300,
       List(
         UserNotLoggedIn,
         UserCustomerLinksNotFoundForUser,
@@ -1485,10 +1420,10 @@ trait APIMethods300 {
         cc => {
           for {
             // Extract the user from the headers and get an updated callContext
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
             // Now here is the business logic.
             // Get The customers related to a user. Process the resonse which might be an Exception
-            customers <- Connector.connector.vend.getCustomersByUserIdFuture(u.userId, callContext) map {
+            (customers,callContext) <- Connector.connector.vend.getCustomersByUserIdFuture(u.userId, callContext) map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
             }
           } yield {
@@ -1520,12 +1455,10 @@ trait APIMethods300 {
       case "users" :: "current" :: Nil JsonGet _ => {
         cc => {
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            entitlements <- Entitlement.entitlement.vend.getEntitlementsByUserIdFuture(u.userId) map {
-              getFullBoxOrFail(_, callContext, ConnectorEmptyResponse, 400)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            entitlements <- NewStyle.function.getEntitlementsByUserId(u.userId, callContext)
           } yield {
-            (JSONFactory300.createUserJSON (Full(u), entitlements), HttpCode.`200`(callContext))
+            (JSONFactory300.createUserJSON (u, entitlements), HttpCode.`200`(callContext))
           }
         }
       }
@@ -1557,12 +1490,10 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "accounts" :: "private" :: Nil JsonGet req => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            bank <- Future { Bank(bankId) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
             availablePrivateAccounts <- Views.views.vend.getPrivateBankAccountsFuture(u, bankId)
-            accounts <- Connector.connector.vend.getCoreBankAccountsFuture(availablePrivateAccounts, callContext) map {
+            ((accounts, callContext)) <- Connector.connector.vend.getCoreBankAccountsFuture(availablePrivateAccounts, callContext) map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
             }
           } yield {
@@ -1600,10 +1531,8 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "accounts" :: "account_ids" :: "private"::Nil JsonGet req => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            bank <- Future { Bank(bankId) } map {
-              x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+             (_, callContext)<- NewStyle.function.getBank(bankId, callContext)
             bankAccountIds <- Views.views.vend.getPrivateBankAccountsFuture(u, bankId)
           } yield {
             (JSONFactory300.createAccountsIdsByBankIdAccountIds(bankAccountIds), HttpCode.`200`(callContext))
@@ -1625,7 +1554,10 @@ trait APIMethods300 {
       emptyObjectJson,
       otherAccountsJsonV300,
       List(
+        UserNotLoggedIn,
         BankAccountNotFound,
+        ViewNotFound,
+        ConnectorEmptyResponse,
         UnknownError
       ),
       Catalogs(notCore, PSD2, OBWG),
@@ -1635,12 +1567,15 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "other_accounts" :: Nil JsonGet req => {
         cc =>
           for {
-            account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-            otherBankAccounts <- account.moderatedOtherBankAccounts(view, cc.user)
+            (u, callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
+            view <- NewStyle.function.view(viewId, BankIdAccountId(account.bankId, account.accountId), callContext)
+            otherBankAccounts <- Future(account.moderatedOtherBankAccounts(view, u)) map {
+              unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
+            }
           } yield {
             val otherBankAccountsJson = createOtherBankAccountsJson(otherBankAccounts)
-            successJsonResponse(Extraction.decompose(otherBankAccountsJson))
+            (otherBankAccountsJson, HttpCode.`200`(callContext))
           }
       }
     }
@@ -1658,20 +1593,28 @@ trait APIMethods300 {
          |Authentication is required if the view is not public.""",
       emptyObjectJson,
       otherAccountJsonV300,
-      List(BankAccountNotFound, UnknownError),
+      List(
+        UserNotLoggedIn,
+        BankAccountNotFound,
+        ViewNotFound,
+        ConnectorEmptyResponse,
+        UnknownError),
       Catalogs(notCore, PSD2, OBWG),
       List(apiTagCounterparty, apiTagAccount, apiTagNewStyle))
   
     lazy val getOtherAccountByIdForBankAccount : OBPEndpoint = {
-      case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "other_accounts":: other_account_id :: Nil JsonGet req => {
+      case "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId) :: "other_accounts":: other_account_id :: Nil JsonGet _ => {
         cc =>
           for {
-            account <- Connector.connector.vend.checkBankAccountExists(bankId, accountId) ?~! BankAccountNotFound
-            view <- Views.views.vend.view(viewId, BankIdAccountId(account.bankId, account.accountId))
-            otherBankAccount <- account.moderatedOtherBankAccount(other_account_id, view, cc.user)
+            (u, callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
+            view <- NewStyle.function.view(viewId, BankIdAccountId(account.bankId, account.accountId), callContext)
+            otherBankAccount <- Future(account.moderatedOtherBankAccount(other_account_id, view, u)) map {
+              unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
+            }
           } yield {
             val otherBankAccountJson = createOtherBankAccount(otherBankAccount)
-            successJsonResponse(Extraction.decompose(otherBankAccountJson))
+            (otherBankAccountJson, HttpCode.`200`(callContext))
           }
       }
     }
@@ -1719,14 +1662,13 @@ trait APIMethods300 {
       case "entitlement-requests" :: Nil JsonPost json -> _ => {
         cc =>
           for {
-              (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+              (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
               postedData <- Future { tryo{json.extract[CreateEntitlementRequestJSON]} } map {
                 val msg = s"$InvalidJsonFormat The Json body should be the $CreateEntitlementRequestJSON "
                 x => fullBoxOrException(x ~> APIFailureNewStyle(msg, 400, callContext.map(_.toLight)))
               } map { unboxFull(_) }
-              _ <- Future { if (postedData.bank_id == "") Full() else Bank(BankId(postedData.bank_id)) } map {
-                x => fullBoxOrException(x ~> APIFailureNewStyle(BankNotFound, 400, callContext.map(_.toLight)))
-              }
+              _ <- Future { if (postedData.bank_id == "") Full() else NewStyle.function.getBank(bankId, callContext)}
+              
               _ <- Helper.booleanToFuture(failMsg = IncorrectRoleName + postedData.role_name + ". Possible roles are " + ApiRole.availableRoles.sorted.mkString(", ")) {
                 availableRoles.exists(_ == postedData.role_name)
               }
@@ -1776,10 +1718,8 @@ trait APIMethods300 {
           val allowedEntitlements = canGetEntitlementRequestsAtAnyBank :: Nil
           val allowedEntitlementsTxt = allowedEntitlements.mkString(" or ")
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + allowedEntitlementsTxt) {
-              hasAtLeastOneEntitlement("", u.userId, allowedEntitlements)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasAtLeastOneEntitlement(failMsg = UserHasMissingRoles + allowedEntitlementsTxt)("", u.userId, allowedEntitlements)
             getEntitlementRequests <- EntitlementRequest.entitlementRequest.vend.getEntitlementRequestsFuture() map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
             }
@@ -1821,10 +1761,8 @@ trait APIMethods300 {
           val allowedEntitlements = canGetEntitlementRequestsAtAnyBank :: Nil
           val allowedEntitlementsTxt = allowedEntitlements.mkString(" or ")
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + allowedEntitlementsTxt) {
-              hasAtLeastOneEntitlement("", u.userId, allowedEntitlements)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasAtLeastOneEntitlement(failMsg = UserHasMissingRoles + allowedEntitlementsTxt)("", u.userId, allowedEntitlements)
             getEntitlementRequests <- EntitlementRequest.entitlementRequest.vend.getEntitlementRequestsFuture(userId) map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
             }
@@ -1864,7 +1802,7 @@ trait APIMethods300 {
       case "my" :: "entitlement-requests" :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
             getEntitlementRequests <- EntitlementRequest.entitlementRequest.vend.getEntitlementRequestsFuture(u.userId) map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
             }
@@ -1903,12 +1841,10 @@ trait APIMethods300 {
       case "entitlement-requests" :: entitlementRequestId :: Nil JsonDelete _ => {
         cc =>
           val allowedEntitlements = canDeleteEntitlementRequestsAtAnyBank :: Nil
-          val allowedEntitlementsTxt = allowedEntitlements.mkString(" or ")
+          val allowedEntitlementsTxt = UserHasMissingRoles + allowedEntitlements.mkString(" or ")
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + allowedEntitlementsTxt) {
-              hasAtLeastOneEntitlement("", u.userId, allowedEntitlements)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasAtLeastOneEntitlement(failMsg = allowedEntitlementsTxt)("", u.userId, allowedEntitlements)
             deleteEntitlementRequest <- EntitlementRequest.entitlementRequest.vend.deleteEntitlementRequestFuture(entitlementRequestId) map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
             }
@@ -1947,10 +1883,8 @@ trait APIMethods300 {
       case "my" :: "entitlements" :: Nil JsonGet _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            getEntitlements <- Entitlement.entitlement.vend.getEntitlementsByUserIdFuture(u.userId) map {
-              unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
-            }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            getEntitlements <- NewStyle.function.getEntitlementsByUserId(u.userId, callContext)
           } yield {
             (JSONFactory200.createEntitlementJSONs(getEntitlements), HttpCode.`200`(callContext))
           }
@@ -2006,8 +1940,8 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: "accounts-held" ::  Nil JsonGet req => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
-            bank <- Future { Bank(bankId) } map { getFullBoxOrFail(_, callContext, BankNotFound,400) }
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
             availableAccounts <- Future{ AccountHolders.accountHolders.vend.getAccountsHeld(bankId, u)}
             accounts <- Connector.connector.vend.getCoreBankAccountsHeldFuture(availableAccounts.toList, callContext) map {
               unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
@@ -2084,13 +2018,11 @@ trait APIMethods300 {
         case "management" :: "aggregate-metrics" :: Nil JsonGet _ => {
           cc => {
             for {
-              (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+              (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
 
-              _ <- Helper.booleanToFuture(failMsg = UserHasMissingRoles + CanReadAggregateMetrics) {
-                hasEntitlement("", u.userId, ApiRole.canReadAggregateMetrics)
-              }
+              _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanReadAggregateMetrics)("", u.userId, ApiRole.canReadAggregateMetrics)
               
-              httpParams <- createHttpParamsByUrlFuture(cc.url) map { unboxFull(_) }
+              httpParams <- NewStyle.function.createHttpParams(cc.url)
               
               obpQueryParams <- createQueriesByHttpParamsFuture(httpParams) map {
                 x => fullBoxOrException(x ~> APIFailureNewStyle(InvalidFilterParameterFormat, 400, callContext.map(_.toLight)))
@@ -2146,7 +2078,7 @@ trait APIMethods300 {
       case "consumers" :: consumerId :: "scopes" :: Nil JsonPost json -> _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
 
             consumerIdInt <- Future { tryo{consumerId.toInt} } map {
               val msg = s"$ConsumerNotFoundById Current Value is $consumerId"
@@ -2172,13 +2104,12 @@ trait APIMethods300 {
             }
             
             allowedEntitlements = canCreateScopeAtOneBank :: canCreateScopeAtAnyBank :: Nil
+            allowedEntitlementsTxt = s"$UserHasMissingRoles ${allowedEntitlements.mkString(", ")}!"
 
-            _ <- Helper.booleanToFuture(failMsg = s"$UserHasMissingRoles ${allowedEntitlements.mkString(", ")}!") {
-               hasAtLeastOneEntitlement(postedData.bank_id, u.userId, allowedEntitlements)
-            }
+            _ <- NewStyle.function.hasAtLeastOneEntitlement(failMsg = allowedEntitlementsTxt)(postedData.bank_id, u.userId, allowedEntitlements)
 
             _ <- Helper.booleanToFuture(failMsg = BankNotFound) {
-              postedData.bank_id.nonEmpty == false || Bank(BankId(postedData.bank_id)).isEmpty == false
+              postedData.bank_id.nonEmpty == false || Bank(BankId(postedData.bank_id), callContext).map(_._1).isEmpty == false
             }
 
             _ <- Helper.booleanToFuture(failMsg = EntitlementAlreadyExists) {
@@ -2217,7 +2148,7 @@ trait APIMethods300 {
       case "consumers" :: consumerId :: "scope" :: scopeId :: Nil JsonDelete _ => {
         cc =>
           for {
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
             consumer <- Future{callContext.get.consumer} map {
               x => fullBoxOrException(x ~> APIFailureNewStyle(InvalidConsumerCredentials, 400, callContext.map(_.toLight)))
             } map { unboxFull(_) }
@@ -2260,7 +2191,7 @@ trait APIMethods300 {
         cc =>
           for {
             
-            (Full(u), callContext) <- extractCallContext(UserNotLoggedIn, cc)
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
             consumer <- Future{callContext.get.consumer} map {
               x => fullBoxOrException(x ~> APIFailureNewStyle(InvalidConsumerCredentials, 400, callContext.map(_.toLight)))
             } map { unboxFull(_) }
@@ -2297,9 +2228,9 @@ trait APIMethods300 {
       case "banks" :: Nil JsonGet _ => {
         cc =>
           for {
-            banks <- NewStyle.function.getBanks(Some(cc))
+            (banks, callContext) <- NewStyle.function.getBanks(Some(cc))
           } yield 
-            (JSONFactory300.createBanksJson(banks), HttpCode.`200`(Some(cc)))
+            (JSONFactory300.createBanksJson(banks), HttpCode.`200`(callContext))
       }
     }
   
@@ -2328,9 +2259,9 @@ trait APIMethods300 {
       case "banks" :: BankId(bankId) :: Nil JsonGet _ => {
         cc =>
           for {
-            bank <- NewStyle.function.getBank(bankId, Some(cc))
+            (bank, callContext) <- NewStyle.function.getBank(bankId, Some(cc))
           } yield
-            (JSONFactory.createBankJSON(bank), HttpCode.`200`(Some(cc)))
+            (JSONFactory.createBankJSON(bank), HttpCode.`200`(callContext))
       }
     }
 
