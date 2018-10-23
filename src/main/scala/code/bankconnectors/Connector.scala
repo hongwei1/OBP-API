@@ -14,6 +14,7 @@ import code.api.v2_1_0.{TransactionRequestCommonBodyJSON, _}
 import code.api.v3_1_0.{CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310, PostCustomerResponseJsonV310}
 import code.atms.Atms
 import code.atms.Atms.{AtmId, AtmT}
+import code.bankconnectors.vARZ.Connector_vARZ
 import code.bankconnectors.vJune2017.KafkaMappedConnector_vJune2017
 import code.bankconnectors.vMar2017.{InboundAdapterInfoInternal, KafkaMappedConnector_vMar2017}
 import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
@@ -82,6 +83,7 @@ object Connector extends SimpleInjector {
       case "kafka_vMar2017" => KafkaMappedConnector_vMar2017
       case "kafka_vJune2017" => KafkaMappedConnector_vJune2017
       case "kafka_vSept2018" => KafkaMappedConnector_vSept2018
+      case "arz" => Connector_vARZ
       case matchKafkaVersion(version) => getObjectInstance(s"""code.bankconnectors.KafkaMappedConnector_v${version}""")
     }
   }
@@ -170,6 +172,7 @@ trait Connector extends MdcLoggable{
   val customersByUserIdBoxTTL = getSecondsCache("getCustomersByUserIdBox")
   val memoryCounterpartyTTL = getSecondsCache("createMemoryCounterparty")
   val memoryTransactionTTL = getSecondsCache("createMemoryTransaction") 
+  val createCustomerFutureTTL = getSecondsCache("createCustomerFuture")
   val branchesTTL = getSecondsCache("getBranches") 
   val branchTTL = getSecondsCache("getBranch")
   val atmsTTL = getSecondsCache("getAtms")

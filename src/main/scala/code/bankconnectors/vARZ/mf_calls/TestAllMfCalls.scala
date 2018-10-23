@@ -12,14 +12,7 @@ object TestAllMfCalls extends App with MdcLoggable {
       famname = "Mustermann",
       vorname = "Max",
       mobiltel = "+4365012345678",
-      emailadr = "max.m@max.com",
-      
-      titel = None,
-      filiale = None,
-      titelnach = None,
-      kundnr = None,
-      hilfszahl = None),
-    musterkundnr = None
+      emailadr = "max.m@max.com")
   )
   
   val postkundenkontakteResponse = PostPrivatkundenkontakte.postPrivatenkundenkontakte(postkundenkontakteRequest)
@@ -39,10 +32,7 @@ object TestAllMfCalls extends App with MdcLoggable {
       identifier = "H",
       number = 1
     ),
-    bankSupervisorId = "FLEXAPI",
-  
-    bankAdvisorId = None,
-    number = None
+    bankSupervisorId = "FLEXAPI"
   )
   
   val postDisposersResponse = PostDisposers.postDisposers(postDisposersRequest)

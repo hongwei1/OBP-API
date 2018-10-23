@@ -282,7 +282,28 @@ case class InternalCounterparty(
                                  bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
 
 
-case class InternalCustomer(customerId: String, bankId: String, number: String, legalName: String, mobileNumber: String, email: String, faceImage: CustomerFaceImage, dateOfBirth: Date, relationshipStatus: String, dependents: Integer, dobOfDependents: List[Date], highestEducationAttained: String, employmentStatus: String, creditRating: CreditRating, creditLimit: CreditLimit, kycStatus: lang.Boolean, lastOkDate: Date) extends Customer
+case class InternalCustomer(
+  customerId: String,
+  bankId: String,
+  number: String,
+  legalName: String,
+  mobileNumber: String,
+  email: String,
+  faceImage: CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Integer,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating: CreditRating,
+  creditLimit: CreditLimit,
+  kycStatus: lang.Boolean,
+  lastOkDate: Date,
+  title: String,
+  branchId: String,
+  nameSuffix: String
+) extends Customer
 
 case class  InboundBranchVJune2017(
                            branchId: BranchId,

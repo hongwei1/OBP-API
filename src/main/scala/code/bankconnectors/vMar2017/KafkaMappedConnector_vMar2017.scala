@@ -33,7 +33,6 @@ import code.api.util.{APIUtil, CallContext, ErrorMessages}
 import code.api.v2_1_0._
 import code.bankconnectors._
 import code.branches.Branches.{Branch, BranchT}
-import code.customer.{AmountOfMoneyTrait, CreateCustomerRequest, CreditRatingTrait, CustomerFaceImageTrait}
 import code.fx.{FXRate, fx}
 import code.kafka.KafkaHelper
 import code.management.ImporterAPI.ImporterTransaction
@@ -60,7 +59,7 @@ import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Props
 
-import scala.collection.immutable.{List, Nil, Seq}
+import scala.collection.immutable.{Nil, Seq}
 import scala.collection.mutable.ArrayBuffer
 
 

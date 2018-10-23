@@ -148,7 +148,3 @@ trait CreditRatingTrait {
 case class CustomerFaceImage(date : Date, url : String) extends CustomerFaceImageTrait
 case class CreditRating(rating: String, source: String) extends CreditRatingTrait
 case class CreditLimit(currency: String, amount: String) extends AmountOfMoneyTrait
-
-case class CreateCustomerRequest(
-                                number: String
-                                )
