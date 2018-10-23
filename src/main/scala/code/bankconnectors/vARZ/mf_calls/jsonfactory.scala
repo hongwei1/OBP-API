@@ -84,3 +84,19 @@ case class PostDisposersResponse(
 )
 
 case class ARZValue(value: Int)
+
+case class Kundennummer(kundennummer: String)
+
+case class Konto(
+  kontonummer: Long,
+  iban: String,
+  geschaeftsart: String,
+  produktbezeichnung: String,
+  produktnummer: String,
+  produktvariante: String,
+  saldo: Int,
+  waehrung: String,
+  kontobezeichnung: String,
+  gemeinschaftsprodukt: Boolean,
+  kundennummerhilfsstamm: Option[Long]
+)

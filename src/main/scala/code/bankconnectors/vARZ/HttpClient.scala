@@ -5,7 +5,7 @@ import java.util.UUID
 import code.api.util.APIUtil
 import code.util.Helper.MdcLoggable
 import net.liftweb.json.JsonAST.{JValue, compactRender}
-import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 
@@ -35,5 +35,27 @@ object HttpClient extends MdcLoggable {
     logger.debug(s"$path--Response : "+response.toString+ "\n Body is :"+result)
     if (result.startsWith("<")) throw new Exception(s"InvalidRequestFormat, current Request is $result") else result
   }
+  
+  def makeGetRequest(path: String): String = {
+    val httpGet = new HttpGet(path)
+    
+    httpGet.addHeader("Content-Type", "application/json;charset=utf-8")
+    httpGet.addHeader("Authorization", APIUtil.getPropsValue("arz.authorization","arz.authorization"))
+    httpGet.addHeader("arz-request-thread", UUID.randomUUID().toString)
+    httpGet.addHeader("arz-tenant", "499")
+    httpGet.addHeader("arz-variante", "0")
+    httpGet.addHeader("arz-accounting-id", "TESOBE")
+    httpGet.addHeader("arz-request-origin", "1")
+
+
+    logger.debug(s"$path--Request : " + httpGet.toString)
+    val response = clientToCbs.execute(httpGet)
+    val inputStream = response.getEntity.getContent
+    val result = scala.io.Source.fromInputStream(inputStream).mkString
+    response.close()
+    logger.debug(s"$path--Response : " + response.toString + "\n Body is :" + result)
+    result
+  }
+  
 
 }
