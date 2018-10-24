@@ -28,7 +28,7 @@ import java.util.UUID.randomUUID
 
 import code.api.cache.Caching
 import code.api.util.APIUtil.{MessageDoc, saveConnectorMetric}
-import code.api.util.{CallContext}
+import code.api.util.CallContext
 import code.api.util.ErrorMessages._
 import code.bankconnectors._
 import code.bankconnectors.vARZ.mf_calls._
@@ -278,15 +278,17 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerIDMapping(bankId, customerNumber)
     .openOrThrowException("getCustomerByCustomerId Error")
     
+    val cbsCustomer = KundeservicesV3.getKunten(customerNumber)
+    
     Full(
       //TODO, here need call CBS-getCustomerByCustomerNumber, return some real CBS data.
       InternalCustomer(
         customerId = customerMapping.customerId.value,
         bankId =customerMapping.bankId.value,
         number = customerMapping.customerNumber,
-        legalName = "",
+        legalName = cbsCustomer.name1,
         mobileNumber ="",
-        email = "",
+        email = cbsCustomer.emailadresse.value,
         faceImage = CustomerFaceImage(new Date(),"" ),
         dateOfBirth = new Date(),
         relationshipStatus = "",
@@ -296,7 +298,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         employmentStatus = "",
         creditRating = CreditRating("",""), 
         creditLimit  = CreditLimit("",""), 
-        kycStatus = true,    
+        kycStatus = cbsCustomer.active,    
         lastOkDate = new Date(),   
         title = "",        
         branchId = "",     
