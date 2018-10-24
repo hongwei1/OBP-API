@@ -28,16 +28,18 @@ import java.util.UUID.randomUUID
 
 import code.api.cache.Caching
 import code.api.util.APIUtil.{MessageDoc, saveConnectorMetric}
-import code.api.util.CallContext
+import code.api.util.{CallContext}
 import code.api.util.ErrorMessages._
 import code.bankconnectors._
-import code.bankconnectors.vARZ.mf_calls.{MfUtil, PostDisposers, PostPrivatkundenkontakte}
+import code.bankconnectors.vARZ.mf_calls._
 import code.bankconnectors.vJune2017.AuthInfo
 import code.bankconnectors.vMar2017._
 import code.customer._
 import code.customer.internalMapping.CustomerIDMappingProvider
 import code.kafka.KafkaHelper
 import code.model._
+import code.usercustomerlinks.UserCustomerLink
+import code.users.Users
 import code.util.Helper.MdcLoggable
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.{Box, _}
@@ -304,8 +306,81 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
   }
     
 
+  //This one will map Bank Customer data with obp user and accounts data. 
+  override def getBankAccounts(username: String, callContext: Option[CallContext]) : Box[(List[InboundAccountCommon], Option[CallContext])] = {
+    
+    val user = Users.users.vend.getUserByUserName(username).openOrThrowException("Can not find the user! ")
+    
+    val cbsAccountsList= for{
+      customerLink <- UserCustomerLink.userCustomerLink.vend.getUserCustomerLinksByUserId(user.userId)
+      customerIDMapping <- CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerLink.customerId))
+      customerNumber = customerIDMapping.customerNumber
+      cbsAccounts <- Full(KundeServicesV4.getKonten(customerNumber))
+      obpAccounts <- Full(
+        for{
+          cbsAccount <- cbsAccounts
+          //TODO, this need to be moved into a mapped table!
+          accountId = UUID.nameUUIDFromBytes(cbsAccount.kontonummer.toString.getBytes).toString
+          obpAccount <- List(InboundAccountArz(
+            errorCode = "",
+            cbsToken = "",
+            bankId ="arz",
+            branchId ="",
+            accountId = accountId,
+            accountNumber = cbsAccount.kontonummer.toString,
+            accountType =cbsAccount.geschaeftsart,
+            balanceAmount = cbsAccount.saldo.toString,
+            balanceCurrency = cbsAccount.waehrung,
+            owners = List(cbsAccount.kontobezeichnung),
+            viewsToGenerate = List("owner"),
+            bankRoutingScheme = "",
+            bankRoutingAddress = "",
+            branchRoutingScheme = "",
+            branchRoutingAddress = "",
+            accountRoutingScheme ="",
+            accountRoutingAddress=cbsAccount.iban,
+            accountRoutings = List(AccountRouting("Iban", cbsAccount.iban), AccountRouting("AccountNumber", cbsAccount.kontonummer.toString)),
+            accountRules = Nil))
+        } yield{
+          obpAccount
+        })
+    } yield 
+      obpAccounts
+    
+    Full((cbsAccountsList.flatten, callContext))
+    
+  }
   
-//  override def getBankAccounts(username: String, callContext: Option[CallContext]) : Box[(List[InboundAccountCommon], Option[CallContext])] = Failure(NotImplemented + currentMethodName)
+  override def getCoreBankAccountsFuture(BankIdAccountIds: List[BankIdAccountId], callContext: Option[CallContext]) : Future[Box[(List[CoreAccount], Option[CallContext])]] = Future
+  {
+    
+    val user = callContext.get.user.openOrThrowException("Can not find the user! ")
+    
+    val coreAccounts= for{
+      customerLink <- UserCustomerLink.userCustomerLink.vend.getUserCustomerLinksByUserId(user.userId)
+      customerIDMapping <- CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerLink.customerId))
+      customerNumber = customerIDMapping.customerNumber
+      cbsAccounts <- Full(KundeServicesV4.getKonten(customerNumber))
+      obpAccounts <- Full(
+        for{
+          cbsAccount <- cbsAccounts
+          //TODO, this need to be moved into a mapped table!
+          accountId = UUID.nameUUIDFromBytes(cbsAccount.kontonummer.toString.getBytes).toString
+          obpAccount <- List(CoreAccount(
+            id = accountId,
+            label = cbsAccount.kontobezeichnung, 
+            bankId = "arz",
+            accountType = cbsAccount.geschaeftsart,
+            accountRoutings = List(AccountRouting("Iban",cbsAccount.iban), AccountRouting("AccountNumber",cbsAccount.kontonummer.toString))))
+        } yield{
+          obpAccount
+        })
+    } yield 
+      obpAccounts
+    
+    Full((coreAccounts.flatten, callContext))
+    
+  }
 
 
 }

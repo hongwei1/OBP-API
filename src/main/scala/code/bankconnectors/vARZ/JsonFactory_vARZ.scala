@@ -106,9 +106,9 @@ case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
 case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
 case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
 case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
-case class InboundGetAccounts(authInfo: AuthInfo, status: Status, data: List[InboundAccountJune2017])
-case class InboundGetAccountbyAccountID(authInfo: AuthInfo, status: Status, data: Option[InboundAccountJune2017])
-case class InboundCheckBankAccountExists(authInfo: AuthInfo, status: Status, data: Option[InboundAccountJune2017])
+case class InboundGetAccounts(authInfo: AuthInfo, status: Status, data: List[InboundAccountArz])
+case class InboundGetAccountbyAccountID(authInfo: AuthInfo, status: Status, data: Option[InboundAccountArz])
+case class InboundCheckBankAccountExists(authInfo: AuthInfo, status: Status, data: Option[InboundAccountArz])
 case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
 case class InboundGetTransactions(authInfo: AuthInfo, status: Status, data: List[InternalTransaction_vJune2017])
 case class InboundGetTransaction(authInfo: AuthInfo, status: Status, data: Option[InternalTransaction_vJune2017])
@@ -144,7 +144,7 @@ case class Status(
                  )
 case class AuthInfo(userId: String = "", username: String ="", cbsToken: String ="", isFirst: Boolean = true, correlationId: String="")
 
-case class InboundAccountJune2017(
+case class InboundAccountArz(
   errorCode: String,
   cbsToken: String, //TODO, this maybe move to AuthInfo, but it is used in GatewayLogin
   bankId: String,
@@ -162,11 +162,11 @@ case class InboundAccountJune2017(
   branchRoutingAddress: String,
   accountRoutingScheme: String,
   accountRoutingAddress: String,
-  accountRouting: List[AccountRouting],
+  accountRoutings: List[AccountRouting],
   accountRules: List[AccountRule]
 ) extends InboundMessageBase with InboundAccountCommon
 
-case class BankAccountJune2017(r: InboundAccountJune2017) extends BankAccount {
+case class BankAccountArz(r: InboundAccountArz) extends BankAccount {
 
   def accountId: AccountId = AccountId(r.accountId)
   def accountType: String = r.accountType
