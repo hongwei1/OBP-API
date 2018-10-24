@@ -244,18 +244,26 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     customerNumber : String
   ) : Future[Box[Boolean]] = Future{Full(true)}
   
+  override def getCustomerByCustomerIdFuture(customerId: String, callContext: Option[CallContext]): Future[Box[(Customer,Option[CallContext])]] = Future
+  {
+    getCustomerByCustomerId(customerId: String, callContext: Option[CallContext])
+  }
+
   override def getCustomerByCustomerId(customerId: String, callContext: Option[CallContext]) = {
     val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerId))
     .openOrThrowException("getCustomerByCustomerId Error")
     
+    val customerNumber = customerMapping.customerNumber
+    val cbsCustomer = KundeservicesV3.getKunten(customerNumber)
+    
     Full(
       InternalCustomer(
-        customerId = customerMapping.customerId.value,
+        customerId = customerId,
         bankId =customerMapping.bankId.value,
         number = customerMapping.customerNumber,
-        legalName = "",
+        legalName = cbsCustomer.name1,
         mobileNumber ="",
-        email = "",
+        email = cbsCustomer.emailadresse.value,
         faceImage = CustomerFaceImage(new Date(),"" ),
         dateOfBirth = new Date(),
         relationshipStatus = "",
@@ -265,7 +273,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         employmentStatus = "",
         creditRating = CreditRating("",""), 
         creditLimit  = CreditLimit("",""), 
-        kycStatus = true,    
+        kycStatus = cbsCustomer.active,    
         lastOkDate = new Date(),   
         title = "",        
         branchId = "",     
