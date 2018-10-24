@@ -112,7 +112,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(banksTTL second){
-        Full(List(Bank2(InboundBank("bankId","name","logo","url"))), callContext)
+        Full(List(Bank2(InboundBank("arz","name","logo","url"))), callContext)
       }
     }
   }("getBanks")
@@ -142,7 +142,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(bankTTL second) {
-        Full(Bank2(InboundBank("bankId","name","logo","url")), callContext)
+        Full(Bank2(InboundBank(bankId.value,"name","logo","url")), callContext)
       }
     }
   }("getBank")
@@ -203,8 +203,8 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
             //5 Map CustomerNumber to OBP CustomerId (UUID)
             val customeNumber =  kundenResult.kundennummer.toString
             //TODO, need enhance the error handling here:
-            val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerId(bankId, customeNumber)
-              .openOrThrowException("InternalCustomerMappingProvider.internalCustomerMappingProvider.vend.getOrCreateCustomerId Error")
+            val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerIDMapping(bankId, customeNumber)
+              .openOrThrowException("getOrCreateCustomerIDMapping Error")
             val customerId = customerMapping.customerId.value
           
             //6 Prepare the OBP response 
@@ -241,6 +241,35 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     bankId : BankId, 
     customerNumber : String
   ) : Future[Box[Boolean]] = Future{Full(true)}
+  
+  override def getCustomerByCustomerId(customerId: String, callContext: Option[CallContext]) = {
+    val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerId))
+    .openOrThrowException("getCustomerByCustomerId Error")
+    
+    Full(
+      InternalCustomer(
+        customerId = customerMapping.customerId.value,
+        bankId =customerMapping.bankId.value,
+        number = customerMapping.customerNumber,
+        legalName = "",
+        mobileNumber ="",
+        email = "",
+        faceImage = null,
+        dateOfBirth = null,
+        relationshipStatus = null,
+        dependents = null,
+        dobOfDependents = null,
+        highestEducationAttained = null,
+        employmentStatus = null,
+        creditRating = null, 
+        creditLimit  = null, 
+        kycStatus = null,    
+        lastOkDate = null,   
+        title = null,        
+        branchId = null,     
+        nameSuffix= null
+      ), callContext)
+  }
 
 }
 
