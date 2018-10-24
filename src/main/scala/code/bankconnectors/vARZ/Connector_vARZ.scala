@@ -194,7 +194,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
             val postkundenkontakteRequestJson = MfUtil.gerernatePostKundeRequest(legalName,mobileNumber, email)
           
             // 2 Call ARZ create `postPrivatenkundenkontakte` service
-            val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(postkundenkontakteRequestJson)
+            val kundenResult =  KundeservicesV3.postPrivatenkundenkontakte(postkundenkontakteRequestJson)
             
             // 3 Prepare the `postDisposersRequestJson`
             val postDisposersRequestJson = MfUtil.gerernatePostDisposerRequest(kundenResult.kundennummer)

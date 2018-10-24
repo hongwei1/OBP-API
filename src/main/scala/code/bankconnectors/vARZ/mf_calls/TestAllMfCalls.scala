@@ -15,7 +15,7 @@ object TestAllMfCalls extends App with MdcLoggable {
       emailadr = "max.m@max.com")
   )
   
-  val postkundenkontakteResponse = PostPrivatkundenkontakte.postPrivatenkundenkontakte(postkundenkontakteRequest)
+  val postkundenkontakteResponse = KundeservicesV3.postPrivatenkundenkontakte(postkundenkontakteRequest)
   logger.info(s"postkundenkontakteResponse : $postkundenkontakteResponse")
   
   
@@ -42,5 +42,9 @@ object TestAllMfCalls extends App with MdcLoggable {
   val consumerNumber = "1248"
   val accountsForThisCustomer = KundeServicesV4.getKonten(consumerNumber)
   logger.info(s"accountsForThisCustomer : $accountsForThisCustomer")
+  
+  
+  val getKuntenResponse = KundeservicesV3.getKunten(consumerNumber)
+  logger.info(s"getKuntenResponse : $getKuntenResponse")
   
 }

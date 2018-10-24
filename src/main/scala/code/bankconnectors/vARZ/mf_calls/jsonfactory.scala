@@ -88,3 +88,26 @@ case class Konto(
   gemeinschaftsprodukt: Boolean,
   kundennummerhilfsstamm: Option[Long]
 )
+
+
+case class KundennummerForGet(
+  bigDecimalValue: Long,
+  value: Long
+)
+case class Strasse(
+  value: String
+)
+case class GetKundenResponseJson(
+  kundennummer: KundennummerForGet,
+  active: Boolean,
+  name1: String,
+  name2: String,
+  strasse: Strasse,
+  ort: Strasse,
+  postleitzahl: Strasse,
+  datenqualitaet: String,
+  rechtsform: Strasse,
+  betreuer: Strasse,
+  filiale: Strasse,
+  emailadresse: Strasse
+)
