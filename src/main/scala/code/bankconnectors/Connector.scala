@@ -1361,7 +1361,6 @@ trait Connector extends MdcLoggable{
   
   def createCustomerFuture(
                       bankId: BankId,
-                      number: String,
                       legalName: String,
                       mobileNumber: String,
                       email: String,

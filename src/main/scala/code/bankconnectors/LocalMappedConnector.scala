@@ -51,6 +51,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.math.BigInt
+import scala.util.Random
 
 
 object LocalMappedConnector extends Connector with MdcLoggable {
@@ -1726,7 +1727,6 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   
   override def createCustomerFuture(
                                bankId: BankId,
-                               number: String,
                                legalName: String,
                                mobileNumber: String,
                                email: String,
@@ -1748,7 +1748,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                nameSuffix: String): Future[Box[Customer]] = Future{
     Customer.customerProvider.vend.addCustomer(
       bankId,
-      number,
+      Random.nextInt(Integer.MAX_VALUE).toString,
       legalName,
       mobileNumber,
       email,
