@@ -35,6 +35,7 @@ import code.bankconnectors.vARZ.mf_calls.{MfUtil, PostDisposers, PostPrivatkunde
 import code.bankconnectors.vJune2017.AuthInfo
 import code.bankconnectors.vMar2017._
 import code.customer._
+import code.customer.internalMapping.CustomerIDMappingProvider
 import code.kafka.KafkaHelper
 import code.model._
 import code.util.Helper.MdcLoggable
@@ -187,21 +188,31 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(createCustomerFutureTTL second){
         Future
         {
-            // 1 Build ARZ Json from OBP Json 
+            // 1 Prepare the `postkundenkontakteRequestJson`
             val postkundenkontakteRequestJson = MfUtil.gerernatePostKundeRequest(legalName,mobileNumber, email)
+          
             // 2 Call ARZ create `postPrivatenkundenkontakte` service
             val kundenResult =  PostPrivatkundenkontakte.postPrivatenkundenkontakte(postkundenkontakteRequestJson)
             
-            // 3 Call ARZ `postDisposers` service
+            // 3 Prepare the `postDisposersRequestJson`
             val postDisposersRequestJson = MfUtil.gerernatePostDisposerRequest(kundenResult.kundennummer)
-          // 2 Call ARZ create `postDisposers` service
+          
+            // 4 Call ARZ create `postDisposers` service
             val disposerResult = PostDisposers.postDisposers(postDisposersRequestJson)
+          
+            //5 Map CustomerNumber to OBP CustomerId (UUID)
+            val customeNumber =  kundenResult.kundennummer.toString
+            //TODO, need enhance the error handling here:
+            val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerId(bankId, customeNumber)
+              .openOrThrowException("InternalCustomerMappingProvider.internalCustomerMappingProvider.vend.getOrCreateCustomerId Error")
+            val customerId = customerMapping.customerId.value
+          
+            //6 Prepare the OBP response 
           Full(
-            //4 Prepare the OBP response 
             InternalCustomer(
-              customerId = createArzCustomerId(kundenResult.kundennummer),
+              customerId = customerId,
               bankId =bankId.value,
-              number =kundenResult.kundennummer.toString,
+              number = customeNumber,
               legalName = legalName,
               mobileNumber =mobileNumber,
               email = email,
