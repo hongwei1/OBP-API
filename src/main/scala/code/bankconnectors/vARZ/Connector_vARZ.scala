@@ -254,22 +254,59 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         legalName = "",
         mobileNumber ="",
         email = "",
-        faceImage = null,
-        dateOfBirth = null,
-        relationshipStatus = null,
-        dependents = null,
-        dobOfDependents = null,
-        highestEducationAttained = null,
-        employmentStatus = null,
-        creditRating = null, 
-        creditLimit  = null, 
-        kycStatus = null,    
-        lastOkDate = null,   
-        title = null,        
-        branchId = null,     
-        nameSuffix= null
+        faceImage = CustomerFaceImage(new Date(),"" ),
+        dateOfBirth = new Date(),
+        relationshipStatus = "",
+        dependents = 1,
+        dobOfDependents = List(new Date()),
+        highestEducationAttained = "",
+        employmentStatus = "",
+        creditRating = CreditRating("",""), 
+        creditLimit  = CreditLimit("",""), 
+        kycStatus = true,    
+        lastOkDate = new Date(),   
+        title = "",        
+        branchId = "",     
+        nameSuffix= ""
       ), callContext)
   }
+  
+  override def getCustomerByCustomerNumberFuture(customerNumber : String, bankId : BankId, callContext: Option[CallContext]): Future[Box[(Customer, Option[CallContext])]] = Future{
+
+    val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerIDMapping(bankId, customerNumber)
+    .openOrThrowException("getCustomerByCustomerId Error")
+    
+    Full(
+      //TODO, here need call CBS-getCustomerByCustomerNumber, return some real CBS data.
+      InternalCustomer(
+        customerId = customerMapping.customerId.value,
+        bankId =customerMapping.bankId.value,
+        number = customerMapping.customerNumber,
+        legalName = "",
+        mobileNumber ="",
+        email = "",
+        faceImage = CustomerFaceImage(new Date(),"" ),
+        dateOfBirth = new Date(),
+        relationshipStatus = "",
+        dependents = 1,
+        dobOfDependents = List(new Date()),
+        highestEducationAttained = "",
+        employmentStatus = "",
+        creditRating = CreditRating("",""), 
+        creditLimit  = CreditLimit("",""), 
+        kycStatus = true,    
+        lastOkDate = new Date(),   
+        title = "",        
+        branchId = "",     
+        nameSuffix= ""
+      ), callContext)
+    
+  }
+    
+
+  
+//  override def getBankAccounts(username: String, callContext: Option[CallContext]) : Box[(List[InboundAccountCommon], Option[CallContext])] = Failure(NotImplemented + currentMethodName)
+
 
 }
 
