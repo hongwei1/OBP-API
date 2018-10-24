@@ -163,7 +163,6 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
 
   override def createCustomerFuture(
     bankId: BankId,
-    number: String,
     legalName: String,
     mobileNumber: String,
     email: String,
