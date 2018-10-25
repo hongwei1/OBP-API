@@ -5,7 +5,7 @@ import code.api.v3_1_0.PostCustomerJsonV310
 
 object MfUtil {
   
-  def gerernatePostKundeRequest(
+  def generatePostKundeRequest(
     legalName: String,
     mobileNumber: String,
     email: String) = 
@@ -19,7 +19,7 @@ object MfUtil {
       )
     )
     
-    def gerernatePostDisposerRequest(customerNumber: Int) =
+    def generatePostDisposerRequest(customerNumber: Int) =
       PostDisposersRequest(
         credentials = Credentials(
           name = "HARDCODE-Simon",

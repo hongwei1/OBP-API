@@ -38,7 +38,7 @@ import code.customer._
 import code.customer.internalMapping.CustomerIDMappingProvider
 import code.kafka.KafkaHelper
 import code.model._
-import code.usercustomerlinks.UserCustomerLink
+import code.usercustomerlinks.{MappedUserCustomerLinkProvider, UserCustomerLink}
 import code.users.Users
 import code.util.Helper.MdcLoggable
 import com.tesobe.CacheKeyFromArguments
@@ -191,13 +191,13 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         Future
         {
             // 1 Prepare the `postkundenkontakteRequestJson`
-            val postkundenkontakteRequestJson = MfUtil.gerernatePostKundeRequest(legalName,mobileNumber, email)
+            val postkundenkontakteRequestJson = MfUtil.generatePostKundeRequest(legalName, mobileNumber, email)
           
             // 2 Call ARZ create `postPrivatenkundenkontakte` service
             val kundenResult =  KundeservicesV3.postPrivatenkundenkontakte(postkundenkontakteRequestJson)
             
             // 3 Prepare the `postDisposersRequestJson`
-            val postDisposersRequestJson = MfUtil.gerernatePostDisposerRequest(kundenResult.kundennummer)
+            val postDisposersRequestJson = MfUtil.generatePostDisposerRequest(kundenResult.kundennummer)
           
             // 4 Call ARZ create `postDisposers` service
             val disposerResult = PostDisposers.postDisposers(postDisposersRequestJson)
@@ -263,7 +263,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         number = customerMapping.customerNumber,
         legalName = cbsCustomer.name1,
         mobileNumber ="",
-        email = cbsCustomer.emailadresse.value,
+        email = cbsCustomer.emailadresse.map(_.value).getOrElse(""),
         faceImage = CustomerFaceImage(new Date(),"" ),
         dateOfBirth = new Date(),
         relationshipStatus = "",
@@ -296,7 +296,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         number = customerMapping.customerNumber,
         legalName = cbsCustomer.name1,
         mobileNumber ="",
-        email = cbsCustomer.emailadresse.value,
+        email = cbsCustomer.emailadresse.map(_.value).getOrElse(""),
         faceImage = CustomerFaceImage(new Date(),"" ),
         dateOfBirth = new Date(),
         relationshipStatus = "",
@@ -391,6 +391,17 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     Full((coreAccounts.flatten, callContext))
     
   }
+  
+  override def getCustomersByUserIdFuture(userId: String, callContext: Option[CallContext]): Future[Box[(List[Customer],Option[CallContext])]]= Future{
+    val customers = for{
+      customerId <- MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(userId).map(_.customerId)
+      (customer, callContext) <- getCustomerByCustomerId(customerId, callContext)      
+    } yield 
+      customer
+    
+    Full((customers, callContext))
+  }
+      
 
 
 }

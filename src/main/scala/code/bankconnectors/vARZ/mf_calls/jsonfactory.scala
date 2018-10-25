@@ -109,5 +109,6 @@ case class GetKundenResponseJson(
   rechtsform: Strasse,
   betreuer: Strasse,
   filiale: Strasse,
-  emailadresse: Strasse
+  emailadresse: Option[Strasse],
+  geburtsdatum:Option[Strasse]
 )
