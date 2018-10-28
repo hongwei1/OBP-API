@@ -41,6 +41,7 @@ import code.customer.internalMapping.CustomerIDMappingProvider
 import code.fx.fx
 import code.kafka.KafkaHelper
 import code.model._
+import code.model.dataAccess.MappedBankAccountData
 import code.transaction.MappedTransaction
 import code.usercustomerlinks.{MappedUserCustomerLinkProvider, UserCustomerLink}
 import code.users.Users
@@ -354,7 +355,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
             branchRoutingAddress = "",
             accountRoutingScheme ="",
             accountRoutingAddress=cbsAccount.iban,
-            accountRoutings = List(AccountRouting("Iban", cbsAccount.iban), AccountRouting("AccountNumber", cbsAccount.kontonummer.toString)),
+            accountRoutings = List(AccountRouting("IBAN", cbsAccount.iban), AccountRouting("AccountNumber", cbsAccount.kontonummer.toString)),
             accountRules = Nil))
         } yield{
           obpAccount
@@ -386,7 +387,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
             label = cbsAccount.kontobezeichnung, 
             bankId = "arz",
             accountType = cbsAccount.geschaeftsart,
-            accountRoutings = List(AccountRouting("Iban",cbsAccount.iban), AccountRouting("AccountNumber",cbsAccount.kontonummer.toString))))
+            accountRoutings = List(AccountRouting("IBAN",cbsAccount.iban), AccountRouting("AccountNumber",cbsAccount.kontonummer.toString))))
         } yield{
           obpAccount
         })
@@ -429,7 +430,23 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
             accountRoutingAddress = "",
             accountRoutings = Nil,
             accountRules = Nil)
+    
+    Connector_vARZ.createMappedAccountDataIfNotExisting(bankId.value, accountId.value, "1234")
+    
     Full(BankAccountArz(account), callContext)
+  }
+  
+  override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String) = {
+    //this will be Full(true) if everything went well
+    val result = for {
+      acc <- getBankAccount(bankId, accountId)
+      (bank, _)<- getBank(bankId, None)
+      d <- MappedBankAccountData.find(By(MappedBankAccountData.accountId, accountId.value), By(MappedBankAccountData.bankId, bank.bankId.value))
+    } yield {
+      d.setLabel(label)
+      d.save()
+    }
+    Full(result.getOrElse(false))
   }
   
       
@@ -620,5 +637,19 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
 
 
 object Connector_vARZ extends Connector_vARZ{
-  
+  private def createMappedAccountDataIfNotExisting(bankId: String, accountId: String, label: String) : Boolean = {
+    MappedBankAccountData.find(By(MappedBankAccountData.accountId, accountId),
+                                    By(MappedBankAccountData.bankId, bankId)) match {
+      case Empty =>
+        val data = new MappedBankAccountData
+        data.setAccountId(accountId)
+        data.setBankId(bankId)
+        data.setLabel(label)
+        data.save()
+        true
+      case _ =>
+        logger.info(s"account data with id $accountId at bank with id $bankId already exists. No need to create a new one.")
+        false
+    }
+  }
 }
