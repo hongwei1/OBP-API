@@ -45,6 +45,7 @@ import code.model.dataAccess.MappedBankAccountData
 import code.transaction.MappedTransaction
 import code.usercustomerlinks.{MappedUserCustomerLinkProvider, UserCustomerLink}
 import code.users.Users
+import code.util.Helper
 import code.util.Helper.MdcLoggable
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.{Box, _}
@@ -609,8 +610,8 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
       .bank(fromAccount.bankId.value)
       .account(fromAccount.accountId.value)
       .transactionType(transactionRequestType.value)
-      .amount(amount.toLong)
-      .newAccountBalance(10000)
+      .amount(Helper.convertToSmallestCurrencyUnits(amount, "EUR"))
+      .newAccountBalance(1000000)
       .currency(currency)
       .tStartDate(new Date())
       .tFinishDate(new Date())
