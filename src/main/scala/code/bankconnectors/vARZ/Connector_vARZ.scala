@@ -151,7 +151,10 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(bankTTL second) {
-        Full(Bank2(InboundBank(bankId.value,"name","logo","url")), callContext)
+        if (bankId.value =="arz")
+          Full(Bank2(InboundBank(bankId.value,"name","logo","url")), callContext)
+        else 
+          Failure(BankNotFound)
       }
     }
   }("getBank")
