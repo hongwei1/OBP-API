@@ -174,11 +174,11 @@ class Boot extends MdcLoggable {
       val vendor =
         Props.mode match {
           case Props.RunModes.Production | Props.RunModes.Staging | Props.RunModes.Development =>
-            new StandardDBVendor(driver,
+            new SchemaAwareDBVendor(driver,
               APIUtil.getPropsValue("db.url") openOr "jdbc:h2:lift_proto.db;AUTO_SERVER=TRUE",
               APIUtil.getPropsValue("db.user"), APIUtil.getPropsValue("db.password"))
           case _ =>
-            new StandardDBVendor(
+            new SchemaAwareDBVendor(
               driver,
               "jdbc:h2:mem:OBPTest;DB_CLOSE_DELAY=-1",
               Empty, Empty)
