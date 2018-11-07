@@ -2277,4 +2277,11 @@ Returns a string showed to the developer
     */
   def generateUUID(): String = UUID.randomUUID().toString
 
+  def getSchema = {
+    val dbUrl = APIUtil.getPropsValue("db.url") openOr "jdbc:h2:lift_proto.db;AUTO_SERVER=TRUE"
+    dbUrl.contains("schema=") match {
+      case true => dbUrl.split("&").filter(i =>i.contains("schema=")).mkString("").split("=")(1)
+      case false =>"public"
+    }
+  }
 }
