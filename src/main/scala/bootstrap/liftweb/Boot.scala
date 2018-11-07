@@ -178,7 +178,7 @@ class Boot extends MdcLoggable {
               APIUtil.getPropsValue("db.url") openOr "jdbc:h2:lift_proto.db;AUTO_SERVER=TRUE",
               APIUtil.getPropsValue("db.user"), APIUtil.getPropsValue("db.password"))
           case _ =>
-            new SchemaAwareDBVendor(
+            new StandardDBVendor(
               driver,
               "jdbc:h2:mem:OBPTest;DB_CLOSE_DELAY=-1",
               Empty, Empty)
