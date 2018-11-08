@@ -10,7 +10,11 @@ trait KafkaConfig {
 
   val bootstrapServers = APIUtil.getPropsValue("kafka.bootstrap_hosts")openOr("localhost:9092")
   val groupId = APIUtil.getPropsValue("kafka.group.id").openOr("obp-api")
-  val apiInstanceId = APIUtil.getPropsAsIntValue("api_instance_id").openOrThrowException(s"${ErrorMessages.MissingPropsValueAtThisInstance} api_instance_id") 
+  val apiInstanceId = 
+    if (APIUtil.isSandboxMode)
+      APIUtil.getPropsAsIntValue("api_instance_id").openOr("{api_instance_id}")
+    else
+      APIUtil.getPropsAsIntValue("api_instance_id").openOrThrowException(s"${ErrorMessages.MissingPropsValueAtThisInstance} api_instance_id") 
   val partitions = APIUtil.getPropsAsIntValue("kafka.partitions", 10)
 
   val clientId = s"obp.api.$apiInstanceId"

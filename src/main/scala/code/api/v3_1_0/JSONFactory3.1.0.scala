@@ -29,6 +29,7 @@ package code.api.v3_1_0
 import java.lang
 import java.util.Date
 
+import code.customeraddress.CustomerAddress
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.util.RateLimitPeriod.LimitCallPeriod
 import code.api.util.{APIUtil, RateLimitPeriod}
@@ -36,6 +37,7 @@ import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchRoutingJsonV141, CustomerFaceImageJson}
 import code.api.v2_1_0.{CustomerCreditRatingJSON, CustomerJsonV210, ResourceUserJSON}
 import code.api.v2_2_0._
+import code.common.Address
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
 import code.model.{Consumer, User}
@@ -44,6 +46,8 @@ import net.liftweb.common.{Box, Full}
 
 import scala.collection.immutable.List
 import code.customer.Customer
+import code.context.UserAuthContext
+import code.taxresidence.TaxResidence
 
 case class CheckbookOrdersJson(
   account: AccountV310Json ,
@@ -240,6 +244,57 @@ case class PostCustomerResponseJsonV310(messages: List[String])
 
 case class PostCustomerNumberJsonV310(customer_number: String)
 
+case class PostUserAuthContextJson(
+  key: String,
+  value: String
+)
+
+case class UserAuthContextJson(
+  user_auth_context_id: String,
+  user_id: String,
+  key: String,
+  value: String
+)
+
+case class UserAuthContextsJson(
+  user_auth_contexts: List[UserAuthContextJson]
+)
+
+case class TaxResidenceV310(domain: String, tax_number: String, tax_residence_id: String)
+case class PostTaxResidenceJsonV310(domain: String, tax_number: String)
+case class TaxResidenceJsonV310(tax_residence: List[TaxResidenceV310])
+
+
+case class PostCustomerAddressJsonV310(
+                                line_1: String,
+                                line_2: String,
+                                line_3: String,
+                                city: String,
+                                county: String,
+                                state: String,
+                                postcode: String,
+                                //ISO_3166-1_alpha-2
+                                country_code: String,
+                                status: String
+                              )
+
+case class CustomerAddressJsonV310(
+                            customer_address_id: String,
+                            customer_id: String,
+                            line_1: String,
+                            line_2: String,
+                            line_3: String,
+                            city: String,
+                            county: String,
+                            state: String,
+                            postcode: String,
+                            //ISO_3166-1_alpha-2
+                            country_code: String,
+                            status: String,
+                            insert_date: Date
+                          )
+case class CustomerAddressesJsonV310(addresses: List[CustomerAddressJsonV310])
+
 object JSONFactory310{
   def createCheckbookOrdersJson(checkbookOrders: CheckbookOrdersJson): CheckbookOrdersJson =
     checkbookOrders
@@ -359,7 +414,7 @@ object JSONFactory310{
   def createAccountWebhooksJson(whs: List[AccountWebhook]) = {
     AccountWebhooksJson(whs.map(createAccountWebhookJson(_)))
   }
-  
+
   def getConfigInfoJSON(): ConfigurationJsonV310 = {
     val configurationJson: ConfigurationJSON = JSONFactory220.getConfigInfoJSON()
     val defaultBankId= APIUtil.defaultBankId
@@ -391,6 +446,48 @@ object JSONFactory310{
       nameSuffix = cInfo.nameSuffix
     )
   }
+  
+  def createUserAuthContextJson(userAuthContext: UserAuthContext): UserAuthContextJson = {
+    UserAuthContextJson(
+      user_auth_context_id= userAuthContext.userAuthContextId,
+      user_id = userAuthContext.userId,
+      key = userAuthContext.key,
+      value = userAuthContext.value
+    )
+  }
+  
+  def createUserAuthContextsJson(userAuthContext: List[UserAuthContext]): UserAuthContextsJson = {
+    UserAuthContextsJson(userAuthContext.map(createUserAuthContextJson))
+  }
+
+  def createTaxResidence(tr: List[TaxResidence]) = TaxResidenceJsonV310(
+    tr.map(
+      i =>
+        TaxResidenceV310(
+          domain = i.domain,
+          tax_number = i.taxNumber,
+          tax_residence_id = i.taxResidenceId
+        )
+    )
+  )
+  def createAddress(address: CustomerAddress): CustomerAddressJsonV310 =
+    CustomerAddressJsonV310(
+      customer_address_id = address.customerAddressId,
+      customer_id = address.customerId,
+      line_1 = address.line1,
+      line_2 = address.line2,
+      line_3 = address.line3,
+      city = address.city,
+      county = address.county,
+      state = address.state,
+      postcode = address.postcode,
+      country_code = address.countryCode,
+      status = address.status,
+      insert_date = address.insertDate
+    )
+
+  def createAddresses(addresses: List[CustomerAddress]): CustomerAddressesJsonV310 =
+    CustomerAddressesJsonV310(addresses.map(createAddress(_)))
 
 
 }

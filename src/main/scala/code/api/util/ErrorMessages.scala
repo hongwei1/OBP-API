@@ -206,7 +206,11 @@ object ErrorMessages {
   val WebhookNotFound = "OBP-30050: Webhook not found. Please specify a valid value for account_webhook_id."
   val CreateCustomerError = "OBP-30051: Cannot create Customer"
   val CheckCustomerError = "OBP-30052: Cannot check Customer"
-
+  
+  val CreateUserAuthContextError = "OBP-30053: Could not insert the UserAuthContext"
+  val UpdateUserAuthContextError = "OBP-30054: Could not update the UserAuthContext"
+  val UpdateUserAuthContextNotFound = "OBP-30055: UserAuthContext not found. Please specify a valid value for USER_ID."
+  val DeleteUserAuthContextNotFound = "OBP-30056: UserAuthContext not found by USER_AUTH_CONTEXT_ID."
 
   // Meetings
   val MeetingsNotSupported = "OBP-30101: Meetings are not supported on this server."
@@ -246,6 +250,9 @@ object ErrorMessages {
   val EntitlementRequestCannotBeAdded = "OBP-30217: Entitlement Request cannot be added."
   val EntitlementRequestNotFound = "OBP-30215: EntitlementRequestId not found"
   val EntitlementAlreadyExists = "OBP-30216: Entitlement already exists for the user."
+
+  val TaxResidenceNotFound = "OBP-30300: Tax Residence not found by TAX_RESIDENCE_ID. "
+  val CustomerAddressNotFound = "OBP-30310: Customer's Address not found by CUSTOMER_ADDRESS_ID. "
 
   // Branch related messages
   val branchesNotFoundLicense = "OBP-32001: No branches available. License may not be set."
@@ -309,6 +316,7 @@ object ErrorMessages {
   val InvalidConnectorResponseForMakePaymentv200 = "OBP-50210: Connector did not return the set of transaction id we requested."
   val InvalidConnectorResponseForGetCheckbookOrdersFuture = "OBP-50211: Connector did not return the set of check book."
   val InvalidConnectorResponseForGetStatusOfCreditCardOrderFuture = "OBP-50212: Connector did not return the set of status of credit card."
+  val InvalidConnectorResponseForCreateTransactionAfterChallengev300 = "OBP-50213: Connector did not return the set of transaction"
 
 
   // Adapter Exceptions (OBP-6XXXX)

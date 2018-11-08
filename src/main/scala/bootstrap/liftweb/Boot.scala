@@ -43,15 +43,17 @@ import code.api._
 import code.api.builder.APIBuilder_Connector
 import code.api.sandbox.SandboxApiCalls
 import code.api.util.APIUtil.enableVersionIfAllowed
-import code.api.util.{APIUtil, ApiVersion, ErrorMessages}
+import code.api.util.{APIUtil, ApiVersion, ErrorMessages, Migration}
 import code.atms.MappedAtm
 import code.bankconnectors.Connector
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
 import code.branches.MappedBranch
 import code.cards.{MappedPhysicalCard, PinReset}
 import code.crm.MappedCrmEvent
+import code.context.MappedUserAuthContext
 import code.customer.internalMapping.MappedCustomerIDMapping
 import code.customer.{MappedCustomer, MappedCustomerMessage}
+import code.customeraddress.MappedCustomerAddress
 import code.entitlement.MappedEntitlement
 import code.entitlementrequest.MappedEntitlementRequest
 import code.fx.{MappedCurrency, MappedFXRate}
@@ -77,6 +79,7 @@ import code.remotedata.RemotedataActors
 import code.scope.{MappedScope, MappedUserScope}
 import code.snippet.{OAuthAuthorisation, OAuthWorkedThanks}
 import code.socialmedia.MappedSocialMedia
+import code.taxresidence.MappedTaxResidence
 import code.transaction.MappedTransaction
 import code.transactionChallenge.MappedExpectedChallengeAnswer
 import code.transactionStatusScheduler.TransactionStatusScheduler
@@ -342,6 +345,10 @@ class Boot extends MdcLoggable {
       logger.info("writeConnectorMetrics is false. We will NOT write connector metrics")
     }
 
+
+    logger.info (s"props_identifier is : ${APIUtil.getPropsValue("props_identifier", "NONE-SET")}")
+
+
     // Build SiteMap
     val sitemap = List(
           Menu.i("Home") / "index",
@@ -461,6 +468,8 @@ class Boot extends MdcLoggable {
         logger.info("ADAPTER INFO - Unknown status.")
     }
 
+    Migration.database.generateAndPopulateMissingCustomerUUIDs()
+
   }
 
   def schemifyAll() = {
@@ -544,7 +553,10 @@ object ToSchemify {
     MappedExpectedChallengeAnswer,
     MappedEntitlementRequest,
     MappedScope,
-    MappedUserScope
+    MappedUserScope,
+    MappedTaxResidence,
+    MappedCustomerAddress,
+    MappedUserAuthContext
   )
 
   // The following tables are accessed directly via Mapper / JDBC

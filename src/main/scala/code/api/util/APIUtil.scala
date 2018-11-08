@@ -1071,16 +1071,22 @@ object APIUtil extends MdcLoggable {
 
   // Used to document the KafkaMessage calls
   case class MessageDoc(
-    process: String,
-    messageFormat: String,
-    description: String,
-    outboundTopic: Option[String] = None,
-    inboundTopic: Option[String] = None,
-    exampleOutboundMessage: JValue,
-    exampleInboundMessage: JValue,
-    outboundAvroSchema: Option[JValue] = None,
-    inboundAvroSchema: Option[JValue] = None
+                         process: String,
+                         messageFormat: String,
+                         description: String,
+                         outboundTopic: Option[String] = None,
+                         inboundTopic: Option[String] = None,
+                         exampleOutboundMessage: JValue,
+                         exampleInboundMessage: JValue,
+                         outboundAvroSchema: Option[JValue] = None,
+                         inboundAvroSchema: Option[JValue] = None,
+                         adapterImplementation : Option[AdapterImplementation] = None
   )
+
+  case class AdapterImplementation(
+                                    group: String,
+                                    suggestedOrder : Integer
+                           )
 
   // Define relations between API end points. Used to create _links in the JSON and maybe later for API Explorer browsing
   case class ApiRelation(
@@ -1464,10 +1470,10 @@ Returns a string showed to the developer
   }
   def getGatewayLoginJwt(): Option[String] = {
     getGatewayResponseHeader() match {
-      case Nil =>
-        None
       case x :: Nil =>
         Some(x._2)
+      case _ =>
+        None
     }
   }
 
@@ -1649,6 +1655,7 @@ Returns a string showed to the developer
 
 
   type OBPEndpoint = PartialFunction[Req, CallContext => Box[JsonResponse]]
+  type OBPReturnType[T] = Future[(T, Option[CallContext])]
 
 
   def getAllowedEndpoints (endpoints : List[OBPEndpoint], resourceDocs: ArrayBuffer[ResourceDoc]) : List[OBPEndpoint] = {

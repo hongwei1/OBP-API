@@ -47,6 +47,8 @@ import scalacache._
 import scalacache.guava._
 import scalacache.memoization._
 
+import scala.concurrent.Future
+
 /**
   * Uses the https://github.com/OpenBankProject/OBP-JVM library to connect to
   * bank resources.
@@ -204,7 +206,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
 
   // Gets current challenge level for transaction request
-  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String) = {
+  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String, callContext: Option[CallContext]) = {
     val parameters = new JHashMap
 
     parameters.put("accountId", accountId)
@@ -219,12 +221,12 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
 
     response.data().map(d => new ChallengeThresholdReader(d)) match {
       // Check does the response data match the requested data
-      case c:ChallengeThresholdReader => Full(AmountOfMoney(c.currency, c.amount))
+      case c:ChallengeThresholdReader => Full((AmountOfMoney(c.currency, c.amount), callContext))
       case _ =>
         val limit = BigDecimal("0")
         val rate = fx.exchangeRate ("EUR", currency)
         val convertedLimit = fx.convert(limit, rate)
-        Full(AmountOfMoney(currency, convertedLimit.toString()))
+        Full((AmountOfMoney(currency, convertedLimit.toString()), callContext))
     }
 
   }
@@ -241,8 +243,8 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   }
   override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, callContext: Option[CallContext]) =
     LocalMappedConnector.createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String)
-  override def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String): Box[Boolean] =
-    LocalMappedConnector.validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String)
+  override def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext: Option[CallContext]) =
+    LocalMappedConnector.validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext)
 
   // Gets bank identified by bankId
   override def getBank(bankId: BankId, callContext: Option[CallContext]) = memoizeSync(getBankTTL millisecond) {
@@ -543,8 +545,8 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
   */
 
   
-  override def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] =
-    LocalMappedConnector.getCounterpartyByIban(iban: String)
+  override def getCounterpartyByIban(iban: String , callContext: Option[CallContext]) =
+    LocalMappedConnector.getCounterpartyByIban(iban: String, callContext)
 
   
   override def createOrUpdatePhysicalCard(bankCardNumber: String,
@@ -718,11 +720,6 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
     TransactionRequests.transactionRequestProvider.vend.getTransactionRequests(fromAccount.bankId, fromAccount.accountId)
   }
 
-  override def getTransactionRequestImpl(transactionRequestId: TransactionRequestId) : Box[TransactionRequest] = {
-    TransactionRequests.transactionRequestProvider.vend.getTransactionRequest(transactionRequestId)
-  }
-
-
   /*
     Bank account creation
    */
@@ -814,7 +811,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
 
     val accountDeleted = account match {
       case acc => true //acc.delete_! //TODO
-      case _ => false
+      // case _ => false
     }
 
     Full(commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
@@ -995,7 +992,7 @@ object ObpJvmMappedConnector extends Connector with MdcLoggable {
         val acc = getBankAccount(bankId, account.accountId)
         acc match {
           case a => true //a.lastUpdate = updateDate //TODO
-          case _ => logger.warn("can't set bank account.lastUpdated because the account was not found"); false
+          // case _ => logger.warn("can't set bank account.lastUpdated because the account was not found"); false
         }
     }
     Full(result.getOrElse(false))

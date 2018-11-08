@@ -61,7 +61,8 @@ import net.liftweb.util.Props
 
 import scala.collection.immutable.{Nil, Seq}
 import scala.collection.mutable.ArrayBuffer
-
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcLoggable {
 
@@ -309,7 +310,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
   )
 
   // Gets current challenge level for transaction request
-  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, username: String): Box[AmountOfMoney] = {
+  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, username: String, callContext: Option[CallContext]) = {
     // Create argument list
     val req = OutboundChallengeThresholdBase(
       action = "obp.get.ChallengeThreshold",
@@ -326,12 +327,12 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
     // Return result
     r match {
       // Check does the response data match the requested data
-      case Some(x)  => Full(AmountOfMoney(x.currency, x.limit))
+      case Some(x)  => Full((AmountOfMoney(x.currency, x.limit), callContext))
       case _ => {
         val limit = BigDecimal("0")
         val rate = fx.exchangeRate ("EUR", currency)
         val convertedLimit = fx.convert(limit, rate)
-        Full(AmountOfMoney(currency,convertedLimit.toString()))
+        Full((AmountOfMoney(currency,convertedLimit.toString()), callContext))
       }
     }
   }
@@ -463,10 +464,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
       )
     )
   )
-  override def validateChallengeAnswer(
-    challengeId: String,
-    hashOfSuppliedAnswer: String
-  ): Box[Boolean] = {
+  override def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext: Option[CallContext]) = Future {
     // Create argument list
     val req = OutboundChallengeAnswerBase(
       messageFormat = messageFormat,
@@ -480,8 +478,8 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
     // Return result
     r match {
       // Check does the response data match the requested data
-      case Some(x)  => Full(x.answer.toBoolean)
-      case _        => Empty
+      case Some(x)  => (Full(x.answer.toBoolean),callContext)
+      case _        => (Empty,callContext)
     }
   }
   
@@ -884,9 +882,9 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
     )
   )
 
-  override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]) = {
+  override def getCounterpartyByCounterpartyIdFuture(counterpartyId: CounterpartyId, callContext: Option[CallContext]) = Future{
     if (APIUtil.getPropsAsBoolValue("get_counterparties_from_OBP_DB", true)) {
-      Counterparties.counterparties.vend.getCounterparty(counterpartyId.value).map(counterparty =>(counterparty, callContext))
+      (Counterparties.counterparties.vend.getCounterparty(counterpartyId.value), callContext)
     } else {
       val req = OutboundCounterpartyByCounterpartyIdBase(
         messageFormat = messageFormat,
@@ -900,7 +898,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
       val r = {
         cachedCounterparty.getOrElseUpdate(req.toString, () => process(req).extract[InboundCounterparty])
       }
-      Full(CounterpartyTrait2(r), callContext)
+      (tryo(CounterpartyTrait2(r)), callContext)
     }
   }
   
@@ -940,9 +938,9 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
     )
   )
 
-  override def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] = {
+  override def getCounterpartyByIban(iban: String, callContext: Option[CallContext])= Future{
     if (APIUtil.getPropsAsBoolValue("get_counterparties_from_OBP_DB", true)) {
-      Counterparties.counterparties.vend.getCounterpartyByIban(iban)
+      (Counterparties.counterparties.vend.getCounterpartyByIban(iban), callContext)
     } else {
       val req = OutboundCounterpartyByIbanBase(
         messageFormat = messageFormat,
@@ -953,7 +951,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
         otherAccountRoutingScheme = "IBAN"
       )
       val r = process(req).extract[InboundCounterparty]
-      Full(CounterpartyTrait2(r))
+      (tryo{CounterpartyTrait2(r)}, callContext)
     }
   }
   
@@ -1096,7 +1094,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
       val response = process(req).extract[InboundTransactionRequestStatus]
       Full(new TransactionRequestStatus2(response))
     }catch {
-      case _ => Empty
+      case _ : Throwable => Empty
     }
 
     logger.info(s"Kafka getTransactionRequestStatusesImpl response: ${r.toString}")
@@ -1283,11 +1281,6 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
     TransactionRequests.transactionRequestProvider.vend.getTransactionRequests(fromAccount.bankId, fromAccount.accountId)
   }
 
-  override def getTransactionRequestImpl(transactionRequestId: TransactionRequestId): Box[TransactionRequest] = {
-    TransactionRequests.transactionRequestProvider.vend.getTransactionRequest(transactionRequestId)
-  }
-
-
   /*
     Bank account creation
    */
@@ -1379,7 +1372,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
 
     val accountDeleted = account match {
       case acc => true //acc.delete_! //TODO
-      case _ => false
+      // case _ => false
     }
 
     Full(commentsDeleted && narrativesDeleted && tagsDeleted && whereTagsDeleted && transactionImagesDeleted &&
@@ -1560,7 +1553,7 @@ trait KafkaMappedConnector_vMar2017 extends Connector with KafkaHelper with MdcL
         val acc = getBankAccount(bankId, account.accountId)
         acc match {
           case a => true //a.lastUpdate = updateDate //TODO
-          case _ => logger.warn("can't set bank account.lastUpdated because the account was not found"); false
+          // case _ => logger.warn("can't set bank account.lastUpdated because the account was not found"); false
         }
     }
     Full(result.getOrElse(false))

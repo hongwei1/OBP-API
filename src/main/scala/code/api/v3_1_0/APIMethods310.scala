@@ -21,6 +21,7 @@ import code.model._
 import code.users.Users
 import code.util.Helper
 import code.webhook.AccountWebhook
+import com.github.dwickern.macros.NameOf.nameOf
 import net.liftweb.common.Full
 import net.liftweb.http.provider.HTTPParam
 import net.liftweb.http.rest.RestHelper
@@ -44,7 +45,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getCheckbookOrders,
       implementedInApiVersion,
-      "getCheckbookOrders",
+      nameOf(getCheckbookOrders),
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/checkbook/orders",
       "get Checkbook orders",
@@ -84,7 +85,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getStatusOfCreditCardOrder,
       implementedInApiVersion,
-      "getStatusOfCreditCardOrder",
+      nameOf(getStatusOfCreditCardOrder),
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/credit_cards/orders",
       "Get status of Credit Card order ",
@@ -128,7 +129,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       createCreditLimitRequest,
       implementedInApiVersion,
-      "createCreditLimitRequest",
+      nameOf(createCreditLimitRequest),
       "POST",
       "/banks/BANK_ID/customers/CUSTOMER_ID/credit_limit/requests",
       "Create Credit Limit Order Request",
@@ -154,7 +155,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getCreditLimitRequests,
       implementedInApiVersion,
-      "getCreditLimitRequests",
+      nameOf(getCreditLimitRequests),
       "GET",
       "/banks/BANK_ID/customers/CUSTOMER_ID/credit_limit/requests",
       "Get Credit Limit Order Requests ",
@@ -180,7 +181,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getCreditLimitRequestByRequestId,
       implementedInApiVersion,
-      "getCreditLimitRequestByRequestId",
+      nameOf(getCreditLimitRequestByRequestId),
       "GET",
       "/banks/BANK_ID/customers/CUSTOMER_ID/credit_limit/requests/REQUEST_ID",
       "Get Credit Limit Order Request By Request Id",
@@ -206,7 +207,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getTopAPIs,
       implementedInApiVersion,
-      "getTopAPIs",
+      nameOf(getTopAPIs),
       "GET",
       "/management/metrics/top-apis",
       "get top apis",
@@ -293,7 +294,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getMetricsTopConsumers,
       implementedInApiVersion,
-      "getMetricsTopConsumers",
+      nameOf(getMetricsTopConsumers),
       "GET",
       "/management/metrics/top-consumers",
       "get metrics top consumers",
@@ -393,7 +394,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getFirehoseCustomers,
       implementedInApiVersion,
-      "getFirehoseCustomers",
+      nameOf(getFirehoseCustomers),
       "GET",
       "/banks/BANK_ID/firehose/customers",
       "Get Firehose Customers",
@@ -447,7 +448,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getBadLoginStatus,
       implementedInApiVersion,
-      "getBadLoginStatus",
+      nameOf(getBadLoginStatus),
       "GET",
       "/users/USERNAME/lock-status",
       "Get User Lock Status",
@@ -481,7 +482,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       unlockUser,
       implementedInApiVersion,
-      "unlockUser",
+      nameOf(unlockUser),
       "PUT",
       "/users/USERNAME/lock-status",
       "Unlock the user",
@@ -516,7 +517,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       callsLimit,
       implementedInApiVersion,
-      "callsLimit",
+      nameOf(callsLimit),
       "PUT",
       "/management/consumers/CONSUMER_ID/consumer/calls_limit",
       "Set Calls' Limit for a Consumer",
@@ -571,7 +572,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getCallsLimit,
       implementedInApiVersion,
-      "getCallsLimit",
+      nameOf(getCallsLimit),
       "GET",
       "/management/consumers/CONSUMER_ID/consumer/calls_limit",
       "Get Calls' Limit for a Consumer",
@@ -618,7 +619,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       checkFundsAvailable,
       implementedInApiVersion,
-      "checkFundsAvailable",
+      nameOf(checkFundsAvailable),
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/funds-available",
       "Check available funds",
@@ -691,7 +692,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getConsumer,
       implementedInApiVersion,
-      "getConsumer",
+      nameOf(getConsumer),
       "GET",
       "/management/consumers/CONSUMER_ID",
       "Get Consumer",
@@ -729,7 +730,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getConsumersForCurrentUser,
       implementedInApiVersion,
-      "getConsumersForCurrentUser",
+      nameOf(getConsumersForCurrentUser),
       "GET",
       "/management/users/current/consumers",
       "Get Consumers (logged in User)",
@@ -764,7 +765,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getConsumers,
       implementedInApiVersion,
-      "getConsumers",
+      nameOf(getConsumers),
       "GET",
       "/management/consumers",
       "Get Consumers",
@@ -811,7 +812,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       createAccountWebhook,
       implementedInApiVersion,
-      "createAccountWebhook",
+      nameOf(createAccountWebhook),
       "POST",
       "/banks/BANK_ID/account-web-hooks",
       "Create an Account Webhook",
@@ -867,7 +868,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       enableDisableAccountWebhook,
       implementedInApiVersion,
-      "enableDisableAccountWebhook",
+      nameOf(enableDisableAccountWebhook),
       "PUT",
       "/banks/BANK_ID/account-web-hooks",
       "Update an Account Webhook",
@@ -918,7 +919,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getAccountWebhooks,
       implementedInApiVersion,
-      "getAccountWebhooks",
+      nameOf(getAccountWebhooks),
       "GET",
       "/management/banks/BANK_ID/account-web-hooks",
       "Get Account Webhooks",
@@ -967,7 +968,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       config,
       implementedInApiVersion,
-      "config",
+      nameOf(config),
       "GET",
       "/config",
       "Get API Configuration",
@@ -1003,7 +1004,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getAdapterInfo,
       implementedInApiVersion,
-      "getAdapterInfo",
+      nameOf(getAdapterInfo),
       "GET",
       "/adapter",
       "Get Adapter Info (general)",
@@ -1034,7 +1035,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getTransactionByIdForBankAccount,
       implementedInApiVersion,
-      "getTransactionByIdForBankAccount",
+      nameOf(getTransactionByIdForBankAccount),
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/transactions/TRANSACTION_ID/transaction",
       "Get Transaction by Id.",
@@ -1073,7 +1074,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getTransactionRequests,
       implementedInApiVersion,
-      "getTransactionRequests",
+      nameOf(getTransactionRequests),
       "GET",
       "/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/transaction-requests",
       "Get Transaction Requests." ,
@@ -1140,7 +1141,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       createCustomer,
       implementedInApiVersion,
-      "createCustomer",
+      nameOf(createCustomer),
       "POST",
       "/banks/BANK_ID/customers",
       "Create Customer.",
@@ -1171,7 +1172,7 @@ trait APIMethods310 {
           for {
             (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
 
-            _ <- Helper.booleanToFuture(failMsg =  UserHasMissingRoles ) {
+            _ <- Helper.booleanToFuture(failMsg =  UserHasMissingRoles + canCreateCustomer + " or " + canCreateCustomerAtAnyBank) {
               hasAtLeastOneEntitlement(bankId.value, u.userId,  canCreateCustomer :: canCreateCustomerAtAnyBank :: Nil)
             }
 
@@ -1215,7 +1216,7 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getRateLimitingInfo,
       implementedInApiVersion,
-      "getRateLimitingInfo",
+      nameOf(getRateLimitingInfo),
       "GET",
       "/rate-limiting",
       "Get Rate Limiting Info",
@@ -1251,11 +1252,11 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getCustomerByCustomerId,
       implementedInApiVersion,
-      "getCustomerByCustomerId",
+      nameOf(getCustomerByCustomerId),
       "GET",
       "/banks/BANK_ID/customers/CUSTOMER_ID",
-      "Get Customer specified by CUSTOMER_ID",
-      s"""Gets the Customers specified by CUSTOMER_ID.
+      "Get Customer by CUSTOMER_ID",
+      s"""Gets the Customer specified by CUSTOMER_ID.
          |
         |
         |${authenticationRequiredMessage(true)}
@@ -1289,11 +1290,11 @@ trait APIMethods310 {
     resourceDocs += ResourceDoc(
       getCustomerByCustomerNumber,
       implementedInApiVersion,
-      "getCustomerByCustomerNumber",
+      nameOf(getCustomerByCustomerNumber),
       "POST",
       "/banks/BANK_ID/customers/customer-number",
-      "Get Customer specified by CUSTOMER_NUMBER",
-      s"""Gets the Customers specified by CUSTOMER_NUMBER.
+      "Get Customer by CUSTOMER_NUMBER",
+      s"""Gets the Customer specified by CUSTOMER_NUMBER.
          |
         |
         |${authenticationRequiredMessage(true)}
@@ -1323,6 +1324,415 @@ trait APIMethods310 {
             (customer, callContext) <- NewStyle.function.getCustomerByCustomerNumber(postedData.customer_number, bank.bankId, callContext)
           } yield {
             (JSONFactory310.createCustomerJson(customer), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+    resourceDocs += ResourceDoc(
+      createUserAuthContext,
+      implementedInApiVersion,
+      nameOf(createUserAuthContext),
+      "POST",
+      "/users/USER_ID/auth-context",
+      "Create UserAuthContext",
+      s"""Create UserAuthContext.
+        |${authenticationRequiredMessage(true)}
+        |""",
+      postUserAuthContextJson,
+      userAuthContextJson,
+      List(
+        UserNotLoggedIn,
+        InvalidJsonFormat,
+        CreateUserAuthContextError,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagUser, apiTagNewStyle))
+
+    lazy val createUserAuthContext : OBPEndpoint = {
+      case "users" :: userId ::"auth-context" :: Nil JsonPost  json -> _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanCreateUserAuthContext)("", u.userId, canCreateUserAuthContext)
+            failMsg = s"$InvalidJsonFormat The Json body should be the $PostUserAuthContextJson "
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
+              json.extract[PostUserAuthContextJson]
+            }
+            (_, callContext) <- NewStyle.function.findByUserId(userId, callContext)
+            (userAuthContext, callContext) <- NewStyle.function.createUserAuthContext(userId, postedData.key, postedData.value, callContext)
+          } yield {
+            (JSONFactory310.createUserAuthContextJson(userAuthContext), HttpCode.`200`(callContext))
+          }
+      }
+    }
+    
+    resourceDocs += ResourceDoc(
+      getUserAuthContexts,
+      implementedInApiVersion,
+      nameOf(getUserAuthContexts),
+      "GET",
+      "/users/USER_ID/auth-context",
+      "Get UserAuthContexts",
+      s"""Get all UserAuthContexts.
+         |
+        |
+        |${authenticationRequiredMessage(true)}
+         |
+        |""",
+      emptyObjectJson,
+      userAuthContextsJson,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        CreateUserAuthContextError,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagUser, apiTagNewStyle))
+
+    lazy val getUserAuthContexts : OBPEndpoint = {
+      case "users" :: userId :: "auth-context" ::  Nil  JsonGet _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetUserAuthContext)("", u.userId, canGetUserAuthContext)
+            (_, callContext) <- NewStyle.function.findByUserId(userId, callContext)
+            (userAuthContexts, callContext) <- NewStyle.function.getUserAuthContexts(userId, callContext)
+          } yield {
+            (JSONFactory310.createUserAuthContextsJson(userAuthContexts), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      deleteUserAuthContexts,
+      implementedInApiVersion,
+      nameOf(deleteUserAuthContexts),
+      "DELETE",
+      "/users/USER_ID/auth-context",
+      "Delete User's all AuthContext",
+      s"""Delete all AuthContext of a User specified by USER_ID.
+         |
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      emptyObjectJson,
+      emptyObjectJson,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val deleteUserAuthContexts : OBPEndpoint = {
+      case "users" :: userId :: "auth-context" :: Nil JsonDelete _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanDeleteUserAuthContext)("", u.userId, canDeleteUserAuthContext)
+            (_, callContext) <- NewStyle.function.findByUserId(userId, callContext)
+            (userAuthContext, callContext) <- NewStyle.function.deleteUserAuthContexts(userId, callContext)
+          } yield {
+            (Full(userAuthContext), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      deleteUserAuthContextById,
+      implementedInApiVersion,
+      nameOf(deleteUserAuthContextById),
+      "DELETE",
+      "/users/USER_ID/auth-context/USER_AUTH_CONTEXT_ID",
+      "Delete User AuthContext",
+      s"""Delete a User AuthContext of the User specified by USER_AUTH_CONTEXT_ID.
+         |
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      emptyObjectJson,
+      emptyObjectJson,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val deleteUserAuthContextById : OBPEndpoint = {
+      case "users" :: userId :: "auth-context" :: userAuthContextId :: Nil JsonDelete _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanDeleteUserAuthContext)("", u.userId, canDeleteUserAuthContext)
+            (_, callContext) <- NewStyle.function.findByUserId(userId, callContext)
+            (userAuthContext, callContext) <- NewStyle.function.deleteUserAuthContextById(userAuthContextId, callContext)
+          } yield {
+            (Full(userAuthContext), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+    resourceDocs += ResourceDoc(
+      createTaxResidence,
+      implementedInApiVersion,
+      nameOf(createTaxResidence),
+      "POST",
+      "/banks/BANK_ID/customers/CUSTOMER_ID/tax-residence",
+      "Add Tax Residence to Customer",
+      s"""Add a Tax Residence to the Customer specified by CUSTOMER_ID.
+         |
+        |
+        |${authenticationRequiredMessage(true)}
+         |
+        |""",
+      postTaxResidenceJsonV310,
+      taxResidenceJsonV310,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        InvalidJsonFormat,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val createTaxResidence : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: customerId :: "tax-residence" ::  Nil JsonPost  json -> _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanCreateTaxResidence)(bankId.value, u.userId, canCreateTaxResidence)
+            failMsg = s"$InvalidJsonFormat The Json body should be the $PostTaxResidenceJsonV310 "
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
+              json.extract[PostTaxResidenceJsonV310]
+            }
+            (_, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, callContext)
+            (taxResidence, callContext) <- NewStyle.function.createTaxResidence(customerId, postedData.domain, postedData.tax_number, callContext)
+          } yield {
+            (JSONFactory310.createTaxResidence(List(taxResidence)), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      getTaxResidence,
+      implementedInApiVersion,
+      nameOf(getTaxResidence),
+      "GET",
+      "/banks/BANK_ID/customers/CUSTOMER_ID/tax-residence",
+      "Get Tax Residences of Customer",
+      s"""Get the Tax Residences of the Customer specified by CUSTOMER_ID.
+         |
+        |
+        |${authenticationRequiredMessage(true)}
+         |
+        |""",
+      emptyObjectJson,
+      taxResidenceJsonV310,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val getTaxResidence : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: customerId :: "tax-residence" ::  Nil JsonGet _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetTaxResidence)(bankId.value, u.userId, canGetTaxResidence)
+            (_, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, callContext)
+            (taxResidence, callContext) <- NewStyle.function.getTaxResidence(customerId, callContext)
+          } yield {
+            (JSONFactory310.createTaxResidence(taxResidence), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      deleteTaxResidence,
+      implementedInApiVersion,
+      nameOf(deleteTaxResidence),
+      "DELETE",
+      "/banks/BANK_ID/customers/CUSTOMER_ID/tax_residencies/TAX_RESIDENCE_ID",
+      "Delete Tax Residence",
+      s"""Delete a Tax Residence of the Customer specified by TAX_RESIDENCE_ID.
+         |
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      emptyObjectJson,
+      emptyObjectJson,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val deleteTaxResidence : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: customerId :: "tax_residencies" :: taxResidenceId :: Nil JsonDelete _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanDeleteTaxResidence)(bankId.value, u.userId, canDeleteTaxResidence)
+            (_, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, callContext)
+            (taxResidence, callContext) <- NewStyle.function.deleteTaxResidence(taxResidenceId, callContext)
+          } yield {
+            (Full(taxResidence), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+
+
+    resourceDocs += ResourceDoc(
+      createCustomerAddress,
+      implementedInApiVersion,
+      nameOf(createCustomerAddress),
+      "POST",
+      "/banks/BANK_ID/customers/CUSTOMER_ID/address",
+      "Add Address to Customer",
+      s"""Add an Address to the Customer specified by CUSTOMER_ID.
+         |
+        |
+        |${authenticationRequiredMessage(true)}
+         |
+        |""",
+      postCustomerAddressJsonV310,
+      customerAddressJsonV310,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        InvalidJsonFormat,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val createCustomerAddress : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: customerId :: "address" ::  Nil JsonPost  json -> _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanCreateCustomer)(bankId.value, u.userId, canCreateCustomer)
+            failMsg = s"$InvalidJsonFormat The Json body should be the $PostCustomerAddressJsonV310 "
+            postedData <- NewStyle.function.tryons(failMsg, 400, callContext) {
+              json.extract[PostCustomerAddressJsonV310]
+            }
+            (_, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, callContext)
+            (address, callContext) <- NewStyle.function.createCustomerAddress(
+              customerId,
+              postedData.line_1,
+              postedData.line_2,
+              postedData.line_3,
+              postedData.city,
+              postedData.county,
+              postedData.state,
+              postedData.postcode,
+              postedData.country_code,
+              postedData.state,
+              callContext)
+          } yield {
+            (JSONFactory310.createAddress(address), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      getCustomerAddresses,
+      implementedInApiVersion,
+      nameOf(getCustomerAddresses),
+      "GET",
+      "/banks/BANK_ID/customers/CUSTOMER_ID/address",
+      "Get Customer Addresses",
+      s"""Get the Addresses of the Customer specified by CUSTOMER_ID.
+         |
+        |
+        |${authenticationRequiredMessage(true)}
+         |
+        |""",
+      emptyObjectJson,
+      customerAddressesJsonV310,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val getCustomerAddresses : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: customerId :: "address" ::  Nil JsonGet _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanGetCustomer)(bankId.value, u.userId, canGetCustomer)
+            (_, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, callContext)
+            (customers, callContext) <- NewStyle.function.getCustomerAddress(customerId, callContext)
+          } yield {
+            (JSONFactory310.createAddresses(customers), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    resourceDocs += ResourceDoc(
+      deleteCustomerAddress,
+      implementedInApiVersion,
+      nameOf(deleteCustomerAddress),
+      "DELETE",
+      "/banks/BANK_ID/customers/CUSTOMER_ID/addresses/CUSTOMER_ADDRESS_ID",
+      "Delete Customer Address",
+      s"""Delete an Address of the Customer specified by CUSTOMER_ADDRESS_ID.
+         |
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      emptyObjectJson,
+      emptyObjectJson,
+      List(
+        UserNotLoggedIn,
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCustomer, apiTagNewStyle))
+
+    lazy val deleteCustomerAddress : OBPEndpoint = {
+      case "banks" :: BankId(bankId) :: "customers" :: customerId :: "addresses" :: customerAddressId :: Nil JsonDelete _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanCreateCustomer)(bankId.value, u.userId, canCreateCustomer)
+            (_, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, callContext)
+            (address, callContext) <- NewStyle.function.deleteCustomerAddress(customerAddressId, callContext)
+          } yield {
+            (Full(address), HttpCode.`200`(callContext))
           }
       }
     }

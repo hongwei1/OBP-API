@@ -36,7 +36,6 @@ import code.api.util.APIUtil
 import code.token.TokensProvider
 import code.consumer.{Consumers, ConsumersProvider}
 import code.model.AppType.{Mobile, Web}
-import code.model.TokenType
 import code.model.TokenType.{Access, Request}
 import code.model.dataAccess.ResourceUser
 import code.nonce.NoncesProvider
@@ -288,6 +287,8 @@ object MappedConsumersProvider extends ConsumersProvider {
 
     Consumer.find(By(Consumer.consumerId, consumerId.getOrElse(Helpers.randomString(40)))) match {
       case Full(c) => Full(c)
+      case Failure(msg, t, c) => Failure(msg, t, c)
+      case ParamFailure(x,y,z,q) => ParamFailure(x,y,z,q)
       case Empty =>
         tryo {
           val c = Consumer.create

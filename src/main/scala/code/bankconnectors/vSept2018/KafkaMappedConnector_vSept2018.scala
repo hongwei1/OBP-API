@@ -58,15 +58,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
 import code.api.util.ExampleValue._
+import code.context.UserAuthContextProvider
 
 trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with MdcLoggable {
   
   implicit override val nameOfConnector = KafkaMappedConnector_vSept2018.toString
 
   // "Versioning" of the messages sent by this or similar connector works like this:
-  // Use Case Classes (e.g. KafkaInbound... KafkaOutbound... as below to describe the message structures.
+  // Use Case Classes (e.g. KafkaInbound... KafkaOutbound...) are defined below to describe the message structures.
   // Each connector has a separate file like this one.
   // Once the message format is STABLE, freeze the key/value pair names there. For now, new keys may be added but none modified.
   // If we want to add a new message format, create a new file e.g. March2017_messages.scala
@@ -103,6 +103,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       views <- Full(permission.views)
       linkedCustomers <- Full(Customer.customerProvider.vend.getCustomersByUserId(user.userId))
       likedCustomersBasic = JsonFactory_vSept2018.createBasicCustomerJson(linkedCustomers)
+      userAuthContexts = Nil //TODO, need get the data from UserAuthContexts table
       authViews<- Full(
         for{
           view <- views              //TODO, need double check whether these data come from OBP side or Adapter.
@@ -119,51 +120,81 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           AuthView(viewBasic, accountBasic)
       )
     } yield{
-      AuthInfo(currentResourceUserId, username, cbs_token, isFirst, correlationId, likedCustomersBasic, authViews)
+      AuthInfo(currentResourceUserId, username, cbs_token, isFirst, correlationId, likedCustomersBasic, userAuthContexts, authViews)
     }
   
-  val viewBasic = ViewBasic("owner","Owner", "This is the owner view")
-  
-  val internalBasicCustomer = InternalBasicCustomer(
-    bankId = "bankId",
-    customerId = "customerId",
-    customerNumber = "customerNumber",
-    legalName = "legalName",
+  val viewBasicExample = ViewBasic("owner","Owner", "This is the owner view")
+
+  val internalBasicCustomerExample = InternalBasicCustomer(
+    bankId = bankIdExample.value,
+    customerId = customerIdExample.value,
+    customerNumber = customerNumberExample.value,
+    legalName = legalNameExample.value,
     dateOfBirth = DateWithSecondsExampleObject
   )
-  val internalBasicUser = InternalBasicUser(
-    userId = "userId",
-    emailAddress = "emailAddress",
-    name = "name"
+  val internalBasicUserExample = InternalBasicUser(
+    userId = userIdExample.value,
+    emailAddress = emailExample.value,
+    name = legalNameExample.value // Assuming this is the legal name
   )
-  val accountBasic = AccountBasic(
-    "123123",
-    List(AccountRouting("AccountNumber","2345 6789 1234"), 
-         AccountRouting("IBAN","DE91 1000 0000 0123 4567 89")), 
-    List(internalBasicCustomer),
-    List(internalBasicUser)
+  val accountBasicExample = AccountBasic(
+    id = accountIdExample.value,
+    List(AccountRouting("AccountNumber",accountNumberExample.value),
+         AccountRouting("IBAN",ibanExample.value)),
+    List(internalBasicCustomerExample),
+    List(internalBasicUserExample)
   )
-  val authView = AuthView(viewBasic, accountBasic)
-  val authViews = List(authView)
-  val basicCustomer = BasicCustomer("customerId","customerNumber","legalName")
-  val basicCustomers = List(basicCustomer)
+  val authViewExample = AuthView(viewBasicExample, accountBasicExample)
+  val authViewsExample = List(authViewExample)
+  val basicCustomerExample = BasicCustomer(customerIdExample.value,customerNumberExample.value,legalNameExample.value)
+  val basicCustomersExample = List(basicCustomerExample)
+  val basicUserAuthContextExample1 = BasicUserAuthContext("CUSTOMER_NUMBER",customerNumberExample.value)
+  val basicUserAuthContextExample2 = BasicUserAuthContext("TOKEN","qieuriopwoir987ASYDUFISUYDF678u")
+  val BasicUserAuthContextsExample = List(basicUserAuthContextExample1, basicUserAuthContextExample2)
   val authInfoExample = AuthInfo(
-    userId = "userId", 
-    username = "username",
-    cbsToken = "cbsToken", 
+    userId = userIdExample.value,
+    username = usernameExample.value,
+    cbsToken = cbsTokenExample.value,
     isFirst = true,
-    correlationId = "correlationId", 
-    basicCustomers,
-    authViews
+    correlationId = correlationIdExample.value,
+    basicCustomersExample,
+    BasicUserAuthContextsExample,
+    authViewsExample
   )
   val inboundStatusMessagesExample = List(InboundStatusMessage("ESB", "Success", "0", "OK"))
   val errorCodeExample = "INTERNAL-OBP-ADAPTER-6001: ..."
   val statusExample = Status(errorCodeExample, inboundStatusMessagesExample)
-  
+
+
+
+
+  val inboundAccountSept2018Example = InboundAccountSept2018(
+    cbsErrorCodeExample.value,
+    cbsToken = cbsTokenExample.value,
+    bankId = bankIdExample.value,
+    branchId = branchIdExample.value,
+    accountId = accountIdExample.value,
+    accountNumber = accountNumberExample.value,
+    accountType = accountTypeExample.value,
+    balanceAmount = balanceAmountExample.value,
+    balanceCurrency = balanceCurrencyExample.value,
+    owners = owner1Example.value :: owner1Example.value :: Nil,
+    viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil,
+    bankRoutingScheme = bankRoutingSchemeExample.value,
+    bankRoutingAddress = bankRoutingAddressExample.value,
+    branchRoutingScheme = branchRoutingSchemeExample.value,
+    branchRoutingAddress = branchRoutingAddressExample.value,
+    accountRoutingScheme = accountRoutingSchemeExample.value,
+    accountRoutingAddress = accountRoutingAddressExample.value,
+    accountRouting = Nil,
+    accountRules = Nil)
+
+
+
   messageDocs += MessageDoc(
     process = "obp.get.AdapterInfo",
     messageFormat = messageFormat,
-    description = "getAdapterInfo from kafka ",
+    description = "Gets information about the active general (non bank specific) Adapter that is responding to messages sent by OBP.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetAdapterInfo.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetAdapterInfo.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -176,19 +207,20 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           inboundStatusMessagesExample,
           name = "Obp-Kafka-South",
           version = "Sept2018",
-          git_commit = "...",
+          git_commit = gitCommitExample.value,
           date = DateWithSecondsExampleString
         )
       )
     ),
     outboundAvroSchema = Some(parse(SchemaFor[OutboundGetAdapterInfo]().toString(true))),
-    inboundAvroSchema = Some(parse(SchemaFor[InboundAdapterInfoInternal]().toString(true)))
+    inboundAvroSchema = Some(parse(SchemaFor[InboundAdapterInfoInternal]().toString(true))),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
   override def getAdapterInfo(callContext: Option[CallContext]) = {
     val req = OutboundGetAdapterInfo(DateWithSecondsExampleString)
-    
+
     logger.debug(s"Kafka getAdapterInfo Req says:  is: $req")
-  
+
     val box = for {
       kafkaMessage <- processToBox[OutboundGetAdapterInfo](req)
       inboundAdapterInfo <- tryo{kafkaMessage.extract[InboundAdapterInfo]} ?~! s"$InboundAdapterInfo extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
@@ -196,10 +228,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     } yield{
       inboundAdapterInfoInternal
     }
-    
-    
+
+
     logger.debug(s"Kafka getAdapterInfo Res says:  is: $Box")
-    
+
     val res = box match {
       case Full(list) if (list.errorCode=="") =>
         Full(list, callContext)
@@ -210,14 +242,14 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       case _ =>
         Failure(ErrorMessages.UnknownError)
     }
-    
+
     res
   }
-  
+
   messageDocs += MessageDoc(
     process = "obp.get.User",
     messageFormat = messageFormat,
-    description = "getUser from kafka ",
+    description = "Gets the User as identified by the the credentials (username and password) supplied.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetUserByUsernamePassword.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetUserByUsernamePassword.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -238,9 +270,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       )
     ),
     outboundAvroSchema = Some(parse(SchemaFor[OutboundGetUserByUsernamePassword]().toString(true))),
-    inboundAvroSchema = Some(parse(SchemaFor[InboundGetUserByUsernamePassword]().toString(true)))
+    inboundAvroSchema = Some(parse(SchemaFor[InboundGetUserByUsernamePassword]().toString(true))),
+    adapterImplementation = Some(AdapterImplementation("User", 1))
+
   )
-  //TODO This method do not use in Leumi, and it is not used in api level, so not CallContext here for now..  
+  //TODO This method do not use in Leumi, and it is not used in api level, so not CallContext here for now..
   override def getUser(username: String, password: String): Box[InboundUser] = saveConnectorMetric {
     /**
       * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
@@ -285,11 +319,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     }
   }("getUser")
 
-  
+
   messageDocs += MessageDoc(
     process = "obp.get.Banks",
     messageFormat = messageFormat,
-    description = "getBanks",
+    description = "Gets the banks list on this OBP installation.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetBanks.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetBanks.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -302,7 +336,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           errorCode = errorCodeExample,
           inboundStatusMessagesExample),
         InboundBank(
-          bankId = "gh.29.uk",
+          bankId = bankIdExample.value,
           name = "sushan",
           logo = "TESOBE",
           url = "https://tesobe.com/"
@@ -310,7 +344,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       )
     ),
     outboundAvroSchema = Some(parse(SchemaFor[OutboundGetBanks]().toString(true))),
-    inboundAvroSchema = Some(parse(SchemaFor[InboundGetBanks]().toString(true)))
+    inboundAvroSchema = Some(parse(SchemaFor[InboundGetBanks]().toString(true))),
+    adapterImplementation = Some(AdapterImplementation("- Core", 2))
   )
   override def getBanks(callContext: Option[CallContext]) = saveConnectorMetric {
     /**
@@ -399,11 +434,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       }
     }
   }("getBanks")
-  
+
   messageDocs += MessageDoc(
     process = "obp.get.Bank",
     messageFormat = messageFormat,
-    description = "getBank from kafka ",
+    description = "Get a specific Bank as specified by bankId",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetBank.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetBank.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -416,7 +451,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           errorCodeExample,
           inboundStatusMessagesExample),
         InboundBank(
-          bankId = "gh.29.uk",
+          bankId = bankIdExample.value,
           name = "sushan",
           logo = "TESOBE",
           url = "https://tesobe.com/"
@@ -424,7 +459,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       )
     ),
     outboundAvroSchema = Some(parse(SchemaFor[OutboundGetBank]().toString(true))),
-    inboundAvroSchema = Some(parse(SchemaFor[InboundGetBank]().toString(true)))
+    inboundAvroSchema = Some(parse(SchemaFor[InboundGetBank]().toString(true))),
+    adapterImplementation = Some(AdapterImplementation("- Core", 5))
   )
   override def getBank(bankId: BankId, callContext: Option[CallContext]) =  saveConnectorMetric {
     /**
@@ -473,7 +509,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       }
     }
   }("getBank")
-  
+
   override def getBankFuture(bankId: BankId, callContext: Option[CallContext]) = saveConnectorMetric {
      /**
         * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
@@ -517,21 +553,23 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       }
     }
   }("getBank")
-  
+
   messageDocs += MessageDoc(
     process = "obp.get.Accounts",
     messageFormat = messageFormat,
-    description = "getBankAccounts from kafka",
+    description = "Gets the list of accounts available to the User. This call sends authInfo including username.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetAccounts.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetAccounts.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundGetAccounts(
         authInfoExample,
-        InternalBasicCustomers(customers =List(internalBasicCustomer)))
+        InternalBasicCustomers(customers =List(internalBasicCustomerExample)))
     ),
     exampleInboundMessage = decompose(
-      InboundGetAccounts(authInfoExample, statusExample, InboundAccountSept2018("", cbsToken ="cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRouting = Nil, accountRules = Nil) :: Nil)
-    )
+      InboundGetAccounts(authInfoExample, statusExample,
+        inboundAccountSept2018Example :: Nil)
+    ),
+    adapterImplementation = Some(AdapterImplementation("Accounts", 5))
   )
   override def getBankAccounts(username: String, callContext: Option[CallContext]): Box[(List[InboundAccountCommon], Option[CallContext])] = saveConnectorMetric{
     /**
@@ -630,7 +668,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Account",
     messageFormat = messageFormat,
-    description = "getBankAccount from kafka",
+    description = "Get a single Account as specified by the bankId and accountId.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetAccountbyAccountID.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetAccountbyAccountID.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -644,7 +682,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       InboundGetAccountbyAccountID(
         authInfoExample,
         statusExample,
-        Some(InboundAccountSept2018("", cbsToken = "cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRouting = Nil, accountRules = Nil))))
+        Some(inboundAccountSept2018Example))),
+      adapterImplementation = Some(AdapterImplementation("Accounts", 7))
   )
   override def getBankAccount(bankId: BankId, accountId: AccountId, @CacheKeyOmit callContext: Option[CallContext]) = saveConnectorMetric {
     /**
@@ -687,22 +726,23 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.check.BankAccountExists",
     messageFormat = messageFormat,
-    description = "checkBankAccountExists from kafka",
+    description = "Check a bank Account exists - as specified by bankId and accountId.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundCheckBankAccountExists.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundCheckBankAccountExists.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundCheckBankAccountExists(
         authInfoExample,
-        bankIdExample.verbose,
-        "accountId"
+        bankIdExample.value,
+        accountIdExample.value
       )
     ),
     exampleInboundMessage = decompose(
       InboundCheckBankAccountExists(
         authInfoExample,
         statusExample,
-        Some(InboundAccountSept2018("", cbsToken = "cbsToken", bankId = bankIdExample.verbose, branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRouting = Nil, accountRules = Nil)))
-    )
+        Some(inboundAccountSept2018Example))
+    ),
+  adapterImplementation = Some(AdapterImplementation("Accounts", 4))
   )
   override def checkBankAccountExists(bankId: BankId, accountId: AccountId, @CacheKeyOmit callContext: Option[CallContext])= saveConnectorMetric {
     /**
@@ -749,21 +789,22 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.coreBankAccounts",
     messageFormat = messageFormat,
-    description = "getCoreBankAccounts from kafka",
+    description = "Get bank Accounts available to the User (without Metadata)",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetAccountbyAccountID.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetAccountbyAccountID.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundGetAccountbyAccountID(
         authInfoExample,
-        "bankId",
-        "accountId"
+        bankIdExample.value,
+        accountIdExample.value
       )
     ),
     exampleInboundMessage = decompose(
       InboundGetAccountbyAccountID(
         authInfoExample,
         statusExample, 
-        Some(InboundAccountSept2018("", cbsToken = "cbsToken", bankId = "gh.29.uk", branchId = "222", accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", accountNumber = "123", accountType = "AC", balanceAmount = "50", balanceCurrency = "EUR", owners = "Susan" :: " Frank" :: Nil, viewsToGenerate = "Public" :: "Accountant" :: "Auditor" :: Nil, bankRoutingScheme = "iban", bankRoutingAddress = "bankRoutingAddress", branchRoutingScheme = "branchRoutingScheme", branchRoutingAddress = " branchRoutingAddress", accountRoutingScheme = "accountRoutingScheme", accountRoutingAddress = "accountRoutingAddress", accountRouting = Nil, accountRules = Nil))))
+        Some(inboundAccountSept2018Example))),
+    adapterImplementation = Some(AdapterImplementation("Accounts", 1))
   )
   override def getCoreBankAccounts(BankIdAccountIds: List[BankIdAccountId], @CacheKeyOmit callContext: Option[CallContext]) : Box[(List[CoreAccount], Option[CallContext])]  = saveConnectorMetric{
     /**
@@ -856,14 +897,14 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Transactions",
     messageFormat = messageFormat,
-    description = "getTransactions from kafka",
+    description = "Get Transactions for an Account specified by bankId and accountId. Pagination is achieved with limit, fromDate and toDate.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetTransactions.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetTransactions.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundGetTransactions(
         authInfo = authInfoExample,
-        bankId = "bankId",
-        accountId = "accountId",
+        bankId = bankIdExample.value,
+        accountId = accountIdExample.value,
         limit =100,
         fromDate="DateWithSecondsExampleObject",
         toDate="DateWithSecondsExampleObject"
@@ -875,9 +916,9 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         statusExample,
         InternalTransaction_vSept2018(
           transactionId = "String",
-          accountId = "String",
+          accountId = accountIdExample.value,
           amount = "String",
-          bankId = "String",
+          bankId = bankIdExample.value,
           completedDate = "String", 
           counterpartyId = "String", 
           counterpartyName = "String", 
@@ -887,7 +928,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           newBalanceCurrency = "String", 
           postedDate = "String", 
           `type` = "String", 
-          userId = "String")::Nil))
+          userId = usernameExample.value)::Nil)),
+    adapterImplementation = Some(AdapterImplementation("Transactions", 10))
   )
   // TODO Get rid on these param lookups and document.
   override def getTransactions(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: OBPQueryParam*) = saveConnectorMetric {
@@ -895,6 +937,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString }.headOption.getOrElse(APIUtil.DefaultFromDate.toString)
     val toDate = queryParams.collect { case OBPToDate(date) => date.toString }.headOption.getOrElse(APIUtil.DefaultToDate.toString)
 
+    // TODO What about offset?
     val req = OutboundGetTransactions(
       authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
       bankId = bankId.toString,
@@ -1028,7 +1071,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Transaction",
     messageFormat = messageFormat,
-    description = "getTransaction from kafka ",
+    description = "Get a single Transaction specified by bankId, accountId and transactionId",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetTransaction.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetTransaction.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -1042,9 +1085,9 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     exampleInboundMessage = decompose(
       InboundGetTransaction(authInfoExample, statusExample, Some(InternalTransaction_vSept2018(
                 transactionId = "String",
-                accountId = "String",
+                accountId = accountIdExample.value,
                 amount = "String",
-                bankId = "String",
+                bankId = bankIdExample.value,
                 completedDate = "2018-10-19T21:17:03Z",
                 counterpartyId = "String",
                 counterpartyName = "String",
@@ -1054,9 +1097,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
                 newBalanceCurrency = "String",
                 postedDate = "2018-10-19T21:17:03Z",
                 `type` = "String",
-                userId = "String"
+                userId = userIdExample.value
               )))
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Transactions", 11))
   )
   override def getTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId, callContext: Option[CallContext]) = saveConnectorMetric{
     /**
@@ -1108,17 +1152,17 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.create.Challenge",
     messageFormat = messageFormat,
-    description = "CreateChallenge from kafka ",
+    description = "Create a Security Challenge that may be used to complete a Transaction Request.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundChallengeBase.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundChallengeBase.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundChallengeBase(
         action = "obp.create.Challenge",
         messageFormat = messageFormat,
-        bankId = "gh.29.uk",
-        accountId = "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
-        userId = "c7b6cb47-cb96-4441-8801-35b57456753a",
-        username = "susan.uk.29@example.com",
+        bankId = bankIdExample.value,
+        accountId = accountIdExample.value,
+        userId = userIdExample.value,
+        username = usernameExample.value,
         transactionRequestType = "SANDBOX_TAN",
         transactionRequestId = "1234567"
       )
@@ -1134,7 +1178,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       )
     ),
     outboundAvroSchema = Some(parse(SchemaFor[OutboundCreateChallengeSept2018]().toString(true))),
-    inboundAvroSchema = Some(parse(SchemaFor[InboundCreateChallengeSept2018]().toString(true)))
+    inboundAvroSchema = Some(parse(SchemaFor[InboundCreateChallengeSept2018]().toString(true))),
+    adapterImplementation = Some(AdapterImplementation("Payments", 20))
   )
   override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, callContext: Option[CallContext]) = {
     
@@ -1177,7 +1222,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.create.Counterparty",
     messageFormat = messageFormat,
-    description = "createCounterparty from kafka ",
+    description = "Create Counterparty",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundCreateCounterparty.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundCreateCounterparty.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -1199,6 +1244,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           otherBranchRoutingScheme = "otherBranchRoutingScheme",
           otherBranchRoutingAddress = "otherBranchRoutingAddress",
           isBeneficiary = true,
+          // Why is this not a list as in inbound?
           bespoke = CounterpartyBespoke("key","value") ::Nil
         )
       )
@@ -1228,7 +1274,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
                           key = "String",
                           value = "String"
                         )))))
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Payments", 5))
   )
   override def createCounterparty(
     name: String,
@@ -1298,7 +1345,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.transactionRequests210",
     messageFormat = messageFormat,
-    description = "getTransactionRequests210 from kafka ",
+    description = "Get Transaction Requests",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetTransactionRequests210.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetTransactionRequests210.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -1349,8 +1396,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           is_beneficiary = false)
         )
       )
-    )
-    
+    ),
+    adapterImplementation = Some(AdapterImplementation("Payments", 10))
   )
   override def getTransactionRequests210(user : User, fromAccount : BankAccount, callContext: Option[CallContext] = None)  = saveConnectorMetric{
     /**
@@ -1415,7 +1462,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.counterparties",
     messageFormat = messageFormat,
-    description = "getCounterparties from kafka ",
+    description = "Get Counterparties available to the View on the Account specified by thisBankId, thisAccountId and viewId.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetCounterparties.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetCounterparties.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -1451,7 +1498,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
             CounterpartyBespoke(key = "key", value = "value"))
         ) :: Nil
     )
-  )
+  ),
+    adapterImplementation = Some(AdapterImplementation("Payments", 0))
   )
 
   override def getCounterparties(thisBankId: BankId, thisAccountId: AccountId,viewId :ViewId, callContext: Option[CallContext] = None) = saveConnectorMetric{
@@ -1502,7 +1550,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.CounterpartyByCounterpartyId",
     messageFormat = messageFormat,
-    description = "getCounterpartyByCounterpartyId from kafka ",
+    description = "Get a Counterparty by its counterpartyId.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetCounterpartyByCounterpartyId.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetCounterpartyByCounterpartyId.getClass.getSimpleName).response),
     exampleOutboundMessage = Extraction.decompose(
@@ -1515,9 +1563,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     ),
     exampleInboundMessage = Extraction.decompose(
       InboundGetCounterparty(authInfoExample, statusExample, Some(InternalCounterparty(createdByUserId = "String", name = "String", thisBankId = "String", thisAccountId = "String", thisViewId = "String", counterpartyId = "String", otherAccountRoutingScheme = "String", otherAccountRoutingAddress = "String", otherBankRoutingScheme = "String", otherBankRoutingAddress = "String", otherBranchRoutingScheme = "String", otherBranchRoutingAddress = "String", isBeneficiary = true, description = "String", otherAccountSecondaryRoutingScheme = "String", otherAccountSecondaryRoutingAddress = "String", bespoke = Nil)))
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Payments", 1))
   )
-  override def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext] = None)= saveConnectorMetric{
+  override def getCounterpartyByCounterpartyIdFuture(counterpartyId: CounterpartyId, callContext: Option[CallContext])= saveConnectorMetric{
     /**
       * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
       * is just a temporary value filed with UUID values in order to prevent any ambiguity.
@@ -1527,31 +1576,30 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(counterpartyByCounterpartyIdTTL second) {
-        val box = for {
-          authInfo <- getAuthInfo(callContext)
-          req = OutboundGetCounterpartyByCounterpartyId(authInfo, OutboundGetCounterpartyById(counterpartyId.value))
-          _ <- Full(logger.debug(s"Kafka getCounterpartyByCounterpartyId Req says: is: $req"))
-          kafkaMessage <- processToBox[OutboundGetCounterpartyByCounterpartyId](req)
-          inboundGetCustomersByUserIdFuture <- tryo {
-            kafkaMessage.extract[InboundGetCounterparty]
-          } ?~! s"$InboundGetCustomersByUserId extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
-          (internalCustomer, status) <- Full(inboundGetCustomersByUserIdFuture.data, inboundGetCustomersByUserIdFuture.status)
-        } yield {
-          (internalCustomer, status)
-        }
-        logger.debug(s"Kafka getCounterpartyByCounterpartyId Res says: is: $box")
+       val req = OutboundGetCounterpartyByCounterpartyId(getAuthInfo(callContext).openOrThrowException(attemptedToOpenAnEmptyBox), OutboundGetCounterpartyById(counterpartyId.value))
+        logger.debug(s"Kafka getCounterpartyByCounterpartyId Req says: is: $req")
+        
+       val future = for {
+         res <- processToFuture[OutboundGetCounterpartyByCounterpartyId](req) map {
+           f =>
+             try {
+               f.extract[InboundGetCounterparty]
+             } catch {
+               case e: Exception => throw new MappingException(s"$InboundGetCounterparty extract error. Both check API and Adapter Inbound Case Classes need be the same ! ", e)
+             }
+         } map { x => (x.authInfo, x.data, x.status) }
+       } yield {
+         Full(res)
+       }
+       logger.debug(s"Kafka getCounterpartyByCounterpartyId Res says: is: $future")
 
-        val res = box match {
-          case Full((Some(data), status)) if (status.errorCode == "") =>
-            Full(data, callContext)
-          case Full((data, status)) if (status.errorCode != "") =>
-            Failure("INTERNAL-" + status.errorCode + ". + CoreBank-Status:" + status.backendMessages)
-          case Empty =>
-            Failure(ErrorMessages.ConnectorEmptyResponse)
-          case Failure(msg, e, c) =>
-            Failure(msg, e, c)
+        val res = future map {
+          case Full((authInfo, Some(data), status)) if (status.errorCode == "") =>
+            (Full(data), callContext)
+          case Full((authInfo, data, status)) if (status.errorCode != "") =>
+            (Failure("INTERNAL-" + status.errorCode + ". + CoreBank-Status:" + status.backendMessages), callContext)
           case _ =>
-            Failure(ErrorMessages.UnknownError)
+            (Failure(ErrorMessages.UnknownError), callContext)
         }
         res
       }
@@ -1566,43 +1614,39 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       * The real value will be assigned by Macro during compile time at this line of a code:
       * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
       */
-    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-    CacheKeyFromArguments.buildCacheKey {
-      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(counterpartyTrait second){
-        val box = for {
-          authInfo <- getAuthInfo(callContext)
-          req = OutboundGetCounterparty(authInfo, thisBankId.value, thisAccountId.value, couterpartyId)
-          _ <- Full(logger.debug(s"Kafka getCounterpartyTrait Req says: is: $req"))
-          kafkaMessage <- processToBox[OutboundGetCounterparty](req)
-          inboundGetCounterparty <- tryo{kafkaMessage.extract[InboundGetCounterparty]} ?~! s"$InboundGetCounterparty extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
-          (data, status) <- Full(inboundGetCounterparty.data, inboundGetCounterparty.status)
-        } yield{
-          (data, status)
-        }
-        logger.debug(s"Kafka getCounterpartyTrait Res says: is: $box")
+    val req = OutboundGetCounterparty(getAuthInfo(callContext).openOrThrowException(attemptedToOpenAnEmptyBox), thisBankId.value, thisAccountId.value, couterpartyId)
+    logger.debug(s"Kafka getCounterpartyTrait Req says: is: $req")
 
-        val res = box match {
-          case Full((Some(data), status)) if (status.errorCode=="")  =>
-            Full((data, callContext))
-          case Full((data, status)) if (status.errorCode!="") =>
-            Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
-          case Empty =>
-            Failure(ErrorMessages.ConnectorEmptyResponse)
-          case Failure(msg, e, c) =>
-            Failure(msg, e, c)
-          case _ =>
-            Failure(ErrorMessages.UnknownError)
-        }
-        res
-      }
+    val future = for {
+     res <- processToFuture[OutboundGetCounterparty](req) map {
+       f =>
+         try {
+           f.extract[InboundGetCounterparty]
+         } catch {
+           case e: Exception => throw new MappingException(s"$InboundGetCounterparty extract error. Both check API and Adapter Inbound Case Classes need be the same ! ", e)
+         }
+     } map { x => (x.authInfo, x.data, x.status) }
+   } yield {
+     Full(res)
+   }
+   logger.debug(s"Kafka getCounterpartyTrait Res says: is: $future")
+    
+    val res = future map {
+      case Full((authInfo, Some(data), status)) if (status.errorCode=="")  =>
+        (Full(data), callContext)
+      case Full((authInfo, data, status)) if (status.errorCode!="") =>
+        (Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages), callContext)
+      case _ =>
+        (Failure(ErrorMessages.UnknownError), callContext)
     }
+    res
   }("getCounterpartyTrait")
   
   
   messageDocs += MessageDoc(
     process = "obp.get.CustomersByUserIdBox",
     messageFormat = messageFormat,
-    description = "getCustomersByUserIdBox from kafka ",
+    description = "Get Customers represented by the User.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetCustomersByUserId.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetCustomersByUserId.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -1615,7 +1659,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         authInfoExample,
         statusExample,
         InternalCustomer(
-          customerId = "String", bankId = "String", number = "String",
+          customerId = "String", bankId = bankIdExample.value, number = "String",
           legalName = "String", mobileNumber = "String", email = "String",
           faceImage = CustomerFaceImage(date = DateWithSecondsExampleObject, url = "String"),
           dateOfBirth = DateWithSecondsExampleObject, relationshipStatus = "String",
@@ -1628,7 +1672,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       )
     ),
     outboundAvroSchema = None,
-    inboundAvroSchema = None
+    inboundAvroSchema = None,
+    adapterImplementation = Some(AdapterImplementation("Accounts", 0))
   )
 
   override def getCustomersByUserIdFuture(userId: String , @CacheKeyOmit callContext: Option[CallContext]): Future[Box[(List[Customer],Option[CallContext])]] = saveConnectorMetric{
@@ -1678,13 +1723,13 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.getStatusOfCheckbookOrdersFuture",
     messageFormat = messageFormat,
-    description = "getStatusOfCheckbookOrdersFuture from kafka ",
+    description = "Get the status of CheckbookOrders for an Account.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetCheckbookOrderStatus.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetCheckbookOrderStatus.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundGetCheckbookOrderStatus(
         authInfoExample,
-        bankId = "bankId", 
+        bankId = bankIdExample.value,
         accountId ="accountId", 
         originatorApplication ="String", 
         originatorStationIP = "String", 
@@ -1697,7 +1742,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         statusExample,
         SwaggerDefinitionsJSON.checkbookOrdersJson
       )
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Misc", 1))
   )
 
   override def getCheckbookOrdersFuture(
@@ -1759,14 +1805,14 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.getStatusOfCreditCardOrderFuture",
     messageFormat = messageFormat,
-    description = "getStatusOfCreditCardOrderFuture from kafka ",
+    description = "Get the status of CreditCardOrders",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetCreditCardOrderStatus.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetCreditCardOrderStatus.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
       OutboundGetCreditCardOrderStatus(
         authInfoExample,
-        bankId = "bankId", 
-        accountId ="accountId", 
+        bankId = bankIdExample.value,
+        accountId = accountIdExample.value,
         originatorApplication = "String", 
         originatorStationIP = "String", 
         primaryAccount = ""
@@ -1787,7 +1833,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           "Branch"
         )
         )
-    ))
+    )),
+    adapterImplementation = Some(AdapterImplementation("Misc", 1))
   )
 
   override def getStatusOfCreditCardOrderFuture(
@@ -1985,7 +2032,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Branches",
     messageFormat = messageFormat,
-    description = "getBranches",
+    description = "Get Branches fora Bank specified by bankId",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetBranches.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetBranches.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -1998,7 +2045,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         inboundStatusMessagesExample),
         InboundBranchVSept2018(
           branchId = BranchId(""),
-          bankId = BankId(""),
+          bankId = BankId(bankIdExample.value),
           name = "",
           address =  Address(line1 = "",
             line2 = "",
@@ -2032,7 +2079,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         )  :: Nil
       )
 
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Open Data", 1))
   )
 
   override def getBranchesFuture(bankId: BankId, callContext: Option[CallContext], queryParams: OBPQueryParam*) = saveConnectorMetric {
@@ -2079,7 +2127,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Branch",
     messageFormat = messageFormat,
-    description = "getBranch",
+    description = "Get a Branch as specified by bankId and branchId",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetBranch.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetBranch.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -2092,7 +2140,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           inboundStatusMessagesExample),
         Some(InboundBranchVSept2018(
           branchId = BranchId(""),
-          bankId = BankId(""),
+          bankId = BankId(bankIdExample.value),
           name = "",
           address =  Address(line1 = "",
             line2 = "",
@@ -2126,7 +2174,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         ))
       )
 
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Open Data", 1))
   )
 
   override def getBranchFuture(bankId : BankId, branchId: BranchId, callContext: Option[CallContext])  = saveConnectorMetric {
@@ -2176,7 +2225,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Atms",
     messageFormat = messageFormat,
-    description = "getAtms",
+    description = "Get ATMs for a bank specified by bankId",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetAtms.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetAtms.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -2188,7 +2237,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         Status(errorCodeExample, inboundStatusMessagesExample),
         InboundAtmSept2018(
           atmId = AtmId("333"),
-          bankId = BankId("10"),
+          bankId = BankId(bankIdExample.value),
           name = "",
           address =  Address(line1 = "",
             line2 = "",
@@ -2229,7 +2278,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         )  :: Nil
       )
 
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Open Data", 1))
   )
 
   override def getAtmsFuture(bankId: BankId, callContext: Option[CallContext], queryParams: OBPQueryParam*) = saveConnectorMetric {
@@ -2276,7 +2326,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   messageDocs += MessageDoc(
     process = "obp.get.Atm",
     messageFormat = messageFormat,
-    description = "getAtm",
+    description = "Get an ATM as specified by bankId and atmId.",
     outboundTopic = Some(Topics.createTopicByClassName(OutboundGetAtm.getClass.getSimpleName).request),
     inboundTopic = Some(Topics.createTopicByClassName(OutboundGetAtm.getClass.getSimpleName).response),
     exampleOutboundMessage = decompose(
@@ -2288,7 +2338,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         Status(errorCodeExample, inboundStatusMessagesExample),
         Some(InboundAtmSept2018(
           atmId = AtmId("333"),
-          bankId = BankId("10"),
+          bankId = BankId(bankIdExample.value),
           name = "",
           address =  Address(line1 = "",
             line2 = "",
@@ -2328,8 +2378,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           hasDepositCapability = Some(true)
         )
       ))
-
-    )
+    ),
+    adapterImplementation = Some(AdapterImplementation("Open Data", 1))
   )
 
   override def getAtmFuture(bankId : BankId, atmId: AtmId, callContext: Option[CallContext]) = saveConnectorMetric {

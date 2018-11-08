@@ -3,15 +3,16 @@ package code.bankconnectors
 import java.util.{Date, UUID}
 
 import code.accountholder.{AccountHolders, MapperAccountHolders}
+import code.customeraddress.CustomerAddress
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.accountId
 import code.api.util.APIUtil._
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
-import code.api.util.{APIUtil, CallContext, ErrorMessages}
+import code.api.util.{APIUtil, CallContext, ErrorMessages, NewStyle}
 import code.api.v1_2_1.AmountOfMoneyJsonV121
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0.{TransactionRequestCommonBodyJSON, _}
-import code.api.v3_1_0.{CardObjectJson, CheckbookOrdersJson, PostCustomerJsonV310, PostCustomerResponseJsonV310}
+import code.api.v3_1_0._
 import code.atms.Atms
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors.vARZ.Connector_vARZ
@@ -19,6 +20,7 @@ import code.bankconnectors.vJune2017.KafkaMappedConnector_vJune2017
 import code.bankconnectors.vMar2017.{InboundAdapterInfoInternal, KafkaMappedConnector_vMar2017}
 import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
 import code.branches.Branches.{Branch, BranchId, BranchT}
+import code.context.UserAuthContext
 import code.customer._
 import code.fx.FXRate
 import code.management.ImporterAPI.ImporterTransaction
@@ -26,6 +28,7 @@ import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.ResourceUser
 import code.model.{BankAccount, Transaction, TransactionRequestType, User, _}
 import code.products.Products.{Product, ProductCode}
+import code.taxresidence.TaxResidence
 import code.transactionChallenge.ExpectedChallengeAnswer
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.transactionrequests.TransactionRequests._
@@ -41,10 +44,10 @@ import net.liftweb.util.{BCrypt, Props, SimpleInjector}
 import scala.collection.immutable.List
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.math.BigInt
 import scala.util.Random
-
+import scala.concurrent.duration._
 
 /*
 So we can switch between different sources of resources e.g.
@@ -63,18 +66,8 @@ Could consider a Map of ("resourceType" -> "provider") - this could tell us whic
 object Connector extends SimpleInjector {
 
   import scala.reflect.runtime.universe._
-  def getObjectInstance(clsName: String):Connector = {
-    val mirror = runtimeMirror(getClass.getClassLoader)
-    val module = mirror.staticModule(clsName)
-    mirror.reflectModule(module).instance.asInstanceOf[Connector]
-  }
-
-  val connector = new Inject(buildOne _) {}
-
-  def buildOne: Connector = {
-    val connectorProps = APIUtil.getPropsValue("connector").openOrThrowException("no connector set")
-
-    connectorProps match {
+  def getConnectorInstance(connectorVersion: String):Connector = {
+    connectorVersion match {
       case "mapped" => LocalMappedConnector
       case "mongodb" => LocalRecordConnector
       case "obpjvm" => ObpJvmMappedConnector
@@ -84,8 +77,16 @@ object Connector extends SimpleInjector {
       case "kafka_vJune2017" => KafkaMappedConnector_vJune2017
       case "kafka_vSept2018" => KafkaMappedConnector_vSept2018
       case "arz" => Connector_vARZ
-      case matchKafkaVersion(version) => getObjectInstance(s"""code.bankconnectors.KafkaMappedConnector_v${version}""")
+      case _ => throw new RuntimeException(s"Do not Support this connector version: $connectorVersion")
     }
+  }
+
+  val connector = new Inject(buildOne _) {}
+
+  def buildOne: Connector = {
+    val connectorProps = APIUtil.getPropsValue("connector").openOrThrowException("connector props filed not set")
+    getConnectorInstance(connectorProps)
+    
   }
 
 }
@@ -200,8 +201,9 @@ trait Connector extends MdcLoggable{
     transactionRequestType: String,
     currency: String,
     userId: String,
-    userName: String
-  ): Box[AmountOfMoney] =
+    userName: String,
+    callContext: Option[CallContext]
+  ): Box[(AmountOfMoney, Option[CallContext])] =
   LocalMappedConnector.getChallengeThreshold(
     bankId: String,
     accountId: String,
@@ -209,7 +211,8 @@ trait Connector extends MdcLoggable{
     transactionRequestType: String,
     currency: String,
     userId: String,
-    userName: String
+    userName: String,
+    callContext: Option[CallContext]
   )
 
   //Gets current charge level for transaction request
@@ -233,7 +236,7 @@ trait Connector extends MdcLoggable{
   // Initiate creating a challenge for transaction request and returns an id of the challenge
   def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, callContext: Option[CallContext] = None) : Box[(String,Option[CallContext])] = Failure(NotImplemented + currentMethodName)
   // Validates an answer for a challenge and returns if the answer is correct or not
-  def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String) : Box[Boolean] = Full(true)
+  def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Full(true), callContext)}
 
   //gets a particular bank handled by this connector
   def getBank(bankId : BankId, callContext: Option[CallContext]) : Box[(Bank, Option[CallContext])] = Failure(NotImplemented + currentMethodName)
@@ -297,7 +300,14 @@ trait Connector extends MdcLoggable{
     getBankAccount(bankId, accountId, None).map(_._1)
   }
 
+  //This one just added the callContext in parameters.
   def getBankAccount(bankId : BankId, accountId : AccountId, callContext: Option[CallContext]) : Box[(BankAccount, Option[CallContext])]= Failure(NotImplemented + currentMethodName)
+
+  //This one return the Future.
+  def getBankAccountFuture(bankId : BankId, accountId : AccountId, callContext: Option[CallContext]) : OBPReturnType[Box[BankAccount]]= Future 
+  {(getBankAccount(bankId : BankId, accountId : AccountId, callContext: Option[CallContext]).map(i =>(i._1)),
+    getBankAccount(bankId : BankId, accountId : AccountId, callContext: Option[CallContext]).map(i =>(i._2)).openOrThrowException(attemptedToOpenAnEmptyBox))
+  }
 
   def getBankAccountsFuture(bankIdAccountIds: List[BankIdAccountId], callContext: Option[CallContext]) : Future[Box[List[BankAccount]]]= Future{Failure(NotImplemented + currentMethodName)}
 
@@ -343,15 +353,18 @@ trait Connector extends MdcLoggable{
 
   def getCounterparty(thisBankId: BankId, thisAccountId: AccountId, couterpartyId: String): Box[Counterparty]= Failure(NotImplemented + currentMethodName)
 
-  def getCounterpartyTrait(bankId: BankId, accountId: AccountId, couterpartyId: String, callContext: Option[CallContext]): Box[(CounterpartyTrait, Option[CallContext])]= Failure(NotImplemented + currentMethodName)
+  def getCounterpartyTrait(bankId: BankId, accountId: AccountId, couterpartyId: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]]= Future{(Failure(NotImplemented + currentMethodName), callContext)}
 
   def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]): Box[(CounterpartyTrait, Option[CallContext])]= Failure(NotImplemented + currentMethodName)
 
+  def getCounterpartyByCounterpartyIdFuture(counterpartyId: CounterpartyId, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = Future{(Failure(NotImplemented + currentMethodName), callContext)}
+
+  
   /**
     * get Counterparty by iban (OtherAccountRoutingAddress field in MappedCounterparty table)
     * This is a helper method that assumes OtherAccountRoutingScheme=IBAN
     */
-  def getCounterpartyByIban(iban: String): Box[CounterpartyTrait] = Failure(NotImplemented + currentMethodName)
+  def getCounterpartyByIban(iban: String, callContext: Option[CallContext]) : OBPReturnType[Box[CounterpartyTrait]] = Future {(Failure(NotImplemented + currentMethodName), callContext)}
 
   def getCounterparties(thisBankId: BankId, thisAccountId: AccountId,viewId :ViewId, callContext: Option[CallContext] = None): Box[(List[CounterpartyTrait], Option[CallContext])]= Failure(NotImplemented + currentMethodName)
 
@@ -447,6 +460,23 @@ trait Connector extends MdcLoggable{
     for {
       transactionId <- makePaymentImpl(fromAccount, toAccount, transactionRequestCommonBody, amount, description, transactionRequestType, chargePolicy) ?~! InvalidConnectorResponseForMakePayment
     } yield transactionId
+  }
+  
+  def makePaymentv210(fromAccount: BankAccount,
+                      toAccount: BankAccount,
+                      transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
+                      amount: BigDecimal,
+                      description: String,
+                      transactionRequestType: TransactionRequestType,
+                      chargePolicy: String, 
+                      callContext: Option[CallContext]): OBPReturnType[Box[TransactionId]]= Future{
+     (makePaymentv200(fromAccount: BankAccount,
+                      toAccount: BankAccount,
+                      transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
+                      amount: BigDecimal,
+                      description: String,
+                      transactionRequestType: TransactionRequestType,
+                      chargePolicy: String), callContext)
   }
 
 
@@ -611,7 +641,8 @@ trait Connector extends MdcLoggable{
                                    transactionRequestType: TransactionRequestType,
                                    transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
                                    detailsPlain: String,
-                                   chargePolicy: String): Box[TransactionRequest] = {
+                                   chargePolicy: String, 
+                                   callContext: Option[CallContext]): Future[Box[(TransactionRequest, Option[CallContext])]] = Future{
   
     // Set initial status
     def getStatus(challengeThresholdAmount: BigDecimal, transactionRequestCommonBodyAmount: BigDecimal): Box[TransactionRequestStatus.Value] ={
@@ -648,7 +679,7 @@ trait Connector extends MdcLoggable{
 
     for{
      // Get the threshold for a challenge. i.e. over what value do we require an out of bounds security challenge to be sent?
-      challengeThreshold <- getChallengeThreshold(fromAccount.bankId.value, fromAccount.accountId.value, viewId.value, transactionRequestType.value, transactionRequestCommonBody.value.currency, initiator.userId, initiator.name) ?~! InvalidConnectorResponseForGetChallengeThreshold
+      (challengeThreshold,callContext) <- getChallengeThreshold(fromAccount.bankId.value, fromAccount.accountId.value, viewId.value, transactionRequestType.value, transactionRequestCommonBody.value.currency, initiator.userId, initiator.name, callContext) ?~! InvalidConnectorResponseForGetChallengeThreshold
       challengeThresholdAmount <- tryo(BigDecimal(challengeThreshold.amount)) ?~! s"$InvalidConnectorResponseForGetChallengeThreshold. challengeThreshold amount ${challengeThreshold.amount} not convertible to number"
       transactionRequestCommonBodyAmount <- tryo(BigDecimal(transactionRequestCommonBody.value.amount)) ?~! s"$InvalidNumber Request Json value.amount ${transactionRequestCommonBody.value.amount} not convertible to number"
       status <- getStatus(challengeThresholdAmount,transactionRequestCommonBodyAmount) ?~! s"$GetStatusException"
@@ -708,7 +739,7 @@ trait Connector extends MdcLoggable{
       }
     }yield{
       logger.debug(newTransactionRequest)
-      newTransactionRequest
+      (newTransactionRequest, callContext)
     }
   }
 
@@ -830,7 +861,7 @@ trait Connector extends MdcLoggable{
 
   protected def getTransactionRequestsImpl210(fromAccount : BankAccount) : Box[List[TransactionRequest]] = TransactionRequests.transactionRequestProvider.vend.getTransactionRequests(fromAccount.bankId, fromAccount.accountId)
 
-  def getTransactionRequestImpl(transactionRequestId: TransactionRequestId) : Box[TransactionRequest] = TransactionRequests.transactionRequestProvider.vend.getTransactionRequest(transactionRequestId)
+  def getTransactionRequestImpl(transactionRequestId: TransactionRequestId, callContext: Option[CallContext]): Box[(TransactionRequest, Option[CallContext])] = TransactionRequests.transactionRequestProvider.vend.getTransactionRequest(transactionRequestId).map(transactionRequest =>(transactionRequest, callContext))
 
   final def getTransactionRequestTypes(initiator : User, fromAccount : BankAccount) : Box[List[TransactionRequestType]] = {
     for {
@@ -851,9 +882,9 @@ trait Connector extends MdcLoggable{
   //It is only used for V140 and V200, has been deprecated from V210.
   @deprecated
   def answerTransactionRequestChallenge(transReqId: TransactionRequestId, answer: String) : Box[Boolean] = {
-    val tr = getTransactionRequestImpl(transReqId) ?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transReqId"
+    val tr= getTransactionRequestImpl(transReqId, None) ?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transReqId"
 
-    tr match {
+    tr.map(_._1) match {
       case Full(tr: TransactionRequest) =>
         if (tr.challenge.allowed_attempts > 0) {
           if (tr.challenge.challenge_type == TransactionChallengeTypes.SANDBOX_TAN.toString) {
@@ -880,13 +911,13 @@ trait Connector extends MdcLoggable{
 
   def createTransactionAfterChallenge(initiator: User, transReqId: TransactionRequestId) : Box[TransactionRequest] = {
     for {
-      tr <- getTransactionRequestImpl(transReqId) ?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transReqId"
+      (tr, callContext)<- getTransactionRequestImpl(transReqId, None) ?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transReqId"
       transId <- makePayment(initiator, BankIdAccountId(BankId(tr.from.bank_id), AccountId(tr.from.account_id)),
           BankIdAccountId (BankId(tr.body.to_sandbox_tan.get.bank_id), AccountId(tr.body.to_sandbox_tan.get.account_id)), BigDecimal (tr.body.value.amount), tr.body.description, TransactionRequestType(tr.`type`)) ?~! InvalidConnectorResponseForMakePayment
       didSaveTransId <- saveTransactionRequestTransaction(transReqId, transId)
       didSaveStatus <- saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.COMPLETED.toString)
       //get transaction request again now with updated values
-      tr <- getTransactionRequestImpl(transReqId)?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transReqId"
+      (tr, callContext) <- getTransactionRequestImpl(transReqId, None)?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transReqId"
     } yield {
       tr
     }
@@ -913,119 +944,122 @@ trait Connector extends MdcLoggable{
     }
   }
 
-  def createTransactionAfterChallengev210(fromAccount: BankAccount, transactionRequest: TransactionRequest, callContext: Option[CallContext] = None) : Box[TransactionRequest] = {
+  def createTransactionAfterChallengeV210(fromAccount: BankAccount, transactionRequest: TransactionRequest, callContext: Option[CallContext]) : OBPReturnType[Box[TransactionRequest]] = {
     for {
-      
-//      details <- Full(transactionRequest.details)
-      body <- Full(transactionRequest.body)
+      body <- Future (transactionRequest.body)
     
       transactionRequestType = transactionRequest.`type`
       transactionRequestId=transactionRequest.id
-      transactionId  <- TransactionRequestTypes.withName(transactionRequestType) match {
+      (transactionId, callContext) <- TransactionRequestTypes.withName(transactionRequestType) match {
         case SANDBOX_TAN =>
           for{
-            toBankId <- tryo{(BankId(body.to_sandbox_tan.get.bank_id))} ?~! s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON "
-            toAccountId <- tryo{(AccountId(body.to_sandbox_tan.get.account_id))} ?~! s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON "
-            toAccount <- Connector.connector.vend.getBankAccount(toBankId,toAccountId)
-            sandboxBody <- Full(
-              TransactionRequestBodySandBoxTanJSON(
+            toSandboxTan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext){
+              body.to_sandbox_tan.get
+            }
+            toBankId = BankId(toSandboxTan.bank_id)
+            toAccountId = AccountId(toSandboxTan.account_id)
+            (toAccount, callContext) <- NewStyle.function.getBankAccount(toBankId,toAccountId, callContext)
+            sandboxBody = TransactionRequestBodySandBoxTanJSON(
               to = TransactionRequestAccountJsonV140(toBankId.value, toAccountId.value),
               value = AmountOfMoneyJsonV121(body.value.currency, body.value.amount),
-              description = body.description
-              )
-            )
-            transactionId <- makePaymentv200(
+              description = body.description)
+            (transactionId, callContext) <- NewStyle.function.makePaymentv210(
               fromAccount,
               toAccount,
               transactionRequestCommonBody=sandboxBody,
               BigDecimal(sandboxBody.value.amount),
               sandboxBody.description,
               TransactionRequestType(transactionRequestType),
-              transactionRequest.charge_policy
-            ) ?~! InvalidConnectorResponseForMakePayment
+              transactionRequest.charge_policy,
+              callContext
+            ) 
           }yield{
-            transactionId
+            (transactionId, callContext)
           }
         case COUNTERPARTY   =>
           for{
-           counterpartyId <- tryo{CounterpartyId(body.to_counterparty.get.counterparty_id)}?~! s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodyCounterpartyJSON"
-           (toCounterparty,callContext) <- Connector.connector.vend.getCounterpartyByCounterpartyId(counterpartyId, callContext) ?~! {ErrorMessages.CounterpartyNotFoundByCounterpartyId}
-           toAccount <- BankAccount.toBankAccount(toCounterparty)
-           counterpartyBody <- Full(
-             TransactionRequestBodyCounterpartyJSON(
+            bodyToCounterparty <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodyCounterpartyJSON", 400, callContext){
+             body.to_counterparty.get
+            }
+            counterpartyId = CounterpartyId(bodyToCounterparty.counterparty_id)
+            (toCounterparty,callContext) <- NewStyle.function.getCounterpartyByCounterpartyId(counterpartyId, callContext) 
+            toAccount <- NewStyle.function.toBankAccount(toCounterparty, callContext)
+            counterpartyBody = TransactionRequestBodyCounterpartyJSON(
                to = CounterpartyIdJson(counterpartyId.value), 
                value = AmountOfMoneyJsonV121(body.value.currency, body.value.amount), 
                description = body.description,
-               charge_policy = transactionRequest.charge_policy
-             )
-            )
-            
-           transactionId <- makePaymentv200(
+               charge_policy = transactionRequest.charge_policy)
+  
+            (transactionId, callContext) <- NewStyle.function.makePaymentv210(
              fromAccount,
              toAccount,
              transactionRequestCommonBody=counterpartyBody,
              BigDecimal(counterpartyBody.value.amount),
              counterpartyBody.description,
              TransactionRequestType(transactionRequestType),
-             transactionRequest.charge_policy
-           ) ?~! InvalidConnectorResponseForMakePayment
+             transactionRequest.charge_policy,
+             callContext
+           )  
           }yield{
-            transactionId
+            (transactionId, callContext)
           }
         case SEPA  =>
           for{
-            toCounterpartyIBan <- tryo{body.to_sepa.get.iban}?~! s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySEPAJSON"
-            toCounterparty <- Connector.connector.vend.getCounterpartyByIban(toCounterpartyIBan) ?~! {ErrorMessages.CounterpartyNotFoundByCounterpartyId}
-            toAccount <- BankAccount.toBankAccount(toCounterparty)
-            sepaBody <- Full(
-              TransactionRequestBodySEPAJSON(
-                to = IbanJson(toCounterpartyIBan),
-                value = AmountOfMoneyJsonV121(body.value.currency, body.value.amount),
-                description = body.description,
-                charge_policy = transactionRequest.charge_policy
-              )
+            bodyToCounterpartyIBan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySEPAJSON", 400, callContext){
+             body.to_sepa.get
+            }
+            toCounterpartyIBan =bodyToCounterpartyIBan.iban
+            (toCounterparty, callContext)<- NewStyle.function.getCounterpartyByIban(toCounterpartyIBan, callContext)
+            toAccount <- NewStyle.function.toBankAccount(toCounterparty, callContext)
+            sepaBody = TransactionRequestBodySEPAJSON(
+              to = IbanJson(toCounterpartyIBan),
+              value = AmountOfMoneyJsonV121(body.value.currency, body.value.amount),
+              description = body.description,
+              charge_policy = transactionRequest.charge_policy
             )
-            transactionId <- makePaymentv200(
+            (transactionId, callContext) <- NewStyle.function.makePaymentv210(
               fromAccount,
               toAccount,
               transactionRequestCommonBody=sepaBody,
               BigDecimal(sepaBody.value.amount),
               sepaBody.description,
               TransactionRequestType(transactionRequestType),
-              transactionRequest.charge_policy
-            ) ?~! InvalidConnectorResponseForMakePayment
+              transactionRequest.charge_policy,
+              callContext
+            ) 
           }yield{
-            transactionId
+            (transactionId, callContext)
           }  
         case FREE_FORM => for{
-          freeformBody <- Full(
+          freeformBody <- Future(
             TransactionRequestBodyFreeFormJSON(
               value = AmountOfMoneyJsonV121(body.value.currency, body.value.amount),
               description = body.description
             )
           )
-          transactionId <- makePaymentv200(
+          (transactionId,callContext) <- NewStyle.function.makePaymentv210(
             fromAccount,
             fromAccount,
             transactionRequestCommonBody=freeformBody,
             BigDecimal(freeformBody.value.amount),
             freeformBody.description,
             TransactionRequestType(transactionRequestType),
-            transactionRequest.charge_policy
-          ) ?~! InvalidConnectorResponseForMakePayment
+            transactionRequest.charge_policy,
+            callContext
+          ) 
         }yield{
-          transactionId
+          (transactionId,callContext)
         }
-        case transactionRequestType => Failure(s"${InvalidTransactionRequestType}: '${transactionRequestType}'. Not supported in this version.")
+        case transactionRequestType => Future((throw new Exception(s"${InvalidTransactionRequestType}: '${transactionRequestType}'. Not supported in this version.")), callContext)
       }
 
-      didSaveTransId <- saveTransactionRequestTransaction(transactionRequestId, transactionId)
-      didSaveStatus <- saveTransactionRequestStatusImpl(transactionRequestId, TransactionRequestStatus.COMPLETED.toString)
+      didSaveTransId <- Future{saveTransactionRequestTransaction(transactionRequestId, transactionId).openOrThrowException(attemptedToOpenAnEmptyBox)}
+      didSaveStatus <- Future{saveTransactionRequestStatusImpl(transactionRequestId, TransactionRequestStatus.COMPLETED.toString).openOrThrowException(attemptedToOpenAnEmptyBox)}
       //After `makePaymentv200` and update data for request, we get the new requqest from database again.
-      transactionReques <- Connector.connector.vend.getTransactionRequestImpl(transactionRequestId) ?~! s"${ErrorMessages.InvalidTransactionRequestId} : $transactionRequestId. Get updated transaction exeception."
+      (transactionRequest, callContext) <- NewStyle.function.getTransactionRequestImpl(transactionRequestId, callContext) 
 
     } yield {
-      transactionReques
+      (Full(transactionRequest), callContext)
     }
   }
 
@@ -1295,7 +1329,7 @@ trait Connector extends MdcLoggable{
     fromAccount: BankAccount,
     transReqId: TransactionRequestId,
     transactionRequestType: TransactionRequestType,
-    callContext: Option[CallContext] = None): Box[TransactionRequest] = Failure(NotImplemented + currentMethodName +".Only some connectors need this method !")
+    callContext: Option[CallContext]): OBPReturnType[Box[TransactionRequest]] = Future{(Failure(NotImplemented + currentMethodName +".Only some connectors need this method !"), callContext)}
   
   def makePaymentv300(
     initiator: User,
@@ -1305,7 +1339,7 @@ trait Connector extends MdcLoggable{
     transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
     transactionRequestType: TransactionRequestType,
     chargePolicy: String, 
-    callContext: Option[CallContext] = None): Box[TransactionId] = Failure(NotImplemented + currentMethodName +".Only some connectors need this method !")
+    callContext: Option[CallContext]): Future[Box[(TransactionId, Option[CallContext])]] = Future{Failure(NotImplemented + currentMethodName +".Only some connectors need this method !")}
   
   def createTransactionRequestv300(
     initiator: User,
@@ -1317,7 +1351,7 @@ trait Connector extends MdcLoggable{
     transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
     detailsPlain: String,
     chargePolicy: String,
-    callContext: Option[CallContext] = None): Box[TransactionRequest] = Failure(NotImplemented + currentMethodName+".Only some connectors need this method !")
+    callContext: Option[CallContext]): Future[Box[(TransactionRequest, Option[CallContext])]]  = Future{Failure(NotImplemented + currentMethodName+".Only some connectors need this method !")}
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1386,9 +1420,32 @@ trait Connector extends MdcLoggable{
 
   def getCustomerByCustomerId(customerId: String, callContext: Option[CallContext]): Box[(Customer,Option[CallContext])]= Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")
   
-  def getCustomerByCustomerIdFuture(customerId: String, callContext: Option[CallContext]): Future[Box[(Customer,Option[CallContext])]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")}
+  def getCustomerByCustomerIdFuture(customerId: String, callContext: Option[CallContext]): Future[Box[(Customer,Option[CallContext])]] = Future{Failure(NotImplemented + currentMethodName+"getCustomerByCustomerIdFuture in Connector!")}
 
-  def getCustomerByCustomerNumberFuture(customerNumber: String, bankId : BankId, callContext: Option[CallContext]): Future[Box[(Customer, Option[CallContext])]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersByUserIdFuture in Connector!")}
+  def getCustomerByCustomerNumberFuture(customerNumber: String, bankId : BankId, callContext: Option[CallContext]): Future[Box[(Customer, Option[CallContext])]] = 
+    Future{Failure(NotImplemented + currentMethodName+"getCustomerByCustomerNumberFuture in Connector!")}
+
+  def getCustomerAddress(customerId : String, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerAddress]]] = 
+    Future{(Failure(NotImplemented + currentMethodName+"getCustomerAddress in Connector!"), callContext)}
+  
+  def createCustomerAddress(customerId: String,
+                            line1: String,
+                            line2: String,
+                            line3: String,
+                            city: String,
+                            county: String,
+                            state: String,
+                            postcode: String,
+                            countryCode: String,
+                            status: String,
+                            callContext: Option[CallContext]): OBPReturnType[Box[CustomerAddress]] = Future{(Failure(NotImplemented + currentMethodName+"createCustomerAddress in Connector!"), callContext)}
+  def deleteCustomerAddress(customerAddressd : String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Failure(NotImplemented + currentMethodName+"deleteCustomerAddress in Connector!"), callContext)}
+
+  def createTaxResidence(customerId : String, domain: String, taxNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[TaxResidence]] = Future{(Failure(NotImplemented + currentMethodName+"postTaxResidence in Connector!"), callContext)}
+
+  def getTaxResidence(customerId : String, callContext: Option[CallContext]): OBPReturnType[Box[List[TaxResidence]]] = Future{(Failure(NotImplemented + currentMethodName+"getTaxResidence in Connector!"), callContext)}
+
+  def deleteTaxResidence(taxResourceId : String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Failure(NotImplemented + currentMethodName+"deleteTaxResidence in Connector!"), callContext)}
 
   def getCustomersFuture(bankId : BankId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]): Future[Box[List[Customer]]] = Future{Failure(NotImplemented + currentMethodName+"getCustomersFuture in Connector!")}
 
@@ -1404,4 +1461,23 @@ trait Connector extends MdcLoggable{
     accountId: String, 
     callContext: Option[CallContext]
   ): Future[Box[(List[CardObjectJson], Option[CallContext])]] = Future{Failure(NotImplemented + currentMethodName)}
+
+  def createUserAuthContext(userId: String,
+                            key: String,
+                            value: String,
+                            callContext: Option[CallContext]): OBPReturnType[Box[UserAuthContext]] =
+    Future{(Failure(NotImplemented + currentMethodName+"createUserAuthContext in Connector!"), callContext)}
+  def deleteUserAuthContexts(userId: String,
+                             callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] =
+    Future{(Failure(NotImplemented + currentMethodName+"deleteUserAuthContexts in Connector!"), callContext)}
+
+  def deleteUserAuthContextById(userAuthContextId: String,
+                             callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] =
+    Future{(Failure(NotImplemented + currentMethodName+"deleteUserAuthContextById in Connector!"), callContext)}
+
+  def getUserAuthContexts(userId : String,
+                          callContext: Option[CallContext]): OBPReturnType[Box[List[UserAuthContext]]] =
+    Future{(Failure(NotImplemented + currentMethodName+"getUserAuthContexts in Connector!"), callContext)}
+
+
 }
