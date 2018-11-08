@@ -27,7 +27,7 @@ object KundeservicesV3  {
     }
   
   // Liefert einen Kunde
-  def getKunten(kundennummer: String): GetKundenResponseJson = {
+  def getKunde(kundennummer: String): GetKundenResponseJson = {
     val path = s"$baseUrl/__arz_service/kundeservices/api/v3/kunden/$kundennummer" 
     val result = makeGetRequest(path)
     try {

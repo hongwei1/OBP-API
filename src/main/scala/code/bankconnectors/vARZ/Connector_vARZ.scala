@@ -264,7 +264,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     .openOrThrowException("getCustomerByCustomerId Error")
     
     val customerNumber = customerMapping.customerNumber
-    val cbsCustomer = KundeservicesV3.getKunten(customerNumber)
+    val cbsCustomer = KundeservicesV3.getKunde(customerNumber)
     
     Full(
       InternalCustomer(
@@ -296,7 +296,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerIDMapping(bankId, customerNumber)
     .openOrThrowException("getCustomerByCustomerId Error")
     
-    val cbsCustomer = KundeservicesV3.getKunten(customerNumber)
+    val cbsCustomer = KundeservicesV3.getKunde(customerNumber)
     
     Full(
       //TODO, here need call CBS-getCustomerByCustomerNumber, return some real CBS data.
