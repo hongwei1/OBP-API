@@ -1,0 +1,268 @@
+openapi: '3.0.0'
+info:
+  version: '1.0'
+  title: Accounts API
+  description: | 
+    Accounts API
+    ```
+    
+    API Version: ${api.version}
+    API Buildtime: ${api.build.timestamp} 
+    Implementation Version:  ${implementation.version}
+    Implementation Buildtime: ${implementation.build.timestamp}     
+    ```
+servers: 
+  - url: http://localhost:8080/__arzservice/accounts/api
+    description: localhost
+tags:
+  - name: Accounts
+    description: Everything for accounts
+    
+paths:
+  '/accounts/{accountId}/transactions':
+    get:
+      tags: 
+      - Accounts
+      summary: List account transactions
+      operationId: getTransactions
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: AccountTransactionsResponse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTransactionsResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+          
+  '/accounts/{accountId}/transactions/{transactionId}':
+    get:
+      tags: 
+      - Accounts
+      summary: Read Transaction Details
+      operationId: getTransactionDetails
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/transactionId'
+      responses:
+        '200':
+          description: AccountTransactionDetailResponse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+          
+        default:
+          $ref: '#/components/responses/Problem'
+        
+components:
+  parameters:
+    accountId:
+      name: accountId
+      in: path
+      description: Account Id
+      required: true
+      schema:
+        $ref: '#/components/schemas/AccountId'
+        
+    transactionId:
+      name: transactionId
+      in: path
+      description: TransactionId
+      required: true
+      schema:
+        type: string
+    
+    dateFrom:
+      name: dateFrom
+      in: query
+      description: Date from
+      schema: 
+        type: string
+        
+    dateTo:
+      name: dateTo
+      in: query
+      description: Date to
+      schema: 
+        type: string
+        
+    offset: 
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: string
+      description: First element of consecutive pagination request.
+          
+  responses:
+    Problem:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    AccountTransactionsResponse:
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/AccountId'
+        transactions:
+          $ref: '#/components/schemas/AccountReport'
+        _links:
+          $ref: '#/components/schemas/Links'
+          
+    AccountReport:
+      type: object
+      required:
+        - booked
+      properties:
+        booked:
+          $ref: '#/components/schemas/Transactions'
+        _links:
+          $ref: '#/components/schemas/Links'
+    
+    Transactions:
+      type: array
+      items:
+        $ref: '#/components/schemas/Transaction'
+        
+    Transaction:
+      type: object
+      required:
+        - transactionAmount
+      properties:
+        transactionId:
+          type: string
+        entryReference:
+          type: string
+        endToEndId:
+          type: string
+        mandateId:
+          type: string
+        creditorId:
+          type: string
+        bookingDate:
+          $ref: '#/components/schemas/Date'
+        valueDate:
+          $ref: '#/components/schemas/Date'
+        transactionAmount:
+          $ref: '#/components/schemas/Amount'
+        creditorName:
+          type: string
+        creditorAccount:
+          type: string
+        ultimateCreditor:
+          type: string
+        debtorName:
+          type: string
+        debtorAccount:
+          type: string
+        ultimateDebtor:
+          type: string
+        remittanceInformationUnstructured:
+          type: string
+        remittanceInformationStructured:
+          type: string
+        bookingTextUnstructured:
+          type: string
+        _links:
+          $ref: '#/components/schemas/Links'
+    
+# Probably outsource
+    Date:
+      type: string
+      format: date
+      example: '2018-08-16'
+      
+    AccountId:
+      type: integer
+      format: int64
+      
+    Amount:
+      type: object
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+        amount:
+          type: number
+          format: double
+          
+    CurrencyCode:
+      type: string
+      minLength: 3
+      maxLength: 3
+      pattern: ^[A-Z]{3}
+    
+# Should be referenced from general yaml
+    Links:
+      type: array
+      items:
+        $ref: '#/components/schemas/Link'
+    Link:
+      properties:
+        rel:
+          type: string
+          maxLength: 64
+          example: next
+        href:
+          type: string
+          maxLength: 255
+        method:
+          type: string
+          maxLength: 8
+      example:
+       - rel: self
+         href: /accounts/{account-id}/transactions
+         method: GET
+    Problem:
+      type: object
+      required:
+      - title
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            An absolute URI that identifies the problem type.  When dereferenced,
+            it SHOULD provide human-readable documentation for the problem type
+            (e.g., using HTML).
+          default: about:blank
+        title:
+          type: string
+          description: |
+            A short, summary of the problem type. Written in english and readable
+            for engineers (usually not suited for non technical stakeholders and
+            not localized); example: Service Unavailable
+        status:
+          type: integer
+          format: int32
+          description: |
+            The HTTP status code generated by the origin server for this occurrence
+            of the problem.
+          minimum: 100
+          maximum: 600
+          exclusiveMaximum: true
+          example: 503
+        detail:
+          type: string
+          description: |
+            A human readable explanation specific to this occurrence of the
+            problem.
+          example: Connection to database timed out
+        instance:
+          type: string
+          format: uri
+          description: |
+            An absolute URI that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
