@@ -11,18 +11,17 @@ object BootUtil extends MdcLoggable{
     logger.debug("Enter getPropsFromEnvironmentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     var dbUrl:String = 
       try {
-      sys.env("EBKNG_POSTGRESQL_DATASOURCE_URL") + "?user=" + sys.env("EBKNG_POSTGRESQL_DATASOURCE_USERNAME") +
-        "&password=" + sys.env("EBKNG_POSTGRESQL_DATASOURCE_PASSWORD") + "&currentSchema=" + sys.env("EBKNG_POSTGRESQL_DATASOURCE_USERNAME")
+        sys.env("HOME")
+//      sys.env("EBKNG_POSTGRESQL_DATASOURCE_URL") + "?user=" + sys.env("EBKNG_POSTGRESQL_DATASOURCE_USERNAME") +
+//        "&password=" + sys.env("EBKNG_POSTGRESQL_DATASOURCE_PASSWORD") + "&currentSchema=" + sys.env("EBKNG_POSTGRESQL_DATASOURCE_USERNAME")
     } catch {
       case e: Throwable => 
           throw new Exception("dbUrl not completely set (must be url, username and password") with NoStackTrace
           
     }
     logger.debug("The new db.url is: " + dbUrl)
-     val fred = net.liftweb.util.Props.appendProvider(Map("db.driver" -> "org.postgresql.Driver"))
+     val fred = net.liftweb.util.Props.prependProvider(Map("db.driver" -> "org.postgresql.Driver"))
      prependProvider(Map("db.url" -> dbUrl))
-    logger.debug("db url props from Environment: " + APIUtil.getPropsValue("db.url"))
-    logger.debug(" with db.driver: " + APIUtil.getPropsValue("db.driver"))
   }
 }
    
