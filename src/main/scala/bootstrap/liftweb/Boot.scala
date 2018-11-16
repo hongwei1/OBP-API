@@ -166,7 +166,7 @@ class Boot extends MdcLoggable {
     Props.whereToLook = () => {
       firstChoicePropsDir.flatten.toList ::: secondChoicePropsDir.flatten.toList
     }
-
+    
     // set up the way to connect to the relational DB we're using (ok if other connector than relational)
     if (!DB.jndiJdbcConnAvailable_?) {
       val driver =
