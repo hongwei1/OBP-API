@@ -37,7 +37,7 @@ object Accounts {
                              bookingTextUnstructured: String
                            )
   
-  case class ArzTransactionAmount( currency: String, amount: String)
+  case class ArzTransactionAmount( currency: String, amount: Double)
 
   def getTransactions(accountId: String): AccountTransactionsResponse = {
     val path = s"$baseUrl/accounts/$accountId/transactions"
