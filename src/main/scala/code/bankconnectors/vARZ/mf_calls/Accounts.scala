@@ -39,7 +39,7 @@ object Accounts {
   
   case class ArzTransactionAmount( currency: String, amount: Double)
 
-  def getTransactions(accountId: String): AccountTransactionsResponse = {
+  def getTransactionsFromCbs(accountId: String): AccountTransactionsResponse = {
     val path = s"$baseUrl/accounts/$accountId/transactions"
     val result = makeGetRequest(path)
     try {
