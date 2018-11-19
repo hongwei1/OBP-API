@@ -37,18 +37,33 @@ object Accounts {
                              bookingTextUnstructured: String
                            )
   
+  case class ArzTransactionsDefaultError(
+  `type`: String,
+  title: String,
+  status: Int,
+  detail: String,
+  instance: String
+                                        )
+  
   case class ArzTransactionAmount( currency: String, amount: Double)
 
-  def getTransactionsFromCbs(accountId: String): AccountTransactionsResponse = {
+  def getTransactionsFromCbs(accountId: String): Either[ArzTransactionsDefaultError, AccountTransactionsResponse] = {
     val path = s"$baseUrl/accounts/$accountId/transactions"
     val result = makeGetRequest(path)
     try {
-      parse(result).extract[AccountTransactionsResponse]
+      Right(parse(result).extract[AccountTransactionsResponse]) 
     } catch {
-      case e: net.liftweb.json.MappingException => throw new Exception("OBP-50201: Connector did not return the set of transactions we requested")
+      case e: net.liftweb.json.MappingException => 
+        try {
+          Left(parse(result).extract[ArzTransactionsDefaultError])
+        } catch  {
+          case e: net.liftweb.json.MappingException => throw new Exception("OBP-50201: Connector did not return the set of transactions we requested")
     }
+    }
+    
   }
 
 
 
 }
+
