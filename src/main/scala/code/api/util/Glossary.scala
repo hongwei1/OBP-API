@@ -9,9 +9,6 @@ import scala.collection.mutable.ArrayBuffer
 import code.api.util.ExampleValue._
 
 
-
-
-
 object Glossary {
 
 	val PegDownProcessorTimeout: Long = 1000*20
@@ -24,6 +21,15 @@ object Glossary {
 															 textDescription: String
                             )
 
+		def makeGlossaryItem (title: String, connectorField: ConnectorField) : GlossaryItem = {
+			GlossaryItem(
+				title = title,
+				description = s"""
+																						|${connectorField.description}
+																						|
+																						|Example value: ${connectorField.value}
+				""")
+		}
 
 	object GlossaryItem {
 
@@ -53,12 +59,222 @@ object Glossary {
 
 
 
+
     val glossaryItems = ArrayBuffer[GlossaryItem]()
 
-	  glossaryItems += GlossaryItem(
-		title = "Account",
+	// NOTE! Some glossary items are defined in ExampleValue.scala
+
+
+	//implicit val formats = DefaultFormats
+	//val prettyJson: String = extraction(decompose(authInfoExample))
+
+
+	/*
+
+
+
+
+	 */
+
+
+	val latestKafkaConnector : String = "kafka_vSept2018"
+
+	def messageDocLink(process: String) : String = {
+		s"""<a href="/message-docs?connector=$latestKafkaConnector#$process">$process</a>"""
+	}
+
+
+
+	glossaryItems += GlossaryItem(
+		title = "Adapter.Kafka.Intro",
 		description =
-		  """The thing that tokens of value (money) come in and out of.
+				s"""
+					|## Brief introduction to using Kafka as the interface layer between OBP and your Core Banking System (CBS).
+					|### Prerequesites
+					|
+					|
+					 |* We assume you have OBP-API running and it is connected to a working Kafka installation.
+						| You can check OBP -> Kafka connectivity using the following <a href="/#vv3_1_0-getObpApiLoopback">"loopback" endpoint</a>
+|
+					|* We assume you have API Explorer running (the application serving this page) but its not necessary - (you could use a REST client)
+					|* You might want to also run API Manager as it makes it easier to grant yourself roles, but its not nessessary (you could use a REST client  / API Explorer instead).
+					|* You should register a User that you want to use to call the API. Let's call this user Jane.
+|* You will need another user that will have the roles required for the following steps. Let's call this user CarolaAdmin.
+					 |* Use <a href="/index#vv3_1_0-createUserAuthContext">Create Auth Context</a> to add a “token” to the User who while request accounts.
+						|This token which could be a CUSTOMER_NUMBER is sent inside the AuthInfo object to Kafka
+					 |* OR Use Create Customer and Create User Customer Link (note that Create Auth Context is preferred)
+					 |
+					 |Once the User(s) have been created its time to consume and respond to the messages OBP will send to Kafka.
+|
+| We suggest they are implemented in the following order:
+|
+|
+ |1) Core (Prerequisites) - Get Adapter, Get Banks, Get Bank)
+ |
+					 |* ${messageDocLink("obp.get.AdapterInfo")}
+					 |* ${messageDocLink("obp.get.Banks")}
+					 |* ${messageDocLink("obp.get.Bank")}
+					 |
+ |2) Get Accounts
+ |
+					 |* ${messageDocLink("obp.get.CustomersByUserIdBox")}
+					 |* ${messageDocLink("obp.get.coreBankAccounts")}
+					 |* ${messageDocLink("obp.check.BankAccountExists")}
+					 |* ${messageDocLink("obp.get.Accounts")}
+					 |* ${messageDocLink("obp.get.Account")}
+					 |
+ |3) Get Transactions
+ |
+					 |* ${messageDocLink("obp.get.Transactions")}
+					 |* ${messageDocLink("obp.get.Transaction")}
+					 |
+ |4) Manage Counterparties
+ |
+					 |* ${messageDocLink("obp.get.counterparties")}
+					 |* ${messageDocLink("obp.get.CounterpartyByCounterpartyId")}
+					 |* ${messageDocLink("obp.create.Counterparty")}
+					 |
+ |5) Get Transaction Request Types
+ |
+					 |    OBP Internal (Props) - (No additional messages required)
+					 |
+ |6) Get Challenge Threshold (CBS)
+					 |Done See Message: Get Challenge Threshold
+					 |
+ |7) Create Transaction Request (Payments)
+					 |Done See Message: Make Payment
+					 |
+ |
+ |This also requires 8,9,10 for high value payments.
+					 |
+ |8) Get Transaction Requests.
+					 |* ${messageDocLink("obp.get.transactionRequests210")}
+					 |
+ |9) Generate Security Challenges (CBS)
+					 |* ${messageDocLink("obp.create.Challenge")}
+					 |
+ |10) Answer Security Challenges (Validate)
+					 |Optional / Internal OBP (No additional messages required)
+					 |
+ |11) Manage Counterparty Metadata
+					 |    Internal OBP (No additional messages required)
+					 |
+ |12) Get Entitlements
+					 |    Internal OBP (No additional messages required)
+					 |
+ |13) Manage Roles
+					 |    Internal OBP (No additional messages required)
+					 |
+ |14) Manage Entitlements
+					 |    Internal OBP (No additional messages required)
+					 |
+ |15) Manage Views
+					 |    Internal OBP (No additional messages required)
+					 |
+ |16) Manage Transaction Metadata
+					 |    Internal OBP (No additional messages required)
+					 |
+ |"""
+	)
+
+
+
+
+
+
+	glossaryItems += GlossaryItem(
+		title = "Adapter.authInfo",
+		description =
+				s"""authInfo is a JSON object sent by the Connector to the Adapter so the Adapter and/or Core Banking System can
+  | identify the User making the call.
+  |
+  | The authInfo object contains several optional objects and fields.
+  |
+  |Please see the Message Docs for your connector for the current JSON structure. The following serves as a guide:
+  |
+  |* userId is the user_id as generated by OBP
+  |* username can be chosen explicitly to match an existing customer number (not recommended)
+  |* linkedCustomers is a list of Customers the User is explicitly linked to. Use the <a href="/#vv2_0_0-createUserCustomerLinks">Create User Customer Link endpoint</a> to populate this data.
+  |* userAuthContexts may contain the customer number or other tokens in order to boot strap the User Customer Links
+  |or provide an alternative method of tagging the User with an authorisation context.
+  |Use the <a href="/#vv3_1_0-createUserAuthContext">Create UserAuthContext endpoint</a> to populate this data.
+  |* cbsToken is a token used by the CBS to identify the user's session. Either generated by the CBS or Gateway.
+  |* isFirst is a flag that indicates that OBP should refresh the user's list of accounts from the CBS (and flush / invalidate any User's cache)
+  |* correlationId just identifies the API call.
+  |* authViews are entitlements given by account holders to third party users e.g. Sam may grant her accountant Jill read only access to her business account. See the <a href="/index#vv3_0_0-createViewForBankAccount">Create View endpoint</a>
+  |
+  |<img width="468" alt="authinfo_annotated_1" src="https://user-images.githubusercontent.com/485218/48432550-f6f0d100-e774-11e8-84dc-e94520ba186e.png"></img>
+  |
+  |
+  |
+ |"""
+	)
+
+
+/*
+
+{
+  "authInfo":{
+    "userId":"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1", <- The user_id as generated by OBP
+    "username":"felixsmith", <- The username the user logs into the API / App with
+    "cbsToken":"FYIUYF6SUYFSD", <- A token used by the CBS to identify the user's session. Either generated by the CBS or Gateway.
+    "isFirst":true, <- A flag that indicates that OBP should not use its cache for list of Accounts etc.
+    "correlationId":"2ba9a7e4-6d02-40e3-a129-0b2bf89de92b", <- Identifies the API call.
+    "linkedCustomers":[{ <- The customers that this User is allowed to represent.
+      "customerId":"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh",
+      "customerNumber":"5987953",
+      "legalName":"Eveline Tripman"
+    }],
+    "userAuthContexts":[{ <- A list of key value pairs that adds authentication context to the user.
+      "key":"CUSTOMER_NUMBER",
+      "value":"5987953"
+    },{
+      "key":"TOKEN",
+      "value":"qieuriopwoir987ASYDUFISUYDF678u"
+    }],
+    "authViews":[{ <- For third party access to accounts. e.g. an accountant accessing her clients account.
+      "view":{
+        "id":"owner", <- Specifies the type of access
+        "short_name":"Owner",
+        "description":"This is the owner view"
+      },
+      "account":{ <- Minimal information about the Account
+        "id":"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0",
+        "accountRoutings":[{
+          "scheme":"AccountNumber",
+          "address":"546387432"
+        },{
+          "scheme":"IBAN",
+          "address":"DE91 1000 0000 0123 4567 89"
+        }],
+        "customerOwners":[{ <- The Customer Owners of the Account
+          "bankId":"GENODEM1GLS",
+          "customerId":"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh",
+          "customerNumber":"5987953",
+          "legalName":"Eveline Tripman",
+          "dateOfBirth":"2017-09-18T22:00:00Z"
+        }],
+        "userOwners":[{ <- The User Owners of the Account
+          "userId":"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1",
+          "emailAddress":"eveline@example.com",
+          "name":"Eveline Tripman"
+        }]
+      }
+    }]
+  }
+}
+
+
+
+ */
+
+
+
+	  glossaryItems += GlossaryItem(
+		title =
+				"Account",
+		description =
+				"""The thing that tokens of value (money) come in and out of.
 			|An account has one or more `owners` which are `Users`.
 			|In the future, `Customers` may also be `owners`.
 			|An account has a balance in a specified currency and zero or more `transactions` which are records of successful movements of money.
@@ -92,7 +308,7 @@ object Glossary {
 	  glossaryItems += GlossaryItem(
 		title = "Bank.bank_id",
 		description =
-		"""
+		s"""
 		  |An identifier that uniquely identifies the bank or financial institution on the OBP-API instance.
 		  |
 		  |It is typically a human (developer) friendly string for ease of identification.
@@ -110,7 +326,7 @@ object Glossary {
 	  glossaryItems += GlossaryItem(
 		title = "Consumer",
 		description =
-		"""
+		s"""
 		  |The "consumer" of the API, i.e. the web, mobile or serverside "App" that calls on the OBP API on behalf of the end user (or system).
 		  |
 		  |Each Consumer has a consumer key and secrect which allows it to enter into secure communication with the API server.
@@ -1002,15 +1218,9 @@ else {
 
 
 
-	glossaryItems += GlossaryItem(
-		title = "correlation_id",
-		description =
-				s"""
-				|${correlationIdExample.description}
-				|
-				|Example value: ${correlationIdExample.value}
-      """)
 
+
+	// NOTE! Some glossary items are generated in ExampleValue.scala
 
 
 }

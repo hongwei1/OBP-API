@@ -33,10 +33,11 @@ import code.customeraddress.CustomerAddress
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.util.RateLimitPeriod.LimitCallPeriod
 import code.api.util.{APIUtil, RateLimitPeriod}
-import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
+import code.api.v1_2_1.{AccountRoutingJsonV121, AmountOfMoneyJsonV121, RateLimiting}
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchRoutingJsonV141, CustomerFaceImageJson}
 import code.api.v2_1_0.{CustomerCreditRatingJSON, CustomerJsonV210, ResourceUserJSON}
 import code.api.v2_2_0._
+import code.bankconnectors.ObpApiLoopback
 import code.common.Address
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
@@ -47,6 +48,7 @@ import net.liftweb.common.{Box, Full}
 import scala.collection.immutable.List
 import code.customer.Customer
 import code.context.UserAuthContext
+import code.entitlement.Entitlement
 import code.taxresidence.TaxResidence
 
 case class CheckbookOrdersJson(
@@ -264,6 +266,9 @@ case class TaxResidenceV310(domain: String, tax_number: String, tax_residence_id
 case class PostTaxResidenceJsonV310(domain: String, tax_number: String)
 case class TaxResidenceJsonV310(tax_residence: List[TaxResidenceV310])
 
+case class EntitlementJsonV310(entitlement_id: String, role_name: String, bank_id: String, user_id: String, username: String)
+case class EntitlementJSonsV310(list: List[EntitlementJsonV310])
+
 
 case class PostCustomerAddressJsonV310(
                                 line_1: String,
@@ -294,6 +299,17 @@ case class CustomerAddressJsonV310(
                             insert_date: Date
                           )
 case class CustomerAddressesJsonV310(addresses: List[CustomerAddressJsonV310])
+case class ObpApiLoopbackJson(
+  connector_version: String,
+  git_commit: String,
+  duration_time: String
+)
+
+case class RefreshUserJson(
+  duration_time: String
+)
+
+case class RateLimitingInfoV310(enabled: Boolean, technology: String, service_available: Boolean, is_active: Boolean)
 
 object JSONFactory310{
   def createCheckbookOrdersJson(checkbookOrders: CheckbookOrdersJson): CheckbookOrdersJson =
@@ -489,5 +505,40 @@ object JSONFactory310{
   def createAddresses(addresses: List[CustomerAddress]): CustomerAddressesJsonV310 =
     CustomerAddressesJsonV310(addresses.map(createAddress(_)))
 
+  def createObpApiLoopbackJson(obpApiLoopback: ObpApiLoopback): ObpApiLoopbackJson =
+    ObpApiLoopbackJson(
+      obpApiLoopback.connectorVersion,
+      obpApiLoopback.gitCommit,
+      s"${obpApiLoopback.durationTime} ms"
+    )
+
+  def createRefreshUserJson(durationTime: Long): RefreshUserJson =
+    RefreshUserJson(s" $durationTime ms")
+  
+  def createEntitlementJsonsV310(tr: List[Entitlement]) = {
+    val idToUser: Map[String, Box[String]] = tr.map(_.userId).distinct.map {
+     userId => (userId, User.findByUserId(userId).map(_.name))
+    } toMap;
+
+    EntitlementJSonsV310(
+      tr.map(e =>
+        EntitlementJsonV310(
+          entitlement_id = e.entitlementId,
+          role_name = e.roleName,
+          bank_id = e.bankId,
+          user_id = e.userId,
+          username = idToUser(e.userId).openOrThrowException("not user exists for userId: " + e.userId)
+        )
+      )
+    )
+  }
+  
+  def createRateLimitingInfo(info: RateLimiting): RateLimitingInfoV310 = 
+    RateLimitingInfoV310(
+      enabled = info.enabled, 
+      technology = info.technology, 
+      service_available = info.service_available, 
+      is_active = info.is_active
+    )
 
 }

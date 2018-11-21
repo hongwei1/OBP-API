@@ -13,7 +13,7 @@ import code.api.v3_1_0.OBPAPI3_1_0.Implementations3_1_0
 import code.atms.Atms
 import code.atms.Atms.AtmId
 import code.bankconnectors.vMar2017.InboundAdapterInfoInternal
-import code.bankconnectors.{Connector, OBPQueryParam}
+import code.bankconnectors.{Connector, OBPQueryParam, ObpApiLoopback}
 import code.branches.Branches
 import code.branches.Branches.BranchId
 import code.consumer.Consumers
@@ -122,20 +122,22 @@ object NewStyle {
     (nameOf(Implementations3_1_0.createUserAuthContext), ApiVersion.v3_1_0.toString),
     (nameOf(Implementations3_1_0.getUserAuthContexts), ApiVersion.v3_1_0.toString),
     (nameOf(Implementations3_1_0.deleteUserAuthContextById), ApiVersion.v3_1_0.toString),
-    (nameOf(Implementations3_1_0.deleteUserAuthContexts), ApiVersion.v3_1_0.toString)
+    (nameOf(Implementations3_1_0.deleteUserAuthContexts), ApiVersion.v3_1_0.toString),
+    (nameOf(Implementations3_1_0.getObpApiLoopback), ApiVersion.v3_1_0.toString),
+    (nameOf(Implementations3_1_0.refreshUser), ApiVersion.v3_1_0.toString)
   )
 
   object HttpCode {
-    def `200`(callContext: Option[CallContext])= {
+    def `200`(callContext: Option[CallContext]): Option[CallContext] = {
       callContext.map(_.copy(httpCode = Some(200)))
     }
-    def `201`(callContext: Option[CallContext])= {
+    def `201`(callContext: Option[CallContext]): Option[CallContext] = {
       callContext.map(_.copy(httpCode = Some(201)))
     }
-    def `202`(callContext: Option[CallContext])= {
+    def `202`(callContext: Option[CallContext]): Option[CallContext] = {
       callContext.map(_.copy(httpCode = Some(202)))
     }
-    def `200`(callContext: CallContext)  = {
+    def `200`(callContext: CallContext): Option[CallContext] = {
       Some(callContext.copy(httpCode = Some(200)))
     }
   }
@@ -162,7 +164,7 @@ object NewStyle {
         unboxFullOrFail(_, callContext, s"$BankNotFound Current BankId is $bankId", 400)
       }
     }
-    def getBanks(callContext: Option[CallContext]) : Future[(List[Bank], Option[CallContext])] = {
+    def getBanks(callContext: Option[CallContext]) : OBPReturnType[List[Bank]] = {
       Connector.connector.vend.getBanksFuture(callContext: Option[CallContext]) map {
         unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
       }
@@ -179,6 +181,11 @@ object NewStyle {
         unboxFullOrFail(_, callContext, s"$BankAccountNotFound Current BankId is $bankId and Current AccountId is $accountId", 400)
       }
     }
+
+    def moderatedBankAccount(account: BankAccount, view: View, user: Box[User]) = Future {
+      account.moderatedBankAccount(view, user)
+    } map { fullBoxOrException(_)
+    } map { unboxFull(_) }
 
     def view(viewId : ViewId, bankAccountId: BankIdAccountId, callContext: Option[CallContext]) : Future[View] = {
       Views.views.vend.viewFuture(viewId, bankAccountId) map {
@@ -306,7 +313,7 @@ object NewStyle {
     }
 
 
-    def isEnabledTransactionRequests() = Helper.booleanToFuture(failMsg = TransactionRequestsNotEnabled)(APIUtil.getPropsAsBoolValue("transactionRequests_enabled", false))
+    def isEnabledTransactionRequests(): Future[Box[Unit]] = Helper.booleanToFuture(failMsg = TransactionRequestsNotEnabled)(APIUtil.getPropsAsBoolValue("transactionRequests_enabled", false))
 
     /**
       * Wraps a Future("try") block around the function f and
@@ -389,7 +396,7 @@ object NewStyle {
       transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
       detailsPlain: String,
       chargePolicy: String,
-      callContext: Option[CallContext]): Future[(TransactionRequest, Option[CallContext])] =
+      callContext: Option[CallContext]): OBPReturnType[TransactionRequest] =
     {
       Connector.connector.vend.createTransactionRequestv210(
         u: User,
@@ -401,8 +408,8 @@ object NewStyle {
         detailsPlain: String,
         chargePolicy: String,
         callContext: Option[CallContext]
-      ) map {
-        unboxFullOrFail(_, callContext, s"$InvalidConnectorResponseForGetTransactionRequests210", 400)
+      ) map { i =>
+        (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetTransactionRequests210", 400), i._2)
       }
     }
     
@@ -490,19 +497,24 @@ object NewStyle {
                       transactionRequestType: TransactionRequestType,
                       chargePolicy: String, 
                       callContext: Option[CallContext]): OBPReturnType[TransactionId]=
-      Future{Connector.connector.vend.makePaymentv200(
+      Connector.connector.vend.makePaymentv210(
         fromAccount: BankAccount,
         toAccount: BankAccount,
         transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
         amount: BigDecimal,
         description: String,
         transactionRequestType: TransactionRequestType,
-        chargePolicy: String
-      )} map { i => 
-        (unboxFullOrFail(i, callContext, s"$InvalidConnectorResponseForMakePayment ",400), callContext)
+        chargePolicy: String, 
+        callContext: Option[CallContext]
+      ) map { i => 
+        (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForMakePayment ",400), i._2)
       }
     
-    
+    def getObpApiLoopback(callContext: Option[CallContext]): OBPReturnType[ObpApiLoopback] = {
+      Connector.connector.vend.getObpApiLoopback(callContext) map {
+        i => (unboxFullOrFail(i._1, callContext, ConnectorEmptyResponse, 400), i._2)
+      }
+    }
         
   }
 

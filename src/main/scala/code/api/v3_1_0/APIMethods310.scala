@@ -15,9 +15,11 @@ import code.api.v3_1_0.JSONFactory310._
 import code.bankconnectors.{Connector, OBPBankId}
 import code.consumer.Consumers
 import code.customer.{CreditLimit, CreditRating, CustomerFaceImage}
+import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
 import code.metrics.APIMetrics
 import code.model._
+import code.model.dataAccess.AuthUser
 import code.users.Users
 import code.util.Helper
 import code.webhook.AccountWebhook
@@ -25,6 +27,8 @@ import com.github.dwickern.macros.NameOf.nameOf
 import net.liftweb.common.Full
 import net.liftweb.http.provider.HTTPParam
 import net.liftweb.http.rest.RestHelper
+import net.liftweb.util.Helpers
+import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.{List, Nil}
 import scala.collection.mutable.ArrayBuffer
@@ -210,8 +214,8 @@ trait APIMethods310 {
       nameOf(getTopAPIs),
       "GET",
       "/management/metrics/top-apis",
-      "get top apis",
-      s"""Returns get top apis. eg. total count, response time (in ms), etc.
+      "Get Top APIs",
+      s"""Get metrics abou the most popular APIs. e.g.: total count, response time (in ms), etc.
         |
         |Should be able to filter on the following fields
         |
@@ -297,12 +301,12 @@ trait APIMethods310 {
       nameOf(getMetricsTopConsumers),
       "GET",
       "/management/metrics/top-consumers",
-      "get metrics top consumers",
-      s"""get metrics top consumers on api usage eg. total count, consumer_id and app_name.
+      "Get Top Consumers",
+      s"""Get metrics about the top consumers of the API usage e.g. total count, consumer_id and app_name.
         |
         |Should be able to filter on the following fields
         |
-        |eg: /management/metrics/top-consumers?from_date=$DateWithMsExampleString&to_date=2017-05-22T01:02:03.000Z&consumer_id=5
+        |e.g.: /management/metrics/top-consumers?from_date=$DateWithMsExampleString&to_date=2017-05-22T01:02:03.000Z&consumer_id=5
         |&user_id=66214b8e-259e-44ad-8868-3eb47be70646&implemented_by_partial_function=getTransactionsForBankAccount
         |&implemented_in_version=v3.0.0&url=/obp/v3.0.0/banks/gh.29.uk/accounts/8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0/owner/transactions
         |&verb=GET&anon=false&app_name=MapperPostman
@@ -520,9 +524,16 @@ trait APIMethods310 {
       nameOf(callsLimit),
       "PUT",
       "/management/consumers/CONSUMER_ID/consumer/calls_limit",
-      "Set Calls' Limit for a Consumer",
+      "Set Calls Limit for a Consumer",
       s"""
-         |Set calls' limit per Consumer.
+         |Set the API call limits for a Consumer:
+         |
+         |Per Minute
+         |Per Hour
+         |Per Week
+         |Per Month
+         |
+         |
          |${authenticationRequiredMessage(true)}
          |
          |""".stripMargin,
@@ -540,6 +551,9 @@ trait APIMethods310 {
       Catalogs(notCore, notPSD2, notOBWG),
       List(apiTagConsumer, apiTagNewStyle),
       Some(List(canSetCallLimits)))
+
+
+    // TODO change URL to /../call-limits
 
     lazy val callsLimit : OBPEndpoint = {
       case "management" :: "consumers" :: consumerId :: "consumer" :: "calls_limit" :: Nil JsonPut json -> _ => {
@@ -569,15 +583,18 @@ trait APIMethods310 {
       }
     }
 
+
+
+    // TODO Change endpoint to ../call-limits
     resourceDocs += ResourceDoc(
       getCallsLimit,
       implementedInApiVersion,
       nameOf(getCallsLimit),
       "GET",
       "/management/consumers/CONSUMER_ID/consumer/calls_limit",
-      "Get Calls' Limit for a Consumer",
+      "Get Call Limits for a Consumer",
       s"""
-         |Get calls' limit per Consumer.
+         |Get Calls limits per Consumer.
          |${authenticationRequiredMessage(true)}
          |
          |""".stripMargin,
@@ -596,6 +613,9 @@ trait APIMethods310 {
       List(apiTagConsumer, apiTagNewStyle),
       Some(List(canSetCallLimits)))
 
+
+
+    // TODO Change endpoint to ../call-limits
     lazy val getCallsLimit : OBPEndpoint = {
       case "management" :: "consumers" :: consumerId :: "consumer" :: "calls_limit" :: Nil JsonGet _ => {
         cc =>
@@ -669,9 +689,7 @@ trait APIMethods310 {
               val currencyCode = httpParams.filter(_.name == currency).map(_.values.head).head
               isValidCurrencyISOCode(currencyCode)
             }
-            _ <- Future {account.moderatedBankAccount(view, Full(u)) } map {
-              fullBoxOrException(_)
-            } map { unboxFull(_) }
+            _ <- NewStyle.function.moderatedBankAccount(account, view, Full(u))
           } yield {
             val ccy = httpParams.filter(_.name == currency).map(_.values.head).head
             val fundsAvailable =  (view.canQueryAvailableFunds, account.balance, account.currency) match {
@@ -974,11 +992,10 @@ trait APIMethods310 {
       "Get API Configuration",
       """Returns information about:
         |
-        |* API Config
-        |* Default bank id
-        |* Akka ports
-        |* Elastic search ports
-        |* Cached function """,
+        |* The default bank_id
+        |* Akka configuration
+        |* Elastic Search configuration
+        |* Cached functions """,
       emptyObjectJson,
       configurationJSON,
       List(
@@ -1220,13 +1237,17 @@ trait APIMethods310 {
       "GET",
       "/rate-limiting",
       "Get Rate Limiting Info",
-      s"""Get basic information about the Rate Limiting.
+      s"""Get information about the Rate Limiting setup on this OBP Instance such as:
+         |
+         |Is rate limiting enabled and active?
+         |What backend is used to keep track of the API calls (e.g. REDIS).
+         |
          |
         |${authenticationRequiredMessage(true)}
          |
       """.stripMargin,
       emptyObjectJson,
-      adapterInfoJsonV300,
+      rateLimitingInfoV310,
       List(UnknownError),
       Catalogs(Core, PSD2, OBWG),
       List(apiTagApi, apiTagNewStyle))
@@ -1243,7 +1264,7 @@ trait APIMethods310 {
               RateLimiting(useConsumerLimits, "REDIS", isRedisAvailable, isActive)
             }
           } yield {
-            (rateLimiting, HttpCode.`200`(cc))
+            (createRateLimitingInfo(rateLimiting), HttpCode.`200`(cc))
           }
       }
     }
@@ -1334,8 +1355,8 @@ trait APIMethods310 {
       nameOf(createUserAuthContext),
       "POST",
       "/users/USER_ID/auth-context",
-      "Create UserAuthContext",
-      s"""Create UserAuthContext.
+      "Create User Auth Context",
+      s"""Create User Auth Context.
         |${authenticationRequiredMessage(true)}
         |""",
       postUserAuthContextJson,
@@ -1373,8 +1394,8 @@ trait APIMethods310 {
       nameOf(getUserAuthContexts),
       "GET",
       "/users/USER_ID/auth-context",
-      "Get UserAuthContexts",
-      s"""Get all UserAuthContexts.
+      "Get User Auth Contexts",
+      s"""Get User Auth Contexts for a User.
          |
         |
         |${authenticationRequiredMessage(true)}
@@ -1412,8 +1433,8 @@ trait APIMethods310 {
       nameOf(deleteUserAuthContexts),
       "DELETE",
       "/users/USER_ID/auth-context",
-      "Delete User's all AuthContext",
-      s"""Delete all AuthContext of a User specified by USER_ID.
+      "Delete User's Auth Contexts",
+      s"""Delete the Auth Contexts of a User specified by USER_ID.
          |
          |
          |${authenticationRequiredMessage(true)}
@@ -1601,7 +1622,49 @@ trait APIMethods310 {
           }
       }
     }
+    resourceDocs += ResourceDoc(
+      getAllEntitlements,
+      implementedInApiVersion,
+      nameOf(getAllEntitlements),
+      "GET",
+      "/entitlements",
+      "Get all Entitlements",
+      s"""
+        |
+        |Login is required.
+        |
+        |Possible filter on the role field:
+        |
+        |eg: /entitlements?role=${canGetCustomer.toString}
+        |
+        |
+        |
+      """.stripMargin,
+      emptyObjectJson,
+      entitlementJSONs,
+      List(UserNotLoggedIn, UserNotSuperAdmin, UnknownError),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagRole, apiTagEntitlement, apiTagNewStyle))
 
+
+    lazy val getAllEntitlements: OBPEndpoint = {
+      case "entitlements" :: Nil JsonGet _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- Helper.booleanToFuture(failMsg = UserNotSuperAdmin) {
+              isSuperAdmin(u.userId)
+            }
+            roleName <- Future(APIUtil.getHttpRequestUrlParam(cc.url, "role"))
+
+            entitlements <- Entitlement.entitlement.vend.getEntitlementsByRoleFuture(roleName) map {
+              unboxFullOrFail(_, callContext, ConnectorEmptyResponse, 400)
+            }
+          } yield {
+            (JSONFactory310.createEntitlementJsonsV310(entitlements), callContext)
+          }
+      }
+    }
 
 
 
@@ -1736,8 +1799,85 @@ trait APIMethods310 {
           }
       }
     }
-
     
+    resourceDocs += ResourceDoc(
+      getObpApiLoopback,
+      implementedInApiVersion,
+      nameOf(getObpApiLoopback),
+      "GET",
+      "/connector/loopback",
+      "Get Connector Status (Loopback)",
+      s"""This endpoint makes a call to the Connector to check the backend transport (e.g. Kafka) is reachable.
+         |
+         |Currently this is only implemented for Kafka based connectors.
+         |
+         |For Kafka based connectors, this endpoint writes a message to Kafka and reads it again.
+         |
+         |In the future, this endpoint may also return information about database connections etc.
+         |
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      emptyObjectJson,
+      obpApiLoopbackJson,
+      List(
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagApi, apiTagNewStyle))
+
+    lazy val getObpApiLoopback : OBPEndpoint = {
+      case "connector" :: "loopback" :: Nil JsonGet _ => {
+        cc =>
+          for {
+            (obpApiLoopback, callContext) <- NewStyle.function.getObpApiLoopback(Some(cc))
+          } yield {
+            (createObpApiLoopbackJson(obpApiLoopback), HttpCode.`200`(callContext))
+          }
+      }
+    }
+    
+    resourceDocs += ResourceDoc(
+      refreshUser,
+      implementedInApiVersion,
+      nameOf(refreshUser),
+      "POST",
+      "/users/USER_ID/refresh",
+      "Refresh User.",
+      s""" The endpoint is used for updating the accounts, views, account holders for the user.
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      emptyObjectJson,
+      refresUserJson,
+      List(
+        UserHasMissingRoles,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagApi, apiTagNewStyle))
+
+    lazy val refreshUser : OBPEndpoint = {
+      case "users" :: userId :: "refresh" :: Nil JsonPost _ => {
+        cc =>
+          for {
+            (Full(u), callContext) <- authorizeEndpoint(UserNotLoggedIn, cc)
+            _ <- NewStyle.function.hasEntitlement(failMsg = UserHasMissingRoles + CanRefreshUser)("", userId, canRefreshUser)
+            startTime <- Future{Helpers.now}
+            _ <- NewStyle.function.findByUserId(userId, Some(cc))
+            _ <- if (APIUtil.isSandboxMode) Future{} else Future{ tryo {AuthUser.updateUserAccountViews(u, callContext)}} map {
+              unboxFullOrFail(_, callContext, RefreshUserError, 400)
+            }
+            endTime <- Future{Helpers.now}
+            durationTime = endTime.getTime - startTime.getTime
+          } yield {
+            (createRefreshUserJson(durationTime), HttpCode.`201`(callContext))
+          }
+      }
+    }
+
   }
 }
 
