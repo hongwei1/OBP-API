@@ -38,12 +38,12 @@ import code.bankconnectors.{OBPQueryParam, _}
 import code.bankconnectors.vARZ.mf_calls._
 import code.bankconnectors.vJune2017.AuthInfo
 import code.bankconnectors.vMar2017._
-import code.bankconnectors.vSept2018.InternalTransaction_vSept2018
+import code.bankconnectors.vSept2018.{InternalTransaction_vSept2018, KafkaMappedConnector_vSept2018}
 import code.customer._
 import code.customer.internalMapping.CustomerIDMappingProvider
 import code.fx.fx
 import code.kafka.KafkaHelper
-import code.model._
+import code.model.{Transaction, _}
 import code.model.dataAccess.MappedBankAccountData
 import code.transaction.MappedTransaction
 import code.usercustomerlinks.{MappedUserCustomerLinkProvider, UserCustomerLink}
@@ -456,7 +456,9 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     Full(result.getOrElse(false))
   }
   
-      
+  //TODO, need be fixed, need create obp transacitonId carefully.
+  def createArzTransactionId(uniqueString: String): TransactionId = TransactionId(UUID.nameUUIDFromBytes(uniqueString.getBytes()).toString)
+  
   override def getTransactionsCore(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: OBPQueryParam*): Box[(List[TransactionCore], Option[CallContext])]= {
     for{
       (account, callContext) <-  getBankAccount(bankId: BankId, accountId: AccountId, callContext: Option[CallContext])
@@ -479,7 +481,7 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         for{
           cbsTransaction <- cbsTransactions
           obpTransaction = TransactionCore(
-              id = TransactionId(cbsTransaction.transactionId), 
+              id = createArzTransactionId(cbsTransaction.transactionId+cbsTransaction.bookingDate+cbsTransaction.valueDate), 
               thisAccount = account,
               otherAccount = counterparty,
               transactionType = "",
@@ -497,96 +499,48 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     
   }
   
-//  
-//  
 //  def getTransactions(bankId: BankId, accountID: AccountId, callContext: Option[CallContext], queryParams: OBPQueryParam*): Box[(List[Transaction], Option[CallContext])]=
   
-//  override def getTransactionsCore(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: OBPQueryParam*) =
-//    {
-//
-//      // TODO Refactor this. No need for database lookups etc.
-//      val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
-//      val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
-//      val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
-//      val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
-//      val ordering = queryParams.collect {
-//        //we don't care about the intended sort field and only sort on finish date for now
-//        case OBPOrdering(_, direction) =>
-//          direction match {
-//            case OBPAscending => OrderBy(MappedTransaction.tFinishDate, Ascending)
-//            case OBPDescending => OrderBy(MappedTransaction.tFinishDate, Descending)
-//          }
-//      }
-//
-//      val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
-//      val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
-//
-//      def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams: Seq[QueryParam[MappedTransaction]]): Box[List[TransactionCore]]
-//      = {
-//        /**
-//          * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
-//          * is just a temporary value filed with UUID values in order to prevent any ambiguity.
-//          * The real value will be assigned by Macro during compile time at this line of a code:
-//          * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
-//          */
-//        var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-//        CacheKeyFromArguments.buildCacheKey {
-//          Caching.memoizeSyncWithProvider (Some(cacheKey.toString()))(getTransactionsTTL millisecond) {
-//
-//          //logger.info("Cache miss getTransactionsCached")
-//
-//          val mappedTransactions = MappedTransaction.findAll(mapperParams: _*)
-//
-//          for (account <- getBankAccount(bankId, accountId))
-//            yield mappedTransactions.flatMap(_.toTransactionCore(account)) //each transaction will be modified by account, here we return the `class Transaction` not a trait.
-//        }
-//      }
-//    }
-//
-//    getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams).map(transactions =>(transactions,callContext))
-//  }
-
   override def getTransactions(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: OBPQueryParam*) = {
-
-    // TODO Refactor this. No need for database lookups etc.
-    val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
-    val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
-    val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
-    val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
-    val ordering = queryParams.collect {
-      //we don't care about the intended sort field and only sort on finish date for now
-      case OBPOrdering(_, direction) =>
-        direction match {
-          case OBPAscending => OrderBy(MappedTransaction.tFinishDate, Ascending)
-          case OBPDescending => OrderBy(MappedTransaction.tFinishDate, Descending)
-        }
-    }
-
-    val optionalParams : Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
-    val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
-
-    def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams : Seq[QueryParam[MappedTransaction]]) : Box[List[Transaction]]
-    = {
-      /**
-        * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
-        * is just a temporary value filed with UUID values in order to prevent any ambiguity.
-        * The real value will be assigned by Macro during compile time at this line of a code:
-        * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
-        */
-      var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-      CacheKeyFromArguments.buildCacheKey {
-        Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(getTransactionsTTL millisecond) {
-
-          //logger.info("Cache miss getTransactionsCached")
-
-          val mappedTransactions = MappedTransaction.findAll(mapperParams: _*)
-
-          for (account <- getBankAccount(bankId, accountId))
-            yield mappedTransactions.flatMap(_.toTransaction(account)) //each transaction will be modified by account, here we return the `class Transaction` not a trait.
-        }
-      }
-    }
-    getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams).map(transactions => (transactions, callContext))
+    for{
+      (account, callContext) <-  getBankAccount(bankId: BankId, accountId: AccountId, callContext: Option[CallContext])
+      //For now, this is hard code, but we need define the mapping between CBS accountId and OBP accountId
+      cbsTransactions <- Accounts.getTransactionsFromCbs("12480770")
+      counterparty = CounterpartyCore(
+        kind ="",
+        counterpartyId ="",
+        counterpartyName ="",
+        thisBankId =BankId(""), 
+        thisAccountId =AccountId(""),
+        otherBankRoutingScheme ="", 
+        otherBankRoutingAddress = None,
+        otherAccountRoutingScheme ="", 
+        otherAccountRoutingAddress = None, 
+        otherAccountProvider ="", 
+        isBeneficiary= true 
+      )
+      obpTransactions <- Full{
+        for{
+          cbsTransaction <- cbsTransactions
+          counterpartyId = APIUtil.createImplicitCounterpartyId(account.bankId.value, account.accountId.value,"","","")
+          counterparty = KafkaMappedConnector_vSept2018.createInMemoryCounterparty(account, "", counterpartyId).openOrThrowException("Can not create counterparty here.")
+          obpTransaction = new Transaction(
+              uuid = createArzTransactionId(cbsTransaction.transactionId+cbsTransaction.bookingDate+cbsTransaction.valueDate).value,
+              id = createArzTransactionId(cbsTransaction.transactionId+cbsTransaction.bookingDate+cbsTransaction.valueDate),
+              thisAccount = account,
+              otherAccount = counterparty,
+              transactionType = "",
+              amount = BigDecimal(cbsTransaction.transactionAmount.amount), 
+              currency = cbsTransaction.transactionAmount.currency, 
+              description = Some("house"), 
+              startDate = new SimpleDateFormat(DateWithDay).parse(cbsTransaction.bookingDate), 
+              finishDate = new SimpleDateFormat(DateWithDay).parse(cbsTransaction.valueDate), 
+              balance = BigDecimal("0"))
+        } yield 
+          obpTransaction
+                             }
+    } yield
+      (obpTransactions, callContext)
   }
   
   
