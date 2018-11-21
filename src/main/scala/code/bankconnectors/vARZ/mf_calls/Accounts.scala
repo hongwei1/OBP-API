@@ -2,9 +2,11 @@ package code.bankconnectors.vARZ.mf_calls
 
 import code.api.util.APIUtil
 import code.bankconnectors.vARZ.HttpClient._
+import net.liftweb.common.{Box, Full}
 import net.liftweb.json.JValue
 import net.liftweb.json.JsonParser._
 import net.liftweb.json.Extraction.decompose
+import net.liftweb.util.Helpers.tryo
 
 object Accounts {
 
@@ -38,29 +40,28 @@ object Accounts {
                            )
   
   case class ArzTransactionsDefaultError(
-  `type`: String,
-  title: String,
-  status: Int,
-  detail: String,
-  instance: String
-                                        )
+    `type`: String,
+    title: String,
+    status: Int,
+    detail: String,
+    instance: String
+  )
   
   case class ArzTransactionAmount( currency: String, amount: Double)
 
-  def getTransactionsFromCbs(accountId: String): Either[ArzTransactionsDefaultError, AccountTransactionsResponse] = {
+  def getTransactionsFromCbs(accountId: String): Box[List[ArzTransaction]] = {
     val path = s"$baseUrl/accounts/$accountId/transactions"
     val result = makeGetRequest(path)
-    try {
-      Right(parse(result).extract[AccountTransactionsResponse]) 
-    } catch {
-      case e: net.liftweb.json.MappingException => 
-        try {
-          Left(parse(result).extract[ArzTransactionsDefaultError])
-        } catch  {
-          case e: net.liftweb.json.MappingException => throw new Exception("OBP-50201: Connector did not return the set of transactions we requested")
-    }
-    }
-    
+    tryo {parse(result).extract[AccountTransactionsResponse].transactions.booked} ?~! "OBP-50201: Connector did not return the set of transactions we requested"
+//    } catch {
+//      case e: net.liftweb.json.MappingException => 
+//        try {
+//          Left(parse(result).extract[ArzTransactionsDefaultError])
+//        } catch  {
+//          case e: net.liftweb.json.MappingException => throw new 
+//          Exception("OBP-50201: Connector did not return the set of transactions we requested")
+//    }
+//    }
   }
 
 
