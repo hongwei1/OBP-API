@@ -47,4 +47,8 @@ object TestAllMfCalls extends App with MdcLoggable {
   val getKuntenResponse = KundeservicesV3.getKunde(consumerNumber)
   logger.info(s"getKuntenResponse : $getKuntenResponse")
   
+  
+  val accountId = "12480770"
+  val getTransactionsResponse = Accounts.getTransactionsFromCbs(accountId)
+  logger.info(s"getTransactionsResponse : $getTransactionsResponse")
 }
