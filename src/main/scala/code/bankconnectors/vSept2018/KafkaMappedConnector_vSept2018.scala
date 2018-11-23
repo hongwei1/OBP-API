@@ -62,6 +62,7 @@ import code.api.util.ExampleValue._
 import code.api.v1_2_1.AmountOfMoneyJsonV121
 import code.api.v2_1_0.{TransactionRequestBodyCommonJSON, TransactionRequestCommonBodyJSON}
 import code.context.UserAuthContextProvider
+import code.customer.internalMapping.CustomerIDMappingProvider
 import code.users.Users
 
 trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with MdcLoggable {
@@ -2645,6 +2646,82 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
                  account.accountRoutings))}
     }
   }
+  
+  messageDocs += MessageDoc(
+    process = "obp.get.getCustomerByCustomerNumberFuture",
+    messageFormat = messageFormat,
+    description = "Get Customer by Customer Number.",
+    outboundTopic = Some(Topics.createTopicByClassName(OutboundGetCustomerByCustomerNumber.getClass.getSimpleName).request),
+    inboundTopic = Some(Topics.createTopicByClassName(OutboundGetCustomerByCustomerNumber.getClass.getSimpleName).response),
+    exampleOutboundMessage = decompose(
+      OutboundGetCustomerByCustomerNumber(
+        authInfoExample,
+        customerNumberExample.value
+      )
+    ),
+    exampleInboundMessage = decompose(
+      InboundGetCustomerByCustomerNumber(
+        inboundAuthInfoExample,
+        statusExample,
+        InternalCustomer(
+          customerId = customerIdExample.value, bankId = bankIdExample.value, number = customerNumberExample.value,
+          legalName = "String", mobileNumber = "String", email = "String",
+          faceImage = CustomerFaceImage(date = DateWithSecondsExampleObject, url = "String"),
+          dateOfBirth = DateWithSecondsExampleObject, relationshipStatus = "String",
+          dependents = 1, dobOfDependents = List(DateWithSecondsExampleObject),
+          highestEducationAttained = "String", employmentStatus = "String",
+          creditRating = CreditRating(rating = "String", source = "String"),
+          creditLimit = CreditLimit(currency = "String", amount = "String"),
+          kycStatus = false, lastOkDate = DateWithSecondsExampleObject
+        )
+      )
+    ),
+    outboundAvroSchema = None,
+    inboundAvroSchema = None,
+    adapterImplementation = Some(AdapterImplementation("Accounts", 0))
+  )
+  
+  override def getCustomerByCustomerNumberFuture(customerNumber : String, bankId : BankId, callContext: Option[CallContext]): Future[Box[(Customer, Option[CallContext])]]  = saveConnectorMetric {
+    /**
+      * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
+      * is just a temporary value filed with UUID values in order to prevent any ambiguity.
+      * The real value will be assigned by Macro during compile time at this line of a code:
+      * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
+      */
+    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
+    CacheKeyFromArguments.buildCacheKey {
+      Caching.memoizeWithProvider(Some(cacheKey.toString()))(customersByUserIdBoxTTL second) {
+
+        val req = OutboundGetCustomerByCustomerNumber(getAuthInfo(callContext).openOrThrowException(NoCallContext), customerNumber)
+        logger.debug(s"Kafka getCustomerByCustomerNumberFuture Req says: is: $req")
+        val customerMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getOrCreateCustomerIDMapping(bankId, customerNumber).openOrThrowException("getCustomerByCustomerId Error")
+
+        val future = for {
+          res <- processToFuture[OutboundGetCustomerByCustomerNumber](req) map {
+            f =>
+              try {
+                f.extract[InboundGetCustomerByCustomerNumber]
+              } catch {
+                case e: Exception => throw new MappingException(s"$InboundGetCustomerByCustomerNumber extract error. Both check API and Adapter Inbound Case Classes need be the same ! ", e)
+              }
+          } map {x => (x.data, x.status)}
+        } yield{
+          res
+        }
+        logger.debug(s"Kafka getCustomerByCustomerNumberFuture Res says: is: $future")
+
+        val res = future map {
+          case (internalCustomer, status) if (status.errorCode=="") =>
+            Full(JsonFactory_vJune2017.createObpCustomer(internalCustomer.copy(customerId = customerMapping.customerId.value)), callContext)
+          case (internalCustomer, status) if (status.errorCode!="") =>
+            Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:" + status.backendMessages)
+          case _ =>
+            Failure(ErrorMessages.UnknownError)
+        }
+        res
+      }
+    }
+  }("getCustomerByCustomerNumberFuture")
 
 }
 

@@ -126,7 +126,10 @@ case class OutboundGetCreditCardOrderStatus(
   primaryAccount: String
 )extends TopicTrait
 
-
+case class OutboundGetCustomerByCustomerNumber(
+  authInfo: AuthInfo,
+  customerNumber: String
+) extends TopicTrait
 
 /**
   * case classes used in Kafka message, these are InBound Kafka messages
@@ -149,6 +152,7 @@ case class InboundGetTransactionRequests210(inboundAuthInfo: InboundAuthInfo, st
 case class InboundGetCounterparties(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InternalCounterparty])
 case class InboundGetCounterparty(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InternalCounterparty])
 case class InboundGetCustomersByUserId(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InternalCustomer])
+case class InboundGetCustomerByCustomerNumber(inboundAuthInfo: InboundAuthInfo, status: Status, data: InternalCustomer)
 case class InboundGetBranches(inboundAuthInfo: InboundAuthInfo,status: Status,data: List[InboundBranchVSept2018])
 case class InboundGetBranch(inboundAuthInfo: InboundAuthInfo,status: Status, data: Option[InboundBranchVSept2018])
 case class InboundGetAtms(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InboundAtmSept2018])
