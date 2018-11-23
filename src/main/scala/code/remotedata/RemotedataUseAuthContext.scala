@@ -18,7 +18,7 @@ object RemotedataUserAuthContext extends ObpActorInit with UserAuthContextProvid
     (actor ? cc.getUserAuthContexts(userId)).mapTo[Box[List[UserAuthContext]]]
   
   def getUserAuthContextsBox(userId: String): Box[List[UserAuthContext]] =
-    extractFutureToBox(actor ? cc.getUserAuthContextsBox(userId))
+    extractFuture(actor ? cc.getUserAuthContextsBox(userId))
 
   def createUserAuthContext(userId: String, key: String, value: String): Future[Box[UserAuthContext]] =
     (actor ? cc.createUserAuthContext(userId, key, value)).mapTo[Box[UserAuthContext]]
