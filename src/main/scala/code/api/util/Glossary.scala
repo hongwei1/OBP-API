@@ -94,7 +94,7 @@ object Glossary {
 					|
 					|
 					 |* We assume you have OBP-API running and it is connected to a working Kafka installation.
-						| You can check OBP -> Kafka connectivity using the following <a href="/#vv3_1_0-getObpApiLoopback">"loopback" endpoint</a>
+						| You can check OBP -> Kafka connectivity using the <a href="/#vv3_1_0-getObpApiLoopback">"loopback" endpoint</a>.
 |
 					|* We assume you have API Explorer running (the application serving this page) but its not necessary - (you could use a REST client)
 					|* You might want to also run API Manager as it makes it easier to grant yourself roles, but its not nessessary (you could use a REST client  / API Explorer instead).
@@ -104,7 +104,7 @@ object Glossary {
 						|This token which could be a CUSTOMER_NUMBER is sent inside the AuthInfo object to Kafka
 					 |* OR Use Create Customer and Create User Customer Link (note that Create Auth Context is preferred)
 					 |
-					 |Once the User(s) have been created its time to consume and respond to the messages OBP will send to Kafka.
+					 |Then its time to configure or program your Adapter to consume, and respond to, the messages OBP will send to Kafka.
 |
 | We suggest they are implemented in the following order:
 |
@@ -136,43 +136,52 @@ object Glossary {
 					 |
  |5) Get Transaction Request Types
  |
-					 |    OBP Internal (Props) - (No additional messages required)
+					 |* This is configured using OBP Props - No messages required
 					 |
  |6) Get Challenge Threshold (CBS)
-					 |Done See Message: Get Challenge Threshold
-					 |
- |7) Create Transaction Request (Payments)
-					 |Done See Message: Make Payment
-					 |
  |
- |This also requires 8,9,10 for high value payments.
+					 |* ${messageDocLink("obp.get.getChallengeThreshold")}
+					 |
+ |7)  Make Payment (used by Create Transaction Request)
+ |
+					 |* ${messageDocLink("obp.get.makePaymentv210")}
+ 						|* This also requires 8,9,10 for high value payments.
 					 |
  |8) Get Transaction Requests.
+ |
 					 |* ${messageDocLink("obp.get.transactionRequests210")}
 					 |
  |9) Generate Security Challenges (CBS)
+ |
 					 |* ${messageDocLink("obp.create.Challenge")}
 					 |
  |10) Answer Security Challenges (Validate)
-					 |Optional / Internal OBP (No additional messages required)
+ |
+					 |* Optional / Internal OBP (No additional messages required)
 					 |
  |11) Manage Counterparty Metadata
-					 |    Internal OBP (No additional messages required)
+ |
+					 |* Internal OBP (No additional messages required)
 					 |
  |12) Get Entitlements
-					 |    Internal OBP (No additional messages required)
+ |
+					 |* Internal OBP (No additional messages required)
 					 |
  |13) Manage Roles
-					 |    Internal OBP (No additional messages required)
+ |
+					 |* Internal OBP (No additional messages required)
 					 |
  |14) Manage Entitlements
-					 |    Internal OBP (No additional messages required)
+ |
+					 |* Internal OBP (No additional messages required)
 					 |
  |15) Manage Views
-					 |    Internal OBP (No additional messages required)
+ |
+					 |* Internal OBP (No additional messages required)
 					 |
  |16) Manage Transaction Metadata
-					 |    Internal OBP (No additional messages required)
+ |
+					 |* Internal OBP (No additional messages required)
 					 |
  |"""
 	)
@@ -209,6 +218,20 @@ object Glossary {
   |
  |"""
 	)
+
+
+	glossaryItems += GlossaryItem(
+		title = "API.Interfaces",
+		description =
+				s"""
+					 |<img width="468" alt="authinfo_annotated_1" src="https://user-images.githubusercontent.com/485218/48845997-413e0780-ed9e-11e8-86c5-e5ce510c140c.png"></img>
+					 |
+  |
+  |
+ |"""
+	)
+
+
 
 
 /*
