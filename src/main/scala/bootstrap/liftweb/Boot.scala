@@ -52,6 +52,7 @@ import code.cards.{MappedPhysicalCard, PinReset}
 import code.crm.MappedCrmEvent
 import code.context.MappedUserAuthContext
 import code.internalMapping.customer.MappedCustomerIDMapping
+import code.internalMapping.account.MappedAccountIDMapping
 import code.customer.{MappedCustomer, MappedCustomerMessage}
 import code.customeraddress.MappedCustomerAddress
 import code.entitlement.MappedEntitlement
@@ -568,6 +569,7 @@ object ToSchemify {
     MappedCurrency,
     MappedTransactionRequestTypeCharge,
     MappedAccountWebhook,
-    MappedCustomerIDMapping
+    MappedCustomerIDMapping,
+    MappedAccountIDMapping
   )++ APIBuilder_Connector.allAPIBuilderModels
 }
