@@ -62,7 +62,7 @@ import code.api.util.ExampleValue._
 import code.api.v1_2_1.AmountOfMoneyJsonV121
 import code.api.v2_1_0.{TransactionRequestBodyCommonJSON, TransactionRequestCommonBodyJSON}
 import code.context.UserAuthContextProvider
-import code.customer.internalMapping.CustomerIDMappingProvider
+import code.internalMapping.customer.CustomerIDMappingProvider
 import code.usercustomerlinks.MappedUserCustomerLinkProvider
 import code.users.Users
 

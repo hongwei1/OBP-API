@@ -51,7 +51,7 @@ import code.branches.MappedBranch
 import code.cards.{MappedPhysicalCard, PinReset}
 import code.crm.MappedCrmEvent
 import code.context.MappedUserAuthContext
-import code.customer.internalMapping.MappedCustomerIDMapping
+import code.internalMapping.customer.MappedCustomerIDMapping
 import code.customer.{MappedCustomer, MappedCustomerMessage}
 import code.customeraddress.MappedCustomerAddress
 import code.entitlement.MappedEntitlement

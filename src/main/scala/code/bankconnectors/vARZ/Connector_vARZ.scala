@@ -40,8 +40,8 @@ import code.bankconnectors.vJune2017.AuthInfo
 import code.bankconnectors.vMar2017._
 import code.bankconnectors.vSept2018.{InternalTransaction_vSept2018, KafkaMappedConnector_vSept2018}
 import code.customer._
-import code.customer.internalMapping.CustomerIDMappingProvider
 import code.fx.fx
+import code.internalMapping.customer.CustomerIDMappingProvider
 import code.kafka.KafkaHelper
 import code.model.{Transaction, _}
 import code.model.dataAccess.MappedBankAccountData
