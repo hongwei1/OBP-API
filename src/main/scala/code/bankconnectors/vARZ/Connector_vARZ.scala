@@ -28,7 +28,7 @@ import java.util.{Date, UUID}
 import java.util.UUID.randomUUID
 
 import code.api.cache.Caching
-import code.api.util.APIUtil.{DateWithDay, MessageDoc, saveConnectorMetric}
+import code.api.util.APIUtil.{DateWithDay, MessageDoc, OBPReturnType, saveConnectorMetric}
 import code.api.util.{APIUtil, CallContext}
 import code.api.util.ErrorMessages._
 import code.api.v2_1_0.TransactionRequestCommonBodyJSON
@@ -41,6 +41,7 @@ import code.bankconnectors.vMar2017._
 import code.bankconnectors.vSept2018.{InternalTransaction_vSept2018, KafkaMappedConnector_vSept2018}
 import code.customer._
 import code.fx.fx
+import code.internalMapping.account.AccountIDMappingProvider
 import code.internalMapping.customer.CustomerIDMappingProvider
 import code.kafka.KafkaHelper
 import code.model.{Transaction, _}
@@ -343,7 +344,8 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         for{
           cbsAccount <- cbsAccounts
           //TODO, this need to be moved into a mapped table!
-          accountId = UUID.nameUUIDFromBytes(cbsAccount.kontonummer.toString.getBytes).toString
+          accountIdMapping = AccountIDMappingProvider.accountIDMappingProvider.vend.getOrCreateAccountIDMapping(BankId("arz"),cbsAccount.kontonummer.toString).openOrThrowException("getOrCreateAccountIDMapping Error")          
+          accountId = accountIdMapping.accountId.value
           obpAccount <- List(InboundAccountArz(
             errorCode = "",
             cbsToken = "",
@@ -388,7 +390,8 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
         for{
           cbsAccount <- cbsAccounts
           //TODO, this need to be moved into a mapped table!
-          accountId = UUID.nameUUIDFromBytes(cbsAccount.kontonummer.toString.getBytes).toString
+          accountIdMapping = AccountIDMappingProvider.accountIDMappingProvider.vend.getOrCreateAccountIDMapping(BankId("arz"), cbsAccount.kontonummer.toString).openOrThrowException("getOrCreateAccountIDMapping Error")
+          accountId = accountIdMapping.accountId.value
           obpAccount <- List(CoreAccount(
             id = accountId,
             label = cbsAccount.kontobezeichnung, 
@@ -415,32 +418,69 @@ trait Connector_vARZ extends Connector with KafkaHelper with MdcLoggable {
     Full((customers, callContext))
   }
   
-  
   override def getBankAccount(bankId: BankId, accountId: AccountId, callContext: Option[CallContext])=  {
-    val account = InboundAccountArz(
-            errorCode = "",
-            cbsToken = "",
-            bankId =bankId.value,
-            branchId ="",
-            accountId = accountId.value,
-            accountNumber = "123",
-            accountType = "P",
-            balanceAmount = "123",
-            balanceCurrency = "EUR",
-            owners = List(""),
-            viewsToGenerate = List("owner"),
-            bankRoutingScheme = "",
-            bankRoutingAddress = "",
-            branchRoutingScheme = "",
-            branchRoutingAddress = "",
-            accountRoutingScheme = "",
-            accountRoutingAddress = "",
-            accountRoutings = Nil,
-            accountRules = Nil)
+    for{
+      accountIdMapping <- AccountIDMappingProvider.accountIDMappingProvider.vend.getAccountIDMapping(accountId) ?~! s"This AccountId($accountId) is not in AccountIdMapping table!"
+      account = InboundAccountArz(
+        errorCode = "",
+        cbsToken = "",
+        bankId =bankId.value,
+        branchId ="",
+        accountId = accountId.value,
+        accountNumber = "123",
+        accountType = "P",
+        balanceAmount = "123",
+        balanceCurrency = "EUR",
+        owners = List(""),
+        viewsToGenerate = List("owner"),
+        bankRoutingScheme = "",
+        bankRoutingAddress = "",
+        branchRoutingScheme = "",
+        branchRoutingAddress = "",
+        accountRoutingScheme = "",
+        accountRoutingAddress = "",
+        accountRoutings = Nil,
+        accountRules = Nil)
+    } yield {
+      Connector_vARZ.createMappedAccountDataIfNotExisting(bankId.value, accountId.value, "1234")
+      (BankAccountArz(account), callContext)
+    }
     
-    Connector_vARZ.createMappedAccountDataIfNotExisting(bankId.value, accountId.value, "1234")
     
-    Full(BankAccountArz(account), callContext)
+    
+  }
+  
+  override def getBankAccountFuture(bankId : BankId, accountId : AccountId, callContext: Option[CallContext]) = Future
+  {
+    val bankAccount = for{
+      accountIdMapping <- AccountIDMappingProvider.accountIDMappingProvider.vend.getAccountIDMapping(accountId) ?~! s"This AccountId($accountId) is not in AccountIdMapping table!"
+      account = InboundAccountArz(
+        errorCode = "",
+        cbsToken = "",
+        bankId = bankId.value,
+        branchId ="",
+        accountId = accountId.value,
+        accountNumber = "123",
+        accountType = "P",
+        balanceAmount = "123",
+        balanceCurrency = "EUR",
+        owners = List(""),
+        viewsToGenerate = List("owner"),
+        bankRoutingScheme = "",
+        bankRoutingAddress = "",
+        branchRoutingScheme = "",
+        branchRoutingAddress = "",
+        accountRoutingScheme = "",
+        accountRoutingAddress = "",
+        accountRoutings = Nil,
+        accountRules = Nil)
+    } yield {
+      Connector_vARZ.createMappedAccountDataIfNotExisting(bankId.value, accountId.value, "1234")
+      BankAccountArz(account)
+    }
+    
+    (bankAccount,callContext)
+    
   }
   
   override def updateAccountLabel(bankId: BankId, accountId: AccountId, label: String) = {
