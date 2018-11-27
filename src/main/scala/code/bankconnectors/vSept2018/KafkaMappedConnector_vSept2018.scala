@@ -136,8 +136,15 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       sessionId <- tryo(cc.sessionId.getOrElse(""))
       permission <- Views.views.vend.getPermissionForUser(user)
       views <- tryo(permission.views)
-      linkedCustomers <- tryo(Customer.customerProvider.vend.getCustomersByUserId(user.userId))
-      likedCustomersBasic = JsonFactory_vSept2018.createBasicCustomerJson(linkedCustomers)
+      customerIds = MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(user.userId).map(_.customerId)
+      customerIdMappings <- tryo {for{
+        customerId <- customerIds
+        customerIdMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerId)).openOrThrowException("getCustomerByCustomerId Error")
+      } yield{
+        customerIdMapping
+      }}
+      
+      likedCustomersBasic = JsonFactory_vSept2018.createBasicCustomerJson(customerIdMappings)
       userAuthContexts<- UserAuthContextProvider.userAuthContextProvider.vend.getUserAuthContextsBox(user.userId) 
       basicUserAuthContexts = JsonFactory_vSept2018.createBasicUserAuthContextJson(userAuthContexts)
       authViews<- Full(

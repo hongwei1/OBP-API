@@ -13,6 +13,7 @@ import code.branches.Branches._
 import code.common.{Address, Location, Meta, Routing}
 import code.context.UserAuthContext
 import code.customer.Customer
+import code.internalMapping.customer.CustomerIDMapping
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData
@@ -479,12 +480,12 @@ object JsonFactory_vSept2018 {
     )
   }
   
-  def createBasicCustomerJson(customer : Customer) : BasicCustomer = {
+  def createBasicCustomerJson(customerIDMapping : CustomerIDMapping) : BasicCustomer = {
     BasicCustomer(
-      customerId = customer.customerId,
-      customerNumber = customer.number,
-      legalName = customer.legalName,
-    )
+      customerId = customerIDMapping.customerId.value,
+      customerNumber = customerIDMapping.customerNumber,
+      legalName = "",//TODO, should we store this value into CustomerIDMapping? 
+      )
   }
   
   def createBasicUserAuthContext(userAuthContest : UserAuthContext) : BasicUserAuthContext = {
@@ -502,8 +503,8 @@ object JsonFactory_vSept2018 {
     InternalBasicUsers(users.map(createUserJson))
   }
   
-  def createBasicCustomerJson(customers : List[Customer]) : List[BasicCustomer] = {
-    customers.map(createBasicCustomerJson)
+  def createBasicCustomerJson(customerIdMappings : List[CustomerIDMapping]) : List[BasicCustomer] = {
+    customerIdMappings.map(createBasicCustomerJson)
   }
   
   
