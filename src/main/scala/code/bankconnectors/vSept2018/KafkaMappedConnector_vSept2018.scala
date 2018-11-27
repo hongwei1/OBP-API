@@ -62,6 +62,7 @@ import code.api.util.ExampleValue._
 import code.api.v1_2_1.AmountOfMoneyJsonV121
 import code.api.v2_1_0.{TransactionRequestBodyCommonJSON, TransactionRequestCommonBodyJSON}
 import code.context.UserAuthContextProvider
+import code.internalMapping.account.AccountIDMappingProvider
 import code.internalMapping.customer.CustomerIDMappingProvider
 import code.usercustomerlinks.MappedUserCustomerLinkProvider
 import code.users.Users
@@ -628,12 +629,21 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(accountsTTL second) {
         //TODO, these Customers should not be get from here, it make some side effects. It is better get it from Parameters.
-        val currentResourceUserId = AuthUser.getCurrentResourceUserUserId
+        val currentResourceUserId = Users.users.vend.getUserByUserName(username).map(_.userId).openOr("") //For GatewayLogin user can be empty here
         val customerList :List[Customer]= Customer.customerProvider.vend.getCustomersByUserId(currentResourceUserId)
         val internalCustomers = JsonFactory_vSept2018.createCustomersJson(customerList)
       
+        val customerIds = MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(currentResourceUserId).map(_.customerId)
+        val customerIdMappings = for{
+          customerId <- customerIds
+          customerIdMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerId)).openOrThrowException("getCustomerByCustomerId Error")
+        } yield{
+          customerIdMapping
+        }
+        val likedCustomersBasic = JsonFactory_vSept2018.createBasicCustomerJson(customerIdMappings)
+        
         val box = for {
-          authInfo <- getAuthInfoFirstCbsCall(username, callContext)
+          authInfo <- getAuthInfoFirstCbsCall(username, callContext).map(_.copy(linkedCustomers = likedCustomersBasic))
           req = OutboundGetAccounts(authInfo, internalCustomers)
           kafkaMessage <- processToBox[OutboundGetAccounts](req)
           inboundGetAccounts <- tryo{kafkaMessage.extract[InboundGetAccounts]} ?~! s"$InboundGetAccounts extract error. Both check API and Adapter Inbound Case Classes need be the same ! "
@@ -644,8 +654,15 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         logger.debug(s"Kafka getBankAccounts says res is $box")
 
         box match {
-          case Full((data, status)) if (status.errorCode=="") =>
-            Full(data, callContext)
+          case Full((inboundAccounts, status)) if (status.errorCode=="") =>
+            val newInboundAccounts = for{
+              inboundAccount <- inboundAccounts
+              cbsAccountNumber = inboundAccount.accountNumber
+              accountIdMapping = AccountIDMappingProvider.accountIDMappingProvider.vend.getOrCreateAccountIDMapping(BankId(inboundAccount.bankId), inboundAccount.accountNumber.toString).openOrThrowException("getOrCreateAccountIDMapping Error")          
+              accountId = accountIdMapping.accountId.value
+            } yield 
+              inboundAccount.copy(accountId = accountId)
+            Full(newInboundAccounts, callContext)
           case Full((data, status)) if (status.errorCode!="") =>
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case Empty =>
@@ -670,13 +687,23 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountsTTL second) {
         //TODO, these Customers should not be get from here, it make some side effects. It is better get it from Parameters.
-        val currentResourceUserId = AuthUser.getCurrentResourceUserUserId
+        val currentResourceUserId = Users.users.vend.getUserByUserName(username).map(_.userId).openOr("") //For GatewayLogin user can be empty here
         val customerList :List[Customer]= Customer.customerProvider.vend.getCustomersByUserId(currentResourceUserId)
         val internalCustomers = JsonFactory_vSept2018.createCustomersJson(customerList)
+        
+        val customerIds = MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(currentResourceUserId).map(_.customerId)
+        val customerIdMappings = for{
+          customerId <- customerIds
+          customerIdMapping = CustomerIDMappingProvider.customerIDMappingProvider.vend.getCustomerIDMapping(CustomerId(customerId)).openOrThrowException("getCustomerByCustomerId Error")
+        } yield{
+          customerIdMapping
+        }
+        val likedCustomersBasic = JsonFactory_vSept2018.createBasicCustomerJson(customerIdMappings)
+        
 
         //TODO we maybe have an issue here, we set the `cbsToken = Empty`, this method will get the cbkToken back. 
         val req = OutboundGetAccounts(
-          getAuthInfoFirstCbsCall(username, callContext).openOrThrowException(s"$attemptedToOpenAnEmptyBox getBankAccountsFuture.callContext is Empty !"),
+          getAuthInfoFirstCbsCall(username, callContext).openOrThrowException(s"$attemptedToOpenAnEmptyBox getBankAccountsFuture.callContext is Empty !").copy(linkedCustomers =likedCustomersBasic),
           internalCustomers
         )
         logger.debug(s"Kafka getBankAccountsFuture says: req is: $req")
@@ -698,8 +725,15 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         logger.debug(s"Kafka getBankAccounts says res is $future")
 
         future map {
-          case (data, status) if (status.errorCode=="") =>
-            Full(data,callContext)
+          case (inboundAccounts, status) if (status.errorCode=="") =>
+            val newInboundAccounts = for{
+              inboundAccount <- inboundAccounts
+              cbsAccountNumber = inboundAccount.accountNumber
+              accountIdMapping = AccountIDMappingProvider.accountIDMappingProvider.vend.getOrCreateAccountIDMapping(BankId(inboundAccount.bankId), inboundAccount.accountNumber.toString).openOrThrowException("getOrCreateAccountIDMapping Error")          
+              accountId = accountIdMapping.accountId.value
+            } yield 
+              inboundAccount.copy(accountId = accountId)
+            Full(newInboundAccounts, callContext)
           case (data, status) if (status.errorCode!="") =>
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case (List(), status) =>
@@ -927,8 +961,22 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         logger.debug(s"Kafka getCoreBankAccountsFuture says res is $future")
 
         future map {
-          case list if (list.head.errorCode=="") =>
-            Full(list.map( x => CoreAccount(x.id,x.label,x.bankId,x.accountType, x.accountRoutings)), callContext)
+          case internalInboundCoreAccounts if (internalInboundCoreAccounts.head.errorCode=="") =>
+            val newInternalInboundCoreAccounts = for{
+              internalInboundCoreAccount <- internalInboundCoreAccounts
+              accountNumber =internalInboundCoreAccount.id
+              accountIdMapping = AccountIDMappingProvider.accountIDMappingProvider.vend.getOrCreateAccountIDMapping(BankId(internalInboundCoreAccount.bankId), accountNumber).openOrThrowException("getOrCreateAccountIDMapping Error")
+              accountId = accountIdMapping.accountId.value
+              obpAccount = CoreAccount(
+                id = accountId,
+                label = internalInboundCoreAccount.label, 
+                bankId = internalInboundCoreAccount.bankId,
+                accountType = internalInboundCoreAccount.accountType,
+                accountRoutings = internalInboundCoreAccount.accountRoutings)
+              } yield{
+                obpAccount
+              }
+            Full(newInternalInboundCoreAccounts, callContext)
           case list if (list.head.errorCode!="") =>
             Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:"+ list.head.backendMessages)
           case List() =>
