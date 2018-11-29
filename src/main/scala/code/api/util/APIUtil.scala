@@ -2167,6 +2167,7 @@ Returns a string showed to the developer
     * @return Decrypted value of a property
     */
   def getPropsValue(nameOfProperty: String): Box[String] = {
+    bootstrap.liftweb.BootUtil.getPropsFromOSEnvironment
     (Props.get(nameOfProperty), Props.get(nameOfProperty + ".is_encrypted"), Props.get(nameOfProperty + ".is_obfuscated") ) match {
       case (Full(base64PropsValue), Full(isEncrypted), Empty)  if isEncrypted == "true" =>
         val decryptedValueAsString = RSAUtil.decrypt(base64PropsValue)
@@ -2277,4 +2278,11 @@ Returns a string showed to the developer
     */
   def generateUUID(): String = UUID.randomUUID().toString
 
+  def getSchema = {
+    val dbUrl = APIUtil.getPropsValue("db.url") openOr "jdbc:h2:lift_proto.db;AUTO_SERVER=TRUE"
+    dbUrl.contains("schema=") match {
+      case true => dbUrl.split("&").filter(i =>i.contains("schema=")).mkString("").split("=")(1)
+      case false =>"public"
+    }
+  }
 }

@@ -51,7 +51,8 @@ import code.branches.MappedBranch
 import code.cards.{MappedPhysicalCard, PinReset}
 import code.crm.MappedCrmEvent
 import code.context.MappedUserAuthContext
-import code.customer.internalMapping.MappedCustomerIDMapping
+import code.internalMapping.customer.MappedCustomerIDMapping
+import code.internalMapping.account.MappedAccountIDMapping
 import code.customer.{MappedCustomer, MappedCustomerMessage}
 import code.customeraddress.MappedCustomerAddress
 import code.entitlement.MappedEntitlement
@@ -166,7 +167,7 @@ class Boot extends MdcLoggable {
     Props.whereToLook = () => {
       firstChoicePropsDir.flatten.toList ::: secondChoicePropsDir.flatten.toList
     }
-
+    
     // set up the way to connect to the relational DB we're using (ok if other connector than relational)
     if (!DB.jndiJdbcConnAvailable_?) {
       val driver =
@@ -177,7 +178,7 @@ class Boot extends MdcLoggable {
       val vendor =
         Props.mode match {
           case Props.RunModes.Production | Props.RunModes.Staging | Props.RunModes.Development =>
-            new StandardDBVendor(driver,
+            new SchemaAwareDBVendor(driver,
               APIUtil.getPropsValue("db.url") openOr "jdbc:h2:lift_proto.db;AUTO_SERVER=TRUE",
               APIUtil.getPropsValue("db.user"), APIUtil.getPropsValue("db.password"))
           case _ =>
@@ -568,6 +569,7 @@ object ToSchemify {
     MappedCurrency,
     MappedTransactionRequestTypeCharge,
     MappedAccountWebhook,
-    MappedCustomerIDMapping
+    MappedCustomerIDMapping,
+    MappedAccountIDMapping
   )++ APIBuilder_Connector.allAPIBuilderModels
 }

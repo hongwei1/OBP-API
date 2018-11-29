@@ -1,0 +1,889 @@
+swagger: "2.0"
+info:
+  description: "REST-API Kunde"
+  version: "3.0.0"
+  title: "kundeservices/v3"
+  contact:
+    name: "ET210"
+    url: "http://www.arz.at"
+    email: "eb016@arz.at"
+host: "cluster-z41-tebk851-arctis.e-bk.m086:8090"
+basePath: "/__arz_service/kundeservices/api/v3/"
+tags:
+- name: "Kunden"
+- name: "Onlinekunden"
+- name: "Onlineprivatkunden"
+- name: "Privatkundenkontakte"
+schemes:
+- "https"
+paths:
+  /kunden/{kundennummer}:
+    get:
+      tags:
+      - "Kunden"
+      summary: "Liefert einen Kunde"
+      description: ""
+      operationId: "KundenResource.getKunde"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Kunde"
+          schema:
+            $ref: "#/definitions/kunde"
+        400:
+          description: "ungültiger Request"
+          schema:
+            type: "string"
+        404:
+          description: "nichts gefunden"
+          schema:
+            type: "string"
+  /kunden/{kundennummer}/legitimationen:
+    get:
+      tags:
+      - "Kunden"
+      summary: "Liefert Legitimationen"
+      description: ""
+      operationId: "KundenResource.getLegitimationen"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Legitimationen"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/legitimation"
+        400:
+          description: "ungültiger Request"
+          schema:
+            type: "string"
+  /kunden/{kundennummer}/steuerdaten:
+    get:
+      tags:
+      - "Kunden"
+      summary: "Liefert Steuerdaten"
+      description: ""
+      operationId: "KundenResource.getSteuerdaten"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Steuerdaten"
+          schema:
+            $ref: "#/definitions/steuerdatenanzeigeresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/steuerdatenanzeigeresponse"
+    put:
+      tags:
+      - "Kunden"
+      summary: "Liefert Kunden"
+      description: ""
+      operationId: "KundenResource.setSteuerdaten"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - in: "body"
+        name: "body"
+        description: "Body"
+        required: true
+        schema:
+          $ref: "#/definitions/steuerdatenaenderungrequest"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Steuerdaten geändert"
+          schema:
+            $ref: "#/definitions/steuerdatenaenderungresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/steuerdatenaenderungresponse"
+  /onlinekunden/{kundennummer}:
+    put:
+      tags:
+      - "Onlinekunden"
+      summary: "Ändert einen Onlinekunden"
+      description: ""
+      operationId: "OnlinekundenResource.setOnlinekunde"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - in: "body"
+        name: "body"
+        description: "Body"
+        required: true
+        schema:
+          $ref: "#/definitions/onlinekundenaenderungrequest"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Onlinekunde geändert"
+          schema:
+            $ref: "#/definitions/onlinekundenaenderungresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/onlinekundenaenderungresponse"
+  /onlineprivatkunden/{kundennummer}:
+    get:
+      tags:
+      - "Onlineprivatkunden"
+      summary: "Liefert einen Onlineprivatkunden"
+      description: ""
+      operationId: "OnlineprivatkundenResource.getOnlineprivatkunde"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Onlineprivatkunde"
+          schema:
+            $ref: "#/definitions/onlinekundeanzeigeresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/onlinekundeanzeigeresponse"
+  /onlineprivatkunden/{kundennummer}/legitimationen:
+    get:
+      tags:
+      - "Onlineprivatkunden"
+      summary: "Liefert Legitimationen"
+      description: ""
+      operationId: "OnlineprivatkundenResource.getLegitimationen"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Legitimationen"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/legitimation"
+        400:
+          description: "ungültiger Request"
+          schema:
+            type: "string"
+    post:
+      tags:
+      - "Onlineprivatkunden"
+      summary: "Erstellt eine Legitimation"
+      description: ""
+      operationId: "OnlineprivatkundenResource.createLegitimation"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - in: "body"
+        name: "body"
+        description: "Body"
+        required: true
+        schema:
+          $ref: "#/definitions/legitimation"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        204:
+          description: "Legitimation erstellt"
+          schema:
+            $ref: "#/definitions/legitimationanlageresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/legitimationanlageresponse"
+  /onlineprivatkunden/{kundennummer}/steuerdaten:
+    get:
+      tags:
+      - "Onlineprivatkunden"
+      summary: "Liefert Steuerdaten"
+      description: ""
+      operationId: "OnlineprivatkundenResource.getSteuerdaten"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Steuerdaten"
+          schema:
+            $ref: "#/definitions/steuerdatenanzeigeresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/steuerdatenanzeigeresponse"
+    put:
+      tags:
+      - "Onlineprivatkunden"
+      summary: "Ändert Steuerdaten"
+      description: ""
+      operationId: "OnlineprivatkundenResource.setSteuerdaten"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "kundennummer"
+        in: "path"
+        description: "Kundennummer"
+        required: true
+        type: "number"
+      - in: "body"
+        name: "body"
+        description: "Body"
+        required: true
+        schema:
+          $ref: "#/definitions/steuerdatenaenderungrequest"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Steuerdaten geändert"
+          schema:
+            $ref: "#/definitions/steuerdatenaenderungresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/steuerdatenaenderungresponse"
+  /privatkundenkontakte:
+    post:
+      tags:
+      - "Privatkundenkontakte"
+      summary: "Erstellt einen Privatkundenkontakt"
+      description: ""
+      operationId: "PrivatkundenkontakteResource.createKontakt"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Body"
+        required: true
+        schema:
+          $ref: "#/definitions/kontaktanlageprivatrequest"
+      - name: "arz-tenant"
+        in: "header"
+        description: "Mandant"
+        required: true
+        type: "number"
+      - name: "arz-variante"
+        in: "header"
+        description: "Variante"
+        required: true
+        type: "string"
+      responses:
+        201:
+          description: "Privatkundenkontakt erstellt"
+          schema:
+            $ref: "#/definitions/kontaktanlageresponse"
+        400:
+          description: "ungültiger Request"
+          schema:
+            $ref: "#/definitions/kontaktanlageresponse"
+securityDefinitions:
+  user:
+    description: ""
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+definitions:
+  ProblemData:
+    type: "object"
+    properties:
+      title:
+        type: "string"
+        example: "flexrail Service "
+      detail:
+        type: "string"
+        example: "Some error occured: Data input invalid"
+      type:
+        type: "string"
+        example: "\"https://arz.at/api-error/ERRVAL001"
+      status:
+        type: "integer"
+        format: "int32"
+        example: 412
+      errId:
+        type: "string"
+        format: "uuid"
+        example: "d47f473a-005e-40c1-8663-18ec88940580"
+      errors:
+        type: "array"
+        items:
+          $ref: "#/definitions/ProblemDetail"
+  ProblemDetail:
+    type: "object"
+    properties:
+      title:
+        type: "string"
+        example: "Data input invalid"
+      detail:
+        type: "string"
+        example: "country code has to be ISO 3166 ALPHA-2 compliant"
+      type:
+        type: "string"
+        example: "addLegitimation.arg1.exhibitionCountry"
+  kontaktanlageresponse:
+    type: "object"
+    properties:
+      kundennummer:
+        type: "number"
+        minimum: 0
+        maximum: 11
+      messages:
+        type: "array"
+        items:
+          type: "string"
+      problem:
+        $ref: "#/definitions/ProblemData"
+  kundenstamm:
+    type: "object"
+    required:
+    - "famname"
+    - "vorname"
+    properties:
+      famname:
+        type: "string"
+        minLength: 0
+        maxLength: 35
+      vorname:
+        type: "string"
+        minLength: 0
+        maxLength: 35
+      titel:
+        type: "string"
+        minLength: 0
+        maxLength: 35
+      mobiltel:
+        type: "string"
+        minLength: 0
+        maxLength: 40
+      emailadr:
+        type: "string"
+        minLength: 0
+        maxLength: 80
+      filiale:
+        type: "string"
+        minLength: 0
+        maxLength: 2
+      titelnach:
+        type: "string"
+        minLength: 0
+        maxLength: 35
+      kundnr:
+        type: "number"
+        minimum: 0
+        maximum: 11
+      hilfszahl:
+        type: "number"
+        minimum: 0
+        maximum: 11
+  BetreuerKennung:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  Email:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  Filialkennzeichen:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+        minLength: 0
+        maxLength: 2
+        pattern: "[0-9][0-9]|[A-Z][0-9A-Z]"
+  Geburtsdatum:
+    type: "object"
+    required:
+    - "value"
+    properties:
+      value:
+        type: "string"
+        format: "date-time"
+  Kundennummer:
+    type: "object"
+    properties:
+      value:
+        type: "integer"
+        format: "int64"
+      bigDecimalValue:
+        type: "number"
+  Laendercode:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  Ort:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  Plz:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  Rechtsform:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  Strasse:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+  kunde:
+    type: "object"
+    required:
+    - "active"
+    - "betreuer"
+    - "datenqualitaet"
+    - "emailadresse"
+    - "filiale"
+    - "geburtsdatum"
+    - "kundennummer"
+    - "name1"
+    - "name2"
+    - "nation"
+    - "ort"
+    - "postleitzahl"
+    - "rechtsform"
+    - "strasse"
+    properties:
+      kundennummer:
+        description: "kundennummer"
+        $ref: "#/definitions/Kundennummer"
+      active:
+        type: "boolean"
+        description: "active"
+      name1:
+        type: "string"
+        description: "name1"
+      name2:
+        type: "string"
+        description: "name2"
+      strasse:
+        description: "strasse"
+        $ref: "#/definitions/Strasse"
+      ort:
+        description: "ort"
+        $ref: "#/definitions/Ort"
+      postleitzahl:
+        description: "postleitzahl"
+        $ref: "#/definitions/Plz"
+      nation:
+        description: "nation"
+        $ref: "#/definitions/Laendercode"
+      datenqualitaet:
+        type: "string"
+        description: "datenqualitaet"
+        enum:
+        - "UNDEFINED"
+        - "KONTAKT"
+        - "ONLINE"
+        - "ZWEI"
+        - "ZWEIPLUS"
+        - "DREI"
+        - "DREIFUENF"
+        - "DREIPLUS"
+      rechtsform:
+        description: "rechtsform"
+        $ref: "#/definitions/Rechtsform"
+      betreuer:
+        description: "betreuer"
+        $ref: "#/definitions/BetreuerKennung"
+      filiale:
+        description: "filiale"
+        $ref: "#/definitions/Filialkennzeichen"
+      geburtsdatum:
+        description: "geburtsdatum"
+        $ref: "#/definitions/Geburtsdatum"
+      emailadresse:
+        description: "emailadresse"
+        $ref: "#/definitions/Email"
+  legitimation:
+    type: "object"
+    required:
+    - "dokart"
+    - "dokausbh"
+    - "dokausdat"
+    - "doknummer"
+    - "swiftlcd"
+    properties:
+      dokart:
+        type: "string"
+        minLength: 0
+        maxLength: 2
+      doknummer:
+        type: "string"
+        minLength: 0
+        maxLength: 70
+      dokausbh:
+        type: "string"
+      swiftlcd:
+        type: "string"
+        minLength: 0
+        maxLength: 2
+      kzvideo:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      dokausdat:
+        type: "string"
+        format: "date-time"
+      databl:
+        type: "string"
+        format: "date-time"
+  steuerdatenanzeigeresponse:
+    type: "object"
+    required:
+    - "steuerdomizile"
+    properties:
+      oecdselbstaus:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      usbezug:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      steuerdomizile:
+        type: "array"
+        items:
+          $ref: "#/definitions/steuerdomizil"
+      messages:
+        type: "array"
+        items:
+          type: "string"
+      problem:
+        $ref: "#/definitions/ProblemData"
+  steuerdomizil:
+    type: "object"
+    required:
+    - "steuerdom"
+    properties:
+      steuerdom:
+        type: "string"
+        minLength: 0
+        maxLength: 4
+      isteuernr:
+        type: "string"
+        minLength: 0
+        maxLength: 25
+  steuerdatenaenderungresponse:
+    type: "object"
+    required:
+    - "successful"
+    properties:
+      successful:
+        type: "boolean"
+      messages:
+        type: "array"
+        items:
+          type: "string"
+      problem:
+        $ref: "#/definitions/ProblemData"
+  steuerdatenaenderungrequest:
+    type: "object"
+    required:
+    - "steuerdomizile"
+    - "uuid"
+    properties:
+      oecdselbstaus:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      usbezug:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      steuerdomizile:
+        type: "array"
+        items:
+          $ref: "#/definitions/steuerdomizil"
+      uuid:
+        type: "string"
+        format: "uuid"
+  adresse:
+    type: "object"
+    required:
+    - "nation"
+    - "ort"
+    - "postlz"
+    - "strasse"
+    properties:
+      strasse:
+        type: "string"
+        minLength: 0
+        maxLength: 35
+      ort:
+        type: "string"
+        minLength: 0
+        maxLength: 35
+      postlz:
+        type: "string"
+        minLength: 0
+        maxLength: 7
+      nation:
+        type: "string"
+        minLength: 0
+        maxLength: 3
+  steuerdaten:
+    type: "object"
+    required:
+    - "steuerdomizile"
+    properties:
+      oecdselbstaus:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      usbezug:
+        type: "string"
+        minLength: 0
+        maxLength: 1
+      steuerdomizile:
+        type: "array"
+        items:
+          $ref: "#/definitions/steuerdomizil"
+  onlinekundenaenderungresponse:
+    type: "object"
+    required:
+    - "successful"
+    properties:
+      successful:
+        type: "boolean"
+      messages:
+        type: "array"
+        items:
+          type: "string"
+      problem:
+        $ref: "#/definitions/ProblemData"
+  onlinekundenaenderungrequest:
+    type: "object"
+    required:
+    - "adresse"
+    - "kundenstamm"
+    - "musterkundnr"
+    - "steuerdaten"
+    - "uuid"
+    properties:
+      kundenstamm:
+        $ref: "#/definitions/kundenstamm"
+      adresse:
+        $ref: "#/definitions/adresse"
+      legitimation:
+        $ref: "#/definitions/legitimation"
+      steuerdaten:
+        $ref: "#/definitions/steuerdaten"
+      musterkundnr:
+        type: "number"
+        minimum: 0
+        maximum: 11
+      uuid:
+        type: "string"
+        format: "uuid"
+  legitimationanlageresponse:
+    type: "object"
+    properties:
+      legitimationsnummer:
+        type: "number"
+        minimum: 0
+        maximum: 9
+      messages:
+        type: "array"
+        items:
+          type: "string"
+      problem:
+        $ref: "#/definitions/ProblemData"
+  onlinekundeanzeigeresponse:
+    type: "object"
+    required:
+    - "adresse"
+    - "kundenstamm"
+    - "problem"
+    - "steuerdaten"
+    properties:
+      kundenstamm:
+        $ref: "#/definitions/kundenstamm"
+      adresse:
+        $ref: "#/definitions/adresse"
+      legitimationen:
+        type: "array"
+        items:
+          $ref: "#/definitions/legitimation"
+      steuerdaten:
+        $ref: "#/definitions/steuerdaten"
+      problem:
+        $ref: "#/definitions/ProblemData"
+  kontaktanlageprivatrequest:
+    type: "object"
+    required:
+    - "kundenstamm"
+    - "musterkundnr"
+    - "uuid"
+    properties:
+      musterkundnr:
+        type: "number"
+        minimum: 0
+        maximum: 11
+      kundenstamm:
+        $ref: "#/definitions/kundenstamm"
+      uuid:
+        type: "string"
+        format: "uuid"

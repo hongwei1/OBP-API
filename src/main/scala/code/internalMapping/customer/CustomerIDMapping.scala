@@ -1,4 +1,4 @@
-package code.customer.internalMapping
+package code.internalMapping.customer
 
 import code.model.{BankId, CustomerId}
 

@@ -66,8 +66,9 @@ class KafkaStreamsHelperActor extends Actor with ObpActorInit with ObpActorHelpe
     //When we send RequestTopic message, contain the partition in it, and when we get the ResponseTopic according to the partition.
     val requestTopic = topic.request
     val responseTopic = topic.response
-    if (NorthSideConsumer.listOfTopics.exists(_ == responseTopic)) {
+    if (!NorthSideConsumer.listOfTopics.map(t => s"to.${clientId}.caseclass.$t").exists(_ == responseTopic)) {
       logger.error(s"North Kafka Consumer is not subscribed to a topic: $responseTopic")
+      throw new RuntimeException(s"North Kafka Consumer is not subscribed to a topic: $responseTopic")
     }
     // This actor is used to listen to a message which will be sent by NorthSideConsumer
     val actorListener = context.actorOf(Props[RequestResponseActor], key)

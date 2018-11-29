@@ -1,8 +1,7 @@
 {
-  "request_url": "/templates",
-  "template": {
-    "author": "Chinua Achebe",
-    "pages": 209,
-    "points": 1.3
+  "request_url": "/account_application",
+  "account_application": {
+    "customer_number": "1234",
+    "date": "19880313"
   }
 }

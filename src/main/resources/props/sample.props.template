@@ -3,11 +3,20 @@
 
 ### OBP-API configuration
 
+### ARZ specific
+
+arz.authorization=Arzwillprovide
+
+
+base.url.disposer=http://127.0.0.1:8080
+backendCalls.diposers=api-builder/b1/v1/disposers
+base.url.kunde=http://127.0.0.1:8080
+backendCalls.postPrivatenkundenkontakte=/api-builder/b1/kundenstamm
 
 ### Base configuration
 
-## Which data connector to use
-connector=mapped
+##connector=mapped
+ Which data connector to use
 #connector=mongodb
 #connector=kafka
 #conenctor=kafka_vMar2017

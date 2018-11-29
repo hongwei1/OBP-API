@@ -1,10 +1,9 @@
-package code.customer.internalMapping
+package code.internalMapping.customer
 
 import code.model.{BankId, CustomerId}
 import code.util.Helper.MdcLoggable
-import net.liftweb.common._
+import net.liftweb.common.{Empty, Failure, Full, ParamFailure}
 import net.liftweb.mapper.By
-
 
 object MappedCustomerIDMappingProvider extends CustomerIDMappingProvider with MdcLoggable
 {
@@ -50,4 +49,3 @@ object MappedCustomerIDMappingProvider extends CustomerIDMappingProvider with Md
     )
   }
 }
-

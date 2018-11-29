@@ -1,0 +1,17 @@
+// --> /v1/disposers
+
+{
+  "credentials": {
+    "name": "Max123456",
+    "pin": 123456
+  },
+  "status": "ACTIVE",
+  "language": "DE",
+  "type": "MINI",
+  "customerNr": 29686,
+  "address": {
+    "identifier": "H",
+    "number": 1
+  },
+  "bankSupervisorId": "FLEXAPI"
+}

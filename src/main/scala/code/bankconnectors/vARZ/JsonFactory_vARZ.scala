@@ -1,26 +1,26 @@
-package code.bankconnectors.vSept2018
+package code.bankconnectors.vARZ
 
-import java.util.Date
+import java.lang
+import java.text.SimpleDateFormat
+import java.util.{Date, Locale, UUID}
+
 import code.api.util.APIUtil
 import code.api.util.APIUtil.InboundMessageBase
-import code.api.v2_1_0.TransactionRequestCommonBodyJSON
 import code.api.v3_1_0.CheckbookOrdersJson
 import code.atms.Atms.{AtmId, AtmT}
 import code.bankconnectors._
-import code.bankconnectors.vJune2017.InternalCustomer
 import code.bankconnectors.vMar2017._
 import code.branches.Branches._
 import code.common.{Address, Location, Meta, Routing}
-import code.context.UserAuthContext
-import code.customer.Customer
-import code.internalMapping.customer.CustomerIDMapping
+import code.customer.{CreditLimit, CreditRating, Customer, CustomerFaceImage}
 import code.kafka.Topics._
 import code.metadata.counterparties.CounterpartyTrait
 import code.model.dataAccess.MappedBankAccountData
-import code.model._
+import code.model.{AmountOfMoney => _, _}
 import code.transactionrequests.TransactionRequests.TransactionRequest
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.today
+
 import scala.collection.immutable.List
 
 /**
@@ -31,7 +31,7 @@ case class OutboundGetAdapterInfo(date: String) extends TopicTrait
 case class OutboundGetBanks(authInfo: AuthInfo) extends TopicTrait
 case class OutboundGetBank(authInfo: AuthInfo, bankId: String) extends TopicTrait
 case class OutboundGetUserByUsernamePassword(authInfo: AuthInfo, password: String) extends TopicTrait
-case class OutboundGetAccounts(authInfo: AuthInfo, customers:InternalBasicCustomers) extends TopicTrait
+case class OutboundGetAccounts(authInfo: AuthInfo, callMfFlag: Boolean, customers:InternalBasicCustomers) extends TopicTrait
 case class OutboundGetAccountbyAccountID(authInfo: AuthInfo, bankId: String, accountId: String)extends TopicTrait
 case class OutboundCheckBankAccountExists(authInfo: AuthInfo, bankId: String, accountId: String)extends TopicTrait
 case class OutboundGetCoreBankAccounts(authInfo: AuthInfo, bankIdAccountIds: List[BankIdAccountId])extends TopicTrait
@@ -41,40 +41,8 @@ case class OutboundGetBranches(authInfo: AuthInfo,bankId: String) extends TopicT
 case class OutboundGetBranch(authInfo: AuthInfo, bankId: String, branchId: String)extends TopicTrait
 case class OutboundGetAtms(authInfo: AuthInfo,bankId: String) extends TopicTrait
 case class OutboundGetAtm(authInfo: AuthInfo,bankId: String, atmId: String) extends TopicTrait
-case class OutboundGetChallengeThreshold(
-  authInfo: AuthInfo,
-  bankId: String,
-  accountId: String,
-  viewId: String,
-  transactionRequestType: String,
-  currency: String,
-  userId: String,
-  userName: String
-) extends TopicTrait
-case class OutboundCreateTransaction(
-  authInfo: AuthInfo,
-  
-  // fromAccount
-  fromAccountBankId : String,
-  fromAccountId : String,
-  
-  // transaction details
-  transactionRequestType: String,
-  transactionChargePolicy: String,
-  transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
-  
-  // toAccount or toCounterparty
-  toCounterpartyId: String,
-  toCounterpartyName: String,
-  toCounterpartyCurrency: String,
-  toCounterpartyRoutingAddress: String,
-  toCounterpartyRoutingScheme: String,
-  toCounterpartyBankRoutingAddress: String,
-  toCounterpartyBankRoutingScheme: String
 
-) extends TopicTrait
-
-case class OutboundCreateChallengeSept2018(
+case class OutboundCreateChallengeJune(
   authInfo: AuthInfo,
   bankId: String,
   accountId: String,
@@ -127,10 +95,7 @@ case class OutboundGetCreditCardOrderStatus(
   primaryAccount: String
 )extends TopicTrait
 
-case class OutboundGetCustomerByCustomerNumber(
-  authInfo: AuthInfo,
-  customerNumber: String
-) extends TopicTrait
+
 
 /**
   * case classes used in Kafka message, these are InBound Kafka messages
@@ -138,29 +103,27 @@ case class OutboundGetCustomerByCustomerNumber(
 
 //AdapterInfo has no AuthInfo, because it just get data from Adapter, no need for AuthInfo
 case class InboundAdapterInfo(data: InboundAdapterInfoInternal)
-case class InboundGetUserByUsernamePassword(inboundAuthInfo: InboundAuthInfo, data: InboundValidatedUser)
-case class InboundGetBanks(inboundAuthInfo: InboundAuthInfo, status: Status,data: List[InboundBank])
-case class InboundGetBank(inboundAuthInfo: InboundAuthInfo, status: Status, data: InboundBank)
-case class InboundGetAccounts(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InboundAccountSept2018])
-case class InboundGetAccountbyAccountID(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InboundAccountSept2018])
-case class InboundCheckBankAccountExists(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InboundAccountSept2018])
-case class InboundGetCoreBankAccounts(inboundAuthInfo: InboundAuthInfo, data: List[InternalInboundCoreAccount])
-case class InboundGetTransactions(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InternalTransaction_vSept2018])
-case class InboundGetTransaction(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InternalTransaction_vSept2018])
-case class InboundCreateChallengeSept2018(inboundAuthInfo: InboundAuthInfo, data: InternalCreateChallengeSept2018)
-case class InboundCreateCounterparty(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InternalCounterparty])
-case class InboundGetTransactionRequests210(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[TransactionRequest])
-case class InboundGetCounterparties(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InternalCounterparty])
-case class InboundGetCounterparty(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InternalCounterparty])
-case class InboundGetCustomersByUserId(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InternalCustomer])
-case class InboundGetCustomerByCustomerNumber(inboundAuthInfo: InboundAuthInfo, status: Status, data: InternalCustomer)
-case class InboundGetBranches(inboundAuthInfo: InboundAuthInfo,status: Status,data: List[InboundBranchVSept2018])
-case class InboundGetBranch(inboundAuthInfo: InboundAuthInfo,status: Status, data: Option[InboundBranchVSept2018])
-case class InboundGetAtms(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InboundAtmSept2018])
-case class InboundGetAtm(inboundAuthInfo: InboundAuthInfo, status: Status, data: Option[InboundAtmSept2018])
-case class InboundGetChecksOrderStatus(inboundAuthInfo: InboundAuthInfo, status: Status, data: CheckbookOrdersJson)
-case class InboundGetCreditCardOrderStatus(inboundAuthInfo: InboundAuthInfo, status: Status, data: List[InboundCardDetails])
-case class InboundGetChallengeThreshold(inboundAuthInfo: InboundAuthInfo, status: Status, data: AmountOfMoney)
+case class InboundGetUserByUsernamePassword(authInfo: AuthInfo, data: InboundValidatedUser)
+case class InboundGetBanks(authInfo: AuthInfo, status: Status,data: List[InboundBank])
+case class InboundGetBank(authInfo: AuthInfo, status: Status, data: InboundBank)
+case class InboundGetAccounts(authInfo: AuthInfo, status: Status, data: List[InboundAccountArz])
+case class InboundGetAccountbyAccountID(authInfo: AuthInfo, status: Status, data: Option[InboundAccountArz])
+case class InboundCheckBankAccountExists(authInfo: AuthInfo, status: Status, data: Option[InboundAccountArz])
+case class InboundGetCoreBankAccounts(authInfo: AuthInfo, data: List[InternalInboundCoreAccount])
+case class InboundGetTransactions(authInfo: AuthInfo, status: Status, data: List[InternalTransaction_vJune2017])
+case class InboundGetTransaction(authInfo: AuthInfo, status: Status, data: Option[InternalTransaction_vJune2017])
+case class InboundCreateChallengeJune2017(authInfo: AuthInfo, data: InternalCreateChallengeJune2017)
+case class InboundCreateCounterparty(authInfo: AuthInfo, status: Status, data: Option[InternalCounterparty])
+case class InboundGetTransactionRequests210(authInfo: AuthInfo, status: Status, data: List[TransactionRequest])
+case class InboundGetCounterparties(authInfo: AuthInfo, status: Status, data: List[InternalCounterparty])
+case class InboundGetCounterparty(authInfo: AuthInfo, status: Status, data: Option[InternalCounterparty])
+case class InboundGetCustomersByUserId(authInfo: AuthInfo, status: Status, data: List[InternalCustomer])
+case class InboundGetBranches(authInfo: AuthInfo,status: Status,data: List[InboundBranchVJune2017])
+case class InboundGetBranch(authInfo: AuthInfo,status: Status, data: Option[InboundBranchVJune2017])
+case class InboundGetAtms(authInfo: AuthInfo, status: Status, data: List[InboundAtmJune2017])
+case class InboundGetAtm(authInfo: AuthInfo, status: Status, data: Option[InboundAtmJune2017])
+case class InboundGetChecksOrderStatus(authInfo: AuthInfo, status: Status, data: CheckbookOrdersJson)
+case class InboundGetCreditCardOrderStatus(authInfo: AuthInfo, status: Status, data: List[InboundCardDetails])
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,54 +142,9 @@ case class Status(
                    errorCode: String,
                    backendMessages: List[InboundStatusMessage]
                  )
+case class AuthInfo(userId: String = "", username: String ="", cbsToken: String ="", isFirst: Boolean = true, correlationId: String="")
 
-case class ViewBasic(
-  id: String,
-  short_name: String,
-  description: String,
-)
-
-case class AccountBasic(
-  id: String,
-  accountRoutings: List[AccountRouting],
-  customerOwners: List[InternalBasicCustomer],
-  userOwners: List[InternalBasicUser]
-)
-
-case class AuthView(
-  view: ViewBasic,
-  account:AccountBasic,
-)
-
-case class AuthInfo(
-  userId: String = "", 
-  username: String = "", 
-  cbsToken: String = "", 
-  isFirst: Boolean = true, 
-  correlationId: String = "",
-  sessionId: String = "", 
-  linkedCustomers: List[BasicCustomer] = Nil,
-  userAuthContexts: List[BasicUserAuthContext]= Nil,
-  authViews: List[AuthView] = Nil,
-)
-
-case class InboundAuthInfo(
-  cbsToken: String = "",
-  sessionId: String = ""
-)
-
-case class BasicCustomer(
-  customerId: String,
-  customerNumber: String,
-  legalName: String,
-)
-
-case class BasicUserAuthContext(
-  key: String,
-  value: String
-)
-
-case class InboundAccountSept2018(
+case class InboundAccountArz(
   errorCode: String,
   cbsToken: String, //TODO, this maybe move to AuthInfo, but it is used in GatewayLogin
   bankId: String,
@@ -244,11 +162,11 @@ case class InboundAccountSept2018(
   branchRoutingAddress: String,
   accountRoutingScheme: String,
   accountRoutingAddress: String,
-  accountRouting: List[AccountRouting],
+  accountRoutings: List[AccountRouting],
   accountRules: List[AccountRule]
 ) extends InboundMessageBase with InboundAccountCommon
 
-case class BankAccountSept2018(r: InboundAccountSept2018) extends BankAccount {
+case class BankAccountArz(r: InboundAccountArz) extends BankAccount {
 
   def accountId: AccountId = AccountId(r.accountId)
   def accountType: String = r.accountType
@@ -288,17 +206,9 @@ case class InternalBasicCustomer(
   dateOfBirth: Date
 )
 
-case class InternalBasicUser(
-  userId:String,
-  emailAddress: String,
-  name: String
-)
-
 case class InternalBasicCustomers(customers: List[InternalBasicCustomer])
 
-case class InternalBasicUsers(users: List[InternalBasicUser])
-
-case class InternalCreateChallengeSept2018(
+case class InternalCreateChallengeJune2017(
   errorCode: String,
   backendMessages: List[InboundStatusMessage],
   answer : String
@@ -372,7 +282,30 @@ case class InternalCounterparty(
                                  bespoke: List[CounterpartyBespoke]) extends CounterpartyTrait
 
 
-case class  InboundBranchVSept2018(
+case class InternalCustomer(
+  customerId: String,
+  bankId: String,
+  number: String,
+  legalName: String,
+  mobileNumber: String,
+  email: String,
+  faceImage: CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Integer,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating: CreditRating,
+  creditLimit: CreditLimit,
+  kycStatus: lang.Boolean,
+  lastOkDate: Date,
+  title: String,
+  branchId: String,
+  nameSuffix: String
+) extends Customer
+
+case class  InboundBranchVJune2017(
                            branchId: BranchId,
                            bankId: BankId,
                            name: String,
@@ -392,7 +325,7 @@ case class  InboundBranchVSept2018(
                            phoneNumber : Option[String]
                          ) extends BranchT
 
-case class InboundAtmSept2018(
+case class InboundAtmJune2017(
                                atmId : AtmId,
                                bankId : BankId,
                                name : String,
@@ -428,7 +361,7 @@ case class InboundAtmSept2018(
                                hasDepositCapability : Option[Boolean]
                              ) extends AtmT
 
-case class InternalTransaction_vSept2018(
+case class InternalTransaction_vJune2017(
                                 transactionId: String,
                                 accountId: String,
                                 amount: String,
@@ -456,12 +389,7 @@ case class InboundCardDetails(
   branch: String
 )
 
-case class InternalTransactionId(
-  id : String
-)
-case class InboundCreateTransactionId(inboundAuthInfo: InboundAuthInfo, status: Status, data: InternalTransactionId)
-
-object JsonFactory_vSept2018 {
+object JsonFactory_vJune2017 {
   def createCustomerJson(customer : Customer) : InternalBasicCustomer = {
     InternalBasicCustomer(
       bankId=customer.bankId,
@@ -472,44 +400,7 @@ object JsonFactory_vSept2018 {
     )
   }
   
-  def createUserJson(user : User) : InternalBasicUser = {
-    InternalBasicUser(
-      user.userId,
-      user.emailAddress,
-      user.name,
-    )
-  }
-  
-  def createBasicCustomerJson(customerIDMapping : CustomerIDMapping) : BasicCustomer = {
-    BasicCustomer(
-      customerId = customerIDMapping.customerId.value,
-      customerNumber = customerIDMapping.customerNumber,
-      legalName = "",//TODO, should we store this value into CustomerIDMapping? 
-      )
-  }
-  
-  def createBasicUserAuthContext(userAuthContest : UserAuthContext) : BasicUserAuthContext = {
-    BasicUserAuthContext(
-      key = userAuthContest.key,
-      value = userAuthContest.value
-    )
-  }
-  
   def createCustomersJson(customers : List[Customer]) : InternalBasicCustomers = {
     InternalBasicCustomers(customers.map(createCustomerJson))
   }
-  
-  def createUsersJson(users : List[User]) : InternalBasicUsers = {
-    InternalBasicUsers(users.map(createUserJson))
-  }
-  
-  def createBasicCustomerJson(customerIdMappings : List[CustomerIDMapping]) : List[BasicCustomer] = {
-    customerIdMappings.map(createBasicCustomerJson)
-  }
-  
-  
-  def createBasicUserAuthContextJson(userAuthContexts : List[UserAuthContext]) : List[BasicUserAuthContext] = {
-    userAuthContexts.map(createBasicUserAuthContext)
-  }
-  
 }
