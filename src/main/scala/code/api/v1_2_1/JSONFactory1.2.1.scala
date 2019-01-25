@@ -60,6 +60,9 @@ case class SuccessMessage(
 case class BanksJSON(
   banks : List[BankJSON]
 )
+case class BanksJSON1(
+  abc : Int
+)
 case class MinimalBankJSON(
   national_identifier : String,
   name : String

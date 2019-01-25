@@ -4,13 +4,14 @@ import code.accountholder.AccountHolders
 import code.api.APIFailureNewStyle
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.{bankJSON, banksJSON, _}
+import code.api.berlin.group.v1_3.JvalueCaseClass
 import code.api.util.APIUtil.{canGetAtm, _}
 import code.api.util.ApiRole._
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util.NewStyle.HttpCode
 import code.api.util._
-import code.api.v1_2_1.JSONFactory
+import code.api.v1_2_1.{BanksJSON1, JSONFactory}
 import code.api.v2_0_0.JSONFactory200
 import code.api.v3_0_0.JSONFactory300._
 import code.atms.Atms.AtmId
@@ -33,7 +34,8 @@ import net.liftweb.common._
 import net.liftweb.http.S
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.rest.RestHelper
-import net.liftweb.json.{Extraction, compactRender}
+import net.liftweb.json
+import net.liftweb.json.{Extraction, JValue, compactRender}
 import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.{List, Nil}
@@ -2191,7 +2193,7 @@ trait APIMethods300 {
             (JSONFactory300.createScopeJSONs(scopes), HttpCode.`200`(callContext))
       }
     }
-
+protected implicit def JvalueToSuper(what: JValue): JvalueCaseClass = JvalueCaseClass(what)
     resourceDocs += ResourceDoc(
       getBanks,
       implementedInApiVersion,
@@ -2206,7 +2208,9 @@ trait APIMethods300 {
         |* Short and full name of bank
         |* Logo URL
         |* Website""",
-      emptyObjectJson,
+      
+//      JvalueToSuper(json.parse("""{"abc" : 1}""")),
+      BanksJSON1(1),
       banksJSON,
       List(UnknownError),
       Catalogs(Core, notPSD2, OBWG),
