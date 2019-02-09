@@ -62,7 +62,7 @@ object ApiVersion {
   lazy val ukOpenBankingV200 = UKOpenBankingV200()
   
   case class UKOpenBankingV310() extends ApiVersion {
-    override def toString() = "v3_1"
+    override def toString() = "v3_1_1"
     // override def toString() = "uk_v2.0.0" // TODO don't want to confuse with OBP
   }
   lazy val ukOpenBankingV310 = UKOpenBankingV310()
@@ -104,7 +104,19 @@ object ApiVersion {
       ScannedApis.versionMapScannedApis.keysIterator.toList
 
   def valueOf(value: String): ApiVersion = {
-    versions.filter(_.vDottedApiVersion == value) match {
+    
+    //This `match` is used for compatibility. Before we do not take care for the BerlinGroup and UKOpenBanking versions carefully. 
+    // eg: v1 ==BGv1.2, v1.3 ==BGv1.3, v2.0 == UKv2.0.0
+    // Now, we use the BerlinGroup standard version in OBP. But we need still make sure old version system is working.
+    val compatibilityVersion = value match {
+      case "BGv1"=>"v1"
+      case "BGv1.3"=>"v1.3"
+      case "UKv2.0.0"=>"v2.0"
+      case "UKv3.1.0"=>"v3.1.1"
+      case _=> value
+    }
+      
+    versions.filter(_.vDottedApiVersion == compatibilityVersion) match {
       case x :: Nil => x // We find exactly one Role
       case x :: _ => throw new Exception("Duplicated version: " + x) // We find more than one Role
       case _ => throw new IllegalArgumentException("Incorrect ApiVersion value: " + value) // There is no Role
