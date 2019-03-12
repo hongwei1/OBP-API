@@ -69,8 +69,6 @@ trait RestConnector_vMar2019 extends Connector with KafkaHelper with MdcLoggable
   val inboundStatusMessagesExample = List(InboundStatusMessage("ESB", "Success", "0", "OK"))
   val errorCodeExample = "INTERNAL-OBP-ADAPTER-6001: ..."
   
-  def createArzCustomerId(customerNumber: Int) = UUID.nameUUIDFromBytes(Array(customerNumber.toByte)).toString
-  
   override def getAdapterInfo(callContext: Option[CallContext]) = saveConnectorMetric {
     tryo{(
       InboundAdapterInfoInternal(
