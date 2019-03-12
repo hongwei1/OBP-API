@@ -1,4 +1,4 @@
-package code.bankconnectors.vREST
+package code.bankconnectors.rest
 
 /*
 Open Bank Project - API
@@ -65,20 +65,6 @@ trait RestConnector_vMar2019 extends Connector with KafkaHelper with MdcLoggable
   override val messageDocs = ArrayBuffer[MessageDoc]()
   val emptyObjectJson: JValue = decompose(Nil)
   
-  def getAuthInfo (callContext: Option[CallContext]): Box[AuthInfo]=
-    for{
-      cc <- tryo {callContext.get} ?~! NoCallContext
-      user <- cc.user
-      username <- tryo{(user.name)}
-      currentResourceUserId <- Some(user.userId)
-      gatewayLoginPayLoad <- cc.gatewayLoginRequestPayload
-      cbs_token <- gatewayLoginPayLoad.cbs_token.orElse(Full(""))
-      isFirst <- tryo{(gatewayLoginPayLoad.is_first)}
-      correlationId <- tryo{(cc.correlationId)}
-    } yield{
-      AuthInfo(currentResourceUserId,username, cbs_token, isFirst,correlationId)
-    }
-
   val authInfoExample = AuthInfo(userId = "userId", username = "username", cbsToken = "cbsToken")
   val inboundStatusMessagesExample = List(InboundStatusMessage("ESB", "Success", "0", "OK"))
   val errorCodeExample = "INTERNAL-OBP-ADAPTER-6001: ..."
@@ -125,24 +111,6 @@ trait RestConnector_vMar2019 extends Connector with KafkaHelper with MdcLoggable
 //    inboundAvroSchema = Some(parse(SchemaFor[InboundGetBanks]().toString(true))),
 //    adapterImplementation = Some(AdapterImplementation("- Core", 2))
 //  )
-  override def getBanks(callContext: Option[CallContext])= saveConnectorMetric {
-    /**
-      * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
-      * is just a temporary value filed with UUID values in order to prevent any ambiguity.
-      * The real value will be assigned by Macro during compile time at this line of a code:
-      * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
-      */
-    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-    CacheKeyFromArguments.buildCacheKey {
-      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(banksTTL second)
-      {
-        //TODO, use some http to call some bank server to get the data back.
-        tryo{(List(Bank2(InboundBank("rest","name","logo","url"))), callContext)}
-        
-        
-      }
-    }
-  }("getBanks")
   override def getBanksFuture(callContext: Option[CallContext]) = saveConnectorMetric {
     /**
       * Please noe that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
@@ -153,7 +121,10 @@ trait RestConnector_vMar2019 extends Connector with KafkaHelper with MdcLoggable
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(banksTTL second){
-        Future{getBanks(callContext: Option[CallContext])}
+        Future
+        {
+          tryo{(List(Bank2(InboundBank("rest","name","logo","url"))), callContext)}
+        }
       }
     }
   }("getBanks")
