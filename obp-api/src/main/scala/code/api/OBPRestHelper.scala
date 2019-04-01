@@ -300,6 +300,8 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
    */
 
   def oauthServe(handler: PartialFunction[Req, CallContext => Box[JsonResponse]], rd: Option[ResourceDoc] = None): Unit = {
+    val wrappedHandler = CallContextFilter.wrapOBPEndpoint(handler)
+
     val obpHandler : PartialFunction[Req, () => Box[LiftResponse]] = {
       new PartialFunction[Req, () => Box[LiftResponse]] {
         def apply(r : Req): () => Box[LiftResponse] = {
@@ -309,7 +311,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
           //if request has correct oauth headers
           val startTime = Helpers.now
           val response = failIfBadAuthorizationHeader(rd) {
-                          failIfBadJSON(r, handler)
+                          failIfBadJSON(r, wrappedHandler)
                         }
           val endTime = Helpers.now
           logAPICall(startTime, endTime.getTime - startTime.getTime, rd)
