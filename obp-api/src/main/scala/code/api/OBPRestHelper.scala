@@ -309,7 +309,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
           //if request has correct oauth headers
           val startTime = Helpers.now
           val response = failIfBadAuthorizationHeader(rd) {
-                          failIfBadJSON(r, handler)
+                          failIfBadJSON(r, CallContextFilter.wrapOBPEndpoint(handler))
                         }
           val endTime = Helpers.now
           logAPICall(startTime, endTime.getTime - startTime.getTime, rd)
