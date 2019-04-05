@@ -386,12 +386,12 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
   })
 
   val genericEndpoint: OBPEndpoint = {
-    case "obp/v2"::fileName::url JsonGet _  if(new File(s"/Users/apple/Desktop/dyEndpoints/${fileName}.sc").exists())=> {
+    case "obp"::fileName::url JsonGet _ if(new File(s"/Users/zhanghongwei/Documents/GitHub-Tower/OBP-API/myIdeas/dyEndpoints/${fileName}.sc").exists()) => {
       cc => {
         val engine = new ScriptEngineManager().getEngineByName("scala")
 
         val value = Future {
-          val source = new FileReader(new File(s"/Users/apple/Desktop/dyEndpoints/${fileName}.sc"))
+          val source = new FileReader(new File(s"/Users/zhanghongwei/Documents/GitHub-Tower/OBP-API/myIdeas/dyEndpoints/$fileName.sc"))
           val result = engine.eval(source)
           source.close()
           result
