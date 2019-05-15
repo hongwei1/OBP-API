@@ -71,6 +71,7 @@ import code.metadata.wheretags.MappedWhereTag
 import code.metrics.{MappedConnectorMetric, MappedMetric}
 import code.migration.MappedMigrationScriptLog
 import code.model._
+import code.model.accountIdMapping.MappedAccountIdMapping
 import code.model.dataAccess._
 import code.productAttributeattribute.MappedProductAttribute
 import code.productcollection.MappedProductCollection
@@ -619,5 +620,6 @@ object ToSchemify {
     MappedProductAttribute,
     MappedConsent,
     MappedMigrationScriptLog,
+    MappedAccountIdMapping,
   )++ APIBuilder_Connector.allAPIBuilderModels
 }
