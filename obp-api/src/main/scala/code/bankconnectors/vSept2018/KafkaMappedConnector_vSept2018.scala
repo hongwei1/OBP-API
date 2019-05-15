@@ -42,6 +42,7 @@ import code.context.UserAuthContextProvider
 import code.customer._
 import code.kafka.{KafkaHelper, Topics}
 import code.model._
+import code.model.accountIdMapping.{AccountIdMapping, AccountIdMappingProvider}
 import code.model.dataAccess._
 import code.users.Users
 import code.util.Helper.MdcLoggable
@@ -57,13 +58,14 @@ import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.{List, Nil}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with MdcLoggable {
   //this one import is for implicit convert, don't delete
   import com.openbankproject.commons.model.{CustomerFaceImage, CreditLimit, CreditRating, AmountOfMoney}
+  import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018._
 
   implicit override val nameOfConnector = KafkaMappedConnector_vSept2018.toString
 
@@ -682,7 +684,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
         box match {
           case Full((data, status)) if (status.errorCode=="") =>
-            Full(data, callContext)
+            Full(updateCbsAccountsToObpAccounts(data),callContext)
           case Full((data, status)) if (status.errorCode!="") =>
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case Empty =>
@@ -741,7 +743,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
         future map {
           case (data, status) if (status.errorCode=="") =>
-            Full(data,callContext)
+            Full(updateCbsAccountsToObpAccounts(data),callContext)
           case (data, status) if (status.errorCode!="") =>
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case (List(), status) =>
@@ -784,8 +786,9 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(accountTTL second){
         val box = for {
+          cbsAccountId <- getCbsAccountIdByObpAccountId(accountId)?~!s"$InvalidAccountId ${accountId}. Not existing in OBP side."
           authInfo <- getAuthInfo(callContext)
-          req = OutboundGetAccountbyAccountID(authInfo, bankId.toString, accountId.value)
+          req = OutboundGetAccountbyAccountID(authInfo, bankId.toString, cbsAccountId.value)
           _ <- Full(logger.debug(s"Kafka getBankAccount says: req is: $req"))
           kafkaMessage <- processToBox[OutboundGetAccountbyAccountID](req)
           received = liftweb.json.compactRender(kafkaMessage)
@@ -802,8 +805,13 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
         logger.debug(s"Kafka getBankAccount says res is $box")
         box match {
-          case Full((Some(data), status)) if (status.errorCode=="") =>
-            Full(new BankAccountSept2018(data), callContext)
+          case Full((Some(data), status)) if (status.errorCode=="") =>{
+            val obpAccountId = getOrCreateObpAccountIdByCbsAccountId(AccountId(data.accountId))
+            obpAccountId match {
+              case Full(accountId) =>Full(new BankAccountSept2018(data.copy(accountId = accountId.value)), callContext)
+              case _ => Failure(s"$ConnectorEmptyResponse Do not return the data for this accountId{$accountId}", Empty, Empty)
+            }
+          }
           case Full((data, status)) if (status.errorCode!="") =>
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case Empty =>
@@ -828,10 +836,12 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(accountTTL second){
 
+        val cbsAccountId = getCbsAccountIdByObpAccountId(accountId).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side.")
+        
         val req = OutboundGetAccountbyAccountID(
           authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
           bankId.value,
-          accountId.value
+          cbsAccountId.value
         )
         logger.debug(s"Kafka getBankAccountFuture says: req is: $req")
 
@@ -854,7 +864,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         }
         val res = future map {
           case (authInfo,x, Some(data)) if (x.errorCode=="")  =>
-            (Full(new BankAccountSept2018(data)), callContext)
+            val obpAccountId = getOrCreateObpAccountIdByCbsAccountId(AccountId(data.accountId))
+            obpAccountId match {
+              case Full(accountId) =>(Full(new BankAccountSept2018(data.copy(accountId = accountId.value))),callContext)
+              case _ => (Failure(s"$ConnectorEmptyResponse Do not return the data for this accountId{$accountId}", Empty, Empty), callContext)
+            }
           case (authInfo, x,_) if (x.errorCode!="") =>
             (Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages), callContext)
           case _ =>
@@ -903,9 +917,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountsTTL second){
 
+        val cbsBankIdAccountIds = updateObpAccountIdsToCbsAccountIds(bankIdAccountIds)
         val req = OutboundGetBankAccountsHeld(
           authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
-          bankIdAccountIds
+          cbsBankIdAccountIds
         )
         logger.debug(s"Kafka getBankAccountsHeldFuture says: req is: $req")
 
@@ -927,8 +942,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
           res
         }
         val res = future map {
-          case (authInfo,x, data) if (x.errorCode=="")  =>
-            (Full(data), callContext)
+          case (authInfo, x, data) if (x.errorCode=="")  =>
+            Full(updateCbsAccountHeldToObpAccountHeld(data),callContext)
           case (authInfo, x,_) if (x.errorCode!="") =>
             (Failure("INTERNAL-"+ x.errorCode+". + CoreBank-Status:"+ x.backendMessages), callContext)
           case _ =>
@@ -971,11 +986,12 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(accountTTL second){
         val box = for {
+          cbsAccountId <- getCbsAccountIdByObpAccountId(accountId)?~!s"$InvalidAccountId ${accountId}. Not existing in OBP side."
           authInfo <- getAuthInfo(callContext)
             req = OutboundCheckBankAccountExists(
             authInfo = authInfo,
             bankId = bankId.toString,
-            accountId = accountId.value
+            accountId = cbsAccountId.value
           )
           _ <- Full(logger.debug(s"Kafka checkBankAccountExists says: req is: $req"))
           kafkaMessage <- processToBox[OutboundCheckBankAccountExists](req)
@@ -990,7 +1006,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
         logger.debug(s"Kafka checkBankAccountExists says res is $box")
         box match {
           case Full((Some(data), status)) if (status.errorCode=="") =>
-            Full(new BankAccountSept2018(data), callContext)
+            val obpAccountId = getOrCreateObpAccountIdByCbsAccountId(AccountId(data.accountId))
+            obpAccountId match {
+              case Full(accountId) =>Full(new BankAccountSept2018(data.copy(accountId = accountId.value)), callContext)
+              case _ => Failure(s"$ConnectorEmptyResponse Do not return the data for this accountId{$accountId}", Empty, Empty)
+            }
           case Full((data,status)) if (status.errorCode!="") =>
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case Empty =>
@@ -1014,18 +1034,23 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
   CacheKeyFromArguments.buildCacheKey {
     Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(accountTTL second){
+      val cbsAccountId = getCbsAccountIdByObpAccountId(accountId).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side.")
       val req = OutboundCheckBankAccountExists(
         authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
         bankId = bankId.toString,
-        accountId = accountId.value
+        accountId = cbsAccountId.value
         )       
       
       logger.debug(s"Kafka checkBankAccountExists says: req is: $req")
         
       processRequest[InboundCheckBankAccountExists](req) map { inbound =>
       val boxedResult = inbound match {
-        case Full(inboundGetTransactions) if (inboundGetTransactions.status.hasNoError) =>
-          Full((new BankAccountSept2018(inboundGetTransactions.data.head)))
+        case Full(inboundCheckBankAccountExists) if (inboundCheckBankAccountExists.status.hasNoError) =>
+          val obpAccountId = getOrCreateObpAccountIdByCbsAccountId(AccountId(inboundCheckBankAccountExists.data.head.accountId))
+          obpAccountId match {
+            case Full(accountId) =>Full(new BankAccountSept2018(inboundCheckBankAccountExists.data.head.copy(accountId = accountId.value)))
+            case _ => Failure(s"$ConnectorEmptyResponse Do not return the data for this accountId{$accountId}", Empty, Empty)
+          }
         case Full(inbound) if (inbound.status.hasError) =>
           Failure("INTERNAL-"+ inbound.status.errorCode+". + CoreBank-Status:" + inbound.status.backendMessages)
         case failureOrEmpty: Failure => failureOrEmpty
@@ -1073,10 +1098,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(accountTTL second){
         val box = for {
+          cbsBankIdAccountIds <- Full(updateObpAccountIdsToCbsAccountIds(bankIdAccountIds))
           authInfo <- getAuthInfo(callContext)
           req = OutboundGetCoreBankAccounts(
             authInfo = authInfo,
-            bankIdAccountIds
+            cbsBankIdAccountIds
           )
           _<-Full(logger.debug(s"Kafka getCoreBankAccounts says: req is: $req"))
           kafkaMessage <- processToBox[OutboundGetCoreBankAccounts](req)
@@ -1095,7 +1121,15 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
         box match {
           case Full(f) if (f.head.errorCode=="") =>
-            Full(f.map( x => CoreAccount(x.id,x.label,x.bankId,x.accountType, x.accountRoutings)),callContext)
+            Full(f.map( x => 
+              CoreAccount(
+                getOrCreateObpAccountIdByCbsAccountId(AccountId(x.id)).openOrThrowException(s"$InvalidAccountId ${x.id}. Not existing in OBP side.").value,
+                x.label,
+                x.bankId,
+                x.accountType, 
+                x.accountRoutings
+              ))
+              ,callContext)
           case Full(f) if (f.head.errorCode!="") =>
             Failure("INTERNAL-"+ f.head.errorCode+". + CoreBank-Status:"+ f.head.backendMessages)
           case Empty =>
@@ -1120,9 +1154,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountsTTL second){
 
+        val cbsBankIdAccountIds = updateObpAccountIdsToCbsAccountIds(bankIdAccountIds)
         val req = OutboundGetCoreBankAccounts(
           authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
-          bankIdAccountIds
+          cbsBankIdAccountIds
         )
         logger.debug(s"Kafka getCoreBankAccountsFuture says: req is: $req")
 
@@ -1149,7 +1184,13 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
         future map {
           case list if (list.head.errorCode=="") =>
-            Full(list.map( x => CoreAccount(x.id,x.label,x.bankId,x.accountType, x.accountRoutings)), callContext)
+            Full(list.map( x => CoreAccount(
+              getOrCreateObpAccountIdByCbsAccountId(AccountId(x.id)).openOrThrowException(s"$InvalidAccountId ${x.id}. Not existing in OBP side.").value,
+              x.label,
+              x.bankId,
+              x.accountType,
+              x.accountRoutings
+            )), callContext)
           case list if (list.head.errorCode!="") =>
             Failure("INTERNAL-"+ list.head.errorCode+". + CoreBank-Status:"+ list.head.backendMessages)
           case List() =>
@@ -1209,11 +1250,12 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString }.headOption.getOrElse(APIUtil.DefaultFromDate.toString)
     val toDate = queryParams.collect { case OBPToDate(date) => date.toString }.headOption.getOrElse(APIUtil.DefaultToDate.toString)
 
+    val cbsAccountId = getCbsAccountIdByObpAccountId(accountId).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side.")
     // TODO What about offset?
     val req = OutboundGetTransactions(
       authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
       bankId = bankId.toString,
-      accountId = accountId.value,
+      accountId = cbsAccountId.value,
       limit = limit,
       fromDate = fromDate,
       toDate = toDate
@@ -1250,7 +1292,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
             case Full((data, status)) if (!data.forall(x => x.accountId == accountId.value && x.bankId == bankId.value)) =>
               Failure(InvalidConnectorResponseForGetTransactions)
             case Full((data, status)) if (status.errorCode == "") =>
-              val bankAccountAndCallContext = checkBankAccountExists(BankId(data.head.bankId), AccountId(data.head.accountId), callContext)
+              val bankAccountAndCallContext = checkBankAccountExists(BankId(data.head.bankId), getOrCreateObpAccountIdByCbsAccountId(AccountId(data.head.accountId)).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side."), callContext)
 
               val res = for {
                 internalTransaction <- data
@@ -1287,11 +1329,13 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     val limit = queryParams.collect { case OBPLimit(value) => value}.headOption.getOrElse(100)
     val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString}.headOption.getOrElse(APIUtil.DefaultFromDate.toString)
     val toDate = queryParams.collect { case OBPToDate(date) => date.toString}.headOption.getOrElse(APIUtil.DefaultToDate.toString)
-  
+      
+    val cbsAccountId = getCbsAccountIdByObpAccountId(accountId).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side.")
+      
     val req = OutboundGetTransactions(
       authInfo = getAuthInfo(callContext).openOrThrowException(NoCallContext),
       bankId = bankId.toString,
-      accountId = accountId.value,
+      accountId = cbsAccountId.value,
       limit = limit,
       fromDate = fromDate,
       toDate = toDate
@@ -1302,7 +1346,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       val boxedResult: Box[List[TransactionCore]] = inbound match {
         case Full(inboundGetTransactions) if (inboundGetTransactions.status.hasNoError) =>
           for{
-            (thisBankAccount, callContext) <- checkBankAccountExists(BankId(inboundGetTransactions.data.head.bankId), AccountId(inboundGetTransactions.data.head.accountId), callContext) ?~! ErrorMessages.BankAccountNotFound
+            (thisBankAccount, callContext) <- checkBankAccountExists(
+              BankId(inboundGetTransactions.data.head.bankId), 
+              getOrCreateObpAccountIdByCbsAccountId(AccountId(inboundGetTransactions.data.head.accountId)).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side."),
+              callContext) ?~! ErrorMessages.BankAccountNotFound
             transaction <- createInMemoryTransactionsCore(thisBankAccount, inboundGetTransactions.data)
           } yield {
             (transaction)
@@ -1344,8 +1391,9 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(transactionTTL second){
         val box = for {
+          cbsAccountId <- getCbsAccountIdByObpAccountId(accountId) ?~! (s"$InvalidAccountId ${accountId}. Not existing in OBP side.") 
           authInfo <- getAuthInfo(callContext)
-          req =  OutboundGetTransaction(authInfo,bankId.value, accountId.value, transactionId.value)
+          req =  OutboundGetTransaction(authInfo,bankId.value, cbsAccountId.value, transactionId.value)
           _ <- Full(logger.debug(s"Kafka getTransaction Req says:  is: $req"))
           kafkaMessage <- processToBox[OutboundGetTransaction](req)
           received = liftweb.json.compactRender(kafkaMessage)
@@ -1369,7 +1417,10 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
             Failure("INTERNAL-"+ status.errorCode+". + CoreBank-Status:"+ status.backendMessages)
           case Full((Some(data), status)) if (transactionId.value == data.transactionId && status.errorCode=="") =>
             for {
-              (bankAccount, callContext) <- checkBankAccountExists(BankId(data.bankId), AccountId(data.accountId),callContext) ?~! ErrorMessages.BankAccountNotFound
+              (bankAccount, callContext) <- checkBankAccountExists(
+                BankId(data.bankId), 
+                getOrCreateObpAccountIdByCbsAccountId(AccountId(data.accountId)).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side."),
+                callContext) ?~! ErrorMessages.BankAccountNotFound
               transaction: Transaction <- createInMemoryTransaction(bankAccount,data)
             } yield {
               (transaction,callContext)
@@ -1419,10 +1470,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   )
   override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, callContext: Option[CallContext]) = {
     val authInfo = getAuthInfo(callContext).openOrThrowException(attemptedToOpenAnEmptyBox)
+    val cbsAccountId = getCbsAccountIdByObpAccountId(accountId).openOrThrowException(s"$InvalidAccountId ${accountId}. Not existing in OBP side.") 
     val req = OutboundCreateChallengeSept2018(
       authInfo = authInfo, 
       bankId = bankId.value,
-      accountId = accountId.value,
+      accountId = cbsAccountId.value,
       userId = userId,
       username = AuthUser.getCurrentUserUsername,
       transactionRequestType = transactionRequestType.value,
@@ -4385,6 +4437,51 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
 
 object KafkaMappedConnector_vSept2018 extends KafkaMappedConnector_vSept2018{
+  /**
+    * The following method is to create obp accountId based on cbsAccountId.
+    * For now, the cbs side need to provide obp a unique identifier for each account. (maybe accountNumber, accountId, or whatever)
+    * And obp will generate a UUID to map it.
+    * 
+    * in process ...
+    */
+  def getOrCreateObpAccountIdByCbsAccountId(csbAccountId: AccountId): Box[AccountId] = AccountIdMappingProvider.accountIdMappingProvider.vend.getOrCreateObpAccountId(csbAccountId).map(_.obpAccountId)
+
+  def getCbsAccountIdByObpAccountId(obpAccountId: AccountId): Box[AccountId] = AccountIdMappingProvider.accountIdMappingProvider.vend.getOrCreateObpAccountId(obpAccountId).map(_.cbsAccountId)
+  
+  /**
+    * This method will update all the cbsAccountId to obpAccountId. 
+    * in process ...
+    */
+  def updateCbsAccountsToObpAccounts(cbsAccounts:  List[InboundAccountSept2018])=
+    for{
+      csbAcount <- cbsAccounts
+      csbAccountId = csbAcount.accountId
+      obpAccountId <- getOrCreateObpAccountIdByCbsAccountId(AccountId(csbAccountId))
+    } yield {
+      csbAcount.copy(accountId = obpAccountId.value)
+    }
+
+  def updateCbsAccountHeldToObpAccountHeld(csbAcounts:  List[AccountHeld])=
+    for{
+      csbAcount <- csbAcounts
+      csbAccountId = csbAcount.id
+      obpAccountId <- getOrCreateObpAccountIdByCbsAccountId(AccountId(csbAccountId))
+    } yield {
+      csbAcount.copy(id = obpAccountId.value)
+    }
+
+  /**
+    * This method will update all the cbsAccountId to obpAccountId. 
+    * in process ...
+    */
+  def updateObpAccountIdsToCbsAccountIds(bankIdAccountIds: List[BankIdAccountId])=
+    for{
+      inboundAccount <- bankIdAccountIds
+      obpAccountId = inboundAccount.accountId
+      csbAccountId<- getCbsAccountIdByObpAccountId(obpAccountId)
+    } yield {
+      inboundAccount.copy(accountId = csbAccountId)
+    }
   
 }
 

@@ -273,6 +273,7 @@ object ErrorMessages {
   val AccountApplicationAlreadyAccepted = "OBP-30314: AccountApplication has already been accepted. "
   val UpdateAccountApplicationStatusError = "OBP-30315: AccountApplication Status can not be updated. "
   val CreateAccountApplicationError = "OBP-30316: AccountApplication Status can not be created. "
+  val InvalidAccountId = "OBP-30317: Invalid Account Id. "
 
   // Branch related messages
   val branchesNotFoundLicense = "OBP-32001: No branches available. License may not be set."
