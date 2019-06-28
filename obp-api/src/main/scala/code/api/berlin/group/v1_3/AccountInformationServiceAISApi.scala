@@ -54,27 +54,29 @@ object APIMethods_AccountInformationServiceAISApi extends RestHelper {
        "POST",
        "/consents",
        "Create consent",
-       s"""${mockedDataText(true)}
-This method create a consent resource, defining access rights to dedicated accounts of 
-a given PSU-ID. These accounts are addressed explicitly in the method as 
-parameters as a core function.
-
-**Side Effects**
-When this Consent Request is a request where the "recurringIndicator" equals "true", 
-and if it exists already a former consent for recurring access on account information 
-for the addressed PSU, then the former consent automatically expires as soon as the new 
-consent request is authorised by the PSU.
-
-Optional Extension:
-As an option, an ASPSP might optionally accept a specific access right on the access on all psd2 related services for all available accounts. 
-
-As another option an ASPSP might optionally also accept a command, where only access rights are inserted without mentioning the addressed account. 
-The relation to accounts is then handled afterwards between PSU and ASPSP. 
-This option is not supported for the Embedded SCA Approach. 
-As a last option, an ASPSP might in addition accept a command with access rights
-* to see the list of available payment accounts or
-* to see the list of available payment accounts with balances.
-""",
+       s"""
+          |${mockedDataText(true)}
+          |This method create a consent resource, defining access rights to dedicated accounts of
+          |a given PSU-ID. These accounts are addressed explicitly in the method as
+          |parameters as a core function.
+          |
+          |**Side Effects**
+          |When this Consent Request is a request where the "recurringIndicator" equals "true",
+          |and if it exists already a former consent for recurring access on account information
+          |for the addressed PSU, then the former consent automatically expires as soon as the new
+          |consent request is authorised by the PSU.
+          |
+          |Optional Extension:
+          |As an option, an ASPSP might optionally accept a specific access right on the access on all psd2 related services for all available accounts.
+          |
+          |As another option an ASPSP might optionally also accept a command, where only access rights are inserted without mentioning the addressed account.
+          |The relation to accounts is then handled afterwards between PSU and ASPSP.
+          |This option is not supported for the Embedded SCA Approach.
+          |As a last option, an ASPSP might in addition accept a command with access rights
+          |* to see the list of available payment accounts or
+          |* to see the list of available payment accounts with balances.
+          |
+        """.stripMargin,
        json.parse("""{
                     |  "access": {
                     |    "accounts": [
@@ -271,16 +273,16 @@ As a last option, an ASPSP might in addition accept a command with access rights
        "/accounts",
        "Read Account List",
        s"""${mockedDataText(true)}
-            Read the identifiers of the available payment account together with booking balance information, depending on the consent granted.
-            It is assumed that a consent of the PSU to this access is already given and stored on the ASPSP system.
-            The addressed list of accounts depends then on the PSU ID and the stored consent addressed by consentId, respectively the OAuth2 access token.
-            Returns all identifiers of the accounts, to which an account access has been granted to through the /consents endpoint by the PSU.
-            In addition, relevant information about the accounts and hyperlinks to corresponding account information resources are provided if a related consent has been already granted.
+           |Read the identifiers of the available payment account together with booking balance information, depending on the consent granted.
+           |It is assumed that a consent of the PSU to this access is already given and stored on the ASPSP system.
+           |The addressed list of accounts depends then on the PSU ID and the stored consent addressed by consentId, respectively the OAuth2 access token.
+           |Returns all identifiers of the accounts, to which an account access has been granted to through the /consents endpoint by the PSU.
+           |In addition, relevant information about the accounts and hyperlinks to corresponding account information resources are provided if a related consent has been already granted.
 
-            Remark: Note that the /consents endpoint optionally offers to grant an access on all available payment accounts of a PSU.
-            In this case, this endpoint will deliver the information about all available payment accounts of the PSU at this ASPSP.
+           |Remark: Note that the /consents endpoint optionally offers to grant an access on all available payment accounts of a PSU.
+           |In this case, this endpoint will deliver the information about all available payment accounts of the PSU at this ASPSP.
 
-            """,
+            """.stripMargin,
        json.parse(""""""),
        json.parse("""{
                     |  "accounts": [
