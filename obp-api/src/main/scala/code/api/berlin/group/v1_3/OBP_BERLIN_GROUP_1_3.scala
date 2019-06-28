@@ -32,13 +32,8 @@
 package code.api.berlin.group.v1_3
 
 import code.api.OBPRestHelper
-import code.api.builder.AccountInformationServiceAISApi.APIMethods_AccountInformationServiceAISApi
-import code.api.builder.CommonServicesApi.APIMethods_CommonServicesApi
-import code.api.builder.ConfirmationOfFundsServicePIISApi.APIMethods_ConfirmationOfFundsServicePIISApi
-import code.api.builder.PaymentInitiationServicePISApi.APIMethods_PaymentInitiationServicePISApi
-import code.api.builder.SigningBasketsApi.APIMethods_SigningBasketsApi
 import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
-import code.api.util.{APIUtil, ApiVersion, ScannedApiVersion, ScannedApis}
+import code.api.util.{ScannedApiVersion, ScannedApis}
 import code.util.Helper.MdcLoggable
 
 import scala.collection.mutable.ArrayBuffer
@@ -56,17 +51,11 @@ object OBP_BERLIN_GROUP_1_3 extends OBPRestHelper with MdcLoggable with ScannedA
 
   private[this] val endpoints =
     APIMethods_AccountInformationServiceAISApi.endpoints ++
-    APIMethods_CommonServicesApi.endpoints ++
-    APIMethods_ConfirmationOfFundsServicePIISApi.endpoints ++
-    APIMethods_PaymentInitiationServicePISApi.endpoints ++
-    APIMethods_SigningBasketsApi.endpoints
+    APIMethods_PaymentInitiationServicePISApi.endpoints
 
   override val allResourceDocs: ArrayBuffer[ResourceDoc]  =
     APIMethods_AccountInformationServiceAISApi.resourceDocs ++
-      APIMethods_CommonServicesApi.resourceDocs ++
-      APIMethods_ConfirmationOfFundsServicePIISApi.resourceDocs ++
-      APIMethods_PaymentInitiationServicePISApi.resourceDocs ++
-      APIMethods_SigningBasketsApi.resourceDocs
+      APIMethods_PaymentInitiationServicePISApi.resourceDocs
   
   private[this] def findResourceDoc(pf: OBPEndpoint): Option[ResourceDoc] = {
     allResourceDocs.find(_.partialFunction==pf)

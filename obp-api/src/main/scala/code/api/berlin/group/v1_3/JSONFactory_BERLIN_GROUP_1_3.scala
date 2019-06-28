@@ -2,17 +2,14 @@ package code.api.berlin.group.v1_3
 
 import java.text.SimpleDateFormat
 import java.util.Date
+
 import code.api.util.APIUtil._
-import code.api.builder.AccountInformationServiceAISApi.APIMethods_AccountInformationServiceAISApi.tweakStatusNames
-import code.api.util.{APIUtil, CustomJsonFormats, ExampleValue}
-import code.api.v1_4_0.JSONFactory1_4_0.{ChallengeJsonV140, TransactionRequestAccountJsonV140}
-import code.api.v2_0_0.TransactionRequestChargeJsonV200
-import code.api.v2_1_0.JSONFactory210.stringOrNull
-import code.api.v2_1_0.TransactionRequestWithChargeJSON210
+import code.api.util.{APIUtil, CustomJsonFormats}
+import code.consent.Consent
 import code.model.ModeratedTransaction
 import com.openbankproject.commons.model.{AmountOfMoneyJsonV121, BankAccount, CoreAccount, TransactionRequest}
 import net.liftweb.json.JValue
-import code.consent.Consent
+
 import scala.collection.immutable.List
 
 case class JvalueCaseClass(jvalueToCaseclass: JValue)
