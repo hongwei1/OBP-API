@@ -127,6 +127,7 @@ object PostCounterpartyMetadata extends SendServerRequests {
     println("got " + users.length + " users")
 
     //loop over users from json
+    //BK 1st loop, get all the users from json file.
     for (u <- users) {
       val user = u.extract[UserJSONRecord]
       println(" ")
@@ -147,6 +148,7 @@ object PostCounterpartyMetadata extends SendServerRequests {
       println(" - ok.")
 
       println("get other accounts for the accounts")
+      //BK 2rd loop, get the accounts for one login user, eg: Robert's accounts
       for(a : BarebonesAccountJson <- accounts) {
         print("account: " + a.label.get + " ")
         println(a.bank_id.get)
@@ -172,66 +174,70 @@ object PostCounterpartyMetadata extends SendServerRequests {
         // This is rather turning the bankId into a composite surrogate key but only for sandbox creation.
 
         // Split by dot (.) except split can take a reg expression so must escape the .
+        //eg: bankId = "gh.29.uk" -->bits: Array[String] = Array(gh, 29, uk)
         val bits = bankId.split("\\.")
-
+        //eg: region = "uk" , why position? --> we prepare the data , we hardcode it there.
         val region = bits(2) // Use the counterpartyCode from the bankId
 
         println(s"region is ${region}")
 
 
         println("get matching json counterparty data for each transaction's other_account")
+        //BK 3rd loop,get all the otherAccounts for login user's one account: eg: robert'account'otheraccount
+        for(otherAccount : OtherAccountJson <- otherAccounts) {
+          //This is counterparyName in `OBP_sandbox_counterparties_pretty`json.
+          val counterpartyNameFromOtherAccount = otherAccount.holder.get.name.get.trim
 
-        for(oa : OtherAccountJson <- otherAccounts) {
-          val name = oa.holder.get.name.get.trim
 
+          println(s"Filtering counterparties by region ${region} and counterparty name ${counterpartyNameFromOtherAccount}")
 
-          println(s"Filtering counterparties by region ${region} and counterparty name ${name}")
+          val filteredCounterpartiesByRegion = counterparties.filter(x => ( x.region == region))
 
-          val regionCounterparties = counterparties.filter(x => ( x.region == region))
-
-          val records = regionCounterparties.filter(x => (x.name equalsIgnoreCase(name)) )
+          //Filter all the counterparties by counterpartyNameFromOtherAccount. 
+          val filteredCounterpartiesByName = filteredCounterpartiesByRegion.filter(x => (x.name equalsIgnoreCase(counterpartyNameFromOtherAccount)) )
 
 
           var found = false
 
           // region == "enbd-lon" &&
-          if (records.size == 0 && name.toLowerCase().indexOf("gas natural") > 0) debugBreak() // else println(s"Condition not met. region is ${region} name is ${name}")
+          if (filteredCounterpartiesByName.size == 0 && counterpartyNameFromOtherAccount.toLowerCase().indexOf("gas natural") > 0) debugBreak() // else println(s"Condition not met. region is ${region} name is ${name}")
 
-          println(s"Found ${records.size} records")
+          println(s"Found ${filteredCounterpartiesByName.size} filteredCounterpartiesByName")
 
           //loop over all counterparties (from json) and match to other_account (counterparties), update data
-          for (cp: CounterpartyJSONRecord <- records) {
-            println(s"cp is Region ${cp.region} Name ${cp.name} Home Page ${cp.homePageUrl}")
-            val logoUrl = if(cp.logoUrl.contains("http://www.brandprofiles.com")) cp.homePageUrl else cp.logoUrl
-            if (logoUrl.startsWith("http") && oa.metadata.get.image_URL.isEmpty) {
+          //BK 4rd loop, get all the counterparties meta : eg: robert'account'otheraccount'metadata
+          for (counterpartyMetadata: CounterpartyJSONRecord <- filteredCounterpartiesByName) {
+            println(s"counterpartyMetadata is Region ${counterpartyMetadata.region} Name ${counterpartyMetadata.name} Home Page ${counterpartyMetadata.homePageUrl}")
+            val logoUrl = if(counterpartyMetadata.logoUrl.contains("http://www.brandprofiles.com")) counterpartyMetadata.homePageUrl else counterpartyMetadata.logoUrl
+            if (logoUrl.startsWith("http") && otherAccount.metadata.get.image_URL.isEmpty) {
               val json = ("image_URL" -> logoUrl)
-              ObpPost("/v1.2.1/banks/" + a.bank_id.get + "/accounts/" + a.id.get + "/owner/other_accounts/" + oa.id.get + "/metadata/image_url", json)
-              println("saved " + logoUrl + " as imageURL for counterparty "+ oa.id.get)
+              ObpPost("/v1.2.1/banks/" + a.bank_id.get + "/accounts/" + a.id.get + "/owner/other_accounts/" + otherAccount.id.get + "/metadata/image_url", json)
+              println("saved " + logoUrl + " as imageURL for counterparty "+ otherAccount.id.get)
               found = true
             } else {
-              println("did NOT save " + logoUrl + " as imageURL for counterparty "+ oa.id.get)
+              println("did NOT save " + logoUrl + " as imageURL for counterparty "+ otherAccount.id.get)
           }
 
-            if(cp.homePageUrl.startsWith("http") && !cp.homePageUrl.endsWith("jpg") && !cp.homePageUrl.endsWith("png") && oa.metadata.get.URL.isEmpty) {
-              val json = ("URL" -> cp.homePageUrl)
-              ObpPost("/v1.2.1/banks/" + a.bank_id.get + "/accounts/" + a.id.get + "/owner/other_accounts/" + oa.id.get + "/metadata/url", json)
-              println("saved " + cp.homePageUrl + " as URL for counterparty "+ oa.id.get)
+            if(counterpartyMetadata.homePageUrl.startsWith("http") && !counterpartyMetadata.homePageUrl.endsWith("jpg") && !counterpartyMetadata.homePageUrl.endsWith("png") && otherAccount.metadata.get.URL.isEmpty) {
+              val json = ("URL" -> counterpartyMetadata.homePageUrl)
+              ObpPost("/v1.2.1/banks/" + a.bank_id.get + "/accounts/" + a.id.get + "/owner/other_accounts/" + otherAccount.id.get + "/metadata/url", json)
+              println("saved " + counterpartyMetadata.homePageUrl + " as URL for counterparty "+ otherAccount.id.get)
             } else {
-              println("did NOT save " + cp.homePageUrl + " as URL for counterparty "+ oa.id.get)
+              println("did NOT save " + counterpartyMetadata.homePageUrl + " as URL for counterparty "+ otherAccount.id.get)
             }
 
-            if(!cp.category.isEmpty && oa.metadata.get.more_info.isEmpty) {
+            if(!counterpartyMetadata.category.isEmpty && otherAccount.metadata.get.more_info.isEmpty) {
 
               // In some cases we might have something like Police_1 . We remove the _1
-              val categoryBits = cp.category.split("_")
+              val categoryBits = counterpartyMetadata.category.split("_")
               val moreInfo = (categoryBits(0) )
 
               val json = ("more_info" -> moreInfo)
-              val result = ObpPost("/v1.2.1/banks/" + a.bank_id.get + "/accounts/" + a.id.get + "/owner/other_accounts/" + oa.id.get + "/metadata/more_info", json)
+              val result = ObpPost("/v1.2.1/banks/" + a.bank_id.get + "/accounts/" + a.id.get + "/owner/other_accounts/" + otherAccount.id.get + "/metadata/more_info", json)
               if(!result.isEmpty)
-                println("saved " + moreInfo + " as more_info for counterparty "+ oa.id.get)
+                println("saved " + moreInfo + " as more_info for counterparty "+ otherAccount.id.get)
             } else {
-              println("did NOT save more_info for counterparty "+ oa.id.get)
+              println("did NOT save more_info for counterparty "+ otherAccount.id.get)
             }
           }
 
