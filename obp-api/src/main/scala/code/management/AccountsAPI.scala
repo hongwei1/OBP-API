@@ -1,3 +1,4 @@
+/*
 package code.management
 
 import code.api.{OBPRestHelper}
@@ -7,7 +8,7 @@ import net.liftweb.common.{Full, Failure}
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.rest.RestHelper
 import code.util.Helper.MdcLoggable
-/*
+
 object AccountsAPI extends OBPRestHelper with MdcLoggable {
   //needs to be a RestHelper to get access to JsonGet, JsonPost, etc.
   self: RestHelper =>
