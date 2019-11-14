@@ -3,7 +3,7 @@ package code.model
 import code.accountholders.MapperAccountHolders
 import code.bankconnectors.Connector
 import code.connector.MockedJune2017Connector
-import code.model.dataAccess.{AuthUser, ViewImpl, ViewPrivileges}
+import code.model.dataAccess.{AuthUser}
 import code.setup.{DefaultUsers, ServerSetup}
 import code.views.MapperViews
 import code.views.system.{AccountAccess, ViewDefinition}

@@ -34,7 +34,7 @@ import net.liftweb.common.{Box, Failure, Full}
 import code.api.UserNotFound
 import code.views.Views
 import code.entitlement.Entitlement
-import code.model.dataAccess.{ResourceUser, ViewImpl, ViewPrivileges}
+import code.model.dataAccess.{ResourceUser}
 import code.users.Users
 import code.util.Helper.MdcLoggable
 import code.views.system.{AccountAccess, ViewDefinition}
