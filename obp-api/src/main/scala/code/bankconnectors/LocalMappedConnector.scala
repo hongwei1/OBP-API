@@ -1671,7 +1671,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         tryo {
           // Update...
           logger.info("We found a branch so update...")
-          mappedBranch
+          val updatedBranch = mappedBranch
             // Doesn't make sense to update branchId and bankId
             //.mBranchId(branch.branchId)
             //.mBankId(branch.bankId)
@@ -1681,7 +1681,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLine3(branch.address.line3)
             .mCity(branch.address.city)
             .mCounty(branch.address.county.orNull)
-            .mState(branch.address.state)
+          updatedBranch.mState(branch.address.state)
             .mPostCode(branch.address.postCode)
             .mCountryCode(branch.address.countryCode)
             .mlocationLatitude(branch.location.latitude)
@@ -1693,7 +1693,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mBranchRoutingScheme(branch.branchRouting.map(_.scheme).orNull) //Added in V220
             .mBranchRoutingAddress(branch.branchRouting.map(_.address).orNull) //Added in V220
 
-            .mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
+          updatedBranch.mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnMonday(branch.lobby.map(_.monday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
             .mLobbyOpeningTimeOnTuesday(branch.lobby.map(_.tuesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
@@ -1702,7 +1702,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLobbyOpeningTimeOnWednesday(branch.lobby.map(_.wednesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnWednesday(branch.lobby.map(_.wednesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
-            .mLobbyOpeningTimeOnThursday(branch.lobby.map(_.thursday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
+          updatedBranch.mLobbyOpeningTimeOnThursday(branch.lobby.map(_.thursday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnThursday(branch.lobby.map(_.thursday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
             .mLobbyOpeningTimeOnFriday(branch.lobby.map(_.friday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
@@ -1711,7 +1711,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLobbyOpeningTimeOnSaturday(branch.lobby.map(_.saturday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnSaturday(branch.lobby.map(_.saturday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
-            .mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
+          updatedBranch.mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnSunday(branch.lobby.map(_.sunday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
 
@@ -1722,7 +1722,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpOpeningTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.closingTime).orNull)
 
-            .mDriveUpOpeningTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.openingTime).orNull)
+          updatedBranch.mDriveUpOpeningTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.closingTime).orNull)
 
             .mDriveUpOpeningTimeOnThursday(branch.driveUp.map(_.thursday).map(_.openingTime).orNull)
@@ -1731,7 +1731,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpOpeningTimeOnFriday(branch.driveUp.map(_.friday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnFriday(branch.driveUp.map(_.friday).map(_.closingTime).orNull)
 
-            .mDriveUpOpeningTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.openingTime).orNull)
+          updatedBranch.mDriveUpOpeningTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnSaturday(branch.driveUp.map(_.saturday).map(_.closingTime).orNull)
 
             .mDriveUpOpeningTimeOnSunday(branch.driveUp.map(_.sunday).map(_.openingTime).orNull)
@@ -1739,7 +1739,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
             .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
 
-            .mBranchType(branch.branchType.orNull)
+          updatedBranch.mBranchType(branch.branchType.orNull)
             .mMoreInfo(branch.moreInfo.orNull)
             .mPhoneNumber(branch.phoneNumber.orNull)
             .mIsDeleted(branch.isDeleted.getOrElse(mappedBranch.isDeleted.getOrElse(false)))
@@ -1750,7 +1750,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         tryo {
           // Insert...
           logger.info("Creating Branch...")
-          MappedBranch.create
+          val mappedBranch = MappedBranch.create
             .mBranchId(branch.branchId.value)
             .mBankId(branch.bankId.value)
             .mName(branch.name)
@@ -1763,7 +1763,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mPostCode(branch.address.postCode)
             .mCountryCode(branch.address.countryCode)
             .mlocationLatitude(branch.location.latitude)
-            .mlocationLongitude(branch.location.longitude)
+          
+          mappedBranch.mlocationLongitude(branch.location.longitude)
             .mLicenseId(branch.meta.license.id)
             .mLicenseName(branch.meta.license.name)
             .mLobbyHours(branch.lobbyString.map(_.hours).getOrElse("")) // null no good.
@@ -1773,7 +1774,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLobbyOpeningTimeOnMonday(branch.lobby.map(_.monday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnMonday(branch.lobby.map(_.monday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
-            .mLobbyOpeningTimeOnTuesday(branch.lobby.map(_.tuesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
+          mappedBranch.mLobbyOpeningTimeOnTuesday(branch.lobby.map(_.tuesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnTuesday(branch.lobby.map(_.tuesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
             .mLobbyOpeningTimeOnWednesday(branch.lobby.map(_.wednesday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
@@ -1785,7 +1786,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLobbyOpeningTimeOnFriday(branch.lobby.map(_.friday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnFriday(branch.lobby.map(_.friday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
-            .mLobbyOpeningTimeOnSaturday(branch.lobby.map(_.saturday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
+          mappedBranch.mLobbyOpeningTimeOnSaturday(branch.lobby.map(_.saturday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
             .mLobbyClosingTimeOnSaturday(branch.lobby.map(_.saturday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.closingTime).head)
 
             .mLobbyOpeningTimeOnSunday(branch.lobby.map(_.sunday).getOrElse(List(OpeningTimes("00:00","00:00"))).map(_.openingTime).head)
@@ -1793,7 +1794,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
 
             // Drive Up
-            .mDriveUpOpeningTimeOnMonday(branch.driveUp.map(_.monday).map(_.openingTime).orNull)
+          mappedBranch.mDriveUpOpeningTimeOnMonday(branch.driveUp.map(_.monday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnMonday(branch.driveUp.map(_.monday).map(_.closingTime).orNull)
 
             .mDriveUpOpeningTimeOnTuesday(branch.driveUp.map(_.tuesday).map(_.openingTime).orNull)
@@ -1802,7 +1803,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpOpeningTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnWednesday(branch.driveUp.map(_.wednesday).map(_.closingTime).orNull)
 
-            .mDriveUpOpeningTimeOnThursday(branch.driveUp.map(_.thursday).map(_.openingTime).orNull)
+          mappedBranch.mDriveUpOpeningTimeOnThursday(branch.driveUp.map(_.thursday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnThursday(branch.driveUp.map(_.thursday).map(_.closingTime).orNull)
 
             .mDriveUpOpeningTimeOnFriday(branch.driveUp.map(_.friday).map(_.openingTime).orNull)
@@ -1814,7 +1815,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mDriveUpOpeningTimeOnSunday(branch.driveUp.map(_.sunday).map(_.openingTime).orNull)
             .mDriveUpClosingTimeOnSunday(branch.driveUp.map(_.sunday).map(_.closingTime).orNull)
 
-            .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
+          mappedBranch.mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
 
             .mBranchType(branch.branchType.orNull)
             .mMoreInfo(branch.moreInfo.orNull)
@@ -1838,7 +1839,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     getAtmLegacy(atm.bankId, atm.atmId) match {
       case Full(mappedAtm) =>
         tryo {
-          mappedAtm.mName(atm.name)
+          val updateAtm = mappedAtm.mName(atm.name)
             .mLine1(atm.address.line1)
             .mLine2(atm.address.line2)
             .mLine3(atm.address.line3)
@@ -1854,7 +1855,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mOpeningTimeOnMonday(atm.OpeningTimeOnMonday.orNull)
             .mClosingTimeOnMonday(atm.ClosingTimeOnMonday.orNull)
 
-            .mOpeningTimeOnTuesday(atm.OpeningTimeOnTuesday.orNull)
+          updateAtm.mOpeningTimeOnTuesday(atm.OpeningTimeOnTuesday.orNull)
             .mClosingTimeOnTuesday(atm.ClosingTimeOnTuesday.orNull)
 
             .mOpeningTimeOnWednesday(atm.OpeningTimeOnWednesday.orNull)
@@ -1869,7 +1870,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mOpeningTimeOnSaturday(atm.OpeningTimeOnSaturday.orNull)
             .mClosingTimeOnSaturday(atm.ClosingTimeOnSaturday.orNull)
 
-            .mOpeningTimeOnSunday(atm.OpeningTimeOnSunday.orNull)
+          updateAtm.mOpeningTimeOnSunday(atm.OpeningTimeOnSunday.orNull)
             .mClosingTimeOnSunday(atm.ClosingTimeOnSunday.orNull)
             .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
             .mLocatedAt(atm.locatedAt.orNull)
@@ -1879,7 +1880,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         }
       case _ =>
         tryo {
-          MappedAtm.create
+          val mappedAtm = MappedAtm.create
             .mAtmId(atm.atmId.value)
             .mBankId(atm.bankId.value)
             .mName(atm.name)
@@ -1888,7 +1889,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mLine3(atm.address.line3)
             .mCity(atm.address.city)
             .mCounty(atm.address.county.getOrElse(""))
-            .mCountryCode(atm.address.countryCode)
+          
+          mappedAtm.mCountryCode(atm.address.countryCode)
             .mState(atm.address.state)
             .mPostCode(atm.address.postCode)
             .mlocationLatitude(atm.location.latitude)
@@ -1898,7 +1900,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mOpeningTimeOnMonday(atm.OpeningTimeOnMonday.orNull)
             .mClosingTimeOnMonday(atm.ClosingTimeOnMonday.orNull)
 
-            .mOpeningTimeOnTuesday(atm.OpeningTimeOnTuesday.orNull)
+          mappedAtm.mOpeningTimeOnTuesday(atm.OpeningTimeOnTuesday.orNull)
             .mClosingTimeOnTuesday(atm.ClosingTimeOnTuesday.orNull)
 
             .mOpeningTimeOnWednesday(atm.OpeningTimeOnWednesday.orNull)
@@ -1913,13 +1915,15 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .mOpeningTimeOnSaturday(atm.OpeningTimeOnSaturday.orNull)
             .mClosingTimeOnSaturday(atm.ClosingTimeOnSaturday.orNull)
 
-            .mOpeningTimeOnSunday(atm.OpeningTimeOnSunday.orNull)
+          mappedAtm.mOpeningTimeOnSunday(atm.OpeningTimeOnSunday.orNull)
             .mClosingTimeOnSunday(atm.ClosingTimeOnSunday.orNull)
             .mIsAccessible(isAccessibleString) // Easy access for people who use wheelchairs etc. Tristate boolean "Y"=true "N"=false ""=Unknown
             .mLocatedAt(atm.locatedAt.orNull)
             .mMoreInfo(atm.moreInfo.orNull)
             .mHasDepositCapability(hasDepositCapabilityString)
             .saveMe()
+          
+          mappedAtm
         }
     }
   }
