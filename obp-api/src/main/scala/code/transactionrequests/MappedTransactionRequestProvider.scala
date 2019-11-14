@@ -89,7 +89,8 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
       .mStatus(status)
       .mStartDate(now)
       .mEndDate(now)
-      .mCharge_Summary(charge.summary)
+    
+    mappedTransactionRequest.mCharge_Summary(charge.summary)
       .mCharge_Amount(charge.value.amount)
       .mCharge_Currency(charge.value.currency)
       .mcharge_Policy(chargePolicy)
@@ -103,7 +104,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
       .mTo_AccountId(toAccount.accountId.value)
 
       //toCounterparty fields
-      .mName(toAccount.name)
+    mappedTransactionRequest.mName(toAccount.name)
       .mOtherAccountRoutingScheme(toAccount.accountRoutingScheme)
       .mOtherAccountRoutingAddress(toAccount.accountRoutingAddress)
       .mOtherBankRoutingScheme(toAccount.bankRoutingScheme)
@@ -116,7 +117,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
       //.mIsBeneficiary(toAccount.isBeneficiary)
 
       //Body from http request: SANDBOX_TAN, FREE_FORM, SEPA and COUNTERPARTY should have the same following fields:
-      .mBody_Value_Currency(transactionRequestCommonBody.value.currency)
+    mappedTransactionRequest.mBody_Value_Currency(transactionRequestCommonBody.value.currency)
       .mBody_Value_Amount(transactionRequestCommonBody.value.amount)
       .mBody_Description(transactionRequestCommonBody.description)
       .mDetails(details) // This is the details / body of the request (contains all fields in the body)
