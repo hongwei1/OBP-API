@@ -42,9 +42,9 @@ object OBPAPI2_2_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.addTransactionNarrative ::
                           Implementations1_2_1.addWhereTagForViewOnTransaction ::
                           // Now in 2.0.0 "allAccountsAllBanks"::
-                          Implementations1_2_1.bankById ::
+                          Implementations1_2_1.bankById ::Nil
                           // Implementations1_2_1.createViewForBankAccount ::
-                          Implementations1_2_1.deleteCommentForViewOnTransaction ::
+        endpointsOf1_2_1::Implementations1_2_1.deleteCommentForViewOnTransaction ::
                           Implementations1_2_1.deleteCommentForViewOnTransaction ::
                           Implementations1_2_1.deleteCounterpartyCorporateLocation ::
                           Implementations1_2_1.deleteCounterpartyImageUrl ::
@@ -59,8 +59,8 @@ object OBPAPI2_2_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.deleteTransactionNarrative ::
                           Implementations1_2_1.deleteViewForBankAccount::
                           Implementations1_2_1.deleteWhereTagForViewOnTransaction ::
-                          Implementations1_2_1.getBanks ::
-                          Implementations1_2_1.getCommentsForViewOnTransaction ::
+                          Implementations1_2_1.getBanks :: Nil
+        endpointsOf1_2_1::Implementations1_2_1.getCommentsForViewOnTransaction ::
                           Implementations1_2_1.getOtherAccountsForBankAccount ::
                           Implementations1_2_1.getOtherAccountByIdForBankAccount ::
                           Implementations1_2_1.getOtherAccountForTransaction ::
@@ -73,8 +73,8 @@ object OBPAPI2_2_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.getTransactionNarrative ::
                           Implementations1_2_1.getTransactionsForBankAccount ::
                           //Implementations1_2_1.getViewsForBankAccount ::
-                          Implementations1_2_1.getWhereTagForViewOnTransaction ::
-                          Implementations1_2_1.removePermissionForUserForBankAccountForAllViews ::
+                          Implementations1_2_1.getWhereTagForViewOnTransaction ::Nil
+        endpointsOf1_2_1 :: Implementations1_2_1.removePermissionForUserForBankAccountForAllViews ::
                           Implementations1_2_1.removePermissionForUserForBankAccountForOneView ::
                           Implementations1_2_1.updateAccountLabel ::
                           Implementations1_2_1.updateCounterpartyCorporateLocation ::
@@ -129,9 +129,9 @@ object OBPAPI2_2_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_0_0.elasticSearchMetrics ::
                           Implementations2_0_0.elasticSearchWarehouse ::
                           Implementations2_0_0.getAllEntitlements ::
-                          Implementations2_0_0.getCoreAccountById ::
+                          Implementations2_0_0.getCoreAccountById :: Nil
                          // Implementations2_0_0.getCoreTransactionsForBankAccount ::
-                          Implementations2_0_0.getCurrentUser ::
+      endpointsOf2_0_0 :: Implementations2_0_0.getCurrentUser ::
                           Implementations2_0_0.getEntitlements ::
                           Implementations2_0_0.getKycChecks ::
                           Implementations2_0_0.getKycDocuments ::

@@ -479,8 +479,9 @@ object MapperViews extends Views with MdcLoggable {
       view_id(randomString(3)).
       isPublic_(false).
       bank_id(bankId.value).
-      account_id(accountId.value).
-      usePrivateAliasIfOneExists_(false).
+      account_id(accountId.value)
+      
+    entity.usePrivateAliasIfOneExists_(false).
       usePublicAliasIfOneExists_(false).
       hideOtherAccountMetadataIfAlias_(false).
       canSeeTransactionThisBankAccount_(true).
@@ -496,8 +497,9 @@ object MapperViews extends Views with MdcLoggable {
       canSeeComments_(true).
       canSeeOwnerComment_(true).
       canSeeTags_(true).
-      canSeeImages_(true).
-      canSeeBankAccountOwners_(true).
+      canSeeImages_(true)
+    
+    entity.canSeeBankAccountOwners_(true).
       canSeeBankAccountType_(true).
       canSeeBankAccountBalance_(true).
       canSeeBankAccountCurrency_(true).
@@ -530,7 +532,9 @@ object MapperViews extends Views with MdcLoggable {
       canAddImageURL_(true).
       canAddOpenCorporatesUrl_(true).
       canAddCorporateLocation_(true).
-      canAddPhysicalLocation_(true).
+      canAddPhysicalLocation_(true)
+    
+    entity.
       canAddPublicAlias_(true).
       canAddPrivateAlias_(true).
       canDeleteCorporateLocation_(true).
@@ -547,7 +551,9 @@ object MapperViews extends Views with MdcLoggable {
       canDeleteWhereTag_(true).
       canSeeBankRoutingScheme_(true). //added following in V300
       canSeeBankRoutingAddress_(true).
-      canSeeBankAccountRoutingScheme_(true).
+      canSeeBankAccountRoutingScheme_(true)
+    
+    entity.
       canSeeBankAccountRoutingAddress_(true).
       canSeeOtherBankRoutingScheme_(true).
       canSeeOtherBankRoutingAddress_(true).
@@ -652,6 +658,8 @@ object MapperViews extends Views with MdcLoggable {
       .isPublic_(false) //(default is false anyways)
       .usePrivateAliasIfOneExists_(false) //(default is false anyways)
       .usePublicAliasIfOneExists_(false) //(default is false anyways)
+    
+    entity
       .hideOtherAccountMetadataIfAlias_(false) //(default is false anyways)
       .canSeeTransactionThisBankAccount_(true)
       .canSeeTransactionOtherBankAccount_(true)
@@ -665,6 +673,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeeTransactionBalance_(true)
       .canSeeComments_(true)
       .canSeeOwnerComment_(true)
+    
+    entity
       .canSeeTags_(true)
       .canSeeImages_(true)
       .canSeeBankAccountOwners_(true)
@@ -672,6 +682,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeeBankAccountBalance_(true)
       .canSeeBankAccountCurrency_(true)
       .canSeeBankAccountLabel_(true)
+
+    entity
       .canSeeBankAccountNationalIdentifier_(true)
       .canSeeBankAccountSwift_bic_(true)
       .canSeeBankAccountIban_(true)
@@ -695,6 +707,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeePhysicalLocation_(true)
       .canSeePublicAlias_(true)
       .canSeePrivateAlias_(true)
+    
+    entity
       .canAddMoreInfo_(true)
       .canAddURL_(true)
       .canAddImageURL_(true)
@@ -708,6 +722,8 @@ object MapperViews extends Views with MdcLoggable {
       .canDeletePhysicalLocation_(true)
       .canEditOwnerComment_(true)
       .canAddComment_(true)
+    
+    entity
       .canDeleteComment_(true)
       .canAddTag_(true)
       .canDeleteTag_(true)
@@ -718,6 +734,8 @@ object MapperViews extends Views with MdcLoggable {
       .canDeleteWhereTag_(true)
       .canSeeBankRoutingScheme_(true) //added following in V300
       .canSeeBankRoutingAddress_(true)
+    
+    entity
       .canSeeBankAccountRoutingScheme_(true)
       .canSeeBankAccountRoutingAddress_(true)
       .canSeeOtherBankRoutingScheme_(true)
@@ -741,6 +759,8 @@ object MapperViews extends Views with MdcLoggable {
       .usePrivateAliasIfOneExists_(false) //(default is false anyways)
       .usePublicAliasIfOneExists_(false) //(default is false anyways)
       .hideOtherAccountMetadataIfAlias_(false) //(default is false anyways)
+    
+    entity
       .canSeeTransactionThisBankAccount_(true)
       .canSeeTransactionOtherBankAccount_(true)
       .canSeeTransactionMetadata_(true)
@@ -750,6 +770,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeeTransactionCurrency_(true)
       .canSeeTransactionStartDate_(true)
       .canSeeTransactionFinishDate_(true)
+
+    entity
       .canSeeTransactionBalance_(true)
       .canSeeComments_(true)
       .canSeeOwnerComment_(true)
@@ -759,6 +781,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeeBankAccountType_(true)
       .canSeeBankAccountBalance_(true)
       .canSeeBankAccountCurrency_(true)
+
+    entity
       .canSeeBankAccountLabel_(true)
       .canSeeBankAccountNationalIdentifier_(true)
       .canSeeBankAccountSwift_bic_(true)
@@ -782,6 +806,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeeCorporateLocation_(true)
       .canSeePhysicalLocation_(true)
       .canSeePublicAlias_(true)
+
+    entity
       .canSeePrivateAlias_(true)
       .canAddMoreInfo_(true)
       .canAddURL_(true)
@@ -791,6 +817,8 @@ object MapperViews extends Views with MdcLoggable {
       .canAddPhysicalLocation_(true)
       .canAddPublicAlias_(true)
       .canAddPrivateAlias_(true)
+
+    entity
       .canAddCounterparty_(true)
       .canDeleteCorporateLocation_(true)
       .canDeletePhysicalLocation_(true)
@@ -799,6 +827,8 @@ object MapperViews extends Views with MdcLoggable {
       .canDeleteComment_(true)
       .canAddTag_(true)
       .canDeleteTag_(true)
+
+    entity
       .canAddImage_(true)
       .canDeleteImage_(true)
       .canAddWhereTag_(true)
@@ -807,6 +837,8 @@ object MapperViews extends Views with MdcLoggable {
       .canSeeBankRoutingScheme_(true) //added following in V300
       .canSeeBankRoutingAddress_(true)
       .canSeeBankAccountRoutingScheme_(true)
+
+    entity
       .canSeeBankAccountRoutingAddress_(true)
       .canSeeOtherBankRoutingScheme_(true)
       .canSeeOtherBankRoutingAddress_(true)
@@ -836,7 +868,9 @@ object MapperViews extends Views with MdcLoggable {
       isPublic_(true).
       bank_id(bankId.value).
       account_id(accountId.value).
-      usePrivateAliasIfOneExists_(false).
+      usePrivateAliasIfOneExists_(false)
+    
+    entity.
       usePublicAliasIfOneExists_(true).
       hideOtherAccountMetadataIfAlias_(true).
       canSeeTransactionThisBankAccount_(true).
@@ -847,7 +881,9 @@ object MapperViews extends Views with MdcLoggable {
       canSeeTransactionType_(true).
       canSeeTransactionCurrency_(true).
       canSeeTransactionStartDate_(true).
-      canSeeTransactionFinishDate_(true).
+      canSeeTransactionFinishDate_(true)
+    
+    entity.
       canSeeTransactionBalance_(true).
       canSeeComments_(true).
       canSeeOwnerComment_(true).
@@ -858,7 +894,9 @@ object MapperViews extends Views with MdcLoggable {
       canSeeBankAccountBalance_(true).
       canSeeBankAccountCurrency_(true).
       canSeeBankAccountLabel_(true).
-      canSeeBankAccountNationalIdentifier_(true).
+      canSeeBankAccountNationalIdentifier_(true)
+    
+    entity.
       canSeeBankAccountIban_(true).
       canSeeBankAccountNumber_(true).
       canSeeBankAccountBankName_(true).
@@ -869,6 +907,7 @@ object MapperViews extends Views with MdcLoggable {
       canSeeOtherAccountNumber_(true).
       canSeeOtherAccountMetadata_(true).
       canSeeOtherAccountKind_(true)
+    
     entity.
       canSeeMoreInfo_(true).
       canSeeUrl_(true).
@@ -880,7 +919,9 @@ object MapperViews extends Views with MdcLoggable {
       canSeePrivateAlias_(true).
       canAddMoreInfo_(true).
       canAddURL_(true).
-      canAddImageURL_(true).
+      canAddImageURL_(true)
+    
+    entity.
       canAddOpenCorporatesUrl_(true).
       canAddCorporateLocation_(true).
       canAddPhysicalLocation_(true).
@@ -891,7 +932,9 @@ object MapperViews extends Views with MdcLoggable {
       canDeletePhysicalLocation_(true).
       canEditOwnerComment_(true).
       canAddComment_(true).
-      canDeleteComment_(true).
+      canDeleteComment_(true)
+    
+    entity.
       canAddTag_(true).
       canDeleteTag_(true).
       canAddImage_(true).
@@ -899,7 +942,9 @@ object MapperViews extends Views with MdcLoggable {
       canAddWhereTag_(true).
       canSeeWhereTag_(true).
       canSeeBankRoutingScheme_(true). //added following in V300
-      canSeeBankRoutingAddress_(true).
+      canSeeBankRoutingAddress_(true)
+    
+    entity.
       canSeeBankAccountRoutingScheme_(true).
       canSeeBankAccountRoutingAddress_(true).
       canSeeOtherBankRoutingScheme_(true).
@@ -923,7 +968,7 @@ object MapperViews extends Views with MdcLoggable {
    */
 
   def unsavedDefaultAccountantsView(bankId : BankId, accountId: AccountId, description: String) : ViewDefinition = {
-    val entityt = create.
+    val entity = create.
       isSystem_(true).
       isFirehose_(true). // TODO This should be set to false. i.e. Firehose views should be separate
       name_("Accountant"). // Use the singular form
@@ -936,7 +981,9 @@ object MapperViews extends Views with MdcLoggable {
       usePublicAliasIfOneExists_(true).
       hideOtherAccountMetadataIfAlias_(true).
       canSeeTransactionThisBankAccount_(true).
-      canSeeTransactionOtherBankAccount_(true).
+      canSeeTransactionOtherBankAccount_(true)
+    
+    entity.
       canSeeTransactionMetadata_(true).
       canSeeTransactionDescription_(false).
       canSeeTransactionAmount_(true).
@@ -949,7 +996,9 @@ object MapperViews extends Views with MdcLoggable {
       canSeeOwnerComment_(true).
       canSeeTags_(true).
       canSeeImages_(true).
-      canSeeBankAccountOwners_(true).
+      canSeeBankAccountOwners_(true)
+    
+    entity.
       canSeeBankAccountType_(true).
       canSeeBankAccountBalance_(true).
       canSeeBankAccountCurrency_(true).
@@ -965,7 +1014,8 @@ object MapperViews extends Views with MdcLoggable {
       canSeeOtherAccountNumber_(true).
       canSeeOtherAccountMetadata_(true).
       canSeeOtherAccountKind_(true)
-    entityt.
+    
+    entity.
       canSeeMoreInfo_(true).
       canSeeUrl_(true).
       canSeeImageUrl_(true).
@@ -977,7 +1027,9 @@ object MapperViews extends Views with MdcLoggable {
       canAddMoreInfo_(true).
       canAddURL_(true).
       canAddImageURL_(true).
-      canAddOpenCorporatesUrl_(true).
+      canAddOpenCorporatesUrl_(true)
+    
+    entity.
       canAddCorporateLocation_(true).
       canAddPhysicalLocation_(true).
       canAddPublicAlias_(true).
@@ -989,14 +1041,18 @@ object MapperViews extends Views with MdcLoggable {
       canAddComment_(true).
       canDeleteComment_(true).
       canAddTag_(true).
-      canDeleteTag_(true).
+      canDeleteTag_(true)
+    
+    entity.
       canAddImage_(true).
       canDeleteImage_(true).
       canAddWhereTag_(true).
       canSeeWhereTag_(true).
       canDeleteWhereTag_(true).
       canSeeBankRoutingScheme_(true). //added following in V300
-      canSeeBankRoutingAddress_(true).
+      canSeeBankRoutingAddress_(true)
+    
+    entity.
       canSeeBankAccountRoutingScheme_(true).
       canSeeBankAccountRoutingAddress_(true).
       canSeeOtherBankRoutingScheme_(true).
@@ -1027,7 +1083,9 @@ Auditors
       isPublic_(false).
       bank_id(bankId.value).
       account_id(accountId.value).
-      usePrivateAliasIfOneExists_(false).
+      usePrivateAliasIfOneExists_(false)
+    
+    entity.
       usePublicAliasIfOneExists_(true).
       hideOtherAccountMetadataIfAlias_(true).
       canSeeTransactionThisBankAccount_(true).
@@ -1036,7 +1094,9 @@ Auditors
       canSeeTransactionDescription_(false).
       canSeeTransactionAmount_(true).
       canSeeTransactionType_(true).
-      canSeeTransactionCurrency_(true).
+      canSeeTransactionCurrency_(true)
+    
+    entity.
       canSeeTransactionStartDate_(true).
       canSeeTransactionFinishDate_(true).
       canSeeTransactionBalance_(true).
@@ -1047,7 +1107,9 @@ Auditors
       canSeeBankAccountOwners_(true).
       canSeeBankAccountType_(true).
       canSeeBankAccountBalance_(true).
-      canSeeBankAccountCurrency_(true).
+      canSeeBankAccountCurrency_(true)
+    
+    entity.
       canSeeBankAccountLabel_(true).
       canSeeBankAccountNationalIdentifier_(true).
       canSeeBankAccountIban_(true).
@@ -1059,6 +1121,7 @@ Auditors
       canSeeOtherAccountBankName_(true).
       canSeeOtherAccountNumber_(true).
       canSeeOtherAccountMetadata_(true)
+    
     entity.
       canSeeOtherAccountKind_(true).
       canSeeMoreInfo_(true).
@@ -1069,7 +1132,9 @@ Auditors
       canSeePhysicalLocation_(true).
       canSeePublicAlias_(true).
       canSeePrivateAlias_(true).
-      canAddMoreInfo_(true).
+      canAddMoreInfo_(true)
+    
+    entity.
       canAddURL_(true).
       canAddImageURL_(true).
       canAddOpenCorporatesUrl_(true).
@@ -1081,7 +1146,9 @@ Auditors
       canDeleteCorporateLocation_(true).
       canDeletePhysicalLocation_(true).
       canEditOwnerComment_(true).
-      canAddComment_(true).
+      canAddComment_(true)
+    
+    entity.
       canDeleteComment_(true).
       canAddTag_(true).
       canDeleteTag_(true).
@@ -1091,7 +1158,9 @@ Auditors
       canSeeWhereTag_(true).
       canDeleteWhereTag_(true).
       canSeeBankRoutingScheme_(true). //added following in V300
-      canSeeBankRoutingAddress_(true).
+      canSeeBankRoutingAddress_(true)
+    
+    entity.
       canSeeBankAccountRoutingScheme_(true).
       canSeeBankAccountRoutingAddress_(true).
       canSeeOtherBankRoutingScheme_(true).

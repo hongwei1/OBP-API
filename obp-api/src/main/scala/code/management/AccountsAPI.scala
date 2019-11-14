@@ -1,7 +1,6 @@
+/*
 package code.management
 
-private case class PlaceHolderClassToSupressCompileWarning()
-/*
 import code.api.OBPRestHelper
 import code.api.util.APIUtil._
 import code.model._

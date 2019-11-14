@@ -69,11 +69,11 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.addPermissionForUserForBankAccountForOneView ::
                           Implementations1_2_1.addTagForViewOnTransaction ::
                           Implementations1_2_1.addTransactionNarrative ::
-                          Implementations1_2_1.addWhereTagForViewOnTransaction ::
+                          Implementations1_2_1.addWhereTagForViewOnTransaction :: Nil
                           // Now in 3.0.0 "allAccountsAllBanks"::
 //                          Implementations1_2_1.bankById ::
                           // Implementations1_2_1.createViewForBankAccount ::
-                          Implementations1_2_1.deleteCommentForViewOnTransaction ::
+       endpointsOf1_2_1 ::Implementations1_2_1.deleteCommentForViewOnTransaction ::
                           Implementations1_2_1.deleteCommentForViewOnTransaction ::
                           Implementations1_2_1.deleteCounterpartyCorporateLocation ::
                           Implementations1_2_1.deleteCounterpartyImageUrl ::
@@ -87,9 +87,9 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations1_2_1.deleteTagForViewOnTransaction ::
                           Implementations1_2_1.deleteTransactionNarrative ::
                           Implementations1_2_1.deleteViewForBankAccount::
-                          Implementations1_2_1.deleteWhereTagForViewOnTransaction ::
+                          Implementations1_2_1.deleteWhereTagForViewOnTransaction :: Nil
 //                          Implementations1_2_1.getBanks ::
-                          Implementations1_2_1.getCommentsForViewOnTransaction ::
+      endpointsOf1_2_1 :: Implementations1_2_1.getCommentsForViewOnTransaction ::
 //                          Implementations1_2_1.getOtherAccountsForBankAccount ::
 //                          Implementations1_2_1.getOtherAccountByIdForBankAccount ::
                           Implementations1_2_1.getOtherAccountForTransaction ::
@@ -103,8 +103,8 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           //now in V300
                           //Implementations1_2_1.getTransactionsForBankAccount ::
                           //Implementations1_2_1.getViewsForBankAccount ::
-                          Implementations1_2_1.getWhereTagForViewOnTransaction ::
-                          Implementations1_2_1.removePermissionForUserForBankAccountForAllViews ::
+                          Implementations1_2_1.getWhereTagForViewOnTransaction :: Nil
+      endpointsOf1_2_1 :: Implementations1_2_1.removePermissionForUserForBankAccountForAllViews ::
                           Implementations1_2_1.removePermissionForUserForBankAccountForOneView ::
                           Implementations1_2_1.updateAccountLabel ::
                           Implementations1_2_1.updateCounterpartyCorporateLocation ::
@@ -154,13 +154,13 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_0_0.createUser ::
                           Implementations2_0_0.createUserCustomerLinks ::
                           Implementations2_0_0.deleteEntitlement ::
-                          Implementations2_0_0.elasticSearchMetrics ::
+                          Implementations2_0_0.elasticSearchMetrics :: Nil
                           //Implementations2_0_0.elasticSearchWarehouse ::
                           // Implementations2_0_0.getAllEntitlements ::
                           //now in V300 Implementations2_0_0.getCoreAccountById ::
                           //now in V300 Implementations2_0_0.getCoreTransactionsForBankAccount ::
                           // Implementations2_0_0.getCurrentUser ::
-                          Implementations2_0_0.getEntitlements ::
+      endpointsOf2_0_0 :: Implementations2_0_0.getEntitlements ::
                           Implementations2_0_0.getKycChecks ::
                           Implementations2_0_0.getKycDocuments ::
                           Implementations2_0_0.getKycMedia ::
@@ -234,8 +234,9 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations3_0_0.updateViewForBankAccount ::
                           Implementations3_0_0.corePrivateAccountsAllBanks ::
                           Implementations3_0_0.dataWarehouseSearch ::
-                          Implementations3_0_0.getUser ::
-                          Implementations3_0_0.getUserByUserId ::
+                          Implementations3_0_0.getUser :: Nil
+
+      endpointsOf3_0_0 :: Implementations3_0_0.getUserByUserId ::
                           Implementations3_0_0.getUserByUsername ::
                           Implementations3_0_0.getAdapterInfoForBank ::
                           Implementations3_0_0.createBranch ::
@@ -245,8 +246,9 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations3_0_0.getAtm ::
                           Implementations3_0_0.getAtms ::
                           Implementations3_0_0.getUsers ::
-                          Implementations3_0_0.getCustomersForUser ::
-                          Implementations3_0_0.getCurrentUser ::
+                          Implementations3_0_0.getCustomersForUser :: Nil
+
+      endpointsOf3_0_0 :: Implementations3_0_0.getCurrentUser ::
                           Implementations3_0_0.privateAccountsAtOneBank ::
                           Implementations3_0_0.getPrivateAccountIdsbyBankId ::
                           Implementations3_0_0.getOtherAccountsForBankAccount ::
@@ -255,8 +257,9 @@ object OBPAPI3_1_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations3_0_0.getAllEntitlementRequests ::
                           Implementations3_0_0.getEntitlementRequests ::
                           Implementations3_0_0.deleteEntitlementRequest ::
-                          Implementations3_0_0.dataWarehouseStatistics ::
-                          Implementations3_0_0.getEntitlementRequestsForCurrentUser ::
+                          Implementations3_0_0.dataWarehouseStatistics :: Nil
+      
+      endpointsOf3_0_0 :: Implementations3_0_0.getEntitlementRequestsForCurrentUser ::
                           Implementations3_0_0.getFirehoseAccountsAtOneBank ::
                           Implementations3_0_0.getEntitlementsForCurrentUser ::
                           Implementations3_0_0.getFirehoseTransactionsForBankAccount ::
