@@ -28,8 +28,8 @@ package com.openbankproject.commons.dto
 
 import java.util.Date
 
-import com.openbankproject.commons.model.enums.{CardAttributeType, DynamicEntityOperation}
 import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
+import com.openbankproject.commons.model.enums.{CardAttributeType, DynamicEntityOperation}
 import com.openbankproject.commons.model.{enums, _}
 import net.liftweb.json.{JObject, JValue}
 

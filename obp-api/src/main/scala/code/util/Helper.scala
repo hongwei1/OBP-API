@@ -3,9 +3,9 @@ package code.util
 import java.net.{Socket, SocketException}
 import java.util.{Date, GregorianCalendar}
 
-import code.api.util.{APIUtil, CustomJsonFormats}
 import code.api.APIFailureNewStyle
 import code.api.util.APIUtil.fullBoxOrException
+import code.api.util.{APIUtil, CustomJsonFormats}
 import net.liftweb.common._
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST._
@@ -227,7 +227,7 @@ object Helper{
     //TODO need clean this format, we have set the TimeZone in boot.scala
   val DateFormatWithCurrentTimeZone = new Formats {
   
-    import java.text.{ParseException, SimpleDateFormat}
+    import java.text.ParseException
   
     val dateFormat = new DateFormat {
       def parse(s: String) = try {

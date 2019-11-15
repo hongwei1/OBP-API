@@ -2,8 +2,8 @@ package code.api.v2_2_0
 
 import code.api.ErrorMessage
 import code.api.util.APIUtil.OAuth._
-import code.api.util.{ApiRole, ApiVersion}
 import code.api.util.ErrorMessages.InvalidISOCurrencyCode
+import code.api.util.{ApiRole, ApiVersion}
 import code.consumer.Consumers
 import code.scope.Scope
 import code.setup.DefaultUsers

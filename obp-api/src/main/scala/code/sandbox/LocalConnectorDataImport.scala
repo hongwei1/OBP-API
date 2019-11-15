@@ -1,14 +1,6 @@
 package code.sandbox
 
-import code.metadata.counterparties.{MongoCounterparties, Metadata}
-import code.model._
-import code.model.dataAccess._
-import net.liftweb.common._
-import java.util.UUID
-import net.liftweb.mapper.By
 import net.liftweb.mongodb.record.MongoRecord
-import net.liftweb.util.Helpers._
-import org.bson.types.ObjectId
 
 //An basic implementation of Saveable for MongoRecords
 case class SaveableMongoObj[T <: MongoRecord[_]](value : T) extends Saveable[T] {

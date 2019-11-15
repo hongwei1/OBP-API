@@ -27,8 +27,6 @@ TESOBE (http://www.tesobe.com/)
 package code.api.v1_2
 
 import java.util.Date
-import net.liftweb.common.{Box, Full}
-import code.model._
 
 case class APIInfoJSON(
   version : String,

@@ -4,7 +4,7 @@ import code.api.BerlinGroup.ScaStatus
 import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.{CancellationJsonV13, InitiatePaymentResponseJson, StartPaymentAuthorisationJson}
 import code.api.builder.PaymentInitiationServicePISApi.APIMethods_PaymentInitiationServicePISApi
 import code.api.util.APIUtil.OAuth._
-import code.api.util.ErrorMessages.{AuthorisationNotFound, InvalidJsonFormat, NotPositiveAmount, _}
+import code.api.util.ErrorMessages.{InvalidJsonFormat, NotPositiveAmount, _}
 import code.model.dataAccess.MappedBankAccount
 import code.setup.{APIResponse, DefaultUsers}
 import code.transactionrequests.TransactionRequests.{PaymentServiceTypes, TransactionRequestTypes}

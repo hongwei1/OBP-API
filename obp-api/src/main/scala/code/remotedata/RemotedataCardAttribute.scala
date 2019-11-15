@@ -1,8 +1,8 @@
 package code.remotedata
 
 import akka.pattern.ask
-import code.cardattribute.{CardAttributeProvider, RemotedataCardAttributeCaseClasses}
 import code.actorsystem.ObpActorInit
+import code.cardattribute.{CardAttributeProvider, RemotedataCardAttributeCaseClasses}
 import com.openbankproject.commons.model._
 import com.openbankproject.commons.model.enums.CardAttributeType
 import net.liftweb.common.Box

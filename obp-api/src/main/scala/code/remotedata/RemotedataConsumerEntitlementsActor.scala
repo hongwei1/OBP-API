@@ -2,8 +2,7 @@ package code.remotedata
 
 import akka.actor.Actor
 import code.actorsystem.ObpActorHelper
-import code.scope._
-import code.scope.{MappedScopesProvider, RemotedataScopesCaseClasses}
+import code.scope.{MappedScopesProvider, RemotedataScopesCaseClasses, _}
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.Box
 

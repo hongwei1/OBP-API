@@ -1,30 +1,27 @@
 package code.api.ResourceDocs1_4_0
 
+import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong}
+import java.math.{BigDecimal => JBigDecimal}
 import java.util.{Date, Objects}
 
 import code.api.util.APIUtil.ResourceDoc
 import code.api.util.ErrorMessages._
 import code.api.util._
-import com.openbankproject.commons.util.{EnumValue, OBPEnumeration, ReflectUtils}
-import net.liftweb
-import net.liftweb.json.JsonAST.JValue
-import net.liftweb.json._
-
-import scala.collection.immutable.ListMap
-import scala.reflect.runtime.universe._
-import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong}
-import java.math.{BigDecimal => JBigDecimal}
-
-import com.openbankproject.commons.model.JsonFieldReName
-import net.liftweb.util.StringHelpers
-
-import scala.collection.mutable.ListBuffer
 import code.api.v3_1_0.ListResult
 import code.api.v4_0_0.APIMethods400.Implementations4_0_0.genericEndpoint
+import com.openbankproject.commons.model.JsonFieldReName
+import com.openbankproject.commons.util.{EnumValue, OBPEnumeration, ReflectUtils}
+import net.liftweb
 import net.liftweb.common.{EmptyBox, Full}
+import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json._
+import net.liftweb.util.StringHelpers
 import org.apache.commons.lang3.StringUtils
 
+import scala.collection.immutable.ListMap
+import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe
+import scala.reflect.runtime.universe._
 
 object SwaggerJSONFactory {
   //Info Object

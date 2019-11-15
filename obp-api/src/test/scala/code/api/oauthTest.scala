@@ -28,6 +28,7 @@ TESOBE (http://www.tesobe.com/)
 package code.api
 
 import java.util.ResourceBundle
+
 import code.api.oauth1a.OauthParams._
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ErrorMessages._
@@ -35,7 +36,6 @@ import code.api.util.{APIUtil, ErrorMessages}
 import code.consumer.Consumers
 import code.loginattempts.LoginAttempt
 import code.model.dataAccess.AuthUser
-import code.model.{Consumer => OBPConsumer, Token => OBPToken}
 import code.setup.ServerSetup
 import code.util.Helper.MdcLoggable
 import dispatch.Defaults._

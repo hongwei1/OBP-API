@@ -4,15 +4,13 @@ package code.crm
 
 
 
-import code.crm.CrmEvent.{CrmEvent, CrmEventId}
-import code.model.dataAccess.ResourceUser
-import code.model.dataAccess.ResourceUser
-import net.liftweb.common.Logger
-import net.liftweb.util
-import net.liftweb.util.SimpleInjector
 import java.util.Date
 
-import com.openbankproject.commons.model.{BankId, MetaT}
+import code.crm.CrmEvent.{CrmEvent, CrmEventId}
+import code.model.dataAccess.ResourceUser
+import com.openbankproject.commons.model.BankId
+import net.liftweb.common.Logger
+import net.liftweb.util
 
 object CrmEvent extends util.SimpleInjector {
 

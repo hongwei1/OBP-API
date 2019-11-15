@@ -8,7 +8,7 @@ import code.bankconnectors.Connector
 import code.setup.{DefaultConnectorTestSetup, DefaultUsers, ServerSetup}
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model._
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.Full
 
 class PhysicalCardsTest extends ServerSetup with DefaultUsers  with DefaultConnectorTestSetup {
 

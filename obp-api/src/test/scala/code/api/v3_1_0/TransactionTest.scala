@@ -29,8 +29,8 @@ import code.api.ErrorMessage
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole.CanCreateHistoricalTransaction
-import code.api.util.{ApiRole, ApiVersion}
 import code.api.util.ErrorMessages.UserNotLoggedIn
+import code.api.util.{ApiRole, ApiVersion}
 import code.api.v1_2_1.TransactionJSON
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0.TransactionRequestWithChargeJSONs210
@@ -40,8 +40,8 @@ import code.api.v3_1_0.OBPAPI3_1_0.Implementations3_1_0
 import code.entitlement.Entitlement
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.model.AmountOfMoneyJsonV121
-import org.scalatest.Tag
 import net.liftweb.json.Serialization.write
+import org.scalatest.Tag
 
 class TransactionTest extends V310ServerSetup {
 

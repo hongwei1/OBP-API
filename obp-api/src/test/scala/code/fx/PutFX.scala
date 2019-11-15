@@ -56,7 +56,6 @@ import code.util.{OAuthClient, ObpGet, ObpPut}
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.RequestVar
 import net.liftweb.json._
-import net.liftweb.util.Props
 
 import scala.collection.mutable.ListBuffer
 import scala.io.Source

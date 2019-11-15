@@ -14,7 +14,6 @@ import code.api.v2_1_0._
 import code.api.v2_2_0.JSONFactory220.transformV220ToBranch
 import code.bankconnectors._
 import code.consumer.Consumers
-import code.fx.{MappedFXRate, fx}
 import code.metadata.counterparties.{Counterparties, MappedCounterparty}
 import code.metrics.ConnectorMetricsProvider
 import code.model._
@@ -23,7 +22,7 @@ import code.util.Helper
 import code.util.Helper._
 import code.views.Views
 import com.openbankproject.commons.model._
-import net.liftweb.common.{Empty, Full}
+import net.liftweb.common.Full
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.Extraction
 import net.liftweb.util.Helpers.tryo

@@ -3,8 +3,8 @@ package code.kycchecks
 import java.util.Date
 
 import com.openbankproject.commons.model.KycCheck
-import net.liftweb.util.SimpleInjector
 import net.liftweb.common.Box
+import net.liftweb.util.SimpleInjector
 
 
 object KycChecks extends SimpleInjector {

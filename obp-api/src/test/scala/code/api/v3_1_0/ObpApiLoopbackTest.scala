@@ -27,7 +27,7 @@ package code.api.v3_1_0
 
 import code.api.ErrorMessage
 import code.api.util.ErrorMessages.NotImplemented
-import code.api.util.{APIUtil, ApiVersion, ErrorMessages}
+import code.api.util.{APIUtil, ApiVersion}
 import code.api.v3_1_0.OBPAPI3_1_0.Implementations3_1_0
 import com.github.dwickern.macros.NameOf.nameOf
 import org.scalatest.Tag

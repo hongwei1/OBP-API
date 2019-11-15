@@ -25,8 +25,8 @@ TESOBE (http://www.tesobe.com/)
 
  */
 import bootstrap.liftweb.Boot
+
 import scala.tools.nsc.MainGenericRunner
-import scala.sys._
 
 object LiftConsole {
   def main(args : Array[String]) {

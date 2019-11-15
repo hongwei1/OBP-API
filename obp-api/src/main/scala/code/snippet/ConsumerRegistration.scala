@@ -32,11 +32,11 @@ import code.consumer.Consumers
 import code.model._
 import code.model.dataAccess.AuthUser
 import code.util.Helper.MdcLoggable
+import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 import net.liftweb.common.{Empty, Full}
 import net.liftweb.http.{RequestVar, S, SHtml}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.{CssSel, FieldError, Helpers}
-import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 
 import scala.collection.immutable.ListMap
 

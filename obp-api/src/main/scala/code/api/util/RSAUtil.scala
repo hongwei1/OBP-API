@@ -16,8 +16,8 @@ object RSAUtil  extends MdcLoggable {
     Base64.encodeBase64String(res)
   }
   def decrypt(encrypted: String): String = {
-    import org.apache.commons.codec.binary.Base64
     import javax.crypto.Cipher
+    import org.apache.commons.codec.binary.Base64
     val bytes = Base64.decodeBase64(encrypted)
     val cipher = Cipher.getInstance(cryptoSystem)
     cipher.init(Cipher.DECRYPT_MODE, privateKey)

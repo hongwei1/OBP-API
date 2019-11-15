@@ -3,8 +3,8 @@ package code.kycdocuments
 import java.util.Date
 
 import com.openbankproject.commons.model.KycDocument
-import net.liftweb.util.SimpleInjector
 import net.liftweb.common.Box
+import net.liftweb.util.SimpleInjector
 
 
 object KycDocuments extends SimpleInjector {

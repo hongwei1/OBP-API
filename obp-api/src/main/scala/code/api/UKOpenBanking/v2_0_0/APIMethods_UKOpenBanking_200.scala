@@ -5,7 +5,7 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.util.APIUtil._
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages.{InvalidConnectorResponseForGetTransactionRequests210, UnknownError, UserNotLoggedIn, _}
-import code.api.util.{ApiVersion, ErrorMessages, NewStyle}
+import code.api.util.{ErrorMessages, NewStyle}
 import code.bankconnectors.Connector
 import code.model._
 import code.util.Helper

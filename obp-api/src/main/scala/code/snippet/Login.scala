@@ -30,10 +30,10 @@ package code.snippet
 import code.api.OpenIdConnectConfig
 import code.api.util.{APIUtil, CustomJsonFormats}
 import code.model.dataAccess.{Admin, AuthUser}
-import net.liftweb.http.{S, SHtml}
-import net.liftweb.util.Helpers._
-import net.liftweb.util.CssSel
 import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
+import net.liftweb.http.{S, SHtml}
+import net.liftweb.util.CssSel
+import net.liftweb.util.Helpers._
 
 import scala.xml.NodeSeq
 

@@ -26,7 +26,6 @@ Berlin 13359, Germany
 import java.util.Date
 
 import code.api.util.ErrorMessages._
-import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
 import code.api.util._
 import code.bankconnectors.vMar2017.KafkaMappedConnector_vMar2017
 import code.branches.Branches.Branch
@@ -41,15 +40,14 @@ import code.metadata.transactionimages.TransactionImages
 import code.metadata.wheretags.WhereTags
 import code.model._
 import code.model.dataAccess._
-import com.openbankproject.commons.model.Product
 import code.transaction.MappedTransaction
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
-import code.transactionrequests.TransactionRequests._
 import code.transactionrequests.{TransactionRequestTypeCharge, TransactionRequests}
 import code.util.Helper.MdcLoggable
 import code.util.{Helper, TTLCache}
 import code.views.Views
-import com.openbankproject.commons.model.{Bank, _}
+import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
+import com.openbankproject.commons.model.{Bank, Product, _}
 import net.liftweb.common._
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers._

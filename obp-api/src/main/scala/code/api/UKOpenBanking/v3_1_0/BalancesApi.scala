@@ -6,7 +6,6 @@ import code.api.util.APIUtil.{defaultBankId, _}
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util.{ApiTag, NewStyle}
-import code.bankconnectors.Connector
 import code.model._
 import code.util.Helper
 import code.views.Views

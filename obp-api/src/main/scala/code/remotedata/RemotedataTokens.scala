@@ -4,9 +4,8 @@ import java.util.Date
 
 import akka.pattern.ask
 import code.actorsystem.ObpActorInit
+import code.model.{Token, TokenType}
 import code.token.{RemotedataTokensCaseClasses, TokensProvider}
-import code.model.Token
-import code.model.TokenType
 import net.liftweb.common.Box
 
 import scala.concurrent.Future

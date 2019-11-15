@@ -4,8 +4,8 @@ import code.api.berlin.group.v1_3.JvalueCaseClass
 import code.api.util.APIUtil.{defaultBankId, _}
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
-import code.api.util.{ApiTag, NewStyle}
 import code.api.util.NewStyle.HttpCode
+import code.api.util.{ApiTag, NewStyle}
 import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.model.{AccountId, BankId}

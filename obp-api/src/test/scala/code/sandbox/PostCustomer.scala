@@ -47,16 +47,16 @@ TESOBE (http://www.tesobe.com/)
 * into your props file.
 * */
 
-import java.util.{Date, UUID}
+import java.util.Date
 
 import code.api.util.{APIUtil, CustomJsonFormats}
-import com.openbankproject.commons.model.AmountOfMoneyJsonV121
 import code.api.v1_4_0.JSONFactory1_4_0.CustomerFaceImageJson
 import code.api.v2_0_0.JSONFactory200.UserJsonV200
 import code.api.v2_1_0.{CustomerCreditRatingJSON, PostCustomerJsonV210}
 import code.setup.SendServerRequests
 import code.util.ObpJson._
 import code.util.{OAuthClient, ObpGet, ObpPost}
+import com.openbankproject.commons.model.AmountOfMoneyJsonV121
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.RequestVar
 import net.liftweb.json._

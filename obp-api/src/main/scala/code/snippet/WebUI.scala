@@ -29,14 +29,14 @@ Berlin 13359, Germany
 package code.snippet
 
 import code.api.util.APIUtil.{activeBrand, getRemoteIpAddress, getServerUrl}
-import code.api.util.{APIUtil, CustomJsonFormats, Glossary, PegdownOptions}
+import code.api.util.{APIUtil, CustomJsonFormats, PegdownOptions}
 import code.util.Helper.MdcLoggable
+import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 import net.liftweb.http.{S, SessionVar}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.{CssSel, Props}
 
 import scala.xml.{NodeSeq, XML}
-import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 
 
 class WebUI extends MdcLoggable{

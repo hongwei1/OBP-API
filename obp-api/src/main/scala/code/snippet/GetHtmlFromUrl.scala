@@ -27,10 +27,10 @@ TESOBE (http://www.tesobe.com/)
 
 package code.snippet
 
-import net.liftweb.util.{Helpers, Props}
-import Helpers._
-import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 import code.util.Helper.MdcLoggable
+import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
+import net.liftweb.util.Helpers._
+import net.liftweb.util.{Helpers, Props}
 
 import scala.xml.{NodeSeq, XML}
 

@@ -1,12 +1,12 @@
 package code.metadata.wheretags
 
-import net.liftweb.mongodb.BsonDSL._
-import net.liftweb.mongodb.record.{MongoMetaRecord, MongoRecord}
-import net.liftweb.mongodb.record.field.{DateField, ObjectIdPk}
-import net.liftweb.record.field.{DoubleField, LongField, StringField}
 import code.model._
 import com.mongodb.{DBObject, QueryBuilder}
 import com.openbankproject.commons.model._
+import net.liftweb.mongodb.BsonDSL._
+import net.liftweb.mongodb.record.field.{DateField, ObjectIdPk}
+import net.liftweb.mongodb.record.{MongoMetaRecord, MongoRecord}
+import net.liftweb.record.field.{DoubleField, LongField, StringField}
 
 private class OBPWhereTag private() extends MongoRecord[OBPWhereTag] with ObjectIdPk[OBPWhereTag] with GeoTag {
   def meta = OBPWhereTag

@@ -3,16 +3,14 @@ package code.remotedata
 import java.util.Date
 
 import akka.actor.Actor
+import akka.pattern.pipe
 import code.actorsystem.ObpActorHelper
 import code.api.util.OBPQueryParam
 import code.customer._
-import code.model._
 import code.util.Helper.MdcLoggable
+import com.openbankproject.commons.model._
 
 import scala.collection.immutable.List
-import akka.pattern.pipe
-import com.openbankproject.commons.model.{AmountOfMoney, AmountOfMoneyTrait, BankId, CreditRatingTrait, CustomerFaceImageTrait}
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class RemotedataCustomersActor extends Actor with ObpActorHelper with MdcLoggable {

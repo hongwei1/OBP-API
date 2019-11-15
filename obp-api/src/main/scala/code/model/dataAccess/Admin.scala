@@ -26,10 +26,9 @@ TESOBE (http://www.tesobe.com/)
   */
 package code.model.dataAccess
 
-import net.liftweb.mapper._
 import net.liftweb.common._
-import net.liftweb.http.SessionVar
-import net.liftweb.http.S
+import net.liftweb.http.{S, SessionVar}
+import net.liftweb.mapper._
 
 
 /**

@@ -2,15 +2,14 @@ package code.metadata.tags
 
 import java.util.Date
 
-import code.model._
 import code.model.dataAccess.ResourceUser
 import code.users.Users
 import code.util._
 import code.views.Views
 import com.openbankproject.commons.model._
 import net.liftweb.common.Box
-import net.liftweb.util.Helpers.tryo
 import net.liftweb.mapper._
+import net.liftweb.util.Helpers.tryo
 
 object MappedTags extends Tags {
   override def getTags(bankId: BankId, accountId: AccountId, transactionId: TransactionId)(viewId: ViewId): List[TransactionTag] = {

@@ -1,16 +1,15 @@
 package code.metadata.tags
 
-import code.model._
 import java.util.Date
 
-import code.util.Helper
-import net.liftweb.common.{Box, Full}
-import org.bson.types.ObjectId
-import net.liftweb.mongodb.record.{MongoMetaRecord, MongoRecord}
-import net.liftweb.mongodb.record.field.{DateField, ObjectIdPk}
-import net.liftweb.record.field.{LongField, StringField}
+import code.model._
 import com.mongodb.{DBObject, QueryBuilder}
 import com.openbankproject.commons.model._
+import net.liftweb.common.{Box, Full}
+import net.liftweb.mongodb.record.field.{DateField, ObjectIdPk}
+import net.liftweb.mongodb.record.{MongoMetaRecord, MongoRecord}
+import net.liftweb.record.field.{LongField, StringField}
+import org.bson.types.ObjectId
 
 private object MongoTransactionTags extends Tags {
   

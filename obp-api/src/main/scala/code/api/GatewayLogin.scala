@@ -30,8 +30,8 @@ import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.util._
 import code.bankconnectors.Connector
 import code.consumer.Consumers
+import code.model.Consumer
 import code.model.dataAccess.AuthUser
-import code.model.{Consumer, UserX}
 import code.users.Users
 import code.util.Helper.MdcLoggable
 import com.nimbusds.jwt.JWTClaimsSet

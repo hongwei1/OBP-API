@@ -23,48 +23,30 @@ Osloerstrasse 16/17
 Berlin 13359, Germany
 */
 
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.UUID.randomUUID
 
-import code.api.JSONFactoryGateway.PayloadOfJwtJSON
-import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.cache.Caching
 import code.api.util.APIUtil.{MessageDoc, saveConnectorMetric, _}
-import code.api.util.ErrorMessages._
 import code.api.util.ExampleValue._
 import code.api.util._
-import code.api.v2_1_0.TransactionRequestBodyCommonJSON
 import code.bankconnectors._
-import code.bankconnectors.vJune2017.{InternalCustomer, JsonFactory_vJune2017}
-import code.bankconnectors.vMar2017._
-import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
-import code.customer._
 import code.kafka.{KafkaHelper, Topics}
-import code.model._
-import code.model.dataAccess._
-import code.users.Users
 import code.util.Helper.MdcLoggable
-import code.views.Views
+import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.dto._
-import com.openbankproject.commons.model.{AmountOfMoneyTrait, CounterpartyTrait, CreditRatingTrait, _}
-import com.sksamuel.avro4s.SchemaFor
+import com.openbankproject.commons.model._
 import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
-import net.liftweb
 import net.liftweb.common.{Box, _}
-import net.liftweb.json.{MappingException, parse}
-import net.liftweb.util.Helpers.tryo
 
-import scala.collection.immutable.{List, Nil}
+import scala.collection.immutable.List
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import com.github.dwickern.macros.NameOf.nameOf
 
 trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcLoggable {
   //this one import is for implicit convert, don't delete
-  import com.openbankproject.commons.model.{CustomerFaceImage, CreditLimit, CreditRating, AmountOfMoney}
+  import com.openbankproject.commons.model.{CreditLimit, CreditRating, CustomerFaceImage}
 
   implicit override val nameOfConnector = KafkaMappedConnector_vMay2019.toString
 
@@ -157,7 +139,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetAdapterInfo => OutBound, InBoundGetAdapterInfo => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetAdapterInfo => InBound, OutBoundGetAdapterInfo => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get )
         logger.debug(s"Kafka getAdapterInfo Req is: $req")
@@ -235,7 +217,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(bankTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetBank => OutBound, InBoundGetBank => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetBank => InBound, OutBoundGetBank => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , bankId)
         logger.debug(s"Kafka getBank Req is: $req")
@@ -312,7 +294,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(banksTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetBanks => OutBound, InBoundGetBanks => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetBanks => InBound, OutBoundGetBanks => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get )
         logger.debug(s"Kafka getBanks Req is: $req")
@@ -396,7 +378,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetBankAccountsForUser => OutBound, InBoundGetBankAccountsForUser => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetBankAccountsForUser => InBound, OutBoundGetBankAccountsForUser => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , username)
         logger.debug(s"Kafka getBankAccountsForUser Req is: $req")
@@ -484,7 +466,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetBankAccount => OutBound, InBoundGetBankAccount => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetBankAccount => InBound, OutBoundGetBankAccount => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , bankId, accountId)
         logger.debug(s"Kafka getBankAccount Req is: $req")
@@ -560,7 +542,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetCoreBankAccounts => OutBound, InBoundGetCoreBankAccounts => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetCoreBankAccounts => InBound, OutBoundGetCoreBankAccounts => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , bankIdAccountIds)
         logger.debug(s"Kafka getCoreBankAccounts Req is: $req")
@@ -648,7 +630,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundCheckBankAccountExists => OutBound, InBoundCheckBankAccountExists => InBound}
+        import com.openbankproject.commons.dto.{InBoundCheckBankAccountExists => InBound, OutBoundCheckBankAccountExists => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , bankId, accountId)
         logger.debug(s"Kafka checkBankAccountExists Req is: $req")
@@ -761,7 +743,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(transactionsTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetTransactions => OutBound, InBoundGetTransactions => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetTransactions => InBound, OutBoundGetTransactions => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , bankId, accountID, OBPQueryParam.getLimit(queryParams), OBPQueryParam.getOffset(queryParams), OBPQueryParam.getFromDate(queryParams), OBPQueryParam.getToDate(queryParams))
         logger.debug(s"Kafka getTransactions Req is: $req")
@@ -871,7 +853,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(transactionTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetTransaction => OutBound, InBoundGetTransaction => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetTransaction => InBound, OutBoundGetTransaction => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , bankId, accountID, transactionId)
         logger.debug(s"Kafka getTransaction Req is: $req")
@@ -963,7 +945,7 @@ trait KafkaMappedConnector_vMay2019 extends Connector with KafkaHelper with MdcL
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
     CacheKeyFromArguments.buildCacheKey {
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(customersByUserIdTTL second) {
-        import com.openbankproject.commons.dto.{OutBoundGetCustomersByUserId => OutBound, InBoundGetCustomersByUserId => InBound}
+        import com.openbankproject.commons.dto.{InBoundGetCustomersByUserId => InBound, OutBoundGetCustomersByUserId => OutBound}
 
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).get , userId)
         logger.debug(s"Kafka getCustomersByUserId Req is: $req")

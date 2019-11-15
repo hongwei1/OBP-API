@@ -1,15 +1,13 @@
 package code.cards
 
-import java.util.{Date, UUID}
+import java.util.Date
 
-import code.api.util.ErrorMessages.BankAccountNotFound
 import code.api.util._
 import code.model.dataAccess.MappedBankAccount
-import code.model._
 import code.views.Views._
 import com.openbankproject.commons.model.{CardAction => CardActionType, _}
-import net.liftweb.mapper.{By, MappedString, _}
 import net.liftweb.common.{Box, Failure, Full}
+import net.liftweb.mapper.{By, MappedString, _}
 import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.List

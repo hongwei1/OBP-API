@@ -42,11 +42,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 // Makes JValue assignment to Nil work
 import code.api.util.ApiRole._
 import code.api.util.ErrorMessages._
-import net.liftweb.json.Extraction
-
-import com.openbankproject.commons.model.{AmountOfMoneyJsonV121 => AmountOfMoneyJSON121}
-
 import code.api.v2_0_0.AccountsHelper._
+import com.openbankproject.commons.model.{AmountOfMoneyJsonV121 => AmountOfMoneyJSON121}
+import net.liftweb.json.Extraction
 
 trait APIMethods200 {
   //needs to be a RestHelper to get access to JsonGet, JsonPost, etc.

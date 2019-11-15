@@ -28,10 +28,10 @@ package code.api.v1_2_1
 
 import java.util.Date
 
-import net.liftweb.common.{Box, Full}
-import code.model._
 import code.api.util.APIUtil._
+import code.model._
 import com.openbankproject.commons.model._
+import net.liftweb.common.{Box, Full}
 
 case class APIInfoJSON(
   version : String,

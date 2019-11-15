@@ -6,7 +6,7 @@ import code.api.util.APIUtil
 import code.model.{MappedNonceProvider, Nonce}
 import code.remotedata.RemotedataNonces
 import net.liftweb.common.Box
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 import scala.concurrent.Future
 

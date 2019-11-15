@@ -5,11 +5,8 @@ import java.util.Date
 import code.api.Constant
 import code.api.util.APIUtil.DateWithDayExampleObject
 import code.api.util.CustomJsonFormats
-import com.openbankproject.commons.model.AmountOfMoneyJsonV121
-import code.model.{ModeratedBankAccount, ModeratedTransaction}
-import code.model.toBankAccountExtended
-import com.openbankproject.commons.model.TransactionRequest
-import com.openbankproject.commons.model.BankAccount
+import code.model.{ModeratedBankAccount, ModeratedTransaction, toBankAccountExtended}
+import com.openbankproject.commons.model.{AmountOfMoneyJsonV121, BankAccount, TransactionRequest}
 
 import scala.collection.immutable.List
 

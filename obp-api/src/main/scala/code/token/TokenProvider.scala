@@ -6,7 +6,7 @@ import code.api.util.APIUtil
 import code.model.{MappedTokenProvider, Token, TokenType}
 import code.remotedata.RemotedataTokens
 import net.liftweb.common.Box
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 import scala.concurrent.Future
 

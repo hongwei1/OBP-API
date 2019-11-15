@@ -5,6 +5,7 @@ import java.util.Date
 import java.util.regex.Matcher
 
 import code.api.util.ApiTag.ResourceDocTag
+import code.api.util.CodeGenerateUtils.createDocExample
 import code.api.util.{ApiTag, CallContext, OBPQueryParam}
 import code.bankconnectors.Connector
 import com.openbankproject.commons.util.ReflectUtils
@@ -15,8 +16,6 @@ import scala.collection.immutable.List
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
-
-import code.api.util.CodeGenerateUtils.createDocExample
 
 object KafkaConnectorBuilder extends App {
 

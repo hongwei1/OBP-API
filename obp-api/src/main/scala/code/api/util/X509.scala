@@ -1,17 +1,17 @@
 package code.api.util
 
+import java.io.ByteArrayInputStream
 import java.security.PublicKey
 import java.security.cert.{CertificateExpiredException, CertificateNotYetValidException, X509Certificate}
 import java.security.interfaces.{ECPublicKey, RSAPublicKey}
-import java.io.ByteArrayInputStream
 
 import com.github.dwickern.macros.NameOf
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.util.X509CertUtils
 import net.liftweb.common.{Box, Failure, Full}
 import org.bouncycastle.asn1.x509.Extension
-import org.bouncycastle.asn1.{ASN1Encodable, ASN1InputStream, ASN1ObjectIdentifier, ASN1Sequence, DEROctetString}
 import org.bouncycastle.asn1.x509.qualified.QCStatement
+import org.bouncycastle.asn1._
 
 object X509 {
 

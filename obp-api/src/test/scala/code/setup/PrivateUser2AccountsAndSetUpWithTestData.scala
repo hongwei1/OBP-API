@@ -1,9 +1,9 @@
 package code.setup
 
-import code.bankconnectors.Connector
-import net.liftweb.util.Helpers._
 import code.api.util.ErrorMessages._
+import code.bankconnectors.Connector
 import com.openbankproject.commons.model.{AccountId, User}
+import net.liftweb.util.Helpers._
 
 trait PrivateUser2AccountsAndSetUpWithTestData {
 

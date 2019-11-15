@@ -1,6 +1,7 @@
 package code.kafka
 
 import code.api.util.{APIUtil, ErrorMessages}
+
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 
 /**

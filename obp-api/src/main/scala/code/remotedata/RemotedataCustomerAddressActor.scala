@@ -1,10 +1,11 @@
 package code.remotedata
 
 import akka.actor.Actor
+import akka.pattern.pipe
 import code.actorsystem.ObpActorHelper
 import code.customeraddress.{MappedCustomerAddressProvider, RemotedataCustomerAddressCaseClasses}
 import code.util.Helper.MdcLoggable
-import akka.pattern.pipe
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class RemotedataCustomerAddressActor extends Actor with ObpActorHelper with MdcLoggable {

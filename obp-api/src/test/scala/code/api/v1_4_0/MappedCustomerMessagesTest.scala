@@ -1,7 +1,7 @@
 package code.api.v1_4_0
 
 import code.api.util.APIUtil.OAuth._
-import code.api.util.{APIUtil, ApiRole}
+import code.api.util.ApiRole
 import code.api.v1_4_0.JSONFactory1_4_0.{AddCustomerMessageJson, CustomerFaceImageJson, CustomerMessagesJson}
 import code.api.v2_0_0.CreateCustomerJson
 import code.customer.{CustomerX, MappedCustomerMessage}

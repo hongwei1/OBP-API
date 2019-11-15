@@ -1,10 +1,10 @@
 package code.remotedata
 
 import akka.actor.Actor
+import akka.pattern.pipe
 import code.accountapplication.{MappedAccountApplicationProvider, RemotedataAccountApplicationCaseClasses}
 import code.actorsystem.ObpActorHelper
 import code.util.Helper.MdcLoggable
-import akka.pattern.pipe
 import com.openbankproject.commons.model.ProductCode
 
 import scala.concurrent.ExecutionContext.Implicits.global

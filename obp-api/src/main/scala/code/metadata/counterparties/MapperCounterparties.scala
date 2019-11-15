@@ -4,14 +4,12 @@ import java.util.UUID.randomUUID
 import java.util.{Date, UUID}
 
 import code.api.cache.Caching
-import code.api.util.{APIUtil, CallContext}
+import code.api.util.APIUtil
 import code.api.util.APIUtil.getSecondsCache
-import code.model._
 import code.model.dataAccess.ResourceUser
 import code.users.Users
 import code.util.Helper.MdcLoggable
 import code.util._
-import com.google.common.cache.CacheBuilder
 import com.openbankproject.commons.model._
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.{Box, Full}

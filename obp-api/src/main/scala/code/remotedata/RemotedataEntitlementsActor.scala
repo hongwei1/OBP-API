@@ -1,11 +1,12 @@
 package code.remotedata
 
 import akka.actor.Actor
+import akka.pattern.pipe
 import code.actorsystem.ObpActorHelper
-import code.entitlement.{ Entitlement, MappedEntitlementsProvider, RemotedataEntitlementsCaseClasses }
+import code.entitlement.{Entitlement, MappedEntitlementsProvider, RemotedataEntitlementsCaseClasses}
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.Box
-import akka.pattern.pipe
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class RemotedataEntitlementsActor extends Actor with ObpActorHelper with MdcLoggable {

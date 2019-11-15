@@ -43,12 +43,11 @@ import code.model._
 import code.model.dataAccess._
 import code.products.Products
 import code.products.Products.countOfProducts
-import com.openbankproject.commons.model.Product
 import code.setup.{APIResponse, SendServerRequests}
 import code.users.Users
 import code.views.Views
 import code.views.system.ViewDefinition
-import com.openbankproject.commons.model._
+import com.openbankproject.commons.model.{Product, _}
 import dispatch._
 import net.liftweb.common.{Empty, ParamFailure}
 import net.liftweb.json.JsonAST.{JObject, JValue}

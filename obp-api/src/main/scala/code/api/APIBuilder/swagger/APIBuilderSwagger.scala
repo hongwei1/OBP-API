@@ -25,8 +25,8 @@ Berlin 13359, Germany
  */
 package code.api.APIBuilder.swagger
 
-import code.api.APIBuilder.APIBuilderModel._
 import code.api.APIBuilder.APIBuilderModel
+import code.api.APIBuilder.APIBuilderModel._
 import code.api.util.APIUtil
 import net.liftweb.json.JsonAST.{JObject, JString}
 import net.liftweb.json.{JArray, JValue}

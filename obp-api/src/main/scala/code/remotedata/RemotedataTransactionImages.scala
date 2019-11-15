@@ -5,11 +5,10 @@ import java.util.Date
 import akka.pattern.ask
 import code.actorsystem.ObpActorInit
 import code.metadata.transactionimages.{RemotedataTransactionImagesCaseClasses, TransactionImages}
-import code.model._
 import com.openbankproject.commons.model._
+import net.liftweb.common.Box
 
 import scala.collection.immutable.List
-import net.liftweb.common.Box
 
 object RemotedataTransactionImages extends ObpActorInit with TransactionImages {
 

@@ -1,5 +1,8 @@
 package code.api
 
+import code.api.util.APIUtil.OAuth._
+import code.api.util.ApiRole.CanGetAnyUser
+import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ErrorMessages}
 import code.bankconnectors.vJune2017.InboundAccountJune2017
 import code.setup.{APIResponse, DefaultUsers, ServerSetup}
@@ -7,11 +10,7 @@ import net.liftweb.common.Full
 import net.liftweb.json
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.{JField, JObject, JString}
-import net.liftweb.util.Props
 import org.scalatest._
-import code.api.util.APIUtil.OAuth._
-import code.api.util.ApiRole.CanGetAnyUser
-import code.api.util.ErrorMessages._
 
 class gateWayloginTest extends ServerSetup with BeforeAndAfter with DefaultUsers {
 

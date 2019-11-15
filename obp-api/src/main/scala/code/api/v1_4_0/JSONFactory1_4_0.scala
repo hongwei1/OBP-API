@@ -11,8 +11,8 @@ import com.openbankproject.commons.model.{Product, _}
 import com.openbankproject.commons.util.{EnumValue, OBPEnumeration}
 import net.liftweb.common.Full
 import net.liftweb.json
-import net.liftweb.json.{JDouble, JInt, JString}
 import net.liftweb.json.JsonAST.{JArray, JBool, JObject, JValue}
+import net.liftweb.json.{JDouble, JInt, JString}
 import net.liftweb.util.StringHelpers
 
 import scala.reflect.runtime.currentMirror

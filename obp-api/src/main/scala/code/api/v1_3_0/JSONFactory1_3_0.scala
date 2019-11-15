@@ -2,7 +2,6 @@ package code.api.v1_3_0
 
 import java.util.Date
 
-import code.model._
 import code.views.Views
 import com.openbankproject.commons.model._
 

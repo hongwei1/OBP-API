@@ -1,8 +1,8 @@
 package code.api.v2_2_0
 
 import code.api.util.APIUtil.OAuth._
-import code.api.util.{ApiRole, ErrorMessages}
 import code.api.util.ErrorMessages.UserHasMissingRoles
+import code.api.util.{ApiRole, ErrorMessages}
 import code.entitlement.Entitlement
 import code.setup.DefaultUsers
 import com.openbankproject.commons.model.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}

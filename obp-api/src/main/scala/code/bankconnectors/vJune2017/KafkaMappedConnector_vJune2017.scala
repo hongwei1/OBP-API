@@ -25,37 +25,28 @@ Berlin 13359, Germany
 
 import java.text.SimpleDateFormat
 import java.util.UUID.randomUUID
-import java.util.{Date, Locale}
 
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.cache.Caching
-import code.api.util.APIUtil.{MessageDoc, getSecondsCache, saveConnectorMetric}
+import code.api.util.APIUtil.{MessageDoc, saveConnectorMetric, _}
 import code.api.util.ErrorMessages._
 import code.api.util._
-import code.api.util.APIUtil._
-import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
-import com.openbankproject.commons.model.{AccountV310Json, CardObjectJson, CheckbookOrdersJson}
 import code.bankconnectors._
 import code.bankconnectors.vMar2017._
 import code.customer._
 import code.kafka.KafkaHelper
-import code.model._
 import code.model.dataAccess._
-import code.transactionrequests.TransactionRequests._
 import code.util.Helper.MdcLoggable
-import com.google.common.cache.CacheBuilder
-import com.openbankproject.commons.model.{CounterpartyTrait, _}
+import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
+import com.openbankproject.commons.model.{CardObjectJson, CounterpartyTrait, _}
 import com.sksamuel.avro4s.SchemaFor
 import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
 import net.liftweb.common.{Box, _}
 import net.liftweb.json
-import net.liftweb.json.Extraction._
-import net.liftweb.json.JsonAST.JValue
-import net.liftweb.json.{Extraction, MappingException, parse}
+import net.liftweb.json.{MappingException, parse}
 import net.liftweb.util.Helpers.tryo
 
 import scala.collection.immutable.{List, Nil}
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._

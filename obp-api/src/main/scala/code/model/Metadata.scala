@@ -29,7 +29,7 @@ package code.model
 
 import code.util.Helper
 import com.openbankproject.commons.model._
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.Full
 import net.liftweb.json.JsonAST.JObject
 import net.liftweb.json.JsonDSL._
 

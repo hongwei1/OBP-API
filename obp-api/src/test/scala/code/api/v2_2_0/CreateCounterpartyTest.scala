@@ -6,7 +6,7 @@ import code.api.util.APIUtil.OAuth._
 import code.api.util.ErrorMessages
 import code.setup.DefaultUsers
 import code.views.Views
-import com.openbankproject.commons.model.{AccountId, BankId, ViewId, ViewIdBankIdAccountId}
+import com.openbankproject.commons.model.{AccountId, ViewId, ViewIdBankIdAccountId}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.Serialization.write
 

@@ -4,9 +4,9 @@ import code.api.APIFailureNewStyle
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.berlin.group.v1.JSONFactory_BERLIN_GROUP_1.{Balances, CoreAccountJsonV1, CoreAccountsJsonV1, Transactions}
 import code.api.util.APIUtil.{defaultBankId, _}
-import code.api.util.{NewStyle}
-import code.api.util.ErrorMessages._
 import code.api.util.ApiTag._
+import code.api.util.ErrorMessages._
+import code.api.util.NewStyle
 import code.api.util.NewStyle.HttpCode
 import code.bankconnectors.Connector
 import code.model._

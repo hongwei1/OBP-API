@@ -1,7 +1,6 @@
 package code.accountHolder
 
 import code.accountholders.AccountHolders
-import code.model._
 import code.setup.{DefaultUsers, ServerSetup}
 import code.views.system.ViewDefinition
 import com.openbankproject.commons.model.{AccountId, BankId, BankIdAccountId}

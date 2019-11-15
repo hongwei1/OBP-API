@@ -19,15 +19,13 @@ import code.metadata.transactionimages.TransactionImages
 import code.metadata.wheretags.WhereTags
 import code.model._
 import code.model.dataAccess._
-import com.openbankproject.commons.model.Product
 import code.transaction.MappedTransaction
-import code.transactionrequests.TransactionRequests._
 import code.transactionrequests._
 import code.util.Helper
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.google.common.cache.CacheBuilder
-import com.openbankproject.commons.model.{Bank, Transaction, _}
+import com.openbankproject.commons.model.{Bank, Product, Transaction, _}
 import com.tesobe.obp.kafka.{Configuration, SimpleConfiguration, SimpleNorth}
 import com.tesobe.obp.transport.nov2016._
 import com.tesobe.obp.transport.spi.{DefaultSorter, TimestampFilter}

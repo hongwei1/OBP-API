@@ -3,7 +3,6 @@ package code.remotedata
 import akka.actor.Actor
 import code.actorsystem.ObpActorHelper
 import code.metadata.comments.{MappedComments, RemotedataCommentsCaseClasses}
-import code.model._
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.{AccountId, BankId, TransactionId}
 

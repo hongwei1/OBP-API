@@ -3,8 +3,7 @@ package code.setup
 import java.util.{Calendar, Date}
 
 import code.api.util.{APIUtil, OBPLimit, OBPOffset}
-import code.bankconnectors.{Connector, LocalMappedConnector}
-import code.model._
+import code.bankconnectors.LocalMappedConnector
 import code.views.Views
 import com.openbankproject.commons.model._
 

@@ -1,7 +1,7 @@
 package code.model.dataAccess.internalMapping
 
 import code.util.Helper.MdcLoggable
-import com.openbankproject.commons.model.{BankId, AccountId}
+import com.openbankproject.commons.model.AccountId
 import net.liftweb.common._
 import net.liftweb.mapper.By
 

@@ -2,11 +2,9 @@ package com.openbankproject.commons.util
 
 import com.openbankproject.commons.util.Color.Color
 import com.openbankproject.commons.util.Shape.Shape
-import org.scalatest._
+import org.scalatest.{Tag, _}
 
 import scala.reflect.runtime.universe._
-
-import org.scalatest.Tag
 
 // to show bad design of scala enumeration
 object Shape extends Enumeration {

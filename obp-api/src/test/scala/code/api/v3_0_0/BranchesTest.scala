@@ -1,9 +1,8 @@
 package code.api.v3_0_0
 
-import code.api.ErrorMessage
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole.CanDeleteBranchAtAnyBank
-import code.api.util.{ApiVersion, ErrorMessages, OBPQueryParam}
+import code.api.util.{ApiVersion, OBPQueryParam}
 import code.api.v3_1_0.OBPAPI3_1_0
 import code.bankconnectors.Connector
 import code.branches.Branches.Branch

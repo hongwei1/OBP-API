@@ -1,33 +1,27 @@
 package code.search
 
 import java.nio.charset.Charset
-
-import dispatch.{Http, url}
-import code.util.Helper.MdcLoggable
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import net.liftweb.http.{InMemoryResponse, JsonResponse, LiftResponse}
-import net.liftweb.json.JsonAST._
-import net.liftweb.util.Helpers
-import net.liftweb.util.Props
-import dispatch._
-import Defaults._
-import net.liftweb.json
 import java.util.Date
 
 import code.api.util.APIUtil
 import code.api.util.ErrorMessages._
+import code.util.Helper.MdcLoggable
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import org.elasticsearch.common.settings.Settings
-import com.sksamuel.elastic4s.http.HttpClient
-import com.sksamuel.elastic4s.mappings.FieldType._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import dispatch.as.String.charset
+import com.sksamuel.elastic4s.http.HttpClient
+import dispatch.Defaults._
+import dispatch.{Http, url, _}
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.provider.HTTPCookie
+import net.liftweb.http.{InMemoryResponse, JsonResponse, LiftResponse}
+import net.liftweb.json
 import net.liftweb.json.JsonAST
+import net.liftweb.json.JsonAST._
+import net.liftweb.util.Helpers
+import org.elasticsearch.common.settings.Settings
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.util.control.NoStackTrace
 
 

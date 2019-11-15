@@ -3,10 +3,9 @@ package code.cards
 import java.util.Date
 
 import code.api.util.{CallContext, OBPQueryParam}
-import code.model._
 import com.openbankproject.commons.model._
-import net.liftweb.util.SimpleInjector
 import net.liftweb.common.Box
+import net.liftweb.util.SimpleInjector
 
 import scala.collection.immutable.List
 

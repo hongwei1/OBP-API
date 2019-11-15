@@ -4,9 +4,8 @@ import java.util.Date
 
 import akka.actor.Actor
 import code.actorsystem.ObpActorHelper
+import code.model.{TokenType, _}
 import code.token.RemotedataTokensCaseClasses
-import code.model.TokenType
-import code.model._
 import code.util.Helper.MdcLoggable
 
 

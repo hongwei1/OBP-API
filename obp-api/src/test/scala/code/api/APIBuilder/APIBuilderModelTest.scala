@@ -26,13 +26,13 @@ Berlin 13359, Germany
 
 package code.api.APIBuilder
 
+import code.api.APIBuilder.APIBuilderModel._
 import code.util.Helper.MdcLoggable
+import net.liftweb.json
+import net.liftweb.json.JValue
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.meta.{Defn, Term, Type}
-import APIBuilderModel.{modelMappedName, _}
-import net.liftweb.json
-import net.liftweb.json.JValue
 
 class APIBuilderModelTest extends FlatSpec with Matchers with MdcLoggable {
   

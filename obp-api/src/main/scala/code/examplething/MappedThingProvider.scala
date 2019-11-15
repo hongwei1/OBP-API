@@ -3,7 +3,6 @@ package code.examplething
 
 import code.util.UUIDString
 import com.openbankproject.commons.model.BankId
-import net.liftweb.common.Box
 import net.liftweb.mapper._
 
 

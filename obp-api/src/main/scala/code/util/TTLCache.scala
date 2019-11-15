@@ -2,7 +2,7 @@ package code.util
 
 import java.util.concurrent.{Callable, TimeUnit}
 
-import com.google.common.cache.{ Cache => GuavaCache, CacheBuilder}
+import com.google.common.cache.{CacheBuilder, Cache => GuavaCache}
 
 sealed trait Caching[K <: String, V <: AnyRef] {
   def get(k: K): Option[V]

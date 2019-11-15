@@ -21,7 +21,7 @@ import code.customer.CustomerX
 import code.entitlement.Entitlement
 import code.fx.fx
 import code.metrics.APIMetrics
-import code.model.{BankX, BankAccountX, Consumer, UserX, toUserExtended}
+import code.model.{BankAccountX, BankX, Consumer, UserX, toUserExtended}
 import code.sandbox.SandboxData
 import code.transactionrequests.TransactionRequests.{TransactionChallengeTypes, TransactionRequestTypes}
 import code.usercustomerlinks.UserCustomerLink
@@ -31,7 +31,6 @@ import code.views.Views
 import com.openbankproject.commons.model._
 import net.liftweb.json.Extraction
 import net.liftweb.util.Helpers.tryo
-import net.liftweb.util.Props
 
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer

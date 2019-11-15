@@ -10,8 +10,8 @@ import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object MappedCustomerAddressProvider extends CustomerAddressProvider {
 

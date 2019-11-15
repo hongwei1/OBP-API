@@ -1,7 +1,5 @@
 package code.bankconnectors.akka
 
-import java.util.Date
-
 import akka.pattern.ask
 import code.actorsystem.ObpLookupSystem
 import code.api.ResourceDocs1_4_0.MessageDocsSwaggerDefinitions.{bankAccountCommons, bankCommons, transactionCommons, _}

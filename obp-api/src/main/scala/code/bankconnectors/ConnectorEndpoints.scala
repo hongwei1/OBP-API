@@ -6,11 +6,11 @@ import code.api.util.NewStyle.HttpCode
 import code.api.util.{APIUtil, CallContext, CustomJsonFormats, OBPQueryParam}
 import code.api.v3_1_0.OBPAPI3_1_0.oauthServe
 import code.bankconnectors.rest.RestConnector_vMar2019
+import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.model._
 import com.openbankproject.commons.util.ReflectUtils
 import com.openbankproject.commons.util.ReflectUtils.{getType, toValueObject}
 import net.liftweb.common.{Box, Empty, Failure, Full}
-import com.github.dwickern.macros.NameOf.nameOf
 import net.liftweb.http.Req
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.JValue

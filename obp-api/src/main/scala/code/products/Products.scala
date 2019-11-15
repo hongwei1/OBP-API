@@ -4,10 +4,9 @@ package code.products
 
 // Need to import these one by one because in same package!
 
-import com.openbankproject.commons.model.{BankId, ProductCode}
+import com.openbankproject.commons.model.{BankId, Product, ProductCode}
 import net.liftweb.common.Logger
 import net.liftweb.util.SimpleInjector
-import com.openbankproject.commons.model.Product
 
 object Products extends SimpleInjector {
 

@@ -7,7 +7,6 @@ import code.remotedata.RemotedataCustomers
 import com.openbankproject.commons.model.{User, _}
 import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
-import akka.pattern.pipe
 
 import scala.collection.immutable.List
 import scala.concurrent.Future

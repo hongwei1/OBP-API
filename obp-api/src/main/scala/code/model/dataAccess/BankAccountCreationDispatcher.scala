@@ -46,7 +46,6 @@ package code.model.dataAccess {
   import code.accountholders.AccountHolders
   import code.api.util.APIUtil
   import code.bankconnectors.Connector
-  import code.model._
   import code.users.Users
   import code.util.Helper.MdcLoggable
   import code.views.Views

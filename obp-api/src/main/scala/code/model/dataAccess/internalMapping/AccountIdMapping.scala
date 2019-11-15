@@ -1,7 +1,7 @@
 package code.model.dataAccess.internalMapping
 
 import code.util.MappedUUID
-import com.openbankproject.commons.model.{BankId, AccountId}
+import com.openbankproject.commons.model.AccountId
 import net.liftweb.mapper._
 
 class AccountIdMapping extends AccountIdMappingT with LongKeyedMapper[AccountIdMapping] with IdPK with CreatedUpdated {

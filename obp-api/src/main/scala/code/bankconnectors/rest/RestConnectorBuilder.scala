@@ -3,6 +3,7 @@ package code.bankconnectors.rest
 import java.io.File
 import java.util.Date
 
+import code.api.util.CodeGenerateUtils.createDocExample
 import code.api.util.{APIUtil, CallContext, OBPQueryParam}
 import code.bankconnectors.Connector
 import com.openbankproject.commons.util.ReflectUtils
@@ -12,7 +13,6 @@ import scala.collection.immutable.List
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
-import code.api.util.CodeGenerateUtils.createDocExample
 
 object RestConnectorBuilder extends App {
   // rewrite method code.webuiprops.MappedWebUiPropsProvider#getWebUiPropsValue, avoid access DB cause dataSource not found exception

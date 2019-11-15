@@ -48,15 +48,13 @@ import code.metadata.transactionimages.TransactionImages
 import code.metadata.wheretags.WhereTags
 import code.model._
 import code.model.dataAccess._
-import com.openbankproject.commons.model.Product
 import code.transaction.MappedTransaction
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
-import code.transactionrequests.TransactionRequests._
 import code.transactionrequests.{MappedTransactionRequestTypeCharge, TransactionRequestTypeCharge, TransactionRequestTypeChargeMock, TransactionRequests}
 import code.util.Helper
 import code.util.Helper.MdcLoggable
 import code.views.Views
-import com.openbankproject.commons.model.{CounterpartyTrait, _}
+import com.openbankproject.commons.model.{CounterpartyTrait, Product, _}
 import com.tesobe.CacheKeyFromArguments
 import com.tesobe.obp.transport.Pager
 import com.tesobe.obp.transport.spi.{DefaultPager, DefaultSorter, TimestampFilter}

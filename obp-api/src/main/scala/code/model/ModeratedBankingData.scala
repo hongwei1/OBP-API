@@ -29,14 +29,13 @@ package code.model
 import java.util.Date
 
 import code.api.util.APIUtil
-import code.api.util.ErrorMessages.NoViewPermission
+import code.api.util.ErrorMessages.{NoViewPermission, _}
 import code.model.Moderation.Moderated
 import code.util.Helper
+import com.openbankproject.commons.model._
 import net.liftweb.common.{Box, Failure}
 import net.liftweb.json.JsonAST.{JField, JObject, JString}
 import net.liftweb.json.JsonDSL._
-import code.api.util.ErrorMessages._
-import com.openbankproject.commons.model._
 
 import scala.collection.immutable.List
 
@@ -62,7 +61,6 @@ class ModeratedTransaction(
 ) {
 
   def dateOption2JString(date: Option[Date]) : JString = {
-    import java.text.SimpleDateFormat
 
     val dateFormat = APIUtil.DateWithMsFormat
     JString(date.map(d => dateFormat.format(d)) getOrElse "")

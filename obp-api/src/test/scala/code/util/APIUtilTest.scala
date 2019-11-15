@@ -27,16 +27,13 @@ TESOBE (http://www.tesobe.com/)
 
 package code.util
 
-import java.time.{ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.Date
 
-import code.api.JSONFactoryGateway.PayloadOfJwtJSON
-import code.api.util.APIUtil._
-import code.api.util.APIUtil.{DateWithMsFormat, DefaultFromDate, DefaultToDate}
-import code.api.util._
+import code.api.util.APIUtil.{DateWithMsFormat, DefaultFromDate, DefaultToDate, _}
 import code.api.util.ErrorMessages._
-import code.bankconnectors._
+import code.api.util._
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.provider.HTTPParam

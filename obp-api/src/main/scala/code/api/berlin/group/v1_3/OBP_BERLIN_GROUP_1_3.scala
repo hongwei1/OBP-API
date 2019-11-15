@@ -38,7 +38,7 @@ import code.api.builder.ConfirmationOfFundsServicePIISApi.APIMethods_Confirmatio
 import code.api.builder.PaymentInitiationServicePISApi.APIMethods_PaymentInitiationServicePISApi
 import code.api.builder.SigningBasketsApi.APIMethods_SigningBasketsApi
 import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc, getAllowedEndpoints}
-import code.api.util.{APIUtil, ApiVersion, ScannedApiVersion, ScannedApis}
+import code.api.util.{ScannedApiVersion, ScannedApis}
 import code.util.Helper.MdcLoggable
 
 import scala.collection.mutable.ArrayBuffer

@@ -1,6 +1,5 @@
 package code.cardattribute
 
-import code.util.{MappedUUID, UUIDString}
 import com.openbankproject.commons.model.enums.CardAttributeType
 import com.openbankproject.commons.model.{BankId, CardAttribute}
 import net.liftweb.common.{Box, Empty, Full}

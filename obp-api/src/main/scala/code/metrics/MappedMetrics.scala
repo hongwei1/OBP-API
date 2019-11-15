@@ -8,15 +8,16 @@ import code.api.cache.Caching
 import code.api.util.ErrorMessages._
 import code.api.util._
 import code.util.Helper.MdcLoggable
-import code.util.{MappedUUID, TTLCache, UUIDString}
+import code.util.{MappedUUID, UUIDString}
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper.{Index, _}
 import net.liftweb.util.Helpers.tryo
-import scala.concurrent.duration._
+
 import scala.collection.immutable.List
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 object MappedMetrics extends APIMetrics with MdcLoggable{
 

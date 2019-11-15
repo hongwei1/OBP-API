@@ -1,5 +1,6 @@
 package code.api.builder
 import java.util.UUID
+
 import code.api.builder.JsonFactory_APIBuilder._
 import code.api.util.APIUtil._
 import code.api.util.ApiTag._
@@ -7,11 +8,11 @@ import code.api.util.ApiVersion
 import code.api.util.ErrorMessages._
 import net.liftweb.common.Full
 import net.liftweb.http.rest.RestHelper
-import net.liftweb.json
 import net.liftweb.json.Extraction._
 import net.liftweb.json._
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.tryo
+
 import scala.collection.immutable.Nil
 import scala.collection.mutable.ArrayBuffer
 trait APIMethods_APIBuilder { self: RestHelper =>

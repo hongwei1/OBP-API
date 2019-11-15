@@ -5,7 +5,7 @@ import com.openbankproject.commons.model.enums.DynamicEntityFieldType
 import com.openbankproject.commons.model.{Converter, JsonFieldReName}
 import net.liftweb.common.Box
 import net.liftweb.json.JsonDSL._
-import net.liftweb.json.{JArray, JBool, JDouble, JField, JInt, JNothing, JNull, JObject, JString, compactRender, parse}
+import net.liftweb.json._
 import net.liftweb.util.SimpleInjector
 
 object DynamicEntityProvider extends SimpleInjector {

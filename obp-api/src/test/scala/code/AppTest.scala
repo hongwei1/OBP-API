@@ -27,11 +27,13 @@ TESOBE (http://www.tesobe.com/)
 package code
 
 import java.io.File
+
+import junit.framework.Assert._
 import junit.framework._
-import Assert._
-import scala.xml.XML
-import net.liftweb.util._
 import net.liftweb.common._
+import net.liftweb.util._
+
+import scala.xml.XML
 
 object AppTest {
   def suite: Test = {

@@ -9,8 +9,8 @@ import com.openbankproject.commons.model.User
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object MappedEntitlementRequestsProvider extends EntitlementRequestProvider {
 

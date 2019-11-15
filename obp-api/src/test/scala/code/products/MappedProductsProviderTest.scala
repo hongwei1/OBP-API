@@ -1,8 +1,7 @@
 package code.products
 
-import com.openbankproject.commons.model.Product
 import code.setup.ServerSetup
-import com.openbankproject.commons.model.BankId
+import com.openbankproject.commons.model.{BankId, Product}
 import net.liftweb.mapper.By
 
 class MappedProductsProviderTest extends ServerSetup {

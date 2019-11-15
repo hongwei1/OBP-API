@@ -30,21 +30,19 @@ package code.api.v2_2_0
 import java.util.Date
 
 import code.actorsystem.ObpActorConfig
-import code.api.util.{APIUtil, ApiProperty, CustomJsonFormats}
 import code.api.util.APIUtil.{MessageDoc, getPropsValue}
+import code.api.util.{APIUtil, ApiProperty, CustomJsonFormats}
 import code.api.v1_2_1.BankRoutingJsonV121
-import com.openbankproject.commons.model.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
 import code.api.v1_4_0.JSONFactory1_4_0._
 import code.api.v2_1_0.{JSONFactory210, LocationJsonV210, PostCounterpartyBespokeJson, ResourceUserJSON}
 import code.atms.Atms.Atm
 import code.branches.Branches.{Branch, DriveUpString, LobbyString}
 import code.fx.FXRate
 import code.metrics.ConnectorMetric
-import code.model.dataAccess.ResourceUser
 import code.model._
-import com.openbankproject.commons.model.Product
+import code.model.dataAccess.ResourceUser
 import code.users.Users
-import com.openbankproject.commons.model._
+import com.openbankproject.commons.model.{AccountRoutingJsonV121, AmountOfMoneyJsonV121, Product, _}
 import net.liftweb.common.{Box, Full}
 import net.liftweb.json.Extraction.decompose
 import net.liftweb.json.JsonAST.JValue

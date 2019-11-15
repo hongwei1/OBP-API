@@ -1,8 +1,7 @@
 package code.metadata.comments
 
-import java.util.{Date, UUID}
+import java.util.Date
 
-import code.model._
 import code.model.dataAccess.ResourceUser
 import code.users.Users
 import code.util.{AccountIdString, MappedUUID, UUIDString}

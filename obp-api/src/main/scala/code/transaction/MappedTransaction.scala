@@ -3,14 +3,14 @@ package code.transaction
 
 import code.actorsystem.ObpLookupSystem
 import code.api.util.{APIUtil, ApiTrigger}
-import code.bankconnectors.{Connector, LocalMappedConnector}
+import code.bankconnectors.LocalMappedConnector
 import code.bankconnectors.LocalMappedConnector.getBankAccountCommon
 import code.model._
 import code.util._
 import code.webhook.WebhookActor
 import com.openbankproject.commons.model._
-import net.liftweb.common._
 import net.liftweb.common.Box.tryo
+import net.liftweb.common._
 import net.liftweb.mapper._
 
 class MappedTransaction extends LongKeyedMapper[MappedTransaction] with IdPK with CreatedUpdated with TransactionUUID {

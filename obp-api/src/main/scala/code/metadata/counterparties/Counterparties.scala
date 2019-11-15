@@ -3,11 +3,10 @@ package code.metadata.counterparties
 import java.util.Date
 
 import code.api.util.APIUtil
-import code.model._
 import code.remotedata.RemotedataCounterparties
 import com.openbankproject.commons.model._
 import net.liftweb.common.Box
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 import scala.collection.immutable.List
 

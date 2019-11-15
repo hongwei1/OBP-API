@@ -38,9 +38,9 @@ object AdminDb extends ConnectionIdentifier {
 
 object MongoConfig {
   def init: Unit = {
+    import com.mongodb.ServerAddress
     import net.liftweb.mongodb.MongoDB
-    import com.mongodb.{Mongo, ServerAddress}
-    import net.liftweb.util.{Props, DefaultConnectionIdentifier}
+    import net.liftweb.util.{DefaultConnectionIdentifier, Props}
 
 
     val srvr = new ServerAddress(

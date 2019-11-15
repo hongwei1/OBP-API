@@ -1,16 +1,16 @@
 package com.openbankproject.commons.util
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.json.JValue
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.annotation.tailrec
 import scala.collection.immutable.List
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
 import scala.util.Success
-import net.liftweb.json.JValue
 
 object ReflectUtils {
   private[this] val mirror: ru.Mirror = ru.runtimeMirror(getClass().getClassLoader)

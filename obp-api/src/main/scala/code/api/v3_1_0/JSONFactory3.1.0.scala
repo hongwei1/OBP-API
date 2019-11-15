@@ -34,7 +34,7 @@ import code.api.util.APIUtil.{stringOptionOrNull, stringOrNull}
 import code.api.util.RateLimitingPeriod.LimitCallPeriod
 import code.api.util.{APIUtil, RateLimitingPeriod}
 import code.api.v1_2_1.JSONFactory.{createAmountOfMoneyJSON, createOwnersJSON}
-import code.api.v1_2_1.{BankJSON, RateLimiting, UserJSONV121, ViewJSONV121}
+import code.api.v1_2_1.{RateLimiting, UserJSONV121, ViewJSONV121}
 import code.api.v1_3_0.JSONFactory1_3_0._
 import code.api.v1_3_0.{PinResetJSON, ReplacementJSON}
 import code.api.v1_4_0.JSONFactory1_4_0.{CustomerFaceImageJson, MetaJsonV140, TransactionRequestAccountJsonV140}
@@ -42,7 +42,7 @@ import code.api.v2_0_0.{MeetingKeysJson, MeetingPresentJson}
 import code.api.v2_1_0.JSONFactory210.createLicenseJson
 import code.api.v2_1_0.{CustomerCreditRatingJSON, ResourceUserJSON}
 import code.api.v2_2_0._
-import code.api.v3_0_0.{AccountRuleJsonV300, ViewBasicV300}
+import code.api.v3_0_0.AccountRuleJsonV300
 import code.api.v3_0_0.JSONFactory300.{createAccountRoutingsJSON, createAccountRulesJSON}
 import code.consent.MappedConsent
 import code.entitlement.Entitlement

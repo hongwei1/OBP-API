@@ -29,6 +29,7 @@ package code.util
 
 import java.net.{URI, URLDecoder}
 
+import code.api.oauth1a.OauthParams._
 import code.api.util.APIUtil
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.{Box, Empty, Failure, Full}
@@ -37,7 +38,7 @@ import oauth.signpost.{OAuthConsumer, OAuthProvider}
 import org.apache.http.client.utils.URLEncodedUtils
 import org.openqa.selenium._
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
-import code.api.oauth1a.OauthParams._
+
 import scala.collection.JavaConverters._
 
 sealed trait Provider {

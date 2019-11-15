@@ -2,7 +2,7 @@ package code.accountattribute
 
 import code.util.{MappedUUID, UUIDString}
 import com.openbankproject.commons.model.enums.AccountAttributeType
-import com.openbankproject.commons.model.{AccountAttribute, AccountId, BankId, ProductAttribute, ProductCode}
+import com.openbankproject.commons.model._
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo

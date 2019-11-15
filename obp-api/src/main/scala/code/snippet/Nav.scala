@@ -26,14 +26,10 @@ TESOBE (http://www.tesobe.com/)
   */
 
 package code.snippet
-import net.liftweb.http.S
-import net.liftweb.http.LiftRules
+import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.http.{LiftRules, S}
+import net.liftweb.sitemap.{Loc, SiteMapSingleton}
 import net.liftweb.util.Helpers._
-import net.liftweb.sitemap.Loc
-import net.liftweb.common.Box
-import net.liftweb.common.Full
-import net.liftweb.common.Empty
-import net.liftweb.sitemap.SiteMapSingleton
 
 class Nav {
 

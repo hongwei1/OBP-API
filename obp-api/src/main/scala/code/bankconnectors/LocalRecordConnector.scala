@@ -13,7 +13,7 @@ import code.util.Helper.MdcLoggable
 import com.mongodb.QueryBuilder
 import com.openbankproject.commons.model._
 import com.tesobe.model.UpdateBankAccount
-import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.common.{Box, Failure, Full}
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.mongodb.BsonDSL._

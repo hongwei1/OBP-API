@@ -25,12 +25,13 @@ Berlin 13359, Germany
  */
 package code.api.APIBuilder.apiResourceDoc;
 
-import code.api.APIBuilder.APIBuilderModel._
 import code.api.APIBuilder.APIBuilderModel
+import code.api.APIBuilder.APIBuilderModel._
 import code.api.util.APIUtil
-import scala.meta._
-import net.liftweb.json.JsonAST.{JObject, JString}
 import net.liftweb.json.JValue
+import net.liftweb.json.JsonAST.{JObject, JString}
+
+import scala.meta._
 
 object APIBuilder
 {

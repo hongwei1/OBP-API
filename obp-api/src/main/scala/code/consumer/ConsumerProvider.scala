@@ -4,7 +4,7 @@ import code.api.util.APIUtil
 import code.model.{AppType, Consumer, MappedConsumersProvider}
 import code.remotedata.RemotedataConsumers
 import net.liftweb.common.Box
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 import scala.concurrent.Future
 

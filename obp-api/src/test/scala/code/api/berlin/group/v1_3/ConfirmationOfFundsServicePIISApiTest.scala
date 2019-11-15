@@ -3,7 +3,7 @@ package code.api.berlin.group.v1_3
 import code.api.ErrorMessage
 import code.api.builder.ConfirmationOfFundsServicePIISApi.APIMethods_ConfirmationOfFundsServicePIISApi
 import code.api.util.APIUtil.OAuth._
-import code.api.util.ErrorMessages.{BankAccountNotFound, InvalidJsonContent, InvalidJsonFormat}
+import code.api.util.ErrorMessages.{BankAccountNotFound, InvalidJsonFormat}
 import code.model.dataAccess.MappedBankAccount
 import code.setup.{APIResponse, DefaultUsers}
 import com.github.dwickern.macros.NameOf.nameOf

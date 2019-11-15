@@ -5,9 +5,10 @@ import java.util.UUID.randomUUID
 
 import code.api.cache.Caching
 import code.api.util._
-import code.util.{MappedUUID}
+import code.util.MappedUUID
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.mapper._
+
 import scala.concurrent.duration._
 
 object ConnectorMetrics extends ConnectorMetricsProvider {

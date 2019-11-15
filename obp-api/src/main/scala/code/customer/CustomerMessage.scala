@@ -1,7 +1,5 @@
 package code.customer
 
-import java.util.Date
-
 import com.openbankproject.commons.model.{BankId, CustomerMessage, User}
 import net.liftweb.util.SimpleInjector
 

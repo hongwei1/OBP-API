@@ -5,7 +5,7 @@ import java.util.Date
 import code.api.util.ErrorMessages
 import code.model.dataAccess.ResourceUser
 import code.util.{MappedUUID, UUIDString}
-import com.openbankproject.commons.model.{BankId, ContactDetails, Invitee, Meeting, MeetingKeys, MeetingPresent, User}
+import com.openbankproject.commons.model._
 import net.liftweb.common.Box
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo

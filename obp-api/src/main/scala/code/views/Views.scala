@@ -1,16 +1,12 @@
 package code.views
 
 import code.api.util.APIUtil
-import code.api.util.APIUtil.canUseFirehose
 import code.remotedata.RemotedataViews
-import code.views.MapperViews.getPrivateBankAccounts
 import com.openbankproject.commons.model.{CreateViewJson, _}
 import net.liftweb.common.Box
-import net.liftweb.mapper.By
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 import scala.collection.immutable.List
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

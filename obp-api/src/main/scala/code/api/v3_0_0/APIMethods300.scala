@@ -13,6 +13,7 @@ import code.api.util.ErrorMessages._
 import code.api.util.NewStyle.HttpCode
 import code.api.util._
 import code.api.v1_2_1.JSONFactory
+import code.api.v2_0_0.AccountsHelper._
 import code.api.v2_0_0.JSONFactory200
 import code.api.v3_0_0.JSONFactory300._
 import code.bankconnectors._
@@ -33,6 +34,7 @@ import net.liftweb.common._
 import net.liftweb.http.S
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.rest.RestHelper
+import net.liftweb.json.JsonAST.JField
 import net.liftweb.json.{Extraction, compactRender}
 import net.liftweb.util.Helpers.tryo
 
@@ -40,8 +42,6 @@ import scala.collection.immutable.{List, Nil}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import code.api.v2_0_0.AccountsHelper._
-import net.liftweb.json.JsonAST.JField
 
 
 trait APIMethods300 {

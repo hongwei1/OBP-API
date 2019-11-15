@@ -6,8 +6,8 @@ import code.api.APIFailure
 import code.api.util.APIUtil
 import code.api.util.APIUtil._
 import code.api.util.ErrorMessages._
-import code.views.system.ViewDefinition.create
 import code.util.Helper.MdcLoggable
+import code.views.system.ViewDefinition.create
 import code.views.system.{AccountAccess, ViewDefinition}
 import com.openbankproject.commons.model.{UpdateViewJSON, _}
 import net.liftweb.common._

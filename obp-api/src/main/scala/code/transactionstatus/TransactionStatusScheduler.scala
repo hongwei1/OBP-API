@@ -6,7 +6,6 @@ import akka.actor.ActorSystem
 import code.transactionrequests.TransactionRequests
 import code.util.Helper.MdcLoggable
 
-
 import scala.concurrent.duration._
 
 

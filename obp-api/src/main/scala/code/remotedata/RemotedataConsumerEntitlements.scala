@@ -2,7 +2,7 @@ package code.remotedata
 
 import akka.pattern.ask
 import code.actorsystem.ObpActorInit
-import code.scope.{Scope, ScopeProvider, RemotedataScopesCaseClasses}
+import code.scope.{RemotedataScopesCaseClasses, Scope, ScopeProvider}
 import net.liftweb.common.Box
 
 import scala.collection.immutable.List

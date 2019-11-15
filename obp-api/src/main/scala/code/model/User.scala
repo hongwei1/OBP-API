@@ -27,18 +27,18 @@ TESOBE (http://www.tesobe.com/)
 
 package code.model
 
-import code.util.Helper
-import net.liftweb.json.JsonDSL._
-import net.liftweb.json.JsonAST.JObject
-import net.liftweb.common.{Box, Failure, Full}
 import code.api.UserNotFound
-import code.views.Views
 import code.entitlement.Entitlement
-import code.model.dataAccess.{ResourceUser}
+import code.model.dataAccess.ResourceUser
 import code.users.Users
+import code.util.Helper
 import code.util.Helper.MdcLoggable
+import code.views.Views
 import code.views.system.{AccountAccess, ViewDefinition}
-import com.openbankproject.commons.model.{BankIdAccountId, User, UserPrimaryKey, View, ViewId}
+import com.openbankproject.commons.model._
+import net.liftweb.common.{Box, Full}
+import net.liftweb.json.JsonAST.JObject
+import net.liftweb.json.JsonDSL._
 import net.liftweb.mapper.By
 
 case class UserExtended(val user: User) extends MdcLoggable {

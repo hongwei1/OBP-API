@@ -1,6 +1,6 @@
 package code.api.util
 
-import code.api.util.APIUtil.{ApiRelation, OBPEndpoint, ResourceDoc}
+import code.api.util.APIUtil.{OBPEndpoint, ResourceDoc}
 import code.util.ClassScanUtils
 import net.liftweb.http.LiftRules
 

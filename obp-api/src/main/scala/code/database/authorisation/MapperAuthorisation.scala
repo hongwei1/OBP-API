@@ -2,10 +2,9 @@ package code.database.authorisation
 
 import code.api.BerlinGroup.ScaStatus
 import code.api.util.ErrorMessages
-import code.consent.{ConsentStatus, MappedConsent}
 import code.util.MappedUUID
 import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.mapper.{BaseIndex, By, CreatedUpdated, IdPK, LongKeyedMapper, LongKeyedMetaMapper, MappedString, UniqueIndex}
+import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo
 
 

@@ -3,7 +3,7 @@ package code.sanitycheck
 import code.api.util.APIUtil
 import code.remotedata.RemotedataSanityCheck
 import net.liftweb.common.{Box, Empty, Full}
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 
 

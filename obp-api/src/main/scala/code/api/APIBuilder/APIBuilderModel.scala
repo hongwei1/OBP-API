@@ -27,9 +27,11 @@ package code.api.APIBuilder
 
 import java.io.File
 import java.nio.file.Files
+
 import code.api.util.APIUtil
-import net.liftweb.json.JsonAST.{JField, JObject, JString}
 import net.liftweb.json.JValue
+import net.liftweb.json.JsonAST.{JField, JObject, JString}
+
 import scala.meta._
 
 object APIBuilderModel

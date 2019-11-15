@@ -1,9 +1,10 @@
 package code.consent
 
+import java.util.Date
+
 import com.openbankproject.commons.model.User
 import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
-import java.util.Date
 
 object Consents extends SimpleInjector {
   val consentProvider = new Inject(buildOne _) {}

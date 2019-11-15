@@ -1,10 +1,11 @@
 package code.remotedata
 
 import akka.actor.Actor
+import akka.pattern.pipe
 import code.actorsystem.ObpActorHelper
 import code.taxresidence.{MappedTaxResidenceProvider, RemotedataTaxResidenceCaseClasses}
 import code.util.Helper.MdcLoggable
-import akka.pattern.pipe
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class RemotedataTaxResidenceActor extends Actor with ObpActorHelper with MdcLoggable {

@@ -37,6 +37,7 @@ import code.users.Users
 import code.util.Helper
 import code.util.Helper.MdcLoggable
 import code.views.Views
+import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 import com.openbankproject.commons.model.{User, _}
 import net.liftweb.common._
 import net.liftweb.http._
@@ -45,9 +46,8 @@ import net.liftweb.util.Mailer.{BCC, From, Subject, To}
 import net.liftweb.util._
 
 import scala.collection.immutable.List
-import scala.xml.{NodeSeq, Text}
 import scala.concurrent.ExecutionContext.Implicits.global
-import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
+import scala.xml.{NodeSeq, Text}
 
 /**
  * An O-R mapped "User" class that includes first name, last name, password

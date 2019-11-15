@@ -3,18 +3,15 @@ package code.bankaccountcreation
 import code.accountholders.AccountHolders
 import code.api.util.APIUtil
 import code.api.util.ErrorMessages._
-import code.views.Views
-import net.liftweb.common.Full
-import net.liftweb.mapper.By
-import net.liftweb.util.Props
-import org.scalatest.Tag
-import com.tesobe.model.CreateBankAccount
-import code.model.dataAccess.{BankAccountCreationListener, ResourceUser}
-import net.liftmodules.amqp.AMQPMessage
 import code.bankconnectors.Connector
+import code.model.dataAccess.BankAccountCreationListener
 import code.setup.{DefaultConnectorTestSetup, ServerSetup}
 import code.users.Users
+import code.views.Views
 import com.openbankproject.commons.model.{BankId, User}
+import com.tesobe.model.CreateBankAccount
+import net.liftmodules.amqp.AMQPMessage
+import org.scalatest.Tag
 
 class BankAccountCreationListenerTest extends ServerSetup with DefaultConnectorTestSetup {
 

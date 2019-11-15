@@ -29,8 +29,10 @@ TESOBE (http://www.tesobe.com/)
 package code.snippet
 
 import java.util.Date
-import code.api.util.ErrorMessages._
+
+import code.api.oauth1a.OauthParams._
 import code.api.util.APIUtil
+import code.api.util.ErrorMessages._
 import code.consumer.Consumers
 import code.model.dataAccess.AuthUser
 import code.model.{Token, TokenType}
@@ -42,8 +44,8 @@ import code.util.Helper.NOOP_SELECTOR
 import net.liftweb.common.{Empty, Failure, Full}
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
-import net.liftweb.util.{CssSel, Helpers, Props}
-import code.api.oauth1a.OauthParams._
+import net.liftweb.util.{CssSel, Helpers}
+
 import scala.xml.NodeSeq
 
 object OAuthAuthorisation {

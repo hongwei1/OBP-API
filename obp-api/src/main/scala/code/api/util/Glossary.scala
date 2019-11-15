@@ -2,10 +2,9 @@ package code.api.util
 
 import code.api.util.APIUtil.{getOAuth2ServerUrl, getObpApiRoot, getServerUrl}
 import code.api.util.ExampleValue.{accountIdExample, bankIdExample, customerIdExample, userIdExample}
+import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 
 import scala.collection.mutable.ArrayBuffer
-
-import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 
 
 object Glossary {

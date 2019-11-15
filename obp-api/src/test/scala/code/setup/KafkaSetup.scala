@@ -11,8 +11,8 @@ import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializ
 import org.scalatest.{FeatureSpec, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.{Duration, _}
 
 trait KafkaSetup extends FeatureSpec with EmbeddedKafka with KafkaHelper
   with GivenWhenThen with BeforeAndAfterAll

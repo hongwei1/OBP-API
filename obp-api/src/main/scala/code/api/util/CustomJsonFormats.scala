@@ -8,8 +8,8 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
 import net.liftweb.util.StringHelpers
 
-import scala.reflect.runtime.{universe => ru}
 import scala.reflect.ManifestFactory
+import scala.reflect.runtime.{universe => ru}
 
 trait CustomJsonFormats {
   implicit val formats: Formats = CustomJsonFormats.formats

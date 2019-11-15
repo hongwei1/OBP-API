@@ -25,27 +25,26 @@ TESOBE (http://www.tesobe.com/)
 
   */
 package code.model
-import java.util.{Date, UUID}
+import java.util.Date
 
 import code.api.util.APIUtil
 import code.api.util.migration.Migration.DbFunction
-import code.token.TokensProvider
 import code.consumer.{Consumers, ConsumersProvider}
 import code.model.AppType.{Mobile, Web}
-import code.model.TokenType.{Access, Request}
 import code.model.dataAccess.ResourceUser
 import code.nonce.NoncesProvider
+import code.token.TokensProvider
 import code.users.Users
+import code.util.Helper.MdcLoggable
+import com.github.dwickern.macros.NameOf
 import net.liftweb.common._
 import net.liftweb.http.S
 import net.liftweb.mapper.{LongKeyedMetaMapper, _}
 import net.liftweb.util.Helpers.{now, _}
-import net.liftweb.util.{FieldError, Helpers, Props}
-import code.util.Helper.MdcLoggable
-import com.github.dwickern.macros.NameOf
+import net.liftweb.util.{FieldError, Helpers}
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 sealed trait AppType
 object AppType {

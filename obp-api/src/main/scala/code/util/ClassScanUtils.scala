@@ -3,9 +3,9 @@ package code.util
 import java.io.File
 
 import com.openbankproject.commons.model.Bank
+import com.openbankproject.commons.util.ReflectUtils
 import org.apache.commons.lang3.StringUtils
 import org.clapper.classutil.{ClassFinder, ClassInfo}
-import com.openbankproject.commons.util.ReflectUtils
 
 import scala.reflect.runtime.universe.TypeTag
 

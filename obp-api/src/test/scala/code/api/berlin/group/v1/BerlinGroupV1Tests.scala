@@ -1,6 +1,6 @@
 package code.api.berlin.group.v1
 
-import code.api.berlin.group.v1.JSONFactory_BERLIN_GROUP_1.{AccountBalances, CoreAccountsJsonV1, TransactionsJsonV1}
+import code.api.berlin.group.v1.JSONFactory_BERLIN_GROUP_1.{AccountBalances, TransactionsJsonV1}
 import code.api.util.APIUtil.OAuth._
 import code.setup.{APIResponse, DefaultUsers}
 import org.scalatest.Tag

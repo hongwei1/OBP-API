@@ -2,11 +2,12 @@ package code.remotedata
 
 import java.util.Date
 
+import akka.pattern.ask
+import code.actorsystem.ObpActorInit
 import code.model.Nonce
 import code.nonce.{NoncesProvider, RemotedataNoncesCaseClasses}
 import net.liftweb.common.Box
-import akka.pattern.ask
-import code.actorsystem.ObpActorInit
+
 import scala.concurrent.Future
 
 

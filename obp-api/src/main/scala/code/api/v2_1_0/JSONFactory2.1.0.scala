@@ -30,8 +30,7 @@ import java.lang
 import java.util.Date
 
 import code.api.util.ApiRole
-import code.api.v1_2_1.{BankRoutingJsonV121}
-import com.openbankproject.commons.model.{AccountRoutingJsonV121, AmountOfMoneyJsonV121}
+import code.api.v1_2_1.BankRoutingJsonV121
 import code.api.v1_4_0.JSONFactory1_4_0._
 import code.api.v2_0_0.JSONFactory200.{UserJsonV200, UsersJsonV200, createEntitlementJSONs}
 import code.api.v2_0_0.TransactionRequestChargeJsonV200
@@ -40,10 +39,8 @@ import code.entitlement.Entitlement
 import code.metrics.APIMetric
 import code.model.dataAccess.ResourceUser
 import code.model.{Consumer, _}
-import com.openbankproject.commons.model.Product
-import code.transactionrequests.TransactionRequests._
 import code.users.Users
-import com.openbankproject.commons.model._
+import com.openbankproject.commons.model.{AccountRoutingJsonV121, AmountOfMoneyJsonV121, Product, _}
 import net.liftweb.common.{Box, Full}
 
 import scala.collection.immutable.List

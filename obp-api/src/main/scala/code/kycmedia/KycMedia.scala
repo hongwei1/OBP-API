@@ -2,9 +2,9 @@ package code.kycmedias
 
 import java.util.Date
 
-import com.openbankproject.commons.model.{KycMedia, User}
-import net.liftweb.util.SimpleInjector
+import com.openbankproject.commons.model.KycMedia
 import net.liftweb.common.Box
+import net.liftweb.util.SimpleInjector
 
 
 object KycMedias extends SimpleInjector {

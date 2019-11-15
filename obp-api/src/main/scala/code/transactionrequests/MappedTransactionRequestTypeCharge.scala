@@ -1,6 +1,6 @@
 package code.transactionrequests
 
-import code.util.{UUIDString}
+import code.util.UUIDString
 import net.liftweb.mapper._
 
 class MappedTransactionRequestTypeCharge extends TransactionRequestTypeCharge with LongKeyedMapper[MappedTransactionRequestTypeCharge] with IdPK with CreatedUpdated{

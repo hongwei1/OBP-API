@@ -3,7 +3,7 @@ package code.webhook
 import akka.actor.{Actor, ActorLogging}
 import code.api.util.ApiTrigger
 import code.util.Helper.MdcLoggable
-import code.webhook.WebhookActor.{WebhookFailure, WebhookResponse, WebhookRequest}
+import code.webhook.WebhookActor.{WebhookFailure, WebhookRequest, WebhookResponse}
 
 
 object WebhookActor {

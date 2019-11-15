@@ -2,23 +2,22 @@ package code.kafka
 
 import akka.pattern.{AskTimeoutException, ask}
 import code.actorsystem.{ObpActorInit, ObpLookupSystem}
-import code.api.APIFailureNewStyle
-import code.api.util.APIUtil.{fullBoxOrException, gitCommit, unboxFull, unboxFullOrFail}
-import code.api.util.{APIUtil, CallContext, CustomJsonFormats}
+import code.api.util.APIUtil.{fullBoxOrException, gitCommit}
 import code.api.util.ErrorMessages._
+import code.api.util.{APIUtil, CustomJsonFormats}
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.{ObpApiLoopback, TopicTrait}
 import net.liftweb
 import net.liftweb.common._
 import net.liftweb.json
 import net.liftweb.json.JsonAST.JNull
-import net.liftweb.json.{Extraction, JValue, MappingException}
-
-import scala.concurrent.Future
 import net.liftweb.json.JsonParser.ParseException
+import net.liftweb.json.{Extraction, JValue}
 import net.liftweb.util.Helpers
 import org.apache.kafka.common.KafkaException
 import org.apache.kafka.common.errors._
+
+import scala.concurrent.Future
 
 object KafkaHelper extends KafkaHelper
 
@@ -89,8 +88,9 @@ trait KafkaHelper extends ObpActorInit with MdcLoggable {
     * @return Kafka's Inbound message into Future
     */
   def processRequest[T: Manifest](request: TopicTrait): Future[Box[T]] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
     import liftweb.json.compactRender
+
+    import scala.concurrent.ExecutionContext.Implicits.global
     implicit val formats = CustomJsonFormats.formats
     val tp = manifest[T].runtimeClass
 

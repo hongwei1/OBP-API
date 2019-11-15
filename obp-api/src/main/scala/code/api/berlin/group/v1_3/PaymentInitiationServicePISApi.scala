@@ -1,18 +1,16 @@
 package code.api.builder.PaymentInitiationServicePISApi
 
 import code.api.BerlinGroup.{AuthenticationType, ScaStatus}
-import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.{PostConsentJson, UpdatePaymentPsuDataJson}
+import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.UpdatePaymentPsuDataJson
 import code.api.berlin.group.v1_3.{JSONFactory_BERLIN_GROUP_1_3, JvalueCaseClass, OBP_BERLIN_GROUP_1_3}
 import code.api.util.APIUtil._
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util.NewStyle.HttpCode
 import code.api.util.{ApiRole, ApiTag, NewStyle}
-import code.consent.ConsentStatus
 import code.database.authorisation.Authorisations
 import code.fx.fx
 import code.model._
-import code.transactionrequests.TransactionRequests.TransactionRequestTypes.{TRANSFER_TO_ACCOUNT, TRANSFER_TO_ATM, TRANSFER_TO_PHONE}
 import code.transactionrequests.TransactionRequests.{PaymentServiceTypes, TransactionRequestTypes}
 import code.util.Helper
 import com.github.dwickern.macros.NameOf.nameOf

@@ -11,13 +11,12 @@ import code.crm.CrmEvent.CrmEvent
 import code.model._
 import code.model.dataAccess.ResourceUser
 import code.products.Products
-import com.openbankproject.commons.model.Product
 import code.users.Users
 import code.util.Helper
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
-import com.openbankproject.commons.model.{Bank, _}
+import com.openbankproject.commons.model.{Bank, Product, _}
 import com.openbankproject.commons.util.ReflectUtils
 import net.liftweb.common._
 import net.liftweb.util.SimpleInjector

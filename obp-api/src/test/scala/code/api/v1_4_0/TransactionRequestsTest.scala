@@ -2,18 +2,17 @@ package code.api.v1_4_0
 
 import code.api.util.APIUtil
 import code.api.util.APIUtil.OAuth._
-import com.openbankproject.commons.model.AmountOfMoneyJsonV121
+import code.api.util.ErrorMessages._
 import code.api.v1_4_0.JSONFactory1_4_0._
 import code.bankconnectors.Connector
+import code.model.BankAccountX
 import code.setup.DefaultUsers
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.transactionrequests.TransactionRequests.{TransactionChallengeTypes, TransactionRequestStatus}
+import com.openbankproject.commons.model.{AccountId, AmountOfMoneyJsonV121, BankAccount, TransactionRequestId}
 import net.liftweb.json.JsonAST.JString
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
-import code.api.util.ErrorMessages._
-import code.model.BankAccountX
-import com.openbankproject.commons.model.{AccountId, BankAccount, TransactionRequestId}
 
 class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
 

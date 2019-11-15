@@ -1,20 +1,18 @@
 package code.snippet
 
-import code.bankconnectors.Connector
-import net.liftweb.util.Helpers._
-import net.liftweb.http.SHtml
-import code.model.{BankX, BankAccountX}
-import code.util.Helper._
-import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.js.JsCmds.SetHtml
-import net.liftweb.http.js.JsCmd
 import code.api.util.ErrorMessages._
-
-import scala.xml.NodeSeq
-import net.liftweb.http.js.jquery.JqJsCmds.{Hide, Show}
+import code.bankconnectors.Connector
 import code.model.dataAccess.{AuthUser, BankAccountCreation}
+import code.model.{BankAccountX, BankX}
 import code.users.Users
+import code.util.Helper._
 import com.openbankproject.commons.model.{AccountId, BankAccount, BankId}
+import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.http.SHtml
+import net.liftweb.http.js.JsCmd
+import net.liftweb.http.js.JsCmds.SetHtml
+import net.liftweb.http.js.jquery.JqJsCmds.{Hide, Show}
+import net.liftweb.util.Helpers._
 
 object CreateTestAccountForm{
 

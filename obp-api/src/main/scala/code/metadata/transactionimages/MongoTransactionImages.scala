@@ -1,20 +1,18 @@
 package code.metadata.transactionimages
 
-import code.model._
-import code.util.Helper
-import net.liftweb.common.Box
-import code.util.Helper.MdcLoggable
 import java.net.URL
 import java.util.Date
 
-import org.bson.types.ObjectId
-import net.liftweb.mongodb.record.{MongoMetaRecord, MongoRecord}
-import net.liftweb.mongodb.record.field.{DateField, ObjectIdPk}
-import net.liftweb.record.field.{LongField, StringField}
-import net.liftweb.util.Helpers._
-import net.liftweb.common.Full
+import code.model._
+import code.util.Helper.MdcLoggable
 import com.mongodb.{DBObject, QueryBuilder}
 import com.openbankproject.commons.model._
+import net.liftweb.common.{Box, Full}
+import net.liftweb.mongodb.record.field.{DateField, ObjectIdPk}
+import net.liftweb.mongodb.record.{MongoMetaRecord, MongoRecord}
+import net.liftweb.record.field.{LongField, StringField}
+import net.liftweb.util.Helpers._
+import org.bson.types.ObjectId
 
 private object MongoTransactionImages extends TransactionImages with MdcLoggable {
 

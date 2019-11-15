@@ -2,21 +2,20 @@ package code.api.v2_1_0
 
 import java.util.UUID
 
-import code.api.{ChargePolicy, ErrorMessage}
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole.CanCreateAnyTransactionRequest
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, ErrorMessages}
-import com.openbankproject.commons.model.AmountOfMoneyJsonV121
 import code.api.v1_4_0.JSONFactory1_4_0.{ChallengeAnswerJSON, TransactionRequestAccountJsonV140}
 import code.api.v2_0_0.TransactionRequestBodyJsonV200
+import code.api.{ChargePolicy, ErrorMessage}
 import code.bankconnectors.Connector
 import code.fx.fx
 import code.model.BankAccountX
 import code.setup.{APIResponse, DefaultUsers}
 import code.transactionrequests.TransactionRequests.TransactionRequestStatus
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
-import com.openbankproject.commons.model.{AccountId, BankAccount, TransactionRequestId}
+import com.openbankproject.commons.model.{AccountId, AmountOfMoneyJsonV121, BankAccount, TransactionRequestId}
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
 

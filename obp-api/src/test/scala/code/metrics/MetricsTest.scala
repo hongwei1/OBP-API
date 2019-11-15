@@ -2,8 +2,8 @@ package code.metrics
 
 import java.util.Date
 
-import code.api.util.{APIUtil, OBPLimit}
 import code.api.util.APIUtil.getCorrelationId
+import code.api.util.{APIUtil, OBPLimit}
 import code.setup.ServerSetup
 
 

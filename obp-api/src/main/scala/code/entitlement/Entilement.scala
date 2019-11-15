@@ -4,7 +4,7 @@ package code.entitlement
 import code.api.util.APIUtil
 import code.remotedata.RemotedataEntitlements
 import net.liftweb.common.Box
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 import scala.concurrent.Future
 

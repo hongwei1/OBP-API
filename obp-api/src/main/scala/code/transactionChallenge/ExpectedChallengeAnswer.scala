@@ -2,7 +2,7 @@ package code.transactionChallenge
 
 import code.api.util.APIUtil
 import code.remotedata.RemotedataExpectedChallengeAnswerProvider
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 
 

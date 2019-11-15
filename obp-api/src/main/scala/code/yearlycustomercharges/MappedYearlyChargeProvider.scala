@@ -2,7 +2,6 @@ package code.yearlycustomercharges
 
 import code.util.UUIDString
 import com.openbankproject.commons.model.{BankId, CustomerId}
-import net.liftweb.common.Box
 import net.liftweb.mapper._
 
 

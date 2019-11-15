@@ -2,10 +2,9 @@ package code.api.v1_4_0
 
 import code.api.util.APIUtil.OAuth._
 import code.api.v1_4_0.JSONFactory1_4_0.{ProductJson, ProductsJson}
-import com.openbankproject.commons.model.Product
 import code.products.{Products, ProductsProvider}
 import code.setup.{DefaultUsers, ServerSetup}
-import com.openbankproject.commons.model.{BankId, License, Meta, ProductCode}
+import com.openbankproject.commons.model._
 
 class ProductsTest extends ServerSetup with DefaultUsers with V140ServerSetup {
 

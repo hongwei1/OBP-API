@@ -27,8 +27,6 @@ TESOBE (http://www.tesobe.com/)
 
 package code.setup
 
-import java.text.SimpleDateFormat
-
 import _root_.net.liftweb.json.JsonAST.JObject
 import code.TestServer
 import code.api.util.{APIUtil, CustomJsonFormats}

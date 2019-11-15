@@ -2,11 +2,11 @@ package code.remotedata
 
 import akka.actor.Actor
 import akka.pattern.pipe
-import code.cardattribute.{MappedCardAttributeProvider, RemotedataCardAttributeCaseClasses}
 import code.actorsystem.ObpActorHelper
+import code.cardattribute.{MappedCardAttributeProvider, RemotedataCardAttributeCaseClasses}
 import code.util.Helper.MdcLoggable
+import com.openbankproject.commons.model.BankId
 import com.openbankproject.commons.model.enums.CardAttributeType
-import com.openbankproject.commons.model.{BankId, ProductCode}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -8,7 +8,7 @@ import code.model.dataAccess.{MappedBank, MappedBankAccount}
 import code.products.MappedProduct
 import code.transaction.MappedTransaction
 import code.views.Views
-import com.openbankproject.commons.model.{AccountId, BankId, View}
+import com.openbankproject.commons.model.{AccountId, BankId}
 
 // , MappedDataLicense
 import code.util.Helper.convertToSmallestCurrencyUnits

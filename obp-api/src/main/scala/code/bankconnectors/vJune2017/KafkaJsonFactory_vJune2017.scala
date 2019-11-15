@@ -4,13 +4,10 @@ import java.lang
 import java.util.Date
 
 import code.api.util.APIUtil
-import com.openbankproject.commons.model.CheckbookOrdersJson
 import code.bankconnectors.vMar2017._
 import code.branches.Branches.{DriveUpString, LobbyString}
-
 import code.model.dataAccess.MappedBankAccountData
-import com.openbankproject.commons.model.TransactionRequest
-import com.openbankproject.commons.model.{CounterpartyTrait, CreditLimit, _}
+import com.openbankproject.commons.model.{CheckbookOrdersJson, CounterpartyTrait, CreditLimit, TransactionRequest, _}
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.today
 

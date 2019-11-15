@@ -3,11 +3,10 @@ package code.metadata.wheretags
 import java.util.Date
 
 import code.api.util.APIUtil
-import code.model._
 import code.remotedata.RemotedataWhereTags
 import com.openbankproject.commons.model._
 import net.liftweb.common.Box
-import net.liftweb.util.{Props, SimpleInjector}
+import net.liftweb.util.SimpleInjector
 
 object WhereTags  extends SimpleInjector {
 

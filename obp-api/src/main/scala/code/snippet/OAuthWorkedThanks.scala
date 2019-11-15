@@ -26,16 +26,13 @@ TESOBE (http://www.tesobe.com/)
 */
 package code.snippet
 
-import code.api.OAuthHandshake
-import code.model.Consumer
 import code.token.Tokens
 import code.util.Helper
 import code.util.Helper.MdcLoggable
-import net.liftweb.util.Helpers._
+import net.liftweb.common.Full
 import net.liftweb.http.S
-import net.liftweb.common.{Box, Full}
-import net.liftweb.mapper.By
 import net.liftweb.sitemap.Menu
+import net.liftweb.util.Helpers._
 
 /**
  * When a mobile app handles an oauth redirect, we can get left with a dangling page open in

@@ -1,6 +1,6 @@
 package code.util
 
-import net.liftweb.mapper.{Mapper, MappedString}
+import net.liftweb.mapper.{MappedString, Mapper}
 
 /**
  * Enforces a default max length.

@@ -3,17 +3,12 @@ package code.crm
 import java.util.Date
 
 import code.api.util.ErrorMessages._
-import code.crm.CrmEvent._
 import code.crm.CrmEvent.{CrmEvent, CrmEventId}
 import code.model.dataAccess.ResourceUser
 import code.users.Users
 import code.util.{MappedUUID, UUIDString}
-import com.openbankproject.commons.model.{BankId, LicenseT}
-import net.liftweb.common.Box
+import com.openbankproject.commons.model.BankId
 import net.liftweb.mapper._
-import org.joda.time.Hours
-
-import scala.util.Try
 
 object MappedCrmEventProvider extends CrmEventProvider {
 

@@ -2,13 +2,12 @@ package code.util
 
 import java.util.Date
 
-import com.openbankproject.commons.model.enums.{AccountAttributeType, ProductAttributeType}
 import com.openbankproject.commons.util.EnumValue
 
+import scala.collection.immutable.List
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
-import scala.collection.immutable.List
 
 object reflectionUtils {
   private[this] val mirror: ru.Mirror = ru.runtimeMirror(getClass().getClassLoader)

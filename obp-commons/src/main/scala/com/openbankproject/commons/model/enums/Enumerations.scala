@@ -1,11 +1,8 @@
 package com.openbankproject.commons.model.enums
 
 import com.openbankproject.commons.util.{EnumValue, OBPEnumeration}
-import net.liftweb.json.{JArray, JBool, JDouble, JInt, JObject, JValue}
 import net.liftweb.json.JsonAST.JString
-
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
+import net.liftweb.json.{JBool, JDouble, JInt, JValue}
 
 sealed trait AccountAttributeType extends EnumValue
 object AccountAttributeType extends OBPEnumeration[AccountAttributeType]{

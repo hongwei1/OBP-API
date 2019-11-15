@@ -1,13 +1,15 @@
 package code.consent
 
 import java.util.Date
-import scala.util.Random
+
 import code.api.util.ErrorMessages
 import code.util.MappedUUID
 import com.openbankproject.commons.model.User
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.mapper.{MappedString, _}
 import net.liftweb.util.Helpers.{now, tryo}
+
+import scala.util.Random
 
 object MappedConsentProvider extends ConsentProvider {
   override def getConsentByConsentId(consentId: String): Box[MappedConsent] = {

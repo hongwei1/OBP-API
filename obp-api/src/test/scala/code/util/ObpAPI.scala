@@ -2,7 +2,6 @@ package code.util
 
 import java.io._
 import java.net.{HttpURLConnection, URL}
-import java.text.SimpleDateFormat
 import java.util.Date
 
 import code.api.util.{APIUtil, CustomJsonFormats}

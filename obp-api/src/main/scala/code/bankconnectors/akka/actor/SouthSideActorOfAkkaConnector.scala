@@ -1,7 +1,5 @@
 package code.bankconnectors.akka.actor
 
-import java.util.Date
-
 import akka.actor.{Actor, ActorLogging}
 import code.api.ResourceDocs1_4_0.MessageDocsSwaggerDefinitions._
 import code.api.util.ErrorMessages.attemptedToOpenAnEmptyBox

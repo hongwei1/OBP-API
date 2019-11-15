@@ -25,13 +25,11 @@ TESOBE (http://www.tesobe.com/)
 */
 package code.api.v3_1_0
 
-import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZonedDateTime}
-import java.util.{Calendar, Date}
+import java.util.Date
 
 import code.api.ErrorMessage
-import code.api.util.APIUtil.DateWithDayFormat
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole.{CanReadCallLimits, CanSetCallLimits}
 import code.api.util.ErrorMessages.{UserHasMissingRoles, UserNotLoggedIn}

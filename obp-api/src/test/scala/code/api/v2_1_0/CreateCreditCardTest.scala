@@ -4,10 +4,10 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.postPhysicalCardJSON
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole
 import code.api.util.ApiRole.CanCreateCardsForBank
+import code.api.util.ErrorMessages._
 import code.api.v1_3_0.PhysicalCardJSON
 import code.setup.DefaultUsers
 import net.liftweb.json.Serialization.write
-import code.api.util.ErrorMessages._
 
 class CreateCreditCardTest extends V210ServerSetup with DefaultUsers {
 

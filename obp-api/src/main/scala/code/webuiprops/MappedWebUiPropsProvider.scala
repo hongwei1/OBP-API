@@ -3,8 +3,8 @@ package code.webuiprops
 import java.util.UUID.randomUUID
 
 import code.api.cache.Caching
-import code.api.util.{APIUtil, ErrorMessages}
 import code.api.util.APIUtil.saveConnectorMetric
+import code.api.util.{APIUtil, ErrorMessages}
 import code.util.MappedUUID
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.{Box, Empty, Failure, Full}

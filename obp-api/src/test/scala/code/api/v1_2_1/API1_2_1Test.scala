@@ -29,6 +29,7 @@ package code.api.v1_2_1
 import _root_.net.liftweb.json.Serialization.write
 import code.api.util.APIUtil
 import code.api.util.APIUtil.OAuth._
+import code.api.util.ErrorMessages._
 import code.bankconnectors.Connector
 import code.setup.{APIResponse, DefaultUsers, PrivateUser2AccountsAndSetUpWithTestData, User1AllPrivileges}
 import code.views.Views
@@ -36,7 +37,6 @@ import com.openbankproject.commons.model._
 import net.liftweb.json._
 import net.liftweb.util.Helpers._
 import org.scalatest.Tag
-import code.api.util.ErrorMessages._
 
 import scala.util.Random._
 

@@ -3,7 +3,6 @@ package code.api.v2_0_0
 import code.api.OAuthResponse
 import code.api.util.APIUtil.OAuth.{Consumer, _}
 import code.consumer.Consumers
-import code.model.{Consumer => OBPConsumer}
 import dispatch._
 import net.liftweb.json.JsonAST.{JField, JObject, JString}
 import net.liftweb.json.Serialization.write

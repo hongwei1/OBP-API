@@ -5,7 +5,7 @@ package code.accountattribute
 import code.api.util.APIUtil
 import code.remotedata.RemotedataAccountAttribute
 import com.openbankproject.commons.model.enums.AccountAttributeType
-import com.openbankproject.commons.model.{AccountAttribute, AccountId, BankId, ProductAttribute, ProductCode}
+import com.openbankproject.commons.model._
 import net.liftweb.common.{Box, Logger}
 import net.liftweb.util.SimpleInjector
 

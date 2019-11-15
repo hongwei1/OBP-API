@@ -5,17 +5,17 @@ import java.util.UUID.randomUUID
 import code.api.builder.OBP_APIBuilder
 import code.api.cache.Caching
 import code.api.util.APIUtil._
-import code.api.util.ApiTag._
 import code.api.util.ApiStandards._
+import code.api.util.ApiTag._
 import code.api.util._
 import code.api.v1_4_0.{APIMethods140, JSONFactory1_4_0, OBPAPI1_4_0}
 import code.api.v2_2_0.{APIMethods220, OBPAPI2_2_0}
 import code.api.v3_0_0.OBPAPI3_0_0
 import code.api.v3_1_0.OBPAPI3_1_0
+import code.api.v4_0_0.APIMethods400.Implementations4_0_0.genericEndpoint
 import code.api.v4_0_0.{APIMethods400, OBPAPI4_0_0}
-import APIMethods400.Implementations4_0_0.genericEndpoint
 import code.util.Helper.MdcLoggable
-import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
+import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.http.{JsonResponse, LiftRules, S}
@@ -35,8 +35,6 @@ import code.api.v2_1_0.{APIMethods210, OBPAPI2_1_0}
 import scala.collection.mutable.ArrayBuffer
 
 // So we can include resource docs from future versions
-import java.text.SimpleDateFormat
-
 import code.api.util.ErrorMessages._
 import code.util.Helper.booleanToBox
 

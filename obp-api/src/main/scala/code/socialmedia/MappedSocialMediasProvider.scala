@@ -1,8 +1,9 @@
 package code.socialmedia
 
 import java.util.Date
+
 import code.model.dataAccess.ResourceUser
-import code.util.{UUIDString}
+import code.util.UUIDString
 import net.liftweb.mapper._
 
 object MappedSocialMediasProvider extends SocialMediaHandleProvider {

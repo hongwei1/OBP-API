@@ -34,7 +34,6 @@ import code.api.util.ErrorMessages._
 import code.api.v3_1_0.OBPAPI3_1_0.Implementations3_1_0
 import code.entitlement.Entitlement
 import com.github.dwickern.macros.NameOf.nameOf
-import net.liftweb.json.{Extraction, prettyRender}
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
 

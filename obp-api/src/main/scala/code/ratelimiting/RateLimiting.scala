@@ -3,9 +3,9 @@ package code.ratelimiting
 import java.util.Date
 
 import code.api.util.APIUtil
-import net.liftweb.util.SimpleInjector
 import code.remotedata.RemotedataRateLimiting
 import net.liftweb.common.Box
+import net.liftweb.util.SimpleInjector
 
 import scala.concurrent.Future
 

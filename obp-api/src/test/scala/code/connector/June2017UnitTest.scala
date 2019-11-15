@@ -3,9 +3,9 @@ package code.connector
 
 import code.api.util.APIUtil.MessageDoc
 import code.api.util.CustomJsonFormats
-import code.bankconnectors.vJune2017.{InboundGetTransactionRequests210, InternalGetTransactionRequests, KafkaMappedConnector_vJune2017, OutboundGetTransactionRequests210}
-import com.openbankproject.commons.model.TransactionRequest
+import code.bankconnectors.vJune2017.{InboundGetTransactionRequests210, KafkaMappedConnector_vJune2017, OutboundGetTransactionRequests210}
 import code.util.Helper.MdcLoggable
+import com.openbankproject.commons.model.TransactionRequest
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.JValue
 import org.scalatest._

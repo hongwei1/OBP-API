@@ -2,7 +2,6 @@ package code.util
 
 import code.api.util.APIUtil
 import net.liftweb.mapper.{MappedString, Mapper}
-import net.liftweb.util.Props
 
 // TODO rename this file or move some classes? Its used for different string definitions.
 
