@@ -130,8 +130,8 @@ class Boot extends MdcLoggable {
 //    println(classUrl.getFile)
 
     import com.sun.mail.util.TraceInputStream
-    println("yyyyyy")
-    System.out.println(classOf[TraceInputStream].getProtectionDomain.getCodeSource.getLocation)
+    logger.info("yyyyyy")
+    logger.info(classOf[TraceInputStream].getProtectionDomain.getCodeSource.getLocation)
     
     
     val contextPath = LiftRules.context.path
