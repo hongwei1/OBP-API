@@ -125,6 +125,15 @@ class Boot extends MdcLoggable {
   
   def boot {
 
+//    val classUrl = this.getClass.getResource("com.sun.mail.util.TraceInputStream")
+//    println("xxxxxxxxx")
+//    println(classUrl.getFile)
+
+    import com.sun.mail.util.TraceInputStream
+    println("yyyyyy")
+    System.out.println(classOf[TraceInputStream].getProtectionDomain.getCodeSource.getLocation)
+    
+    
     val contextPath = LiftRules.context.path
     val propsPath = tryo{Box.legacyNullTest(System.getProperty("props.resource.dir"))}.toIterable.flatten
 
