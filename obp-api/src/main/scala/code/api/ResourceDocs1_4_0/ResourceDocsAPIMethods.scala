@@ -245,7 +245,11 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
             def replaceJsonValue(json: JValue): JValue = json transformField {
               case JField("role", JString(x)) => JField("role", JString(x.substring("ApiRole$".length)))
             }
-            successJsonResponse(replaceJsonValue(replaceJsonKey(removeJsonKeyAndKeepChildObject(Extraction.decompose(innerJson)))))
+
+            val abc = code.api.util.APIUtil.getJValueFromFile("obp-api/src/main/scala/code/api/ResourceDocs1_4_0/allResourceDocs-apisandbox.json")
+            successJsonResponse(abc)                                  
+            
+//            successJsonResponse(replaceJsonValue(replaceJsonKey(removeJsonKeyAndKeepChildObject(Extraction.decompose(innerJson)))))
           }
           obpResourceDocJson
         }

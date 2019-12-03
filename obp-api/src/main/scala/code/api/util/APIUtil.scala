@@ -28,7 +28,7 @@ TESOBE (http://www.tesobe.com/)
 package code.api.util
 
 import java.io.InputStream
-import java.net.URLDecoder
+import java.net.{URL, URLDecoder}
 import java.nio.charset.Charset
 import java.text.{ParsePosition, SimpleDateFormat}
 import java.util.{Date, UUID}
@@ -2708,4 +2708,115 @@ Returns a string showed to the developer
     if(range1.end.before(range2.start) || range1.start.after(range2.end)) false else true
   }
   
+}
+
+object myApp extends App{
+  import net.liftweb.json._
+  import java.io.BufferedReader
+  import java.io.IOException
+  import java.io.InputStreamReader
+  import java.net.HttpURLConnection
+  import java.net.URL
+  import java.net.URLEncoder
+
+  @throws[IOException]
+  private def translate(langFrom: String ="en", langTo: String ="zh", text: String) = { // INSERT YOU URL HERE
+    val urlStr = "https://script.google.com/macros/s/AKfycbzCknzouwoIWZA8nBgBIh7kDhWJEwG7c7wuWYtEJbjYW1EBOE0/exec" + "?q=" + URLEncoder.encode(text, "UTF-8") + "&target=" + langTo + "&source=" + langFrom
+    val url = new URL(urlStr)
+    val response = new StringBuilder
+    val con = url.openConnection.asInstanceOf[HttpURLConnection]
+    con.setRequestProperty("User-Agent", "Mozilla/5.0")
+    val in = new BufferedReader(new InputStreamReader(con.getInputStream))
+    var inputLine : String = in.readLine
+    while ( inputLine  != null ) {
+      response.append(inputLine)
+      inputLine  = in.readLine
+    }
+    in.close()
+    response.toString
+  }
+
+//  println("Translated text: " + translate(text="GAME!!!!!"))
+//  println(12312)
+
+  implicit val formats = net.liftweb.json.DefaultFormats
+
+  val jsonJValueFromFile: JValue = code.api.util.APIUtil.getJValueFromFile("/Users/zhanghongwei/Documents/GitHub-Tower/OBP-API/myIdeas/20191203-Chinese-Version/allResourceDocs.json")
+  val arrayList = (jsonJValueFromFile \ "resource_docs").asInstanceOf[JArray]
+//  val summary = arrayList(0).\\("summary").values.head._2.toString
+//  val description =arrayList(0).\\("description").values.head._2.toString
+//
+//  val summaryTranslated = translate(text = summary)
+//  val descriptionTranslated = translate(text = description)
+
+  //replace the fields
+  val jsonJValueFromFileTranslated = arrayList.map(
+    resourceDocFiled => {
+      if (resourceDocFiled.find(abc => abc.values.toString.contains("summary")).isDefined && !resourceDocFiled.isInstanceOf[JString]&& resourceDocFiled.isInstanceOf[JObject]&& resourceDocFiled.toString.contains("operation_id"))
+        {
+          val summary =resourceDocFiled.\\("summary").values.head._2.toString
+          val summaryTranslated = tryo {translate(text = summary)}.?~("").openOr("")
+          resourceDocFiled.replace("summary" :: Nil, JString(summaryTranslated))
+        }
+      else
+        resourceDocFiled     
+    }).map(
+    resourceDocFiled => {
+      if (resourceDocFiled.find(abc => abc.values.toString.contains("description")).isDefined && !resourceDocFiled.isInstanceOf[JString] &&resourceDocFiled.isInstanceOf[JObject]&& resourceDocFiled.toString.contains("operation_id")) {
+        val description = resourceDocFiled.\\("description").values.head._2.toString
+        val descriptionTranslated = tryo {
+          translate(text = description)
+        }.?~("").openOr("")
+        resourceDocFiled.replace("description" :: Nil, JString(descriptionTranslated))
+      }
+      else
+        resourceDocFiled
+    })
+      
+  val addedResouceDoc= jsonJValueFromFile.replace("resource_docs" :: Nil, jsonJValueFromFileTranslated)
+
+//  val jsonJValueFromFileTranslatedAll = JObject("resource_docs", jsonJValueFromFileTranslated) 
+  //JValue --> String 
+  val translatedString: String = compactRender(addedResouceDoc)
+
+
+  reflect.io.File("/Users/zhanghongwei/Documents/GitHub-Tower/OBP-API/myIdeas/20191203-Chinese-Version/allResourceDocs-translated.json").writeAll(translatedString)
+  
+  // Used to describe where an API call is implemented (format from API)
+  case class ImplementedByJson (
+    version : String, // Short hand for the version e.g. "1_4_0" means Implementations1_4_0
+    function : String // The val / partial function that implements the call e.g. "getBranches
+  )
+
+  case class RoleJson (
+    role: String,
+    requires_bank_id: Boolean
+  )
+
+  // Used to describe the OBP API calls for documentation and API discovery purposes
+  case class ResourceDocJson(operation_id: String,
+    request_verb: String,
+    request_url: String,
+    summary: String, // Summary of call should be 120 characters max
+    description: String,      // Description of call in markdown
+    example_request_body: JValue,  // An example request body
+    success_response_body: JValue, // Success response body
+    error_response_bodies: List[String],
+    implemented_by: ImplementedByJson,
+    is_core : Boolean,
+    is_psd2 : Boolean,
+    is_obwg : Boolean, // This may be tracking isCore
+    tags : List[String],
+    roles: List[RoleJson],
+    is_featured: Boolean,
+    special_instructions: String,
+    specified_url: String // This is the URL that we want people to call.
+  )
+
+  case class ResourceDocsJson (resource_docs : List[ResourceDocJson])
+
+  val a2771 = addedResouceDoc.extract[ResourceDocsJson]
+  
+  println(a2771)
+
 }
