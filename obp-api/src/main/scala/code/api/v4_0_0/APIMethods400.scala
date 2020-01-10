@@ -46,6 +46,7 @@ import scala.collection.immutable.{List, Nil}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.io.Source
 
 trait APIMethods400 {
   self: RestHelper =>
@@ -1995,7 +1996,52 @@ trait APIMethods400 {
           }
       }
     }
-    
+
+    resourceDocs += ResourceDoc(
+      revokeUserAccessToView2,
+      implementedInApiVersion,
+      "revokeUserAccessToView2",
+      "POST",
+      "/getAdapterInfo",
+      "Revoke User access to View.",
+      s"""Revoke the User identified by USER_ID access to the view identified by VIEW_ID.
+         |
+         |${authenticationRequiredMessage(true)} and the user needs to be account holder.
+         |
+         |""",
+      postAccountAccessJsonV400,
+      revokedJsonV400,
+      List(
+        UserNotLoggedIn,
+        UserMissOwnerViewOrNotAccountHolder,
+        InvalidJsonFormat,
+        UserNotFoundById,
+        SystemViewNotFound,
+        ViewNotFound,
+        CannotRevokeAccountAccess,
+        CannotFindAccountAccess,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagAccountAccess, apiTagView, apiTagAccount, apiTagUser, apiTagOwnerRequired))
+    lazy val revokeUserAccessToView2 : OBPEndpoint = {
+      case process :: Nil JsonPost json -> _  => {
+        cc =>
+          for {
+            (_, callContext) <- anonymousAccess(cc)
+            filename = "/Users/zhanghongwei/Documents/GitHub-Tower/OBP-API/myIdeas/1.json"
+
+            fileContents <- Future {Source.fromFile(filename).getLines.mkString}
+
+            myJson <- Future{parse(fileContents)}
+            message_doc_selected = (myJson \\ "message_docs").children.head.children.filter(_.values.toString.contains(process)).head.\\("example_inbound_message").children
+            
+
+          } yield {
+            (message_doc_selected, HttpCode.`200`(callContext))
+          }
+      }
+    }
 
   }
 
@@ -2007,3 +2053,25 @@ object APIMethods400 extends RestHelper with APIMethods400 {
   }.toList
 }
 
+object myApp extends App{
+  import net.liftweb.json.{parse, _}
+  import scala.io.Source
+
+
+  val filename = "MessageDocs.json"
+
+
+  val fileContents = Source.fromFile(filename).getLines.mkString
+
+  val myJson = parse(
+    fileContents
+  )
+  println(myJson)
+  val message_doc_selected = (myJson \\ "message_docs").children.head.children.filter(_.values.toString.contains("obp.getAdapterInfo"))
+  message_doc_selected.head.\\("example_inbound_message").children
+  
+
+
+  println(message_doc_selected)
+
+}
