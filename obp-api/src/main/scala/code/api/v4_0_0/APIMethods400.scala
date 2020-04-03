@@ -113,6 +113,40 @@ trait APIMethods400 {
       }
     }
 
+    resourceDocs += ResourceDoc(
+      getBanks2,
+      implementedInApiVersion,
+      nameOf(getBanks2),
+      "GET",
+      "/banks/new",
+      "Get Banks New",
+      """Get banks on this API instance
+        |Returns a list of banks supported on this server:
+        |
+        |* ID used as parameter in URLs
+        |* Short and full name of bank
+        |* Logo URL
+        |* Website""",
+      emptyObjectJson,
+      banksJSON,
+      List(UnknownError),
+      Catalogs(Core, PSD2, OBWG),
+      apiTagBank :: apiTagPSD2AIS :: apiTagNewStyle :: Nil,
+      connectorMethods = Some(List("obp.getBanks"))
+    )
+
+    lazy val getBanks2: OBPEndpoint = {
+      case "banks" :: "new" :: Nil JsonGet _ => {
+        cc =>
+          for {
+            (banks, callContext) <- NewStyle.function.getBanks(cc.callContext)
+          } yield {
+            (JSONFactory400.createBanksJson(banks), HttpCode.`200`(callContext))
+          }
+
+      }
+    }
+    
     val exchangeRates =
       APIUtil.getPropsValue("webui_api_explorer_url", "") +
         "/more?version=OBPv4.0.0&list-all-banks=false&core=&psd2=&obwg=#OBPv2_2_0-getCurrentFxRate"
