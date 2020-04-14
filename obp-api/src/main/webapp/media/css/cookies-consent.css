@@ -1,5 +1,5 @@
 #cookies-consent {
-    background-color:#ffffe1;
+    background-color:#252525;
     display:none;
     text-align: center;
     position: absolute;
@@ -8,4 +8,10 @@
     top: 0;
     right: 0;
     z-index: 99;
+    height: 156px;
+}
+
+#cookies-consent-font{
+    font-size: 16px;
+    color: #FFFFFF;
 }
