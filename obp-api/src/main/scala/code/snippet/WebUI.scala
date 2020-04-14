@@ -551,4 +551,8 @@ class WebUI extends MdcLoggable{
       "img [alt]" #> s"${i.altText}"
     }
   }
+
+  def mainIndexPage: CssSel = {
+    "#main-index-page *" #> scala.xml.Unparsed(getWebUiPropsValue("webui_index_page", """This is a Test!!!""".stripMargin))
+  }
 }
