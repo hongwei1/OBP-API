@@ -27,6 +27,7 @@ TESOBE (http://www.tesobe.com/)
 package bootstrap.liftweb
 
 import java.io.{File, FileInputStream}
+import java.nio.file.Files
 import java.util.{Locale, TimeZone}
 
 import code.CustomerDependants.MappedCustomerDependant
@@ -107,6 +108,7 @@ import code.util.Helper.MdcLoggable
 import code.views.Views
 import code.views.system.{AccountAccess, ViewDefinition}
 import code.webhook.{MappedAccountWebhook, WebhookHelperActors}
+import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 import code.webuiprops.WebUiProps
 import com.openbankproject.commons.model.ErrorMessage
 import com.openbankproject.commons.util.ApiVersion
@@ -419,6 +421,21 @@ class Boot extends MdcLoggable {
 
     logger.info (s"props_identifier is : ${APIUtil.getPropsValue("props_identifier", "NONE-SET")}")
 
+    LiftRules.getResource("/media/../index.html").map{url=>
+      val newIndex= APIUtil.getPropsValue("webui_index_page", """OBP_index.html""".stripMargin)
+      val stream = getClass().getClassLoader().getResourceAsStream(s"webAppResources/${newIndex}")
+      val customerIndexHtml = try {
+        scala.io.Source.fromInputStream(stream, "utf-8").mkString
+      } finally {
+        stream.close()
+      }
+      
+      val indexHtmlFile = new File(url.getPath)
+      Files.write(
+        indexHtmlFile.toPath,
+        customerIndexHtml.getBytes("UTF-8")
+      )
+    }
 
     // Build SiteMap
     val indexPage = APIUtil.getPropsValue("server_mode", "apis,portal") match {
