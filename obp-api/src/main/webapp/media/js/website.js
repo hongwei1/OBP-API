@@ -61,4 +61,5 @@ $(document).ready(function() {
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
 	}
+	showIndicatorCookiePage('cookies-consent');
 });

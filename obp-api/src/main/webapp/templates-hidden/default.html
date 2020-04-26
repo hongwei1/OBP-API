@@ -50,9 +50,9 @@ Berlin 13359, Germany
 	<script src="/media/js/cookies-consent.js"></script>
 </head>
 <body id="page_init">
-	<div id="cookies-consent" data-lift="WebUI.cookieConsent">
-		We use cookies to support session management.
-		<input id="clickMe"/>
+	<div id="cookies-consent">
+		<div id="cookies-consent-font"> We use cookies to support session management.</div>
+		<input id="cookies-consent-button" class="btn btn-default" type="button" value="Accept and close" onclick="removeByIdAndSaveIndicatorCookie('cookies-consent')"/>
 	</div>
 
 	<div class="container">
@@ -105,58 +105,60 @@ Berlin 13359, Germany
 				</div>
 				<div id="navbar" class="collapse navbar-collapse">
 					<ul class="nav navbar-nav">
-						<li data-lift="Nav.item?name=Home" class="navitem navitem-home">
-							<a class="navlink" href="#">Link name. Has class "selected" if it's the current page.</a>
+						<li class="navitem">
+							<a id ="navitem-logo" class="navlink" href="/"><img src="/media/images/logo.png"></a>
 						</li>
 						<li data-lift="Nav.item?name=Consumer%20Registration&showEvenIfRestricted=true" class="navitem">
 							<a class="navlink" href="#">Link name. Has class "selected" if it's the current page.</a>
 						</li>
-						<li data-lift="Nav.item?name=Metrics" class="navitem">
-							<a class="navlink" href="#">Link name. Has class "selected" if it's the current page.</a>
+						<li class="navitem">
+							<a class="navlink" data-lift="WebUI.apiExplorerLink" href="">API Explorer</a>
 						</li>
-						<li data-lift="Nav.item?name=Connect" class="navitem">
-							<a class="navlink" href="#">Link name. Has class "selected" if it's the current page.</a>
-						</li>
-						<li data-lift="Nav.item?name=Sandbox%20Account%20Creation&showEvenIfRestricted=true" class="navitem">
-							<a class="navlink" href="#">Link name. Has class "selected" if it's the current page.</a>
+						<li class="navitem">
+							<a class="navlink" data-lift="WebUI.supportPlatformLink" href="https://slack.openbankproject.com" target="_blank">Support</a>
 						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
 						<!-- login state -->
 						<li data-lift="Nav.item?name=Login" class="navitem">
 							<!-- LOGGED OUT -->
-							<p class="navbar-btn">
-								<a href="/user_mgt/sign_up" class="btn btn-default">Sign up</a>
-								<a data-lift="Login.loggedOut" href="#" class="btn btn-default login">Login</a>
+							<p >
+								<a href="/user_mgt/sign_up" class="navbar-btn">Register</a>
+								<a data-lift="Login.loggedOut" href="#" class="btn btn-danger login">Log On</a>
 							</p>
 						</li>
-						<li class="navitem">
+						<li class="navitem" data-lift="Login.loggedIn" >
 							<!-- LOGGED IN -->
-							<p class="navbar-btn"><a data-lift="Login.loggedIn" href="#" class="btn btn-default logout">Logout <span id="username">username</span></a></p>
+<<<<<<< HEAD
+							<p class="navbar-btn"><span id="loggedIn-username">username</span><a href="#" class="btn btn-default logout">Log Off </a></p>
+=======
+							<p class="navbar-btn"><span id="loggedIn-username">username</span>  <a href="#" class="btn btn-default logout">Log Off  </a></p>
+>>>>>>> MyComments
 						</li>
 					</ul>
 				</div><!--/.nav-collapse -->
 			</div>
 		</nav>
-
+		<hr style="margin: 0">
 		<section id="content">
 			<lift:bind name="content"/>
 			The main content gets bound here
 		</section>
 
 		<footer>
-			<div id="copyright">
-				<a href="http://openbankproject.com">Open Bank Project</a> is &copy;2011-<span id="copyright-year" data-lift="WebUI.currentYearText">2018</span> <a href="http://tesobe.com">TESOBE</a> and distributed under the AGPL and commercial licenses.
-			</div>
 			<div>
-				<a href="http://twitter.com/#!/OpenBankProject">Twitter</a> |
-				<a href="https://github.com/OpenBankProject/OBP-API/">Github</a> |
-				<a class="api-documentation-link" data-lift="WebUI.apiDocumentationLink" href="">API Documentation</a> |
-				<a class="api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">API Explorer</a> |
-				<a class="sofi-link" data-lift="WebUI.sofiLink" href="">Sofit</a> |
-				<a class="api-link" data-lift="WebUI.apiLinkHuman" href="">This API Host</a> |
-				<a href="https://openbankproject.com/privacy-policy">Privacy Policy</a> |
-				<a class="termsAndConditions-link" data-lift="WebUI.termsAndConditions" href="">Terms and Conditions</a>
+				<a class="termsAndConditions-link" data-lift="WebUI.termsAndConditions" href="">Terms and Conditions</a> &nbsp&nbsp&nbsp&nbsp 
+				<a href="https://openbankproject.com/privacy-policy">Privacy Policy</a> &nbsp&nbsp&nbsp&nbsp
+				<a href="http://twitter.com/#!/OpenBankProject">Twitter</a> &nbsp&nbsp&nbsp&nbsp
+				<a href="https://github.com/OpenBankProject/OBP-API/">Github</a> &nbsp&nbsp&nbsp&nbsp
+				<a class="api-documentation-link" data-lift="WebUI.apiDocumentationLink" href="">API Documentation</a> &nbsp&nbsp&nbsp&nbsp
+				<!--				<a class="api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">API Explorer</a> |-->
+				<a class="sofi-link" data-lift="WebUI.sofiLink" href="">Sofit</a> &nbsp&nbsp&nbsp&nbsp
+				<a class="api-link" data-lift="WebUI.apiLinkHuman" href="">This API Host</a> &nbsp&nbsp&nbsp&nbsp
+			</div>
+			<br>
+			<div id="copyright">
+				<a href="http://openbankproject.com">Open Bank Projectis &copy;2011 -</a> <span id="copyright-year" data-lift="WebUI.currentYearText">2018</span> <a href="http://tesobe.com">TESOBE and distributed under the AGPL and commercial licenses.</a> 
 			</div>
 		</footer>
 

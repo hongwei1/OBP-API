@@ -31,7 +31,9 @@ Berlin 13359, Germany
 		<h1>Register your consumer</h1>
 
 		<div id="register-consumer-input">
-			<div id="register-consumer-explanation">Please complete the information about your application below, so we can create your OAuth consumer key and secret.</div>
+			<div id="register-consumer-explanation">Please complete the information about your application below, so we can create your OAuth consumer key and secret.
+			<p>All fields are required unless marked as 'optional'</p>
+			</div>
 
 			<div id="register-consumer-errors" class="alert alert-danger">
 				<div class="error">
@@ -41,7 +43,7 @@ Berlin 13359, Germany
 
 			<form method="post">
 				<div class="row">
-					<div class="col-xs-12 col-sm-6">
+					<div class="col-xs-12 col-sm-12">
 						<div class="form-group">
 							<label for="appType">Application Type</label>
 							<select name="app-type" id="appType" class="form-control">
@@ -53,33 +55,26 @@ Berlin 13359, Germany
 							<input type="text" name="app-name" id="appName" class="form-control">
 						</div>
 						<div class="form-group">
-							<label for="appRedirectUrl">Redirect URL</label>
+							<label for="appDesc">Description of the application</label>
+							<textarea rows="4" name="app-description" id="appDesc" class="form-control"></textarea>
+						</div>
+						<div class="form-group">
+							<label for="appRedirectUrl">Redirect URL (Optional)</label>
 							<input type="text" name="app-redirect-url" id="appRedirectUrl" class="form-control">
 						</div>
-						<!--Note for the commented div : 719aa7fd 04/10/15 Stefan. Hongwei just reformatted the code -->
-						 <!--<div class="form-group">-->
-						<!--<label for="appUserAuthenticationUrl">Authentication URL</label>-->
-						<!--<input type="text" name="app-user-authentication-url" id="appUserAuthenticationUrl" class="form-control" >-->
-						<!--<img src="/media/images/moreInfo.png" title="The user will redirected to that URL during the authentication phase to authenticate. Leave it blank so that the user will see the default login page." alt="more info" class="more-info-icon"/>-->
-						<!--</div>-->
 						<div class="form-group">
 							<label for="appDev">Developer Email</label>
 							<input type="text" name="app-developer" id="appDev" class="form-control">
 						</div>
-					</div>
-					<div class="col-xs-12 col-sm-6">
-						<div class="form-group">
-							<label for="appDesc">Description of the application</label>
-							<textarea rows="4" name="app-description" id="appDesc" class="form-control"></textarea>
-						</div>
+						<input type="submit" value="Submit" class="btn btn-danger" />
 					</div>
 				</div>
-				<input type="submit" value="Register consumer" class="btn btn-default" />
 			</form>
 		</div>
-
 		<div id="register-consumer-success">
 			<p id="register-consumer-success-message">Thanks for registering your consumer with the Open Bank API! Here is your developer information. Please save it in a secure location.</p>
+			<p>Please save it in a secure location.</p>
+			<br>
 			<div class="row">
 				<div class="col-xs-12 col-sm-4">Consumer ID</div>
 				<div class="col-xs-12 col-sm-8"><span id="app-consumer_id">123</span></div>

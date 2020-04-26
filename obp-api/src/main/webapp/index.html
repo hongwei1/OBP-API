@@ -30,18 +30,19 @@ Berlin 13359, Germany
 
 	<div id="main-about" data-lift="WebUI.aboutBackground">
 		<div class="row">
-			<div class="col-xs-12 col-md-5"></div>
 			<div class="col-xs-12 col-md-7">
 				<div id="main-about-box">
-					<div id="main-about-text" data-lift="WebUI.aboutText">
-						<h2>Welcome to the API Sandbox powered by the Open Bank Project!</h2>
-						<p>This API, powered by the Open Bank Project, provides standard RESTful interfaces for developers to create customer facing and backend applications.<br> </p>
+					<div id="main-about-text">
+						<h1>Welcome to the {HSBC API Sandbox}</h1>
+						<p>
+							This sandbox offers more than 250 API endpoints and a range of realistic data to help you develop andbring your fintech ideas to life.<br> </p>
 					</div>
 					<div id="main-about-buttons">
-						<a href="/consumer-registration" class="btn btn-default">GET API KEY</a>
-						<a class="api-explorer-link btn btn-default" data-lift="WebUI.apiExplorerLink" href="">API EXPLORER</a>
-						<a class="sofi-link btn btn-default" data-lift="WebUI.sofiLink" href="">SOFIT</a>
-						<a id="sandbox-introduction-link" class="btn btn-default" data-lift="WebUI.sandboxIntroductionLink" href="">INTRODUCTION</a>
+						<a class="api-explorer-link btn btn-danger" data-lift="WebUI.apiExplorerLink" href="">View API Explorer</a>
+						<a href="/consumer-registration" class="btn btn-default">Get API Key</a>
+<!--						<a class="sofi-link btn btn-default" data-lift="WebUI.sofiLink" href="">SOFIT</a>-->
+<!--						<a id="sandbox-introduction-link" class="btn btn-default" data-lift="WebUI.sandboxIntroductionLink" href="">INTRODUCTION</a>-->
+
 					</div>
 				</div>
 			</div>
@@ -89,7 +90,7 @@ Berlin 13359, Germany
 		</div>
 
 		<div class="bigbutton">
-			<a href="/consumer-registration">Get your API key</a>
+			<a href="/consumer-registration">Get API key</a>
 		</div>
 	</div>
 
@@ -103,13 +104,13 @@ Berlin 13359, Germany
 	<div id="get-started-script" data-lift="WebUI.getStartedContentLoader"></div>
 
 
-
+<hr>
 	<div id="main-apis">
-		<h1>Your APIs</h1>
+		<h1>Explore APIs</h1>
 		<div class="row">
 			<a class="api-explorer-link" data-lift="WebUI.apiExplorerLink?tags=Account,Card" href="">
 				<div class="col-xs-12 col-sm-2 col-lg-1 main-apis-icon">
-					<img class="icon-accounts" src="https://static.openbankproject.com/images/sandbox/icons/icon-accounts.png" width="100" height="100" alt="accounts" />
+					<img class="icon-accounts" src="/media/images/icons/apis/accounts.svg" width="100" height="100" alt="accounts" />
 				</div>
 				<div class="col-xs-12 col-sm-4 col-lg-5 main-apis-text">
 					<h2>Accounts</h2>
@@ -225,7 +226,7 @@ Berlin 13359, Germany
 
 
 	<div id="main-apiexplorer" class="bigbutton">
-		<a class="api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">Go to API Explorer</a>
+		<a class="api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">View API Explorer</a>
 	</div>
 
 
@@ -241,6 +242,7 @@ Berlin 13359, Germany
 			<div class="hidden-xs col-sm-1"></div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item0" class="collapsed main-faq-button">
+					<hr/>
 					<h2>What is the correct base URL for this sandbox?</h2>
 					<p id="main-faq-item0" class="collapse">
 						The base URL is<br />
@@ -251,6 +253,7 @@ Berlin 13359, Germany
 			</div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item1" class="collapsed main-faq-button">
+					<hr/>
 					<h2>I got a 404 error, what am I doing wrong</h2>
 					<ol id="main-faq-item1" class="collapse">
 						<li>
@@ -270,6 +273,7 @@ Berlin 13359, Germany
 			<div class="hidden-xs col-sm-1"></div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item2" class="collapsed main-faq-button">
+					<hr/>
 					<h2>How should I login?</h2>
 					<p id="main-faq-item2" class="collapse">
 						There are two ways to authenticate a user: <a href="https://github.com/OpenBankProject/OBP-API/wiki/OAuth-Client-SDKS">OAuth</a> and <a href="https://github.com/OpenBankProject/OBP-API/wiki/Direct-Login">Direct Login</a>. If you are using this sandbox for a hackathon, we recommend you use Direct Login to authenticate as it is easier than the OAuth workflow.
@@ -279,6 +283,7 @@ Berlin 13359, Germany
 
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item3" class="collapsed main-faq-button">
+					<hr/>
 					<h2>How can I use OAuth or Direct Login?</h2>
 					<p id="main-faq-item3" class="collapse">
 						If you want to use OBP with OAuth, we recommend you use (and fork) one of our <a href="https://github.com/OpenBankProject/OBP-API/wiki/OAuth-Client-SDKS">OAuth Starter SDKs</a>.
@@ -295,6 +300,7 @@ Berlin 13359, Germany
 			<div class="hidden-xs col-sm-1"></div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item4" class="collapsed main-faq-button">
+					<hr/>
 					<h2>Where can I read the API documentation?</h2>
 					<p id="main-faq-item4" class="collapse">
 						Please use the <a class="api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">API Explorer</a>
@@ -304,6 +310,7 @@ Berlin 13359, Germany
 			</div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item5" class="collapsed main-faq-button">
+					<hr/>
 					<h2>How can I use the example customer data?</h2>
 					<p id="main-faq-item5" class="collapse">
 						You will need to login to the API as a sandbox customer. You can do this using the API Explorer, or any REST client. You can find some example credentials <a class="example_sandbox_credentials_link" data-lift="WebUI.exampleSandboxCredentialsLink" href="https://github.com/OpenBankProject/OBP-API/wiki/">here</a>.</p>
@@ -316,12 +323,14 @@ Berlin 13359, Germany
 			<div class="hidden-xs col-sm-1"></div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item6" class="collapsed main-faq-button">
+					<hr/>
 					<h2>Where does the data come from?</h2>
 					<p id="main-faq-item6" class="collapse faq-data-text" data-lift="WebUI.faqDataText">Text is replaced</p>
 				</div>
 			</div>
 			<div class="col-xs-12 col-sm-5">
 				<div data-toggle="collapse" data-target="#main-faq-item7" class="collapsed main-faq-button">
+					<hr/>
 					<h2>Where can i get more information and support?</h2>
 					<p id="main-faq-item7" class="collapse">
 						Please refer to our <a class="faq-link" data-lift="WebUI.faqLink" href="" target="_blank">FAQ</a>, <a class="glossary-link" data-lift="WebUI.glossaryLink" href="" target="_blank">Glossary</a>, join our <a class="support-platform-link" data-lift="WebUI.supportPlatformLink" href="" target="_blank">Slack channels</a> or email us at <a class="faq-email" data-lift="WebUI.faqEmail" href="">contact@openbankproject.com</a></p>
@@ -332,42 +341,35 @@ Berlin 13359, Germany
 	</div>
 
 
-	<div id="main-start_building">
-		<h1 name="get-started" data-lift="WebUI.getStartedText">Get started building your application using this sandbox now</h1>
-		<div class="bigbutton">
-			<a href="/consumer-registration">Get your API key</a>
-		</div>
-	</div>
 
 
 
-	<div id="main-partners" class="lift:WebUI.createMainPartners">
-		<a href="">
-			<img src="" alt="">
-		</a>
-	</div>
+<!--	<div id="main-partners" class="lift:WebUI.createMainPartners">-->
+<!--		<a href="">-->
+<!--			<img src="" alt="">-->
+<!--		</a>-->
+<!--	</div>-->
+
 
 	
-
 	<div id="main-support">
-		<h1>For technical support</h1>
+		<h1>Technical support</h1>
 		<div class="main-support-item">
-			<img class="support-mail" src="https://static.openbankproject.com/images/sandbox/support/mail.png" width="150" height="150" alt="mail" />
-			<h2>Email us</h2>
+			<img class="support-mail" src="/media/images/icons/support/email.svg" width="38" height="48" alt="mail" />
+			<h2>Email</h2>
 			<a href="mailto:contact@openbankproject.com">contact@openbankproject.com</a>
 		</div>
 		<div class="main-support-item">
-			<img class="support-twitter" src="https://static.openbankproject.com/images/sandbox/support/twitter.png" width="150" height="150" alt="twitter" />
+			<img class="support-twitter" src="/media/images/icons/support/twitter.svg" width="38" height="48" alt="twitter" />
 			<h2>Twitter</h2>
 			<a href="https://twitter.com/openbankproject">@OpenBankProject</a>
 		</div>
 		<div class="main-support-item">
-			<img class="support-slack" src="https://static.openbankproject.com/images/sandbox/support/slack.png" width="150" height="150" alt="slack" />
+			<img class="support-slack" src="/media/images/icons/support/chat.svg" width="38" height="48" alt="slack" />
 			<h2>Chat</h2>
 			<a class="support-platform-link" data-lift="WebUI.supportPlatformLink" href="" target="_blank">Slack channel</a>
 		</div>
 	</div>
-
 
 
 	<div id="vendor-support"></div>
@@ -385,12 +387,20 @@ Berlin 13359, Germany
 	</div>
 -->
 
-
-	<div id="for-banks" name="for-banks" data-lift="WebUI.forBanks" >
-		<h1>For Banks</h1>
-		<a class="api-manager-link btn btn-default btn-for-banks" data-lift="WebUI.apiManagerLink" href="">API Manager</a>
-		<a class="obp-cli-link btn btn-default btn-for-banks" data-lift="WebUI.obpCliLink" href="">OBP CLI</a>
-		<a class="api-tester-link btn btn-default btn-for-banks" data-lift="WebUI.apiTesterLink" href="">API Tester</a>
+	<div id= "main-start" class="row">
+		<div id="main-start_building" class="col-xs-12 col-sm-6">
+			<h1 name="get-started" data-lift="WebUI.getStartedText" >Get started building your application</h1>
+			<div class="btn btn-default pull-left" >
+				<a href="/consumer-registration">Get API key</a>
+			</div>
+		</div>
+		
+		<div id="for-banks" name="for-banks" data-lift="WebUI.forBanks" class="col-xs-12 col-sm-6">
+			<h1>For Banks</h1>
+			<a class="api-manager-link btn btn-default btn-for-banks pull-left margin-right"  data-lift="WebUI.apiManagerLink" href="">API Manager</a>
+			<a class="obp-cli-link btn btn-default btn-for-banks pull-left margin-left10"  data-lift="WebUI.obpCliLink" href="">OBP CLI</a>
+			<a class="api-tester-link btn btn-default btn-for-banks pull-left margin-left10" data-lift="WebUI.apiTesterLink" href="">API Tester</a>
+		</div>
 	</div>
 
 

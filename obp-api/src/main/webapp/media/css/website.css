@@ -1,12 +1,12 @@
 @import url('reset.css');
 
 html {
+	font-family: "UniversArabicForHSBC-Regular";
 	height: 100%
 }
 
 
 body {
-	font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 	font-size: 18px;
 	line-height: 24px;
 	font-weight: 400;
@@ -14,11 +14,11 @@ body {
 }
 
 h1 {
-	font-size: 36px;
+	font-size: 35px;
 	line-height: 40px;
 	text-align: center;
-	font-weight: bold;
 	margin-bottom: 30px;
+	color: #333;
 }
 
 h2 {
@@ -29,6 +29,7 @@ h2 {
 }
 
 a {
+	font-family: UniversNextforHSBC-Regular;
 	color: #666666;
 	text-decoration: none;
 }
@@ -50,6 +51,7 @@ header #logo-right {
 
 #table-header {
     width: 100%;
+	display: none;
 }
 
 #logo-left-xs {
@@ -77,6 +79,7 @@ header #logo-right {
 header #header-decoration {
 	background-color: #53C4EF;
 	height: 35px;
+	display: none;
 }
 header #lift__noticesContainer__ {
 	display: none;
@@ -93,10 +96,22 @@ nav {
 	border: none;
 }
 .navbar-default .navbar-nav > li > a:link, .navbar-default .navbar-nav > li > a:visited {
-	color: white;
+	font-family: UniversNextforHSBC-Light;
+	font-size: 22px;
+	color: #333333;
+	line-height: 31px;
+	padding-top: 27px;
+}
+#navitem-logo{
+	padding-top: 22px;
+}
+
+.navbar-right{
+	margin-right: 80px;
+	margin-top: 27px;
 }
 .navbar-default .navbar-nav > li > a:focus, .navbar-default .navbar-nav > li > a:hover {
-	color: #eee;
+	color: #241e23;
 }
 .navbar-default .navbar-nav > li.active > a, .navbar-default .navbar-nav > li.active > a:focus, .navbar-default .navbar-nav > li.active > a:hover, .navbar-default .navbar-nav > li.active > a:visited {
 	color: #555;
@@ -115,7 +130,6 @@ nav {
 }
 .navbar-btn a {
 	margin-left: 15px;
-	text-transform: uppercase;
 }
 .navbar-btn .login {
 	margin-right: 25px;
@@ -123,41 +137,50 @@ nav {
 .navbar-btn .logout {
 	margin-right: 20px;
 }
-.navbar-btn .logout #username {
-	font-size: 12px;
+#loggedIn-username {
+	font-family: UniversNextforHSBC-Regular;
+	font-size: 16px;
+	color: #333333;
+	line-height: 24px;
 }
+
+#main-start{
+	margin: 0;
+	padding: 50px;
+	text-align: center;
+	background-color: #F3F3F3;
+}
+
+#main-start h1{
+	font-size: 28px;
+	text-align: left;
+}
+#main-start .btn-default{
+	margin-right:20px;
+	background-color: #F3F3F3;
+}
+
 
 #for-banks {
 	padding: 50px 0;
-	text-align: center;
-	background-color: #f1f4f8;
 }
-#for-banks h1 {
-	font-size: 36px;
-	margin-bottom: 10px;
-}
-#for-banks a {
-	font-size: 24px;
-}
-
-
 
 footer {
-	padding: 50px 10px;
-	color: #999999;
+	padding: 24px 100px;
+	color: #FFFFFF;
 	background-color: #3C3C3C;
-	text-align: center;
+	text-align: left;
 	line-height: 20px;
 }
-footer a, footer a:hover {
-	color: white;
+footer a,span, footer a:hover,span:hover  {
+	font-size: 14px;
+	letter-spacing: 0;
+	line-height: 20px;
+	color: #FFFFFF;
 }
-
 footer #copyright {
 	margin-bottom: 10px;
 }
-
-
 
 #main-about {
 	padding-top: 50px;
@@ -203,7 +226,13 @@ footer #copyright {
 }
 
 #main-about h1 {
-	color: white;
+	font-size: 44px;
+	color: #333333;
+	letter-spacing: 0;
+	line-height: 50px;
+	text-align: left;
+	padding-top: 32px;
+	padding-left: 32px;
 }
 #main-about h2 {
 	padding: 20px 10px 2px 10px;
@@ -215,14 +244,18 @@ footer #copyright {
 	text-align: left;
 }
 #main-about p {
-	padding: 10px 10px 10px 30px;
-	color: white;
-	text-align: left;
+	padding: 10px 10px 10px 32px;
+	margin-bottom: 32px;
+	font-size: 22px;
+	color: #333333;
+	line-height: 31px;
 }
 #main-about #main-about-box {
-	background-color: rgba(83, 196, 239, 0.7);
-	margin-top: 240px;
+	background-color: white;
+	margin-top: 79px;
 	padding-bottom: 40px;
+	margin-bottom: 80px;
+	margin-left: 100px;
 }
 #main-about #main-about-text a {
 	text-decoration: underline;
@@ -231,15 +264,16 @@ footer #copyright {
 #main-about #main-about-buttons {
 	margin: 20px 0 0 30px;
 }
-#main-about #main-about-buttons a {
-	margin-bottom: 10px;
+#main-about #main-about-buttons .api-explorer-link {
+	margin-right: 20px;
+	margin-left: 0px;
 }
 
 
 
 #main-get-started {
 	padding: 50px 10px;
-	background-color: #f1f4f8;
+	background-color: #ffffff;
 }
 #main-get-started h2 {
 	font-weight: bold;
@@ -283,7 +317,7 @@ footer #copyright {
 .main-showcases-item {
 	display: inline-block;
 	margin: 30px 10px;
-	width: 230px;
+	width: 300px;
 	font-size: small;
 }
 .main-showcases-item a {
@@ -298,11 +332,16 @@ footer #copyright {
 #main-faq {
 	text-align: left;
 	padding: 50px 0;
-	background-color: #f1f4f8;
+	background-color: white;
 }
 #main-faq h2 {
-	font-size: 18px;
-	margin-left: 30px;
+	font-size: 16px;
+	margin: 0;
+}
+
+#main-faq hr {
+	margin-bottom: 10px;
+	margin-top: 0px;
 }
 #main-faq p, #main-faq ol {
 	margin-top: 10px;
@@ -360,7 +399,10 @@ footer #copyright {
 	margin: 30px 10px;
 }
 .main-support-item a {
-	color: white;
+	color: #241e23;
+}
+.main-support-item h2 {
+	color: #241e23;
 }
 
 
@@ -389,13 +431,14 @@ footer #copyright {
 .bigbutton {
 	margin: 30px auto;
 	text-align: center;
+	background-color: white;
 }
 .bigbutton a {
 	border: 3px solid green;
 	border-radius: 25px;
 	color: green;
 	padding: 10px;
-	font-size: 24px;
+	font-size: 16px;
 	text-decoration: none;
 }
 .bigbutton a:hover {
@@ -426,6 +469,36 @@ footer #copyright {
 #signup form {
 	max-width: 400px;
 	margin: 0 auto;
+	color: #333333;
+}
+
+#signup form h1:first-child{
+	font-size: 28px;
+	color: #333333;
+	letter-spacing: 0;
+	line-height: 36px;
+	text-align: left;
+	width: 500px;
+}
+
+#signup form span{
+	margin-bottom: 15px;
+	font-size: 16px;
+	color: #333333;
+	line-height: 24px;
+}
+#signup form span input:first-child{
+	margin-bottom: 15px;
+}
+#signup form span input:last-child{
+	margin-top: 15px;
+}
+
+#signup form label{
+	margin-bottom: 15px;
+	font-size: 16px;
+	color: #333333;
+	line-height: 24px;
 }
 #authorise .authorise-button {
 	margin-bottom: 10px;
@@ -460,12 +533,11 @@ footer #copyright {
 #signup #signup-submit input:hover {
 	background-color: #e6e6e6;
 }
-#authorise #authorise-signup {
-	text-transform: uppercase;
-}
+
 #authorise #authorise-recover-password {
 	font-size: 12px;
-	color: white;
+	color: black;
+	text-decoration:underline
 }
 #authorise .login-error {
 	margin-bottom: 10px;
@@ -517,7 +589,9 @@ footer #copyright {
 	text-align: justify;
 }
 
-
+#login-Register-text, #login-form-username, #login-form-password{
+	color: black;
+}
 
 #create-account a,
 #signup #signup-agree-terms a,
@@ -525,7 +599,6 @@ footer #copyright {
 #register-consumer a,
 #authorise #manual-redirect a {
 	color: white;
-	text-decoration: underline;
 }
 #create-account #create-account-explanation,
 #create-account form,
@@ -535,11 +608,29 @@ footer #copyright {
 #register-consumer-success {
 	max-width: 600px;
 	margin: 0 auto;
+	color: #333333;
+}
+
+#register-consumer-input form label{
+	margin-bottom: 10px;
+}
+
+#register-consumer-input form .btn-danger{
+	margin-left: 0; 
 }
 #create-account #create-account-explanation,
 #register-consumer #register-consumer-explanation {
 	margin-bottom: 20px;
+	color: #333333;
+	font-size: 22px;
 }
+#register-consumer #register-consumer-explanation p{
+	margin-top: 10px;
+	color: #333333;
+	font-size: 14px;
+}
+
+
 #create-account #create-account-id span,
 #create-account #create-account-bank-id span,
 #create-account #create-account-initial-balance span,
@@ -550,7 +641,7 @@ footer #copyright {
 
 
 #register-consumer #appDesc {
-	height: 250px;
+	height: 96px;
 }
 #register-consumer #register-consumer-errors {
 	margin-bottom: 20px;
@@ -559,7 +650,27 @@ footer #copyright {
 	margin-top: 30px;
 }
 #register-consumer #register-consumer-success p {
+	font-family: UniversNextforHSBC-Light;
+	font-size: 22px;
+	color: #333333;
+	letter-spacing: 0;
 	margin-bottom: 20px;
+	line-height: 31px;
+}
+#register-consumer h1 {
+	font-size: 28px;
+	color: #333333;
+	letter-spacing: 0;
+	line-height: 36px;
+	text-align: left;
+	padding-left: 260px;
+}
+
+#register-consumer-success span,
+#register-consumer-success a{
+	font-size: 16px;
+	color: #333333;
+	line-height: 24px;
 }
 #register-consumer #register-consumer-success .row {
 	margin-bottom: 20px;
@@ -582,4 +693,23 @@ footer #copyright {
 .wrap-text {
 	word-break: break-all;
 	overflow-wrap: break-word;
+}
+
+#authorise #thanks-h1{
+	font-size: 28px;
+	color: #333333;
+	letter-spacing: 0;
+	line-height: 36px;
+}
+
+#authorise #thanks-detail{
+	font-size: 16px;
+	color: #333333;
+	line-height: 24px;
+	margin-top: 32px;
+	margin-bottom: 48px;
+}
+
+#authorise #manual-redirect .btn-danger{
+	margin: 0;
 }
