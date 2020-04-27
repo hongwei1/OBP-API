@@ -1,6 +1,6 @@
 #main-start{
     margin: 0;
-    padding: 50px 100px;
+    padding: 0 100px;
     text-align: center;
     background-color: #F3F3F3;
 }
@@ -16,6 +16,11 @@
 #main-start .btn-default{
     margin-right:20px;
     background-color: #F3F3F3;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    text-align: center;
+    line-height: 24px;
     
 }
 #main-start .btn-default a{
@@ -26,7 +31,7 @@
     line-height: 24px;
 }
 #main-start #main-start_building {
-    padding: 50px 0;
+    padding: 64px 0;
 }
 #main-start #main-start_building .btn-default a{
     font-family: UniversNextforHSBC-Regular;
@@ -37,7 +42,7 @@
 }
 
 #main-start #for-banks {
-    padding: 50px 0;
+    padding: 64px 0;
 }
 
 .btn-default {
