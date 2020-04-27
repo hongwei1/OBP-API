@@ -17,22 +17,26 @@
     position: absolute;
     left: 100px;
     top: 32px;
-    line-height: 24px;
-    color: #FFFFFF;
+    font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
+    color: #FFFFFF;
+    line-height: 24px;
 }
 
 #cookies-consent-button{
     position: absolute;
     left: 100px;
     top: 80px;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
     color: #FFFFFF;
     text-align: center;
+    line-height: 24px;
     background-color: #DB0011;
     height:44px;
     width:169px;
     border: 0;
-    font-size: 16px;
+    padding-top: 6px;
 }
 
 #cookies-consent-button:hover{
