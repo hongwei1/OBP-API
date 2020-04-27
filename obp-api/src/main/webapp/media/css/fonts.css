@@ -1,19 +1,20 @@
 @font-face {
-    font-family: UniversArabicForHSBC-Bold;
-    src: url(../font/UniversArabicForHSBC-Bold.ttf);
+    font-family: UniversNextforHSBC-Bold;
+    src: url(../font/UniversNextforHSBC-Bold.otf);
 }
 
 @font-face {
-    font-family: UniversArabicForHSBC-Light;
-    src: url(../font/UniversArabicForHSBC-Light.ttf);
+    font-family: UniversNextforHSBC-Light;
+    src: url(../font/UniversNextforHSBC-Light.otf);
 }
 
 @font-face {
-    font-family: UniversArabicForHSBC-Regular;
-    src: url(../font/UniversArabicForHSBC-Regular.ttf);
+    font-family: UniversNextforHSBC-Medium;
+    src: url(../font/UniversNextforHSBC-Medium.otf);
 }
 
 @font-face {
-    font-family: UniversArabicForHSBC-Thin;
-    src: url(../font/UniversArabicForHSBC-Thin.ttf);
+    font-family: UniversNextforHSBC-Regular;
+    src: url(../font/UniversNextforHSBC-Regular.otf);
 }
+

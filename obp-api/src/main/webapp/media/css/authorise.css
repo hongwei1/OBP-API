@@ -88,6 +88,7 @@
     color: red;
 }
 #authorise #thanks-h1{
+    font-family: UniversNextforHSBC-Light;
     font-size: 28px;
     color: #333333;
     letter-spacing: 0;
@@ -95,6 +96,7 @@
 }
 
 #authorise #thanks-detail{
+    font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     color: #333333;
     line-height: 24px;
@@ -115,9 +117,7 @@
 }
 
 #authorise form,
-#authorise #oauth-done-thanks,
-#recover-password form,
-#recover-password #recover-password-explanation{
+#authorise #oauth-done-thanks{
     max-width: 400px;
     margin: 0 auto;
     color: #333333;

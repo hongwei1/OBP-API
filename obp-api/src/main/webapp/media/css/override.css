@@ -48,11 +48,6 @@ footer {
     background-color: #333333;
 }
 
-#recover-password #recover-password-submit input {
-    color: #FFF;
-    background-color: #DB0011;
-}
-
 #vendor-support {
     padding: 0px 0px;
     color: white;
@@ -72,97 +67,6 @@ footer {
 .vendor-support-item a {
     color: white;
 }
-
-.icon-branches {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/webhooks.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-transactions {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/transactions.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-metadata {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/metadata.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-counterparties {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/counterparties.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-entitlements {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/branches_ATMs_and_products.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-messages {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/customer_onboarding_and_KYC.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-security {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/roles_metrics_and_documentation.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-requests {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/payments_and_transfers.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
-.icon-kyc {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/search_warehouse.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
-}
-
 @media (min-width: 768px) {
     .container {
         width: 100%;

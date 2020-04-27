@@ -113,3 +113,11 @@
     color: #FFF;
     background-color: #DB0011;
 }
+
+#signup-agree-terms.input{
+    zoom: 300%;
+}
+
+#signup-agree-terms.input +label{
+    background-color: white;
+}

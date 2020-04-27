@@ -41,6 +41,9 @@ nav .navbar-collapse.collapse {
     color: #333333;
     line-height: 24px;
 }
+.navbar-default .navbar-right .navbar-btn{
+    margin-top: 0;
+}
 
 .navbar-default .navbar-right .navbar-btn .login {
     margin-right: 25px;
@@ -59,7 +62,7 @@ nav .navbar-collapse.collapse {
 }
 
 .navbar-default .navbar-right .navbar-btn #loggedIn-username {
-    margin-right: 20px;
+    margin-right: 24px;
     font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     color: #333333;
