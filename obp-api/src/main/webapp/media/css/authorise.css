@@ -122,3 +122,6 @@
     margin: 0 auto;
     color: #333333;
 }
+#authorise .authorise-token-success #authorise-submit-button{
+    margin-right: -15px;
+}
