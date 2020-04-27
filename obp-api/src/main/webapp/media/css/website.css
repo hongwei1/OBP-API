@@ -186,3 +186,7 @@ footer #copyright {
 	padding-top: 10px;
 	height: 44px;
 }
+
+input[type="text"]{
+	height: 44px;
+}

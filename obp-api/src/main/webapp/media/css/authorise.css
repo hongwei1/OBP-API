@@ -17,6 +17,7 @@
 #login-form-username, 
 #login-form-password{
     margin-bottom: 8px;
+    margin-top: 32px;
     font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     color: #333333;
@@ -28,6 +29,7 @@
     color: #FFFFFF;
     float: right;
     height: 44px;
+    width: 92px;
     font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     text-align: center;
