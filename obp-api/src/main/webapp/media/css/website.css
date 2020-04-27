@@ -10,6 +10,7 @@
 @import url(/media/css/register-consumer.css);
 @import url(/media/css/signup.css);
 @import url(/media/css/recover-password.css);
+@import url(/media/css/main-showcases.css);
 
 html {
 	font-family: "UniversArabicForHSBC-Regular";
@@ -110,25 +111,7 @@ footer #copyright {
 	margin-bottom: 10px;
 }
 
-#main-showcases {
-	margin-top: 70px;
-	padding: 50px 10px;
-	color: white;
-	background-color: #53C4EF;
-	text-align: center;
-}
-.main-showcases-item {
-	display: inline-block;
-	margin: 30px 10px;
-	width: 300px;
-	font-size: small;
-}
-.main-showcases-item a {
-	color: white;
-}
-.main-showcases-item a:hover {
-	text-decoration: underline;
-}
+
 
 #main-partners {
 	padding-bottom: 50px;

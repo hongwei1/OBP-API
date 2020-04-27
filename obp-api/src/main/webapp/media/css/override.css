@@ -19,7 +19,6 @@ header #header-decoration,
 #create-account,
 .navbar-default .navbar-toggle:hover,
 .navbar-default .navbar-toggle:focus,
-#main-showcases,
 #vendor-support,
 #main-links {
     background-color: #ffffff;
@@ -34,14 +33,6 @@ header #header-decoration,
     padding-bottom: 6%;
     padding-left: 6%;
     padding-right: 10%;
-}
-
-#main-showcases {
-    background-color: #333333;
-}
-
-#main-showcases h1 {
-    color: white;
 }
 
 footer {

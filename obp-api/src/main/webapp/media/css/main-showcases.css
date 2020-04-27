@@ -1,0 +1,26 @@
+#main-showcases {
+    padding: 50px 10px;
+    color: white;
+    background-color: #53C4EF;
+    text-align: center;
+}
+.main-showcases-item {
+    display: inline-block;
+    margin: 30px 40px;
+    width: 300px;
+    font-size: small;
+}
+.main-showcases-item a {
+    color: white;
+}
+.main-showcases-item a:hover {
+    text-decoration: underline;
+}
+
+#main-showcases {
+    background-color: #333333;
+}
+
+#main-showcases h1 {
+    color: white;
+}
