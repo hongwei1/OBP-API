@@ -1,7 +1,8 @@
 #main-support {
     margin-left: 50px;
     margin-right: 50px;
-    padding: 50px 10px;
+    margin-top: 72px;
+    margin-bottom: 56px;
     background-color: #ffffff;
     text-align: left;
 }
@@ -20,7 +21,9 @@
 }
 .main-support-item {
     display: inline-block;
-    margin: 30px 100px;
+    margin-top: 60px;
+    margin-left: 100px;
+    margin-right: 120px;
     text-align: left;
 }
 .main-support-item a {

@@ -1,6 +1,5 @@
 #main-faq {
     text-align: left;
-    padding: 50px 0;
     background-color: white;
 }
 #main-faq .row {
@@ -24,8 +23,9 @@
     color: #333333;
     text-align: center;
     line-height: 42px;
-    padding: 50px 0;
     background-color: white;
+    margin-top: 72px;
+    margin-bottom: 48px;
 }
 
 #main-faq h2 {
@@ -38,6 +38,11 @@
 #main-faq hr {
     margin-bottom: 10px;
     margin-top: 0px;
+}
+#main-faq hr:last-child {
+    margin-top: 160px;
+    margin-bottom: 70px;
+    width: 86%;
 }
 #main-faq p, #main-faq ol{
     margin-top: 10px;
