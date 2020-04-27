@@ -44,18 +44,3 @@
 #main-start #for-banks {
     padding: 64px 0;
 }
-
-.btn-default {
-    color: #555555;
-    border-color: #555555;
-    border-radius: 0;
-    padding-top: 10px;
-    padding-bottom: 6px;
-    height: 44px;
-}
-.btn-default:hover{
-    background-color: #F3F3F3
-}
-.btn-default:active{
-    background-color: #EDEDED;
-}

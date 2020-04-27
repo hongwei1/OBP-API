@@ -172,9 +172,32 @@ footer div:first-child a {
 	line-height: 24px;
 	background: #DB0011;
 	border-radius: 0;
-	margin-left: 20px;
-	padding-top: 10px;
+	padding-top: 9px;
+	padding-bottom: 11px;
+	padding-left: 20px;
+	padding-right: 20px;
 	height: 44px;
+    border: 0;
+}
+.btn-default {
+	border-color: #555555;
+	border-radius: 0;
+	height: 44px;
+	padding-top: 9px;
+	padding-bottom: 11px;
+	padding-left: 20px;
+	padding-right: 20px;
+	font-family: UniversNextforHSBC-Regular;
+	font-size: 16px;
+	color: #333333;
+	text-align: center;
+	line-height: 24px;
+}
+.btn-default:hover{
+	background-color: #F3F3F3
+}
+.btn-default:active{
+	background-color: #EDEDED;
 }
 
 input[type="password"],
