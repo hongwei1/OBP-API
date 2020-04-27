@@ -187,6 +187,7 @@ footer #copyright {
 	height: 44px;
 }
 
+input[type="password"],
 input[type="text"]{
 	height: 44px;
 }

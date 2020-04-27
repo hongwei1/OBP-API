@@ -21,23 +21,25 @@
 }
 
 #signup form span{
-    margin-bottom: 15px;
+    font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     color: #333333;
     line-height: 24px;
-}
-#signup form span input:first-child{
     margin-bottom: 15px;
 }
+#signup form span input:first-child{
+    margin-bottom: 32px;
+}
 #signup form span input:last-child{
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
 #signup form label{
-    margin-bottom: 15px;
+    font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     color: #333333;
     line-height: 24px;
+    margin-bottom: 8px;
 }
 
 #signup #signup-submit input {
@@ -71,7 +73,6 @@
     /* Copy of bootstrap .form-control */
     display: block;
     width: 100%;
-    height: 34px;
     padding: 6px 12px;
     font-size: 14px;
     line-height: 1.42857143;
@@ -91,11 +92,15 @@
 
 #signup #signup-error,
 #signup .form-group,
-#signup #signup-agree-terms,
 #signup #signup-agree-privacy-policy,
 #signup #signup-submit {
-    margin-bottom: 20px;
+    margin-bottom: 32px;
     text-align: justify;
+}
+
+#signup #signup-agree-terms{
+    margin-bottom: 12px;
+    text-align: justify; 
 }
 
 #signup #signup-agree-terms a,
