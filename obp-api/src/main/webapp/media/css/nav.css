@@ -1,0 +1,69 @@
+nav {
+    margin-bottom: 0 !important;
+    border-radius: 0;
+}
+nav .navbar-collapse.collapse {
+    display: block !important;
+    height: auto !important;
+    margin-left: 85px;
+    margin-right: 100px;
+    padding: 0;
+}
+.navbar-default .navbar-nav > li #navitem-logo {
+    padding-top: 23px;
+    padding-bottom: 15px;
+}
+.navbar-default .navbar-nav > li > a {
+    background-color: white;
+    font-family: UniversNextforHSBC-Light;
+    font-size: 22px;
+    color: #333333;
+    line-height: 31px;
+    padding-top: 27px;
+    padding-bottom: 30px;
+}
+
+.navbar-default .navbar-nav > li > a:hover {
+    background: #F3F3F3;
+}
+
+.navbar-default .navbar-nav > li > a:active {
+    background: #EDEDED;
+}
+
+.navbar-default .navbar-right {
+    padding-top: 22px;
+    margin-right: 0;
+}
+.navbar-default .navbar-right .navitem p #register-link {
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+}
+
+.navbar-default .navbar-right .navbar-btn .login {
+    margin-right: 25px;
+}
+
+.navbar-default .navbar-right .navbar-btn .login:hover {
+    background-color: #AF000D;
+}
+
+.navbar-default .navbar-right .navbar-btn .login:active {
+    background-color: #83000A;
+}
+
+.navbar-default .navbar-right .navbar-btn .logout {
+    margin-right: 20px;
+}
+
+.navbar-default .navbar-right .navbar-btn #loggedIn-username {
+    margin-right: 20px;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+}
+
+

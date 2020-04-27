@@ -1,38 +1,29 @@
-@import url(https://static.openbankproject.com/hsbc/css/fonts.css);
+@import url(/media/css/fonts.css);
 
 @font-face {
     font-family: UniversNextForHSBC-Light;
-    src: url(https://static.openbankproject.com/hsbc/font/UniversNextforHSBC-Light.otf);
+    src: url(/media/font/UniversNextforHSBC-Light.otf);
 }
 
 body {
     font-family: "UniversNextForHSBC-Light";
 }
 
-
 header #header-decoration,
 .navbar-default,
-#main-support,
 #main-links,
 #authorise,
 #signup,
 #recover-password,
 #register-consumer,
 #create-account,
-.navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus,
+.navbar-default .navbar-toggle:hover,
+.navbar-default .navbar-toggle:focus,
 #main-showcases,
-#main-support,
 #vendor-support,
-#main-links,
-.bigbutton a:hover {
+#main-links {
     background-color: #ffffff;
 }
-
-/*.navbar-default {
-	        background-color: #CC0000;
-		        border: none;
-		}
-*/
 
 #logo-right-xs {
     max-width: 43%;
@@ -45,71 +36,21 @@ header #header-decoration,
     padding-right: 10%;
 }
 
-#main-about h2 {
-    font-size: 28px;
-}
-
-
-#main-about #main-about-buttons {
-    margin: 0px 0 0 30px;
-}
-
 #main-showcases {
-    margin-left: 50px;
-    margin-right: 50px;
     background-color: #333333;
 }
 
-#main-showcases h1{
+#main-showcases h1 {
     color: white;
-}
-
-#main-faq {
-    margin-left: 50px;
-    margin-right: 50px;
-}
-
-#main-support {
-    margin-left: 50px;
-    margin-right: 50px;
-}
-
-.bigbutton a {
-    border: 2px solid #333333;
-    color: #0077BE;
 }
 
 footer {
     background-color: #333333;
 }
 
-.btn-danger {
-    background: #DB0011;
-    font-size: 16px;
-    color: #FFFFFF;
-    text-align: center;
-    line-height: 24px;
-    margin-left: 20px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    font-family: UniversNextforHSBC-Regular;
-}
-
-.btn-default {
-    color: #555555;
-    border-color: #555555;
-    border-radius: 0;
-}
-
-#authorise #authorise-submit input,
-#recover-password #recover-password-submit input,
-#signup #signup-submit input {
+#recover-password #recover-password-submit input {
     color: #FFF;
     background-color: #DB0011;
-}
-
-#main-support {
-    padding: 30px 10px;
 }
 
 #vendor-support {
@@ -118,107 +59,18 @@ footer {
     background-color: #333333;
     text-align: center;
 }
+
 #vendor-support h2 {
     font-size: 24px;
 }
+
 .vendor-support-item {
     display: inline-block;
     margin: 30px 10px;
 }
+
 .vendor-support-item a {
     color: white;
-}
-
-
-.btn-default:hover {
-    background-color: #555555;
-    color: white;
-    border-color: #555555;
-}
-
-.bigbutton a {
-    color: #333333;
-    background-color: white;
-    border-radius: 0;
-}
-
-.bigbutton a:hover {
-    background-color: #555555;
-    color: white;;
-}
-
-.create-account {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(https://static.openbankproject.com/openlab/img/get-started/create_account.png) no-repeat;
-    width: 260px; /* Width of new image */
-    height: 260px; /* Height of new image */
-    padding-left: 260px; /* Equal to width of new image */
-}
-
-.connect-app {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(https://static.openbankproject.com/openlab/img/get-started/connect_app.png) no-repeat;
-    width: 370px; /* Width of new image */
-    height: 260px; /* Height of new image */
-    padding-left: 370px; /* Equal to width of new image */
-}
-
-.test-data {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(https://static.openbankproject.com/openlab/img/get-started/test_data.png) no-repeat;
-    width: 285px; /* Width of new image */
-    height: 270px; /* Height of new image */
-    padding-left: 285px; /* Equal to width of new image */
-}
-
-.item-1 {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/item-1.png) no-repeat;
-    width: 75px; /* Width of new image */
-    height: 300px; /* Height of new image */
-    padding-left: 75px; /* Equal to width of new image */
-    #margin-bottom: 30px;
-}
-
-.item-2 {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/item-2.png) no-repeat;
-    width: 75px; /* Width of new image */
-    height: 300px; /* Height of new image */
-    padding-left: 75px; /* Equal to width of new image */
-    #margin-top: -30px;
-    #margin-bottom: 150px;
-}
-
-.item-3 {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/item-3.png) no-repeat;
-    width: 75px; /* Width of new image */
-    height: 300px; /* Height of new image */
-    padding-left: 75px; /* Equal to width of new image */
-    #margin-top: -150px;
-}
-
-.icon-accounts {
-    #display: block;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    background: url(/media/images/icons/apis/accounts.svg) no-repeat;
-    width: 100px; /* Width of new image */
-    height: 80px; /* Height of new image */
-    padding-left: 100px; /* Equal to width of new image */
 }
 
 .icon-branches {
@@ -311,54 +163,15 @@ footer {
     padding-left: 100px; /* Equal to width of new image */
 }
 
-#main-faq .main-faq-button {
-    margin: 5px;
-    background-image: url('/media/images/icons/upArrow.png');
-    background-repeat:no-repeat;
-    background-position: right;
-}
-#main-faq .main-faq-button.collapsed {
-    background-image: url('/media/images/icons/downArrow.png');
-    background-position: right;
-}
-
-@media only screen and (min-width: 992px) and (max-width: 1199px) {
-    #main-about {
-        background-image: url("/media/images/about-background-992.png") !important;
-    }
-}
-
-@media only screen and (max-width: 991px) {
-    #main-about {
-        background-image: url("/media/images/about-background-768.png") !important;
-    }
-}
-
-
-#main-get-started .bigbutton a{
-    margin: 30px auto;
-    text-align: center;
-    background-color: black;
-    color: white;
-    padding: 20px;
-}
-
-#signup-agree-terms label {
-    text-align: left;
-    font-size: 16px;
-}
-
 @media (min-width: 768px) {
     .container {
-        width:100%;
+        width: 100%;
         margin: 0;
         padding: 0;
     }
 }
 
-.navbar-collapse.collapse {
-    display: block!important;
-    height: auto!important;
-    margin-left: 85px;
-    padding: 0;
+.row {
+    margin-right: 0px;
+    margin-left: 0px;
 }

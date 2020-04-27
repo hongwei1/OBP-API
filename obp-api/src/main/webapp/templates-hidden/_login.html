@@ -1,17 +1,17 @@
 <div id="authorise">
 	<div class="login-error"><span data-lift="Msg?id=login&errorClass=error"/></div>
 	<div data-lift="Login.customiseLogin">
-		<h1>Log on to {HSBC API Sandbox}</h1>
+		<h1>Log on to HSBC API Playground</h1>
 		<div id="login-special-instructions">Special Instructions</div>
 
 		<form class="login" action="/user_mgt/login" method="post">
 			<div data-lift="Login.openIdConnectScripts" id="openid_scripts"></div>
 			<div class="form-group">
-				<p id="login-form-username">Username </p> <br>
+				<p id="login-form-username">Username </p> 
 				<input class="form-control" id="username" type="text" placeholder="Username" name="username" tabindex="1" autofocus autocomplete="off"/>
 			</div>
 			<div class="form-group">
-				<p id="login-form-password">Password</p> <br>
+				<p id="login-form-password">Password</p> 
 				<input class="form-control" id="password" type="password" placeholder="Password"  name="password" tabindex="2" autocomplete="off"/>
 			</div>
 
@@ -22,21 +22,20 @@
 			</div>
 
 			<div class="row">
-				<div class="col-xs-12">
-					<div id="authorise-submit" class="authorise-button" tabindex="3">
-						<!-- Would be nice to have proper HTML here -->
-						<user:submit />
-					</div>
+				<div id="authorise-submit" class="authorise-button" tabindex="3">
+					<!-- Would be nice to have proper HTML here -->
+					<user:submit />
 				</div>
 			</div>
-			<a href="/user_mgt/lost_password" id="authorise-recover-password" tabindex="5">Forgotten password?</a>
+			<div id="authorise-recover-password">
+				<a href="/user_mgt/lost_password"  tabindex="5">Forgotten password?</a>
+			</div>
 
+			<div id ="login-or"> or </div>
+			<hr>
 			<div class="row">
-				<div class="col-xs-12">
-					<hr>
-					<span id="login-Register-text">Don't have an account? </span>
-					<a href="/user_mgt/sign_up" id="authorise-signup" class="btn btn-default pull-right authorise-button" tabindex="4">Register</a>
-				</div>
+				<span id="login-Register-text">Don't have an account? </span>
+				<a href="/user_mgt/sign_up" id="authorise-signup" class="btn btn-default pull-right authorise-button" tabindex="4">Register</a>
 			</div>
 		</form>
 		<div data-lift="Login.openIdConnectButton">

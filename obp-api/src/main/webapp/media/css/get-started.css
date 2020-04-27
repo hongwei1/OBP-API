@@ -1,0 +1,64 @@
+#main-get-started {
+    padding: 72px 0 0 0;
+    margin-left: 100px;
+    margin-right: 100px;
+    background-color: #ffffff;
+}
+#main-get-started .main-get-started-icon, #main-get-started .main-get-started-item {
+    text-align: left;
+    padding: 0;
+}
+#main-get-started .main-get-started-item {
+    margin-bottom: -6px;
+    text-align: center;
+}
+#main-get-started .main-get-started-text {
+    text-align: left;
+    padding: 0;
+}
+#main-get-started .main-get-started-text div{
+    font-family: UniversNextforHSBC-Light;
+    font-size: 28px;
+    color: #333333;
+    line-height: 36px;
+    margin-bottom: 17px;
+}
+#main-get-started .main-get-started-text p{
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+}
+#main-get-started .main-get-started-text p a{
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+    text-decoration:underline;
+}
+#main-get-started .btn-primary{
+    margin-top: 48px;
+    margin-bottom: 36px;
+    margin-left: 46%;
+    padding-top: 10px;
+    background-color: #000000;
+    border-radius: 0;
+    text-align: center;
+    height: 44px;
+}
+
+#main-get-started .btn-primary:hover{
+    background-color: #404040;
+}
+
+#main-get-started .btn-primary:active{
+    background-color: #767676;
+}
+
+#main-get-started .btn-primary a{
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #FFFFFF;
+    text-align: center;
+    line-height: 24px;
+}

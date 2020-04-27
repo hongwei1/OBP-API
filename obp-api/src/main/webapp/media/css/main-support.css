@@ -1,0 +1,32 @@
+#main-support {
+    margin-left: 50px;
+    margin-right: 50px;
+    padding: 50px 10px;
+    background-color: #ffffff;
+    text-align: left;
+}
+#main-support h1 {
+    font-family: UniversNextforHSBC-Light;
+    font-size: 35px;
+    color: #333333;
+    text-align: center;
+    line-height: 42px;
+}
+#main-support h2 {
+    font-family: UniversNextforHSBC-Light;
+    font-size: 28px;
+    color: #333333;
+    line-height: 36px;
+}
+.main-support-item {
+    display: inline-block;
+    margin: 30px 100px;
+    text-align: left;
+}
+.main-support-item a {
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+}
+

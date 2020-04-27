@@ -1,0 +1,103 @@
+#main-about {
+    background-size: cover;
+    height: 420px;
+    background-repeat: no-repeat;
+}
+
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+    .container {max-width: 500px;}
+    #main-about {
+        background-repeat:repeat-y;
+        background-size:500px;
+    }
+}
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+    .container {max-width: 450px;}
+    #main-about {
+        background-repeat:repeat-y;
+        background-size:450px;
+    }
+}
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+    .container {max-width: 400px;}
+    #main-about {
+        background-repeat:repeat-y;
+        background-size:400px;
+    }
+}
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+    .container {max-width: 350px;}
+    #main-about {
+        background-repeat:repeat-y;
+        background-size:350px;
+    }
+}
+@media only screen and (max-width: 350px) {
+    .container {max-width: 300px;}
+    #main-about {
+        background-repeat:repeat-y;
+        background-size: 300px;
+    }
+}
+
+#main-about h1 {
+    font-size: 44px;
+    color: #333333;
+    letter-spacing: 0;
+    line-height: 50px;
+    text-align: left;
+    padding-top: 32px;
+    padding-left: 32px;
+}
+#main-about h2 {
+    padding: 20px 10px 2px 10px;
+    color: white;
+    margin: 20px 10px 20px 20px;
+    font-size: 40px;
+    line-height: 42px;
+    font-weight: normal;
+    text-align: left;
+}
+#main-about p {
+    padding: 10px 10px 10px 32px;
+    margin-bottom: 32px;
+    font-size: 22px;
+    color: #333333;
+    line-height: 31px;
+}
+#main-about #main-about-box {
+    background-color: white;
+    margin-top: 72px;
+    padding-bottom: 40px;
+    margin-bottom: 80px;
+    margin-left: 85px;
+}
+#main-about #main-about-text a {
+    text-decoration: underline;
+    color: white;
+}
+#main-about #main-about-buttons {
+    margin: 20px 0 0 30px;
+}
+#main-about #main-about-buttons .api-explorer-link {
+    margin-right: 20px;
+    margin-left: 0px;
+}
+
+#main-about h2 {
+    font-size: 28px;
+}
+
+#main-about #main-about-buttons {
+    margin: 0px 0 0 30px;
+}
+@media only screen and (min-width: 992px) and (max-width: 1199px) {
+    #main-about {
+        background-image: url("/media/images/about-background-992.png") !important;
+    }
+}
+@media only screen and (max-width: 991px) {
+    #main-about {
+        background-image: url("/media/images/about-background-768.png") !important;
+    }
+}

@@ -1,0 +1,84 @@
+#register-consumer {
+    background-color: #53C4EF;
+    padding: 20px 10px;
+    color: white;
+    margin: 30px auto;
+}
+
+#register-consumer a,
+#register-consumer #register-consumer-explanation,
+#register-consumer form,
+#register-consumer-errors,
+#register-consumer-success {
+    max-width: 600px;
+    margin: 0 auto;
+    color: #333333;
+}
+
+#register-consumer-input form label{
+    margin-bottom: 10px;
+}
+
+#register-consumer #register-consumer-explanation {
+    margin-top: 32px;
+    margin-bottom: 20px;
+    font-family: UniversNextforHSBC-Light;
+    font-size: 22px;
+    color: #333333;
+    letter-spacing: 0;
+    line-height: 31px;
+    padding: 0 15px;
+}
+#register-consumer #register-consumer-explanation p{
+    margin-top: 8px;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 14px;
+    color: #333333;
+    letter-spacing: 0;
+    line-height: 20px;
+}
+
+#register-consumer #appDesc {
+    height: 96px;
+}
+#register-consumer #register-consumer-errors {
+    margin-bottom: 20px;
+}
+#register-consumer #register-consumer-success {
+    margin-top: 30px;
+}
+#register-consumer #register-consumer-success p {
+    font-family: UniversNextforHSBC-Light;
+    font-size: 22px;
+    color: #333333;
+    letter-spacing: 0;
+    margin-bottom: 20px;
+    line-height: 31px;
+}
+#register-consumer h1 {
+    ont-family: UniversNextforHSBC-Light;
+    font-size: 28px;
+    color: #333333;
+    letter-spacing: 0;
+    line-height: 36px;
+    letter-spacing: 0;
+    text-align: center;
+}
+
+#register-consumer-success span,
+#register-consumer-success a{
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+}
+#register-consumer #register-consumer-success .row {
+    margin-bottom: 20px;
+}
+#register-consumer #register-consumer-success .row div:nth-child(1) {
+    font-weight: bold;
+}
+#register-consumer-input form .btn-danger{
+    margin-left: 0;
+    margin-top: 48px;
+}
+

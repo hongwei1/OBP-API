@@ -1,10 +1,19 @@
 @import url('reset.css');
+@import url(/media/css/get-started.css);
+@import url(/media/css/main-about.css);
+@import url(/media/css/nav.css);
+@import url(/media/css/main-apis.css);
+@import url(/media/css/main-faq.css);
+@import url(/media/css/main-support.css);
+@import url(/media/css/main-start.css);
+@import url(/media/css/authorise.css);
+@import url(/media/css/register-consumer.css);
+@import url(/media/css/signup.css);
 
 html {
 	font-family: "UniversArabicForHSBC-Regular";
 	height: 100%
 }
-
 
 body {
 	font-size: 18px;
@@ -14,11 +23,8 @@ body {
 }
 
 h1 {
-	font-size: 35px;
-	line-height: 40px;
-	text-align: center;
-	margin-bottom: 30px;
-	color: #333;
+	font-size: 28px;
+	color: #333333;
 }
 
 h2 {
@@ -30,7 +36,7 @@ h2 {
 
 a {
 	font-family: UniversNextforHSBC-Regular;
-	color: #666666;
+	color: #333333;
 	text-decoration: none;
 }
 
@@ -85,86 +91,6 @@ header #lift__noticesContainer__ {
 	display: none;
 }
 
-nav {
-	margin-bottom: 0 !important;
-}
-.navbar {
-	border-radius: 0;
-}
-.navbar-default {
-	background-color: #53C4EF;
-	border: none;
-}
-.navbar-default .navbar-nav > li > a:link, .navbar-default .navbar-nav > li > a:visited {
-	font-family: UniversNextforHSBC-Light;
-	font-size: 22px;
-	color: #333333;
-	line-height: 31px;
-	padding-top: 27px;
-}
-#navitem-logo{
-	padding-top: 22px;
-}
-
-.navbar-right{
-	margin-right: 80px;
-	margin-top: 27px;
-}
-.navbar-default .navbar-nav > li > a:focus, .navbar-default .navbar-nav > li > a:hover {
-	color: #241e23;
-}
-.navbar-default .navbar-nav > li.active > a, .navbar-default .navbar-nav > li.active > a:focus, .navbar-default .navbar-nav > li.active > a:hover, .navbar-default .navbar-nav > li.active > a:visited {
-	color: #555;
-	background-color: white;
-	border: none;
-}
-.navbar-default .navbar-toggle {
-	border-color: white;
-}
-.navbar-default .navbar-toggle .icon-bar {
-	background-color: white;
-}
-.navbar-default .navbar-toggle:hover,
-.navbar-default .navbar-toggle:focus {
-    background-color: #33a4cf;
-}
-.navbar-btn a {
-	margin-left: 15px;
-}
-.navbar-btn .login {
-	margin-right: 25px;
-}
-.navbar-btn .logout {
-	margin-right: 20px;
-}
-#loggedIn-username {
-	font-family: UniversNextforHSBC-Regular;
-	font-size: 16px;
-	color: #333333;
-	line-height: 24px;
-}
-
-#main-start{
-	margin: 0;
-	padding: 50px;
-	text-align: center;
-	background-color: #F3F3F3;
-}
-
-#main-start h1{
-	font-size: 28px;
-	text-align: left;
-}
-#main-start .btn-default{
-	margin-right:20px;
-	background-color: #F3F3F3;
-}
-
-
-#for-banks {
-	padding: 50px 0;
-}
-
 footer {
 	padding: 24px 100px;
 	color: #FFFFFF;
@@ -181,131 +107,6 @@ footer a,span, footer a:hover,span:hover  {
 footer #copyright {
 	margin-bottom: 10px;
 }
-
-#main-about {
-	padding-top: 50px;
-	background-size: cover;
-	background-repeat: no-repeat;
-	font-size: 17px;
-}
-
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-.container {max-width: 500px;}
-  #main-about {
-    background-repeat:repeat-y;
-    background-size:500px;
-   }
-}
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-.container {max-width: 450px;}
-  #main-about {
-    background-repeat:repeat-y;
-    background-size:450px;
-   }
-}
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-.container {max-width: 400px;}
-  #main-about {
-    background-repeat:repeat-y;
-    background-size:400px;
-   }
-}
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  .container {max-width: 350px;}
-  #main-about {
-    background-repeat:repeat-y;
-    background-size:350px;
-  }
-}
-@media only screen and (max-width: 350px) {
-  .container {max-width: 300px;}
-  #main-about {
-    background-repeat:repeat-y;
-    background-size: 300px;
-  }
-}
-
-#main-about h1 {
-	font-size: 44px;
-	color: #333333;
-	letter-spacing: 0;
-	line-height: 50px;
-	text-align: left;
-	padding-top: 32px;
-	padding-left: 32px;
-}
-#main-about h2 {
-	padding: 20px 10px 2px 10px;
-	color: white;
-	margin: 20px 10px 20px 20px;
-	font-size: 40px;
-	line-height: 42px;
-	font-weight: normal;
-	text-align: left;
-}
-#main-about p {
-	padding: 10px 10px 10px 32px;
-	margin-bottom: 32px;
-	font-size: 22px;
-	color: #333333;
-	line-height: 31px;
-}
-#main-about #main-about-box {
-	background-color: white;
-	margin-top: 79px;
-	padding-bottom: 40px;
-	margin-bottom: 80px;
-	margin-left: 100px;
-}
-#main-about #main-about-text a {
-	text-decoration: underline;
-	color: white;
-}
-#main-about #main-about-buttons {
-	margin: 20px 0 0 30px;
-}
-#main-about #main-about-buttons .api-explorer-link {
-	margin-right: 20px;
-	margin-left: 0px;
-}
-
-
-
-#main-get-started {
-	padding: 50px 10px;
-	background-color: #ffffff;
-}
-#main-get-started h2 {
-	font-weight: bold;
-	font-size: 24px;
-	margin-bottom: 10px;
-}
-#main-get-started .main-get-started-icon, #main-get-started .main-get-started-item {
-	text-align: center;
-}
-#main-get-started .main-get-started-item {
-	margin-bottom: -6px;
-}
-#main-get-started .main-get-started-text {
-	padding: 20px 30px;
-	text-align: left;
-}
-
-
-
-#main-apis {
-	padding-top: 50px;
-}
-#main-apis h2 {
-	font-weight: bold;
-	font-size: 24px;
-	margin-top: 13px;
-}
-#main-apis .main-apis-text {
-	margin-bottom: 50px;
-}
-
-
 
 #main-showcases {
 	margin-top: 70px;
@@ -327,49 +128,6 @@ footer #copyright {
 	text-decoration: underline;
 }
 
-
-
-#main-faq {
-	text-align: left;
-	padding: 50px 0;
-	background-color: white;
-}
-#main-faq h2 {
-	font-size: 16px;
-	margin: 0;
-}
-
-#main-faq hr {
-	margin-bottom: 10px;
-	margin-top: 0px;
-}
-#main-faq p, #main-faq ol {
-	margin-top: 10px;
-}
-#main-faq .main-faq-button {
-	margin: 10px;
-	background-image: url('https://static.openbankproject.com/images/sandbox/faq/minus.png');
-	background-repeat:no-repeat;
-}
-#main-faq .main-faq-button.collapsed {
-	background-image: url('https://static.openbankproject.com/images/sandbox/faq/plus.png');
-}
-#main-faq .main-faq-button:hover {
-	cursor: pointer;
-}
-#main-faq ol {
-	list-style-type: decimal;
-	margin-left: 20px;
-}
-
-
-
-#main-start_building {
-	padding: 50px 0;
-}
-
-
-
 #main-partners {
 	padding-bottom: 50px;
 	text-align: center;
@@ -382,30 +140,6 @@ footer #copyright {
 	display: inline-block;
 	padding: 30px 30px 30px 30px;
 }
-
-
-
-#main-support {
-	padding: 60px 10px;
-	color: white;
-	background-color: #53C4EF;
-	text-align: center;
-}
-#main-support h2 {
-	font-size: 24px;
-}
-.main-support-item {
-	display: inline-block;
-	margin: 30px 10px;
-}
-.main-support-item a {
-	color: #241e23;
-}
-.main-support-item h2 {
-	color: #241e23;
-}
-
-
 
 #vendor-support {
 	padding: 60px 10px;
@@ -425,90 +159,14 @@ footer #copyright {
 }
 
 
-
-
-
-.bigbutton {
-	margin: 30px auto;
-	text-align: center;
-	background-color: white;
-}
-.bigbutton a {
-	border: 3px solid green;
-	border-radius: 25px;
-	color: green;
-	padding: 10px;
-	font-size: 16px;
-	text-decoration: none;
-}
-.bigbutton a:hover {
-	background-color: green;
-	color: white;;
-}
-
-
-
-#authorise,
-#recover-password,
-#signup,
-#create-account,
-#register-consumer {
+#create-account{
 	background-color: #53C4EF;
 	padding: 20px 10px;
 	color: white;
 	margin: 30px auto;
 }
-#authorise #login-special-instructions {
-	text-align: center;
-	margin-bottom: 20px;
-}
-#authorise form,
-#authorise #oauth-done-thanks,
-#recover-password form,
-#recover-password #recover-password-explanation,
-#signup form {
-	max-width: 400px;
-	margin: 0 auto;
-	color: #333333;
-}
 
-#signup form h1:first-child{
-	font-size: 28px;
-	color: #333333;
-	letter-spacing: 0;
-	line-height: 36px;
-	text-align: left;
-	width: 500px;
-}
-
-#signup form span{
-	margin-bottom: 15px;
-	font-size: 16px;
-	color: #333333;
-	line-height: 24px;
-}
-#signup form span input:first-child{
-	margin-bottom: 15px;
-}
-#signup form span input:last-child{
-	margin-top: 15px;
-}
-
-#signup form label{
-	margin-bottom: 15px;
-	font-size: 16px;
-	color: #333333;
-	line-height: 24px;
-}
-#authorise .authorise-button {
-	margin-bottom: 10px;
-}
-#authorise #authorise-submit {
-	text-align: left;
-}
-#authorise #authorise-submit input,
-#recover-password #recover-password-submit input,
-#signup #signup-submit input {
+#recover-password #recover-password-submit input{
 	/* Copy of bootstrap .btn */
 	display: inline-block;
 	padding: 6px 12px;
@@ -528,27 +186,10 @@ footer #copyright {
 	background-color: white;
 	text-transform: uppercase;
 }
-#authorise #authorise-submit input:hover,
-#recover-password #recover-password-submit input:hover,
-#signup #signup-submit input:hover {
-	background-color: #e6e6e6;
-}
-
-#authorise #authorise-recover-password {
-	font-size: 12px;
-	color: black;
-	text-decoration:underline
-}
-#authorise .login-error {
-	margin-bottom: 10px;
-	color: red;
-}
 
 
 
-#recover-password #recover-password-email input,
-#signup input[type="text"],
-#signup input[type="password"]
+#recover-password #recover-password-email input
 {
 	/* Copy of bootstrap .form-control */
 	display: block;
@@ -564,9 +205,7 @@ footer #copyright {
 	border-radius: 4px;
 	transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 }
-#recover-password #recover-password-email input:focus,
-#signup input[type="text"]:focus,
-#signup input[type="password"]:focus {
+#recover-password #recover-password-email input:focus {
 	border-color: #66afe9;
 	outline: 0;
 	box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
@@ -579,57 +218,20 @@ footer #copyright {
 }
 
 
-
-#signup #signup-error,
-#signup .form-group,
-#signup #signup-agree-terms,
-#signup #signup-agree-privacy-policy,
-#signup #signup-submit {
-	margin-bottom: 20px;
-	text-align: justify;
-}
-
-#login-Register-text, #login-form-username, #login-form-password{
-	color: black;
-}
-
 #create-account a,
-#signup #signup-agree-terms a,
-#signup #signup-agree-privacy-policy a,
-#register-consumer a,
-#authorise #manual-redirect a {
-	color: white;
-}
 #create-account #create-account-explanation,
-#create-account form,
-#register-consumer #register-consumer-explanation,
-#register-consumer form,
-#register-consumer-errors,
-#register-consumer-success {
+#create-account form{
 	max-width: 600px;
 	margin: 0 auto;
 	color: #333333;
 }
 
-#register-consumer-input form label{
-	margin-bottom: 10px;
-}
 
-#register-consumer-input form .btn-danger{
-	margin-left: 0; 
-}
-#create-account #create-account-explanation,
-#register-consumer #register-consumer-explanation {
+#create-account #create-account-explanation {
 	margin-bottom: 20px;
 	color: #333333;
 	font-size: 22px;
 }
-#register-consumer #register-consumer-explanation p{
-	margin-top: 10px;
-	color: #333333;
-	font-size: 14px;
-}
-
 
 #create-account #create-account-id span,
 #create-account #create-account-bank-id span,
@@ -637,49 +239,6 @@ footer #copyright {
 #create-account #create-account-currency span {
 	font-weight: bold;
 }
-
-
-
-#register-consumer #appDesc {
-	height: 96px;
-}
-#register-consumer #register-consumer-errors {
-	margin-bottom: 20px;
-}
-#register-consumer #register-consumer-success {
-	margin-top: 30px;
-}
-#register-consumer #register-consumer-success p {
-	font-family: UniversNextforHSBC-Light;
-	font-size: 22px;
-	color: #333333;
-	letter-spacing: 0;
-	margin-bottom: 20px;
-	line-height: 31px;
-}
-#register-consumer h1 {
-	font-size: 28px;
-	color: #333333;
-	letter-spacing: 0;
-	line-height: 36px;
-	text-align: left;
-	padding-left: 260px;
-}
-
-#register-consumer-success span,
-#register-consumer-success a{
-	font-size: 16px;
-	color: #333333;
-	line-height: 24px;
-}
-#register-consumer #register-consumer-success .row {
-	margin-bottom: 20px;
-}
-#register-consumer #register-consumer-success .row div:nth-child(1) {
-	font-weight: bold;
-}
-
-
 
 /* from oauth/authorize.html */
 #verifier {
@@ -695,21 +254,15 @@ footer #copyright {
 	overflow-wrap: break-word;
 }
 
-#authorise #thanks-h1{
-	font-size: 28px;
-	color: #333333;
-	letter-spacing: 0;
-	line-height: 36px;
-}
-
-#authorise #thanks-detail{
+.btn-danger {
+	font-family: UniversNextforHSBC-Regular;
 	font-size: 16px;
-	color: #333333;
+	color: #FFFFFF;
+	text-align: center;
 	line-height: 24px;
-	margin-top: 32px;
-	margin-bottom: 48px;
-}
-
-#authorise #manual-redirect .btn-danger{
-	margin: 0;
+	background: #DB0011;
+	border-radius: 0;
+	margin-left: 20px;
+	padding-top: 10px;
+	height: 44px;
 }
