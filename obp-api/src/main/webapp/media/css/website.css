@@ -97,20 +97,27 @@ header #lift__noticesContainer__ {
 footer {
 	padding: 24px 100px;
 	color: #FFFFFF;
-	background-color: #3C3C3C;
+	background-color: #333333;
 	text-align: left;
 	line-height: 20px;
 }
-footer a,span, footer a:hover,span:hover  {
+
+footer a,span, 
+footer a:hover,
+span:hover  {
+	font-family: UniversNextforHSBC-Regular;
 	font-size: 14px;
+	color: #FFFFFF;
 	letter-spacing: 0;
 	line-height: 20px;
-	color: #FFFFFF;
 }
 footer #copyright {
 	margin-bottom: 10px;
 }
 
+footer div:first-child a {
+	margin-right: 40px;
+}
 
 
 #main-partners {
