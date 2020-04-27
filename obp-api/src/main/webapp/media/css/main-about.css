@@ -94,10 +94,12 @@
 @media only screen and (min-width: 992px) and (max-width: 1199px) {
     #main-about {
         background-image: url("/media/images/about-background-992.png") !important;
+        height: 100%;
     }
 }
 @media only screen and (max-width: 991px) {
     #main-about {
         background-image: url("/media/images/about-background-768.png") !important;
+        height: 100%;
     }
 }
