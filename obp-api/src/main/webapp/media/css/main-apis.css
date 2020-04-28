@@ -1,5 +1,4 @@
 #main-apis {
-    padding-top: 52px;
     margin: 0 100px;
 }
 #main-apis h1 {
@@ -8,7 +7,7 @@
     color: #333333;
     text-align: center;
     line-height: 42px;
-    margin-bottom: 51px;
+    margin-bottom: 48px;
 }
 #main-apis .main-apis-text {
     margin-bottom: 48px;
@@ -28,13 +27,20 @@
     color: #333333;
     line-height: 36px;
     margin-bottom: 16px;
+    display:inline;
+    margin-right: 7.2px;
+}
+#main-apis #api-roles-metrics-documentation{
+    margin-right: 0px;
+    padding-right: 0px;
+    width: 530px;
 }
 #main-apis .main-apis-text p{
     font-family: UniversNextforHSBC-Regular;
     font-size: 16px;
     color: #333333;
     line-height: 24px;
-    margin-bottom: 16px;
+    margin-top: 16px;
 }
 #main-apis .btn-secondary{
     margin-bottom: 56px;

@@ -43,6 +43,7 @@
     margin-top: 160px;
     margin-bottom: 70px;
     width: 86%;
+    color: #D7D8D6;
 }
 #main-faq p, #main-faq ol{
     margin-top: 10px;
@@ -63,12 +64,12 @@
 
 #main-faq .main-faq-button {
     margin: 5px;
-    background-image: url('/media/images/icons/upArrow.png');
+    background-image: url('/media/images/icons/up_arrow.png');
     background-repeat:no-repeat;
     background-position: right;
 }
 #main-faq .main-faq-button.collapsed {
-    background-image: url('/media/images/icons/downArrow.png');
+    background-image: url('/media/images/icons/down_arrow.png');
     background-position: right;
     background-repeat:no-repeat;
 }
