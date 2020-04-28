@@ -11,6 +11,7 @@
 @import url(/media/css/signup.css);
 @import url(/media/css/recover-password.css);
 @import url(/media/css/main-showcases.css);
+@import url(/media/css/footer.css);
 
 html {
 	font-family: "UniversArabicForHSBC-Regular";
@@ -93,32 +94,6 @@ header #lift__noticesContainer__ {
 	display: none;
 }
 
-footer {
-	padding: 24px 100px;
-	color: #FFFFFF;
-	background-color: #333333;
-	text-align: left;
-	line-height: 20px;
-}
-
-footer a,span, 
-footer a:hover,
-span:hover  {
-	font-family: UniversNextforHSBC-Regular;
-	font-size: 14px;
-	color: #FFFFFF;
-	letter-spacing: 0;
-	line-height: 20px;
-}
-footer #copyright {
-	margin-bottom: 10px;
-}
-
-footer div:first-child a {
-	margin-right: 40px;
-}
-
-
 #main-partners {
 	padding-bottom: 50px;
 	text-align: center;
@@ -179,7 +154,6 @@ footer div:first-child a {
     border: 0;
 }
 .btn-default {
-	border-color: #555555;
 	border-radius: 0;
 	height: 44px;
 	padding-top: 9px;
@@ -191,12 +165,17 @@ footer div:first-child a {
 	color: #333333;
 	text-align: center;
 	line-height: 24px;
+	background-color: #FFFFFF;
+	font-size: 16px;
+	border: 1px solid #333333;
 }
 .btn-default:hover{
-	background-color: #F3F3F3
+	background-color: #F3F3F3;
+	border: 1px solid #333333;
 }
 .btn-default:active{
 	background-color: #EDEDED;
+	border: 1px solid #333333;
 }
 
 input[type="password"],

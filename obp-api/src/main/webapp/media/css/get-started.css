@@ -48,6 +48,7 @@
     text-decoration:underline;
 }
 #main-get-started .btn-primary{
+    border: 0;
     margin-top: 48px;
     margin-left: 46%;
     background-color: #000000;
