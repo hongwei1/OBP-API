@@ -64,12 +64,14 @@
 }
 
 #main-faq .main-faq-button {
-    background-image: url('/media/images/icons/up_arrow.png');
+    background-image: url('/media/images/icons/chevron_up_thick.svg');
     background-repeat:no-repeat;
-    background-position: right;
+    background-position: right 15px;
+    background-size: 16px 9.7px;
 }
 #main-faq .main-faq-button.collapsed {
-    background-image: url('/media/images/icons/down_arrow.png');
-    background-position: right;
-    background-repeat:no-repeat;
+    background-image: url('/media/images/icons/chevron_down_thick.svg');
+    background-position: right 15px;
+    background-repeat:no-repeat ;
+    background-size: 16px 9.7px;
 }
