@@ -1,26 +1,40 @@
 #main-showcases {
-    padding: 50px 10px;
+    padding: 72px 10px 56px;
     color: white;
-    background-color: #53C4EF;
+    background-color: #333333;
     text-align: center;
 }
+#main-showcases h1 {
+    font-family: UniversNextforHSBC-Light;
+    font-size: 35px;
+    color: #ffffff;
+    text-align: center;
+    line-height: 42px;
+}
+
+#main-showcases h2{
+    font-family: UniversNextforHSBC-Light;
+    font-size: 28px;
+    color: #ffffff;
+    line-height: 36px;
+}
+
 .main-showcases-item {
     display: inline-block;
     margin: 30px 40px;
     width: 300px;
-    font-size: small;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    
 }
-.main-showcases-item a {
+.main-showcases-item a,
+#main-showcases p
+{
     color: white;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    line-height: 24px;
 }
 .main-showcases-item a:hover {
     text-decoration: underline;
-}
-
-#main-showcases {
-    background-color: #333333;
-}
-
-#main-showcases h1 {
-    color: white;
 }
