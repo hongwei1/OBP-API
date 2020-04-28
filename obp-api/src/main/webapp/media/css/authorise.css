@@ -25,6 +25,7 @@
 }
 
 #authorise #authorise-submit input{
+    border: 0;
     background-color: #DB0011;
     color: #FFFFFF;
     float: right;
