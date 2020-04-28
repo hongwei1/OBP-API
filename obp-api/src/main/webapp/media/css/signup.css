@@ -113,6 +113,13 @@
     text-align: left;
     font-size: 16px;
 }
+#signup-agree-terms #signup-agree-terms-content {
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    letter-spacing: 0;
+    line-height: 24px;
+}
 
 #signup #signup-submit input {
     color: #FFF;
