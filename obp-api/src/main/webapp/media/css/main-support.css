@@ -1,6 +1,6 @@
 #main-support {
-    margin-left: 50px;
-    margin-right: 50px;
+    margin-left: 100px;
+    margin-right: 100px;
     margin-top: 72px;
     margin-bottom: 56px;
     background-color: #ffffff;
@@ -12,19 +12,15 @@
     color: #333333;
     text-align: center;
     line-height: 42px;
+    margin-bottom: 64px;
 }
 #main-support h2 {
     font-family: UniversNextforHSBC-Light;
     font-size: 28px;
     color: #333333;
     line-height: 36px;
-}
-.main-support-item {
-    display: inline-block;
-    margin-top: 60px;
-    margin-left: 100px;
-    margin-right: 120px;
-    text-align: left;
+    margin-top: 24px ;
+    margin-bottom: 9px ;
 }
 .main-support-item a {
     font-family: UniversNextforHSBC-Regular;
@@ -33,3 +29,6 @@
     line-height: 24px;
 }
 
+.main-support-item a:hover {
+    text-decoration: underline;
+}
