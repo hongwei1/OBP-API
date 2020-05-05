@@ -76,6 +76,36 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
 
   object user extends MappedLongForeignKey(this, ResourceUser)
 
+  override lazy val firstName = new MyFirstName
+  
+  protected class MyFirstName extends MappedString(this, 32) {
+    def isEmpty(msg: => String)(value: String): List[FieldError] =
+      value match {
+        case null                  => List(FieldError(this, Text(msg))) // issue 179
+        case e if e.trim.isEmpty   => List(FieldError(this, Text(msg))) // issue 179
+        case _                     => Nil
+      }
+    
+    override def displayName = fieldOwner.firstNameDisplayName
+    override val fieldId = Some(Text("txtFirstName"))
+    override def validations = isEmpty(Helper.i18n("Please.enter.your.first.name")) _ :: super.validations
+  }
+  
+  override lazy val lastName = new MyLastName
+
+  protected class MyLastName extends MappedString(this, 32) {
+    def isEmpty(msg: => String)(value: String): List[FieldError] =
+      value match {
+        case null                  => List(FieldError(this, Text(msg))) // issue 179
+        case e if e.trim.isEmpty   => List(FieldError(this, Text(msg))) // issue 179
+        case _                     => Nil
+      }
+
+    override def displayName = fieldOwner.lastNameDisplayName
+    override val fieldId = Some(Text("txtLastName"))
+    override def validations = isEmpty(Helper.i18n("Please.enter.your.last.name")) _ :: super.validations
+  }
+  
   /**
     * The username field for the User.
     */
@@ -89,7 +119,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
       }
     override def displayName = S.?("Username")
     override def dbIndexed_? = true
-    override def validations = isEmpty(Helper.i18n("username.must.be.set")) _ :: 
+    override def validations = isEmpty(Helper.i18n("Please.enter.your.username")) _ :: 
                                valUnique(S.?("unique.username")) _ :: 
                                super.validations
     override val fieldId = Some(Text("txtUsername"))
@@ -103,10 +133,13 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
 
     override def _toForm: Box[NodeSeq] = {
       S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-        Full(<span>{appendFieldId(<input type={formInputType} name={funcName}
-                                         value={get.toString}/>)}&nbsp;{signupPasswordRepeatText}&nbsp;<input
-          type={formInputType} name={funcName}
-          value={get.toString}/></span>)
+        Full(
+          <span>
+            {appendFieldId(<input type={formInputType} name={funcName} value={get.toString}/>)}
+            <div id="signup-error" class="alert alert-danger hide"><span data-lift={s"Msg?id=${uniqueFieldId.getOrElse("")}&errorClass=error"}/></div>
+            <div id ="repeat-password">{signupPasswordRepeatText}</div>
+          <input type={formInputType} name={funcName} value={get.toString}/>
+        </span>)
       }
     }
     
@@ -153,7 +186,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
       if (super.validate.nonEmpty) super.validate
       else if (!invalidPw && password.get != "*") Nil
       else if (invalidPw) List(FieldError(this, Text(invalidMsg)))
-      else List(FieldError(this, Text(S.?("password.must.be.set"))))
+      else List(FieldError(this, Text(S.?("Please enter your password"))))
     }
     
   }
@@ -243,9 +276,9 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
     override def validations = super.validations
     override def dbIndexed_? = false
     override def validate = i_is_! match {
-      case null                  => List(FieldError(this, Text(Helper.i18n("email.must.be.set"))))
-      case e if e.trim.isEmpty   => List(FieldError(this, Text(Helper.i18n("email.must.be.set"))))
-      case e if isEmailValid(e)  => List(FieldError(this, Text(S.?("invalid.email.address"))))
+      case null                  => List(FieldError(this, Text(Helper.i18n("Please.enter.your.email"))))
+      case e if e.trim.isEmpty   => List(FieldError(this, Text(Helper.i18n("Please.enter.your.email"))))
+      case e if (!isEmailValid(e))  => List(FieldError(this, Text(S.?("invalid.email.address"))))
       case _                     => Nil
     }
   }

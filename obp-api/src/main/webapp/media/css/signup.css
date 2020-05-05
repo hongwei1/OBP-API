@@ -27,8 +27,14 @@
     line-height: 24px;
     margin-bottom: 15px;
 }
-#signup form span input:first-child{
-    margin-bottom: 32px;
+
+#signup form #repeat-password{
+    margin-top: 32px;
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 16px;
+    color: #333333;
+    line-height: 24px;
+    margin-bottom: 8px;
 }
 #signup form span input:last-child{
     margin-top: 8px;
