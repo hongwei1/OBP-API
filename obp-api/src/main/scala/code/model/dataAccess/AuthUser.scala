@@ -135,10 +135,10 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
       S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
         Full(
           <span>
-            {appendFieldId(<input type={formInputType} name={funcName} value={get.toString}/>)}
+            {appendFieldId(<input id="textPassword" type={formInputType} name={funcName} value={get.toString}/>)}
             <div id="signup-error" class="alert alert-danger hide"><span data-lift={s"Msg?id=${uniqueFieldId.getOrElse("")}&errorClass=error"}/></div>
             <div id ="repeat-password">{signupPasswordRepeatText}</div>
-          <input type={formInputType} name={funcName} value={get.toString}/>
+          <input id="textPasswordRepeat" type={formInputType} name={funcName} value={get.toString}/>
         </span>)
       }
     }

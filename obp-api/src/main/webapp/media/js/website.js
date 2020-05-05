@@ -58,24 +58,36 @@ $(document).ready(function() {
 
 	// Show sign up errors - FIXME: Change backend to (not) show errors
 	var signupError = $('#signup #signup-error #authuser_firstName');
+	var txtFirstName = $('#signup #txtFirstName');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
+		txtFirstName.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_lastName');
+	var txtLastName = $('#signup #txtLastName');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
+		txtLastName.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_email');
+	var txtEmail = $('#signup #txtEmail');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
+		txtEmail.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_username');
+	var txtUsername = $('#signup #txtUsername');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
+		txtUsername.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_password');
+	var textPassword = $('#signup #textPassword');
+	var textPasswordRepeat = $('#signup #textPasswordRepeat');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
+		textPassword.css("border","1px solid #A8000B").css("background","#F9F2F3")
+		textPasswordRepeat.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	showIndicatorCookiePage('cookies-consent');
 });
