@@ -110,6 +110,45 @@ $(document).ready(function() {
 		loginPasswordForm.css("border","").css("background","")
 	}
 
+	var consumerRegistrationAppnameError = $('#register-consumer-input #consumer-registration-app-name-error');
+	var consumerRegistrationAppnameForm = $('#register-consumer-input #appName');
+	if (consumerRegistrationAppnameError.length > 0 && consumerRegistrationAppnameError.html().length > 0) {
+		consumerRegistrationAppnameError.parent().removeClass('hide');
+		consumerRegistrationAppnameForm.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	}else{
+		consumerRegistrationAppnameError.parent().addClass('hide');
+		consumerRegistrationAppnameForm.css("border","").css("background","")
+	}
+
+	var consumerRegistrationAppDeveloperError = $('#register-consumer-input #consumer-registration-app-developer-error');
+	var consumerRegistrationAppDeveloperForm = $('#register-consumer-input #appDev');
+	if (consumerRegistrationAppDeveloperError.length > 0 && consumerRegistrationAppDeveloperError.html().length > 0) {
+		consumerRegistrationAppDeveloperError.parent().removeClass('hide');
+		consumerRegistrationAppDeveloperForm.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	}else{
+		consumerRegistrationAppDeveloperError.parent().addClass('hide');
+		consumerRegistrationAppDeveloperForm.css("border","").css("background","")
+	}
+
+	var consumerRegistrationAppDescError = $('#register-consumer-input #consumer-registration-app-description-error');
+	var consumerRegistrationAppDescForm = $('#register-consumer-input #appDesc');
+	if (consumerRegistrationAppDescError.length > 0 && consumerRegistrationAppDescError.html().length > 0) {
+		consumerRegistrationAppDescError.parent().removeClass('hide');
+		consumerRegistrationAppDescForm.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	}else{
+		consumerRegistrationAppDescError.parent().addClass('hide');
+		consumerRegistrationAppDescForm.css("border","").css("background","")
+	}
+
+	var consumerRegistrationAppRedirectUrlError = $('#register-consumer-input #consumer-registration-app-description-error');
+	var consumerRegistrationAppRedirectUrlForm = $('#register-consumer-input #appDesc');
+	if (consumerRegistrationAppRedirectUrlError.length > 0 && consumerRegistrationAppRedirectUrlError.html().length > 0) {
+		consumerRegistrationAppRedirectUrlError.parent().removeClass('hide');
+		consumerRegistrationAppRedirectUrlForm.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	}else{
+		consumerRegistrationAppRedirectUrlError.parent().addClass('hide');
+		consumerRegistrationAppRedirectUrlForm.css("border","").css("background","")
+	}
 	
 	showIndicatorCookiePage('cookies-consent');
 });

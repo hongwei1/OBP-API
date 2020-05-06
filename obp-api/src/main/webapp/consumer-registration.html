@@ -54,18 +54,30 @@ Berlin 13359, Germany
 						<div class="form-group">
 							<label for="appName">Application Name</label>
 							<input type="text" name="app-name" id="appName" class="form-control">
+							<div id = "consumer-registration-app-name-error-div" class="hide">
+								<span data-lift="Msg?id=consumer-registration-app-name-error"/>
+							</div>
 						</div>
 						<div class="form-group">
 							<label for="appDesc">Description of the application</label>
 							<textarea rows="4" name="app-description" id="appDesc" class="form-control"></textarea>
+							<div id = "consumer-registration-app-description-error-div" class="hide">
+								<span data-lift="Msg?id=consumer-registration-app-description-error"/>
+							</div>
 						</div>
 						<div class="form-group">
 							<label for="appRedirectUrl">Redirect URL (Optional)</label>
 							<input type="text" name="app-redirect-url" id="appRedirectUrl" class="form-control">
+							<div id = "consumer-registration-app-redirect-url-error-div" class="hide">
+								<span data-lift="Msg?id=consumer-registration-app-redirect-url-error"/>
+							</div>
 						</div>
 						<div class="form-group">
 							<label for="appDev">Developer Email</label>
 							<input type="text" name="app-developer" id="appDev" class="form-control">
+							<div id = "consumer-registration-app-developer-error-div" class="hide">
+								<span data-lift="Msg?id=consumer-registration-app-developer-error"/>
+							</div>
 						</div>
 						<input type="submit" value="Submit" class="btn btn-danger" />
 					</div>

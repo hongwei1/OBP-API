@@ -155,13 +155,12 @@ class ConsumerRegistration extends MdcLoggable {
         }
     }
     def showValidationErrors(errors : List[String]): CssSel = {
+      errors.filter(errorMessage => (errorMessage.contains("name") || errorMessage.contains("Name")) ).map(errorMessage => S.error("consumer-registration-app-name-error", errorMessage))
+      errors.filter(errorMessage => (errorMessage.contains("description") || errorMessage.contains("Description"))).map(errorMessage => S.error("consumer-registration-app-description-error", errorMessage))
+      errors.filter(errorMessage => (errorMessage.contains("email")|| errorMessage.contains("Email"))).map(errorMessage => S.error("consumer-registration-app-developer-error", errorMessage))
+      errors.filter(errorMessage => (errorMessage.contains("redirect")|| errorMessage.contains("Redirect"))).map(errorMessage => S.error("consumer-registration-app-redirect-url-error", errorMessage))
       register &
-        "#register-consumer-errors *" #> {
-          ".error *" #>
-            errors.map({ e=>
-              ".errorContent *" #> e
-            })
-        }
+        "#register-consumer-errors " #> ""
     }
 
     //TODO this should be used somewhere else, it is check the empty of description for the hack attack from GUI.
@@ -189,8 +188,6 @@ class ConsumerRegistration extends MdcLoggable {
 
       if(submitButtonDefenseFlag.isEmpty)
         showErrorsForDescription("The 'Register' button random name has been modified !")
-      else if(descriptionVar.isEmpty)
-        showErrorsForDescription("Description of the application can not be empty !")
       else{
         val consumer = Consumers.consumers.vend.createConsumer(
           Some(Helpers.randomString(40).toLowerCase),

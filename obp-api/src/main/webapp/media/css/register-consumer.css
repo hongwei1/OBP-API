@@ -13,7 +13,9 @@
     margin: 0 auto;
     color: #333333;
 }
-
+#register-consumer-errors span{
+    color: black;
+}
 #register-consumer h1 {
     font-family: UniversNextforHSBC-Light;
     font-size: 28px;
@@ -125,3 +127,23 @@
     margin-top: 33px;
 }
 
+#register-consumer-input #consumer-registration-app-name-error-div,
+#register-consumer-input #consumer-registration-app-description-error-div,
+#register-consumer-input #consumer-registration-app-developer-error-div{
+    margin-top: 11px;
+}
+
+#register-consumer-input #consumer-registration-app-name-error,
+#register-consumer-input #consumer-registration-app-description-error,
+#register-consumer-input #consumer-registration-app-developer-error{
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 14px;
+    color: #333333;
+    line-height: 20px;
+    background-image: url(/media/images/icons/errorSign.jpg);
+    background-repeat:no-repeat;
+    background-position: left 15px;
+    background-size: 18px 15.70px;
+    padding-top: 11px;
+    padding-left: 26px;
+}
