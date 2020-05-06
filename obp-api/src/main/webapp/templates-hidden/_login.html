@@ -9,12 +9,16 @@
 			<div class="form-group">
 				<p id="login-form-username">Username </p> 
 				<input class="form-control" id="username" type="text" placeholder="Username" name="username" tabindex="1" autofocus autocomplete="off"/>
-				<span data-lift="Msg?id=login-form-username-error"/>
+				<div id = "login-username-error" class="hide">
+					<span data-lift="Msg?id=login-form-username-error"/>
+				</div>
 			</div>
 			<div class="form-group">
 				<p id="login-form-password">Password</p> 
 				<input class="form-control" id="password" type="password" placeholder="Password"  name="password" tabindex="2" autocomplete="off"/>
-				<span data-lift="Msg?id=login-form-password-error"/>
+				<div id = "login-password-error" class="hide">
+					<span data-lift="Msg?id=login-form-password-error"/>
+				</div>
 			</div>
 
 			<!-- this hidden field is used to pass the brand over to the new session -->

@@ -132,3 +132,22 @@
 #authorise .authorise-token-success #authorise-submit-button{
     margin-right: -15px;
 }
+
+#authorise #login-form-username-error,
+#authorise #login-form-password-error{
+    font-family: UniversNextforHSBC-Regular;
+    font-size: 14px;
+    color: #333333;
+    line-height: 20px;
+    background-image: url(/media/images/icons/errorSign.jpg);
+    background-repeat:no-repeat;
+    background-position: left 15px;
+    background-size: 18px 15.70px;
+    padding-top: 11px;
+    padding-left: 26px;
+}
+
+#authorise #login-username-error,
+#authorise #login-password-error{
+    margin-top: 11px;
+}

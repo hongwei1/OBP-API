@@ -89,5 +89,27 @@ $(document).ready(function() {
 		textPassword.css("border","1px solid #A8000B").css("background","#F9F2F3")
 		textPasswordRepeat.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
+
+	var loginUsernameError = $('#authorise #login-form-username-error');
+	var loginUsernameForm = $('#authorise #username');
+	if (loginUsernameError.length > 0 && loginUsernameError.html().length > 0) {
+		loginUsernameError.parent().removeClass('hide');
+		loginUsernameForm.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	} else{
+		loginUsernameError.parent().addClass('hide');
+		loginUsernameForm.css("border","").css("background","")
+	}
+
+	var loginPasswordError = $('#authorise #login-form-password-error');
+	var loginPasswordForm = $('#authorise #password');
+	if (loginPasswordError.length > 0 && loginPasswordError.html().length > 0) {
+		loginPasswordError.parent().removeClass('hide');
+		loginPasswordForm.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	}else{
+		loginPasswordError.parent().addClass('hide');
+		loginPasswordForm.css("border","").css("background","")
+	}
+
+	
 	showIndicatorCookiePage('cookies-consent');
 });
