@@ -36,29 +36,23 @@
 				<a href="/user_mgt/lost_password"  tabindex="5">Forgotten password?</a>
 			</div>
 
-			<div id ="login-or"> or </div>
+			<div class ="login-or"> or </div>
 			<hr>
 			<div class="row">
 				<span id="login-Register-text">Don't have an account? </span>
 				<a href="/user_mgt/sign_up" id="authorise-signup" class="btn btn-default pull-right authorise-button" tabindex="4">Register</a>
 			</div>
-            
-			<div class="row">
-				<div class="col-xs-6"></div>
-				<div class="col-xs-6" data-lift="OpenidConnectInvoke.linkButtonFirstProvider">
-					<div class="authorise-button-oidc">
-						Log in with: <a class="btn btn-default">OIDC 1</a>
+
+			<div class ="login-or"> or Login with OpenID : </div>
+			<hr>
+				<div data-lift="OpenidConnectInvoke.linkButtonFirstProvider">
+					<div class="authorise-button-oidc"><a class="btn btn-danger">OIDC 1</a>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-6"></div>
-				<div class="col-xs-6" data-lift="OpenidConnectInvoke.linkButtonSecondProvider">
-					<div class="authorise-button-oidc">
-						Log in with: <a class="btn btn-default">OIDC 2</a>
+				<div data-lift="OpenidConnectInvoke.linkButtonSecondProvider">
+					<div class="authorise-button-oidc"> <a class="btn btn-danger">OIDC 2</a>
 					</div>
 				</div>
-			</div>
 		</form>
 	</div>
 </div>
