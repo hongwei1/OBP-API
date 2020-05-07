@@ -5,7 +5,6 @@
 		<div id="login-special-instructions">Special Instructions</div>
 
 		<form class="login" action="/user_mgt/login" method="post">
-			<div data-lift="Login.openIdConnectScripts" id="openid_scripts"></div>
 			<div class="form-group">
 				<p id="login-form-username">Username </p> 
 				<input class="form-control" id="username" type="text" placeholder="Username" name="username" tabindex="1" autofocus autocomplete="off"/>
@@ -43,9 +42,23 @@
 				<span id="login-Register-text">Don't have an account? </span>
 				<a href="/user_mgt/sign_up" id="authorise-signup" class="btn btn-default pull-right authorise-button" tabindex="4">Register</a>
 			</div>
+            
+			<div class="row">
+				<div class="col-xs-6"></div>
+				<div class="col-xs-6" data-lift="OpenidConnectInvoke.linkButtonFirstProvider">
+					<div class="authorise-button-oidc">
+						Log in with: <a class="btn btn-default">OIDC 1</a>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-6"></div>
+				<div class="col-xs-6" data-lift="OpenidConnectInvoke.linkButtonSecondProvider">
+					<div class="authorise-button-oidc">
+						Log in with: <a class="btn btn-default">OIDC 2</a>
+					</div>
+				</div>
+			</div>
 		</form>
-		<div data-lift="Login.openIdConnectButton">
-			<div id="openid_button"></div>
-		</div>
 	</div>
 </div>

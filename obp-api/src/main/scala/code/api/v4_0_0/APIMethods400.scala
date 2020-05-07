@@ -30,6 +30,7 @@ import code.api.v4_0_0.JSONFactory400.{createBankAccountJSON, createNewCoreBankA
 import code.bankconnectors.Connector
 import code.dynamicEntity.{DynamicEntityCommons, ReferenceType}
 import code.entitlement.Entitlement
+import code.metadata.counterparties.{Counterparties, MappedCounterparty}
 import code.metadata.tags.Tags
 import code.model.dataAccess.{AuthUser, BankAccountCreation}
 import code.model.{toUserExtended, _}
@@ -39,6 +40,7 @@ import code.transactionrequests.TransactionRequests.TransactionChallengeTypes._
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes.{apply => _, _}
 import code.transactionrequests.TransactionRequests.{TransactionRequestStatus, TransactionRequestTypes}
 import code.users.Users
+import code.util.Helper.booleanToBox
 import code.util.{Helper, JsonUtils}
 import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
@@ -55,7 +57,7 @@ import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.write
 import net.liftweb.json.{compactRender, _}
 import net.liftweb.mapper.By
-import net.liftweb.util.Helpers.now
+import net.liftweb.util.Helpers.{now, tryo}
 import net.liftweb.util.{Helpers, StringHelpers}
 import org.apache.commons.lang3.StringUtils
 import org.atteo.evo.inflector.English
@@ -73,12 +75,15 @@ trait APIMethods400 {
 
     val implementedInApiVersion = ApiVersion.v4_0_0
 
-    val resourceDocs = ArrayBuffer[ResourceDoc]()
+    private val staticResourceDocs = ArrayBuffer[ResourceDoc]()
+    // createDynamicEntityDoc and updateDynamicEntityDoc are dynamic, So here dynamic create resourceDocs
+    def resourceDocs = staticResourceDocs ++ ArrayBuffer[ResourceDoc](createDynamicEntityDoc, updateDynamicEntityDoc)
+
     val apiRelations = ArrayBuffer[ApiRelation]()
-    val codeContext = CodeContext(resourceDocs, apiRelations)
+    val codeContext = CodeContext(staticResourceDocs, apiRelations)
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getBanks,
       implementedInApiVersion,
       nameOf(getBanks),
@@ -134,11 +139,11 @@ trait APIMethods400 {
          |  INITIATED => COMPLETED
          |In case n persons needs to answer security challenge we have next flow of state of an `transaction request`:
          |  INITIATED => NEXT_CHALLENGE_PENDING => ... => NEXT_CHALLENGE_PENDING => COMPLETED
-         |  
+         |
          |The security challenge is bound to a user i.e. in case of right answer and the user is different than expected one the challenge will fail.
          |
          |Rule for calculating number of security challenges:
-         |If product Account attribute REQUIRED_CHALLENGE_ANSWERS=N then create N challenges 
+         |If product Account attribute REQUIRED_CHALLENGE_ANSWERS=N then create N challenges
          |(one for every user that has a View where permission "can_add_transaction_request_to_any_account"=true)
          |In case REQUIRED_CHALLENGE_ANSWERS is not defined as an account attribute default value is 1.
          |
@@ -178,7 +183,7 @@ trait APIMethods400 {
 
 
     // ACCOUNT. (we no longer create a resource doc for the general case)
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionRequestAccount,
       implementedInApiVersion,
       "createTransactionRequestAccount",
@@ -215,7 +220,7 @@ trait APIMethods400 {
       List(apiTagTransactionRequest, apiTagPSD2PIS, apiTagNewStyle))
 
     // ACCOUNT_OTP. (we no longer create a resource doc for the general case)
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionRequestAccountOtp,
       implementedInApiVersion,
       "createTransactionRequestAccountOtp",
@@ -252,7 +257,7 @@ trait APIMethods400 {
       List(apiTagTransactionRequest, apiTagPSD2PIS, apiTagNewStyle))
 
     // COUNTERPARTY
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionRequestCounterparty,
       implementedInApiVersion,
       "createTransactionRequestCounterparty",
@@ -295,7 +300,7 @@ trait APIMethods400 {
     val sharedChargePolicy = ChargePolicy.withName("SHARED")
 
     // Transaction Request (SEPA)
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionRequestSepa,
       implementedInApiVersion,
       "createTransactionRequestSepa",
@@ -333,7 +338,7 @@ trait APIMethods400 {
       Catalogs(Core, PSD2, OBWG),
       List(apiTagTransactionRequest, apiTagPSD2PIS, apiTagNewStyle))
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionRequestRefund,
       implementedInApiVersion,
       nameOf(createTransactionRequestRefund),
@@ -366,9 +371,9 @@ trait APIMethods400 {
       ),
       Catalogs(Core, PSD2, OBWG),
       List(apiTagTransactionRequest, apiTagPSD2PIS, apiTagNewStyle))
-    
+
     // FREE_FORM.
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionRequestFreeForm,
       implementedInApiVersion,
       "createTransactionRequestFreeForm",
@@ -427,7 +432,7 @@ trait APIMethods400 {
 
             account = BankIdAccountId(bankId, accountId)
             _ <- NewStyle.function.checkAuthorisationToCreateTransactionRequest(viewId, account, u, cc.callContext)
-            
+
             _ <- Helper.booleanToFuture(InsufficientAuthorisationToCreateTransactionRequest) {
               u.hasOwnerViewAccess(BankIdAccountId(bankId, accountId)) ||
                 hasEntitlement(bankId.value, u.userId, ApiRole.canCreateAnyTransactionRequest)
@@ -470,7 +475,7 @@ trait APIMethods400 {
                   transactionRequestBodyRefundJson <- NewStyle.function.tryons(s"${InvalidJsonFormat}, it should be $ACCOUNT json format", 400, cc.callContext) {
                     json.extract[TransactionRequestBodyRefundJsonV400]
                   }
-                  
+
                   transactionId = TransactionId(transactionRequestBodyRefundJson.refund.transaction_id)
                   toBankId = BankId(transactionRequestBodyRefundJson.to.bank_id)
                   toAccountId = AccountId(transactionRequestBodyRefundJson.to.account_id)
@@ -479,28 +484,28 @@ trait APIMethods400 {
                   transDetailsSerialized <- NewStyle.function.tryons(UnknownError, 400, callContext) {
                     write(transactionRequestBodyRefundJson)(Serialization.formats(NoTypeHints))
                   }
-                  
+
                   _ <- Helper.booleanToFuture(s"${RefundedTransaction} Current input amount is: '${transDetailsJson.value.amount}'. It can not be more than the original amount(${(transaction.amount).abs})") {
                     (transaction.amount).abs  >= transactionAmountNumber
                   }
-                  //TODO, we need additional field to guarantee the transaction is refunded...  
+                  //TODO, we need additional field to guarantee the transaction is refunded...
 //                  _ <- Helper.booleanToFuture(s"${RefundedTransaction}") {
 //                    !((transaction.description.toString contains(" Refund to ")) && (transaction.description.toString contains(" and transaction_id(")))
 //                  }
-                  
+
                   //we add the extro info (counterparty name + transaction_id) for this special Refund endpoint.
                   newDescription = s"${transactionRequestBodyRefundJson.description} - Refund for transaction_id: (${transactionId.value}) to ${transaction.otherAccount.counterpartyName}"
-                  
-                  //This is the refund endpoint, the original fromAccount is the `toAccount` which will receive money. 
+
+                  //This is the refund endpoint, the original fromAccount is the `toAccount` which will receive money.
                   refundToAccount = fromAccount
-                  //This is the refund endpoint, the original toAccount is the `fromAccount` which will lose money. 
+                  //This is the refund endpoint, the original toAccount is the `fromAccount` which will lose money.
                   refundFromAccount = toAccount
-                  
+
                   (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
                     viewId,
                     refundFromAccount,
                     refundToAccount,
-                    transactionRequestType, 
+                    transactionRequestType,
                     transactionRequestBodyRefundJson.copy(description = newDescription),
                     transDetailsSerialized,
                     sharedChargePolicy.toString,
@@ -571,7 +576,7 @@ trait APIMethods400 {
                   }
                   toCounterpartyId = transactionRequestBodyCounterparty.to.counterparty_id
                   (toCounterparty, callContext) <- NewStyle.function.getCounterpartyByCounterpartyId(CounterpartyId(toCounterpartyId), cc.callContext)
-                  toAccount <- NewStyle.function.toBankAccount(toCounterparty, callContext)
+                  toAccount <- NewStyle.function.toBankAccount(toCounterparty, true, callContext)
                   // Check we can send money to it.
                   _ <- Helper.booleanToFuture(s"$CounterpartyBeneficiaryPermit") {
                     toCounterparty.isBeneficiary
@@ -605,7 +610,7 @@ trait APIMethods400 {
                   }
                   toIban = transDetailsSEPAJson.to.iban
                   (toCounterparty, callContext) <- NewStyle.function.getCounterpartyByIban(toIban, cc.callContext)
-                  toAccount <- NewStyle.function.toBankAccount(toCounterparty, callContext)
+                  toAccount <- NewStyle.function.toBankAccount(toCounterparty, true, callContext)
                   _ <- Helper.booleanToFuture(s"$CounterpartyBeneficiaryPermit") {
                     toCounterparty.isBeneficiary
                   }
@@ -663,7 +668,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       answerTransactionRequestChallenge,
       implementedInApiVersion,
       "answerTransactionRequestChallenge",
@@ -785,7 +790,7 @@ trait APIMethods400 {
                 .findAll(By(MappedExpectedChallengeAnswer.mTransactionRequestId, transReqId.value))
                 .count(_.successful == true) match {
                   case number if number >= quorum => true
-                  case _ => 
+                  case _ =>
                     MappedTransactionRequestProvider.saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.NEXT_CHALLENGE_PENDING.toString)
                     false
                 }
@@ -811,7 +816,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getDynamicEntities,
       implementedInApiVersion,
       nameOf(getDynamicEntities),
@@ -848,7 +853,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    private def createDynamicEntityDoc = ResourceDoc(
       createDynamicEntity,
       implementedInApiVersion,
       nameOf(createDynamicEntity),
@@ -899,7 +904,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    private def updateDynamicEntityDoc = ResourceDoc(
       updateDynamicEntity,
       implementedInApiVersion,
       nameOf(updateDynamicEntity),
@@ -957,7 +962,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteDynamicEntity,
       implementedInApiVersion,
       nameOf(deleteDynamicEntity),
@@ -1083,7 +1088,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       resetPasswordUrl,
       implementedInApiVersion,
       nameOf(resetPasswordUrl),
@@ -1117,13 +1122,13 @@ trait APIMethods400 {
               json.extract[PostResetPasswordUrlJsonV400]
             }
           } yield {
-             val resetLink = AuthUser.passwordResetUrl(postedData.username, postedData.email, postedData.user_id) 
+             val resetLink = AuthUser.passwordResetUrl(postedData.username, postedData.email, postedData.user_id)
             (ResetPasswordUrlJsonV400(resetLink), HttpCode.`201`(cc.callContext))
           }
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       addAccount,
       implementedInApiVersion,
       nameOf(addAccount),
@@ -1242,7 +1247,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       root,
       implementedInApiVersion,
       "root",
@@ -1271,7 +1276,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCallContext,
       implementedInApiVersion,
       nameOf(getCallContext),
@@ -1296,7 +1301,7 @@ trait APIMethods400 {
         }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getEntitlements,
       implementedInApiVersion,
       "getEntitlements",
@@ -1335,7 +1340,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getEntitlementsForBank,
       implementedInApiVersion,
       nameOf(getEntitlementsForBank),
@@ -1367,7 +1372,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       addTagForViewOnAccount,
       implementedInApiVersion,
       "addTagForViewOnAccount",
@@ -1413,7 +1418,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteTagForViewOnAccount,
       implementedInApiVersion,
       "deleteTagForViewOnAccount",
@@ -1456,7 +1461,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getTagsForViewOnAccount,
       implementedInApiVersion,
       "getTagsForViewOnAccount",
@@ -1500,7 +1505,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCoreAccountById,
       implementedInApiVersion,
       nameOf(getCoreAccountById),
@@ -1551,7 +1556,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getPrivateAccountByIdFull,
       implementedInApiVersion,
       nameOf(getPrivateAccountByIdFull),
@@ -1606,7 +1611,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCustomersByCustomerPhoneNumber,
       implementedInApiVersion,
       nameOf(getCustomersByCustomerPhoneNumber),
@@ -1648,7 +1653,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createBank,
       implementedInApiVersion,
       "createBank",
@@ -1715,7 +1720,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createDirectDebit,
       implementedInApiVersion,
       nameOf(createDirectDebit),
@@ -1775,7 +1780,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createDirectDebitManagement,
       implementedInApiVersion,
       nameOf(createDirectDebitManagement),
@@ -1832,7 +1837,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createStandingOrder,
       implementedInApiVersion,
       nameOf(createStandingOrder),
@@ -1906,7 +1911,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createStandingOrderManagement,
       implementedInApiVersion,
       nameOf(createStandingOrderManagement),
@@ -1980,7 +1985,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       grantUserAccessToView,
       implementedInApiVersion,
       "grantUserAccessToView",
@@ -2034,7 +2039,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       revokeUserAccessToView,
       implementedInApiVersion,
       "revokeUserAccessToView",
@@ -2087,7 +2092,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createCustomerAttribute,
       implementedInApiVersion,
       nameOf(createCustomerAttribute),
@@ -2144,7 +2149,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       updateCustomerAttribute,
       implementedInApiVersion,
       nameOf(updateCustomerAttribute),
@@ -2184,7 +2189,7 @@ trait APIMethods400 {
               CustomerAttributeType.withName(postedData.`type`)
             }
             (customer, callContext) <- NewStyle.function.getCustomerByCustomerId(customerId, cc.callContext)
-            _ <-  Helper.booleanToFuture(InvalidCustomerBankId.replaceAll("Bank Id.",s"Bank Id ($bankId).").replaceAll("The Customer",s"The Customer($customerId)")){customer.bankId == bankId} 
+            _ <-  Helper.booleanToFuture(InvalidCustomerBankId.replaceAll("Bank Id.",s"Bank Id ($bankId).").replaceAll("The Customer",s"The Customer($customerId)")){customer.bankId == bankId}
             (accountAttribute, callContext) <- NewStyle.function.getCustomerAttributeById(
               customerAttributeId,
               callContext
@@ -2204,7 +2209,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCustomerAttributes,
       implementedInApiVersion,
       nameOf(getCustomerAttributes),
@@ -2246,7 +2251,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCustomerAttributeById,
       implementedInApiVersion,
       nameOf(getCustomerAttributeById),
@@ -2287,7 +2292,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCustomersByAttributes,
       implementedInApiVersion,
       nameOf(getCustomersByAttributes),
@@ -2342,7 +2347,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createTransactionAttribute,
       implementedInApiVersion,
       nameOf(createTransactionAttribute),
@@ -2398,7 +2403,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       updateTransactionAttribute,
       implementedInApiVersion,
       nameOf(updateTransactionAttribute),
@@ -2455,7 +2460,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getTransactionAttributes,
       implementedInApiVersion,
       nameOf(getTransactionAttributes),
@@ -2497,7 +2502,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getTransactionAttributeById,
       implementedInApiVersion,
       nameOf(getTransactionAttributeById),
@@ -2539,7 +2544,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getTransactionRequest,
       implementedInApiVersion,
       nameOf(getTransactionRequest),
@@ -2603,7 +2608,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getPrivateAccountsAtOneBank,
       implementedInApiVersion,
       "getPrivateAccountsAtOneBank",
@@ -2654,7 +2659,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createConsumer,
       implementedInApiVersion,
       "createConsumer",
@@ -2732,7 +2737,7 @@ trait APIMethods400 {
          |
        """.stripMargin
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteCustomerAttribute,
       implementedInApiVersion,
       nameOf(deleteCustomerAttribute),
@@ -2771,7 +2776,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createDynamicEndpoint,
       implementedInApiVersion,
       nameOf(createDynamicEndpoint),
@@ -2821,7 +2826,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getDynamicEndpoint,
       implementedInApiVersion,
       nameOf(getDynamicEndpoint),
@@ -2859,8 +2864,8 @@ trait APIMethods400 {
           }
       }
     }
-    
-    resourceDocs += ResourceDoc(
+
+    staticResourceDocs += ResourceDoc(
       getDynamicEndpoints,
       implementedInApiVersion,
       nameOf(getDynamicEndpoints),
@@ -2902,7 +2907,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteDynamicEndpoint,
       implementedInApiVersion,
       nameOf(deleteDynamicEndpoint),
@@ -2959,7 +2964,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createOrUpdateCustomerAttributeAttributeDefinition,
       implementedInApiVersion,
       nameOf(createOrUpdateCustomerAttributeAttributeDefinition),
@@ -3024,7 +3029,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createOrUpdateAccountAttributeDefinition,
       implementedInApiVersion,
       nameOf(createOrUpdateAccountAttributeDefinition),
@@ -3088,7 +3093,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createOrUpdateProductAttributeDefinition,
       implementedInApiVersion,
       nameOf(createOrUpdateProductAttributeDefinition),
@@ -3151,7 +3156,7 @@ trait APIMethods400 {
       }
     }
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createOrUpdateTransactionAttributeDefinition,
       implementedInApiVersion,
       nameOf(createOrUpdateTransactionAttributeDefinition),
@@ -3216,7 +3221,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       createOrUpdateCardAttributeDefinition,
       implementedInApiVersion,
       nameOf(createOrUpdateCardAttributeDefinition),
@@ -3281,7 +3286,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteTransactionAttributeDefinition,
       implementedInApiVersion,
       nameOf(deleteTransactionAttributeDefinition),
@@ -3320,7 +3325,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteCustomerAttributeDefinition,
       implementedInApiVersion,
       nameOf(deleteCustomerAttributeDefinition),
@@ -3359,7 +3364,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteAccountAttributeDefinition,
       implementedInApiVersion,
       nameOf(deleteAccountAttributeDefinition),
@@ -3398,7 +3403,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteProductAttributeDefinition,
       implementedInApiVersion,
       nameOf(deleteProductAttributeDefinition),
@@ -3437,7 +3442,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteCardAttributeDefinition,
       implementedInApiVersion,
       nameOf(deleteCardAttributeDefinition),
@@ -3476,7 +3481,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getProductAttributeDefinition,
       implementedInApiVersion,
       nameOf(getProductAttributeDefinition),
@@ -3514,7 +3519,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCustomerAttributeDefinition,
       implementedInApiVersion,
       nameOf(getCustomerAttributeDefinition),
@@ -3552,7 +3557,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getAccountAttributeDefinition,
       implementedInApiVersion,
       nameOf(getAccountAttributeDefinition),
@@ -3590,7 +3595,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getTransactionAttributeDefinition,
       implementedInApiVersion,
       nameOf(getTransactionAttributeDefinition),
@@ -3629,7 +3634,7 @@ trait APIMethods400 {
 
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getCardAttributeDefinition,
       implementedInApiVersion,
       nameOf(getCardAttributeDefinition),
@@ -3667,7 +3672,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       deleteUserCustomerLink,
       implementedInApiVersion,
       nameOf(deleteUserCustomerLink),
@@ -3706,7 +3711,7 @@ trait APIMethods400 {
     }
 
 
-    resourceDocs += ResourceDoc(
+    staticResourceDocs += ResourceDoc(
       getUserCustomerLinksByUserId,
       implementedInApiVersion,
       nameOf(getUserCustomerLinksByUserId),
@@ -3739,6 +3744,174 @@ trait APIMethods400 {
             )
           } yield {
             (JSONFactory200.createUserCustomerLinkJSONs(userCustomerLinks), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+    staticResourceDocs += ResourceDoc(
+      createCounterpartyForAnyAccount,
+      implementedInApiVersion,
+      "createCounterpartyForAnyAccount",
+      "POST",
+      "/management/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/counterparties",
+      "Create Counterparty (Explicit) for any account",
+      s"""Create Counterparty (Explicit) for any Account.
+         |
+         |In OBP, there are two types of Counterparty.
+         |
+         |* Explicit Counterparties (those here) which we create explicitly and are used in COUNTERPARTY Transaction Requests
+         |
+         |* Implicit Counterparties (AKA Other Accounts) which are generated automatically from the other sides of Transactions.
+         |
+         |Explicit Counterparties are created for the account / view
+         |They are how the user of the view (e.g. account owner) refers to the other side of the transaction
+         |
+         |name : the human readable name (e.g. Piano teacher, Miss Nipa)
+         |
+         |description : the human readable name (e.g. Piano teacher, Miss Nipa)
+         |
+         |bank_routing_scheme : eg: bankId or bankCode or any other strings
+         |
+         |bank_routing_address : eg: `gh.29.uk`, must be valid sandbox bankIds
+         |
+         |account_routing_scheme : eg: AccountId or AccountNumber or any other strings
+         |
+         |account_routing_address : eg: `1d65db7c-a7b2-4839-af41-95`, must be valid accountIds
+         |
+         |other_account_secondary_routing_scheme : eg: IBan or any other strings
+         |
+         |other_account_secondary_routing_address : if it is an IBAN, it should be unique for each counterparty.
+         |
+         |other_branch_routing_scheme : eg: branchId or any other strings or you can leave it empty, not useful in sandbox mode.
+         |
+         |other_branch_routing_address : eg: `branch-id-123` or you can leave it empty, not useful in sandbox mode.
+         |
+         |is_beneficiary : must be set to `true` in order to send payments to this counterparty
+         |
+         |bespoke: It supports a list of key-value, you can add it to the counterparty.
+         |
+         |bespoke.key : any info-key you want to add to this counterparty
+         |
+         |bespoke.value : any info-value you want to add to this counterparty
+         |
+         |The view specified by VIEW_ID must have the canAddCounterparty permission
+         |
+         |A minimal example for TransactionRequestType == COUNTERPARTY
+         | {
+         |  "name": "Tesobe1",
+         |  "description": "Good Company",
+         |  "other_bank_routing_scheme": "OBP",
+         |  "other_bank_routing_address": "gh.29.uk",
+         |  "other_account_routing_scheme": "OBP",
+         |  "other_account_routing_address": "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
+         |  "is_beneficiary": true,
+         |  "other_account_secondary_routing_scheme": "",
+         |  "other_account_secondary_routing_address": "",
+         |  "other_branch_routing_scheme": "",
+         |  "other_branch_routing_address": "",
+         |  "bespoke": []
+         |}
+         |
+         |
+         |A minimal example for TransactionRequestType == SEPA
+         |
+         | {
+         |  "name": "Tesobe2",
+         |  "description": "Good Company",
+         |  "other_bank_routing_scheme": "OBP",
+         |  "other_bank_routing_address": "gh.29.uk",
+         |  "other_account_routing_scheme": "OBP",
+         |  "other_account_routing_address": "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0",
+         |  "other_account_secondary_routing_scheme": "IBAN",
+         |  "other_account_secondary_routing_address": "DE89 3704 0044 0532 0130 00",
+         |  "is_beneficiary": true,
+         |  "other_branch_routing_scheme": "",
+         |  "other_branch_routing_address": "",
+         |  "bespoke": []
+         |}
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""".stripMargin,
+      postCounterpartyJSON,
+      counterpartyWithMetadataJson,
+      List(
+        UserNotLoggedIn,
+        InvalidAccountIdFormat,
+        InvalidBankIdFormat,
+        BankNotFound,
+        AccountNotFound,
+        InvalidJsonFormat,
+        ViewNotFound,
+        CounterpartyAlreadyExists,
+        UnknownError
+      ),
+      Catalogs(notCore, notPSD2, notOBWG),
+      List(apiTagCounterparty, apiTagAccount),
+      Some(List(canCreateCounterpartyAtBank)))
+
+
+    lazy val createCounterpartyForAnyAccount: OBPEndpoint = {
+      case "management" :: "banks" :: BankId(bankId) :: "accounts" :: AccountId(accountId) :: ViewId(viewId):: "counterparties" :: Nil JsonPost json -> _ => {
+        cc =>
+          for {
+            (Full(u), _) <- authenticatedAccess(cc)
+            postJson <- NewStyle.function.tryons(InvalidJsonFormat, 400,  cc.callContext) {
+              json.extract[PostCounterpartyJSON]
+            }
+            _ <- Helper.booleanToFuture(s"$InvalidValueLength. The maximum length of `description` field is ${MappedCounterparty.mDescription.maxLen}"){postJson.description.length <= 36}
+
+
+            //Note: The following checkCounterpartyAvailable is only obp standard now. It depends how to identify the counterparty. For this, we only use the BANK_ID+ACCOUNT_ID+COUNTERPARTY_NAME here.
+            _ <- Helper.booleanToFuture(CounterpartyAlreadyExists.replace("value for BANK_ID or ACCOUNT_ID or VIEW_ID or NAME.",
+              s"COUNTERPARTY_NAME(${postJson.name}) for the BANK_ID(${bankId.value}) and ACCOUNT_ID(${accountId.value}) and VIEW_ID($viewId)")){
+              Counterparties.counterparties.vend.checkCounterpartyAvailable(postJson.name, bankId.value, accountId.value, viewId.value)
+            }
+
+            //If other_account_routing_scheme=="OBP" or other_account_secondary_routing_address=="OBP" we will check if it is a real obp bank account.
+            (_, callContext)<- if (postJson.other_bank_routing_scheme == "OBP" && postJson.other_account_routing_scheme =="OBP"){
+              for{
+                (_, callContext) <- NewStyle.function.getBank(BankId(postJson.other_bank_routing_address), Some(cc))
+                (account, callContext) <- NewStyle.function.checkBankAccountExists(BankId(postJson.other_bank_routing_address), AccountId(postJson.other_account_routing_address), callContext)
+
+              } yield {
+                (account, callContext)
+              }
+            } else if (postJson.other_bank_routing_scheme == "OBP" && postJson.other_account_secondary_routing_scheme=="OBP"){
+              for{
+                (_, callContext) <- NewStyle.function.getBank(BankId(postJson.other_bank_routing_address), Some(cc))
+                (account, callContext) <- NewStyle.function.checkBankAccountExists(BankId(postJson.other_bank_routing_address), AccountId(postJson.other_account_secondary_routing_address), callContext)
+
+              } yield {
+                (account, callContext)
+              }
+            }
+            else
+              Future{(Full(), Some(cc))}
+
+            (counterparty, callContext) <- NewStyle.function.createCounterparty(
+              name=postJson.name,
+              description=postJson.description,
+              createdByUserId=u.userId,
+              thisBankId=bankId.value,
+              thisAccountId=accountId.value,
+              thisViewId = "owner",
+              otherAccountRoutingScheme=postJson.other_account_routing_scheme,
+              otherAccountRoutingAddress=postJson.other_account_routing_address,
+              otherAccountSecondaryRoutingScheme=postJson.other_account_secondary_routing_scheme,
+              otherAccountSecondaryRoutingAddress=postJson.other_account_secondary_routing_address,
+              otherBankRoutingScheme=postJson.other_bank_routing_scheme,
+              otherBankRoutingAddress=postJson.other_bank_routing_address,
+              otherBranchRoutingScheme=postJson.other_branch_routing_scheme,
+              otherBranchRoutingAddress=postJson.other_branch_routing_address,
+              isBeneficiary=postJson.is_beneficiary,
+              bespoke=postJson.bespoke.map(bespoke =>CounterpartyBespoke(bespoke.key,bespoke.value))
+              , callContext)
+
+            (counterpartyMetadata, callContext) <- NewStyle.function.getOrCreateMetadata(bankId, accountId, counterparty.counterpartyId, postJson.name, callContext)
+
+          } yield {
+            (JSONFactory220.createCounterpartyWithMetadataJSON(counterparty,counterpartyMetadata), HttpCode.`201`(callContext))
           }
       }
     }
