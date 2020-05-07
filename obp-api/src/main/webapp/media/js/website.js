@@ -82,10 +82,12 @@ $(document).ready(function() {
 		txtUsername.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_password');
+	var signupErrorRepeat = $('#signup #signup-error #authuser_password_repeat');
 	var textPassword = $('#signup #textPassword');
 	var textPasswordRepeat = $('#signup #textPasswordRepeat');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
+		signupErrorRepeat.parent().removeClass('hide');
 		textPassword.css("border","1px solid #A8000B").css("background","#F9F2F3")
 		textPasswordRepeat.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}

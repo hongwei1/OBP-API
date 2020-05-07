@@ -136,9 +136,14 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
         Full(
           <span>
             {appendFieldId(<input id="textPassword" type={formInputType} name={funcName} value={get.toString}/>)}
-            <div id="signup-error" class="alert alert-danger hide"><span data-lift={s"Msg?id=${uniqueFieldId.getOrElse("")}&errorClass=error"}/></div>
+            <div id="signup-error" class="alert alert-danger hide">
+              <span data-lift={s"Msg?id=${uniqueFieldId.getOrElse("")}&errorClass=error"}/>
+            </div>
             <div id ="repeat-password">{signupPasswordRepeatText}</div>
-          <input id="textPasswordRepeat" type={formInputType} name={funcName} value={get.toString}/>
+            <input id="textPasswordRepeat" type={formInputType} name={funcName} value={get.toString}/>
+            <div id="signup-error" class="alert alert-danger hide">
+              <span data-lift={s"Msg?id=${uniqueFieldId.getOrElse("")}_repeat&errorClass=error"}/>
+            </div>
         </span>)
       }
     }
@@ -152,41 +157,58 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
     // TODO Remove double negative and abreviation.
     // TODO  “invalidPw” = false -> “strongPassword = true” etc.
     override def setFromAny(f: Any): String = {
+      def checkPassword() = {
+        def isPasswordEmpty() = {
+          if (passwordValue.isEmpty())
+            true
+          else {
+            passwordValue match {
+              case "*" | null | MappedPassword.blankPw =>
+                true
+              case _ =>
+                false
+            }
+          }
+        }
+        isPasswordEmpty() match {
+          case true =>
+            invalidPw = true;
+            invalidMsg = Helper.i18n("please.enter.your.password")
+            S.error("authuser_password_repeat", Text(Helper.i18n("please.re-enter.your.password")))
+          case false =>
+            if (isValidStrongPassword(passwordValue))
+              invalidPw = false
+            else {
+              invalidPw = true
+              invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat.split(':')(1))
+              S.error("authuser_password_repeat", Text(invalidMsg))
+            }
+        }
+      }
       f match {
         case a: Array[String] if (a.length == 2 && a(0) == a(1)) => {
           passwordValue = a(0).toString
-          if (isValidStrongPassword(passwordValue))
-            invalidPw = false
-          else {
-            invalidPw = true
-            invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat)
-          }
+          checkPassword()
           this.set(a(0))
         }
         case l: List[_] if (l.length == 2 && l.head.asInstanceOf[String] == l(1).asInstanceOf[String]) => {
           passwordValue = l(0).asInstanceOf[String]
-          if (isValidStrongPassword(passwordValue))
-            invalidPw = false
-          else {
-            invalidPw = true
-            invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat)
-          }
-          
+          checkPassword()
           this.set(l.head.asInstanceOf[String])
         }
         case _ => {
           invalidPw = true;
-          invalidMsg = S.?("passwords.do.not.match")
+          invalidMsg = Helper.i18n("passwords.do.not.match")
+          S.error("authuser_password_repeat", Text(invalidMsg))
         }
       }
       get
     }
     
     override def validate: List[FieldError] = {
-      if (super.validate.nonEmpty) super.validate
-      else if (!invalidPw && password.get != "*") Nil
+      if (!invalidPw && password.get != "*") Nil
       else if (invalidPw) List(FieldError(this, Text(invalidMsg)))
-      else List(FieldError(this, Text(S.?("Please enter your password"))))
+      else List(FieldError(this, Text(Helper.i18n("please.enter.your.password"))))
     }
     
   }
@@ -515,11 +537,18 @@ import net.liftweb.util.Helpers._
       if field.show_? && (!ignorePassword || !pointer.isPasswordField_?)
       form <- field.toForm.toList
     } yield {
-      <div class="form-group">
-        <label>{field.displayName}</label>
-        {form}
-        <div id="signup-error" class="alert alert-danger hide"><span data-lift={s"Msg?id=${field.uniqueFieldId.getOrElse("")}&errorClass=error"}/></div>
-      </div>
+      if(field.uniqueFieldId.getOrElse("") == "authuser_password") {
+        <div class="form-group">
+          <label>{field.displayName}</label>
+          {form}
+        </div>
+      } else {
+        <div class="form-group">
+          <label>{field.displayName}</label>
+          {form}
+          <div id="signup-error" class="alert alert-danger hide"><span data-lift={s"Msg?id=${field.uniqueFieldId.getOrElse("")}&errorClass=error"}/></div>
+        </div>
+      }
     }
       
   }
