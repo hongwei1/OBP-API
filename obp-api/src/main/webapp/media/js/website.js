@@ -27,20 +27,22 @@ $(document).ready(function() {
 		});
 	}
 
-
+	var agreeTermsCheckbox= $("#signup #signup-agree-terms .checkbox-placeholder")
 	// Enforce check of Terms and Conditions (if existing) on signup form
-	$('#signup form').submit(function() {
-		var agreeTerms = $('#signup #signup-agree-terms input');
-		if (agreeTerms.length > 0) {
-			if (!agreeTerms.prop('checked')) {
-				var msg = 'Please agree to the Terms & Conditions';
-				$('#signup #signup-general-error #error').html(msg);
-				$('#signup #signup-general-error').removeClass('hide');
-				return false;
-			}
-		}
-		return true;
-	});
+	// $('#signup form').submit(function() {
+	// 	var agreeTerms = $('#signup #signup-agree-terms input');
+	//	
+	// 	if (agreeTerms.length > 0) {
+	// 		if (!agreeTerms.prop('checked')) {
+	// 			// var msg = 'Please agree to the Terms & Conditions';
+	// 			agreeTermsCheckbox.css("border","1px solid #A8000B").css("background","#F9F2F3")
+	// 			// $('#signup #signup-general-error #error').html(msg);
+	// 			// $('#signup #signup-general-error').removeClass('hide');
+	// 			return true;
+	// 		}
+	// 	}
+	// 	return true;
+	// });
 
 	// Enforce check of Privacy Policy (if existing) on signup form
 	$('#signup form').submit(function() {
@@ -62,24 +64,28 @@ $(document).ready(function() {
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
 		txtFirstName.css("border","1px solid #A8000B").css("background","#F9F2F3")
+		agreeTermsCheckbox.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_lastName');
 	var txtLastName = $('#signup #txtLastName');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
 		txtLastName.css("border","1px solid #A8000B").css("background","#F9F2F3")
+		agreeTermsCheckbox.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_email');
 	var txtEmail = $('#signup #txtEmail');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
 		txtEmail.css("border","1px solid #A8000B").css("background","#F9F2F3")
+		agreeTermsCheckbox.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_username');
 	var txtUsername = $('#signup #txtUsername');
 	if (signupError.length > 0 && signupError.html().length > 0) {
 		signupError.parent().removeClass('hide');
 		txtUsername.css("border","1px solid #A8000B").css("background","#F9F2F3")
+		agreeTermsCheckbox.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 	var signupError = $('#signup #signup-error #authuser_password');
 	var signupErrorRepeat = $('#signup #signup-error #authuser_password_repeat');
@@ -90,6 +96,7 @@ $(document).ready(function() {
 		signupErrorRepeat.parent().removeClass('hide');
 		textPassword.css("border","1px solid #A8000B").css("background","#F9F2F3")
 		textPasswordRepeat.css("border","1px solid #A8000B").css("background","#F9F2F3")
+		agreeTermsCheckbox.css("border","1px solid #A8000B").css("background","#F9F2F3")
 	}
 
 	var loginUsernameError = $('#authorise #login-form-username-error');
