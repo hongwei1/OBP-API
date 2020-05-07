@@ -159,7 +159,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
             invalidPw = false
           else {
             invalidPw = true
-            invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat)
+            invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat.split(':')(1))
           }
           this.set(a(0))
         }
@@ -169,24 +169,23 @@ class AuthUser extends MegaProtoUser[AuthUser] with MdcLoggable {
             invalidPw = false
           else {
             invalidPw = true
-            invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat)
+            invalidMsg = S.?(ErrorMessages.InvalidStrongPasswordFormat.split(':')(1))
           }
           
           this.set(l.head.asInstanceOf[String])
         }
         case _ => {
           invalidPw = true;
-          invalidMsg = S.?("passwords.do.not.match")
+          invalidMsg = Helper.i18n("passwords.do.not.match")
         }
       }
       get
     }
     
     override def validate: List[FieldError] = {
-      if (super.validate.nonEmpty) super.validate
-      else if (!invalidPw && password.get != "*") Nil
+      if (!invalidPw && password.get != "*") Nil
       else if (invalidPw) List(FieldError(this, Text(invalidMsg)))
-      else List(FieldError(this, Text(S.?("Please enter your password"))))
+      else List(FieldError(this, Text(Helper.i18n("please.enter.your.password"))))
     }
     
   }
