@@ -854,12 +854,11 @@ class SandboxDataLoadingTest extends FlatSpec with SendServerRequests with Match
     getResponse(List(userWithoutPassword)).code should equal(FAILED)
     //no user should be created
     Users.users.vend.getUserByProviderId(defaultProvider, user1.user_name).isDefined should equal(false)
-    
-    // TODO Fix this test
-//    val userWithBlankPassword = replaceField(goodUser, "password", "")
-//    getResponse(List(userWithBlankPassword)).code should equal(FAILED)
-//    //no user should be created
-//    Users.users.vend.getUserByProviderId(defaultProvider, user1.user_name).isDefined should equal(false)
+
+    val userWithBlankPassword = replaceField(goodUser, "password", "")
+    getResponse(List(userWithBlankPassword)).code should equal(FAILED)
+    //no user should be created
+    Users.users.vend.getUserByProviderId(defaultProvider, user1.user_name).isDefined should equal(false)
 
     //check that a normal password is okay
     getResponse(List(goodUser)).code should equal(SUCCESS)
