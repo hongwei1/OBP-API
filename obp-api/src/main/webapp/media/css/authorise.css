@@ -64,14 +64,18 @@
     color: #333333;
     margin-top: -85px;
 }
-#authorise #authorise-recover-password a{
+#authorise #oauth-authorise-recover-password{
+    color: #333333;
+    margin-top: -55px; 
+}
+#authorise #authorise-recover-password a,
+#authorise #oauth-authorise-recover-password a{
     font-family: UniversNextforHSBC-Regular;
     font-size: 14px;
     color: #333333;
     letter-spacing: 0;
     line-height: 20px;
     text-decoration:underline;
-    margin-top: -40px;
 }
 
 #authorise .login-or {
@@ -128,9 +132,6 @@
     max-width: 400px;
     margin: 0 auto;
     color: #333333;
-}
-#authorise .authorise-token-success #authorise-submit-button{
-    margin-right: -15px;
 }
 
 #authorise #login-form-username-error,

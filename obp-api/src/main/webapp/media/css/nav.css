@@ -5,7 +5,7 @@ nav {
 nav .navbar-collapse.collapse {
     display: block !important;
     height: auto !important;
-    margin-left: 100px;
+    margin-left: 80px;
     margin-right: 100px;
     padding: 0;
 }
@@ -23,8 +23,8 @@ nav .navbar-collapse.collapse {
     line-height: 31px;
     padding-top: 27px;
     padding-bottom: 30px;
-    padding-left: 0;
-    padding-right: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 .navbar-default .navbar-nav > li > a:hover {
