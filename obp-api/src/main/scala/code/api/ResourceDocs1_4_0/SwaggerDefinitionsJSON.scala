@@ -3372,7 +3372,7 @@ object SwaggerDefinitionsJSON {
     label = "Label",
     `type` = "CURRENT",
     branch_id = "1234",
-    account_routing = accountRoutingJsonV121
+    account_routings = List(accountRoutingJsonV121)
   )
 
   val updateAccountResponseJsonV310 = UpdateAccountResponseJsonV310(
@@ -3381,7 +3381,7 @@ object SwaggerDefinitionsJSON {
     label = "Label",
     `type` = "CURRENT",
     branch_id = "1234",
-    account_routing = accountRoutingJsonV121
+    account_routings = List(AccountRoutingJsonV121(accountRoutingSchemeExample.value, accountRoutingAddressExample.value))
   )
   val createPhysicalCardJsonV310 = CreatePhysicalCardJsonV310(
     card_number = bankCardNumberExample.value,
@@ -3647,7 +3647,7 @@ object SwaggerDefinitionsJSON {
     product_code = accountTypeExample.value,
     balance =  amountOfMoneyJsonV121,
     branch_id  = branchIdExample.value,
-    account_routing = accountRoutingJsonV121
+    account_routings = List(accountRoutingJsonV121)
   )
   
   val postAccountAccessJsonV400 = PostAccountAccessJsonV400(userIdExample.value, PostViewJsonV400(ExampleValue.viewIdExample.value, true))
