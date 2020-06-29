@@ -123,7 +123,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       transactionRequestType=transactionRequestTypeExample.value,
       currency=currencyExample.value,
       userId=userIdExample.value,
-      userName=userNameExample.value)
+      username=usernameExample.value)
     ),
     exampleInboundMessage = (
      InBoundGetChallengeThreshold(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -134,9 +134,9 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, userName: String, callContext: Option[CallContext]): OBPReturnType[Box[AmountOfMoney]] = {
+  override def getChallengeThreshold(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, username: String, callContext: Option[CallContext]): OBPReturnType[Box[AmountOfMoney]] = {
         import com.openbankproject.commons.dto.{OutBoundGetChallengeThreshold => OutBound, InBoundGetChallengeThreshold => InBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, transactionRequestType, currency, userId, userName)
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, transactionRequestType, currency, userId, username)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_challenge_threshold", req, callContext)
         response.map(convertToTuple[AmountOfMoney](callContext))        
   }
@@ -154,7 +154,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       accountId=AccountId(accountIdExample.value),
       viewId=ViewId(viewIdExample.value),
       userId=userIdExample.value,
-      userName=userNameExample.value,
+      username=usernameExample.value,
       transactionRequestType=transactionRequestTypeExample.value,
       currency=currencyExample.value)
     ),
@@ -167,9 +167,9 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def getChargeLevel(bankId: BankId, accountId: AccountId, viewId: ViewId, userId: String, userName: String, transactionRequestType: String, currency: String, callContext: Option[CallContext]): OBPReturnType[Box[AmountOfMoney]] = {
+  override def getChargeLevel(bankId: BankId, accountId: AccountId, viewId: ViewId, userId: String, username: String, transactionRequestType: String, currency: String, callContext: Option[CallContext]): OBPReturnType[Box[AmountOfMoney]] = {
         import com.openbankproject.commons.dto.{OutBoundGetChargeLevel => OutBound, InBoundGetChargeLevel => InBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, userId, userName, transactionRequestType, currency)
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, userId, username, transactionRequestType, currency)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_charge_level", req, callContext)
         response.map(convertToTuple[AmountOfMoney](callContext))        
   }
@@ -378,7 +378,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     outboundTopic = None,
     inboundTopic = None,
     exampleOutboundMessage = (
-     OutBoundGetUser(name=userNameExample.value,
+     OutBoundGetUser(name=usernameExample.value,
       password="string")
     ),
     exampleInboundMessage = (
@@ -421,7 +421,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       azp=Some("string"),
       email=Some(emailExample.value),
       emailVerified=Some("string"),
-      name=Some(userNameExample.value)))
+      name=Some(usernameExample.value)))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -1288,7 +1288,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       limit=limitExample.value.toInt,
       offset=offsetExample.value.toInt,
       fromDate="string",
@@ -1603,7 +1603,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -1744,7 +1744,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -1885,7 +1885,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceAmountExample.value),
@@ -2689,7 +2689,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceAmountExample.value),
@@ -2805,7 +2805,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceAmountExample.value),
@@ -2895,7 +2895,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -5029,13 +5029,13 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       customerUser= UserCommons(userPrimaryKey=UserPrimaryKey(123),
       userId=userIdExample.value,
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       providerId="string",
       purposeId="string",
       when=parseDate(dateExample.value).getOrElse(sys.error("dateExample.value is not valid date format.")),
@@ -5096,7 +5096,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value))
+      name=usernameExample.value))
     ),
     exampleInboundMessage = (
      InBoundGetMeetings(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -5144,7 +5144,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       meetingId="string")
     ),
     exampleInboundMessage = (
@@ -5487,7 +5487,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       idGivenByProvider="string",
       provider="string",
       emailAddress=emailExample.value,
-      name=userNameExample.value),
+      name=usernameExample.value),
       bankId=BankId(bankIdExample.value),
       message="string",
       fromDepartment="string",
