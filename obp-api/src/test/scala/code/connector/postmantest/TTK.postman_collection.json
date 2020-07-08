@@ -1,0 +1,1939 @@
+{
+	"info": {
+		"_postman_id": "a7f8ca8e-9668-4d91-b638-00a3e3a99db7",
+		"name": "TTK",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "stored_procedures",
+			"item": [
+				{
+					"name": "01) obp.getBanks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0326c96f-42ba-436c-bf1f-224848ad1ff5",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data[0].bankId.value).to.eql(\"1\");",
+									"    pm.expect(jsonData.data[1].bankId.value).to.eql(\"2\");",
+									"    pm.expect(jsonData.data[2].bankId.value).to.eql(\"3\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBanks",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBanks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "02) obp.getBank",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "478d18da-356e-4215-b834-26e791b2598e",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data[0].bankId.value).to.eql(\"1\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"1\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBank",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBank"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "02) obp.getBank-errorCase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "23d76a7c-d626-4e2c-930d-9bc17caa65f0",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"CoreBank - Status.errorCode: 100. Error.details:List(InboundStatusMessage(TTK Core,-1,100,NO BANK WITH THIS ID)\");",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"xxx\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBank",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBank"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "03) obp.getBankAccountsForUser-wait",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d6831470-8d4c-4c5b-8cf2-cc363ed312ab",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"pm.test(\"returnEmpty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.eql([123]);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\n{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"username\":\"hongwei.zhang\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBankAccountsForUser",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBankAccountsForUser"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "03) obp.getBankAccountsForUser-errorCase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1745e4b2-ef20-4052-ac63-df64ef0ac922",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 200;",
+									"",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include('\"data\":[]');",
+									"});",
+									"pm.test(\"returnEmpty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.eql([]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\n{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"username\":\"hongwei\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBankAccountsForUser",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBankAccountsForUser"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "04) obp.checkBankAccountExists",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c0a46f94-c862-44fb-84f7-329a8661c076",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"CoreBank - Status.errorCode: 404. Error.details:List(InboundStatusMessage(TTK CORE,1,-1,NO DATA!))\");",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"1\"\n  },\n  \"accountId\":{\n    \"value\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/checkBankAccountExists",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"checkBankAccountExists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "04) obp.checkBankAccountExists-errorCase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "7cf23a37-0112-4e3e-b6f0-7931bb88a01f",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"CoreBank - Status.errorCode: 404. Error.details:List(InboundStatusMessage(TTK CORE,1,-1,NO DATA!))\");",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"gh.29.uk\"\n  },\n  \"accountId\":{\n    \"value\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/checkBankAccountExists",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"checkBankAccountExists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "05) implement obp.getBankAccounts- wait",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4e38b13b-b403-464e-8e29-72ae6220c387",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"CoreBank - Status.errorCode: 404. Error.details:List(InboundStatusMessage(TTK CORE,1,-1,NO DATA!))\");",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"gh.29.uk\"\n  },\n  \"accountId\":{\n    \"value\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBankAccounts",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBankAccounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "06) obp.checkExternalUserCredentials-errorCase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "451427dc-22da-4168-9889-79d696205b76",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"username\":\"xxxx\",\n  \"password\":\"xxxx\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/checkExternalUserCredentials",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"checkExternalUserCredentials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "06) obp.checkExternalUserCredentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "6baedf25-ed95-4bdb-9a38-2c17dbb7957d",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.sub).to.eql(\"hongwei.zhang\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"username\":\"hongwei.zhang\",\n  \"password\":\"ttkObp2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/checkExternalUserCredentials",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"checkExternalUserCredentials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "07) Implement obp.getTransactions-wait",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c226d609-12c9-44b3-9801-874ce248d5b1",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"1\"\n  },\n  \"accountId\":{\n    \"value\":\"102565245542\"\n  },\n  \"limit\":100,\n  \"offset\":100,\n  \"fromDate\":\"2018-03-09\",\n  \"toDate\":\"2018-03-09\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getTransactions",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getTransactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "08) Implement obp.getChallengeThreshold",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b526964d-ef87-4fa9-a5c7-0667937449e6",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":\"1\",\n  \"accountId\":\"102565245542\",\n  \"viewId\":\"owner\",\n  \"transactionRequestType\":\"SEPA\",\n  \"currency\":\"EUR\",\n  \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n  \"username\":\"hongwei.zhang\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getChallengeThreshold",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getChallengeThreshold"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "09) Implement obp.getChargeLevel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8c3b9e9d-63a6-4c6d-8919-af010af49d62",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"1\"\n  },\n  \"accountId\":{\n    \"value\":\"605865245725\"\n  },\n  \"viewId\":{\n    \"value\":\"owner\"\n  },\n  \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n  \"username\":\"hongwei.zhang\",\n  \"transactionRequestType\":\"SEPA\",\n  \"currency\":\"EUR\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getChargeLevel",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getChargeLevel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "010) Implement obp.createChallenge",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "62b77b0b-3dbf-47a7-91b1-573aaba3ee11",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"bankId\":{\n    \"value\":\"gh.29.uk\"\n  },\n  \"accountId\":{\n    \"value\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\"\n  },\n  \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n  \"transactionRequestType\":{\n    \"value\":\"SEPA\"\n  },\n  \"transactionRequestId\":\"8138a7e4-6d02-40e3-a129-0b2bf89de9f1\",\n  \"scaMethod\":\"SMS\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/createChallenge",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"createChallenge"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "11) obp.validateChallengeAnswer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "36580e55-a875-4633-9a56-f59f1b58787a",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\": {\n    \"correlationId\": \"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"challengeId\": \"string\",\n  \"hashOfSuppliedAnswer\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/validateChallengeAnswer",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"validateChallengeAnswer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "12) implement obp.getTransactionRequests210",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "35e55c94-0610-4b4b-9a95-605442490b37",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\" <- null\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\"\n  },\n  \"initiator\":{\n    \"userPrimaryKey\":{\n      \"value\":123\n    },\n    \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n    \"idGivenByProvider\":\"string\",\n    \"provider\":\"string\",\n    \"emailAddress\":\"felixsmith@example.com\",\n    \"name\":\"felixsmith\"\n  },\n  \"fromAccount\":{\n    \"accountId\":{\n      \"value\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\"\n    },\n    \"label\":\"My Account\",\n    \"iban\":\"DE91 1000 0000 0123 4567 89\",\n    \"bankId\":{\n      \"value\":\"gh.29.uk\"\n    },\n    \"accountRoutingScheme\":\"IBAN\",\n    \"accountRoutingAddress\":\"DE91 1000 0000 0123 4567 89\",\n    \"accountRules\":[{\n      \"scheme\":\"AccountRule scheme string\",\n      \"value\":\"AccountRule value string\"\n    }],\n    \"accountHolder\":\"bankAccount accountHolder string\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getTransactionRequests210",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getTransactionRequests210"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Hongwei",
+			"item": [
+				{
+					"name": "GetToken-hongwei",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8f8b9dbe-e386-457a-be57-f92b04b8ed24",
+								"exec": [
+									"pm.environment.set(\"api.ttk.com.mk_direct_login_token_hongwei\", pm.response.json().token)",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "DirectLogin username=\"hongwei.zhang\" ,password=\"ttkObp2\",consumer_key=\"wnohmxxv5iirsrp3dg4znf35ernilzslx24l5nmp\"",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/my/logins/direct",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"my",
+								"logins",
+								"direct"
+							]
+						},
+						"description": "Consumer IDe2f62d82-730d-4aa6-ab47-6dbeaa7702c8\nApplication TypeWeb\nApplication NameTestUse1\nUser redirect URL\nDeveloper Email hongwei@tesobe.com\nApp DescriptionThe The endpoints\nConsumer Key wnohmxxv5iirsrp3dg4znf35ernilzslx24l5nmp\nConsumer Secret dmxyfnrxrixwkufgeis5a41v0bcktrfltijsxoz4"
+					},
+					"response": []
+				},
+				{
+					"name": "Read Account List",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5acfec41-e161-410d-ace7-d80d2913cb5b",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"accounts\");",
+									"});",
+									"",
+									"pm.environment.set(\"hongwei_account_id\", pm.response.json().accounts[0].resourceId)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token_hongwei}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read Account Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "78db881e-86ac-43a3-aacf-c092826c6566",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"cashAccountType\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{hongwei_account_id}}",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{hongwei_account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read Balance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "cd9abb54-d28c-43ae-a7b9-d9f0d1805e7a",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{hongwei_account_id}}/balances",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{hongwei_account_id}}",
+								"balances"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read card account balances",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "44ba9f77-9f04-41dd-be42-c63fbd95492e",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/card-accounts/{{hongwei_account_id}}/balances",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"card-accounts",
+								"{{hongwei_account_id}}",
+								"balances"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reads a list of card accounts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "a6b09d29-15dd-48c6-810c-4770af1d4d7c",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{hongwei_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{hongwei_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read transaction list of a card account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "846d3024-16e0-4ca4-9fa5-0c3c4c77f1a2",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/card-accounts/{{hongwei_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"card-accounts",
+								"{{hongwei_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read transaction list of an account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "3a5e9660-93eb-4223-95f4-bf5886aca111",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{hongwei_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{hongwei_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read Transaction Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "831c65b9-5c6c-4e55-ae69-85e454a23864",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_hongwei}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{hongwei_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{hongwei_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Daniel",
+			"item": [
+				{
+					"name": "GetToken-daniel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2096cf5b-4479-4280-932f-c8a675a34b72",
+								"exec": [
+									"pm.environment.set(\"api.ttk.com.mk_direct_login_token_daniel\", pm.response.json().token)",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "DirectLogin username=\"daniel.tippmann\" ,password=\"ttkObp3\",consumer_key=\"wnohmxxv5iirsrp3dg4znf35ernilzslx24l5nmp\"",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/my/logins/direct",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"my",
+								"logins",
+								"direct"
+							]
+						},
+						"description": "Consumer IDe2f62d82-730d-4aa6-ab47-6dbeaa7702c8\nApplication TypeWeb\nApplication NameTestUse1\nUser redirect URL\nDeveloper Email hongwei@tesobe.com\nApp DescriptionThe The endpoints\nConsumer Key wnohmxxv5iirsrp3dg4znf35ernilzslx24l5nmp\nConsumer Secret dmxyfnrxrixwkufgeis5a41v0bcktrfltijsxoz4"
+					},
+					"response": []
+				},
+				{
+					"name": "Read Account List",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "401d6623-f854-4341-9ef9-71b0b51c2c28",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"accounts\");",
+									"});",
+									"",
+									"pm.environment.set(\"daniel_account_id\", pm.response.json().accounts[0].resourceId)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token_daniel}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read Account Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "90630eeb-5cff-4804-9458-16136b18f39f",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"cashAccountType\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_daniel}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{daniel_account_id}}",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{daniel_account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read Balance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "e345da21-be08-466f-b13d-34bee8ba1d05",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_daniel}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{daniel_account_id}}/balances",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{daniel_account_id}}",
+								"balances"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read card account balances",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "55e24804-eaa2-4591-bec3-dfbca20cc860",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_daniel}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/card-accounts/{{daniel_account_id}}/balances",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"card-accounts",
+								"{{daniel_account_id}}",
+								"balances"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read transaction list of a card account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4f47e896-735d-47f1-87a0-a50008b043e7",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_daniel}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/card-accounts/{{daniel_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"card-accounts",
+								"{{daniel_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read transaction list of an account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9ae91c1e-1aae-4218-a6bb-d6807b39e0a5",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_daniel}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{daniel_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{daniel_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read Transaction Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fbe6753c-6db2-45a9-8ae9-6973c75840f2",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"account\");",
+									"    pm.expect(pm.response.text()).to.include(\"balances\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token_daniel}}"
+							}
+						],
+						"url": {
+							"raw": "{{api.ttk.com.mk.host}}/berlin-group/v1.3/accounts/{{daniel_account_id}}/transactions",
+							"host": [
+								"{{api.ttk.com.mk.host}}"
+							],
+							"path": [
+								"berlin-group",
+								"v1.3",
+								"accounts",
+								"{{daniel_account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Connector",
+			"item": [
+				{
+					"name": "getBanks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d88d2c39-64cb-448a-9a9d-12b8d8f5d62f",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\",\n    \"sessionId\":\"b4e0352a-9a0f-4bfa-b30b-9003aa467f50\",\n    \"consumerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n    \"generalContext\":[{\n      \"key\":\"CustomerNumber\",\n      \"value\":\"5987953\"\n    }],\n    \"outboundAdapterAuthInfo\":{\n      \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n      \"username\":\"felixsmith\",\n      \"linkedCustomers\":[{\n        \"customerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n        \"customerNumber\":\"5987953\",\n        \"legalName\":\"Eveline Tripman\"\n      }],\n      \"userAuthContext\":[{\n        \"key\":\"CustomerNumber\",\n        \"value\":\"5987953\"\n      }],\n      \"authViews\":[{\n        \"view\":{\n          \"id\":\"owner\",\n          \"name\":\"Owner\",\n          \"description\":\"This view is for the owner for the account.\"\n        },\n        \"account\":{\n          \"id\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\",\n          \"accountRoutings\":[{\n            \"scheme\":\"IBAN\",\n            \"address\":\"DE91 1000 0000 0123 4567 89\"\n          }],\n          \"customerOwners\":[{\n            \"bankId\":\"gh.29.uk\",\n            \"customerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n            \"customerNumber\":\"5987953\",\n            \"legalName\":\"Eveline Tripman\",\n            \"dateOfBirth\":\"2018-03-09T00:00:00Z\"\n          }],\n          \"userOwners\":[{\n            \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n            \"emailAddress\":\"felixsmith@example.com\",\n            \"name\":\"felixsmith\"\n          }]\n        }\n      }]\n    }\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBanks",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBanks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkBankAccountExists",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "e870e03e-ca7d-4ffa-8576-f7ccf826b9db",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\",\n    \"sessionId\":\"b4e0352a-9a0f-4bfa-b30b-9003aa467f50\",\n    \"consumerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n    \"generalContext\":[{\n      \"key\":\"CustomerNumber\",\n      \"value\":\"5987953\"\n    }],\n    \"outboundAdapterAuthInfo\":{\n      \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n      \"username\":\"felixsmith\",\n      \"linkedCustomers\":[{\n        \"customerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n        \"customerNumber\":\"5987953\",\n        \"legalName\":\"Eveline Tripman\"\n      }],\n      \"userAuthContext\":[{\n        \"key\":\"CustomerNumber\",\n        \"value\":\"5987953\"\n      }],\n      \"authViews\":[{\n        \"view\":{\n          \"id\":\"owner\",\n          \"name\":\"Owner\",\n          \"description\":\"This view is for the owner for the account.\"\n        },\n        \"account\":{\n          \"id\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\",\n          \"accountRoutings\":[{\n            \"scheme\":\"IBAN\",\n            \"address\":\"DE91 1000 0000 0123 4567 89\"\n          }],\n          \"customerOwners\":[{\n            \"bankId\":\"gh.29.uk\",\n            \"customerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n            \"customerNumber\":\"5987953\",\n            \"legalName\":\"Eveline Tripman\",\n            \"dateOfBirth\":\"2018-03-09T00:00:00Z\"\n          }],\n          \"userOwners\":[{\n            \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n            \"emailAddress\":\"felixsmith@example.com\",\n            \"name\":\"felixsmith\"\n          }]\n        }\n      }]\n    }\n  },\n  \"bankId\":{\n    \"value\":\"gh.29.uk\"\n  },\n  \"accountId\":{\n    \"value\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/checkBankAccountExists",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"checkBankAccountExists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkExternalUserCredentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8a260dcc-5025-4abc-bd4d-c60251689025",
+								"exec": [
+									"tests[\"Status code is 201\"] = responseCode.code === 200;"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outboundAdapterCallContext\":{\n    \"correlationId\":\"1flssoftxq0cr1nssr68u0mioj\",\n    \"sessionId\":\"b4e0352a-9a0f-4bfa-b30b-9003aa467f50\",\n    \"consumerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n    \"generalContext\":[{\n      \"key\":\"CustomerNumber\",\n      \"value\":\"5987953\"\n    }],\n    \"outboundAdapterAuthInfo\":{\n      \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n      \"username\":\"felixsmith\",\n      \"linkedCustomers\":[{\n        \"customerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n        \"customerNumber\":\"5987953\",\n        \"legalName\":\"Eveline Tripman\"\n      }],\n      \"userAuthContext\":[{\n        \"key\":\"CustomerNumber\",\n        \"value\":\"5987953\"\n      }],\n      \"authViews\":[{\n        \"view\":{\n          \"id\":\"owner\",\n          \"name\":\"Owner\",\n          \"description\":\"This view is for the owner for the account.\"\n        },\n        \"account\":{\n          \"id\":\"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0\",\n          \"accountRoutings\":[{\n            \"scheme\":\"IBAN\",\n            \"address\":\"DE91 1000 0000 0123 4567 89\"\n          }],\n          \"customerOwners\":[{\n            \"bankId\":\"gh.29.uk\",\n            \"customerId\":\"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh\",\n            \"customerNumber\":\"5987953\",\n            \"legalName\":\"Eveline Tripman\",\n            \"dateOfBirth\":\"2018-03-09T00:00:00Z\"\n          }],\n          \"userOwners\":[{\n            \"userId\":\"9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1\",\n            \"emailAddress\":\"felixsmith@example.com\",\n            \"name\":\"felixsmith\"\n          }]\n        }\n      }]\n    }\n  },\n  \"username\":\"daneil\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ttk.com.mk/connector/getBankAccountsForUser",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ttk",
+								"com",
+								"mk"
+							],
+							"path": [
+								"connector",
+								"getBankAccountsForUser"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Get API Info (root)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "fdc73f2b-9db8-42b1-bdb7-5fe47a4f442d",
+						"exec": [
+							"tests[\"Status code is 201\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.ttk.com.mk/obp/v4.0.0/root",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ttk",
+						"com",
+						"mk"
+					],
+					"path": [
+						"obp",
+						"v4.0.0",
+						"root"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Adapter Info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c4825d25-f08e-4694-8ad8-de9dd67f5455",
+						"exec": [
+							"tests[\"Status code is 201\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.ttk.com.mk/obp/v4.0.0/adapter",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ttk",
+						"com",
+						"mk"
+					],
+					"path": [
+						"obp",
+						"v4.0.0",
+						"adapter"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Banks",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "121a3fea-97e0-4937-ae9c-7aea437953d5",
+						"exec": [
+							"tests[\"Status code is 201\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.ttk.com.mk/obp/v4.0.0/banks",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ttk",
+						"com",
+						"mk"
+					],
+					"path": [
+						"obp",
+						"v4.0.0",
+						"banks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Bank",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "7d4792e3-3c2a-499c-b404-514e3522cb2c",
+						"exec": [
+							"tests[\"Status code is 201\"] = responseCode.code === 200;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.ttk.com.mk/obp/v4.0.0/banks/1",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ttk",
+						"com",
+						"mk"
+					],
+					"path": [
+						"obp",
+						"v4.0.0",
+						"banks",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Bank - Error",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e3fd2eba-9b88-4330-a1ca-0bb5ca4be4f3",
+						"exec": [
+							"tests[\"Status code is 201\"] = responseCode.code === 404;",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"OBP-30001: Bank not found. Please specify a valid value for BANK_ID. Current BankId is wrongId\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.ttk.com.mk/obp/v4.0.0/banks/wrongId",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ttk",
+						"com",
+						"mk"
+					],
+					"path": [
+						"obp",
+						"v4.0.0",
+						"banks",
+						"wrongId"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
