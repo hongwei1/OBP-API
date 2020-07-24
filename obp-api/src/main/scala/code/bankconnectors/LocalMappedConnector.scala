@@ -511,36 +511,19 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   }
 
   override def getBankAccountByIban(iban: String, callContext: Option[CallContext]): OBPReturnType[Box[BankAccount]] = Future {
-    (MappedBankAccount
-      .find(By(MappedBankAccount.accountIban, iban))
-      .map(
-        account =>
-          account
-            .mAccountRoutingScheme(APIUtil.ValueOrOBP(account.accountRoutingScheme))
-            .mAccountRoutingAddress(APIUtil.ValueOrOBPId(account.accountRoutingAddress, account.accountId.value))
-      ), callContext)
+    getBankAccountByRouting("IBAN", iban, callContext)
   }
 
-  override def getBankAccountByRouting(scheme: String, address: String, callContext: Option[CallContext]): Box[(BankAccount, Option[CallContext])] =
-    (MappedBankAccount
-      .find(By(MappedBankAccount.mAccountRoutingScheme, scheme), By(MappedBankAccount.mAccountRoutingAddress, address))
-      .map(
-        account =>
-          account
-            .mAccountRoutingScheme(APIUtil.ValueOrOBP(account.accountRoutingScheme))
-            .mAccountRoutingAddress(APIUtil.ValueOrOBPId(account.accountRoutingAddress, account.accountId.value))
-      )).map(a => (a, callContext))
+  override def getBankAccountByRouting(scheme: String, address: String, callContext: Option[CallContext]): Box[(BankAccount, Option[CallContext])] = {
+    BankAccountRouting
+      .find(By(BankAccountRouting.AccountRoutingScheme, scheme), By(BankAccountRouting.AccountRoutingAddress, address))
+      .flatMap(accountRouting => getBankAccountCommon(accountRouting.bankId, accountRouting.accountId, callContext))
+  }
 
   def getBankAccountCommon(bankId: BankId, accountId: AccountId, callContext: Option[CallContext]) = {
     MappedBankAccount
-      .find(By(MappedBankAccount.bank, bankId.value),
-        By(MappedBankAccount.theAccountId, accountId.value))
-      .map(
-        account =>
-          account
-            .mAccountRoutingScheme(APIUtil.ValueOrOBP(account.accountRoutingScheme))
-            .mAccountRoutingAddress(APIUtil.ValueOrOBPId(account.accountRoutingAddress, account.accountId.value))
-      ).map(bankAccount => (bankAccount, callContext))
+      .find(By(MappedBankAccount.bank, bankId.value), By(MappedBankAccount.theAccountId, accountId.value))
+      .map(bankAccount => (bankAccount, callContext))
   }
 
   override def getBankAccounts(bankIdAccountIds: List[BankIdAccountId], callContext: Option[CallContext]): OBPReturnType[Box[List[BankAccount]]] = {
