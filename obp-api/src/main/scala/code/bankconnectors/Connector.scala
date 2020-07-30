@@ -669,6 +669,11 @@ trait Connector extends MdcLoggable {
                       chargePolicy: String,
                       callContext: Option[CallContext]): OBPReturnType[Box[TransactionId]]= Future{(Failure(setUnimplementedError), callContext)}
 
+  def makePaymentv400(
+    transactionRequest: TransactionRequest,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[TransactionId]]= Future{(Failure(setUnimplementedError), callContext)}
+
 
   protected def makePaymentImpl(fromAccount: BankAccount, toAccount: BankAccount, transactionRequestCommonBody: TransactionRequestCommonBodyJSON, amt: BigDecimal, description: String, transactionRequestType: TransactionRequestType, chargePolicy: String): Box[TransactionId]= Failure(setUnimplementedError)
 
@@ -944,31 +949,10 @@ trait Connector extends MdcLoggable {
   }
 
 
-  /**
-    *
-    * @param initiator
-    * @param viewId
-    * @param fromAccount
-    * @param toAccount
-    * @param transactionRequestType Support Types: SANDBOX_TAN, FREE_FORM, SEPA and COUNTERPARTY
-    * @param transactionRequestCommonBody Body from http request: should have common fields
-    * @param chargePolicy  SHARED, SENDER, RECEIVER
-    * @param detailsPlain This is the details / body of the request (contains all fields in the body)
-    * @return Always create a new Transaction Request in mapper, and return all the fields
-    */
-
-
-  def createTransactionRequestv400(initiator: User,
-                                   viewId: ViewId,
-                                   fromAccount: BankAccount,
-                                   toAccount: BankAccount,
-                                   transactionRequestType: TransactionRequestType,
-                                   transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
-                                   detailsPlain: String,
-                                   chargePolicy: String,
-                                   challengeType: Option[String],
-                                   scaMethod: Option[SCA],
-                                   callContext: Option[CallContext]): OBPReturnType[Box[TransactionRequest]] = Future{(Failure(setUnimplementedError), callContext)}
+  def createTransactionRequestv400(
+    transactionRequest: TransactionRequest,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[TransactionRequest]] = Future{(Failure(setUnimplementedError), callContext)}
 
   //place holder for various connector methods that overwrite methods like these, does the actual data access
   protected def createTransactionRequestImpl(transactionRequestId: TransactionRequestId, transactionRequestType: TransactionRequestType,

@@ -30,6 +30,7 @@ import com.openbankproject.commons.model.ListResult
 import code.api.v4_0_0.DynamicEndpointHelper.DynamicReq
 import code.api.v4_0_0.JSONFactory400.{createBankAccountJSON, createNewCoreBankAccountJson}
 import code.bankconnectors.Connector
+import code.bankconnectors.LocalMappedConnector.{createTransactionRequestImpl210, getChargeValue, getStatus}
 import code.dynamicEntity.{DynamicEntityCommons, ReferenceType}
 import code.entitlement.Entitlement
 import code.metadata.counterparties.{Counterparties, MappedCounterparty}
@@ -68,6 +69,7 @@ import org.apache.commons.lang3.StringUtils
 import scala.collection.immutable.{List, Nil}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
+import scala.math.BigDecimal
 
 trait APIMethods400 {
   self: RestHelper =>
@@ -493,14 +495,41 @@ trait APIMethods400 {
               isValidCurrencyISOCode(transDetailsJson.value.currency)
             }
 
-            // Prevent default value for transaction request type (at least).
-            _ <- Helper.booleanToFuture(s"${InvalidISOCurrencyCode} Current input is: '${transDetailsJson.value.currency}'") {
-              isValidCurrencyISOCode(transDetailsJson.value.currency)
-            }
 
             // Prevent default value for transaction request type (at least).
             _ <- Helper.booleanToFuture(s"From Account Currency is ${fromAccount.currency}, but Requested Transaction Currency is: ${transDetailsJson.value.currency}") {
               transDetailsJson.value.currency == fromAccount.currency
+            }
+            // Get the threshold for a challenge. i.e. over what value do we require an out of Band security challenge to be sent?
+            (challengeThreshold, callContext) <- Connector.connector.vend.getChallengeThreshold(fromAccount.bankId.value, fromAccount.accountId.value, viewId.value, transactionRequestType.value, transDetailsJson.value.currency, u.userId, u.name, callContext) map { i =>
+              (unboxFullOrFail(i._1, cc.callContext, s"$InvalidConnectorResponseForGetChallengeThreshold ", 400), i._2)
+            }
+            
+            challengeThresholdAmount <- NewStyle.function.tryons(s"$InvalidConnectorResponseForGetChallengeThreshold. challengeThreshold amount ${challengeThreshold.amount} not convertible to number", 400, callContext) {
+              BigDecimal(challengeThreshold.amount)
+            }
+            
+            transactionRequestCommonBodyAmount <- NewStyle.function.tryons(s"$InvalidNumber Request Json value.amount ${transDetailsJson.value.amount} not convertible to number", 400, callContext) {
+              BigDecimal(transDetailsJson.value.amount)
+            }
+            
+            status <- getStatus(challengeThresholdAmount, transactionRequestCommonBodyAmount, transactionRequestType: TransactionRequestType)
+            
+            (chargeLevel, callContext) <- Connector.connector.vend.getChargeLevel(BankId(fromAccount.bankId.value), AccountId(fromAccount.accountId.value), viewId, u.userId, u.name, transactionRequestType.value, fromAccount.currency, callContext) map { i =>
+              (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetChargeLevel ", 400), i._2)
+            }
+
+            chargeLevelAmount <- NewStyle.function.tryons(s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} can not be transferred to decimal !", 400, callContext) {
+              BigDecimal(chargeLevel.amount)
+            }
+            chargeValue <- getChargeValue(chargeLevelAmount, transactionRequestCommonBodyAmount)
+            charge = TransactionRequestCharge("Total charges for completed transaction", AmountOfMoney(transDetailsJson.value.currency, chargeValue))
+            
+            // Always create a new Transaction Request
+            transactionRequest <- Future {
+              createTransactionRequestImpl210(TransactionRequestId(generateUUID()), transactionRequestType, fromAccount, toAccount, transDetailsJson, detailsPlain, status.toString, charge, chargePolicy)
+            } map {
+              unboxFullOrFail(_, callContext, s"$InvalidConnectorResponseForCreateTransactionRequestImpl210")
             }
 
             (createdTransactionRequest, callContext) <- TransactionRequestTypes.withName(transactionRequestType.value) match {
@@ -535,16 +564,8 @@ trait APIMethods400 {
                   //This is the refund endpoint, the original toAccount is the `fromAccount` which will lose money.
                   refundFromAccount = toAccount
 
-                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
-                    viewId,
-                    refundFromAccount,
-                    refundToAccount,
-                    transactionRequestType,
-                    transactionRequestBodyRefundJson.copy(description = newDescription),
-                    transDetailsSerialized,
-                    sharedChargePolicy.toString,
-                    Some(OTP_VIA_API.toString),
-                    getScaMethodAtInstance(transactionRequestType.value).toOption,
+                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(
+                    transactionRequest,
                     callContext) //in ACCOUNT, ChargePolicy set default "SHARED"
                 } yield (createdTransactionRequest, callContext)
               }
@@ -562,17 +583,10 @@ trait APIMethods400 {
                     write(transactionRequestBodySandboxTan)(Serialization.formats(NoTypeHints))
                   }
 
-                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
-                    viewId,
-                    fromAccount,
-                    toAccount,
-                    transactionRequestType,
-                    transactionRequestBodySandboxTan,
-                    transDetailsSerialized,
-                    sharedChargePolicy.toString,
-                    Some(OTP_VIA_API.toString),
-                    getScaMethodAtInstance(transactionRequestType.value).toOption,
-                    callContext) //in ACCOUNT, ChargePolicy set default "SHARED"
+                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(
+                    transactionRequest,
+                    callContext
+                  ) //in ACCOUNT, ChargePolicy set default "SHARED"
                 } yield (createdTransactionRequest, callContext)
               }
               case ACCOUNT_OTP => {
@@ -589,16 +603,8 @@ trait APIMethods400 {
                     write(transactionRequestBodySandboxTan)(Serialization.formats(NoTypeHints))
                   }
 
-                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
-                    viewId,
-                    fromAccount,
-                    toAccount,
-                    transactionRequestType,
-                    transactionRequestBodySandboxTan,
-                    transDetailsSerialized,
-                    sharedChargePolicy.toString,
-                    Some(OTP_VIA_WEB_FORM.toString),
-                    getScaMethodAtInstance(transactionRequestType.value).toOption,
+                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(
+                    transactionRequest,
                     callContext) //in ACCOUNT, ChargePolicy set default "SHARED"
                 } yield (createdTransactionRequest, callContext)
               }
@@ -622,16 +628,8 @@ trait APIMethods400 {
                   transDetailsSerialized <- NewStyle.function.tryons(UnknownError, 400, callContext) {
                     write(transactionRequestBodyCounterparty)(Serialization.formats(NoTypeHints))
                   }
-                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
-                    viewId,
-                    fromAccount,
-                    toAccount,
-                    transactionRequestType,
-                    transactionRequestBodyCounterparty,
-                    transDetailsSerialized,
-                    chargePolicy,
-                    Some(OTP_VIA_API.toString),
-                    getScaMethodAtInstance(transactionRequestType.value).toOption,
+                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(
+                    transactionRequest,
                     callContext)
                 } yield (createdTransactionRequest, callContext)
 
@@ -655,16 +653,8 @@ trait APIMethods400 {
                   transDetailsSerialized <- NewStyle.function.tryons(UnknownError, 400, callContext) {
                     write(transDetailsSEPAJson)(Serialization.formats(NoTypeHints))
                   }
-                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
-                    viewId,
-                    fromAccount,
-                    toAccount,
-                    transactionRequestType,
-                    transDetailsSEPAJson,
-                    transDetailsSerialized,
-                    chargePolicy,
-                    Some(OTP_VIA_API.toString),
-                    getScaMethodAtInstance(transactionRequestType.value).toOption,
+                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(
+                    transactionRequest,
                     callContext)
                 } yield (createdTransactionRequest, callContext)
               }
@@ -678,16 +668,8 @@ trait APIMethods400 {
                   transDetailsSerialized <- NewStyle.function.tryons(UnknownError, 400, cc.callContext) {
                     write(transactionRequestBodyFreeForm)(Serialization.formats(NoTypeHints))
                   }
-                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(u,
-                    viewId,
-                    fromAccount,
-                    fromAccount,
-                    transactionRequestType,
-                    transactionRequestBodyFreeForm,
-                    transDetailsSerialized,
-                    sharedChargePolicy.toString,
-                    Some(OTP_VIA_API.toString),
-                    getScaMethodAtInstance(transactionRequestType.value).toOption,
+                  (createdTransactionRequest, callContext) <- NewStyle.function.createTransactionRequestv400(
+                    transactionRequest,
                     cc.callContext)
                 } yield
                   (createdTransactionRequest, callContext)

@@ -18,6 +18,7 @@ import code.api.util.ErrorMessages.{attemptedToOpenAnEmptyBox, _}
 import code.api.util._
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0._
+import code.api.v4_0_0.TransactionRequestBodyRefundJsonV400
 import code.atms.Atms.Atm
 import code.atms.MappedAtm
 import code.branches.Branches.Branch
@@ -1048,6 +1049,97 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
   }
 
+  override def makePaymentv400(
+    transactionRequest: TransactionRequest,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[TransactionId]]= {
+    for {
+      bankId<- Future{BankId(transactionRequest.from.bank_id)} 
+      accountId<- Future{ AccountId(transactionRequest.from.account_id)}
+      //from account is always there, we get the from_bank_id nad from_account_id from the URL:
+      (fromAccount, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
+      //for to account, it depends on the different transaction request types:
+      (toAccount, callContext) <-  TransactionRequestTypes.withName(transactionRequest.`type`) match {
+        case REFUND => {
+          for{
+             transactionRequestBodyRefundJsonV400 <- Future{transactionRequest.body.asInstanceOf[TransactionRequestBodyRefundJsonV400]}
+             toBankId <- Future{BankId(transactionRequest.body.to_sandbox_tan.get.bank_id)}
+             toAccountId = AccountId(transactionRequest.body.to_sandbox_tan.get.account_id)
+             (toAccount, callContext) <- NewStyle.function.checkBankAccountExists(toBankId, toAccountId, callContext)
+          }yield
+            (toAccount,callContext)  
+        } 
+        case (ACCOUNT | SANDBOX_TAN) => {
+          for{
+            transactionRequestBodyRefundJsonV400 <- Future{transactionRequest.body.asInstanceOf[TransactionRequestBodyRefundJsonV400]}
+            toBankId <- Future{BankId(transactionRequest.body.to_sandbox_tan.get.bank_id)}
+            toAccountId = AccountId(transactionRequest.body.to_sandbox_tan.get.account_id)
+            (toAccount, callContext) <- NewStyle.function.checkBankAccountExists(toBankId, toAccountId, callContext)
+          } yield
+            (toAccount,callContext)
+        }
+        case ACCOUNT_OTP => {
+          for{
+            transactionRequestBodyRefundJsonV400 <- Future{transactionRequest.body.asInstanceOf[TransactionRequestBodyRefundJsonV400]}
+            toBankId <- Future{BankId(transactionRequest.body.to_sandbox_tan.get.bank_id)}
+            toAccountId = AccountId(transactionRequest.body.to_sandbox_tan.get.account_id)
+            (toAccount, callContext) <- NewStyle.function.checkBankAccountExists(toBankId, toAccountId, callContext)
+          }yield
+            (toAccount,callContext)
+        }
+        case COUNTERPARTY => {
+          for{
+            transactionRequestBodyRefundJsonV400 <- Future{transactionRequest.body.asInstanceOf[TransactionRequestBodyRefundJsonV400]}
+            toBankId <- Future{BankId(transactionRequest.body.to_sandbox_tan.get.bank_id)}
+            toAccountId = AccountId(transactionRequest.body.to_sandbox_tan.get.account_id)
+            (toAccount, callContext) <- NewStyle.function.checkBankAccountExists(toBankId, toAccountId, callContext)
+          }yield
+            (toAccount,callContext)
+        }
+        case SEPA => {
+          for{
+            transactionRequestBodyRefundJsonV400 <- Future{transactionRequest.body.asInstanceOf[TransactionRequestBodyRefundJsonV400]}
+            toBankId <- Future{BankId(transactionRequest.body.to_sandbox_tan.get.bank_id)}
+            toAccountId = AccountId(transactionRequest.body.to_sandbox_tan.get.account_id)
+            (toAccount, callContext) <- NewStyle.function.checkBankAccountExists(toBankId, toAccountId, callContext)
+          }yield
+            (toAccount,callContext)
+        }
+        case _ => {
+          for{
+            transactionRequestBodyRefundJsonV400 <- Future{transactionRequest.body.asInstanceOf[TransactionRequestBodyRefundJsonV400]}
+            toBankId <- Future{BankId(transactionRequest.body.to_sandbox_tan.get.bank_id)}
+            toAccountId = AccountId(transactionRequest.body.to_sandbox_tan.get.account_id)
+            (toAccount, callContext) <- NewStyle.function.checkBankAccountExists(toBankId, toAccountId, callContext)
+          }yield
+            (toAccount,callContext)
+        }
+      }
+      
+      //def exchangeRate --> do not return any exception, but it may return NONE there.
+      rate <- Future (fx.exchangeRate(fromAccount.currency, toAccount.currency, Some(fromAccount.bankId.value)))
+      _ <- Helper.booleanToFuture(s"$InvalidCurrency The requested currency conversion (${fromAccount.currency} to ${fromAccount.currency}) is not supported." ){
+        rate.isDefined
+      }
+      amount = BigDecimal(transactionRequest.body.value.amount)
+      fromTransAmt = -amount //from fromAccount balance should decrease
+      toTransAmt = fx.convert(amount, rate)
+      transactionRequestCommonBody = transactionRequest.body.to_transfer_to_phone.head
+      description = transactionRequest.charge_policy
+      transactionRequestType = TransactionRequestType(transactionRequest.`type`)
+      chargePolicy = transactionRequest.charge_policy
+      sentTransactionId <- Future {
+        saveTransaction(fromAccount, toAccount, transactionRequestCommonBody, fromTransAmt, description, transactionRequestType, chargePolicy)
+      }
+      _sentTransactionId <- Future {
+        saveTransaction(toAccount, fromAccount, transactionRequestCommonBody, toTransAmt, description, transactionRequestType, chargePolicy)
+      }
+    } yield {
+      (sentTransactionId, callContext)
+    }
+  }
+  
+  
   override def makeHistoricalPayment(
                                       fromAccount: BankAccount,
                                       toAccount: BankAccount,
@@ -1162,10 +1254,13 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       //Here is the `LocalMappedConnector`, once get this point, fromAccount must be a mappedBankAccount. So can use asInstanceOf.... 
       _ <- tryo(fromAccount.asInstanceOf[MappedBankAccount].accountBalance(newAccountBalance).save()) ?~! UpdateBankAccountException
 
-      mappedTransaction <- tryo(MappedTransaction.create
+      mappedTransaction <- tryo(
+        MappedTransaction.create
         //No matter which type (SANDBOX_TAN,SEPA,FREE_FORM,COUNTERPARTYE), always filled the following nine fields.
-        .bank(fromAccount.bankId.value)
-        .account(fromAccount.accountId.value)
+          
+        .bank(fromAccount.bankId.value) //1st: theBankId.value, 
+        .account(fromAccount.accountId.value) //2rd: theAccountId.value, 
+          
         .transactionType(transactionRequestType.value)
         .amount(Helper.convertToSmallestCurrencyUnits(amount, currency))
         .newAccountBalance(newAccountBalance)
@@ -1173,20 +1268,37 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         .tStartDate(now)
         .tFinishDate(now)
         .description(description)
+          
         //Old data: other BankAccount(toAccount: BankAccount)simulate counterparty 
-        .counterpartyAccountHolder(toAccount.accountHolder)
+        .counterpartyAccountHolder(toAccount.accountHolder) // 3rd: counterpartyName,
         .counterpartyAccountNumber(toAccount.number)
         .counterpartyAccountKind(toAccount.accountType)
         .counterpartyBankName(toAccount.bankName)
         .counterpartyIban(toAccount.iban.getOrElse(""))
         .counterpartyNationalId(toAccount.nationalIdentifier)
+          
+          
         //New data: real counterparty (toCounterparty: CounterpartyTrait)
-        //      .CPCounterPartyId(toAccount.accountId.value)
-        .CPOtherAccountRoutingScheme(toAccount.accountRoutingScheme)
-        .CPOtherAccountRoutingAddress(toAccount.accountRoutingAddress)
+        // .CPCounterPartyId(toAccount.accountId.value)
+          //If it is SANDBOX_TAN, here can be `OBP`
+          //using the `transactionRequestType` to decide the following scheme and address:
+        .CPOtherAccountRoutingScheme(toAccount.accountRoutings.head.scheme)   //4th: otherAccountRoutingScheme 
+          //If it is SANDBOX_TAN, here can be obp account Id.
+          //If it is SEPA, here can be the IBAN 
+        .CPOtherAccountRoutingAddress(toAccount.accountRoutings.head.address) //5th: otherAccountRoutingAddress
+          
         .CPOtherBankRoutingScheme(toAccount.bankRoutingScheme)
         .CPOtherBankRoutingAddress(toAccount.bankRoutingAddress)
+          
         .chargePolicy(chargePolicy)
+          
+          //will generate the implicitCounterpartyId
+          //1 theBankId.value, 
+          //2 theAccountId.value, 
+          //3 counterpartyName,
+          //4 otherAccountRoutingScheme, 
+          //5 otherAccountRoutingAddress
+          
         .saveMe) ?~! s"$CreateTransactionsException, exception happened when create new mappedTransaction"
     } yield {
       mappedTransaction.theTransactionId
@@ -3631,47 +3743,12 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                             callContext: Option[CallContext]): OBPReturnType[Box[TransactionRequest]] = {
 
     for {
-      // Get the threshold for a challenge. i.e. over what value do we require an out of Band security challenge to be sent?
-      (challengeThreshold, callContext) <- Connector.connector.vend.getChallengeThreshold(fromAccount.bankId.value, fromAccount.accountId.value, viewId.value, transactionRequestType.value, transactionRequestCommonBody.value.currency, initiator.userId, initiator.name, callContext) map { i =>
-        (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetChallengeThreshold ", 400), i._2)
-      }
-      challengeThresholdAmount <- NewStyle.function.tryons(s"$InvalidConnectorResponseForGetChallengeThreshold. challengeThreshold amount ${challengeThreshold.amount} not convertible to number", 400, callContext) {
-        BigDecimal(challengeThreshold.amount)
-      }
-      transactionRequestCommonBodyAmount <- NewStyle.function.tryons(s"$InvalidNumber Request Json value.amount ${transactionRequestCommonBody.value.amount} not convertible to number", 400, callContext) {
-        BigDecimal(transactionRequestCommonBody.value.amount)
-      }
-      status <- getStatus(challengeThresholdAmount, transactionRequestCommonBodyAmount, transactionRequestType: TransactionRequestType)
-      (chargeLevel, callContext) <- Connector.connector.vend.getChargeLevel(BankId(fromAccount.bankId.value), AccountId(fromAccount.accountId.value), viewId, initiator.userId, initiator.name, transactionRequestType.value, fromAccount.currency, callContext) map { i =>
-        (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetChargeLevel ", 400), i._2)
-      }
-
-      chargeLevelAmount <- NewStyle.function.tryons(s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} can not be transferred to decimal !", 400, callContext) {
-        BigDecimal(chargeLevel.amount)
-      }
-      chargeValue <- getChargeValue(chargeLevelAmount, transactionRequestCommonBodyAmount)
-      charge = TransactionRequestCharge("Total charges for completed transaction", AmountOfMoney(transactionRequestCommonBody.value.currency, chargeValue))
-      // Always create a new Transaction Request
-      transactionRequest <- Future {
-        createTransactionRequestImpl210(TransactionRequestId(generateUUID()), transactionRequestType, fromAccount, toAccount, transactionRequestCommonBody, detailsPlain, status.toString, charge, chargePolicy)
-      } map {
-        unboxFullOrFail(_, callContext, s"$InvalidConnectorResponseForCreateTransactionRequestImpl210")
-      }
 
       // If no challenge necessary, create Transaction immediately and put in data store and object to return
       (transactionRequest, callConext) <- status match {
         case TransactionRequestStatus.COMPLETED =>
           for {
-            (createdTransactionId, callContext) <- NewStyle.function.makePaymentv210(
-              fromAccount,
-              toAccount,
-              transactionRequestCommonBody,
-              BigDecimal(transactionRequestCommonBody.value.amount),
-              transactionRequestCommonBody.description,
-              transactionRequestType,
-              chargePolicy,
-              callContext
-            )
+            (createdTransactionId, callContext) <- NewStyle.function.makePaymentv400(transactionRequest, callContext)
             //set challenge to null, otherwise it have the default value "challenge": {"id": "","allowed_attempts": 0,"challenge_type": ""}
             transactionRequest <- Future(transactionRequest.copy(challenge = null))
 

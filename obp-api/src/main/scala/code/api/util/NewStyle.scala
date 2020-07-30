@@ -683,29 +683,11 @@ object NewStyle {
       }
     }  
     def createTransactionRequestv400(
-      u: User,
-      viewId: ViewId,
-      fromAccount: BankAccount,
-      toAccount: BankAccount,
-      transactionRequestType: TransactionRequestType,
-      transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
-      detailsPlain: String,
-      chargePolicy: String,
-      challengeType: Option[String],
-      scaMethod: Option[SCA],
+      transactionRequest: TransactionRequest,
       callContext: Option[CallContext]): OBPReturnType[TransactionRequest] =
     {
       Connector.connector.vend.createTransactionRequestv400(
-        u: User,
-        viewId: ViewId,
-        fromAccount: BankAccount,
-        toAccount: BankAccount,
-        transactionRequestType: TransactionRequestType,
-        transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
-        detailsPlain: String,
-        chargePolicy: String,
-        challengeType: Option[String],
-        scaMethod: Option[SCA],
+        transactionRequest: TransactionRequest,
         callContext: Option[CallContext]
       ) map { i =>
         (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetTransactionRequests210", 400), i._2)
@@ -796,6 +778,17 @@ object NewStyle {
         chargePolicy: String, 
         callContext: Option[CallContext]
       ) map { i => 
+        (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForMakePayment ",400), i._2)
+      }
+
+    def makePaymentv400(
+      transactionRequest: TransactionRequest,
+      callContext: Option[CallContext]
+    ): OBPReturnType[TransactionId]=
+      Connector.connector.vend.makePaymentv400(
+        transactionRequest: TransactionRequest,
+        callContext: Option[CallContext]
+      ) map { i =>
         (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForMakePayment ",400), i._2)
       }
     

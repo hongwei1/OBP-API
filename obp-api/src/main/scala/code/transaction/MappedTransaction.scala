@@ -44,6 +44,7 @@ class MappedTransaction extends LongKeyedMapper[MappedTransaction] with IdPK wit
   object description extends MappedString(this, 2000)
   object chargePolicy extends MappedString(this, 32)
   
+  //other account (settlement account):  
   object counterpartyAccountHolder extends MappedString(this, 255)
   object counterpartyAccountKind extends MappedString(this, 40)
   object counterpartyBankName extends MappedString(this, 100)
@@ -51,18 +52,17 @@ class MappedTransaction extends LongKeyedMapper[MappedTransaction] with IdPK wit
   
   @deprecated("use CPOtherAccountRoutingAddress instead. ","06/12/2017")
   object counterpartyAccountNumber extends MappedAccountNumber(this)
-  
   @deprecated("use CPOtherAccountSecondaryRoutingAddress instead. ","06/12/2017")
   //this should eventually be calculated using counterpartyNationalId
   object counterpartyIban extends MappedString(this, 100)
 
+  //CP--> CounterParty
   //The following are the fields from CounterpartyTrait, previous just save BankAccount to simulate the counterparty.
   //Now we save the real Counterparty data 
-  //CP--> CounterParty
   object CPCounterPartyId extends UUIDString(this)
   object CPOtherAccountProvider extends MappedString(this, 36)
   object CPOtherAccountRoutingScheme extends MappedString(this, 255)
-  object CPOtherAccountRoutingAddress extends MappedString(this, 255)
+  object CPOtherAccountRoutingAddress extends MappedString(this, 255) // Guillaume Real IBan
   object CPOtherAccountSecondaryRoutingScheme extends MappedString(this, 255)
   object CPOtherAccountSecondaryRoutingAddress extends MappedString(this, 255)
   object CPOtherBankRoutingScheme extends MappedString(this, 255)
