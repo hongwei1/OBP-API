@@ -1281,4 +1281,8 @@ case class InBoundCheckExternalUserExists(inboundAdapterCallContext: InboundAdap
 
 case class OutBoundCreateAuthorization(outboundAdapterCallContext: OutboundAdapterCallContext, paymentId: String, consentId: String, authenticationType: String, authenticationMethodId: String, scaStatus: String, challengeData: String) extends TopicTrait
 case class InBoundCreateAuthorization(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: AuthorisationCommons) extends InBoundTrait[AuthorisationCommons]
+
+case class OutBoundCheckAnswer(outboundAdapterCallContext: OutboundAdapterCallContext, paymentId: String, authorizationId: String, challengeData: String) extends TopicTrait
+case class InBoundCheckAnswer(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: AuthorisationCommons) extends InBoundTrait[AuthorisationCommons]
+// --------------------- some special connector methods corresponding InBound and OutBound -- end --
 // --------------------- some special connector methods corresponding InBound and OutBound -- end --

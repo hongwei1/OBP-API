@@ -4248,5 +4248,16 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     scaStatus: String,
     challengeData: String
   ))  map { ( _, callContext) }
+  
+  override def checkAnswer(
+    paymentId: String, 
+    authorizationId: String, 
+    challengeData: String,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[AuthorisationTrait]] =  Future(Authorisations.authorisationProvider.vend.checkAnswer(
+    paymentId: String,
+    authorizationId: String,
+    challengeData: String,
+  ))  map { ( _, callContext) }
 
 }

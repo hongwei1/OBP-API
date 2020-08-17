@@ -2228,4 +2228,11 @@ trait Connector extends MdcLoggable {
     challengeData: String,
     callContext: Option[CallContext]
   ): OBPReturnType[Box[AuthorisationTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def checkAnswer(
+    paymentId: String,
+    authorizationId: String,
+    challengeData: String,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[AuthorisationTrait]] = Future{(Failure(setUnimplementedError), callContext)}
 }

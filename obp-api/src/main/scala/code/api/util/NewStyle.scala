@@ -2160,7 +2160,23 @@ object NewStyle {
         challengeData: String,
         callContext: Option[CallContext]
       ) map {
-        x => (unboxFullOrFail(x._1, callContext, TransactionNotFound, 404), x._2)
+        x => (unboxFullOrFail(x._1, callContext, s"$InvalidConnectorResponse Can not create Authorization  in the backend. ", 404), x._2)
+      }
+    }
+    
+    def checkAnswer(
+      paymentId: String,
+      authorizationId: String,
+      challengeData: String,
+      callContext: Option[CallContext]
+    ):OBPReturnType[AuthorisationTrait] = {
+      Connector.connector.vend.checkAnswer(
+        paymentId: String,
+        authorizationId: String,
+        challengeData: String,
+        callContext: Option[CallContext]
+      ) map {
+        x => (unboxFullOrFail(x._1, callContext, s"$InvalidConnectorResponse Can not check Authorization Answer in the backend. ", 404), x._2)
       }
     }
     

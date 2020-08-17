@@ -877,12 +877,7 @@ There are the following request types on this access path:
                TransactionRequestTypes.withName(paymentProduct.replaceAll("-","_"))
              }
              (_, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
-             authorisation <- Future(Authorisations.authorisationProvider.vend.checkAnswer(
-               paymentId,
-               cancellationId, 
-               updatePaymentPsuDataJson.scaAuthenticationData))map {
-               i => connectorEmptyResponse(i, callContext)
-             }
+             (authorisation, callContext) <- NewStyle.function.checkAnswer(paymentId, cancellationId, updatePaymentPsuDataJson.scaAuthenticationData, callContext)
            } yield {
              (JSONFactory_BERLIN_GROUP_1_3.createStartPaymentCancellationAuthorisationJson(
                authorisation,
@@ -977,9 +972,7 @@ There are the following request types on this access path:
                TransactionRequestTypes.withName(paymentProduct.replaceAll("-","_"))
              }
              (_, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
-             authorisation <- Future(Authorisations.authorisationProvider.vend.checkAnswer(paymentId,authorisationid, updatePaymentPsuDataJson.scaAuthenticationData))map {
-               i => connectorEmptyResponse(i, callContext)
-             }
+             (authorisation, callContext) <- NewStyle.function.checkAnswer(paymentId, authorisationid, updatePaymentPsuDataJson.scaAuthenticationData, callContext)
 
              //Map obp transaction request id with BerlinGroup PaymentId
              transactionRequestId = TransactionRequestId(paymentId)
