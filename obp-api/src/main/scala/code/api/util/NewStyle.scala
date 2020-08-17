@@ -19,6 +19,7 @@ import code.bankconnectors.Connector
 import code.bankconnectors.rest.RestConnector_vMar2019
 import code.branches.Branches.{Branch, DriveUpString, LobbyString}
 import code.consumer.Consumers
+import code.database.authorisation.Authorisation
 import com.openbankproject.commons.model.DirectDebitTrait
 import code.dynamicEntity.{DynamicEntityProvider, DynamicEntityT}
 import code.entitlement.Entitlement
@@ -2141,5 +2142,27 @@ object NewStyle {
       }
     }
 
+    def createAuthorization(
+      paymentId: String,
+      consentId: String,
+      authenticationType: String,
+      authenticationMethodId: String,
+      scaStatus: String,
+      challengeData: String,
+      callContext: Option[CallContext]
+    ):OBPReturnType[AuthorisationTrait] = {
+      Connector.connector.vend.createAuthorization(
+        paymentId: String,
+        consentId: String,
+        authenticationType: String,
+        authenticationMethodId: String,
+        scaStatus: String,
+        challengeData: String,
+        callContext: Option[CallContext]
+      ) map {
+        x => (unboxFullOrFail(x._1, callContext, TransactionNotFound, 404), x._2)
+      }
+    }
+    
   }
 }

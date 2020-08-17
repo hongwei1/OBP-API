@@ -74,7 +74,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
   val connectorName = "stored_procedure_vDec2019"
 
 //---------------- dynamic start -------------------please don't modify this line
-// ---------- created on 2020-08-14T15:10:32Z
+// ---------- created on 2020-08-17T22:28:00Z
 
   messageDocs += getAdapterInfoDoc
   def getAdapterInfoDoc = MessageDoc(
@@ -5821,8 +5821,45 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[Boolean](callContext))        
   }
           
-// ---------- created on 2020-08-14T15:10:32Z
-//---------------- dynamic end ---------------------please don't modify this line  
+  messageDocs += createAuthorizationDoc
+  def createAuthorizationDoc = MessageDoc(
+    process = "obp.createAuthorization",
+    messageFormat = messageFormat,
+    description = "Create Authorization",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateAuthorization(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      paymentId="string",
+      consentId="string",
+      authenticationType="string",
+      authenticationMethodId="string",
+      scaStatus="string",
+      challengeData="string")
+    ),
+    exampleInboundMessage = (
+     InBoundCreateAuthorization(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AuthorisationCommons(scaStatus="string",
+      authorisationId="string",
+      paymentId="string",
+      consentId="string",
+      authenticationType="string",
+      authenticationMethodId="string",
+      challengeData="string"))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createAuthorization(paymentId: String, consentId: String, authenticationType: String, authenticationMethodId: String, scaStatus: String, challengeData: String, callContext: Option[CallContext]): OBPReturnType[Box[AuthorisationTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateAuthorization => InBound, OutBoundCreateAuthorization => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, paymentId, consentId, authenticationType, authenticationMethodId, scaStatus, challengeData)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_authorization", req, callContext)
+        response.map(convertToTuple[AuthorisationCommons](callContext))        
+  }
+          
+// ---------- created on 2020-08-17T22:28:00Z
+//---------------- dynamic end ---------------------please don't modify this line   
 
   private val availableOperation = DynamicEntityOperation.values.map(it => s""""$it"""").mkString("[", ", ", "]")
 

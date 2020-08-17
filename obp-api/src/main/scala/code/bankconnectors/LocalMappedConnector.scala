@@ -9,6 +9,7 @@ import code.DynamicEndpoint.{DynamicEndpointProvider, DynamicEndpointT}
 import code.accountapplication.AccountApplicationX
 import code.accountattribute.AccountAttributeX
 import code.accountholders.{AccountHolders, MapperAccountHolders}
+import code.api.BerlinGroup.{AuthenticationType, ScaStatus}
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.attributedefinition.{AttributeDefinition, AttributeDefinitionDI}
 import code.api.cache.Caching
@@ -28,6 +29,7 @@ import code.context.{UserAuthContextProvider, UserAuthContextUpdateProvider}
 import code.customer._
 import code.customeraddress.CustomerAddressX
 import code.customerattribute.CustomerAttributeX
+import code.database.authorisation.{Authorisation, Authorisations}
 import code.directdebit.DirectDebits
 import code.fx.fx.TTL
 import code.fx.{MappedFXRate, fx}
@@ -4229,5 +4231,22 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   //NOTE: this method is not for mapped connector, we put it here for the star default implementation.
   //    : we call that method only when we set external authentication and provider is not OBP-API
   override def checkExternalUserExists(username: String, callContext: Option[CallContext]): Box[InboundExternalUser] = Failure("")
+
+  override def createAuthorization(
+    paymentId: String,
+    consentId: String,
+    authenticationType: String,
+    authenticationMethodId: String,
+    scaStatus: String,
+    challengeData: String,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[AuthorisationTrait]] =  Future(Authorisations.authorisationProvider.vend.createAuthorization(
+    paymentId: String,
+    consentId: String,
+    authenticationType: String,
+    authenticationMethodId: String,
+    scaStatus: String,
+    challengeData: String
+  ))  map { ( _, callContext) }
 
 }

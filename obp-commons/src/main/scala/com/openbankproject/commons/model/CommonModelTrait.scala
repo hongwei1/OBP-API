@@ -466,6 +466,16 @@ trait DirectDebitTrait {
   def active: Boolean
 }
 
+trait AuthorisationTrait{
+  def scaStatus: String
+  def authorisationId: String
+  def paymentId: String
+  def consentId: String
+  def authenticationType: String
+  def authenticationMethodId: String
+  def challengeData: String
+}
+
 //---------------------------------------- trait dependents of case class
 
 @deprecated("Use Lobby instead which contains detailed fields, not this string","24 July 2017")

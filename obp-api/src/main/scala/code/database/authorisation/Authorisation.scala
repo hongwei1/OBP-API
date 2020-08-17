@@ -1,5 +1,6 @@
 package code.database.authorisation
 
+import com.openbankproject.commons.model.AuthorisationTrait
 import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
@@ -10,16 +11,16 @@ object Authorisations extends SimpleInjector {
 }
 
 trait AuthorisationProvider {
-  def getAuthorizationByAuthorizationId(authorizationId: String): Box[Authorisation]
-  def getAuthorizationByAuthorizationId(paymentId: String, authorizationId: String): Box[Authorisation]
-  def getAuthorizationByPaymentId(paymentId: String): Box[List[Authorisation]]
-  def getAuthorizationByConsentId(consentId: String): Box[List[Authorisation]]
+  def getAuthorizationByAuthorizationId(authorizationId: String): Box[AuthorisationTrait]
+  def getAuthorizationByAuthorizationId(paymentId: String, authorizationId: String): Box[AuthorisationTrait]
+  def getAuthorizationByPaymentId(paymentId: String): Box[List[AuthorisationTrait]]
+  def getAuthorizationByConsentId(consentId: String): Box[List[AuthorisationTrait]]
   def createAuthorization(paymentId: String,
                           consentId: String, 
                           authenticationType: String, 
                           authenticationMethodId: String,
                           scaStatus: String,
                           challengeData: String
-                         ): Box[Authorisation]
-  def checkAnswer(paymentId: String, authorizationId: String, challengeData: String): Box[Authorisation]
+                         ): Box[AuthorisationTrait]
+  def checkAnswer(paymentId: String, authorizationId: String, challengeData: String): Box[AuthorisationTrait]
 }

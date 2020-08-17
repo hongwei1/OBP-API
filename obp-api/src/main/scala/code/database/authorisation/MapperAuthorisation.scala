@@ -4,12 +4,13 @@ import code.api.BerlinGroup.ScaStatus
 import code.api.util.ErrorMessages
 import code.consent.{ConsentStatus, MappedConsent}
 import code.util.MappedUUID
+import com.openbankproject.commons.model.AuthorisationTrait
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.mapper.{BaseIndex, By, CreatedUpdated, IdPK, LongKeyedMapper, LongKeyedMetaMapper, MappedString, UniqueIndex}
 import net.liftweb.util.Helpers.tryo
 
 
-class Authorisation extends LongKeyedMapper[Authorisation] with IdPK with CreatedUpdated {
+class Authorisation extends AuthorisationTrait with LongKeyedMapper[Authorisation] with IdPK with CreatedUpdated {
   def getSingleton = Authorisation
   // Enum: received, psuIdentified, psuAuthenticated, scaMethodSelected, started, finalised, failed, exempted
   object ScaStatus extends MappedString(this, 20)
@@ -21,13 +22,13 @@ class Authorisation extends LongKeyedMapper[Authorisation] with IdPK with Create
   object AuthenticationMethodId extends MappedString(this, 35)
   object ChallengeData extends MappedString(this, 1024)
 
-  def scaStatus: String = ScaStatus.get
-  def authorisationId: String = AuthorisationId.get
-  def paymentId: String = PaymentId.get
-  def consentId: String = ConsentId.get
-  def authenticationType: String = AuthenticationType.get
-  def authenticationMethodId: String = AuthenticationMethodId.get
-  def challengeData: String = ChallengeData.get
+  override def scaStatus: String = ScaStatus.get
+  override def authorisationId: String = AuthorisationId.get
+  override def paymentId: String = PaymentId.get
+  override def consentId: String = ConsentId.get
+  override def authenticationType: String = AuthenticationType.get
+  override def authenticationMethodId: String = AuthenticationMethodId.get
+  override def challengeData: String = ChallengeData.get
 }
 
 object Authorisation extends Authorisation with LongKeyedMetaMapper[Authorisation] {

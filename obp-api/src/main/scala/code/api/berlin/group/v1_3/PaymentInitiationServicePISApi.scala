@@ -693,16 +693,15 @@ This applies in the following scenarios:
           }
           (_, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
           
-          authorisation <- Future(Authorisations.authorisationProvider.vend.createAuthorization(
+          (authorisation, callContext) <- NewStyle.function.createAuthorization(
             paymentId,
             "",
             AuthenticationType.SMS_OTP.toString,
             "",
             ScaStatus.received.toString,
-            "12345" // TODO Implement SMS sending
-          )) map {
-            unboxFullOrFail(_, callContext, s"$UnknownError ")
-          }
+            "12345", // TODO Implement SMS sending
+            callContext
+          )
         } yield {
           (JSONFactory_BERLIN_GROUP_1_3.createStartPaymentAuthorisationJson(authorisation), callContext)
         }
@@ -777,16 +776,15 @@ This applies in the following scenarios:
                TransactionRequestTypes.withName(paymentProduct.replaceAll("-","_"))
              }
              (_, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
-             authorisation <- Future(Authorisations.authorisationProvider.vend.createAuthorization(
+             (authorisation, callContext) <- NewStyle.function.createAuthorization(
                paymentId,
                "",
                AuthenticationType.SMS_OTP.toString,
                "",
                ScaStatus.received.toString,
-               "12345" // TODO Implement SMS sending
-             )) map {
-               unboxFullOrFail(_, callContext, s"$UnknownError ")
-             }
+               "12345", // TODO Implement SMS sending
+               callContext
+             )
            } yield {
              (JSONFactory_BERLIN_GROUP_1_3.createStartPaymentCancellationAuthorisationJson(
                authorisation,

@@ -496,6 +496,17 @@ case class TransactionStatusCommons(
 ) extends TransactionStatus
 object TransactionStatusCommons extends Converter[TransactionStatus, TransactionStatusCommons]
 
+case class AuthorisationCommons (
+  override val scaStatus: String,
+  override val authorisationId: String,
+  override val paymentId: String,
+  override val consentId: String,
+  override val authenticationType: String,
+  override val authenticationMethodId: String,
+  override val challengeData: String    
+) extends AuthorisationTrait
+object AuthorisationCommons extends Converter[AuthorisationTrait, AuthorisationCommons]
+
 //----------------obp-api moved to here case classes
 
 case class BranchRoutingJsonV141(

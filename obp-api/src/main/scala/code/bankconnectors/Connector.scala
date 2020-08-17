@@ -61,6 +61,7 @@ import scala.math.{BigDecimal, BigInt}
 import scala.util.Random
 import scala.reflect.runtime.universe.{MethodSymbol, typeOf}
 import _root_.akka.http.scaladsl.model.HttpMethod
+import code.database.authorisation.Authorisation
 import com.openbankproject.commons.dto.{CustomerAndAttribute, GetProductsParam, InBoundTrait, ProductCollectionItemsTree}
 
 /*
@@ -2217,4 +2218,14 @@ trait Connector extends MdcLoggable {
   def getDynamicEndpoints(callContext: Option[CallContext]): OBPReturnType[List[DynamicEndpointT]] = Future {
     (List.empty[DynamicEndpointT], callContext)
   }
+
+  def createAuthorization(
+    paymentId: String,
+    consentId: String,
+    authenticationType: String,
+    authenticationMethodId: String,
+    scaStatus: String,
+    challengeData: String,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[AuthorisationTrait]] = Future{(Failure(setUnimplementedError), callContext)}
 }

@@ -1137,16 +1137,15 @@ The ASPSP might make the usage of this access method unnecessary, since the rela
              consent <- Future(Consents.consentProvider.vend.getConsentByConsentId(consentId)) map {
                unboxFullOrFail(_, callContext, ConsentNotFound)
               }
-             authorization <- Future(Authorisations.authorisationProvider.vend.createAuthorization(
+             (authorization, callContext) <- NewStyle.function.createAuthorization(
                "",
                consent.consentId,
                AuthenticationType.SMS_OTP.toString,
                "",
                ScaStatus.received.toString,
-               "12345" // TODO Implement SMS sending
-             )) map {
-               unboxFullOrFail(_, callContext, s"$UnknownError ")
-             }
+               "12345", // TODO Implement SMS sending
+               callContext
+             )
            } yield {
              (createStartConsentAuthorisationJson(consent, authorization), HttpCode.`201`(callContext))
            }

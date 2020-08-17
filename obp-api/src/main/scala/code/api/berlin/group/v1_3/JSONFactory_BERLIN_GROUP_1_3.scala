@@ -528,7 +528,7 @@ object JSONFactory_BERLIN_GROUP_1_3 extends CustomJsonFormats {
     )
   }
 
-  def createStartConsentAuthorisationJson(consent: Consent, authorization: Authorisation) : StartConsentAuthorisationJson = {
+  def createStartConsentAuthorisationJson(consent: Consent, authorization: AuthorisationTrait) : StartConsentAuthorisationJson = {
     StartConsentAuthorisationJson(
       scaStatus = consent.status.toLowerCase(),
       pushMessage = "started", //TODO Not implment how to fill this.
@@ -588,11 +588,11 @@ object JSONFactory_BERLIN_GROUP_1_3 extends CustomJsonFormats {
     )
   }
 
-  def createStartPaymentAuthorisationsJson(authorizations: List[Authorisation]): List[StartPaymentAuthorisationJson] = {
+  def createStartPaymentAuthorisationsJson(authorizations: List[AuthorisationTrait]): List[StartPaymentAuthorisationJson] = {
     authorizations.map(createStartPaymentAuthorisationJson)
   }
 
-  def createStartPaymentAuthorisationJson(authorization: Authorisation) = {
+  def createStartPaymentAuthorisationJson(authorization: AuthorisationTrait) = {
       StartPaymentAuthorisationJson(
         scaStatus = authorization.scaStatus,
         authorisationId = authorization.authorisationId,
@@ -601,13 +601,13 @@ object JSONFactory_BERLIN_GROUP_1_3 extends CustomJsonFormats {
       )
   }
 
-  def createStartPaymentCancellationAuthorisationsJson(authorizations: List[Authorisation],
+  def createStartPaymentCancellationAuthorisationsJson(authorizations: List[AuthorisationTrait],
                                                        paymentService: String,
                                                        paymentProduct: String,
                                                        paymentId: String): List[StartPaymentAuthorisationJson] = {
     authorizations.map(createStartPaymentCancellationAuthorisationJson(_, paymentService, paymentProduct, paymentId))
   }
-  def createStartPaymentCancellationAuthorisationJson(authorization: Authorisation,
+  def createStartPaymentCancellationAuthorisationJson(authorization: AuthorisationTrait,
                                                       paymentService: String,
                                                       paymentProduct: String,
                                                       paymentId: String
