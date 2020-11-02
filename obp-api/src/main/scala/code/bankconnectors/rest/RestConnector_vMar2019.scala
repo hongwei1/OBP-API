@@ -2,7 +2,7 @@ package code.bankconnectors.rest
 
 /*
 Open Bank Project - API
-Copyright (C) 2011-2017, TESOBE GmbH
+Copyright (C) 2011-2020, TESOBE GmbH
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
