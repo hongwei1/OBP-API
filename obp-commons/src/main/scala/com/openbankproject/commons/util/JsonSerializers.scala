@@ -1,6 +1,7 @@
 package com.openbankproject.commons.util
 
 import java.lang.reflect.{Constructor, Modifier, Parameter}
+import java.text.SimpleDateFormat
 
 import com.openbankproject.commons.model.{JsonFieldReName, ListResult}
 import com.openbankproject.commons.model.enums.{SimpleEnum, SimpleEnumCollection}
@@ -27,10 +28,14 @@ object JsonSerializers {
       JsonAbleSerializer :: ListResultSerializer.asInstanceOf[Serializer[_]] :: // here must do class cast, or it cause compile error, looks like a bug of scala.
       MapperSerializer :: Nil
 
-  implicit val commonFormats = net.liftweb.json.DefaultFormats ++ serializers
+  implicit val commonFormats = CustomDefaultFormats ++ serializers
 
   val nullTolerateFormats = commonFormats + JNothingSerializer
 
+}
+
+object CustomDefaultFormats extends DefaultFormats {
+  override protected def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 }
 
 trait JsonAble {
