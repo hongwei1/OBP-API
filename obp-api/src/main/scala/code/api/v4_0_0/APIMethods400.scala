@@ -7645,6 +7645,36 @@ trait APIMethods400 {
       }
     }
 
+    staticResourceDocs += ResourceDoc(
+      getFooBarx,
+      implementedInApiVersion,
+      nameOf(getFooBarx),
+      "GET",
+      "/management/getfoobarx/METHOD_NAME",
+      "GET Dynamic Message Doc",
+      s"""GET a Dynamic Message Doc.
+         |""",
+      EmptyBody,
+      EmptyBody,
+      List(
+        InvalidJsonFormat,
+        UnknownError
+      ),
+      tags=List.empty[ResourceDocTag]
+    )
+    
+    lazy val getFooBarx: OBPEndpoint = {
+      case "management" :: "getfoobarx" :: process ::  Nil JsonGet _ => {
+        cc =>
+          for {
+            (dynamicResourceDocBox) <- DynamicConnector.invoke(process,  Array("1","2","3"), cc.callContext)
+            (dynamicResource, callContext) = dynamicResourceDocBox.openOrThrowException("abc")
+          } yield {
+            (dynamicResource, HttpCode.`200`(callContext))
+          }
+      }
+    }
+
   }
 }
 
