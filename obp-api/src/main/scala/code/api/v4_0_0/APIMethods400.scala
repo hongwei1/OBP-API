@@ -7674,7 +7674,121 @@ trait APIMethods400 {
           }
       }
     }
-
+    //Post --> {{url-400}}/management/dynamic-message-docs 
+//    {
+//      "outbound_avro_schema": "no-example-provided",
+//      "inbound_avro_schema": "no-example-provided",
+//      "outbound_topic": "no-example-provided",
+//      "inbound_topic": "no-example-provided",
+//      "adapter_implementation": "no-example-provided",
+//      "description": "no-example-provided",
+//      "message_format": "no-example-provided",
+//      "example_outbound_message": {
+//        "outboundAdapterCallContext": {
+//        "correlationId": "1flssoftxq0cr1nssr68u0mioj",
+//        "sessionId": "b4e0352a-9a0f-4bfa-b30b-9003aa467f50",
+//        "consumerId": "7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh",
+//        "generalContext": [
+//      {
+//        "key": "CustomerNumber",
+//        "value": "5987953"
+//      }
+//        ],
+//        "outboundAdapterAuthInfo": {
+//        "userId": "9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1",
+//        "username": "felixsmith",
+//        "linkedCustomers": [
+//      {
+//        "customerId": "7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh",
+//        "customerNumber": "5987953",
+//        "legalName": "Eveline Tripman"
+//      }
+//        ],
+//        "userAuthContext": [
+//      {
+//        "key": "CustomerNumber",
+//        "value": "5987953"
+//      }
+//        ],
+//        "authViews": [
+//      {
+//        "view": {
+//        "id": "owner",
+//        "name": "Owner",
+//        "description": "This view is for the owner for the account."
+//      },
+//        "account": {
+//        "id": "8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0",
+//        "accountRoutings": [
+//      {
+//        "scheme": "IBAN",
+//        "address": "DE91 1000 0000 0123 4567 89"
+//      }
+//        ],
+//        "customerOwners": [
+//      {
+//        "bankId": "gh.29.uk",
+//        "customerId": "7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh",
+//        "customerNumber": "5987953",
+//        "legalName": "Eveline Tripman",
+//        "dateOfBirth": "2018-03-09T00:00:00Z"
+//      }
+//        ],
+//        "userOwners": [
+//      {
+//        "userId": "9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1",
+//        "emailAddress": "felixsmith@example.com",
+//        "name": "felixsmith"
+//      }
+//        ]
+//      }
+//      }
+//        ]
+//      }
+//      }
+//      },
+//      "example_inbound_message": {
+//        "inboundAdapterCallContext": {
+//        "correlationId": "1flssoftxq0cr1nssr68u0mioj",
+//        "sessionId": "b4e0352a-9a0f-4bfa-b30b-9003aa467f50",
+//        "generalContext": [
+//      {
+//        "key": "CustomerNumber",
+//        "value": "5987953"
+//      }
+//        ]
+//      },
+//        "status": {
+//        "errorCode": "status error code string",
+//        "backendMessages": [
+//      {
+//        "source": "",
+//        "status": "Status string",
+//        "errorCode": "errorCode string",
+//        "text": "text string"
+//      }
+//        ]
+//      },
+//        "data": {
+//        "errorCode": "error code",
+//        "backendMessages": [
+//      {
+//        "source": "",
+//        "status": "Status string",
+//        "errorCode": "errorCode string",
+//        "text": "text string"
+//      }
+//        ],
+//        "name": "NAME",
+//        "version": "version string",
+//        "git_commit": "git_commit",
+//        "date": "date String"
+//      }
+//      },
+//
+//      "process": "obp.getfoobarx14",
+//      "method_body": "Future.successful%28%0A++Full%28%0A++++BankCommons%28%0A++++++BankId%28%22Hello+bank+id%22%29%2C%0A++++++%2214%22%2C%0A++++++%2214%22%2C%0A++++++%2214%22%2C%0A++++++%2214%22%2C%0A++++++%2214%22%2C%0A++++++%2214%22%2C%0A++++++%2214%22%2C%0A++++++%2214%22%0A++++%29%2C%0A++++None%0A++%29%0A%29"
+//    }
   }
 }
 
