@@ -41,8 +41,7 @@ class DynamicEndpointsTest extends V400ServerSetup {
 
   feature(s"test $ApiEndpoint9, $ApiEndpoint10, $ApiEndpoint11, $ApiEndpoint12 version $VersionOfApi") {
 
-    scenario(s"If we create one entity for system, we should not allow to create the bank level as the same entity," +
-      s" otherwise it will break the roles", ApiEndpoint1,ApiEndpoint9, VersionOfApi) {
+    scenario(s"If we create one entity for system, we should allow to create the bank level as the same entity", ApiEndpoint1,ApiEndpoint9, VersionOfApi) {
       When("We make a request v4.0.0")
       Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, canCreateDynamicEndpoint.toString)
       val requestSystemLevel = (v4_0_0_Request / "management" / "dynamic-endpoints").POST<@ (user1)
@@ -51,14 +50,13 @@ class DynamicEndpointsTest extends V400ServerSetup {
       responseSystemLevel.code should equal(201)
       responseSystemLevel.body.toString contains("dynamic_endpoint_id") should be (true)
       
-//      TODO , Need to think about if we should allow to create same entity as the bank level.
-//      When("We make a request v4.0.0")
-//      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, canCreateBankLevelDynamicEndpoint.toString)
-//      val request = (v4_0_0_Request / "management" /"banks"/testBankId1.value/ "dynamic-endpoints").POST<@ (user1)
-//      val responseWithRole = makePostRequest(request, postDynamicEndpointSwagger)
-//      Then("We should get a 400")
-//      responseWithRole.code should equal(400)
-//      responseWithRole.body.toString contains(DynamicEndpointExists) should be (true)
+      When("We make a request v4.0.0")
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, canCreateBankLevelDynamicEndpoint.toString)
+      val request = (v4_0_0_Request / "management" /"banks"/testBankId1.value/ "dynamic-endpoints").POST<@ (user1)
+      val responseWithRole = makePostRequest(request, postDynamicEndpointSwagger)
+      Then("We should get a 201")
+      responseWithRole.code should equal(201)
+      responseSystemLevel.body.toString contains("dynamic_endpoint_id") should be (true)
     }
     
     
@@ -169,7 +167,7 @@ class DynamicEndpointsTest extends V400ServerSetup {
 
     scenario(s" $ApiEndpoint9 the the system level role", ApiEndpoint1, VersionOfApi) {
       Then("We grant the role to the user1")
-      Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, canCreateDynamicEndpoint.toString)
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, canCreateBankLevelDynamicEndpoint.toString)
       When("We make a request v4.0.0")
       val request = (v4_0_0_Request / "management" /"banks"/testBankId1.value / "dynamic-endpoints").POST<@ (user1)
 
@@ -191,9 +189,21 @@ class DynamicEndpointsTest extends V400ServerSetup {
       duplicatedRequest.code should equal(400)
       duplicatedRequest.body.extract[ErrorMessage].message.toString contains (DynamicEndpointExists) should be (true)
     }
+
+    scenario(s" $ApiEndpoint9 the the system level role can not use in bank level endpoints", ApiEndpoint1, VersionOfApi) {
+      Then("We grant the system level role to the, can not call the bank level endpoint")
+      Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, canCreateDynamicEndpoint.toString)
+      When("We make a request v4.0.0")
+      val request = (v4_0_0_Request / "management" /"banks"/testBankId1.value / "dynamic-endpoints").POST<@ (user1)
+
+      val responseWithRole = makePostRequest(request, postDynamicEndpointSwagger)
+      Then("We should get a 403")
+      responseWithRole.code should equal(403)
+      responseWithRole.body.toString contains(UserHasMissingRoles) should be (true)
+
+    }
     
   }
-  
 
   feature(s"test $ApiEndpoint1 version $VersionOfApi - Unauthorized access") {
     scenario("We will call the endpoint without user credentials", ApiEndpoint1, VersionOfApi) {
@@ -240,7 +250,7 @@ class DynamicEndpointsTest extends V400ServerSetup {
       Then("We should get a 201")
       responseWithRole.code should equal(201)
       responseWithRole.body.toString contains("dynamic_endpoint_id") should be (true)
-    
+
     }
   }
 
@@ -422,7 +432,7 @@ class DynamicEndpointsTest extends V400ServerSetup {
       val response400 = makeGetRequest(request400)
       response400.code should be (200)
       response400.body.toString contains("dynamic_endpoint_id") should be (true)
-  
+
 
 
       val requestDelete = (v4_0_0_Request / "management" / "dynamic-endpoints" /id).DELETE<@ (user1)
@@ -487,6 +497,68 @@ class DynamicEndpointsTest extends V400ServerSetup {
       val responseDeleteAgain = makeDeleteRequest(requestDelete)
       responseDeleteAgain.code should be (404)
     }
+    
+    scenario("user1 create one Entity, user2 create the same Entity, with different URL, " +
+      "they should have different roles, can not be mixed", ApiEndpoint5, ApiEndpoint6, VersionOfApi) {
+      When("We make a request v4.0.0")
+      val postDynamicEndpointRequestBodyExample = ExampleValue.dynamicEndpointRequestBodyExample
+      Then("We grant the role to the user1")
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, CanCreateBankLevelDynamicEndpoint.toString)
+      val request = (v4_0_0_Request / "management" / "banks"/testBankId1.value / "dynamic-endpoints").POST<@ (user1)
+
+      val responseWithRole = makePostRequest(request, write(postDynamicEndpointRequestBodyExample))
+      Then("We should get a 201")
+      responseWithRole.code should equal(201)
+
+      // user1 can call the endpoint,
+      {
+        val request = (v4_0_0_Request  / "dynamic" / "banks"/testBankId1.value/  "accounts").POST<@ (user1)
+        val response = makePostRequest(request, postDynamicEndpointSwagger)
+        response.code should equal(201)
+        response.body.toString contains("name") should be (true)
+        response.body.toString contains("String") should be (true)
+      }
+
+      //user2 can not call,because of the role is missing: 
+      {
+        val request = (v4_0_0_Request  / "dynamic" / "banks"/testBankId1.value/  "accounts").POST<@ (user2)
+        val response = makePostRequest(request, postDynamicEndpointSwagger)
+        response.code should equal(403)
+        response.body.extract[ErrorMessage].message.toString contains (UserHasMissingRoles) should be (true)
+      }
+      //Then user2 create the dynamic with different urls"
+      val requestUser2 = (v4_0_0_Request / "management" / "banks"/testBankId1.value / "dynamic-endpoints").POST<@ (user2)
+
+      Then("We grant the role to the user1")
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser2.userId, CanCreateBankLevelDynamicEndpoint.toString)
+
+      val newSwagger = postDynamicEndpointRequestBodyExample.transformField {
+        case JField(name, value) if name.startsWith("/") => JField(s"$name/newSwagger", value)
+      }
+      
+      val responseWithRoleUser2 = makePostRequest(requestUser2, write(newSwagger))
+      Then("We should get a 201")
+      responseWithRoleUser2.code should equal(201)
+
+      //user2 should use the new endpoint
+      {
+        val request = (v4_0_0_Request  / "dynamic" / "banks"/testBankId1.value/  "accounts" / "newSwagger").POST<@ (user2)
+        val response = makePostRequest(request, postDynamicEndpointSwagger)
+        response.code should equal(201)
+        response.body.toString contains("name") should be (true)
+        response.body.toString contains("String") should be (true)
+      }
+
+      //user2 should not use the user1 created endpoint
+      {
+        val request = (v4_0_0_Request  / "dynamic" / "banks"/testBankId1.value/  "accounts" ).POST<@ (user2)
+        val response = makePostRequest(request, postDynamicEndpointSwagger)
+        response.code should equal(403)
+        response.body.extract[ErrorMessage].message.toString contains (UserHasMissingRoles) should be (true)
+      }
+      
+    }
+    
   }
 
   feature(s"test $ApiEndpoint7 version $VersionOfApi - - Unauthorized access") {
@@ -662,7 +734,7 @@ class DynamicEndpointsTest extends V400ServerSetup {
       When("We make a request v4.0.0 with the role canCreateDynamicEndpoint")
 
       Then("First test the system Level role")
-      Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, canCreateDynamicEndpoint.toString)
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, CanCreateBankLevelDynamicEndpoint.toString)
       val request = (v4_0_0_Request / "management" /"banks"/testBankId1.value/ "dynamic-endpoints").POST<@ (user1)
       val responseWithRole = makePostRequest(request, postDynamicEndpointSwagger)
       Then("We should get a 201")

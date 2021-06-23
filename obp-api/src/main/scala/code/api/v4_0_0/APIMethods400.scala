@@ -1722,7 +1722,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEntity, apiTagApi, apiTagNewStyle),
-      Some(List(canGetBankLevelDynamicEntities, canGetDynamicEntities))
+      Some(List(canGetBankLevelDynamicEntities))
     )
 
     lazy val getBankLevelDynamicEntities: OBPEndpoint = {
@@ -1839,7 +1839,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEntity, apiTagApi, apiTagNewStyle),
-      Some(List(canCreateBankLevelDynamicEntity, canCreateDynamicEntity)))
+      Some(List(canCreateBankLevelDynamicEntity)))
     lazy val createBankLevelDynamicEntity: OBPEndpoint = {
       case "management" ::"banks" :: BankId(bankId) :: "dynamic-entities" :: Nil JsonPost json -> _ => {
         cc =>
@@ -1946,7 +1946,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEntity, apiTagApi, apiTagNewStyle),
-      Some(List(canUpdateBankLevelDynamicEntity, canUpdateDynamicEntity)))
+      Some(List(canUpdateBankLevelDynamicEntity)))
     lazy val updateBankLevelDynamicEntity: OBPEndpoint = {
       case "management" :: "banks" :: bankId :: "dynamic-entities" :: dynamicEntityId :: Nil JsonPut json -> _ => {
         cc =>
@@ -2014,7 +2014,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEntity, apiTagApi, apiTagNewStyle),
-      Some(List(canDeleteBankLevelDynamicEntity, canDeleteDynamicEntity)))
+      Some(List(canDeleteBankLevelDynamicEntity)))
     lazy val deleteBankLevelDynamicEntity: OBPEndpoint = {
       case "management" :: "banks" :: bankId :: "dynamic-entities" :: dynamicEntityId :: Nil JsonDelete _ => {
         cc =>
@@ -4703,7 +4703,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEndpoint, apiTagApi, apiTagNewStyle),
-      Some(List(canCreateBankLevelDynamicEndpoint, canCreateDynamicEndpoint)))
+      Some(List(canCreateBankLevelDynamicEndpoint)))
 
     lazy val createBankLevelDynamicEndpoint: OBPEndpoint = {
       case "management" :: "banks" :: BankId(bankId) ::"dynamic-endpoints" :: Nil JsonPost json -> _ => {
@@ -4881,7 +4881,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEndpoint, apiTagApi, apiTagNewStyle),
-      Some(List(canGetBankLevelDynamicEndpoint, canGetDynamicEndpoint)))
+      Some(List(canGetBankLevelDynamicEndpoint)))
 
     lazy val getBankLevelDynamicEndpoint: OBPEndpoint = {
       case "management" :: "banks" :: bankId :: "dynamic-endpoints" :: dynamicEndpointId :: Nil JsonGet req => {
@@ -4925,7 +4925,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEndpoint, apiTagApi, apiTagNewStyle),
-      Some(List(canGetBankLevelDynamicEndpoints, canGetDynamicEndpoints)))
+      Some(List(canGetBankLevelDynamicEndpoints)))
 
     lazy val getBankLevelDynamicEndpoints: OBPEndpoint = {
       case "management" :: "banks" :: bankId :: "dynamic-endpoints" :: Nil JsonGet _ => {
@@ -4984,7 +4984,7 @@ trait APIMethods400 {
         UnknownError
       ),
       List(apiTagManageDynamicEndpoint, apiTagApi, apiTagNewStyle),
-      Some(List(canDeleteBankLevelDynamicEndpoint ,canDeleteDynamicEndpoint)))
+      Some(List(canDeleteBankLevelDynamicEndpoint)))
 
     lazy val deleteBankLevelDynamicEndpoint : OBPEndpoint = {
       case "management" :: "banks" :: bankId :: "dynamic-endpoints" :: dynamicEndpointId ::  Nil JsonDelete _ => {
