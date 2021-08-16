@@ -325,7 +325,10 @@ object JSONFactory1_4_0 extends MdcLoggable{
     function : String // The val / partial function that implements the call e.g. "getBranches"
   )
 
-
+  case class ResourceDocMeta(
+    response_date: Date,
+    count: Int
+  )
   // Used to describe the OBP API calls for documentation and API discovery purposes
   case class ResourceDocJson(operation_id: String,
                              implemented_by: ImplementedByJson,
@@ -344,13 +347,16 @@ object JSONFactory1_4_0 extends MdcLoggable{
                              is_featured: Boolean,
                              special_instructions: String,
                              specified_url: String, // Derived value. The Url when called under a certain version.
-                             connector_methods: List[String] // this is the connector methods which need to be connected by this endpoint.
+                             connector_methods: List[String], // this is the connector methods which need to be connected by this endpoint.
                             )
 
-
+  
 
   // Creates the json resource_docs
-  case class ResourceDocsJson (resource_docs : List[ResourceDocJson])
+  case class ResourceDocsJson (
+    resource_docs : List[ResourceDocJson],
+    meta: Option[ResourceDocMeta] = None
+  )
 
   /**
    * get the glossaryItem.title by the input string
