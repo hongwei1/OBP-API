@@ -2777,12 +2777,16 @@ trait APIMethods400 {
               json.extract[PostCreateUserWithRolesJsonV400]
             }
             //check the system role bankId is Empty, but bank level role need bankId 
-            _ <- checkRoleBankIdMappings(callContext, postedData)
-            
-            _ <- checkRolesBankIdExsiting(callContext, postedData)
-            
-            _ <- checkRolesName(callContext, postedData)
-            
+              
+            _ <- checkRolesName(callContext, po tedData)
+             
+            //if canCreateEntitlementAtAnyBank --> can do anything,  xt = UserNotSuperAdmin +" or" +  UserHasMissingRoles + canCreateEntitlementAtAnyBank
+            _ <-
+              if(isSuperAdmin(loggedInUser.userId))
+                Future.successful(Full(Unit))
+              else
+                NewStyle.function.hasAtLeastOneEntitlement(allowedEntitlementsTxt)("", loggedInUser.userId, allowedEntitlements, callContext)
+                
             _ <- NewStyle.function.hasEntitlement("", loggedInUser.userId, canCreateEntitlementAtAnyBank, cc.callContext)
             
             (postBodyUser, callContext) <- NewStyle.function.getOrCreateUser(postedData.user_id, postedData.provider, callContext)
@@ -2790,6 +2794,8 @@ trait APIMethods400 {
             _ <- checkIfUserAlreadyHasEntitlements(postedData, callContext)
             
             addedEntitlements <- addEntitlementsToUser(postedData, callContext)
+            
+            //if the useris start with dauth.
             
           } yield {
             (JSONFactory400.createEntitlementJSONs(addedEntitlements), HttpCode.`201`(callContext))
@@ -4257,6 +4263,8 @@ trait APIMethods400 {
             postJson <- NewStyle.function.tryons(failMsg, 400, cc.callContext) {
               json.extract[PostCreateUserAccountAccessJsonV400]
             }
+            //provider must start with dauth. 
+            //user_id set the length for the min length of the userId. eg: 20 
             _ <- NewStyle.function.canGrantAccessToView(bankId, accountId, cc.loggedInUser, cc.callContext)
             (user, callContext) <- NewStyle.function.getOrCreateUser(postJson.user_id, postJson.provider, cc.callContext)
             views <- getViews(bankId, accountId, postJson, callContext)
