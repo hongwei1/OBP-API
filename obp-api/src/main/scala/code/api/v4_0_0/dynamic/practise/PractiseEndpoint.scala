@@ -42,7 +42,7 @@ object PractiseEndpoint extends code.api.v4_0_0.dynamic.DynamicCompileEndpoint {
   case class ResponseRootJsonClass(my_user_id: String, name: String, age: Long, hobby: List[String])
 
   // * is any bankId, if bound to other bankId, just modify this value to correct one
-  override val boundBankId = "abc"
+  override val boundBankId = "*"
 
   // copy the whole method body as "dynamicResourceDoc" method body
   override protected def
@@ -50,16 +50,34 @@ object PractiseEndpoint extends code.api.v4_0_0.dynamic.DynamicCompileEndpoint {
     // please add import sentences here, those used by this method
     import code.api.util.NewStyle
     import code.api.v4_0_0.JSONFactory400
-
+    import org.apache.commons.io.FileUtils
+    import net.liftweb.common.{Box, Empty, Failure, Full}
+    import code.api.v2_0_0.JSONFactory200
+    
     val Some(resourceDoc) = callContext.resourceDocument
     val hasRequestBody = request.body.isDefined
+    import sys.process._
+    import java.net.URL
+    import java.io.File
 
+    val src = scala.io.Source.fromURL("http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words")
+    val out = new java.io.FileWriter("stop-words-en.txt")
+    out.write(src.mkString)
+    out.close
     // get Path Parameters, example:
     // if the requestUrl of resourceDoc is /hello/banks/BANK_ID/world
     // the request path is /hello/banks/bank_x/world
     //pathParams.get("BANK_ID") will get Option("bank_x") value
     val myUserId = pathParams("MY_USER_ID")
-
+//    val connectorCodePath = "1232"
+//    val path = new File(getClass.getResource("").toURI.toString.replaceFirst("target/.*", "").replace("file:", ""), connectorCodePath)
+//
+//    
+//    val source2 = getClass().getClassLoader().getResource("custom_webapp") 
+//    val source = FileUtils.readFileToString(path, "utf-8")
+//    val start = "//---------------- dynamic start -------------------please don't modify this line"
+//    val end   = "//---------------- dynamic end ---------------------please don't modify this line"
+    
     val requestEntity = request.json match {
       case Full(zson) =>
         try {
@@ -78,6 +96,7 @@ object PractiseEndpoint extends code.api.v4_0_0.dynamic.DynamicCompileEndpoint {
       (banks, callContext) <- NewStyle.function.getBanks(Some(callContext))
     } yield {
       (JSONFactory400.createBanksJson(banks), HttpCode.`200`(callContext))
+//      ("123456", HttpCode.`200`(callContext))
     }
   }
 

@@ -7,7 +7,7 @@ import code.api.v4_0_0.JSONFactory400
 import code.api.v4_0_0.dynamic.{CompiledObjects, DynamicCompileEndpoint}
 import code.api.v4_0_0.dynamic.practise.PractiseEndpoint
 import com.openbankproject.commons.ExecutionContext
-import com.openbankproject.commons.model.BankId
+import com.openbankproject.commons.model.{Bank, BankId}
 import com.openbankproject.commons.util.Functions.Memo
 import com.openbankproject.commons.util.{JsonUtils, ReflectUtils}
 import javassist.{ClassPool, LoaderClassPath}
@@ -16,6 +16,7 @@ import net.liftweb.http.JsonResponse
 import net.liftweb.json.{JValue, prettyRender}
 import org.apache.commons.lang3.StringUtils
 
+import java.io.FilePermission
 import java.lang.reflect.ReflectPermission
 import java.net.NetPermission
 import java.security.{AccessControlContext, AccessController, CodeSource, Permission, PermissionCollection, Permissions, Policy, PrivilegedAction, ProtectionDomain}
@@ -209,7 +210,7 @@ object DynamicUtil {
 
     private val memoSandbox = new Memo[String, Sandbox]
     def sandbox(bankId: String): Sandbox = memoSandbox.memoize(bankId) {
-      Sandbox.createSandbox(BankId.permission(bankId) :: Validation.permissions)
+      Sandbox.createSandbox(BankId.permission(bankId) :: Validation.allowedPermissions)
     }
   }
 
@@ -266,7 +267,9 @@ object DynamicUtil {
 
   object Validation {
     // all Permissions put at here
-    val permissions = List[Permission](
+   // https://docs.oracle.com/javase/8/docs/technotes/guides/security/spec/security-spec.doc3.html#17001
+    //Here is the Runtime
+    val allowedPermissions= List[Permission](
       new NetPermission("specifyStreamHandler"),
       new ReflectPermission("suppressAccessChecks"),
       new RuntimePermission("getenv.*"),
@@ -275,9 +278,12 @@ object DynamicUtil {
       new PropertyPermission("cglib.debugLocation", "read"),
       new RuntimePermission("accessDeclaredMembers"),
       new RuntimePermission("getClassLoader"),
+      new FilePermission("stop-words-en.txt","write")
+//    val out = new java.io.FileWriter("stop-words-en.txt")
     )
 
     // all allowed methods put at here, typeName -> methods
+    // only for the complation, in our OBP code there is no security check, we need to check it manully!!!
     val allowedMethods: Map[String, Set[String]] = Map(
       // companion objects methods
       NewStyle.function.getClass.getTypeName -> "*",
@@ -287,7 +293,7 @@ object DynamicUtil {
       APIUtil.getClass.getTypeName -> "errorJsonResponse, errorJsonResponse$default$1, errorJsonResponse$default$2, errorJsonResponse$default$3, errorJsonResponse$default$4, scalaFutureToLaFuture, futureToBoxedResponse",
       ErrorMessages.getClass.getTypeName -> "*",
       ExecutionContext.Implicits.getClass.getTypeName -> "global",
-      JSONFactory400.getClass.getTypeName -> "createBanksJson",
+      JSONFactory400.getClass.getTypeName -> "createBanksJson, createBankJSON400, createBankJSON400$default$1, createBankJSON400$default$2",
 
       // class methods
       classOf[Sandbox].getTypeName -> "runInSandbox",
@@ -337,4 +343,20 @@ object DynamicUtil {
       validateDependency(dependentMethods)
     }
   }
+}
+
+
+
+
+object AkkaConnectorBuilder3 extends App {
+  println(123123)
+  import sys.process._
+  import java.net.URL
+  import java.io.File
+
+  def fileDownloader(url: String, filename: String) = {
+    new URL(url) #> new File(filename) !!
+  }
+  val abc = fileDownloader("http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words", "stop-words-en.txt")
+
 }
