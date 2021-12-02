@@ -29,6 +29,13 @@ object AccountIdString {
   val MaxLength = APIUtil.getPropsAsIntValue("account_id.length", 64)
 }
 
+//We need to mapping OBP userId with Airnode Smart Contract Address, default length is not enough.
+class ResourceUserIdString [T <: Mapper[T]](override val fieldOwner : T) extends MappedString(fieldOwner, ResourceUserIdString.MaxLength)
+
+object ResourceUserIdString {
+  val MaxLength = APIUtil.getPropsAsIntValue("resource_user_id.length", 128)
+}
+
 
 /*
 So we can store a time of day without the date e.g. 23:33 - but also go past midnight e.g. 26:33 if we want to represent the following morning.

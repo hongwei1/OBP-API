@@ -27,9 +27,8 @@ TESOBE (http://www.tesobe.com/)
 package code.model.dataAccess
 
 import java.util.Date
-
 import code.api.util.APIUtil
-import code.util.MappedUUID
+import code.util.{MappedUUID, ResourceUserIdString}
 import com.openbankproject.commons.model.{User, UserPrimaryKey}
 import net.liftweb.mapper._
 
@@ -60,7 +59,7 @@ class ResourceUser extends LongKeyedMapper[ResourceUser] with User with ManyToMa
   def primaryKeyField = id
 
   object id extends MappedLongIndex(this)
-  object userId_ extends MappedUUID(this)
+  object userId_ extends ResourceUserIdString(this)
   object email extends MappedEmail(this, 100){
     override def required_? = false
   }
