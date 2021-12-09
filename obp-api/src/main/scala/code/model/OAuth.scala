@@ -469,7 +469,7 @@ class Consumer extends LongKeyedMapper[Consumer] with CreatedUpdated{
   }
 
   private def EmptyError(field: MappedText[Consumer])( s : String) = {
-    if(s.isEmpty) List(FieldError(field, {field.displayName + "can not be empty"}))
+    if(s.isEmpty) List(FieldError(field, {field.displayName + "cannot be empty"}))
     else Nil
   }
   

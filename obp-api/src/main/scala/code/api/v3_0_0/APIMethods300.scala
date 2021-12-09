@@ -785,7 +785,7 @@ trait APIMethods300 {
               esw.isEnabled()
             }
             maximumSize = APIUtil.getPropsAsIntValue("es.warehouse.allowed.maximum.pagesize", 10000)
-            //This is for performance issue, we can not support query more than maximumSize records in one call. 
+            //This is for performance issue, we cannot support query more than maximumSize records in one call. 
             // If it contains the size and if it over maximumSize, we will throw the error back.
             _ <- Helper.booleanToFuture(failMsg = maximumLimitExceeded.replace("Maximum number is 10000.",s"Please check query body, the maximum size is $maximumSize."), cc=callContext) {
               // find all the size field.
@@ -865,7 +865,7 @@ trait APIMethods300 {
               esw.isEnabled()
             }
             maximumSize = APIUtil.getPropsAsIntValue("es.warehouse.allowed.maximum.pagesize", 10000)
-            //This is for performance issue, we can not support query more than maximumSize records in one call. 
+            //This is for performance issue, we cannot support query more than maximumSize records in one call. 
             // If it contains the size and if it over maximumSize, we will throw the error back.
             _ <- Helper.booleanToFuture(failMsg = maximumLimitExceeded.replace("Maximum number is 10000.",s"Please check query body, the maximum size is $maximumSize."), cc=callContext) {
               // find all the size field.
@@ -2128,7 +2128,7 @@ trait APIMethods300 {
         |
         |5 anon (if null ignore) only support two value : true (return where user_id is null.) or false (return where user_id is not null.)
         |
-        |6 url (if null ignore), note: can not contain '&'.
+        |6 url (if null ignore), note: cannot contain '&'.
         |
         |7 app_name (if null ignore)
         |

@@ -76,7 +76,7 @@ class ConfirmationOfFundsServicePIISApiTest extends BerlinGroupServerSetupV1_3 w
       val iban = accountsIban.head.accountRouting.address
       val account = MappedBankAccount.find(
         By(MappedBankAccount.bank, accountsIban.head.bankId.value),
-        By(MappedBankAccount.theAccountId, accountsIban.head.accountId.value)).openOrThrowException("Can not be empty here")
+        By(MappedBankAccount.theAccountId, accountsIban.head.accountId.value)).openOrThrowException("Cannot be empty here")
       val balance = account.balance
       val laggerbalance = balance +1000
 

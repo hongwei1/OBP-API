@@ -38,7 +38,7 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
     // Search by primary key
     case str if str.matches("\\d+") => Some(str) 
     // Get consumer by UUID, extract a primary key and then search by the primary key
-    // This can not be empty here, it need return the value back as the parameter 
+    // This cannot be empty here, it need return the value back as the parameter 
     case str => MappedConsumersProvider.getConsumerByConsumerId(str).map(_.id.get.toString).toOption.orElse(Some(str)) 
   }
 

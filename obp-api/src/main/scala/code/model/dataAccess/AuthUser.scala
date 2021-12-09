@@ -600,7 +600,7 @@ import net.liftweb.util.Helpers._
    def grantDefaultEntitlementsToAuthUser(user: TheUserType) = {
      tryo{getResourceUserByUsername(user.username.get).head.userId} match {
        case Full(userId)=>APIUtil.grantDefaultEntitlementsToNewUser(userId)
-       case _ => logger.error("Can not getResourceUserByUsername here, so it breaks the grantDefaultEntitlementsToNewUser process.")
+       case _ => logger.error("Cannot getResourceUserByUsername here, so it breaks the grantDefaultEntitlementsToNewUser process.")
      }
    }
   
@@ -887,7 +887,7 @@ import net.liftweb.util.Helpers._
           case Some(authContexts) => { // Write user auth context to the database
               // get resourceUserId from AuthUser.
               val resourceUserId = user.user.foreign.map(_.userId).getOrElse("")
-              // we try to catch this exception, the createOrUpdateUserAuthContexts can not break the login process.
+              // we try to catch this exception, the createOrUpdateUserAuthContexts cannot break the login process.
               tryo {UserAuthContextProvider.userAuthContextProvider.vend.createOrUpdateUserAuthContexts(resourceUserId, authContexts)} 
                 .openOr(logger.error(s"${resourceUserId} checkExternalUserViaConnector.createOrUpdateUserAuthContexts throw exception! "))
           }

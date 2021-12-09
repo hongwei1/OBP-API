@@ -277,7 +277,7 @@ trait APIMethods310 {
         |
         |5 anon (if null ignore) only support two value : true (return where user_id is null.) or false (return where user_id is not null.)
         |
-        |6 url (if null ignore), note: can not contain '&'.
+        |6 url (if null ignore), note: cannot contain '&'.
         |
         |7 app_name (if null ignore)
         |
@@ -364,7 +364,7 @@ trait APIMethods310 {
         |
         |5 anon (if null ignore) only support two value : true (return where user_id is null.) or false (return where user_id is not null.)
         |
-        |6 url (if null ignore), note: can not contain '&'.
+        |6 url (if null ignore), note: cannot contain '&'.
         |
         |7 app_name (if null ignore)
         |

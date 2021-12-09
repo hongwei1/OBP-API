@@ -536,8 +536,8 @@ case class DynamicEntityIntTypeExample(`type`: DynamicEntityFieldType, example: 
 trait DynamicEntityProvider {
   def getById(bankId: Option[String], dynamicEntityId: String): Box[DynamicEntityT]
 
-  //Note, we use entity name to create the roles, and bank level and system level can not be mixed, 
-  // so --> here can not use bankId as parameters: 
+  //Note, we use entity name to create the roles, and bank level and system level cannot be mixed, 
+  // so --> here cannot use bankId as parameters: 
   def getByEntityName(entityName: String): Box[DynamicEntityT]
 
   def getDynamicEntities(bankId: Option[String]): List[DynamicEntityT]

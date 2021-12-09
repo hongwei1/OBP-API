@@ -288,7 +288,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       Then(s"we call $ApiEndpoint6 to get the account back by user2")
       val requestApiUser2Endpoint6 = (v3_1_0_Request /"banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID" / Constant.SYSTEM_OWNER_VIEW_ID/ "account" ).GET <@(user2)
       val responseApiUser2Endpoint6 = makeGetRequest(requestApiUser2Endpoint6)
-      //This mean, the user2 can not get access to user1's account!
+      //This mean, the user2 cannot get access to user1's account!
       responseApiUser2Endpoint6.code should not equal(200)
       
     }

@@ -1333,7 +1333,7 @@ class API1_2_1Test extends ServerSetupWithTestData with DefaultUsers with Privat
   }
 
   feature("Information about a bank account"){
-    //For now, can not get the public accounts from this endpoint: accountById - v121
+    //For now, cannot get the public accounts from this endpoint: accountById - v121
 //    scenario("we get data without using an access token", API1_2, GetBankAccount) {
 //      Given("We will not use an access token")
 //      val bankId = randomBank
@@ -1496,7 +1496,7 @@ class API1_2_1Test extends ServerSetupWithTestData with DefaultUsers with Privat
       reply.body.extract[ErrorMessage].message.nonEmpty should equal (true)
     }
   
-    scenario("can not create the System View") {
+    scenario("cannot create the System View") {
       Given("The BANK_ID, ACCOUNT_ID, Login user, views")
       val bankId = randomBank
       val bankAccount : AccountJSON = randomPrivateAccount(bankId)
@@ -1628,7 +1628,7 @@ class API1_2_1Test extends ServerSetupWithTestData with DefaultUsers with Privat
       reply.body.extract[ErrorMessage].message.nonEmpty should equal (true)
     }
   
-    scenario("we can not update a System view on a bank account") {
+    scenario("we cannot update a System view on a bank account") {
       val bankId = randomBank
       val bankAccount : AccountJSON = randomPrivateAccount(bankId)
     
@@ -1726,7 +1726,7 @@ class API1_2_1Test extends ServerSetupWithTestData with DefaultUsers with Privat
       reply.body.extract[ErrorMessage].message.nonEmpty should equal (true)
     }
   
-    scenario("we can not delete a system view on a bank account", API1_2_1, DeleteView){
+    scenario("we cannot delete a system view on a bank account", API1_2_1, DeleteView){
       Given("We will use an access token")
       val bankId = randomBank
       val bankAccount : AccountJSON = randomPrivateAccount(bankId)

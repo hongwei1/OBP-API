@@ -120,7 +120,7 @@ object DynamicEndpointHelper extends RestHelper {
     def unapply(r: Req): Option[(String, JValue, AkkaHttpMethod, Map[String, List[String]], Map[String, String], ApiRole, String, Option[(Int, JValue)], Option[String])] = {
       val partPath = r.path.partPath//eg: List("dynamic","feature-test")
       if (!testResponse_?(r) || partPath.headOption != Option(urlPrefix))//if check the Content-Type contains json or not, and check the if it is the `dynamic_endpoints_url_prefix`
-        None //if do not match `URL and Content-Type`, then can not find this endpoint. return None.
+        None //if do not match `URL and Content-Type`, then cannot find this endpoint. return None.
       else {
         val akkaHttpMethod = HttpMethods.getForKeyCaseInsensitive(r.requestType.method).get
         val httpMethod = HttpMethod.valueOf(r.requestType.method)
