@@ -363,7 +363,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     callContext: Option[CallContext]
   ) = Future {
     Future {
-      val userId = callContext.map(_.user.map(_.userId).openOrThrowException(s"$UserNotLoggedIn Can not find the userId here."))
+      val userId = callContext.map(_.user.map(_.userId).openOrThrowException(s"$UserNotLoggedIn Cannot find the userId here."))
       (Challenges.ChallengeProvider.vend.validateChallenge(challengeId, hashOfSuppliedAnswer, userId), callContext)
     }
   }
@@ -380,7 +380,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   override def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = 
     Future { 
-      val userId = callContext.map(_.user.map(_.userId).openOrThrowException(s"$UserNotLoggedIn Can not find the userId here."))
+      val userId = callContext.map(_.user.map(_.userId).openOrThrowException(s"$UserNotLoggedIn Cannot find the userId here."))
       (Full(Challenges.ChallengeProvider.vend.validateChallenge(challengeId, hashOfSuppliedAnswer, userId).isDefined), callContext)
     } 
   
@@ -4500,7 +4500,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetChargeLevel ", 400), i._2)
       }
 
-      chargeLevelAmount <- NewStyle.function.tryons(s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} can not be transferred to decimal !", 400, callContext) {
+      chargeLevelAmount <- NewStyle.function.tryons(s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} cannot be transferred to decimal !", 400, callContext) {
         BigDecimal(chargeLevel.amount)
       }
       chargeValue <- getChargeValue(chargeLevelAmount, transactionRequestCommonBodyAmount)
@@ -4627,7 +4627,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetChargeLevel ", 400), i._2)
       }
 
-      chargeLevelAmount <- NewStyle.function.tryons(s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} can not be transferred to decimal !", 400, callContext) {
+      chargeLevelAmount <- NewStyle.function.tryons(s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} cannot be transferred to decimal !", 400, callContext) {
         BigDecimal(chargeLevel.amount)
       }
       chargeValue <- getChargeValue(chargeLevelAmount, transactionRequestCommonBodyAmount)
@@ -4904,7 +4904,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (transactionId, callContext) <- TransactionRequestTypes.withName(transactionRequestType) match {
         case SANDBOX_TAN | ACCOUNT | ACCOUNT_OTP =>
           for {
-            toSandboxTan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext) {
+            toSandboxTan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext) {
               body.to_sandbox_tan.get
             }
             toBankId = BankId(toSandboxTan.bank_id)
@@ -4930,7 +4930,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
           }
         case COUNTERPARTY =>
           for {
-            bodyToCounterparty <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodyCounterpartyJSON", 400, callContext) {
+            bodyToCounterparty <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodyCounterpartyJSON", 400, callContext) {
               body.to_counterparty.get
             }
             counterpartyId = CounterpartyId(bodyToCounterparty.counterparty_id)
@@ -4998,7 +4998,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
           }
         case SEPA =>
           for {
-            bodyToCounterpartyIBan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySEPAJSON", 400, callContext) {
+            bodyToCounterpartyIBan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodySEPAJSON", 400, callContext) {
               body.to_sepa.get
             }
             toCounterpartyIBan = bodyToCounterpartyIBan.iban
@@ -5048,7 +5048,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         }
         case SEPA_CREDIT_TRANSFERS => for {
 
-          toSepaCreditTransfers <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext) {
+          toSepaCreditTransfers <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext) {
             body.to_sepa_credit_transfers.get
           }
           toAccountIban = toSepaCreditTransfers.creditorAccount.iban

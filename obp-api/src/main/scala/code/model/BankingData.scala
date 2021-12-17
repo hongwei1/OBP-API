@@ -598,9 +598,9 @@ object BankAccountX {
     Full(
       //TODO, check all the `new Counterparty` code, they can be reduced into one gernal method for all.
       new Counterparty(
-        kind = "",//Can not map
-        nationalIdentifier = "", //Can not map
-        otherAccountProvider = "", //Can not map
+        kind = "",//Cannot map
+        nationalIdentifier = "", //Cannot map
+        otherAccountProvider = "", //Cannot map
 
         thisBankId = BankId(counterparty.thisBankId),
         thisAccountId = AccountId(counterparty.thisAccountId),

@@ -1644,7 +1644,7 @@ trait APIMethods210 {
         |
         |9 anon (if null ignore) only support two value : true (return where user_id is null.) or false (return where user_id is not null.)
         |
-        |10 url (if null ignore), note: can not contain '&'.
+        |10 url (if null ignore), note: cannot contain '&'.
         |
         |11 app_name (if null ignore)
         |

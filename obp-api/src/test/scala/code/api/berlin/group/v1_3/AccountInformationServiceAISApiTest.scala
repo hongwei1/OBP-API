@@ -290,7 +290,7 @@ class AccountInformationServiceAISApiTest extends BerlinGroupServerSetupV1_3 wit
       val responseDelete = makeDeleteRequest(requestDelete)
       responseDelete.code should be (204)
 
-      //TODO We can not delete one consent two time, will fix it later.
+      //TODO We cannot delete one consent two time, will fix it later.
 //      val responseDeleteSecondTime = makeDeleteRequest(requestDelete)
 //      responseDeleteSecondTime.code should be (400)
     }

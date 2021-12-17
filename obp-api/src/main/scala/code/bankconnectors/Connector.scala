@@ -948,7 +948,7 @@ trait Connector extends MdcLoggable {
         (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForGetChargeLevel ", 400), i._2)
       }
 
-      chargeLevelAmount <- NewStyle.function.tryons( s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} can not be transferred to decimal !", 400, callContext) {
+      chargeLevelAmount <- NewStyle.function.tryons( s"$InvalidNumber chargeLevel.amount: ${chargeLevel.amount} cannot be transferred to decimal !", 400, callContext) {
         BigDecimal(chargeLevel.amount)}
       chargeValue <- getChargeValue(chargeLevelAmount,transactionRequestCommonBodyAmount)
       charge = TransactionRequestCharge("Total charges for completed transaction", AmountOfMoney(transactionRequestCommonBody.value.currency, chargeValue))
@@ -1245,7 +1245,7 @@ trait Connector extends MdcLoggable {
       (transactionId, callContext) <- TransactionRequestTypes.withName(transactionRequestType) match {
         case SANDBOX_TAN | ACCOUNT | ACCOUNT_OTP =>
           for{
-            toSandboxTan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext){
+            toSandboxTan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext){
               body.to_sandbox_tan.get
             }
             toBankId = BankId(toSandboxTan.bank_id)
@@ -1271,7 +1271,7 @@ trait Connector extends MdcLoggable {
           }
         case COUNTERPARTY   =>
           for{
-            bodyToCounterparty <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodyCounterpartyJSON", 400, callContext){
+            bodyToCounterparty <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodyCounterpartyJSON", 400, callContext){
               body.to_counterparty.get
             }
             counterpartyId = CounterpartyId(bodyToCounterparty.counterparty_id)
@@ -1300,7 +1300,7 @@ trait Connector extends MdcLoggable {
           }
         case SEPA  =>
           for{
-            bodyToCounterpartyIBan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySEPAJSON", 400, callContext){
+            bodyToCounterpartyIBan <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodySEPAJSON", 400, callContext){
               body.to_sepa.get
             }
             toCounterpartyIBan =bodyToCounterpartyIBan.iban
@@ -1350,7 +1350,7 @@ trait Connector extends MdcLoggable {
         }
         case SEPA_CREDIT_TRANSFERS => for{
 
-          toSepaCreditTransfers <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It can not extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext){
+          toSepaCreditTransfers <- NewStyle.function.tryons(s"$TransactionRequestDetailsExtractException It cannot extract to $TransactionRequestBodySandBoxTanJSON ", 400, callContext){
             body.to_sepa_credit_transfers.get
           }
           toAccountIban = toSepaCreditTransfers.creditorAccount.iban

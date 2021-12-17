@@ -248,7 +248,7 @@ class elasticsearchMetrics extends elasticsearch {
   override val esPortHTTP = APIUtil.getPropsValue("es.metrics.port.http","9200")
   override val esIndex    = APIUtil.getPropsValue("es.metrics.index", "metrics")
 
-  if (esIndex.contains(",")) throw new RuntimeException("Props error: es.metrics.index can not be a list")
+  if (esIndex.contains(",")) throw new RuntimeException("Props error: es.metrics.index cannot be a list")
 
   var client:HttpClient = null
 

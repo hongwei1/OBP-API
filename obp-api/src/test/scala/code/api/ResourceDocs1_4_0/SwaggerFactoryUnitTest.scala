@@ -75,7 +75,7 @@ class SwaggerFactoryUnitTest extends V140ServerSetup with MdcLoggable {
       val allStrings = listOfExampleRequestBodyDefinition ++ listOfSuccessRequestBodyDefinition ++ listNestedMissingDefinition
       //All of the following are invalid value in Swagger, if any of them exist, 
       //need check how you create the case class object in SwaggerDefinitionsJSON.json. 
-      allStrings.toString() should not include ("$colon") // This happened when use the primitive types. eg: val b = List("tesobe"), the List can not be find for now. 
+      allStrings.toString() should not include ("$colon") // This happened when use the primitive types. eg: val b = List("tesobe"), the List cannot be find for now. 
       allStrings.toString() should not include ("Nil$")
       allStrings.toString() should not include ("JArray")
       allStrings.toString() should not include ("JBool")

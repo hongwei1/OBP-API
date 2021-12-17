@@ -69,14 +69,14 @@ class KafkaTest extends KafkaSetup with ServerSetupWithTestData {
         } yield {
           (firstGetAuthInfo)
         }
-        firstAuthInfo.openOrThrowException("firstAuthInfo Can not be empty here. ")
+        firstAuthInfo.openOrThrowException("firstAuthInfo Cannot be empty here. ")
 
         val authInfo: Box[AuthInfo] =  for{
           getAuthInfo <- KafkaMappedConnector_vSept2018.getAuthInfo(callContext)
         } yield {
           getAuthInfo
         }
-        authInfo.openOrThrowException("firstAuthInfo Can not be empty here. ")
+        authInfo.openOrThrowException("firstAuthInfo Cannot be empty here. ")
 
     }
 

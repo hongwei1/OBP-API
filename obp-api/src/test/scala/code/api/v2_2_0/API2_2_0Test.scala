@@ -274,7 +274,7 @@ class API2_2_0Test extends V220ServerSetup with DefaultUsers {
       reply.body.extract[ErrorMessage].message.nonEmpty should equal (true)
     }
   
-    scenario("can not create the System View") {
+    scenario("cannot create the System View") {
       Given("The BANK_ID, ACCOUNT_ID, Login user, views")
       val bankId = randomBankId
       val bankAccountId = randomPrivateAccountId(bankId)
@@ -396,7 +396,7 @@ class API2_2_0Test extends V220ServerSetup with DefaultUsers {
       reply.body.extract[ErrorMessage].message.nonEmpty should equal (true)
     }
   
-    scenario("we can not update a System view on a bank account") {
+    scenario("we cannot update a System view on a bank account") {
       val bankId = randomBankId
       val bankAccountId = randomPrivateAccountId(bankId)
     

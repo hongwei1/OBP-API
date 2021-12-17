@@ -33,7 +33,7 @@ object MappedUserRefreshesProvider extends UserRefreshesProvider {
 
   override def createOrUpdateRefreshUser(userId: String): MappedUserRefreshes = MappedUserRefreshes.find(By(MappedUserRefreshes.mUserId, userId)) match {
     case Full(user) => user.updatedAt(now).saveMe() //if we find user, just update the datetime
-    case _ => MappedUserRefreshes.create.mUserId(userId).saveMe() //if can not find user, just create the new one.
+    case _ => MappedUserRefreshes.create.mUserId(userId).saveMe() //if cannot find user, just create the new one.
   }
 
 }

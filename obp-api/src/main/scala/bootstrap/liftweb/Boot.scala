@@ -293,7 +293,7 @@ class Boot extends MdcLoggable {
       LiftRules.getResource("/").map { url =>
         // this following will get the path of `OBP-API/obp-api/src/main/resources/custom_webapp`
         val source = if (getClass().getClassLoader().getResource("custom_webapp") == null)
-          throw new RuntimeException("If you set `use_custom_webapp = true`, custom_webapp folder can not be Empty!!")
+          throw new RuntimeException("If you set `use_custom_webapp = true`, custom_webapp folder cannot be Empty!!")
         else
           getClass().getClassLoader().getResource("custom_webapp").getPath
         val srcDir = new File(source);

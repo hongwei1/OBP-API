@@ -191,7 +191,7 @@ trait View {
 
   //This is used for distinguishing all the views
   //For now, we need have some system views and user created views.
-  // 1 `System Views` : eg: owner, accountant ... They are the fixed views, developers can not modify it.
+  // 1 `System Views` : eg: owner, accountant ... They are the fixed views, developers cannot modify it.
   // 2 `User Created Views`: Start with _, eg _son, _wife ... The developers can update the fields for these views.
   def isSystem: Boolean
 

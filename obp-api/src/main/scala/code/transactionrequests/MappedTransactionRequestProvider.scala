@@ -124,7 +124,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider {
         .map(_.value)).getOrElse(toAccount.bankRoutingScheme))
       .mOtherBankRoutingAddress(toAccount.attributes.flatMap(_.find(_.name == "BANK_ROUTING_ADDRESS")
         .map(_.value)).getOrElse(toAccount.bankRoutingScheme))
-      // We need transfer CounterpartyTrait to BankAccount, so We lost some data. can not fill the following fields .
+      // We need transfer CounterpartyTrait to BankAccount, so We lost some data. cannot fill the following fields .
       //.mThisBankId(toAccount.bankId.value) 
       //.mThisAccountId(toAccount.accountId.value)
       //.mThisViewId(toAccount.v) 

@@ -6737,7 +6737,7 @@ trait RestConnector_vMar2019 extends Connector with KafkaHelper with MdcLoggable
         }
       }
     }.map(Helper.convertToId(_)) recoverWith {
-      //Can not catch the `StreamTcpException` here, so I used the contains to show the error.
+      //Cannot catch the `StreamTcpException` here, so I used the contains to show the error.
       case e: Exception if (e.getMessage.contains(s"$httpRequestTimeout seconds")) => Future.failed(new Exception(s"$AdapterTimeOurError Please Check Adapter Side, the response should be returned to OBP-Side in $httpRequestTimeout seconds. Details: ${e.getMessage}", e))
       case e: Exception => Future.failed(new Exception(s"$AdapterUnknownError Please Check Adapter Side! Details: ${e.getMessage}", e))
     }

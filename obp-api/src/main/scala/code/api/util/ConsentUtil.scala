@@ -131,7 +131,7 @@ object Consent {
               case Some(reqHeaderConsumerKey) =>
                 if (reqHeaderConsumerKey == consumerFromConsent.key.get)
                   Full(true) // This consent can be used by current application
-                else // This consent can NOT be used by current application
+                else // This consent cannot be used by current application
                   Failure(ErrorMessages.ConsentDoesNotMatchConsumer)
               case None => Failure(ErrorMessages.ConsumerKeyHeaderMissing) // There is no header `Consumer-Key` in request headers
             }
@@ -142,7 +142,7 @@ object Consent {
               .replace("\r", "")
             if (removeBreakLines(clientCert) == removeBreakLines(consumerFromConsent.clientCertificate.get))
               Full(true) // This consent can be used by current application
-            else // This consent can NOT be used by current application
+            else // This consent cannot be used by current application
               Failure(ErrorMessages.ConsentDoesNotMatchConsumer)
           case "NONE" => // This instance does not require validation method
             Full(true)
@@ -708,7 +708,7 @@ object Consent {
           case Some(consumerId) =>
             if (consumerId == consumerFromConsent.consumerId.get)
               Full(true) // This consent can be used by current application
-            else // This consent can NOT be used by current application
+            else // This consent cannot be used by current application
               Failure(ErrorMessages.ConsentDoesNotMatchConsumer)
           case None => Failure(ErrorMessages.ConsumerNotFound) // Consumer cannot be found by logged in user
         }

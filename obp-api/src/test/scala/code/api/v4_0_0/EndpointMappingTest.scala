@@ -112,7 +112,7 @@ class EndpointMappingTest extends V400ServerSetup {
       }
 
       {
-        // error case, can not update with different operationid
+        // error case, cannot update with different operationid
         val request400 = (v4_0_0_Request / "management" / "endpoint-mappings" / customerJson.endpointMappingId.get ).PUT <@(user1)
         val response400 = makePutRequest(request400, write(customerJson.copy(operationId = "newOperationId")))
         Then("We should get a 400")

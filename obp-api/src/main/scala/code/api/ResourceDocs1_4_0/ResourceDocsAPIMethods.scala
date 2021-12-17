@@ -431,7 +431,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
          |
          | You may need some other language resource docs, now we support en and zh , e.g. ?language=zh
          | 
-         | You can filter with api-collection-id, but api-collection-id can not be used with others together. If api-collection-id is used in URL, it will ignore all other parameters. 
+         | You can filter with api-collection-id, but api-collection-id cannot be used with others together. If api-collection-id is used in URL, it will ignore all other parameters. 
          |
          | You can easily pass the cache, use different value for cache-modifier, eg: ?cache-modifier= 123
          |
@@ -631,7 +631,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
                 )
             }
             requestedApiVersion <- NewStyle.function.tryons(s"$InvalidApiVersionString $requestedApiVersionString", 400, callContext) {ApiVersionUtils.valueOf(requestedApiVersionString)}
-            json <- NewStyle.function.tryons(s"$UnknownError Can not create dynamic resource docs.", 400, callContext) {
+            json <- NewStyle.function.tryons(s"$UnknownError Cannot create dynamic resource docs.", 400, callContext) {
               getResourceDocsObpDynamicCached(requestedApiVersion, tags, partialFunctions, languageParam, contentParam,  cacheModifierParam, Some(bankId), false).map(successJsonResponse(_)).get
             }
           } yield {

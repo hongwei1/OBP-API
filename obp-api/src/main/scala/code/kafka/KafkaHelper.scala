@@ -98,7 +98,7 @@ trait KafkaHelper extends ObpActorInit with MdcLoggable {
       .map {jvalue =>
         try {
           if (jvalue == JNull)
-            throw new Exception("Adapter can not return `null` value to OBP-API!")
+            throw new Exception("Adapter cannot return `null` value to OBP-API!")
           else 
             Full(jvalue.extract[T])
         } catch {

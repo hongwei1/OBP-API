@@ -401,10 +401,10 @@ Check the transaction status of a payment initiation.""",
                case "INITIATED" => "RCVD"
              }
 
-             transactionRequestAmount <- NewStyle.function.tryons(s"${UnknownError} transction request amount can not convert to a Decimal",400, callContext) {
+             transactionRequestAmount <- NewStyle.function.tryons(s"${UnknownError} transction request amount cannot convert to a Decimal",400, callContext) {
                BigDecimal(transactionRequest.body.to_sepa_credit_transfers.get.instructedAmount.amount)
              }
-             transactionRequestCurrency <- NewStyle.function.tryons(s"${UnknownError} can not get currency from this paymentId(${paymentId})",400, callContext) {
+             transactionRequestCurrency <- NewStyle.function.tryons(s"${UnknownError} cannot get currency from this paymentId(${paymentId})",400, callContext) {
                transactionRequest.body.to_sepa_credit_transfers.get.instructedAmount.currency
              }
              
@@ -539,7 +539,7 @@ $additionalInstructions
                json.extract[SepaCreditTransfersBerlinGroupV13]
              }
 
-             transDetailsSerialized <- NewStyle.function.tryons (s"$UnknownError Can not serialize in request Json ", 400, callContext){write(transDetailsJson)(Serialization.formats(NoTypeHints))}
+             transDetailsSerialized <- NewStyle.function.tryons (s"$UnknownError Cannot serialize in request Json ", 400, callContext){write(transDetailsJson)(Serialization.formats(NoTypeHints))}
              
              isValidAmountNumber <- NewStyle.function.tryons(s"$InvalidNumber Current input is  ${transDetailsJson.instructedAmount.amount} ", 400, callContext) {
                BigDecimal(transDetailsJson.instructedAmount.amount)

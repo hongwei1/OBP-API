@@ -1827,8 +1827,8 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
 
           counterpartyName <- tryo {
             internalTransaction.counterpartyName
-          } ?~! s"$InvalidConnectorResponseForGetTransaction. Can not get counterpartyName from Adapter. "
-          //2018-07-18, here we can not get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
+          } ?~! s"$InvalidConnectorResponseForGetTransaction. Cannot get counterpartyName from Adapter. "
+          //2018-07-18, here we cannot get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
           counterpartyId <- Full(APIUtil.createImplicitCounterpartyId(bankAccount.bankId.value, bankAccount.accountId.value, counterpartyName,counterpartyName,counterpartyName))
           counterparty <- createInMemoryCounterparty(bankAccount, counterpartyName, counterpartyId)
 
@@ -1870,7 +1870,7 @@ trait KafkaMappedConnector_vJune2017 extends Connector with KafkaHelper with Mdc
             new SimpleDateFormat(DateWithDay2).parse(internalTransaction.completedDate)
           } ?~! s"$InvalidConnectorResponseForGetTransaction Wrong completedDate format should be $DateWithDay2, current is ${internalTransaction.completedDate}"
           counterpartyCore <- Full(CounterpartyCore(
-            //2018-07-18, here we can not get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
+            //2018-07-18, here we cannot get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
             counterpartyId = APIUtil.createImplicitCounterpartyId(bankAccount.bankId.value, bankAccount.accountId.value, internalTransaction.counterpartyName,
                                                                   internalTransaction.counterpartyName,internalTransaction.counterpartyName),
             counterpartyName = internalTransaction.counterpartyName,

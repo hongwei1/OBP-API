@@ -928,7 +928,7 @@ trait APIMethods400 {
                     write(transactionRequestBodyRefundJson)(Serialization.formats(NoTypeHints))
                   }
 
-                  _ <- Helper.booleanToFuture(s"${RefundedTransaction} Current input amount is: '${transDetailsJson.value.amount}'. It can not be more than the original amount(${(transaction.amount).abs})", cc=callContext) {
+                  _ <- Helper.booleanToFuture(s"${RefundedTransaction} Current input amount is: '${transDetailsJson.value.amount}'. It cannot be more than the original amount(${(transaction.amount).abs})", cc=callContext) {
                     (transaction.amount).abs  >= transactionAmountNumber
                   }
                   //TODO, we need additional field to guarantee the transaction is refunded...
@@ -2796,7 +2796,7 @@ trait APIMethods400 {
               json.extract[PostCreateUserWithRolesJsonV400]
             }
 
-            //provider must start with dauth., can not create other provider users.
+            //provider must start with dauth., cannot create other provider users.
             _ <- Helper.booleanToFuture(s"$InvalidUserProvider The user.provider must be start with 'dauth.'", cc=Some(cc)) {
               postedData.provider.startsWith("dauth.")
             }
@@ -3917,7 +3917,7 @@ trait APIMethods400 {
               bank.id.length > 3
             }
 
-            _ <- Helper.booleanToFuture(failMsg = s"$InvalidJsonFormat BANK_ID can not contain space characters", cc=cc.callContext) {
+            _ <- Helper.booleanToFuture(failMsg = s"$InvalidJsonFormat BANK_ID cannot contain space characters", cc=cc.callContext) {
               !bank.id.contains(" ")
             }
 
@@ -4307,7 +4307,7 @@ trait APIMethods400 {
             postJson <- NewStyle.function.tryons(failMsg, 400, cc.callContext) {
               json.extract[PostCreateUserAccountAccessJsonV400]
             }
-            //provider must start with dauth., can not create other provider users.
+            //provider must start with dauth., cannot create other provider users.
             _ <- Helper.booleanToFuture(s"$InvalidUserProvider The user.provider must be start with 'dauth.'", cc=Some(cc)) {
               postJson.provider.startsWith("dauth.")
             }
@@ -10474,7 +10474,7 @@ trait APIMethods400 {
       "PUT",
       "/management/endpoints/OPERATION_ID/tags/ENDPOINT_TAG_ID",
       "Update System Level Endpoint Tag",
-      s"""Update System Level Endpoint Tag, you can only update the tag_name here, operation_id can not be updated.""",
+      s"""Update System Level Endpoint Tag, you can only update the tag_name here, operation_id cannot be updated.""",
       endpointTagJson400,
       bankLevelEndpointTagResponseJson400,
       List(
@@ -10620,7 +10620,7 @@ trait APIMethods400 {
       "PUT",
       "/management/banks/BANK_ID/endpoints/OPERATION_ID/tags/ENDPOINT_TAG_ID",
       "Update Bank Level Endpoint Tag",
-      s"""Update Endpoint Tag, you can only update the tag_name here, operation_id can not be updated.""",
+      s"""Update Endpoint Tag, you can only update the tag_name here, operation_id cannot be updated.""",
       endpointTagJson400,
       bankLevelEndpointTagResponseJson400,
       List(
@@ -10960,7 +10960,7 @@ trait APIMethods400 {
   /**
    * This method will check all the roles the request user already has and the request roles:
    * It will find the roles the requestUser already have, then show the error to the developer.
-   * (We can not grant the same roles to the request user twice)
+   * (We cannot grant the same roles to the request user twice)
    */
   private def assertTargetUserLacksRoles(userId:String, requestedEntitlements: List[CreateEntitlementJSON], callContext: Option[CallContext]) = {
     //1st:  get all the entitlements for the user:
@@ -10972,7 +10972,7 @@ trait APIMethods400 {
     //2rd: find the duplicated ones:
     val duplicatedRoles = userRoles.filter(targetRoles)
     
-    //3rd: We can not grant the roles again, so we show the error to the developer.
+    //3rd: We cannot grant the roles again, so we show the error to the developer.
     if(duplicatedRoles.size >0){
       val errorMessages = s"$EntitlementAlreadyExists user_id($userId) ${duplicatedRoles.mkString(",")}"
         Helper.booleanToFuture(errorMessages, cc=callContext) {false}
@@ -11064,17 +11064,18 @@ trait APIMethods400 {
       _ <- Helper.booleanToFuture(errorMsg, cc = cc.callContext) {
         duplicatedUrl.isEmpty
       }
-      dynamicEndpointInfo <- NewStyle.function.tryons(InvalidJsonFormat+"Can not convert to OBP Internal Resource Docs", 400, cc.callContext) {
-        DynamicEndpointHelper.buildDynamicEndpointInfo(openAPI, "current_request_json_body", bankId)
-      }
-      roles <- NewStyle.function.tryons(InvalidJsonFormat+"Can not generate OBP roles", 400, cc.callContext) {
+      dynamicEndpointInfo = DynamicEndpointHelper.buildDynamicEndpointInfo(openAPI, "current_request_json_body", bankId)
+      //<- NewStyle.function.tryons(InvalidJsonFormat+"Cannot convert to OBP Internal Resource Docs", 400, cc.callContext) {
+        
+      //}
+      roles <- NewStyle.function.tryons(InvalidJsonFormat+"Cannot generate OBP roles", 400, cc.callContext) {
         DynamicEndpointHelper.getRoles(dynamicEndpointInfo)
       }
-      _ <- NewStyle.function.tryons(InvalidJsonFormat+"Can not generate OBP external Resource Docs", 400, cc.callContext) {
+      _ <- NewStyle.function.tryons(InvalidJsonFormat+"Cannot generate OBP external Resource Docs", 400, cc.callContext) {
         JSONFactory1_4_0.createResourceDocsJson(dynamicEndpointInfo.resourceDocs.toList, false)
       }
       (dynamicEndpoint, callContext) <- NewStyle.function.createDynamicEndpoint(bankId, cc.userId, postedJson.swaggerString, cc.callContext)
-      _ <- NewStyle.function.tryons(InvalidJsonFormat+s"Can not grant these roles ${roles.toString} ", 400, cc.callContext) {
+      _ <- NewStyle.function.tryons(InvalidJsonFormat+s"Cannot grant these roles ${roles.toString} ", 400, cc.callContext) {
         roles.map(role => Entitlement.entitlement.vend.addEntitlement(bankId.getOrElse(""), cc.userId, role.toString()))
       }
     } yield {

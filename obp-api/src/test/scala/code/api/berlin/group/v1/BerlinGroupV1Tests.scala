@@ -18,7 +18,7 @@ class BerlinGroupV1Tests extends BerlinGroupV1ServerSetup with DefaultUsers {
   
       Then("We should get a 200 ")
       response.code should equal(200)
-//      TODO because of the links is a trait, we can not extract automatically here.
+//      TODO because of the links is a trait, we cannot extract automatically here.
 //      logger.info(response.body)
 //      val coreAccountsJsonV1 = response.body.extract[CoreAccountsJsonV1]
     }

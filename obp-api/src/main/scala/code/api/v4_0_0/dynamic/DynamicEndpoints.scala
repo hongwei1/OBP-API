@@ -129,7 +129,7 @@ case class CompiledObjects(exampleRequestBody: Option[JValue], successResponseBo
 
     //If the requestBody is PrimaryDataBody, return None. otherwise, return the exampleRequestBody:Option[JValue]
     // In side OBP resourceDoc, requestBody and successResponse must be Product type，
-    // both can not be the primitive type: `boolean， string， kong， int， long， double` and List. 
+    // both cannot be the primitive type: `boolean， string， kong， int， long， double` and List. 
     // PrimaryDataBody is used for OBP mapping these types.
     // Note: List and object will generate the `Case class`, `case class` must not be PrimaryDataBody. only these two 
     // possibilities: case class or PrimaryDataBody

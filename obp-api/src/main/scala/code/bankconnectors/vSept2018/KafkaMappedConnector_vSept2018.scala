@@ -104,8 +104,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       basicUserAuthContexts <- cc.gatewayLoginRequestPayload match {
         case None => 
           for{
-            user <- Users.users.vend.getUserByUserName(username) ?~! "getAuthInfoFirstCbsCall: can not get user object here."
-            userAuthContexts<- UserAuthContextProvider.userAuthContextProvider.vend.getUserAuthContextsBox(user.userId)?~! "getAuthInfoFirstCbsCall: can not get userAuthContexts object here."
+            user <- Users.users.vend.getUserByUserName(username) ?~! "getAuthInfoFirstCbsCall: cannot get user object here."
+            userAuthContexts<- UserAuthContextProvider.userAuthContextProvider.vend.getUserAuthContextsBox(user.userId)?~! "getAuthInfoFirstCbsCall: cannot get userAuthContexts object here."
             basicUserAuthContexts = JsonFactory_vSept2018.createBasicUserAuthContextJson(userAuthContexts)
           } yield
             basicUserAuthContexts
@@ -131,9 +131,9 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
                          cbs_id = "",
                          session_id = Some(""))))
       cbs_token <- gatewayLoginPayLoad.cbs_token.orElse(Full(""))
-      isFirst <- tryo(gatewayLoginPayLoad.is_first) ?~! "getAuthInfo:is_first can not be got from gatewayLoginPayLoad!"
-      correlationId <- tryo(cc.correlationId) ?~! "getAuthInfo: User id can not be got from callContext!"
-      sessionId <- tryo(cc.sessionId.getOrElse(""))?~! "getAuthInfo: session id can not be got from callContext!"
+      isFirst <- tryo(gatewayLoginPayLoad.is_first) ?~! "getAuthInfo:is_first cannot be got from gatewayLoginPayLoad!"
+      correlationId <- tryo(cc.correlationId) ?~! "getAuthInfo: User id cannot be got from callContext!"
+      sessionId <- tryo(cc.sessionId.getOrElse(""))?~! "getAuthInfo: session id cannot be got from callContext!"
       permission <- Views.views.vend.getPermissionForUser(user)?~! "getAuthInfo: No permission for this user"
       views <- tryo(permission.views)?~! "getAuthInfo: No views for this user"
       linkedCustomers <- tryo(CustomerX.customerProvider.vend.getCustomersByUserId(user.userId))?~! "getAuthInfo: No linked customers for this user"
@@ -1720,8 +1720,8 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
           counterpartyName <- tryo {
             internalTransaction.counterpartyName
-          } ?~! s"$InvalidConnectorResponseForGetTransaction. Can not get counterpartyName from Adapter. "
-          //2018-07-18, here we can not get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
+          } ?~! s"$InvalidConnectorResponseForGetTransaction. Cannot get counterpartyName from Adapter. "
+          //2018-07-18, here we cannot get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
           counterpartyId <- Full(APIUtil.createImplicitCounterpartyId(bankAccount.bankId.value, bankAccount.accountId.value, counterpartyName,counterpartyName,counterpartyName))
           counterparty <- createInMemoryCounterparty(bankAccount, counterpartyName, counterpartyId)
 
@@ -1775,7 +1775,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
             new SimpleDateFormat(DateWithDay2).parse(internalTransaction.completedDate)
           } ?~! s"$InvalidConnectorResponseForGetTransaction Wrong completedDate format should be $DateWithDay2, current is ${internalTransaction.completedDate}"
           counterpartyCore <- Full(CounterpartyCore(
-            //2018-07-18, here we can not get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
+            //2018-07-18, here we cannot get enough data from Adapter, so we only use counterpartyName set to otherAccountRoutingScheme and otherAccountRoutingAddress. 
             counterpartyId = APIUtil.createImplicitCounterpartyId(bankAccount.bankId.value, bankAccount.accountId.value, internalTransaction.counterpartyName,
                                                                   internalTransaction.counterpartyName,internalTransaction.counterpartyName),
             counterpartyName = internalTransaction.counterpartyName,

@@ -1179,9 +1179,9 @@ object NewStyle {
       callContext: Option[CallContext]
     ): OBPReturnType[ChallengeTrait] = {
       if(challengeType == ChallengeType.BERLINGROUP_PAYMENT && transactionRequestId.isEmpty ){
-        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_PAYMENT challengeType: paymentId($transactionRequestId) ")}
+        Future{ throw new Exception(s"$UnknownError The following parameters cannot be empty for BERLINGROUP_PAYMENT challengeType: paymentId($transactionRequestId) ")}
       }else if(challengeType == ChallengeType.BERLINGROUP_CONSENT && consentId.isEmpty ){
-        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_CONSENT challengeType: consentId($consentId) ")}
+        Future{ throw new Exception(s"$UnknownError The following parameters cannot be empty for BERLINGROUP_CONSENT challengeType: consentId($consentId) ")}
       }else{
         Connector.connector.vend.validateChallengeAnswerC2(
           transactionRequestId: Option[String],
@@ -1218,9 +1218,9 @@ object NewStyle {
       callContext: Option[CallContext]
     ) : OBPReturnType[List[ChallengeTrait]] = {
       if(challengeType == ChallengeType.BERLINGROUP_PAYMENT && (transactionRequestId.isEmpty || scaStatus.isEmpty || scaMethod.isEmpty)){
-        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_PAYMENT challengeType: paymentId($transactionRequestId), scaStatus($scaStatus), scaMethod($scaMethod) ")}
+        Future{ throw new Exception(s"$UnknownError The following parameters cannot be empty for BERLINGROUP_PAYMENT challengeType: paymentId($transactionRequestId), scaStatus($scaStatus), scaMethod($scaMethod) ")}
       }else if(challengeType == ChallengeType.BERLINGROUP_CONSENT && (consentId.isEmpty || scaStatus.isEmpty || scaMethod.isEmpty)){
-        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_CONSENT challengeType: consentId($consentId), scaStatus($scaStatus), scaMethod($scaMethod) ")}
+        Future{ throw new Exception(s"$UnknownError The following parameters cannot be empty for BERLINGROUP_CONSENT challengeType: consentId($consentId), scaStatus($scaStatus), scaMethod($scaMethod) ")}
       }else{
         Connector.connector.vend.createChallengesC2(
           userIds: List[String],
@@ -1969,7 +1969,7 @@ object NewStyle {
         invitees: List[Invitee],
         callContext: Option[CallContext]
     ) map {
-        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Can not createMeeting in the backend. ", 400), i._2)
+        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Cannot createMeeting in the backend. ", 400), i._2)
       }
     }
     
@@ -1983,7 +1983,7 @@ object NewStyle {
         user: User,
         callContext: Option[CallContext]
       ) map {
-          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Can not getMeetings in the backend. ", 400), i._2)
+          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Cannot getMeetings in the backend. ", 400), i._2)
         }
       }
     
@@ -2006,7 +2006,7 @@ object NewStyle {
     def getCoreBankAccountsFuture(bankIdAccountIds: List[BankIdAccountId], callContext: Option[CallContext]): OBPReturnType[List[CoreAccount]] = 
       {
         Connector.connector.vend.getCoreBankAccounts(bankIdAccountIds, callContext) map {
-          i => (unboxFullOrFail(i, callContext, s"$InvalidConnectorResponse Can not ${nameOf(getCoreBankAccountsFuture(bankIdAccountIds, callContext))} in the backend. ", 400))
+          i => (unboxFullOrFail(i, callContext, s"$InvalidConnectorResponse Cannot ${nameOf(getCoreBankAccountsFuture(bankIdAccountIds, callContext))} in the backend. ", 400))
         }
       }
 
@@ -2034,7 +2034,7 @@ object NewStyle {
                                 callContext: Option[CallContext]): OBPReturnType[KycCheck] = {
       Connector.connector.vend.createOrUpdateKycCheck(bankId, customerId, id, customerNumber, date, how, staffUserId, mStaffName, mSatisfied, comments, callContext)
        .map {
-          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Can not create or update KycCheck in the backend. ", 400), i._2)
+          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Cannot create or update KycCheck in the backend. ", 400), i._2)
        }
     }
 
@@ -2060,7 +2060,7 @@ object NewStyle {
           expiryDate,
           callContext)
         .map {
-          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Can not create or update KycDocument in the backend. ", 400), i._2)
+          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Cannot create or update KycDocument in the backend. ", 400), i._2)
         }
     }
 
@@ -2086,7 +2086,7 @@ object NewStyle {
         relatesToKycCheckId,
         callContext
       ).map {
-        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Can not create or update KycMedia in the backend. ", 400), i._2)
+        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Cannot create or update KycMedia in the backend. ", 400), i._2)
       }
     }
 
@@ -2104,7 +2104,7 @@ object NewStyle {
         date,
         callContext
       ).map {
-        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Can not create or update KycStatus in the backend. ", 400), i._2)
+        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse Cannot create or update KycStatus in the backend. ", 400), i._2)
       }
     }
 
@@ -2154,7 +2154,7 @@ object NewStyle {
         fromDepartment : String,
         fromPerson : String,
         callContext: Option[CallContext]) map {
-        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse  Can not create message in the backend.", 400), i._2)
+        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse  Cannot create message in the backend.", 400), i._2)
       }
     }
 
@@ -3143,14 +3143,14 @@ object NewStyle {
     def createJsonSchemaValidation(validation: JsonValidation, callContext: Option[CallContext]): OBPReturnType[JsonValidation] =
       Future {
         val newValidation = JsonSchemaValidationProvider.validationProvider.vend.create(validation)
-        val errorMsg = s"$UnknownError Can not create JSON Schema Validation in the backend. "
+        val errorMsg = s"$UnknownError Cannot create JSON Schema Validation in the backend. "
         (unboxFullOrFail(newValidation, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonSchemaValidation(operationId: String, jsonschema: String, callContext: Option[CallContext]): OBPReturnType[JsonValidation] =
       Future {
         val updatedValidation = JsonSchemaValidationProvider.validationProvider.vend.update(JsonValidation(operationId, jsonschema))
-        val errorMsg = s"$UnknownError Can not update JSON Schema Validation in the backend. "
+        val errorMsg = s"$UnknownError Cannot update JSON Schema Validation in the backend. "
         (unboxFullOrFail(updatedValidation, callContext, errorMsg, 400), callContext)
       }
 
@@ -3182,14 +3182,14 @@ object NewStyle {
     def createAuthenticationTypeValidation(AuthTypeValidation: JsonAuthTypeValidation, callContext: Option[CallContext]): OBPReturnType[JsonAuthTypeValidation] =
       Future {
         val newAuthTypeValidation = AuthenticationTypeValidationProvider.validationProvider.vend.create(AuthTypeValidation)
-        val errorMsg = s"$UnknownError Can not create Authentication Type Validation in the backend. "
+        val errorMsg = s"$UnknownError Cannot create Authentication Type Validation in the backend. "
         (unboxFullOrFail(newAuthTypeValidation, callContext, errorMsg, 400), callContext)
       }
 
     def updateAuthenticationTypeValidation(operationId: String, authTypes: List[AuthenticationType], callContext: Option[CallContext]): OBPReturnType[JsonAuthTypeValidation] =
       Future {
         val updatedAuthTypeValidation = AuthenticationTypeValidationProvider.validationProvider.vend.update(JsonAuthTypeValidation(operationId, authTypes))
-        val errorMsg = s"$UnknownError Can not update Authentication Type Validation in the backend. "
+        val errorMsg = s"$UnknownError Cannot update Authentication Type Validation in the backend. "
         (unboxFullOrFail(updatedAuthTypeValidation, callContext, errorMsg, 400), callContext)
       }
 
@@ -3221,14 +3221,14 @@ object NewStyle {
     def createJsonConnectorMethod(connectorMethod: JsonConnectorMethod, callContext: Option[CallContext]): OBPReturnType[JsonConnectorMethod] =
       Future {
         val newInternalConnector = ConnectorMethodProvider.provider.vend.create(connectorMethod)
-        val errorMsg = s"$UnknownError Can not create Connector Method in the backend. "
+        val errorMsg = s"$UnknownError Cannot create Connector Method in the backend. "
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonConnectorMethod(connectorMethodId: String, connectorMethodBody: String, callContext: Option[CallContext]): OBPReturnType[JsonConnectorMethod] =
       Future {
         val updatedConnectorMethod = ConnectorMethodProvider.provider.vend.update(connectorMethodId, connectorMethodBody)
-        val errorMsg = s"$UnknownError Can not update Connector Method in the backend. "
+        val errorMsg = s"$UnknownError Cannot update Connector Method in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }
 
@@ -3265,14 +3265,14 @@ object NewStyle {
     def createJsonDynamicResourceDoc(dynamicResourceDoc: JsonDynamicResourceDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicResourceDoc] =
       Future {
         val newInternalConnector = DynamicResourceDocProvider.provider.vend.create(dynamicResourceDoc)
-        val errorMsg = s"$UnknownError Can not create Dynamic Resource Doc in the backend. "
+        val errorMsg = s"$UnknownError Cannot create Dynamic Resource Doc in the backend. "
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonDynamicResourceDoc(entity: JsonDynamicResourceDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicResourceDoc] =
       Future {
         val updatedConnectorMethod = DynamicResourceDocProvider.provider.vend.update(entity: JsonDynamicResourceDoc)
-        val errorMsg = s"$UnknownError Can not update Dynamic Resource Doc in the backend. "
+        val errorMsg = s"$UnknownError Cannot update Dynamic Resource Doc in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }
 
@@ -3303,14 +3303,14 @@ object NewStyle {
     def createJsonDynamicMessageDoc(dynamicMessageDoc: JsonDynamicMessageDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicMessageDoc] =
       Future {
         val newInternalConnector = DynamicMessageDocProvider.provider.vend.create(dynamicMessageDoc)
-        val errorMsg = s"$UnknownError Can not create Dynamic Message Doc in the backend. "
+        val errorMsg = s"$UnknownError Cannot create Dynamic Message Doc in the backend. "
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonDynamicMessageDoc(entity: JsonDynamicMessageDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicMessageDoc] =
       Future {
         val updatedConnectorMethod = DynamicMessageDocProvider.provider.vend.update(entity: JsonDynamicMessageDoc)
-        val errorMsg = s"$UnknownError Can not update Dynamic Message Doc  in the backend. "
+        val errorMsg = s"$UnknownError Cannot update Dynamic Message Doc  in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }
 

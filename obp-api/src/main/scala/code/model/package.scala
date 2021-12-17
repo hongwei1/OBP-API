@@ -33,7 +33,7 @@ package object model {
       counterparty.thisAccountId,
       counterparty.counterpartyId,
       counterparty.counterpartyName
-    ).openOrThrowException("Can not getOrCreateMetadata !")
+    ).openOrThrowException("Cannot getOrCreateMetadata !")
   }
 
   implicit class TransactionExtended(transaction: Transaction) {
