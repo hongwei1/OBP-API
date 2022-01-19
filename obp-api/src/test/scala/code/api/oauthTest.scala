@@ -39,12 +39,14 @@ import code.model.dataAccess.{AuthUser, ResourceUser}
 import code.model.{Consumer => OBPConsumer, Token => OBPToken}
 import code.setup.ServerSetup
 import code.util.Helper.MdcLoggable
+import com.gargoylesoftware.htmlunit.{BrowserVersion, WebClient}
 import dispatch.Defaults._
 import dispatch._
 import net.liftweb.common.{Box, Failure}
 import net.liftweb.http.LiftRules
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers._
+import org.openqa.selenium.htmlunit.HtmlUnitDriver
 import org.scalatest._
 import org.scalatestplus.selenium._
 
@@ -133,7 +135,22 @@ class OAuthTest extends ServerSetup {
   }
 
   case class Browser() extends HtmlUnit with MdcLoggable{
-    implicit val driver = webDriver
+    implicit val driver =  new HtmlUnitDriver(BrowserVersion.CHROME) {
+      override protected def modifyWebClient(client: WebClient): WebClient = {
+        val webClient = super.modifyWebClient(client)
+        // you might customize the client here
+        webClient.getOptions.setJavaScriptEnabled(true)
+        webClient.getOptions.setCssEnabled(false)
+        webClient.getOptions.setTimeout(3500)
+        webClient.getOptions.setThrowExceptionOnScriptError(false)
+        webClient.getOptions.setThrowExceptionOnFailingStatusCode(false)
+        import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController
+        webClient.setAjaxController(new NicelyResynchronizingAjaxController)
+        webClient.waitForBackgroundJavaScript(3500)
+        webClient.setJavaScriptTimeout(8000) 
+        webClient
+      }
+    }
     def getVerifier(loginPage: String, userName: String, password: String) : Box[String] = {
       tryo{
         go.to(loginPage)

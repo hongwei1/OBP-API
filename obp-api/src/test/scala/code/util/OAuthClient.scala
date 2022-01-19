@@ -28,7 +28,6 @@ TESOBE (http://www.tesobe.com/)
 package code.util
 
 import java.net.{URI, URLDecoder}
-
 import code.api.util.APIUtil
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.{Box, Empty, Failure, Full}
@@ -36,6 +35,7 @@ import oauth.signpost.basic.{DefaultOAuthConsumer, DefaultOAuthProvider}
 import oauth.signpost.{OAuthConsumer, OAuthProvider}
 import org.apache.http.client.utils.URLEncodedUtils
 import org.openqa.selenium._
+import com.gargoylesoftware.htmlunit.{BrowserVersion, WebClient}
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
 import code.api.oauth1a.OauthParams._
 import scala.collection.JavaConverters._
@@ -131,7 +131,23 @@ object OAuthClient extends MdcLoggable {
     val authUrl = provider.oAuthProvider.retrieveRequestToken(credential.consumer, "http://dummyurl.com/oauthcallback")
 
     //use selenium to submit login form
-    val webdriver = new HtmlUnitDriver()
+    val webdriver = new HtmlUnitDriver(BrowserVersion.CHROME) {
+      override protected def modifyWebClient(client: WebClient): WebClient = {
+        val webClient = super.modifyWebClient(client)
+        // you might customize the client here
+        webClient.getOptions.setJavaScriptEnabled(true)
+        webClient.getOptions.setCssEnabled(false)
+        webClient.getOptions.setTimeout(3500)
+        webClient.getOptions.setThrowExceptionOnScriptError(false)
+        webClient.getOptions.setThrowExceptionOnFailingStatusCode(false)
+        import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController
+        webClient.setAjaxController(new NicelyResynchronizingAjaxController)
+        webClient.waitForBackgroundJavaScript(3500)
+        webClient.setJavaScriptTimeout(8000)
+        webClient
+      }
+    }
+    
     webdriver.get(authUrl)
     webdriver.findElement(By.xpath("//input[@name='username']")).sendKeys(username)
     val element = webdriver.findElement(By.xpath("//input[@name='password']"))
