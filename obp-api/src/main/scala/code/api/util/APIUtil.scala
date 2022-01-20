@@ -103,7 +103,9 @@ import javassist.{ClassPool, LoaderClassPath}
 import javassist.expr.{ExprEditor, MethodCall}
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.reflect.FieldUtils
 
+import java.lang.reflect.Field
 import java.security.AccessControlException
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -4161,4 +4163,17 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       |* You can define a collection (also known as baskets or buckets) of products using Product Collections.
       |
       """.stripMargin
+}
+
+
+object API extends App{
+  private val declaredFields: Array[Field] = Props.getClass.getDeclaredFields
+  private val fields: Array[Field] = Props.getClass.getFields
+  private val a2: Box[String] = Props.get("connector")
+  val newProps123 :scala.collection.Map[String, String] = Map("AL" -> "Alabama", "AK" -> "Alaska")
+  private val before: List[Map[String, String]] = FieldUtils.readDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", true).asInstanceOf[List[Map[String, String]]]
+  FieldUtils.writeDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", List(newProps123),  true)
+  private val after: List[Map[String, String]] = FieldUtils.readDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", true).asInstanceOf[List[Map[String, String]]]
+  private val a1: Box[String] = Props.get("AL")
+  println(12)
 }
