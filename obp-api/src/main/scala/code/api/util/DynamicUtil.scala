@@ -142,6 +142,12 @@ object DynamicUtil {
     }
   }
 
+  /**
+   * 
+   * @param clazz Class, the class object of the Target Class.
+   * @param predicate function: String => Boolean, default is _ => true. (always return true)
+   * @return
+   */
   def getDynamicCodeDependentMethods(clazz: Class[_], predicate:  String => Boolean = _ => true): List[(String, String, String)] = {
     val className = clazz.getTypeName
     val listBuffer = new ListBuffer[(String, String, String)]()
@@ -391,4 +397,11 @@ object DynamicUtil {
       }
     }
   }
+}
+
+object myApp extends App{
+  val pool = ClassPool.getDefault
+  val cc = pool.get("test.Rectangle")
+  cc.setSuperclass(pool.get("test.Point"))
+  
 }

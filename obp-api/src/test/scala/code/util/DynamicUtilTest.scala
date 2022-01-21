@@ -233,4 +233,11 @@ class DynamicUtilTest extends FlatSpec with Matchers {
     val zson2Object: Product = DynamicUtil.toCaseObject(jValueZson2)
     zson2Object.isInstanceOf[Product] should be (true)
   }
+  
+  "DynamicUtil.getDynamicCodeDependentMethods method" should "work well" taggedAs DynamicUtilsTag in {
+    
+    val jValueZson2  = json.parse(zson2)
+    val zson2Object: Product = DynamicUtil.getDynamicCodeDependentMethods(jValueZson2)
+    zson2Object.isInstanceOf[Product] should be (true)
+  }
 }
