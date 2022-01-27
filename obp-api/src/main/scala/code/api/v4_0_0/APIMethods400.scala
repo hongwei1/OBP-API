@@ -5671,50 +5671,75 @@ trait APIMethods400 {
                   Future.successful((EndpointMappingCommons(None,"","","", None), callContext))
                 }
                 requestMappingString = endpointMapping.requestMapping
-//                requestMappingJvalue = net.liftweb.json.parse(requestMappingString)
+                requestMappingJvalue = net.liftweb.json.parse(requestMappingString)
                 responseMappingString = endpointMapping.responseMapping
                 responseMappingJvalue = net.liftweb.json.parse(responseMappingString)
 
-                (entityName, entityIdKey, entityIdValueFromUrl) <- if (method.value.equalsIgnoreCase("get")) {
+                responseBody <- if (method.value.equalsIgnoreCase("get")) {
+                  for{
+                    (entityName, entityIdKey, entityIdValueFromUrl) <- NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+                      DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+                    }
+                    dynamicData <- Future{DynamicDataProvider.connectorMethodProvider.vend.getAll(entityName)}
+                    dynamicJsonData = JArray(dynamicData.map(it => net.liftweb.json.parse(it.dataJson)).map(_.asInstanceOf[JObject]))
+
+                    //                //We only get the value, but not sure the field name of it.
+                    //                // we can get the field name from the mapping: `primary_query_key`
+                    //                //requestBodyMapping --> Convert `RequestJson` --> `DynamicEntity Model.`  
+                    //                targetRequestBody = JsonUtils.buildJson(json, requestBodySchemeJvalue)
+                    //                requestBody = targetRequestBody match {
+                    //                  case j@JObject(_) => Some(j)
+                    //                  case _ => None
+                    //                }
+                    result = if (method.value.equalsIgnoreCase("get") && entityIdValueFromUrl.isDefined) {
+                      DynamicEndpointHelper.getObjectByKeyValuePair(dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
+                    } else {
+                      val newParams = DynamicEndpointHelper.convertToMappingQueryParams(responseMappingJvalue, params)
+                      DynamicEndpointHelper.getObjectsByParams(dynamicJsonData, newParams)
+                    } 
+                    responseBodyScheme = DynamicEndpointHelper.prepareMappingFields(responseMappingJvalue)
+                    responseBody = JsonUtils.buildJson(result, responseBodyScheme)
+                  } yield {
+                    responseBody
+                  }
+                  
+                } else if (method.value.equalsIgnoreCase("post")) { 
+                  for{
+                    (entityName, entityIdKey, entityIdValueFromUrl) <-  NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+                      DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+                    }
+                    entityBody = JsonUtils.buildJson(json,requestMappingJvalue)
+                    dynamicData = List(DynamicDataProvider.connectorMethodProvider.vend.save(entityName, entityBody.asInstanceOf[JObject]).head)
+                    dynamicJsonData = JArray(dynamicData.map(it => net.liftweb.json.parse(it.dataJson)).map(_.asInstanceOf[JObject]))
+                    responseBodyScheme = DynamicEndpointHelper.prepareMappingFields(responseMappingJvalue)
+                    newParams = DynamicEndpointHelper.convertToMappingQueryParams(responseMappingJvalue, params)
+                    result = DynamicEndpointHelper.getObjectsByParams(dynamicJsonData, newParams)
+                    responseBody = JsonUtils.buildJson(result, responseBodyScheme)
+                  } yield {
+                    responseBody
+                  }
+                } else if (method.value.equalsIgnoreCase("delete")) {
+//                  for{
+//                    (entityName, entityIdKey, entityIdValueFromUrl) <- NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+//                      DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+//                    }
+//                    dynamicData = DynamicDataProvider.connectorMethodProvider.vend.getAll(entityName)
+//                    dynamicJsonData = JArray(dynamicData.map(it => net.liftweb.json.parse(it.dataJson)).map(_.asInstanceOf[JObject]))
+//                  }yield{
+//                    DynamicEndpointHelper.deleteObjectByKeyValuePair(dynamicData, dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
+//                  }
+                  throw new RuntimeException(s"$NotImplemented Only support Http Method `GET` yet, current  is ${method.value}")
+                } else if (method.value.equalsIgnoreCase("put")) {
                   NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
-                    DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
-                  } 
-                } else {
+                    DynamicEndpointHelper.getEntityNameKeyAndValue(requestMappingString, pathParams)
+                  }
+                  throw new RuntimeException(s"$NotImplemented Only support Http Method `GET` yet, current  is ${method.value}")
+                }else {
                   NewStyle.function.tryons(s"$InvalidEndpointMapping `request_mapping` must  be linked to at least one valid dynamic entity!", 400, cc.callContext) {
                     DynamicEndpointHelper.getEntityNameKeyAndValue(requestMappingString, pathParams)
                   }
-                }
-
-                dynamicData <- Future{DynamicDataProvider.connectorMethodProvider.vend.getAll(entityName)}
-                dynamicJsonData = JArray(dynamicData.map(it => net.liftweb.json.parse(it.dataJson)).map(_.asInstanceOf[JObject]))
-
-                //                //We only get the value, but not sure the field name of it.
-                //                // we can get the field name from the mapping: `primary_query_key`
-                //                //requestBodyMapping --> Convert `RequestJson` --> `DynamicEntity Model.`  
-                //                targetRequestBody = JsonUtils.buildJson(json, requestBodySchemeJvalue)
-                //                requestBody = targetRequestBody match {
-                //                  case j@JObject(_) => Some(j)
-                //                  case _ => None
-                //                }
-
-                result = if (method.value.equalsIgnoreCase("get") && entityIdValueFromUrl.isDefined) {
-                  DynamicEndpointHelper.getObjectByKeyValuePair(dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
-                } else if (method.value.equalsIgnoreCase("get") && entityIdValueFromUrl.isEmpty) {
-                  val newParams = DynamicEndpointHelper.convertToMappingQueryParams(responseMappingJvalue, params)
-                  DynamicEndpointHelper.getObjectsByParams(dynamicJsonData, newParams)
-//                } else if (method.value.equalsIgnoreCase("post")) {
-//                  //this post need the dynamicId to update it.
-//                  //1st: we need to find the data by json.field1 --> dynamicId --> update the table.
-//                  dynamicJsonData
-//                } else if (method.value.equalsIgnoreCase("put")) {
-//                  dynamicJsonData
-                } else if (method.value.equalsIgnoreCase("delete") && entityIdValueFromUrl.isDefined) {
-                  DynamicEndpointHelper.deleteObjectByKeyValuePair(dynamicData, dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
-                } else {
                   throw new RuntimeException(s"$NotImplemented Only support Http Method `GET` yet, current  is ${method.value}")
                 }
-                responseBodyScheme = DynamicEndpointHelper.prepareMappingFields(responseMappingJvalue)
-                responseBody = JsonUtils.buildJson(result, responseBodyScheme)
               } yield{
                 (Full(("code", 200) ~ ("value", responseBody)), callContext)
               }

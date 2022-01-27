@@ -2,6 +2,7 @@ package code.api.v4_0_0
 
 import code.DynamicData.DynamicDataT
 import code.api.v4_0_0.dynamic.DynamicEndpointHelper
+import com.openbankproject.commons.util.JsonUtils
 import net.liftweb.json
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.{Formats, JArray, prettyRender}
@@ -762,6 +763,31 @@ class DynamicEndpointHelperTest extends FlatSpec with Matchers {
     result should equal(expectedResult)
   }
 
+//
+//  "getEntityNameAndBody with proper input" should "work well" taggedAs FunctionsTag in {
+//    val mapping = """{
+//                    |    "field1": "name",
+//                    |    "field2": "address"
+//                    |}""".stripMargin
+//
+//
+//    val swaggerJsonBody = json.parse("""
+//                    |{
+//                    |    "name": "Tesobe",
+//                    |    "address":"Berlin"
+//                    |}""".stripMargin)
+//    
+//    val expectedResult = ("FashionBrand",json.parse("""
+//        |{
+//        |    "field1": "Tesobe",
+//        |    "field2": "Berlin"
+//        |}""".stripMargin))
+//    JsonUtils.buildJson(swaggerJsonBody,mapping)
+//    val result = DynamicEndpointHelper.getEntityNameAndBody(mapping, swaggerJsonBody)
+//
+//    result should equal(expectedResult)
+//  }
+  
   "findDynamicData with proper input" should "work well" taggedAs FunctionsTag in {
 
     case class DataTest (
