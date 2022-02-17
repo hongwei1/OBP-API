@@ -95,6 +95,15 @@ trait AccountApplication {
   def status: String
 }
 
+trait UserAttributeTrait {
+  def userAttributeId: String
+  def userId: String
+  def name: String
+  def attributeType: UserAttributeType.Value
+  def value: String
+  def insertDate: Date
+}
+
 trait AccountAttribute {
   def bankId: BankId
   def accountId: AccountId
@@ -298,6 +307,7 @@ trait UserAuthContext {
   def userId : String
   def key : String
   def value : String
+  def timeStamp : Date
 }
 
 trait ConsentAuthContext {

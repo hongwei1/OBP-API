@@ -3494,7 +3494,8 @@ object SwaggerDefinitionsJSON {
     user_auth_context_id = "613c83ea-80f9-4560-8404-b9cd4ec42a7f",
     user_id = ExampleValue.userIdExample.value,
     key = "CUSTOMER_NUMBER",
-    value = "78987432"
+    value = "78987432",
+    timeStamp = parseDate(timeStampExample.value).getOrElse(sys.error("timeStampExample.value is not validate date format."))
   )
 
   val userAuthContextUpdateJson = UserAuthContextUpdateJson(
@@ -4130,6 +4131,23 @@ object SwaggerDefinitionsJSON {
     name = customerAttributeNameExample.value,
     `type` = customerAttributeTypeExample.value,
     value = customerAttributeValueExample.value
+  )
+
+
+  val userAttributeResponseJson = UserAttributeResponseJsonV400 (
+    user_attribute_id = userAttributeIdExample.value,
+    name = userAttributeNameExample.value,
+    `type` = userAttributeTypeExample.value,
+    value = userAttributeValueExample.value,
+    insert_date = new Date()
+  )
+  val userAttributesResponseJson = UserAttributesResponseJson (
+    user_attributes = List(userAttributeResponseJson)
+  )
+  val userAttributeJsonV400 = UserAttributeJsonV400(
+    name = userAttributeNameExample.value,
+    `type` = userAttributeTypeExample.value,
+    value = userAttributeValueExample.value
   )
 
   val transactionAttributeResponseJson = TransactionAttributeResponseJson(

@@ -5671,50 +5671,72 @@ trait APIMethods400 {
                   Future.successful((EndpointMappingCommons(None,"","","", None), callContext))
                 }
                 requestMappingString = endpointMapping.requestMapping
-//                requestMappingJvalue = net.liftweb.json.parse(requestMappingString)
+                requestMappingJvalue = net.liftweb.json.parse(requestMappingString)
                 responseMappingString = endpointMapping.responseMapping
                 responseMappingJvalue = net.liftweb.json.parse(responseMappingString)
 
-                (entityName, entityIdKey, entityIdValueFromUrl) <- if (method.value.equalsIgnoreCase("get")) {
-                  NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
-                    DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
-                  } 
-                } else {
-                  NewStyle.function.tryons(s"$InvalidEndpointMapping `request_mapping` must  be linked to at least one valid dynamic entity!", 400, cc.callContext) {
-                    DynamicEndpointHelper.getEntityNameKeyAndValue(requestMappingString, pathParams)
+                responseBody <- if (method.value.equalsIgnoreCase("get")) {
+                  for{
+                    (entityName, entityIdKey, entityIdValueFromUrl) <- NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+                      DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+                    }
+                    dynamicData <- Future{DynamicDataProvider.connectorMethodProvider.vend.getAll(entityName)}
+                    dynamicJsonData = JArray(dynamicData.map(it => net.liftweb.json.parse(it.dataJson)).map(_.asInstanceOf[JObject]))
+                    //                //We only get the value, but not sure the field name of it.
+                    //                // we can get the field name from the mapping: `primary_query_key`
+                    //                //requestBodyMapping --> Convert `RequestJson` --> `DynamicEntity Model.`  
+                    //                targetRequestBody = JsonUtils.buildJson(json, requestBodySchemeJvalue)
+                    //                requestBody = targetRequestBody match {
+                    //                  case j@JObject(_) => Some(j)
+                    //                  case _ => None
+                    //                }
+                    result = if (method.value.equalsIgnoreCase("get") && entityIdValueFromUrl.isDefined) {
+                      DynamicEndpointHelper.getObjectByKeyValuePair(dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
+                    } else {
+                      val newParams = DynamicEndpointHelper.convertToMappingQueryParams(responseMappingJvalue, params)
+                      DynamicEndpointHelper.getObjectsByParams(dynamicJsonData, newParams)
+                    } 
+                    responseBodyScheme = DynamicEndpointHelper.prepareMappingFields(responseMappingJvalue)
+                    responseBody = JsonUtils.buildJson(result, responseBodyScheme)
+                  } yield {
+                    responseBody
                   }
+                } else if (method.value.equalsIgnoreCase("post")) { 
+                  for{
+                    (entityName, entityIdKey, entityIdValueFromUrl) <- NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+                      DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+                    }
+                    //build the entity body according to the request json and mapping
+                    entityBody = JsonUtils.buildJson(json,requestMappingJvalue)
+                    (box, _) <- NewStyle.function.invokeDynamicConnector(CREATE, entityName, Some(entityBody.asInstanceOf[JObject]), None, None, None, Some(cc))
+                    singleObject: JValue = unboxResult(box.asInstanceOf[Box[JValue]], entityName)
+                    responseBodyScheme = DynamicEndpointHelper.prepareMappingFields(responseMappingJvalue)
+                    responseBody = JsonUtils.buildJson(singleObject, responseBodyScheme)
+                  } yield {
+                    responseBody
+                  }
+                } else if (method.value.equalsIgnoreCase("delete")) {
+//                  for {
+//                    (entityName, entityIdKey, entityIdValueFromUrl) <- NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+//                      DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+//                    }
+//                    isDeleted <- NewStyle.function.tryons(s"$InvalidEndpointMapping `response_mapping` must be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+                  //We need to delete the record by the the request key and value, 
+//                      DynamicDataProvider.connectorMethodProvider.vend.delete(entityName, entityIdValueFromUrl.head).head
+//                    }
+//                  }yield{
+//                    JBool(isDeleted)
+//                  }
+                  throw new RuntimeException(s"$NotImplemented We only support the Http Methods GET and POST . The current method is: ${method.value}")
+                } else if (method.value.equalsIgnoreCase("put")) {
+                
+                  throw new RuntimeException(s"$NotImplemented We only support the Http Methods GET and POST . The current method is: ${method.value}")
+                }else {
+                  NewStyle.function.tryons(s"$InvalidEndpointMapping `request_mapping` must  be linked to at least one valid dynamic entity!", 400, cc.callContext) {
+                    DynamicEndpointHelper.getEntityNameKeyAndValue(responseMappingString, pathParams)
+                  }
+                  throw new RuntimeException(s"$NotImplemented We only support the Http Methods GET and POST . The current method is: ${method.value}")
                 }
-
-                dynamicData <- Future{DynamicDataProvider.connectorMethodProvider.vend.getAll(entityName)}
-                dynamicJsonData = JArray(dynamicData.map(it => net.liftweb.json.parse(it.dataJson)).map(_.asInstanceOf[JObject]))
-
-                //                //We only get the value, but not sure the field name of it.
-                //                // we can get the field name from the mapping: `primary_query_key`
-                //                //requestBodyMapping --> Convert `RequestJson` --> `DynamicEntity Model.`  
-                //                targetRequestBody = JsonUtils.buildJson(json, requestBodySchemeJvalue)
-                //                requestBody = targetRequestBody match {
-                //                  case j@JObject(_) => Some(j)
-                //                  case _ => None
-                //                }
-
-                result = if (method.value.equalsIgnoreCase("get") && entityIdValueFromUrl.isDefined) {
-                  DynamicEndpointHelper.getObjectByKeyValuePair(dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
-                } else if (method.value.equalsIgnoreCase("get") && entityIdValueFromUrl.isEmpty) {
-                  val newParams = DynamicEndpointHelper.convertToMappingQueryParams(responseMappingJvalue, params)
-                  DynamicEndpointHelper.getObjectsByParams(dynamicJsonData, newParams)
-//                } else if (method.value.equalsIgnoreCase("post")) {
-//                  //this post need the dynamicId to update it.
-//                  //1st: we need to find the data by json.field1 --> dynamicId --> update the table.
-//                  dynamicJsonData
-//                } else if (method.value.equalsIgnoreCase("put")) {
-//                  dynamicJsonData
-                } else if (method.value.equalsIgnoreCase("delete") && entityIdValueFromUrl.isDefined) {
-                  DynamicEndpointHelper.deleteObjectByKeyValuePair(dynamicData, dynamicJsonData, entityIdKey, entityIdValueFromUrl.get)
-                } else {
-                  throw new RuntimeException(s"$NotImplemented Only support Http Method `GET` yet, current  is ${method.value}")
-                }
-                responseBodyScheme = DynamicEndpointHelper.prepareMappingFields(responseMappingJvalue)
-                responseBody = JsonUtils.buildJson(result, responseBodyScheme)
               } yield{
                 (Full(("code", 200) ~ ("value", responseBody)), callContext)
               }
@@ -8105,6 +8127,180 @@ trait APIMethods400 {
           } yield {
             val consentsOfBank = Consent.filterByBankId(consents, bankId)
             (JSONFactory400.createConsentInfosJsonV400(consentsOfBank), HttpCode.`200`(cc))
+          }
+      }
+    }
+
+    staticResourceDocs += ResourceDoc(
+      getCurrentUserAttributes,
+      implementedInApiVersion,
+      nameOf(getCurrentUserAttributes),
+      "GET",
+      "/my/user/attributes",
+      "Get User Attributes for current user",
+      s"""Get User Attributes for current user.
+         |
+         |${authenticationRequiredMessage(true)}
+         |""".stripMargin,
+      EmptyBody,
+      userAttributesResponseJson,
+      List(
+        $UserNotLoggedIn,
+        UnknownError
+      ),
+      List(apiTagUser, apiTagNewStyle)
+    )
+
+    lazy val getCurrentUserAttributes: OBPEndpoint = {
+      case "my" ::  "user" :: "attributes" :: Nil JsonGet _ => {
+        cc =>
+          for {
+            (attributes, callContext) <- NewStyle.function.getUserAttributes(cc.userId, cc.callContext)
+          } yield {
+            (JSONFactory400.createUserAttributesJson(attributes), HttpCode.`200`(callContext))
+          }
+      }
+    }
+    
+    
+    staticResourceDocs += ResourceDoc(
+      getUserWithAttributes,
+      implementedInApiVersion,
+      nameOf(getUserWithAttributes),
+      "GET",
+      "/users/USER_ID/attributes",
+      "Get User Attributes for the user",
+      s"""Get User Attributes for the user defined via USER_ID.
+         |
+         |${authenticationRequiredMessage(true)}
+         |""".stripMargin,
+      EmptyBody,
+      userAttributesResponseJson,
+      List(
+        $UserNotLoggedIn,
+        UnknownError
+      ),
+      List(apiTagUser, apiTagNewStyle),
+      Some(canGetUsersWithAttributes :: Nil)
+    )
+
+    lazy val getUserWithAttributes: OBPEndpoint = {
+      case "users" :: userId :: "attributes" :: Nil JsonGet _ => {
+        cc =>
+          for {
+            (user, callContext) <- NewStyle.function.getUserByUserId(userId, cc.callContext)
+            (attributes, callContext) <- NewStyle.function.getUserAttributes(userId, callContext)
+          } yield {
+            (JSONFactory400.createUserWithAttributesJson(user, attributes), HttpCode.`200`(callContext))
+          }
+      }
+    }
+
+
+    staticResourceDocs += ResourceDoc(
+      createCurrentUserAttribute,
+      implementedInApiVersion,
+      nameOf(createCurrentUserAttribute),
+      "POST",
+      "/my/user/attributes",
+      "Create User Attribute for current user",
+      s""" Create User Attribute for current user
+         |
+         |The type field must be one of "STRING", "INTEGER", "DOUBLE" or DATE_WITH_DAY"
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      userAttributeJsonV400,
+      userAttributeResponseJson,
+      List(
+        $UserNotLoggedIn,
+        InvalidJsonFormat,
+        UnknownError
+      ),
+      List(apiTagUser, apiTagNewStyle),
+      Some(List()))
+
+    lazy val createCurrentUserAttribute : OBPEndpoint = {
+      case "my" ::  "user" :: "attributes" :: Nil JsonPost json -> _=> {
+        cc =>
+          val failMsg = s"$InvalidJsonFormat The Json body should be the $TransactionAttributeJsonV400 "
+          for {
+            (attributes, callContext) <- NewStyle.function.getUserAttributes(cc.userId, cc.callContext)
+            postedData <- NewStyle.function.tryons(failMsg, 400,  callContext) {
+              json.extract[TransactionAttributeJsonV400]
+            }
+            failMsg = s"$InvalidJsonFormat The `Type` field can only accept the following field: " +
+              s"${TransactionAttributeType.DOUBLE}(12.1234), ${TransactionAttributeType.STRING}(TAX_NUMBER), ${TransactionAttributeType.INTEGER} (123)and ${TransactionAttributeType.DATE_WITH_DAY}(2012-04-23)"
+            userAttributeType <- NewStyle.function.tryons(failMsg, 400,  callContext) {
+              UserAttributeType.withName(postedData.`type`)
+            }
+            (userAttribute, callContext) <- NewStyle.function.createOrUpdateUserAttribute(
+              cc.userId,
+              None,
+              postedData.name,
+              userAttributeType,
+              postedData.value,
+              callContext
+            )
+          } yield {
+            (JSONFactory400.createUserAttributeJson(userAttribute), HttpCode.`201`(callContext))
+          }
+      }
+    }
+
+    staticResourceDocs += ResourceDoc(
+      updateCurrentUserAttribute,
+      implementedInApiVersion,
+      nameOf(updateCurrentUserAttribute),
+      "PUT",
+      "/my/user/attributes/USER_ATTRIBUTE_ID",
+      "Update User Attribute for current user",
+      s"""Update User Attribute for current user by USER_ATTRIBUTE_ID
+         |
+         |The type field must be one of "STRING", "INTEGER", "DOUBLE" or DATE_WITH_DAY"
+         |
+         |${authenticationRequiredMessage(true)}
+         |
+         |""",
+      userAttributeJsonV400,
+      userAttributeResponseJson,
+      List(
+        $UserNotLoggedIn,
+        InvalidJsonFormat,
+        UnknownError
+      ),
+      List(apiTagUser, apiTagNewStyle),
+      Some(List()))
+
+    lazy val updateCurrentUserAttribute : OBPEndpoint = {
+      case "my" ::  "user" :: "attributes" :: userAttributeId :: Nil JsonPut json -> _=> {
+        cc =>
+          val failMsg = s"$InvalidJsonFormat The Json body should be the $TransactionAttributeJsonV400 "
+          for {
+            (attributes, callContext) <- NewStyle.function.getUserAttributes(cc.userId, cc.callContext)
+            failMsg = s"$UserAttributeNotFound"
+            _ <- NewStyle.function.tryons(failMsg, 400,  callContext) {
+              attributes.exists(_.userAttributeId == userAttributeId)
+            }
+            postedData <- NewStyle.function.tryons(failMsg, 400,  callContext) {
+              json.extract[TransactionAttributeJsonV400]
+            }
+            failMsg = s"$InvalidJsonFormat The `Type` field can only accept the following field: " +
+              s"${TransactionAttributeType.DOUBLE}(12.1234), ${TransactionAttributeType.STRING}(TAX_NUMBER), ${TransactionAttributeType.INTEGER} (123)and ${TransactionAttributeType.DATE_WITH_DAY}(2012-04-23)"
+            userAttributeType <- NewStyle.function.tryons(failMsg, 400,  callContext) {
+              UserAttributeType.withName(postedData.`type`)
+            }
+            (userAttribute, callContext) <- NewStyle.function.createOrUpdateUserAttribute(
+              cc.userId,
+              Some(userAttributeId),
+              postedData.name,
+              userAttributeType,
+              postedData.value,
+              callContext
+            )
+          } yield {
+            (JSONFactory400.createUserAttributeJson(userAttribute), HttpCode.`200`(callContext))
           }
       }
     }
