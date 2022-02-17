@@ -16,6 +16,17 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: |
+          echo '<configuration>' > obp-api/src/main/resources/logback.xml
+          echo '<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">' >> obp-api/src/main/resources/logback.xml
+          echo '<encoder>' >> obp-api/src/main/resources/logback.xml
+          echo '<pattern>%d{yyyy-MM-dd HH:mm:ss} %t %c{0} [%p] %m%n</pattern>' >> obp-api/src/main/resources/logback.xml
+          echo '</encoder>' >> obp-api/src/main/resources/logback.xml
+          echo '</appender>' >> obp-api/src/main/resources/logback.xml
+          echo '<logger name="org.apache.kafka.clients.consumer.internals.ConsumerCoordinator" level="WARN"/>' >> obp-api/src/main/resources/logback.xml
+          echo '<root level="INFO">' >> obp-api/src/main/resources/logback.xml
+          echo '<appender-ref ref="STDOUT"/>' >> obp-api/src/main/resources/logback.xml
+          echo '</root>' >> obp-api/src/main/resources/logback.xml
+          echo '</configuration>' >> obp-api/src/main/resources/logback.xml
           echo -Xmx1512M -XX:MaxPermSize=512M > obp-api/src/main/resources/props/test.default.props
           echo connector=mapped >> obp-api/src/main/resources/props/test.default.props
           echo hostname=http://localhost:8019 >> obp-api/src/main/resources/props/test.default.props
