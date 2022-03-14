@@ -4,13 +4,14 @@ import code.api.util.{CallContext, CustomJsonFormats}
 import code.bankconnectors._
 import code.setup.{DefaultConnectorTestSetup, DefaultUsers, ServerSetup}
 import code.util.Helper.MdcLoggable
-import com.openbankproject.commons.model.{AccountId, BankId, BankIdAccountId, InboundAccount, InboundAccountCommons}
+import com.openbankproject.commons.model.{AccountId, BankId, BankIdAccountId, CreditLimit, CreditRating, Customer, CustomerCommons, CustomerFaceImage, InboundAccount, InboundAccountCommons}
 import net.liftweb.common.{Box, Full}
 
 import scala.collection.immutable.List
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import net.liftweb.json.Formats
 
+import java.util.Date
 import scala.concurrent.Future
 
 /**
@@ -68,5 +69,36 @@ object MockedCbsConnector extends ServerSetup
   override def getBankAccountsForUser(username: String, callContext: Option[CallContext]):  Future[Box[(List[InboundAccount], Option[CallContext])]] = Future{
     getBankAccountsForUserLegacy(username,callContext)
   }
+  
+  override def getCustomersByUserId(userId: String, callContext: Option[CallContext]): Future[Box[(List[Customer],Option[CallContext])]] = Future{ 
+    Full(
+      List(CustomerCommons(
+        customerId="customre-id-1",
+        bankId="string",
+        number="string",
+        legalName="string",
+        mobileNumber="string",
+        email="string",
+        faceImage= CustomerFaceImage(date=new Date(),
+          url="string"),
+        dateOfBirth=new Date(),
+        relationshipStatus="string",
+        dependents=123,
+        dobOfDependents=List(new Date()),
+        highestEducationAttained="string",
+        employmentStatus="string",
+        creditRating= CreditRating(rating="string",
+          source="string"),
+        creditLimit= CreditLimit(currency="string",
+          amount="string"),
+        kycStatus=true,
+        lastOkDate=new Date(),
+        title="string",
+        branchId="string",
+        nameSuffix="string"
+      )),callContext
+    )
+  }
+
 }
 

@@ -60,6 +60,7 @@ import com.github.dwickern.macros.NameOf.nameOf
 import sh.ory.hydra.model.AcceptLoginRequest
 import net.liftweb.http.S.fmapFunc
 
+import java.util.Date
 import scala.concurrent.Future
 
 /**
@@ -1257,6 +1258,7 @@ def restoreSomeSessions(): Unit = {
    * This method is used for onboarding bank customer to OBP.
    *  1st: we will get all the accountsHeld from CBS side.
    *  2rd: we will create the account Holder, view and account accesses.
+   *  3rd: we will create user Customer links
    */
   def refreshUser(user: User, callContext: Option[CallContext]) = {
     for{
@@ -1264,18 +1266,24 @@ def restoreSomeSessions(): Unit = {
         connectorEmptyResponse(_, callContext)
       }
       _ = logger.debug(s"-->AuthUser.refreshUserAccountAccess.accounts : ${accountsHeld}")
+      
+      (customers, _) <- Connector.connector.vend.getCustomersByUserId(user.userId, callContext) map {
+        connectorEmptyResponse(_, callContext)
+      }
+      _ = logger.debug(s"-->AuthUser.refreshUserAccountAccess.customers : ${customers}")
+    
     }yield {
-      refreshViewsAccountAccessAndHolders(user, accountsHeld)
+      refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(user, accountsHeld, customers)
     }
   }
 
   /**
     * This is a helper method
-    * create/update/delete the views, accountAccess, accountHolders for OBP get accounts from CBS side.
+    * create/update/delete the views, accountAccess, accountHolders, userCustomerLinks for OBP (the accounts are from CBS side).
     * This method can only be used by the original user(account holder).
    *  InboundAccount return many fields, but in this method, we only need bankId, accountId and viewId so far. 
     */
-    def refreshViewsAccountAccessAndHolders(user: User, accountsHeld: List[InboundAccount]): Unit = {
+    def refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(user: User, accountsHeld: List[InboundAccount], customers: List[Customer]): Unit = {
       if(user.isOriginalUser){
         //first, we compare the accounts in obp  and the accounts in cbs,   
         val (_, privateAccountAccess) = Views.views.vend.privateViewsUserCanAccess(user)
@@ -1328,6 +1336,29 @@ def restoreSomeSessions(): Unit = {
             Views.views.vend.grantAccessToCustomView(view.uid, user)
         }
 
+        val obpUserCustomerLinks = code.usercustomerlinks.MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(user.userId)
+        val obpCustomerIds = obpUserCustomerLinks.map(_.customerId)
+        
+        val cbsCustomerIds = customers.map(_.customerId)
+        
+        //cbs removed this customers, but OBP still contains the customerUserLinks for them, so we need to clean data in OBP side.
+        val cbsRemovedCustomerIds = obpCustomerIds diff cbsCustomerIds
+        val cbsRemovedCustomerUserLinkIds = cbsRemovedCustomerIds.map(id => obpUserCustomerLinks.filter(_.customerId == id).map(_.userCustomerLinkId)).flatten
+       
+        //cbs has new customers for the user, which are not in obp yet, we need to create new customUserLinks for news customers.
+        val csbNewCustomerIds = cbsCustomerIds diff obpCustomerIds
+
+        logger.debug("refreshViewsAccountAccessAndHolders.cbsRemovedCustomerIds-------"+cbsRemovedCustomerIds)
+        logger.debug("refreshViewsAccountAccessAndHolders.cbsRemovedCustomerUserLinkIds-------"+cbsRemovedCustomerUserLinkIds)
+        logger.debug("refreshViewsAccountAccessAndHolders.csbNewCustomerIds-------" + csbNewCustomerIds)
+        
+        //removed all the cbs already removed link ids.
+        cbsRemovedCustomerUserLinkIds.map(userCustomerLinkId => 
+          code.usercustomerlinks.MappedUserCustomerLinkProvider.deleteUserCustomerLink(userCustomerLinkId))
+
+        //create the new customer user links.
+        csbNewCustomerIds.map(customerId =>
+          code.usercustomerlinks.MappedUserCustomerLinkProvider.getOCreateUserCustomerLink(user.userId, customerId, new Date(),true))
         
       } else {
       }

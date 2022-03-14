@@ -8,9 +8,10 @@ import code.model.dataAccess.{AuthUser, ViewImpl, ViewPrivileges}
 import code.setup.{DefaultUsers, PropsReset, ServerSetup}
 import code.views.MapperViews
 import code.views.system.{AccountAccess, ViewDefinition}
-import com.openbankproject.commons.model.{InboundAccount, InboundAccountCommons}
+import com.openbankproject.commons.model.{CreditLimit, CreditRating, CustomerCommons, CustomerFaceImage, InboundAccount, InboundAccountCommons}
 import net.liftweb.mapper.{By, PreCache}
 
+import java.util.Date
 import scala.collection.immutable.List
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -68,6 +69,9 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
 
   def accountholder1 = MapperAccountHolders.getAccountHolders(bankIdAccountId1.bankId, bankIdAccountId1.accountId)
   def accountholder2 = MapperAccountHolders.getAccountHolders(bankIdAccountId2.bankId, bankIdAccountId2.accountId)
+  
+  def user1CustomerLinks = code.usercustomerlinks.MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(resourceUser1.userId)
+  def user2CustomerLinks = code.usercustomerlinks.MappedUserCustomerLinkProvider.getUserCustomerLinksByUserId(resourceUser2.userId)
 
   def allViewsForAccount1 = MapperViews.availableViewsForAccount(bankIdAccountId1)
   def allViewsForAccount2 = MapperViews.availableViewsForAccount(bankIdAccountId2)
@@ -153,8 +157,117 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       accountRoutingAddress = ""
     )
   )
-  
-  
+
+  val customersEmpty = List()
+
+  val customer1 = List(CustomerCommons(
+      customerId="customre-id-1",
+      bankId="string",
+      number="string",
+      legalName="string",
+      mobileNumber="string",
+      email="string",
+      faceImage= CustomerFaceImage(date=new Date(),
+        url="string"),
+      dateOfBirth=new Date(),
+      relationshipStatus="string",
+      dependents=123,
+      dobOfDependents=List(new Date()),
+      highestEducationAttained="string",
+      employmentStatus="string",
+      creditRating= CreditRating(rating="string",
+        source="string"),
+      creditLimit= CreditLimit(currency="string",
+        amount="string"),
+      kycStatus=true,
+      lastOkDate=new Date(),
+      title="string",
+      branchId="string",
+      nameSuffix="string"
+  ))
+
+  val customer2 = List(
+    CustomerCommons(
+      customerId="customre-id-2",
+      bankId="string",
+      number="string",
+      legalName="string",
+      mobileNumber="string",
+      email="string",
+      faceImage= CustomerFaceImage(date=new Date(),
+        url="string"),
+      dateOfBirth=new Date(),
+      relationshipStatus="string",
+      dependents=123,
+      dobOfDependents=List(new Date()),
+      highestEducationAttained="string",
+      employmentStatus="string",
+      creditRating= CreditRating(rating="string",
+        source="string"),
+      creditLimit= CreditLimit(currency="string",
+        amount="string"),
+      kycStatus=true,
+      lastOkDate=new Date(),
+      title="string",
+      branchId="string",
+      nameSuffix="string"
+    )
+  )
+
+  val twoCustomers = List(
+    CustomerCommons(
+      customerId="customre-id-1",
+      bankId="string",
+      number="string",
+      legalName="string",
+      mobileNumber="string",
+      email="string",
+      faceImage= CustomerFaceImage(date=new Date(),
+        url="string"),
+      dateOfBirth=new Date(),
+      relationshipStatus="string",
+      dependents=123,
+      dobOfDependents=List(new Date()),
+      highestEducationAttained="string",
+      employmentStatus="string",
+      creditRating= CreditRating(rating="string",
+        source="string"),
+      creditLimit= CreditLimit(currency="string",
+        amount="string"),
+      kycStatus=true,
+      lastOkDate=new Date(),
+      title="string",
+      branchId="string",
+      nameSuffix="string"
+    ),
+    CustomerCommons(
+      customerId="customre-id-2",
+      bankId="string",
+      number="string",
+      legalName="string",
+      mobileNumber="string",
+      email="string",
+      faceImage= CustomerFaceImage(date=new Date(),
+        url="string"),
+      dateOfBirth=new Date(),
+      relationshipStatus="string",
+      dependents=123,
+      dobOfDependents=List(new Date()),
+      highestEducationAttained="string",
+      employmentStatus="string",
+      creditRating= CreditRating(rating="string",
+        source="string"),
+      creditLimit= CreditLimit(currency="string",
+        amount="string"),
+      kycStatus=true,
+      lastOkDate=new Date(),
+      title="string",
+      branchId="string",
+      nameSuffix="string"
+    )
+  )
+
+
   feature("Test the refreshUser method") {
     scenario("we fake the output from getBankAccounts(), and check the functions there") {
 
@@ -190,11 +303,11 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
     }
   }
   
-  feature("Test the refreshViewsAccountAccessAndHolders method") {
+  feature("Test the refreshViewsAccountAccessAndHoldersAndUserCustomerLinks- accounts -- method") {
     scenario("Test one account views,account access and account holder") {
       
       When("1st Step: no accounts in the List")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, accountsHeldEmpty)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(0)
@@ -212,7 +325,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       MappedUserRefreshes.findAll().length should be (0)
 
       Then("2rd Step: there is 1st account in the List")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, account1Held)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account1Held, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(1)
@@ -231,7 +344,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
 
       Then("3rd: we remove the accounts ")
       val accountsHeld = List()
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, accountsHeld)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeld, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(0)
@@ -253,7 +366,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
     scenario("Test two accounts views,account access and account holder") {
 
       When("1rd Step: no accounts in the List")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, accountsHeldEmpty)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(0)
@@ -271,7 +384,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       MappedUserRefreshes.findAll().length should be (0)
       
       When("2rd block, we prepare one account")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, account1Held)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account1Held, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(1)
@@ -289,7 +402,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       MappedUserRefreshes.findAll().length should be (1)
 
       Then("3rd:  we have two accounts in the accountsHeld")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, twoAccountsHeld)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, twoAccountsHeld, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(1)
@@ -308,7 +421,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
         
 
       When("4th, we removed the 1rd account, only have 2rd account there.")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, account2Held)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account2Held, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(0)
@@ -326,7 +439,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       MappedUserRefreshes.findAll().length should be (1)
       
       When("5th, we do not have any accounts ")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, accountsHeldEmpty)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(0)
@@ -348,7 +461,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
     scenario("Test two users, account views,account access and account holder") {
 
       When("1st Step: no accounts in the List")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, accountsHeldEmpty)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(0)
@@ -366,7 +479,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       MappedUserRefreshes.findAll().length should be (0)
 
       Then("2rd Step: 1st user and  1st account in the List")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, account1Held)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account1Held, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(1)
@@ -387,7 +500,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
 
 
       Then("3rd Step: 2rd user and 1st account in the List")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser2, account1Held)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser2, account1Held, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(2)
@@ -407,7 +520,7 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
       MappedUserRefreshes.findAll().length should be (2)
 
       When("4th, User1 we do not have any accounts ")
-      AuthUser.refreshViewsAccountAccessAndHolders(resourceUser1, accountsHeldEmpty)
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
 
       Then("We check the accountHolders")
       accountholder1.size should be(1)
@@ -428,5 +541,279 @@ class AuthUserTest extends ServerSetup with DefaultUsers with PropsReset{
 
     }
   }
-  
+
+  feature("Test the refreshViewsAccountAccessAndHoldersAndUserCustomerLinks --> accounts+customers -- method") {
+    scenario("Test one account views,account access and account holder") {
+
+      When("1st Step: no accounts in the List")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(0)
+      accountholder2.size should be(0)
+      user1CustomerLinks.size should be(0)
+
+      Then("There is not system views at all in the ViewDefinition table, so both should be Empty")
+      allViewsForAccount1.map(_.viewId.value) should equal(List())
+      allViewsForAccount2.map(_.viewId.value) should equal(List())
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (0)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(0)
+
+      Then("2rd Step: there is 1st account + 1rd customer in the List")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account1Held, customer1)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(1)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system view. both accounts should have the `owner` view.")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(1)
+      account2Access.length should equal(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(1)
+
+      Then("3rd: we remove the accounts  and customers")
+      val accountsHeld = List()
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, Nil, customersEmpty)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(0)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system view. both accounts should have the `owner` view.")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(0)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+    }
+
+    scenario("Test two accounts views,account access, account holder and customer links") {
+
+      When("1rd Step: no accounts in the List")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(0)
+      accountholder2.size should be(0)
+
+      Then("There is not system views at all in the ViewDefinition table, so both should be Empty")
+      allViewsForAccount1.map(_.viewId.value) should equal(List())
+      allViewsForAccount2.map(_.viewId.value) should equal(List())
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (0)
+
+      When("2rd block, we prepare one account and one customer")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account1Held, customer1)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(1)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system views")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(1)
+      account2Access.length should equal(0)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(1)
+      user2CustomerLinks.size should be(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+      Then("3rd:  we have two accounts in the accountsHeld")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, twoAccountsHeld, twoCustomers)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(1)
+      accountholder2.size should be(1)
+
+      Then("We check the views, only support the system views")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(1)
+      account2Access.length should equal(1)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(2)
+      
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+
+      When("4th, we removed the 1rd account, only have 2rd account there.")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account2Held, customer2)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(0)
+      accountholder2.size should be(1)
+
+      Then("We check the views, only support the system views")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(1)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(1)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+      When("5th, we do not have any accounts ")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(0)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system views")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(0)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+    }
+
+    scenario("Test two users, account views,account access, account holder and customer links") {
+
+      When("1st Step: no accounts or customers in the List")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(0)
+      accountholder2.size should be(0)
+
+      Then("There is not system views at all in the ViewDefinition table, so both should be Empty")
+      allViewsForAccount1.map(_.viewId.value) should equal(List())
+      allViewsForAccount2.map(_.viewId.value) should equal(List())
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (0)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(0)
+
+      Then("2rd Step: 1st user and  1st account and 1st customer in the List")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, account1Held, customer1)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(1)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system view. both accounts should have the `owner` view.")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(1)
+      account2Access.length should equal(0)
+      account1AccessUser2.length should equal(0)
+      account2AccessUser2.length should equal(0)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (1)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(1)
+      user2CustomerLinks.size should be(0)
+      
+      Then("3rd Step: 2rd user and 1st account and 1st customer in the List")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser2, account1Held, customer1)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(2)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system view. both accounts should have the `owner` view.")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(1)
+      account2Access.length should equal(0)
+      account1AccessUser2.length should equal(1)
+      account2AccessUser2.length should equal(0)
+      
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(1)
+      user2CustomerLinks.size should be(1)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (2)
+
+      When("4th, User1 we do not have any accounts or customers ")
+      AuthUser.refreshViewsAccountAccessAndHoldersAndUserCustomerLinks(resourceUser1, accountsHeldEmpty, customersEmpty)
+
+      Then("We check the accountHolders")
+      accountholder1.size should be(1)
+      accountholder2.size should be(0)
+
+      Then("We check the views, only support the system views")
+      allViewsForAccount1.map(_.viewId.value) should equal(List("owner"))
+      allViewsForAccount2.map(_.viewId.value) should equal(List("owner"))
+
+      Then("We check the AccountAccess")
+      account1Access.length should equal(0)
+      account2Access.length should equal(0)
+      account1AccessUser2.length should equal(1)
+      account2AccessUser2.length should equal(0)
+
+      Then("We check the customer link")
+      user1CustomerLinks.size should be(0)
+      user2CustomerLinks.size should be(1)
+
+      Then("We check the MappedUserRefreshes table")
+      MappedUserRefreshes.findAll().length should be (2)
+    }
+  }
 }
