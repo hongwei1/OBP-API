@@ -121,7 +121,7 @@ import code.transactionattribute.MappedTransactionAttribute
 import code.transactionrequests.{MappedTransactionRequest, MappedTransactionRequestTypeCharge, TransactionRequestReasons}
 import code.usercustomerlinks.MappedUserCustomerLink
 import code.userlocks.UserLocks
-import code.users.{UserAgreement, UserAttribute, UserInitAction, UserInvitation}
+import code.users.{UserMessage,UserAgreement, UserAttribute, UserInitAction, UserInvitation}
 import code.util.Helper.MdcLoggable
 import code.util.{Helper, HydraUtil}
 import code.validation.JsonSchemaValidation
@@ -930,6 +930,7 @@ object ToSchemify {
     BankAttribute,
     RateLimiting,
     MappedCustomerDependant,
+    UserMessage,
     AttributeDefinition
   )
 

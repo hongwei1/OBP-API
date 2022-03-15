@@ -465,6 +465,15 @@ trait CustomerMessage {
   def transport : Option[String] = None //TODO, introduced from V400, may set mandatory later, need to check V140.
 }
 
+trait UserMessageTrait {
+  def messageId : String
+  def date : Date
+  def message : String
+  def fromDepartment : String
+  def fromPerson : String
+  def transport : Option[String] = None //TODO, introduced from V400, may set mandatory later, need to check V140.
+}
+
 trait BankAttributeTrait {
   def bankId: BankId
   def bankAttributeId: String
