@@ -11,6 +11,7 @@ import code.bankconnectors.Connector
 import code.branches.Branches
 import code.customer.CustomerX
 import code.usercustomerlinks.UserCustomerLink
+import code.users.UserMessages
 import code.views.Views
 import com.openbankproject.commons.model._
 import com.openbankproject.commons.util.ApiVersion
@@ -98,10 +99,10 @@ trait APIMethods140 extends MdcLoggable with APIMethods130 with APIMethods121{
       "getCustomerMessages",
       "GET",
       "/banks/BANK_ID/customer/messages",
-      "Get Customer Messages for a Customer",
+      "Get Customer (User) Messages (current)",
       """Get messages for the logged in customer
       |Messages sent to the currently authenticated user.
-      |
+      |(Actually, we get the user messages back)
       |Authentication via OAuth is required.""",
       emptyObjectJson,
       customerMessagesJson,
@@ -117,8 +118,14 @@ trait APIMethods140 extends MdcLoggable with APIMethods130 with APIMethods121{
             //au <- ResourceUser.find(By(ResourceUser.id, u.apiId))
             //role <- au.isCustomerMessageAdmin ~> APIFailure("User does not have sufficient permissions", 401)
           } yield {
-            val messages = CustomerMessages.customerMessageProvider.vend.getMessages(u, bankId)
-            val json = JSONFactory1_4_0.createCustomerMessagesJson(messages)
+            val messages = UserMessages.userMessageProvider.vend.getMessages(u, bankId)
+            val json = JSONFactory1_4_0.createCustomerMessagesJson(messages.map(message => CustomerMessageCommons(
+              messageId = message.messageId,
+              date = message.date,
+              message = message.message,
+              fromDepartment = message.fromDepartment,
+              fromPerson = message.fromPerson,
+            )))
             successJsonResponse(Extraction.decompose(json))
           }
         }
@@ -131,8 +138,8 @@ trait APIMethods140 extends MdcLoggable with APIMethods130 with APIMethods121{
       "createCustomerMessage",
       "POST",
       "/banks/BANK_ID/customer/CUSTOMER_ID/messages",
-      "Create Customer Message",
-      "Create a message for the customer specified by CUSTOMER_ID",
+      "Create Customer(User) Message",
+      "Create a message for the customer specified by CUSTOMER_ID, actually we create a user message.",
       // We use Extraction.decompose to convert to json
       addCustomerMessageJson,
       successMessage,

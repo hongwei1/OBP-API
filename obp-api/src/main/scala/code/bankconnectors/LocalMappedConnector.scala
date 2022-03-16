@@ -2,7 +2,6 @@ package code.bankconnectors
 
 import java.util.Date
 import java.util.UUID.randomUUID
-
 import _root_.akka.http.scaladsl.model.HttpMethod
 import code.DynamicData.DynamicDataProvider
 import code.DynamicEndpoint.{DynamicEndpointProvider, DynamicEndpointT}
@@ -67,7 +66,7 @@ import code.transactionattribute.TransactionAttributeX
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import code.transactionrequests.TransactionRequests.{TransactionChallengeTypes, TransactionRequestTypes}
 import code.transactionrequests._
-import code.users.{UserAttribute, UserAttributeProvider, Users}
+import code.users.{UserAttribute, UserAttributeProvider, UserMessages, Users}
 import code.util.Helper
 import code.util.Helper.{MdcLoggable, _}
 import code.views.Views
@@ -4132,8 +4131,14 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                              fromDepartment: String,
                              fromPerson: String,
                              callContext: Option[CallContext]): OBPReturnType[Box[CustomerMessage]] = Future {
-    val boxedData = Box !! CustomerMessages.customerMessageProvider.vend.addMessage(user, bankId, message, fromDepartment, fromPerson)
-    (boxedData, callContext)
+    val boxedData = Box !! UserMessages.userMessageProvider.vend.createMessage(user, bankId, message, fromDepartment, fromPerson, "")
+    (boxedData.map(message => CustomerMessageCommons(
+      messageId = message.messageId,
+      date = message.date,
+      message = message.message,
+      fromDepartment = message.fromDepartment,
+      fromPerson = message.fromPerson,
+    )), callContext)
   }
 
   override def createCustomerMessage(

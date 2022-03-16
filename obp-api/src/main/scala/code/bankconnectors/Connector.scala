@@ -2408,6 +2408,8 @@ trait Connector extends MdcLoggable {
                      callContext: Option[CallContext]
                     ): OBPReturnType[Box[List[KycStatus]]] = Future{(Failure(setUnimplementedError), callContext)}
 
+  @deprecated("This create user message, but return customer message, please use createUserMessage or createCustomerMessage instead.",
+    "15/03/2021")  
   def createMessage(user : User,
                     bankId : BankId,
                     message : String,

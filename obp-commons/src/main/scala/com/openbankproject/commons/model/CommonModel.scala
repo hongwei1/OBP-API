@@ -456,6 +456,17 @@ case class CustomerMessageCommons(
 ) extends CustomerMessage
 object CustomerMessageCommons extends Converter[CustomerMessage, CustomerMessageCommons]
 
+case class UserMessageCommons(
+  override val messageId: String,
+  override val date: Date,
+  override val message: String,
+  override val fromDepartment: String,
+  override val fromPerson: String,
+  override val transport: Option[String] = None,
+) extends UserMessageTrait
+
+object UserMessageCommons extends Converter[UserMessageTrait, UserMessageCommons]
+
 case class CustomerAttributeCommons (
   override val bankId: BankId,
   override val customerId: CustomerId,
