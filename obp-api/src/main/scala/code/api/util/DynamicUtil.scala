@@ -47,7 +47,7 @@ object DynamicUtil {
    * Compile scala code
    * toolBox have bug that first compile fail, second or later compile success.
    * @param code
-   * @return compiled Full[function|object|class] or Failure
+   * @return compiled Full[function|object|class] or Failure 
    */
   def compileScalaCode[T](code: String): Box[T] = {
     val compiledResult: Box[Any] = dynamicCompileResult.computeIfAbsent(code, _ => {
