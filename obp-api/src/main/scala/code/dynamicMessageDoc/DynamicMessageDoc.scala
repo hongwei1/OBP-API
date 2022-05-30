@@ -43,5 +43,5 @@ object DynamicMessageDoc extends DynamicMessageDoc with LongKeyedMetaMapper[Dyna
     adapterImplementation = dynamicMessageDoc.AdapterImplementation.get,
     methodBody = dynamicMessageDoc.MethodBody.get,
     programmingLang = dynamicMessageDoc.Lang.get
-  )
+  )  
 }
