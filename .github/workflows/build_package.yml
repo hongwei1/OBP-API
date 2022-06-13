@@ -18,7 +18,6 @@ jobs:
         with:
           java-version: '11'
           distribution: 'adopt'
-          cache: maven
       - name: Build with Maven
         run: |
           echo connector=star > obp-api/src/main/resources/props/test.default.props
