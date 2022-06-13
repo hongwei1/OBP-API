@@ -25,12 +25,11 @@ import code.connectormethod.{JsonConnectorMethod, JsonConnectorMethodMethodBody}
 import code.dynamicMessageDoc.JsonDynamicMessageDoc
 import code.dynamicResourceDoc.JsonDynamicResourceDoc
 import code.sandbox.SandboxData
-import code.transactionrequests.TransactionRequests.TransactionChallengeTypes
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.model
 import com.openbankproject.commons.model.PinResetReason.{FORGOT, GOOD_SECURITY_PRACTICE}
-import com.openbankproject.commons.model.enums.{AttributeCategory, CardAttributeType}
+import com.openbankproject.commons.model.enums.{AttributeCategory, CardAttributeType, ChallengeType}
 import com.openbankproject.commons.model.{UserAuthContextUpdateStatus, ViewBasic, _}
 import com.openbankproject.commons.util.{ApiVersion, FieldNameApiVersions, ReflectUtils, RequiredArgs, RequiredInfo}
 import net.liftweb.json
@@ -4309,7 +4308,7 @@ object SwaggerDefinitionsJSON {
     id = transactionIdExample.value,
     user_id = userIdExample.value,
     allowed_attempts =3,
-    challenge_type = TransactionChallengeTypes.OTP_VIA_API.toString,
+    challenge_type = ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString,
     link = "/obp/v4.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/VIEW_ID/transaction-request-types/TRANSACTION_REQUEST_TYPE/transaction-requests/TRANSACTION_REQUEST_ID/challenge"
   )
   val transactionRequestWithChargeJSON400 = TransactionRequestWithChargeJSON400(
@@ -4356,8 +4355,14 @@ object SwaggerDefinitionsJSON {
   val apiCollectionEndpointJson400 = ApiCollectionEndpointJson400(apiCollectionEndpointIdExample.value, apiCollectionIdExample.value, operationIdExample.value)
   val apiCollectionEndpointsJson400 = ApiCollectionEndpointsJson400(List(apiCollectionEndpointJson400))
 
-  val jsonConnectorMethod  = JsonConnectorMethod(Some(connectorMethodIdExample.value),"getBank", connectorMethodBodyExample.value)
-  val jsonConnectorMethodMethodBody  = JsonConnectorMethodMethodBody(connectorMethodBodyExample.value)
+  val jsonScalaConnectorMethod  = JsonConnectorMethod(Some(connectorMethodIdExample.value),"getBank", connectorMethodBodyScalaExample.value, "Scala")
+  val jsonScalaConnectorMethodMethodBody  = JsonConnectorMethodMethodBody(connectorMethodBodyScalaExample.value, "Scala")
+  
+  val jsonJavaConnectorMethod  = JsonConnectorMethod(Some(connectorMethodIdExample.value),"getBank", connectorMethodBodyJavaExample.value, "Java")
+  val jsonJavaConnectorMethodMethodBody  = JsonConnectorMethodMethodBody(connectorMethodBodyJavaExample.value, "Java")
+  
+  val jsonJsConnectorMethod  = JsonConnectorMethod(Some(connectorMethodIdExample.value),"getBank", connectorMethodBodyJsExample.value, "Js")
+  val jsonJsConnectorMethodMethodBody  = JsonConnectorMethodMethodBody(connectorMethodBodyJsExample.value, "Js")
   
   val jsonDynamicResourceDoc = JsonDynamicResourceDoc(
     bankId = Some(bankIdExample.value),
@@ -4388,7 +4393,8 @@ object SwaggerDefinitionsJSON {
     outboundAvroSchema = outboundAvroSchemaExample.value,
     inboundAvroSchema = inboundAvroSchemaExample.value,
     adapterImplementation = adapterImplementationExample.value,
-    methodBody = connectorMethodBodyExample.value
+    methodBody = connectorMethodBodyScalaExample.value,
+    programmingLang = connectorMethodLangExample.value
   )
 
   val jsonResourceDocFragment = ResourceDocFragment(
