@@ -1,7 +1,7 @@
 package code.api.v1_2_1
 
 import java.net.URL
-import java.util.Random
+import java.util.{Locale, Random}
 import java.security.SecureRandom
 import java.util.UUID.randomUUID
 
@@ -24,7 +24,7 @@ import com.google.common.cache.CacheBuilder
 import com.openbankproject.commons.model.{Bank, UpdateViewJSON, _}
 import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.common.{Full, _}
-import net.liftweb.http.JsonResponse
+import net.liftweb.http.{JsonResponse, S}
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.JValue
@@ -220,7 +220,9 @@ trait APIMethods121 {
             val bankJSON = JSONFactory.createBankJSON(bank)
             Extraction.decompose(bankJSON)
           }
-          for((bank, callContext)<- BankX(bankId, Some(cc)) ?~! BankNotFound)
+          val local = S.param("locale").getOrElse("")
+          Locale.setDefault(I18NUtil.computeLocale(local))
+          for((bank, callContext)<- BankX(bankId, Some(cc)) ?~! S.?("BankNotFound"))
           yield successJsonResponse(bankToJson(bank))
       }
     }

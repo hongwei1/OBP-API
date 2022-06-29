@@ -60,7 +60,7 @@ import scala.concurrent.Future
 import scala.math.BigDecimal
 import scala.reflect.runtime.universe.MethodSymbol
 import code.validation.{JsonSchemaValidationProvider, JsonValidation}
-import net.liftweb.http.JsonResponse
+import net.liftweb.http.{JsonResponse, S}
 import net.liftweb.util.Props
 import code.api.JsonResponseException
 import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEntityHelper, DynamicEntityInfo}
@@ -367,7 +367,7 @@ object NewStyle extends MdcLoggable{
     
     def getBank(bankId : BankId, callContext: Option[CallContext]) : OBPReturnType[Bank] = {
       Connector.connector.vend.getBank(bankId, callContext) map {
-        unboxFullOrFail(_, callContext, s"$BankNotFound Current BankId is $bankId", 404)
+        unboxFullOrFail(_, callContext, s"${S.?("api.explorer")} Current BankId is $bankId", 404)
       }
     }
     def getBanks(callContext: Option[CallContext]) : Future[(List[Bank], Option[CallContext])] = {
