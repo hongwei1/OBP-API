@@ -59,14 +59,15 @@
       <artifactId>dispatch-lift-json_${scala.version}</artifactId>
       <version>0.13.1</version>
     </dependency>
+<!-- Vulnerability: force maven update to safe version: log4j-over-slf4j and slf4j-ext  -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>log4j-over-slf4j</artifactId>
       <version>1.7.26</version>
     </dependency>
     <dependency>
-      <artifactId>slf4j-ext</artifactId>
       <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-ext</artifactId>
       <version>1.7.26</version>
     </dependency>
     <dependency>
