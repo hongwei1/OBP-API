@@ -112,6 +112,12 @@
         <version>3.0.8</version>
         <scope>test</scope>
       </dependency>
+      <!-- Vulnerability: force maven update to safe version: xercesImpl -->
+      <dependency>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+          <version>2.12.2</version>
+      </dependency>
       <dependency>
         <groupId>org.scalactic</groupId>
         <artifactId>scalactic_${scala.version}</artifactId>
