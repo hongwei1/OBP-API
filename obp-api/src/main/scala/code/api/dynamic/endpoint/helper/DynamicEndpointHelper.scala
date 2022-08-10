@@ -389,7 +389,7 @@ object DynamicEndpointHelper extends RestHelper {
 
   def parseSwaggerContent(content: String): OpenAPI = {
     val tempSwaggerFile = File.createTempFile("temp", ".swagger")
-    FileUtils.write(tempSwaggerFile, content, Charset.forName("utf-8"))
+    FileUtils.write(tempSwaggerFile, "UTF8", content)
     val openAPI: OpenAPI = new OpenAPIV3Parser().read(tempSwaggerFile.getAbsolutePath)
     // Delete temp file when program exits, only if delete fail.
     if(!FileUtils.deleteQuietly(tempSwaggerFile)){
