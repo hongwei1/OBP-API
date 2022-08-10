@@ -66,12 +66,6 @@
       <artifactId>netty-codec-http</artifactId>
       <version>4.1.79.Final</version>
     </dependency>
-    <!-- Vulnerability - force to update the relevant dependency: commons-fileupload-->
-    <dependency>
-      <groupId>commons-fileupload</groupId>
-      <artifactId>commons-fileupload</artifactId>
-      <version>1.4</version>
-    </dependency>
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-mapper_${scala.version}</artifactId>

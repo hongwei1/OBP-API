@@ -72,6 +72,12 @@
             <artifactId>guava</artifactId>
             <version>23.0</version>
         </dependency>
+        <!-- Vulnerability - force to update the relevant dependency: commons-fileupload-->
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.4</version>
+        </dependency>
     </dependencies>
 
     <build>
