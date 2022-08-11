@@ -72,6 +72,13 @@
             <artifactId>guava</artifactId>
             <version>23.0</version>
         </dependency>
+
+        <!-- Vulnerability: force maven update to safe version: commons-beanutils -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
     </dependencies>
 
     <build>
