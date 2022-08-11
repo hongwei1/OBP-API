@@ -418,12 +418,6 @@
       <groupId>io.grpc</groupId>
       <artifactId>grpc-all</artifactId>
       <version>1.25.0</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>netty-transport</artifactId>
-          <groupId>io.netty</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
