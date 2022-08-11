@@ -510,6 +510,12 @@
       <artifactId>hydra-client</artifactId>
       <version>1.7.0</version>
     </dependency>
+    <!-- Vulnerability: force maven update to safe version: org.json.json -->
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20200518</version>
+    </dependency>
   </dependencies>
 
   <build>
