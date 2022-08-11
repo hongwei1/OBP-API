@@ -124,6 +124,12 @@
         <version>3.0.8</version>
         <scope>test</scope>
       </dependency>
+      <!-- Vulnerability - force to update the relevant dependency: commons-fileupload-->
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.4</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

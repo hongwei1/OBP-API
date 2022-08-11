@@ -22,12 +22,6 @@
     </repositories>
 
     <dependencies>
-        <!-- Vulnerability - force to update the relevant dependency: commons-fileupload-->
-        <dependency>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-            <version>1.4</version>
-        </dependency>
         <dependency>
             <groupId>net.liftweb</groupId>
             <artifactId>lift-common_${scala.version}</artifactId>
