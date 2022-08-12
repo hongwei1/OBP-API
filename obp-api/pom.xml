@@ -177,6 +177,13 @@
       <version>${jetty.version}</version>
       <scope>test</scope>
   </dependency>
+    <!-- Vulnerability: force maven update to safe version: jackson-dataformat-cbor -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-cbor</artifactId>
+      <version>2.11.4</version>
+    </dependency>
+    
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-mongodb_${scala.version}</artifactId>
