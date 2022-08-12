@@ -235,6 +235,12 @@
       <artifactId>elasticsearch</artifactId>
       <version>7.17.1</version>
     </dependency>
+    <!-- Vulnerability: force maven update to safe version: jackson-databind -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.12.6.1</version>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-client-esjava -->
     <dependency>
       <groupId>com.sksamuel.elastic4s</groupId>
