@@ -350,7 +350,7 @@
     <dependency>
       <groupId>com.vladsch.flexmark</groupId>
       <artifactId>flexmark-all</artifactId>
-      <version>0.40.8</version>
+      <version>0.64.0</version>
     </dependency>
     <!--scala utils, for type scan-->
     <dependency>
