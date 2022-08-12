@@ -378,6 +378,13 @@
       <artifactId>client</artifactId>
       <version>4.0.1</version>
     </dependency>
+    <!-- Vulnerability: force maven update to safe version: commons-compress -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.21</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>io.swagger.parser.v3</groupId>
       <artifactId>swagger-parser</artifactId>
