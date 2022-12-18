@@ -49,14 +49,18 @@ trait DefaultUsers {
   val defaultProvider = Constant.HostName
   
   // create some resource user for test purposes
-  lazy val resourceUser1 = UserX.createResourceUser(provider = defaultProvider, providerId= None, createdByConsentId= None, 
+  lazy val resourceUser1 = UserX.createResourceUser(provider = defaultProvider, providerId= userId1, createdByConsentId= None,
     name= Some("resourceUser1"),email= Some("resourceUser1@123.com"), userId= userId1, company = Some("Tesobe GmbH")).openOrThrowException(attemptedToOpenAnEmptyBox)
-  lazy val resourceUser2 = UserX.createResourceUser(provider = defaultProvider, providerId= None, createdByConsentId= None, 
+  lazy val resourceUser2 = UserX.createResourceUser(provider = defaultProvider, providerId= userId2, createdByConsentId= None,
     name= Some("resourceUser2"),email= Some("resourceUser2@123.com"), userId= userId2, company = Some("Tesobe GmbH")).openOrThrowException(attemptedToOpenAnEmptyBox)
-  lazy val resourceUser3 = UserX.createResourceUser(provider = defaultProvider, providerId= None, createdByConsentId= None, 
+  lazy val resourceUser3 = UserX.createResourceUser(provider = defaultProvider, providerId= userId3, createdByConsentId= None,
     name= Some("resourceUser3"),email= Some("resourceUser3@123.com"), userId= userId3, company = Some("Tesobe GmbH")).openOrThrowException(attemptedToOpenAnEmptyBox)
-  lazy val resourceUser4 = UserX.createResourceUser(provider = GatewayLogin.gateway, providerId = Some("simonr"), 
+  lazy val resourceUser4 = UserX.createResourceUser(provider = GatewayLogin.gateway, providerId = Some("resourceUser4"),
     createdByConsentId= Some("simonr"), name= Some("resourceUser4"), email= Some("resourceUser4@123.com"), userId=userId4, company = Some("Tesobe GmbH")).openOrThrowException(attemptedToOpenAnEmptyBox)
+
+
+
+
 
   // create the tokens in database, we only need token-key and token-secretAllCases
   lazy val testToken1 = Tokens.tokens.vend.createToken(
