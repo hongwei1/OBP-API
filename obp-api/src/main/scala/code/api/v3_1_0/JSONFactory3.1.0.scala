@@ -305,7 +305,7 @@ case class UserAuthContextJson(
   user_id: String,
   key: String,
   value: String,
-  timeStamp: Date
+  time_stamp: Date
 )
 case class UserAuthContextUpdateJson(
   user_auth_context_update_id: String,
@@ -410,6 +410,7 @@ case class AccountAttributeJson(
   name: String,
   `type`: String,
   value: String,
+  product_instance_code: Option[String],
 )
 
 case class CardAttributeJson(
@@ -423,7 +424,8 @@ case class AccountAttributeResponseJson(
   account_attribute_id: String,
   name: String,
   `type`: String,
-  value: String
+  value: String,
+  product_instance_code: Option[String],
 )
 case class AccountAttributesResponseJson(list: List[AccountAttributeResponseJson])
 
@@ -529,6 +531,7 @@ case class PostConsentBodyCommonJson(
                                       views:  List[PostConsentViewJsonV310],
                                       entitlements: List[PostConsentEntitlementJsonV310],
                                       consumer_id: Option[String],
+                                      consent_request_id: Option[String],
                                       valid_from: Option[Date],
                                       time_to_live: Option[Long]
 ) extends PostConsentCommonBody
@@ -994,7 +997,7 @@ object JSONFactory310{
       user_id = userAuthContext.userId,
       key = userAuthContext.key,
       value = userAuthContext.value,
-      timeStamp = userAuthContext.timeStamp
+      time_stamp = userAuthContext.timeStamp
     )
   }
   
@@ -1244,7 +1247,8 @@ object JSONFactory310{
       account_attribute_id = accountAttribute.accountAttributeId,
       name = accountAttribute.name,
       `type` = accountAttribute.attributeType.toString,
-      value = accountAttribute.value
+      value = accountAttribute.value,
+      product_instance_code = accountAttribute.productInstanceCode
     )
   }
   def createAccountAttributesJson(productsList: List[AccountAttribute]) : AccountAttributesResponseJson = {

@@ -1,5 +1,6 @@
 package code.api.util
 
+import code.api.Constant.PARAM_LOCALE
 import code.api.util.APIUtil.{getOAuth2ServerUrl, getObpApiRoot, getServerUrl}
 import code.api.util.ExampleValue.{accountIdExample, bankIdExample, customerIdExample, userIdExample}
 import code.util.Helper.MdcLoggable
@@ -708,8 +709,56 @@ object Glossary extends MdcLoggable  {
 		title = "Transaction",
 		description =
 		  """
-			|Records of successful movements of money from / to an `Account`. OBP Transactions don't contain any "draft" or "pending" Transactions. (see Transaction Requests). Transactions contain infomration including type, description, from, to, currency, amount and new balance information.
+			|Transactions are records of successful movements of value into or out of an `Account`.
 			|
+			|OBP Transactions don't contain any "draft" or "pending" Transactions; pending transactions see represented by Transaction Requests.
+			|
+			|OBP Transactions are modelled on a Bank statement where everything is based on the perspective of my account.
+			|That is, if I look at "my account", I see credits (positive numbers) and debits (negative numbers)
+
+			|An OBP transaction stores information including the:
+			|Bank ID
+			|Account ID
+			|Currency
+			|Amount (positive for a credit, negative for a debit)
+			|Date
+			|Counterparty (information that describes the other party in the transaction)
+			|- optionally description and new balance.
+|
+|Note, OBP operates a Double-Entry Bookkeeping system which means that every transfer of value within OBP is represented by *two* transactions.
+|
+|For instance, to represent 5 Euros going from Account A to Account B, we would have 2 transactions:
+|
+|Transaction 1.
+|
+|Account: A
+|Currency: EUR
+|Amount: -5
+|Counterparty: Account B
+|
+|Transaction 2.
+|
+|Account: B
+|Currency: EUR
+|Amount: +5
+|Counterparty: Account A
+|
+|The sum of the two transactions must be zero.
+|
+|What about representing value coming into or out of the system? Here we use "settlement accounts":
+|
+|OBP-INCOMING-SETTLEMENT-ACCOUNT is typically the ID for a default incoming settlement account
+|
+|OBP-OUTGOING-SETTLEMENT-ACCOUNT is typically the ID for a default outgoing settlement account
+|
+|See the following diagram:
+|
+|![OBP Double-Entry Bookkeeping](https://user-images.githubusercontent.com/485218/167990092-e76e6265-faa2-4425-b366-e570ed3301b9.png)
+|
+|See the [Get Double Entry Transaction](/index?version=OBPv4.0.0&operation_id=OBPv4_0_0-getDoubleEntryTransaction&currentTag=Transaction#OBPv4_0_0-getDoubleEntryTransaction) endpoint
+|
+|
+|
 		  """)
 
 	  glossaryItems += GlossaryItem(
@@ -759,6 +808,146 @@ object Glossary extends MdcLoggable  {
 		  """
 			|Link Users and Customers in a many to many relationship. A User can represent many Customers (e.g. the bank may have several Customer records for the same individual or a dependant). In this way Customers can easily be attached / detached from Users.
 		  """)
+	
+	  glossaryItems += GlossaryItem(
+		title = "Consent",
+		description =
+			s"""Consents provide a mechanism by which a third party App or User can access resources on behalf of a User.
+				|${getGlossaryItem("Consent OBP Flow Example")}
+				|${getGlossaryItem("Consent / Account Onboarding")}
+				|<img width="468" alt="OBP Access Control Image" src="$getServerUrl/media/images/glossary/OBP_Consent_Request__3_.png"></img>
+				|""".stripMargin)
+
+
+	glossaryItems += GlossaryItem(
+		title = "Consent OBP Flow Example",
+		description =
+				s"""
+					|#### 1) Call endpoint Create Consent Request using application access (Client Credentials)
+					|
+					|Url: [$getObpApiRoot/v5.0.0/consumer/consent-requests]($getObpApiRoot/v5.0.0/consumer/consent-requests)
+					|
+					|Post body:
+					|
+					|```
+					|{
+					|  "everything": false,
+					|  "account_access": [],
+					|  "entitlements": [
+					|    {
+					|      "bank_id": "gh.29.uk.x",
+					|      "role_name": "CanGetCustomer"
+					|    }
+					|  ],
+					|  "email": "marko@tesobe.com"
+					|}
+					|```
+					|
+					|Output:
+					|```
+					|{
+					|  "consent_request_id":"bc0209bd-bdbe-4329-b953-d92d17d733f4",
+					|  "payload":{
+					|    "everything":false,
+					|    "account_access":[],
+					|    "entitlements":[{
+					|      "bank_id":"gh.29.uk.x",
+					|      "role_name":"CanGetCustomer"
+					|    }],
+					|    "email":"marko@tesobe.com"
+					|  },
+					|  "consumer_id":"0b34068b-cb22-489a-b1ee-9f49347b3346"
+					|}
+					|```
+					|
+					|
+					|
+					|
+					|#### 2) Call endpoint Create Consent By CONSENT_REQUEST_ID (SMS) with logged on user
+					|
+					|Url: $getObpApiRoot/v5.0.0/consumer/consent-requests/bc0209bd-bdbe-4329-b953-d92d17d733f4/EMAIL/consents									
+					|
+					|Output:
+					|```
+					|{
+					|  "consent_id":"155f86b2-247f-4702-a7b2-671f2c3303b6",
+					|  "jwt":"eyJhbGciOiJIUzI1NiJ9.eyJlbnRpdGxlbWVudHMiOlt7InJvbGVfbmFtZSI6IkNhbkdldEN1c3RvbWVyIiwiYmFua19pZCI6ImdoLjI5LnVrLngifV0sImNyZWF0ZWRCeVVzZXJJZCI6ImFiNjUzOWE5LWIxMDUtNDQ4OS1hODgzLTBhZDhkNmM2MTY1NyIsInN1YiI6IjU3NGY4OGU5LTE5NDktNDQwNy05NTMwLTA0MzM3MTU5YzU2NiIsImF1ZCI6IjFhMTA0NjNiLTc4NTYtNDU4ZC1hZGI2LTViNTk1OGY1NmIxZiIsIm5iZiI6MTY2OTg5NDU5OSwiaXNzIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwODAiLCJleHAiOjE2Njk4OTgxOTksImlhdCI6MTY2OTg5NDU5OSwianRpIjoiMTU1Zjg2YjItMjQ3Zi00NzAyLWE3YjItNjcxZjJjMzMwM2I2Iiwidmlld3MiOltdfQ.lLbn9BtgKvgAcb07if12SaEyPAKgXOEmr6x3Y5pU-vE",
+					|  "status":"INITIATED",
+					|  "consent_request_id":"bc0209bd-bdbe-4329-b953-d92d17d733f4"
+					|}
+					|```
+					|
+					|#### 3) We receive the SCA message via SMS                    
+					|Your consent challenge : 29131491, Application: Any application		
+					|
+					|
+					|
+					|
+					|#### 4) Call endpoint Answer Consent Challenge with logged on user
+					|Url: $getObpApiRoot/v5.0.0/banks/gh.29.uk.x/consents/155f86b2-247f-4702-a7b2-671f2c3303b6/challenge
+					|Post body:
+					|```
+					|{
+					|  "answer": "29131491"
+					|}
+					|```
+					|Output:
+					|```
+					|{
+					|  "consent_id":"155f86b2-247f-4702-a7b2-671f2c3303b6",
+					|  "jwt":"eyJhbGciOiJIUzI1NiJ9.eyJlbnRpdGxlbWVudHMiOlt7InJvbGVfbmFtZSI6IkNhbkdldEN1c3RvbWVyIiwiYmFua19pZCI6ImdoLjI5LnVrLngifV0sImNyZWF0ZWRCeVVzZXJJZCI6ImFiNjUzOWE5LWIxMDUtNDQ4OS1hODgzLTBhZDhkNmM2MTY1NyIsInN1YiI6IjU3NGY4OGU5LTE5NDktNDQwNy05NTMwLTA0MzM3MTU5YzU2NiIsImF1ZCI6IjFhMTA0NjNiLTc4NTYtNDU4ZC1hZGI2LTViNTk1OGY1NmIxZiIsIm5iZiI6MTY2OTg5NDU5OSwiaXNzIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwODAiLCJleHAiOjE2Njk4OTgxOTksImlhdCI6MTY2OTg5NDU5OSwianRpIjoiMTU1Zjg2YjItMjQ3Zi00NzAyLWE3YjItNjcxZjJjMzMwM2I2Iiwidmlld3MiOltdfQ.lLbn9BtgKvgAcb07if12SaEyPAKgXOEmr6x3Y5pU-vE",
+					|  "status":"ACCEPTED"
+					|}
+					|```
+					|
+					|
+					|
+					|
+					|#### 5) Call endpoint Get Customer by CUSTOMER_ID with Consent Header
+					|
+					|Url: $getObpApiRoot/v5.0.0/banks/gh.29.uk.x/customers/a9c8bea0-4f03-4762-8f27-4b463bb50a93
+					|
+					|Request Header: 
+					|```
+					|Consent-JWT:eyJhbGciOiJIUzI1NiJ9.eyJlbnRpdGxlbWVudHMiOlt7InJvbGVfbmFtZSI6IkNhbkdldEN1c3RvbWVyIiwiYmFua19pZCI6ImdoLjI5LnVrLngifV0sImNyZWF0ZWRCeVVzZXJJZCI6ImFiNjUzOWE5LWIxMDUtNDQ4OS1hODgzLTBhZDhkNmM2MTY1NyIsInN1YiI6IjU3NGY4OGU5LTE5NDktNDQwNy05NTMwLTA0MzM3MTU5YzU2NiIsImF1ZCI6IjFhMTA0NjNiLTc4NTYtNDU4ZC1hZGI2LTViNTk1OGY1NmIxZiIsIm5iZiI6MTY2OTg5NDU5OSwiaXNzIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwODAiLCJleHAiOjE2Njk4OTgxOTksImlhdCI6MTY2OTg5NDU5OSwianRpIjoiMTU1Zjg2YjItMjQ3Zi00NzAyLWE3YjItNjcxZjJjMzMwM2I2Iiwidmlld3MiOltdfQ.lLbn9BtgKvgAcb07if12SaEyPAKgXOEmr6x3Y5pU-
+					|```
+					|Output:
+					|```
+					|{
+					|  "bank_id":"gh.29.uk.x",
+					|  "customer_id":"a9c8bea0-4f03-4762-8f27-4b463bb50a93",
+					|  "customer_number":"0908977830011-#2",
+					|  "legal_name":"NONE",
+					|  "mobile_phone_number":"+3816319549071",
+					|  "email":"marko@tesobe.com1",
+					|  "face_image":{
+					|    "url":"www.openbankproject",
+					|    "date":"2017-09-18T22:00:00Z"
+					|  },
+					|  "date_of_birth":"2017-09-18T22:00:00Z",
+					|  "relationship_status":"Single",
+					|  "dependants":5,
+					|  "dob_of_dependants":[],
+					|  "credit_rating":{
+					|    "rating":"3",
+					|    "source":"OBP"
+					|  },
+					|  "credit_limit":{
+					|    "currency":"EUR",
+					|    "amount":"10001"
+					|  },
+					|  "highest_education_attained":"Bachelor’s Degree",
+					|  "employment_status":"Employed",
+					|  "kyc_status":true,
+					|  "last_ok_date":"2017-09-18T22:00:00Z",
+					|  "title":null,
+					|  "branch_id":"3210",
+					|  "name_suffix":null,
+					|  "customer_attributes":[]
+					|}
+					|```
+					|""".stripMargin)
+
 
 
 	glossaryItems += GlossaryItem(
@@ -945,7 +1134,7 @@ object Glossary extends MdcLoggable  {
 			|
 			|Body:
 			|
-			|	{  "legal_name":"Eveline Tripman",  "mobile_phone_number":"+44 07972 444 876",  "email":"eveline@example.com",  "face_image":{    "url":"www.openbankproject",    "date":"2017-09-19T00:00:00Z"  },  "date_of_birth":"2017-09-19T00:00:00Z",  "relationship_status":"single",  "dependants":10,  "dob_of_dependants":["2017-09-19T00:00:00Z"],  "credit_rating":{    "rating":"OBP",    "source":"OBP"  },  "credit_limit":{    "currency":"EUR",    "amount":"10"  },  "highest_education_attained":"Master",  "employment_status":"worker",  "kyc_status":true,  "last_ok_date":"2017-09-19T00:00:00Z",  "title":"Dr.",  "branch_id":"DERBY6",  "name_suffix":"Sr"}
+			|	{  "legal_name":"Eveline Tripman",  "mobile_phone_number":"+44 07972 444 876",  "email":"eveline@example.com",  "face_image":{    "url":"www.openbankproject",    "date":"1100-01-01T00:00:00Z"  },  "date_of_birth":"1100-01-01T00:00:00Z",  "relationship_status":"single",  "dependants":10,  "dob_of_dependants":["1100-01-01T00:00:00Z"],  "credit_rating":{    "rating":"OBP",    "source":"OBP"  },  "credit_limit":{    "currency":"EUR",    "amount":"10"  },  "highest_education_attained":"Master",  "employment_status":"worker",  "kyc_status":true,  "last_ok_date":"1100-01-01T00:00:00Z",  "title":"Dr.",  "branch_id":"DERBY6",  "name_suffix":"Sr"}
 			|
 			|Headers:
 			|
@@ -1302,6 +1491,193 @@ object Glossary extends MdcLoggable  {
 			|
 
 		  """)
+
+	glossaryItems += GlossaryItem(
+		title = "Scenario 6: Update credit score based on transaction and device data.",
+		description =
+			s"""
+			|### 1) Use Case
+			|
+			| As an App developer you want to give a Credit Rating to a Customer based on their Transactions and also device data.
+			|
+|### 2) Solution Overview:
+|
+|In general your application will need to:
+|				1) Loop through Customers
+|     	2) For each Customer, get its related Users and associated device data
+|       3) For each Customer or User get the related accounts
+|       4) For each Account, get its Transaction data
+|       5) Update the Credit Rating and Credit Rating Readiness score of the Customer.
+|
+|### 3) Authentication and Authorisation
+|
+|Depending on the configuration of this OBP instance, the Consumer will need Scopes and / or the User will need Entitlements.
+|To get started, we suggest requesting Entitlements via the API Explorer.
+|
+|### 4) Endpoints
+|
+|* Get Customers (minimal). Click [here](/index?version=OBPv4.0.0&operation_id=OBPv4_0_0-getCustomersMinimalAtAnyBank&currentTag=Customer#OBPv4_0_0-getCustomersMinimalAtAnyBank) for documentation.
+|
+|The above endpoints return a list of bank_id and customer_id which can be used for getting correlated Users and their attributes:
+|
+|* Get Correlated Users for a Customer. Click [here](/index?version=OBPv4.0.0&operation_id=OBPv4_0_0-getCustomersMinimalAtAnyBank&currentTag=Customer#OBPv4_0_0-getCorrelatedUsersInfoByCustomerId) for documentation.
+|
+|Then get Accounts related to a Customer:
+|
+|* GET Accounts Minimal for a Customer. Click [here](/index?version=OBPv4.0.0&operation_id=OBPv4_0_0-getAccountsMinimalByCustomerId&currentTag=Account#OBPv4_0_0-getAccountsMinimalByCustomerId) for documentation.
+|
+|Once you have the list of bank_ids and account_ids, you can get their transactions which include tags for each transaction:
+|
+|* GET Firehose Transactions. Click [here](/index?version=OBPv4.0.0&operation_id=OBPv3_0_0-getFirehoseTransactionsForBankAccount&currentTag=Transaction#OBPv3_0_0-getFirehoseTransactionsForBankAccount) for documentation.
+|
+|After your processing of the data you can update the Credit Score:
+|
+|* Update Credit Score. Click [here](/index?version=OBPv4.0.0&operation_id=OBPv3_1_0-updateCustomerCreditRatingAndSource&currentTag=Customer#OBPv3_1_0-updateCustomerCreditRatingAndSource) for documentation.
+|
+|You can create a CREDIT_SCORE_READINESS attribute using the following endpoint:
+|
+|* Create Customer Attribute. Click [here](/index?version=OBPv4.0.0&operation_id=OBPv3_1_0-updateCustomerCreditRatingAndSource&currentTag=Customer#OBPv4_0_0-createCustomerAttribute) for documentation.
+|
+|And update it here:
+|
+|* Update Customer Attribute. Click [here](/index?version=OBPv4.0.0&operation_id=OBPv3_1_0-updateCustomerCreditRatingAndSource&currentTag=Customer#OBPv4_0_0-updateCustomerAttribute) for documentation.
+|
+|""")
+
+	glossaryItems += GlossaryItem(
+		title = "Scenario 7: Onboarding a User with multiple User Auth Context records",
+		description =
+			s"""
+			|### 1) Assuming a User is registered.
+			|
+			|The User can authenticate using OAuth, OIDC, Direct Login etc.
+      |
+			|### 2) Create a first User Auth Context record e.g. ACCOUNT_NUMBER
+			|
+			| The setting of the first User Auth Context record for a User, typically involves sending an SMS to the User.
+      | The phone number used for the SMS is retrieved from the bank's Core Banking System via an Account Number to Phone Number lookup.
+			| If this step succeeds we can be reasonably confident that the User who initiated it has access to a SIM card that can use the Phone Number linked to the Bank Account on the Core Banking System.
+			| 
+			|Action: Create User Auth Context Update Request
+			|
+			|	POST $getObpApiRoot/obp/v5.0.0/banks/BANK_ID/users/current/auth-context-updates/SMS
+			|
+			|Body:
+			|
+			|	{  "key":"ACCOUNT_NUMBER",  "value":"78987432"}
+			|
+			|Headers:
+			|
+			|	Content-Type:  application/json
+			|
+			|	DirectLogin: token="your-token-from-direct-login"
+			| 
+			| When customer get the the challenge answer from SMS, then need to call `Answer Auth Context Update Challenge` to varify the challenge. 
+			| Then the customer create the 1st `User Auth Context` successfully.
+			| 
+			| 
+			|Action: Answer Auth Context Update Challenge
+			|
+			|	POST $getObpApiRoot/obp/v5.0.0/banks/BANK_ID/users/current/auth-context-updates/AUTH_CONTEXT_UPDATE_ID/challenge
+			|
+			|Body:
+			|
+			|	{  "answer": "12345678"}
+			|
+			|Headers:
+			|
+			|	Content-Type:  application/json
+			|
+			|	DirectLogin: token="your-token-from-direct-login"
+			|
+|### 3) Create a second User Auth Context record e.g. SMALL_PAYMENT_VERIFIED
+|
+| Once the first User Auth Context record is set, we can require the App to set a second record which builds on the information of the first.
+|
+|Action: Create User Auth Context Update Request
+|
+|	POST $getObpApiRoot/obp/v5.0.0/banks/BANK_ID/users/current/auth-context-updates/SMS
+|
+|Body:
+|
+|	{  "key":"SMALL_PAYMENT_VERIFIED",  "value":"78987432"}
+|
+|Headers:
+|
+|	Content-Type:  application/json
+|
+|	DirectLogin: token="your-token-from-direct-login"
+|
+|
+|
+|Following `Create User Auth Context Update Request` request the API will send a small payment with a random code from the Users bank account specified in the SMALL_PAYMENT_VERIFIED key value.
+|
+|In order to answer the challenge, the User must have access to the online banking statement (or some other App that already can read transactions in realtime) so they can read the code in the description of the payment.
+|
+|
+|Then Action:Answer Auth Context Update Challenge
+|
+|	POST $getObpApiRoot/obp/v5.0.0/banks/BANK_ID/users/current/auth-context-updates/AUTH_CONTEXT_UPDATE_ID/challenge
+|
+|Body:
+|
+|	{  "answer": "12345678"}
+|
+|Headers:
+|
+|	Content-Type:  application/json
+|
+|	DirectLogin: token="your-token-from-direct-login"
+| 
+| Note! The above logic must be encoded in a dynamic connector method for the OBP internal function validateUserAuthContextUpdateRequest which is used by the endpoint Create User Auth Context Update Request See the next step.
+|
+|### 4) Create or Update Connector Method for validateUserAuthContextUpdateRequest
+|
+| Using this endpoint you can modify the Scala logic
+|
+|Action:
+|
+|	POST $getObpApiRoot/obp/v4.0.0/management/connector-methods
+|
+|Body:
+|
+|	{  "method_name":"validateUserAuthContextUpdateRequest",  "method_body":"%20%20%20%20%20%20Future.successful%28%0A%20%20%20%20%20%20%20%20Full%28%28BankCommons%28%0A%20%20%20%20%20%20%20%20%20%20BankId%28%22Hello%20bank%20id%22%29%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%228%22%0A%20%20%20%20%20%20%20%20%29%2C%20None%29%29%0A%20%20%20%20%20%20%29"}
+|
+|Headers:
+|
+|	Content-Type:  application/json
+|
+|	DirectLogin: token="your-token-from-direct-login"
+|
+|### 5) Allow automated access to the App with Create Consent (SMS)
+|
+|
+| Following the creation of User Auth Context records, OBP will create the relevant Account Access Views which allows the User to access their account(s).
+| The App can then request an OBP consent which can be used as a bearer token and have automated access to the accounts.
+| The Consent can be deleted at any time by the User.
+|
+| The Consent can have access to everything the User has access to, or a subset of this.
+|
+|Action:
+|
+|	POST $getObpApiRoot/obp/v4.0.0/banks/BANK_ID/my/consents/SMS
+|
+|Body:
+|
+|	{  "everything":false,  "views":[{    "bank_id":"gh.29.uk",    "account_id":"8ca8a7e4-6d02-40e3-a129-0b2bf89de9f0",    "view_id":"owner"  }],  "entitlements":[{    "bank_id":"gh.29.uk",    "role_name":"CanGetCustomer"  }],  "consumer_id":"7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh",  "phone_number":"+44 07972 444 876",  "valid_from":"2022-04-29T10:40:03Z",  "time_to_live":3600}
+|
+|Headers:
+|
+|	Content-Type:  application/json
+|
+|	DirectLogin: token="your-token-from-direct-login"
+|
+|![OBP User Auth Context, Views, Consents 2022](https://user-images.githubusercontent.com/485218/165982767-f656c965-089b-46de-a5e6-9f05b14db182.png)
+|
+|
+		  """)
+
+
 	glossaryItems += GlossaryItem(
 		title = "KYC (Know Your Customer)",
 		description =
@@ -1751,7 +2127,7 @@ object Glossary extends MdcLoggable  {
 |		"picture": "https://lh5.googleusercontent.com/-Xd44hnJ6TDo/AAAAAAAAAAI/AAAAAAAAAAA/AKxrwcadwzhm4N4tWk5E8Avxi-ZK6ks4qg/s96-c/photo.jpg",
 |		"given_name": "Marko",
 |		"family_name": "Milić",
-|		"locale": "en",
+|		$PARAM_LOCALE: "en",
 |		"iat": 1547705691,
 |		"exp": 1547709291
 |		}
@@ -2673,14 +3049,15 @@ object Glossary extends MdcLoggable  {
 		title = "Connector Method",
 		description =
 			s"""
-			| The developer can override all the existing Connector methods on their own. 
+			| Developers can override all the existing Connector methods.
 			| This function needs to be used together with the Method Routing. 
-			| when set "connector = internal", then the developer can call their own method body at API level. 
+			| When we set "connector = internal", then the developer can call their own method body at API level.
 			|
-			|eg: Get Banks endpoint, it calls the connector "getBanks" method, then the developers can use these endpoints to modify the business logic in the getBanks method body.
+			|For example, the GetBanks endpoint calls the connector "getBanks" method. Then, developers can use these endpoints to modify the business logic in the getBanks method body.
 			|  
 			|  The following videos are available:
 		  |* [Introduction for Connector Method] (https://vimeo.com/507795470)
+		  |* [Introduction 2 for Connector Method] (https://vimeo.com/712557419)
 		  |
 		  |""".stripMargin)
 
@@ -2690,13 +3067,19 @@ object Glossary extends MdcLoggable  {
 		title = "Dynamic Resource Doc",
 		description =
 			s"""
-		  | The developers can create their own endpoints by this endpoint.
-			| Need to prepare the obp resource doc format json. 
-			| And all the business logic code can be written in the *method_body* field, it is the encoded scala code.
+		  | In OBP we largely define our endpoints using an internal case class or model called ResourceDoc
+|
+|  Using this endpoint, developers can create their own Resource Docs at run time thus creating fully featured
+|  Open Bank Project style endpoints dynamically.
+|
+|
+			| In order to do this you need to prepare your desired Resource Doc as JSON.
+			| The business logic code can be written in the *method_body* field as encoded Scala code.
 			|  
-			| It is still working in the processing ..
+			| This feature is somewhat work in progress (WIP).
+			|
 			|The following videos are available:
-			|* [Introduction for dConnector Method] (https://vimeo.com/623381607)
+			|* [Introduction to Dynamic Resource Docs] (https://vimeo.com/623381607)
 		  |
 		  |""".stripMargin)
 
@@ -2704,16 +3087,21 @@ object Glossary extends MdcLoggable  {
 		title = "Dynamic Message Doc",
 		description =
 			s"""
-			| The developers can create their own scala methods in OBP code.
+			| In OBP we represent messages sent by a Connector method / function as MessageDocs.
+			| A MessageDoc defines the message the Connector sends to an Adapter and the response it expects from the Adapter.
+			|
+			| Using this endpoint, developers can create their own scala methods aka Connectors in OBP code.
 			| These endpoints are designed for extending the current connector methods. 
-			| when you call the dynamic resource doc endpoints, sometimes you need to call internal scala methods, 
-			| which are not existing in OBP code, then you can use these endpoints to prepare them on your own.
+			|
+			| When you call the Dynamic Resource Doc endpoints, sometimes you need to call internal Scala methods which
+			|don't yet exist in the OBP code. In this case you can use these endpoints to create your own internal Scala methods.
       | 
-      | And you can use these endpoints to design your own helper methods in OBP code.
+      |You can also use these endpoints to create your own helper methods in OBP code.
 			|  
-			| It is still working in the processing ..
+			| This feature is somewhat work in progress (WIP).
+|
 		  |The following videos are available:
-			|* [Introduction for Connector Method] (https://vimeo.com/623317747)
+			|* [Introduction to Dynamic Message Doc] (https://vimeo.com/623317747)
 		  |
 		  |""".stripMargin)
 

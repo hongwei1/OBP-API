@@ -1,7 +1,9 @@
 package code.api.v4_0_0
 
 import code.DynamicData.DynamicDataT
-import code.api.v4_0_0.dynamic.DynamicEndpointHelper
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+import code.api.util.APIUtil.defaultBankId
+import code.connector.MockedCbsConnector.testBankId1
 import net.liftweb.json
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.{Formats, JArray, prettyRender}
@@ -768,6 +770,9 @@ class DynamicEndpointHelperTest extends FlatSpec with Matchers {
       dynamicDataId: Option[String],
       dynamicEntityName: String,
       dataJson: String,
+      bankId: Option[String],
+      userId: Option[String],
+      isPersonalEntity: Boolean
     )extends DynamicDataT
     
     val dataJsonString = """{
@@ -785,7 +790,7 @@ class DynamicEndpointHelperTest extends FlatSpec with Matchers {
                            |}
                            |}""".stripMargin
     val dynamicDataJson = json.parse(dataJsonString)
-    val dynamicDataList = List(DataTest(Some("1"),"PetEntity",dataJsonString), DataTest(Some("2"),"PetEntity2",dataJsonString2))
+    val dynamicDataList = List(DataTest(Some("1"),"PetEntity",dataJsonString, Some(testBankId1.value), None, false), DataTest(Some("2"),"PetEntity2",dataJsonString2, Some(testBankId1.value), None, false))
 
 
     val expectedResult = ("PetEntity", "1")

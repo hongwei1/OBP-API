@@ -1,12 +1,12 @@
 package code.api.v1_4_0
 
 import code.api.berlin.group.v1_3.JvalueCaseClass
-
 import java.util.Date
+
 import code.api.util.APIUtil.{EmptyBody, PrimaryDataBody, ResourceDoc}
 import code.api.util.ApiTag.ResourceDocTag
 import code.api.util.Glossary.glossaryItems
-import code.api.util.{APIUtil, ApiRole, ConnectorField, CustomJsonFormats, ExampleValue, PegdownOptions}
+import code.api.util.{APIUtil, ApiRole, ConnectorField, CustomJsonFormats, ExampleValue, I18NUtil, PegdownOptions}
 import code.bankconnectors.LocalMappedConnector.getAllEndpointTagsBox
 import com.openbankproject.commons.model.ListResult
 import code.crm.CrmEvent.CrmEvent
@@ -21,9 +21,10 @@ import net.liftweb.json.JsonAST.{JArray, JBool, JNothing, JObject, JValue}
 import net.liftweb.util.StringHelpers
 import code.util.Helper.MdcLoggable
 import org.apache.commons.lang3.StringUtils
-
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
+
+import com.openbankproject.commons.model.enums.LanguageParam
 
 object JSONFactory1_4_0 extends MdcLoggable{
   implicit def formats: Formats = CustomJsonFormats.formats
@@ -365,7 +366,31 @@ object JSONFactory1_4_0 extends MdcLoggable{
    * @return Bank.bank_id
    */
   def getGlossaryItemTitle(parameter: String): String = {
-    glossaryItems.find(_.title.toLowerCase.contains(s"${parameter.toLowerCase}")).map(_.title).getOrElse("")
+    def isUrlParameter(): Boolean = {
+      List(
+        "BANK_ID", 
+        "ACCOUNT_ID", 
+        "CUSTOMER_ID",
+        "TRANSACTION_ID",
+        "ATTRIBUTE_ID",
+        "VIEW_ID",
+        "USER_ID",
+        "PRODUCT_CODE",
+        "PRODUCT_ID",
+        "OPERATION_ID",
+        "ENDPOINT_TAG_ID",
+      ).exists(_ == parameter)
+    }
+    parameter match {
+      case _ if isUrlParameter() =>
+        glossaryItems
+          .find(_.title.toLowerCase.contains(s"${parameter.toLowerCase}"))
+          .map(_.title).getOrElse("").replaceAll(" ","-")
+      case _ =>
+        glossaryItems
+          .find(_.title.toLowerCase.equals(s"${parameter.toLowerCase}"))
+          .map(_.title).getOrElse("").replaceAll(" ","-")
+    }
   }
   
   /**
@@ -407,7 +432,7 @@ object JSONFactory1_4_0 extends MdcLoggable{
 
     if(findMatches.nonEmpty) {
       val urlParameters: List[String] = findMatches.toList.sorted
-      val parametersDescription: List[String] = urlParameters.map(prepareDescription)
+      val parametersDescription: List[String] = urlParameters.map(i => prepareDescription(i, Nil))
       parametersDescription.mkString("\n\n\n**URL Parameters:**", "", "\n")
     } else {
       ""
@@ -419,31 +444,49 @@ object JSONFactory1_4_0 extends MdcLoggable{
    * @param parameter BANK_ID
    * @return [BANK_ID](/glossary#Bank.bank_id):gh.29.uk 
    */
-  def prepareDescription(parameter: String): String = {
+  def prepareDescription(parameter: String, optionalTypeFields: List[(String, Boolean)]): String = {
     val glossaryItemTitle = getGlossaryItemTitle(parameter)
     val exampleFieldValue = getExampleFieldValue(parameter)
-    if(exampleFieldValue.contains(ExampleValue.NoExampleProvided)){
+    def boldIfMandatory() = {
+      optionalTypeFields.exists(i => i._1 == parameter && i._2 == false) match {
+        case true =>
+          s"***$parameter**"
+        case false =>
+          s"$parameter"
+      }
+    }
+    if(glossaryItemTitle.contains("jsonstring")){
       "" 
     } else {
-      s"""
-         |
-         |* [${parameter}](/glossary#$glossaryItemTitle): $exampleFieldValue
-         |
-         |""".stripMargin
-    }
+    s"""
+       |
+       |* [${boldIfMandatory()}](/glossary#$glossaryItemTitle): $exampleFieldValue
+       |
+       |""".stripMargin
+  }
   }
 
   def prepareJsonFieldDescription(jsonBody: scala.Product, jsonType: String): String = {
-
-    val jsonBodyJValue = jsonBody match {
+    jsonBody.productIterator
+    val (jsonBodyJValue: json.JValue, optionalTypeFields) = jsonBody match {
       case JvalueCaseClass(jValue) =>
-        jValue
-      case _ => decompose(jsonBody)
+        val types = Nil
+        (jValue, types)
+      case _ =>
+        val types = jsonBody.getClass()
+          .getDeclaredFields().toList
+          .map(f => (f.getName(), f.getType().getCanonicalName().contains("Option")))
+        (decompose(jsonBody), types)
     }
 
-    val jsonBodyFields =JsonUtils.collectFieldNames(jsonBodyJValue).keySet.toList.sorted
+    // Group by is mandatory criteria and sort those 2 groups by name of the field
+    val jsonBodyFieldsOptional = JsonUtils.collectFieldNames(jsonBodyJValue).keySet.toList
+      .filter(x => optionalTypeFields.exists(i => i._1 == x && i._2 == true)).sorted
+    val jsonBodyFieldsMandatory = JsonUtils.collectFieldNames(jsonBodyJValue).keySet.toList
+      .filter(x => optionalTypeFields.exists(i => i._1 == x && i._2 == false)).sorted
+    val jsonBodyFields = jsonBodyFieldsMandatory ::: jsonBodyFieldsOptional
 
-    val jsonFieldsDescription = jsonBodyFields.map(prepareDescription)
+    val jsonFieldsDescription = jsonBodyFields.map(i => prepareDescription(i, optionalTypeFields))
     
     val jsonTitleType = if (jsonType.contains("request")) "\n\n\n**JSON request body fields:**\n\n" else  "\n\n\n**JSON response body fields:**\n\n"
 
@@ -452,12 +495,11 @@ object JSONFactory1_4_0 extends MdcLoggable{
 
   private val createResourceDocJsonMemo = new ConcurrentHashMap[ResourceDoc, ResourceDocJson]
 
-  def createResourceDocJson(rd: ResourceDoc, isVersion4OrHigher:Boolean) : ResourceDocJson = {
-    // if this calculate conversion already happened before, just return that value
-    // if not calculated before, just do conversion
+  def createResourceDocJson(rd: ResourceDoc, isVersion4OrHigher:Boolean, languageParam: Option[LanguageParam]) : ResourceDocJson = {
+    // We MUST recompute all resource doc values due to translation via Web UI props
     val endpointTags = getAllEndpointTagsBox(rd.operationId).map(endpointTag =>ResourceDocTag(endpointTag.tagName))
-    val resourceDocUpdatedTags = rd.copy(tags = endpointTags++ rd.tags)
-    createResourceDocJsonMemo.computeIfAbsent(resourceDocUpdatedTags, _=>{
+    val resourceDocUpdatedTags: ResourceDoc = rd.copy(tags = endpointTags++ rd.tags)
+    createResourceDocJsonMemo.compute(resourceDocUpdatedTags, (k, v) => {
       // There are multiple flavours of markdown. For instance, original markdown emphasises underscores (surrounds _ with (<em>))
       // But we don't want to have to escape underscores (\_) in our documentation
       // Thus we use a flavour of markdown that ignores underscores in words. (Github markdown does this too)
@@ -489,13 +531,20 @@ object JSONFactory1_4_0 extends MdcLoggable{
         urlParametersDescription ++ exampleRequestBodyFieldsDescription ++ responseFieldsDescription
       }
 
-      val description = resourceDocUpdatedTags.description.stripMargin.trim ++ fieldsDescription
+      val resourceDocDescription = I18NUtil.ResourceDocTranslation.description(
+        resourceDocUpdatedTags.operationId, 
+        languageParam, 
+        resourceDocUpdatedTags.description.stripMargin.trim
+      )
+      val description = resourceDocDescription ++ fieldsDescription
+      val summary = resourceDocUpdatedTags.summary.replaceFirst("""\.(\s*)$""", "$1") // remove the ending dot in summary
+      val translatedSummary = I18NUtil.ResourceDocTranslation.summary(resourceDocUpdatedTags.operationId, languageParam, summary)
       
       ResourceDocJson(
         operation_id = resourceDocUpdatedTags.operationId,
         request_verb = resourceDocUpdatedTags.requestVerb,
         request_url = resourceDocUpdatedTags.requestUrl,
-        summary = resourceDocUpdatedTags.summary.replaceFirst("""\.(\s*)$""", "$1"), // remove the ending dot in summary
+        summary = translatedSummary,
         // Strip the margin character (|) and line breaks and convert from markdown to html
         description = PegdownOptions.convertPegdownToHtmlTweaked(description), //.replaceAll("\n", ""),
         description_markdown = description,
@@ -516,14 +565,14 @@ object JSONFactory1_4_0 extends MdcLoggable{
     }) 
   }
 
-  def createResourceDocsJson(resourceDocList: List[ResourceDoc], isVersion4OrHigher:Boolean) : ResourceDocsJson = {
+  def createResourceDocsJson(resourceDocList: List[ResourceDoc], isVersion4OrHigher:Boolean, languageParam: Option[LanguageParam]) : ResourceDocsJson = {
     if(isVersion4OrHigher){
       ResourceDocsJson(
-        resourceDocList.map(createResourceDocJson(_,isVersion4OrHigher)),
+        resourceDocList.map(createResourceDocJson(_,isVersion4OrHigher, languageParam)),
         meta=Some(ResourceDocMeta(new Date(), resourceDocList.length))
       )
     } else {
-      ResourceDocsJson(resourceDocList.map(createResourceDocJson(_,false)))
+      ResourceDocsJson(resourceDocList.map(createResourceDocJson(_,false, languageParam)))
     }
   }
   

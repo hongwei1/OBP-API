@@ -47,12 +47,12 @@ object RemotedataViews extends ObpActorInit with Views {
     (actor ? cc.revokeSystemViewPermission(bankId, accountId, view, user)).mapTo[Box[Boolean]]
   )
 
-  def revokeAllAccountAccesses(bankId : BankId, accountId: AccountId, user : User) : Box[Boolean] = getValueFromFuture(
-    (actor ? cc.revokeAllAccountAccesses(bankId, accountId, user)).mapTo[Box[Boolean]]
+  def revokeAllAccountAccess(bankId : BankId, accountId: AccountId, user : User) : Box[Boolean] = getValueFromFuture(
+    (actor ? cc.revokeAllAccountAccess(bankId, accountId, user)).mapTo[Box[Boolean]]
   )
   
-  def revokeAccountAccessesByUser(bankId : BankId, accountId: AccountId, user : User) : Box[Boolean] = getValueFromFuture(
-    (actor ? cc.revokeAccountAccessesByUser(bankId, accountId, user)).mapTo[Box[Boolean]]
+  def revokeAccountAccessByUser(bankId : BankId, accountId: AccountId, user : User) : Box[Boolean] = getValueFromFuture(
+    (actor ? cc.revokeAccountAccessByUser(bankId, accountId, user)).mapTo[Box[Boolean]]
   )
 
   def customView(viewId : ViewId, account: BankIdAccountId) : Box[View] = getValueFromFuture(
@@ -68,6 +68,10 @@ object RemotedataViews extends ObpActorInit with Views {
   
   def systemViewFuture(viewId : ViewId) : Future[Box[View]] = 
     (actor ? cc.systemViewFuture(viewId)).mapTo[Box[View]]
+
+  def getSystemViews() : Future[List[View]] =
+    (actor ? cc.getSystemViews()).mapTo[List[View]]
+  
 
   def createView(bankAccountId: BankIdAccountId, view: CreateViewJson): Box[View] = getValueFromFuture(
     (actor ? cc.createView(bankAccountId, view)).mapTo[Box[View]]
@@ -173,5 +177,13 @@ object RemotedataViews extends ObpActorInit with Views {
     (actor ? cc.removeAllViews(bankId, accountId)).mapTo[Boolean]
   )
 
+
+  def revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String) : Box[Boolean] = getValueFromFuture(
+    (actor ? cc.revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String)).mapTo[Box[Boolean]]
+  )
+  
+  def revokeAccessToCustomViewForConsumer(view : View, consumerId : String) : Box[Boolean] = getValueFromFuture(
+    (actor ? cc.revokeAccessToCustomViewForConsumer(view : View, consumerId : String)).mapTo[Box[Boolean]]
+  )
 
 }

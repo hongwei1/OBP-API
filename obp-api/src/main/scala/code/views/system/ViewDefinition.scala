@@ -49,6 +49,12 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
   object hideOtherAccountMetadataIfAlias_ extends MappedBoolean(this){
     override def defaultValue = false
   }
+  object canGrantAccessToViews_ extends MappedText(this){
+    override def defaultValue = ""
+  }
+  object canRevokeAccessToViews_ extends MappedText(this){
+    override def defaultValue = ""
+  }
   object canSeeTransactionThisBankAccount_ extends MappedBoolean(this){
     override def defaultValue = false
   }
@@ -221,7 +227,13 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
     override def defaultValue = false
   }
   object canAddCounterparty_ extends MappedBoolean(this){
-    override def defaultValue = true
+    override def defaultValue = false
+  }
+  object canGetCounterparty_ extends MappedBoolean(this){
+    override def defaultValue = false
+  }
+  object canDeleteCounterparty_ extends MappedBoolean(this){
+    override def defaultValue = false
   }
   object canDeleteCorporateLocation_ extends MappedBoolean(this){
     override def defaultValue = false
@@ -259,9 +271,13 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
   object canDeleteWhereTag_ extends MappedBoolean(this){
     override def defaultValue = false
   }
+  
+  //internal transfer between my own accounts
   object canAddTransactionRequestToOwnAccount_ extends MappedBoolean(this){
     override def defaultValue = false
   }
+  
+  // transfer to any account
   object canAddTransactionRequestToAnyAccount_ extends MappedBoolean(this){
     override def defaultValue = false
   }
@@ -293,6 +309,9 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
     isPublic_(viewData.is_public)
     isFirehose_(viewData.is_firehose.getOrElse(false))
     metadataView_(viewData.metadata_view)
+    
+    canGrantAccessToViews_(viewData.can_grant_access_to_views.getOrElse(Nil).mkString(","))
+    canRevokeAccessToViews_(viewData.can_revoke_access_to_views.getOrElse(Nil).mkString(","))
 
     val actions = viewData.allowed_actions
 
@@ -354,6 +373,8 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
     canAddPublicAlias_(actions.exists(_ == "can_add_public_alias"))
     canAddPrivateAlias_(actions.exists(_ == "can_add_private_alias"))
     canAddCounterparty_(actions.exists(_ == "can_add_counterparty"))
+    canDeleteCounterparty_(actions.exists(_ == "can_delete_counterparty"))
+    canGetCounterparty_(actions.exists(_ == "can_get_counterparty"))
     canDeleteCorporateLocation_(actions.exists(_ == "can_delete_corporate_location"))
     canDeletePhysicalLocation_(actions.exists(_ == "can_delete_physical_location"))
     canEditOwnerComment_(actions.exists(_ == "can_edit_narrative"))
@@ -396,6 +417,19 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
   def usePublicAliasIfOneExists: Boolean = usePublicAliasIfOneExists_.get
   def hideOtherAccountMetadataIfAlias: Boolean = hideOtherAccountMetadataIfAlias_.get
 
+  override def canGrantAccessToViews : Option[List[String]] = {
+    canGrantAccessToViews_.get == null || canGrantAccessToViews_.get.isEmpty() match {
+      case true => None
+      case _ => Some(canGrantAccessToViews_.get.split(",").toList.map(_.trim))
+    }
+  }
+  override def canRevokeAccessToViews : Option[List[String]] = {
+    canRevokeAccessToViews_.get == null || canRevokeAccessToViews_.get.isEmpty()  match {
+      case true => None
+      case _ => Some(canRevokeAccessToViews_.get.split(",").toList.map(_.trim))
+    }
+  }
+  
   //reading access
 
   //transaction fields
@@ -465,6 +499,8 @@ class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with Many
   def canAddPublicAlias : Boolean = canAddPublicAlias_.get
   def canAddPrivateAlias : Boolean = canAddPrivateAlias_.get
   def canAddCounterparty : Boolean = canAddCounterparty_.get
+  def canGetCounterparty : Boolean = canGetCounterparty_.get
+  def canDeleteCounterparty : Boolean = canDeleteCounterparty_.get
   def canDeleteCorporateLocation : Boolean = canDeleteCorporateLocation_.get
   def canDeletePhysicalLocation : Boolean = canDeletePhysicalLocation_.get
 

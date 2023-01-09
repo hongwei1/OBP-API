@@ -5,6 +5,7 @@ import com.openbankproject.commons.model.{AccountRouting, AccountRoutingJsonV121
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.updateAccountRequestJsonV310
 import code.api.util.APIUtil.OAuth._
+import code.api.util.APIUtil.extractErrorMessageCode
 import code.api.util.ErrorMessages.{UserHasMissingRoles, UserNotLoggedIn}
 import code.api.util.ApiRole
 import code.api.v2_0_0.BasicAccountJSON
@@ -22,6 +23,8 @@ import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
 
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 import scala.util.Random
 
 class AccountTest extends V310ServerSetup with DefaultUsers {
@@ -40,7 +43,9 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
   lazy val putCreateAccountOtherUserJsonV310 = SwaggerDefinitionsJSON.createAccountRequestJsonV310
     .copy(user_id = resourceUser2.userId, balance = AmountOfMoneyJsonV121("EUR","0"),
     account_routings = List(AccountRoutingJsonV121(Random.nextString(10), Random.nextString(10))))
-  
+
+  val userAccountId = UUID.randomUUID.toString
+  val user2AccountId = UUID.randomUUID.toString
   
   feature("test Update Account") {
     scenario("We will test Update Account Api", ApiEndpoint1, VersionOfApi) {
@@ -98,6 +103,10 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       responsePut1.code should equal(200)
       responsePut1.body.extract[UpdateAccountResponseJsonV310].account_routings should be (testPutJsonWithIban.account_routings)
 
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
+      
       val responseGet1 = makeGetRequest(requestGet)
       And("We should get 200 and updated account routings in the getAccount response")
       responseGet1.code should equal(200)
@@ -112,6 +121,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       responsePut2.code should equal(200)
       responsePut2.body.extract[UpdateAccountResponseJsonV310].account_routings should be (testPutJsonWithoutAccountNumber.account_routings)
 
+      
       val responseGet2 = makeGetRequest(requestGet)
       And("We should get 200 and updated account routings in the getAccount response")
       responseGet2.code should equal(200)
@@ -192,6 +202,11 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       val response310 = makePutRequest(request310, write(putCreateAccountJSONV310))
       Then("We should get a 201")
       response310.code should equal(201)
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
+      
+      
       val account = response310.body.extract[CreateAccountResponseJsonV310]
       account.product_code should be (putCreateAccountJSONV310.product_code)
       account.`label` should be (putCreateAccountJSONV310.`label`)
@@ -202,16 +217,21 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       account.label should be (putCreateAccountJSONV310.label)
       account.account_routings should be (putCreateAccountJSONV310.account_routings)
 
+
+      //We need to waite some time for the account creation, because we introduce `AuthUser.refreshUser(user, callContext)`
+      //It may not finished when we call the get accounts directly.
+      TimeUnit.SECONDS.sleep(2)
       
       Then(s"we call $ApiEndpoint4 to get the account back")
       val requestApiEndpoint4 = (v3_1_0_Request / "my" / "accounts" ).PUT <@(user1)
       val responseApiEndpoint4 = makeGetRequest(requestApiEndpoint4)
+      
+      
 
       responseApiEndpoint4.code should equal(200)
       val accounts = responseApiEndpoint4.body.extract[CoreAccountsJsonV300].accounts
       accounts.map(_.id).toList.toString() contains(account.account_id) should be (true)
-
-
+      
       Then(s"we call $ApiEndpoint5 to get the account back")
       val requestApiEndpoint5 = (v3_1_0_Request /"banks" / testBankId.value / "accounts").GET <@ (user1)
       val responseApiEndpoint5 = makeGetRequest(requestApiEndpoint5)
@@ -232,7 +252,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       val responseWithNoRole = makePutRequest(request310WithNewAccountId, write(putCreateAccountOtherUserJsonV310))
       Then("We should get a 403 and some error message")
       responseWithNoRole.code should equal(403)
-      responseWithNoRole.body.toString contains(s"$UserHasMissingRoles") should be (true)
+      responseWithNoRole.body.toString contains(extractErrorMessageCode(UserHasMissingRoles)) should be (true)
 
 
       Then("We grant the roles and test it again")
@@ -253,11 +273,15 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
 
     scenario("Create new account will have system owner view, and other use also have the system owner view should not get the account back", ApiEndpoint2, VersionOfApi) {
       When("We make a request v3.1.0")
-      val request310 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID" ).PUT <@(user1)
+      val request310 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / userAccountId ).PUT <@(user1)
       val putCreateAccountJson = putCreateAccountJSONV310.copy(account_routings = List(AccountRoutingJsonV121("AccountNumber", "15649885656")))
       val response310 = makePutRequest(request310, write(putCreateAccountJson))
       Then("We should get a 201")
       response310.code should equal(201)
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
+      
       val account = response310.body.extract[CreateAccountResponseJsonV310]
       account.product_code should be (putCreateAccountJson.product_code)
       account.`label` should be (putCreateAccountJson.`label`)
@@ -270,23 +294,27 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
 
 
       Then(s"we call $ApiEndpoint6 to get the account back")
-      val requestApiEndpoint6 = (v3_1_0_Request /"banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID" / Constant.SYSTEM_OWNER_VIEW_ID/ "account" ).GET <@(user1)
+      val requestApiEndpoint6 = (v3_1_0_Request /"banks" / testBankId.value / "accounts" / userAccountId / Constant.SYSTEM_OWNER_VIEW_ID/ "account" ).GET <@(user1)
       val responseApiEndpoint6 = makeGetRequest(requestApiEndpoint6)
 
       responseApiEndpoint6.code should equal(200)
       val accountEndpoint6 = responseApiEndpoint6.body.extract[ModeratedCoreAccountJsonV300]
-      accountEndpoint6.id should be ("TEST_ACCOUNT_ID")
+      accountEndpoint6.id should be (userAccountId)
       accountEndpoint6.label should be (account.label)
 
       Then(s"we prepare the user2 will create a new account ($ApiEndpoint2)and he will have system view, and to call  get account ($ApiEndpoint6) and compare the result.")
-      val requestUser2_310 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID_2" ).PUT <@(user2)
+      val requestUser2_310 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / user2AccountId ).PUT <@(user2)
       val responseUser2_310 = makePutRequest(requestUser2_310, write(putCreateAccountJSONV310.copy(user_id = resourceUser2.userId, balance = AmountOfMoneyJsonV121("EUR","0"))))
       Then("We should get a 201")
       responseUser2_310.code should equal(201)
 
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
+
 
       Then(s"we call $ApiEndpoint6 to get the account back by user2")
-      val requestApiUser2Endpoint6 = (v3_1_0_Request /"banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID" / Constant.SYSTEM_OWNER_VIEW_ID/ "account" ).GET <@(user2)
+      val requestApiUser2Endpoint6 = (v3_1_0_Request /"banks" / testBankId.value / "accounts" / userAccountId / Constant.SYSTEM_OWNER_VIEW_ID/ "account" ).GET <@(user2)
       val responseApiUser2Endpoint6 = makeGetRequest(requestApiUser2Endpoint6)
       //This mean, the user2 can not get access to user1's account!
       responseApiUser2Endpoint6.code should not equal(200)
@@ -299,6 +327,10 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       val response310_1 = makePutRequest(request310_1, write(putCreateAccountJSONV310))
       Then("We should get a 201")
       response310_1.code should equal(201)
+
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
       val account = response310_1.body.extract[CreateAccountResponseJsonV310]
       account.product_code should be (putCreateAccountJSONV310.product_code)
       account.`label` should be (putCreateAccountJSONV310.`label`)
@@ -310,14 +342,14 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       account.account_routings should be (putCreateAccountJSONV310.account_routings)
 
       When("We make a request v3.1.0 to create the second account with an already existing scheme/address")
-      val request310_2 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID_2" ).PUT <@(user1)
+      val request310_2 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / user2AccountId ).PUT <@(user1)
       val response310_2 = makePutRequest(request310_2, write(putCreateAccountJSONV310))
       Then("We should get a 400 in the createAccount response")
       response310_2.code should equal(400)
       response310_2.body.toString should include("OBP-30115: Account Routing already exist.")
 
       Then(s"The second account should not be created")
-      val requestApiGetAccount = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID_2" / Constant.SYSTEM_OWNER_VIEW_ID / "account" ).GET <@(user1)
+      val requestApiGetAccount = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / user2AccountId / Constant.SYSTEM_OWNER_VIEW_ID / "account" ).GET <@(user1)
       val responseApiGetAccount = makeGetRequest(requestApiGetAccount)
       And("We should get a 404 in the getAccount response")
       responseApiGetAccount.code should equal(404)
@@ -325,7 +357,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
 
     scenario("Create new account with a duplication in routing scheme should not create the account", ApiEndpoint2, VersionOfApi) {
       When("We make a request v3.1.0 to create the account")
-      val request310 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID" ).PUT <@(user1)
+      val request310 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / userAccountId ).PUT <@(user1)
       val putCreateAccountJsonWithRoutingSchemeDuplication = putCreateAccountJSONV310.copy(account_routings =
         List(AccountRoutingJsonV121(AccountRoutingScheme.IBAN.toString, Random.nextString(10)),
           AccountRoutingJsonV121(AccountRoutingScheme.IBAN.toString, Random.nextString(10))))
@@ -335,7 +367,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       response310.body.toString should include ("Duplication detected in account routings, please specify only one value per routing scheme")
 
       Then(s"The account should not be created")
-      val requestApiGetAccount = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / "TEST_ACCOUNT_ID" / Constant.SYSTEM_OWNER_VIEW_ID / "account" ).GET <@(user1)
+      val requestApiGetAccount = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / userAccountId / Constant.SYSTEM_OWNER_VIEW_ID / "account" ).GET <@(user1)
       val responseApiGetAccount = makeGetRequest(requestApiGetAccount)
       And("We should get a 404 in the getAccount response")
       responseApiGetAccount.code should equal(404)

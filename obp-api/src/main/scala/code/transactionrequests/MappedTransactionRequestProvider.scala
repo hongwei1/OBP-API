@@ -200,7 +200,7 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
   object mEndDate extends MappedDate(this)
   object mChallenge_Id extends MappedString(this, 64)
   object mChallenge_AllowedAttempts extends MappedInt(this)
-  object mChallenge_ChallengeType extends MappedString(this, 32)
+  object mChallenge_ChallengeType extends MappedString(this, 100)
   object mCharge_Summary  extends MappedString(this, 64)
   object mCharge_Amount  extends MappedString(this, 32)
   object mCharge_Currency  extends MappedString(this, 3)
@@ -273,7 +273,8 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
     else
       None
     
-    val t_to_counterparty = if (TransactionRequestTypes.withName(transactionType) == TransactionRequestTypes.COUNTERPARTY){
+    val t_to_counterparty = if (TransactionRequestTypes.withName(transactionType) == TransactionRequestTypes.COUNTERPARTY ||
+      TransactionRequestTypes.withName(transactionType) == TransactionRequestTypes.CARD){
       val counterpartyIdList: List[String] = for {
         JObject(child) <- parsedDetails
         JField("counterparty_id", JString(counterpartyId)) <- child
@@ -285,7 +286,37 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
     else
       None
 
-    val t_to_transfer_to_phone = if (TransactionRequestTypes.withName(transactionType) == TransactionRequestTypes.TRANSFER_TO_PHONE && details.nonEmpty) 
+    val t_to_simple = if (TransactionRequestTypes.withName(transactionType) == TransactionRequestTypes.SIMPLE && details.nonEmpty){
+      val transactionRequestSimples = for {
+        JObject(child) <- parsedDetails
+        JField("other_bank_routing_scheme", JString(otherBankRoutingScheme)) <- child
+        JField("other_bank_routing_address", JString(otherBankRoutingAddress)) <- child
+        JField("other_branch_routing_scheme", JString(otherBranchRoutingScheme)) <- child
+        JField("other_branch_routing_address", JString(otherBranchRoutingAddress)) <- child
+        JField("other_account_routing_scheme", JString(otherAccountRoutingScheme)) <- child
+        JField("other_account_routing_address", JString(otherAccountRoutingAddress)) <- child
+        JField("other_account_secondary_routing_scheme", JString(otherAccountSecondaryRoutingScheme)) <- child
+        JField("other_account_secondary_routing_address", JString(otherAccountSecondaryRoutingAddress)) <- child
+      } yield
+      TransactionRequestSimple (
+        otherBankRoutingScheme,
+        otherBankRoutingAddress,
+        otherBranchRoutingScheme,
+        otherBranchRoutingAddress,
+        otherAccountRoutingScheme,
+        otherAccountRoutingAddress,
+        otherAccountSecondaryRoutingScheme,
+        otherAccountSecondaryRoutingAddress
+      )
+      if(transactionRequestSimples.isEmpty) 
+        Some(TransactionRequestSimple("","","","","","","","")) 
+      else 
+        Some(transactionRequestSimples.head)
+    }
+    else
+      None
+      
+    val t_to_transfer_to_phone = if (TransactionRequestTypes.withName(transactionType) == TransactionRequestTypes.TRANSFER_TO_PHONE && details.nonEmpty)
       Some(parsedDetails.extract[TransactionRequestTransferToPhone])
     else
       None
@@ -309,6 +340,7 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
       to_sandbox_tan = t_to_sandbox_tan,
       to_sepa = t_to_sepa,
       to_counterparty = t_to_counterparty,
+      to_simple = t_to_simple,
       to_transfer_to_phone = t_to_transfer_to_phone, 
       to_transfer_to_atm = t_to_transfer_to_atm,
       to_transfer_to_account = t_to_transfer_to_account,

@@ -27,7 +27,6 @@ Berlin 13359, Germany
 import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.util.{APIUtil, CallContext, CustomJsonFormats}
 import code.bankconnectors.Connector
-import code.bankconnectors.vMar2017.InboundBank
 import code.bankconnectors.vSept2018._
 import code.kafka.KafkaHelper
 import code.setup.{KafkaSetup, ServerSetupWithTestData}
@@ -61,7 +60,7 @@ class KafkaMappedConnector_vMay2019Test extends KafkaSetup with ServerSetupWithT
 
 
   feature("Send and retrieve message") {
-    if (PropsConnectorVersion == "mapped") {
+    if (PropsConnectorVersion =="mapped" || PropsConnectorVersion =="star") {
       ignore("ignore test getObpConnectorLoopback, if it is mapped connector", kafkaTest) {}
     } else
       scenario("1st test `getObpConnectorLoopback` method, there no need Adapter message for this method!", kafkaTest) {
@@ -85,7 +84,7 @@ class KafkaMappedConnector_vMay2019Test extends KafkaSetup with ServerSetupWithT
         Then("For KafkaMappedConnector_vSept2018 connector, we need to make these two methods work `getAuthInfoFirstCbsCall` and `getAuthInfo`")
 
         val firstAuthInfo: Box[AuthInfo] = for {
-          firstGetAuthInfo <- KafkaMappedConnector_vSept2018.getAuthInfoFirstCbsCall("", callContext)
+          firstGetAuthInfo <- KafkaMappedConnector_vSept2018.getAuthInfoFirstCbsCall("","", callContext)
         } yield {
           (firstGetAuthInfo)
         }
@@ -100,7 +99,7 @@ class KafkaMappedConnector_vMay2019Test extends KafkaSetup with ServerSetupWithT
 
       }
 
-    if (PropsConnectorVersion == "mapped") {
+    if (PropsConnectorVersion =="mapped" || PropsConnectorVersion =="star") {
       ignore("ignore test processRequest, if it is mapped connector", kafkaTest) {}
     } else
       scenario("Send and retrieve message directly to and from kafka", kafkaTest) {
@@ -121,7 +120,7 @@ class KafkaMappedConnector_vMay2019Test extends KafkaSetup with ServerSetupWithT
 
   feature("Test the getBank error cases") {
 
-    if (PropsConnectorVersion == "mapped") {
+    if (PropsConnectorVersion =="mapped" || PropsConnectorVersion =="star") {
       ignore("ignore test getBanks, if it is mapped connector", kafkaTest) {}
     } else
       scenario(s"test getBanksFuture -- status.hasError", kafkaTest) {
@@ -136,7 +135,7 @@ class KafkaMappedConnector_vMay2019Test extends KafkaSetup with ServerSetupWithT
         result should be(expectedValue)
       }
 
-    if (PropsConnectorVersion == "mapped") {
+    if (PropsConnectorVersion =="mapped" || PropsConnectorVersion =="star") {
       ignore("ignore test getBanksFuture -- status.hasNoError,  if it is mapped connector", kafkaTest) {}
     } else 
       scenario(s"test getBanksFuture -- status.hasNoError", kafkaTest) {

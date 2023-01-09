@@ -3,13 +3,12 @@ package code.api.util
 
 import java.util.Date
 import java.util.UUID.randomUUID
-
 import akka.http.scaladsl.model.HttpMethod
 import code.DynamicEndpoint.{DynamicEndpointProvider, DynamicEndpointT}
-import code.api.APIFailureNewStyle
+import code.api.{APIFailureNewStyle, Constant, JsonResponseException}
 import code.api.Constant.SYSTEM_READ_ACCOUNTS_BERLIN_GROUP_VIEW_ID
 import code.api.cache.Caching
-import code.api.util.APIUtil.{EntitlementAndScopeStatus, OBPReturnType, afterAuthenticateInterceptResult, canGrantAccessToViewCommon, canRevokeAccessToViewCommon, connectorEmptyResponse, createHttpParamsByUrlFuture, createQueriesByHttpParamsFuture, fullBoxOrException, generateUUID, unboxFull, unboxFullOrFail}
+import code.api.util.APIUtil._
 import code.api.util.ApiRole.canCreateAnyTransactionRequest
 import code.api.util.ErrorMessages.{InsufficientAuthorisationToCreateTransactionRequest, _}
 import code.api.ResourceDocs1_4_0.ResourceDocs140.ImplementationsResourceDocs
@@ -56,7 +55,7 @@ import net.liftweb.util.Helpers.tryo
 import org.apache.commons.lang3.StringUtils
 import java.security.AccessControlException
 
-import scala.collection.immutable.List
+import scala.collection.immutable.{List, Nil}
 import scala.concurrent.Future
 import scala.math.BigDecimal
 import scala.reflect.runtime.universe.MethodSymbol
@@ -64,15 +63,22 @@ import code.validation.{JsonSchemaValidationProvider, JsonValidation}
 import net.liftweb.http.JsonResponse
 import net.liftweb.util.Props
 import code.api.JsonResponseException
-import code.api.v4_0_0.dynamic.{DynamicEndpointHelper, DynamicEntityInfo}
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+import code.api.v4_0_0.JSONFactory400
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+import code.api.dynamic.entity.helper.{DynamicEntityHelper, DynamicEntityInfo}
 import code.bankattribute.BankAttribute
 import code.connectormethod.{ConnectorMethodProvider, JsonConnectorMethod}
+import code.customeraccountlinks.CustomerAccountLinkTrait
 import code.dynamicMessageDoc.{DynamicMessageDocProvider, JsonDynamicMessageDoc}
 import code.dynamicResourceDoc.{DynamicResourceDocProvider, JsonDynamicResourceDoc}
 import code.endpointMapping.{EndpointMappingProvider, EndpointMappingT}
 import code.endpointTag.EndpointTagT
+import code.util.Helper.MdcLoggable
+import code.views.system.AccountAccess
+import net.liftweb.mapper.By
 
-object NewStyle {
+object NewStyle extends MdcLoggable{
   lazy val endpoints: List[(String, String)] = List(
     (nameOf(ImplementationsResourceDocs.getResourceDocsObp), ApiVersion.v1_4_0.toString),
     (nameOf(Implementations1_2_1.deleteWhereTagForViewOnTransaction), ApiVersion.v1_2_1.toString),
@@ -285,6 +291,11 @@ object NewStyle {
     def createOrUpdateAtm(atm: AtmT, callContext: Option[CallContext]): OBPReturnType[AtmT] = {
       Connector.connector.vend.createOrUpdateAtm(atm, callContext) map {
         i => (unboxFullOrFail(i._1, callContext, s"$CreateAtmError", 400), i._2)
+      } 
+    }    
+    def deleteAtm(atm: AtmT, callContext: Option[CallContext]): OBPReturnType[Boolean] = {
+      Connector.connector.vend.deleteAtm(atm, callContext) map {
+        i => (unboxFullOrFail(i._1, callContext, s"$DeleteAtmError", 400), i._2)
       } 
     }
 
@@ -531,8 +542,8 @@ object NewStyle {
     } map { fullBoxOrException(_)
     } map { unboxFull(_) }
     
-    def revokeAllAccountAccesses(account: BankAccount, u: User, provider : String, providerId: String) = Future {
-      account.revokeAllAccountAccesses(u, provider, providerId)
+    def revokeAllAccountAccess(account: BankAccount, u: User, provider : String, providerId: String) = Future {
+      account.revokeAllAccountAccess(u, provider, providerId)
     } map { fullBoxOrException(_)
     } map { unboxFull(_) }
     
@@ -586,18 +597,51 @@ object NewStyle {
         unboxFullOrFail(_, callContext, s"$UserNoPermissionAccessView")
       }
     }
+    def checkBalancingTransactionAccountAccessAndReturnView(doubleEntryTransaction: DoubleEntryTransaction, user: Option[User], callContext: Option[CallContext]) : Future[View] = {
+      val debitBankAccountId = BankIdAccountId(
+        doubleEntryTransaction.debitTransactionBankId, 
+        doubleEntryTransaction.debitTransactionAccountId
+      )
+      val creditBankAccountId = BankIdAccountId(
+        doubleEntryTransaction.creditTransactionBankId, 
+        doubleEntryTransaction.creditTransactionAccountId
+      )
+      val ownerViewId = ViewId(Constant.SYSTEM_OWNER_VIEW_ID)
+      Future{
+        APIUtil.checkViewAccessAndReturnView(ownerViewId, debitBankAccountId, user).or(
+          APIUtil.checkViewAccessAndReturnView(ownerViewId, creditBankAccountId, user)
+        )
+      } map {
+        unboxFullOrFail(_, callContext, s"$UserNoPermissionAccessView")
+      }
+    }
     
     def checkAuthorisationToCreateTransactionRequest(viewId : ViewId, bankAccountId: BankIdAccountId, user: User, callContext: Option[CallContext]) : Future[Boolean] = {
       Future{
-        APIUtil.hasEntitlement(bankAccountId.bankId.value, user.userId, canCreateAnyTransactionRequest) match {
-          case true => Full(true)
-          case false => user.hasOwnerViewAccess(BankIdAccountId(bankAccountId.bankId,bankAccountId.accountId)) match {
-            case true => Full(true)
-            case false => Empty
-          }
+        
+        lazy val hasCanCreateAnyTransactionRequestRole = APIUtil.hasEntitlement(bankAccountId.bankId.value, user.userId, canCreateAnyTransactionRequest) 
+        
+        lazy val consumerIdFromCallContext = callContext.map(_.consumer.map(_.consumerId.get).getOrElse(""))
+        
+        lazy val view = APIUtil.checkViewAccessAndReturnView(viewId, bankAccountId, Some(user), consumerIdFromCallContext)
+
+        lazy val canAddTransactionRequestToAnyAccount = view.map(_.canAddTransactionRequestToAnyAccount).getOrElse(false)
+        
+        //1st check the admin level role/entitlement `canCreateAnyTransactionRequest`
+        if(hasCanCreateAnyTransactionRequestRole) {
+          Full(true) 
+        //2rd: check if the user have the view access and the view has the `canAddTransactionRequestToAnyAccount` permission
+        } else if (canAddTransactionRequestToAnyAccount) {
+          Full(true)
+        } else{
+          Empty
         }
       } map {
-        unboxFullOrFail(_, callContext, s"$InsufficientAuthorisationToCreateTransactionRequest")
+        unboxFullOrFail(_, callContext, s"$InsufficientAuthorisationToCreateTransactionRequest " +
+          s"Current ViewId(${viewId.value})," +
+          s"current UserId(${user.userId})"+
+          s"current ConsumerId(${callContext.map(_.consumer.map(_.consumerId.get).getOrElse("")).getOrElse("")})"
+        )
       }
     }
     
@@ -611,6 +655,9 @@ object NewStyle {
       Views.views.vend.systemViewFuture(viewId) map {
         unboxFullOrFail(_, callContext, s"$SystemViewNotFound. Current ViewId is $viewId")
       }
+    }    
+    def systemViews(): Future[List[View]] = {
+      Views.views.vend.getSystemViews()
     }
     def grantAccessToCustomView(view : View, user: User, callContext: Option[CallContext]) : Future[View] = {
       view.isSystem match {
@@ -718,6 +765,11 @@ object NewStyle {
     def getCustomers(bankId : BankId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]): Future[List[Customer]] = {
       Connector.connector.vend.getCustomers(bankId, callContext, queryParams) map {
         connectorEmptyResponse(_, callContext)
+      }
+    }
+    def getCustomersAtAllBanks(callContext: Option[CallContext], queryParams: List[OBPQueryParam]): OBPReturnType[List[Customer]] = {
+      Connector.connector.vend.getCustomersAtAllBanks(callContext, queryParams) map {
+        i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
     def getCustomersByCustomerPhoneNumber(bankId : BankId, phoneNumber: String, callContext: Option[CallContext]): OBPReturnType[List[Customer]] = {
@@ -877,16 +929,17 @@ object NewStyle {
 
     def getMetadata(bankId : BankId, accountId : AccountId, counterpartyId : String, callContext: Option[CallContext]): Future[CounterpartyMetadata] = {
       Future(Counterparties.counterparties.vend.getMetadata(bankId, accountId, counterpartyId)) map {
-        x => fullBoxOrException(x ~> APIFailureNewStyle(CounterpartyMetadataNotFound, 400, callContext.map(_.toLight)))
+        x => fullBoxOrException(x ~> APIFailureNewStyle(CounterpartyNotFoundByCounterpartyId, 400, callContext.map(_.toLight)))
       } map { unboxFull(_) }
     }
 
-    def getCounterpartyTrait(bankId : BankId, accountId : AccountId, counterpartyId : String, callContext: Option[CallContext]): OBPReturnType[CounterpartyTrait] = {
-      Connector.connector.vend.getCounterpartyTrait(bankId, accountId, counterpartyId, callContext) map { i=>
-        (connectorEmptyResponse(i._1, callContext), i._2)
-      } 
+    def getCounterpartyTrait(bankId : BankId, accountId : AccountId, counterpartyId : String, callContext: Option[CallContext]): OBPReturnType[CounterpartyTrait] = 
+    {
+      Connector.connector.vend.getCounterpartyTrait(bankId, accountId, counterpartyId, callContext) map { i =>
+        (unboxFullOrFail(i._1, callContext, s"$CounterpartyNotFoundByCounterpartyId Current counterpartyId($counterpartyId) ", 400),
+          i._2)
+      }
     }
-
 
     def isEnabledTransactionRequests(callContext: Option[CallContext]): Future[Box[Unit]] = Helper.booleanToFuture(failMsg = TransactionRequestsNotEnabled, cc=callContext)(APIUtil.getPropsAsBoolValue("transactionRequests_enabled", false))
 
@@ -911,13 +964,21 @@ object NewStyle {
     def extractHttpParamsFromUrl(url: String): Future[List[HTTPParam]] = {
       createHttpParamsByUrlFuture(url) map { unboxFull(_) }
     }
-    def createObpParams(httpParams: List[HTTPParam], allowedParams: List[String], callContext: Option[CallContext]): Future[List[OBPQueryParam]] = {
+    def createObpParams(httpParams: List[HTTPParam], allowedParams: List[String], callContext: Option[CallContext]): OBPReturnType[List[OBPQueryParam]] = {
       val httpParamsAllowed = httpParams.filter(
         x => allowedParams.contains(x.name)
       )
-      createQueriesByHttpParamsFuture(httpParamsAllowed) map {
-        x => fullBoxOrException(x ~> APIFailureNewStyle(InvalidFilterParameterFormat, 400, callContext.map(_.toLight)))
-      } map { unboxFull(_) }
+      createQueriesByHttpParamsFuture(httpParamsAllowed, callContext)
+    }
+    
+    def extractQueryParams(url: String,
+                           allowedParams: List[String],
+                           callContext: Option[CallContext]): OBPReturnType[List[OBPQueryParam]] = {
+      val httpParams = createHttpParamsByUrl(url).toList.flatten
+      val httpParamsAllowed = httpParams.filter(
+        x => allowedParams.contains(x.name)
+      )
+      createQueriesByHttpParamsFuture(httpParamsAllowed, callContext)
     }
     
     
@@ -1013,9 +1074,15 @@ object NewStyle {
       validateRequestPayload(callContext)(boxResult)
     }
 
-    def createUserAuthContext(userId: String, key: String, value: String,  callContext: Option[CallContext]): OBPReturnType[UserAuthContext] = {
-      Connector.connector.vend.createUserAuthContext(userId, key, value, callContext) map {
+    def createUserAuthContext(user: User, key: String, value: String,  callContext: Option[CallContext]): OBPReturnType[UserAuthContext] = {
+      Connector.connector.vend.createUserAuthContext(user.userId, key, value, callContext) map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
+      } map {
+        result =>
+          //We will call the `refreshUserAccountAccess` after we successfully create the UserAuthContext
+          // because `createUserAuthContext` is a connector method, here is the entry point for OBP to refreshUser
+          AuthUser.refreshUser(user, callContext)
+          result
       }
     }
     def createUserAuthContextUpdate(userId: String, key: String, value: String, callContext: Option[CallContext]): OBPReturnType[UserAuthContextUpdate] = {
@@ -1034,9 +1101,15 @@ object NewStyle {
       }
     }
 
-    def deleteUserAuthContextById(userAuthContextId: String, callContext: Option[CallContext]): OBPReturnType[Boolean] = {
+    def deleteUserAuthContextById(user: User, userAuthContextId: String, callContext: Option[CallContext]): OBPReturnType[Boolean] = {
       Connector.connector.vend.deleteUserAuthContextById(userAuthContextId, callContext) map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
+      }map {
+        result =>
+          // We will call the `refreshUserAccountAccess` after we successfully delete the UserAuthContext
+          // because `deleteUserAuthContextById` is a connector method, here is the entry point for OBP to refreshUser
+          AuthUser.refreshUser(user, callContext)
+          result
       }
     }
     
@@ -1105,7 +1178,7 @@ object NewStyle {
                                       transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
                                       detailsPlain: String,
                                       chargePolicy: String,
-                                      challengeType: Option[String],
+                                      challengeType: Option[ChallengeType.Value],
                                       scaMethod: Option[SCA],
                                       reasons: Option[List[TransactionRequestReason]],
                                       berlinGroupPayments: Option[SepaCreditTransfersBerlinGroupV13],
@@ -1120,7 +1193,7 @@ object NewStyle {
         transactionRequestCommonBody: TransactionRequestCommonBodyJSON,
         detailsPlain: String,
         chargePolicy: String,
-        challengeType: Option[String],
+        challengeType = challengeType.map(_.toString),
         scaMethod: Option[SCA],
         reasons: Option[List[TransactionRequestReason]],
         berlinGroupPayments: Option[SepaCreditTransfersBerlinGroupV13],
@@ -1140,6 +1213,14 @@ object NewStyle {
     {
       Connector.connector.vend.getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]) map { i =>
         (unboxFullOrFail(i._1, callContext, s"$CounterpartyNotFoundByCounterpartyId Current counterpartyId($counterpartyId) ", 400),
+          i._2)
+      }
+    }
+    
+    def deleteCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]): OBPReturnType[Boolean] = 
+    {
+      Connector.connector.vend.deleteCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]) map { i =>
+        (unboxFullOrFail(i._1, callContext, s"$DeleteCounterpartyError Current counterpartyId($counterpartyId) ", 400),
           i._2)
       }
     }
@@ -1177,6 +1258,92 @@ object NewStyle {
           i._2)
       }
     }
+
+    def getOrCreateCounterparty(
+      name: String,
+      description: String,
+      currency: String,
+      createdByUserId: String,
+      thisBankId: String,
+      thisAccountId: String,
+      thisViewId: String,
+      otherBankRoutingScheme: String,
+      otherBankRoutingAddress: String,
+      otherBranchRoutingScheme: String,
+      otherBranchRoutingAddress: String,
+      otherAccountRoutingScheme: String,
+      otherAccountRoutingAddress: String,
+      otherAccountSecondaryRoutingScheme: String,
+      otherAccountSecondaryRoutingAddress: String,
+      callContext: Option[CallContext]
+    ) : OBPReturnType[CounterpartyTrait] =
+    {
+      Connector.connector.vend.getOrCreateCounterparty(
+        name: String,
+        description: String,
+        currency: String,
+        createdByUserId: String,
+        thisBankId: String,
+        thisAccountId: String,
+        thisViewId: String,
+        otherBankRoutingScheme: String,
+        otherBankRoutingAddress: String,
+        otherBranchRoutingScheme: String,
+        otherBranchRoutingAddress: String,
+        otherAccountRoutingScheme: String,
+        otherAccountRoutingAddress: String,
+        otherAccountSecondaryRoutingScheme: String,
+        otherAccountSecondaryRoutingAddress: String,
+        callContext: Option[CallContext]
+      ) map { i =>
+        (unboxFullOrFail(
+          i._1,
+          callContext,
+          s"$CreateCounterpartyError.",
+          404),
+          i._2)
+      }
+    }
+    
+    def getCounterpartyByRoutings(
+      otherBankRoutingScheme: String,
+      otherBankRoutingAddress: String,
+      otherBranchRoutingScheme: String,
+      otherBranchRoutingAddress: String,
+      otherAccountRoutingScheme: String,
+      otherAccountRoutingAddress: String,
+      otherAccountSecondaryRoutingScheme: String,
+      otherAccountSecondaryRoutingAddress: String,
+      callContext: Option[CallContext]
+    ) : OBPReturnType[CounterpartyTrait] =
+    {
+      Connector.connector.vend.getCounterpartyByRoutings(
+        otherBankRoutingScheme: String,
+        otherBankRoutingAddress: String,
+        otherBranchRoutingScheme: String,
+        otherBranchRoutingAddress: String,
+        otherAccountRoutingScheme: String,
+        otherAccountRoutingAddress: String,
+        otherAccountSecondaryRoutingScheme: String,
+        otherAccountSecondaryRoutingAddress: String,
+        callContext: Option[CallContext]
+      ) map { i =>
+        (unboxFullOrFail(
+          i._1,
+          callContext,
+          s"$CounterpartyNotFoundByRoutings. Current routings: " +
+            s"otherBankRoutingScheme($otherBankRoutingScheme), " +
+            s"otherBankRoutingAddress($otherBankRoutingAddress)"+
+            s"otherBranchRoutingScheme($otherBranchRoutingScheme)"+
+            s"otherBranchRoutingAddress($otherBranchRoutingAddress)"+
+            s"otherAccountRoutingScheme($otherAccountRoutingScheme)"+
+            s"otherAccountRoutingAddress($otherAccountRoutingAddress)"+
+            s"otherAccountSecondaryRoutingScheme($otherAccountSecondaryRoutingScheme)"+
+            s"otherAccountSecondaryRoutingAddress($otherAccountSecondaryRoutingAddress)"+
+          404),
+          i._2)
+      }
+    }
     
     def getTransactionRequestImpl(transactionRequestId: TransactionRequestId, callContext: Option[CallContext]): OBPReturnType[TransactionRequest] = 
     {
@@ -1191,6 +1358,21 @@ object NewStyle {
      Connector.connector.vend.validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext: Option[CallContext]) map { i =>
        (unboxFullOrFail(i._1, callContext, s"$InvalidChallengeAnswer "), i._2)
       }
+
+    def allChallengesSuccessfullyAnswered(
+      bankId: BankId,
+      accountId: AccountId,
+      transReqId: TransactionRequestId,
+      callContext: Option[CallContext]
+    ): OBPReturnType[Boolean] = 
+     Connector.connector.vend.allChallengesSuccessfullyAnswered(
+       bankId: BankId,
+       accountId: AccountId,
+       transReqId: TransactionRequestId,
+       callContext: Option[CallContext]
+       ) map { i =>
+       (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse"), i._2)
+     }
     
     def validateAndCheckIbanNumber(iban: String, callContext: Option[CallContext]): OBPReturnType[IbanChecker] = 
      Connector.connector.vend.validateAndCheckIbanNumber(iban: String, callContext: Option[CallContext]) map { i =>
@@ -1205,10 +1387,10 @@ object NewStyle {
       hashOfSuppliedAnswer: String, 
       callContext: Option[CallContext]
     ): OBPReturnType[ChallengeTrait] = {
-      if(challengeType == ChallengeType.BERLINGROUP_PAYMENT && transactionRequestId.isEmpty ){
-        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_PAYMENT challengeType: paymentId($transactionRequestId) ")}
-      }else if(challengeType == ChallengeType.BERLINGROUP_CONSENT && consentId.isEmpty ){
-        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_CONSENT challengeType: consentId($consentId) ")}
+      if(challengeType == ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE && transactionRequestId.isEmpty ){
+        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_PAYMENT_CHALLENGE challengeType: paymentId($transactionRequestId) ")}
+      }else if(challengeType == ChallengeType.BERLINGROUP_CONSENT_CHALLENGE && consentId.isEmpty ){
+        Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_CONSENT_CHALLENGE challengeType: consentId($consentId) ")}
       }else{
         Connector.connector.vend.validateChallengeAnswerC2(
           transactionRequestId: Option[String],
@@ -1244,9 +1426,9 @@ object NewStyle {
       authenticationMethodId: Option[String],
       callContext: Option[CallContext]
     ) : OBPReturnType[List[ChallengeTrait]] = {
-      if(challengeType == ChallengeType.BERLINGROUP_PAYMENT && (transactionRequestId.isEmpty || scaStatus.isEmpty || scaMethod.isEmpty)){
+      if(challengeType == ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE && (transactionRequestId.isEmpty || scaStatus.isEmpty || scaMethod.isEmpty)){
         Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_PAYMENT challengeType: paymentId($transactionRequestId), scaStatus($scaStatus), scaMethod($scaMethod) ")}
-      }else if(challengeType == ChallengeType.BERLINGROUP_CONSENT && (consentId.isEmpty || scaStatus.isEmpty || scaMethod.isEmpty)){
+      }else if(challengeType == ChallengeType.BERLINGROUP_CONSENT_CHALLENGE && (consentId.isEmpty || scaStatus.isEmpty || scaMethod.isEmpty)){
         Future{ throw new Exception(s"$UnknownError The following parameters can not be empty for BERLINGROUP_CONSENT challengeType: consentId($consentId), scaStatus($scaStatus), scaMethod($scaMethod) ")}
       }else{
         Connector.connector.vend.createChallengesC2(
@@ -1353,6 +1535,10 @@ object NewStyle {
 
     def getDoubleEntryBookTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId, callContext: Option[CallContext]): OBPReturnType[DoubleEntryTransaction] =
       Connector.connector.vend.getDoubleEntryBookTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId, callContext: Option[CallContext]) map { i =>
+        (unboxFullOrFail(i._1, callContext, s"$DoubleEntryTransactionNotFound ", 404), i._2)
+      }
+    def getBalancingTransaction(transactionId: TransactionId, callContext: Option[CallContext]): OBPReturnType[DoubleEntryTransaction] =
+      Connector.connector.vend.getBalancingTransaction(transactionId: TransactionId, callContext: Option[CallContext]) map { i =>
         (unboxFullOrFail(i._1, callContext, s"$DoubleEntryTransactionNotFound ", 404), i._2)
       }
 
@@ -1563,6 +1749,7 @@ object NewStyle {
                                         name: String,
                                         attributeType: AccountAttributeType.Value,
                                         value: String,
+                                        productInstanceCode: Option[String],
                                         callContext: Option[CallContext]
                                       ): OBPReturnType[AccountAttribute] = {
       Connector.connector.vend.createOrUpdateAccountAttribute(
@@ -1573,6 +1760,7 @@ object NewStyle {
         name: String,
         attributeType: AccountAttributeType.Value,
         value: String,
+        productInstanceCode: Option[String],
         callContext: Option[CallContext]
       ) map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
@@ -1629,6 +1817,14 @@ object NewStyle {
       ) map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
+    } 
+    
+    def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+      Connector.connector.vend.getUserAttributesByUsers(
+        userIds, callContext: Option[CallContext]
+      ) map {
+        i => (connectorEmptyResponse(i._1, callContext), i._2)
+      }
     }
     def createOrUpdateUserAttribute(
       userId: String,
@@ -1654,12 +1850,14 @@ object NewStyle {
                                 accountId: AccountId,
                                 productCode: ProductCode,
                                 accountAttributes: List[ProductAttribute],
+                                productInstanceCode: Option[String],
                                 callContext: Option[CallContext]): OBPReturnType[List[AccountAttribute]] = {
       Connector.connector.vend.createAccountAttributes(
         bankId: BankId,
         accountId: AccountId,
         productCode: ProductCode,
         accountAttributes,
+        productInstanceCode: Option[String],
         callContext: Option[CallContext]
       ) map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
@@ -1676,6 +1874,17 @@ object NewStyle {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
+
+    def getAccountAttributesForAccounts(bankId: BankId,
+                                        accounts: List[BankAccount],
+                                        callContext: Option[CallContext]): OBPReturnType[ List[ (BankAccount, List[AccountAttribute]) ]] = {
+      Future.sequence(accounts.map( account =>
+        Connector.connector.vend.getAccountAttributesByAccount(bankId, AccountId(account.accountId.value), callContext: Option[CallContext]) map { i =>
+          (connectorEmptyResponse(i._1.map(x => (account,x)), callContext), i._2)
+        }
+      )).map(t => (t.map(_._1), callContext))
+    }
+    
     def getModeratedAccountAttributesByAccount(bankId: BankId, 
                                                accountId: AccountId, 
                                                viewId: ViewId, 
@@ -2218,7 +2427,39 @@ object NewStyle {
         fromDepartment : String,
         fromPerson : String,
         callContext: Option[CallContext]) map {
+          i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse  Can not create message in the backend.", 400), i._2)
+      }
+    }
+
+    def createCustomerMessage(
+      customer: Customer,
+      bankId: BankId,
+      transport: String,
+      message: String,
+      fromDepartment: String,
+      fromPerson: String,
+      callContext: Option[CallContext]
+    ) : OBPReturnType[CustomerMessage] = {
+      Connector.connector.vend.createCustomerMessage(
+        customer: Customer,
+        bankId : BankId,
+        transport: String,
+        message : String,
+        fromDepartment : String,
+        fromPerson : String,
+        callContext: Option[CallContext]
+      ) map {
         i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse  Can not create message in the backend.", 400), i._2)
+      }
+    }
+    
+     def getCustomerMessages(customer : Customer, bankId : BankId, callContext: Option[CallContext]) : OBPReturnType[List[CustomerMessage]] = {
+      Connector.connector.vend.getCustomerMessages(
+        customer : Customer, 
+        bankId : BankId,
+        callContext: Option[CallContext]
+      ) map {
+        i => (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponse  Can not get messages in the backend.", 400), i._2)
       }
     }
 
@@ -2264,6 +2505,53 @@ object NewStyle {
       Connector.connector.vend.createCustomer(
         bankId: BankId,
         legalName: String,
+        mobileNumber: String,
+        email: String,
+        faceImage:
+          CustomerFaceImageTrait,
+        dateOfBirth: Date,
+        relationshipStatus: String,
+        dependents: Int,
+        dobOfDependents: List[Date],
+        highestEducationAttained: String,
+        employmentStatus: String,
+        kycStatus: Boolean,
+        lastOkDate: Date,
+        creditRating: Option[CreditRatingTrait],
+        creditLimit: Option[AmountOfMoneyTrait],
+        title: String,
+        branchId: String,
+        nameSuffix: String,
+        callContext: Option[CallContext]
+      ) map {
+        i => (unboxFullOrFail(i._1, callContext, CreateCustomerError), i._2)
+      }
+    def createCustomerC2(
+                        bankId: BankId,
+                        legalName: String,
+                        customerNumber: String,
+                        mobileNumber: String,
+                        email: String,
+                        faceImage:
+                        CustomerFaceImageTrait,
+                        dateOfBirth: Date,
+                        relationshipStatus: String,
+                        dependents: Int,
+                        dobOfDependents: List[Date],
+                        highestEducationAttained: String,
+                        employmentStatus: String,
+                        kycStatus: Boolean,
+                        lastOkDate: Date,
+                        creditRating: Option[CreditRatingTrait],
+                        creditLimit: Option[AmountOfMoneyTrait],
+                        title: String,
+                        branchId: String,
+                        nameSuffix: String,
+                        callContext: Option[CallContext]): OBPReturnType[Customer] = 
+      Connector.connector.vend.createCustomerC2(
+        bankId: BankId,
+        legalName: String,
+        customerNumber: String,
         mobileNumber: String,
         email: String,
         faceImage:
@@ -2362,6 +2650,8 @@ object NewStyle {
       collected: Option[CardCollectionInfo],
       posted: Option[CardPostedInfo],
       customerId: String,
+      cvv: String,
+      brand: String,
       callContext: Option[CallContext]
     ): OBPReturnType[PhysicalCard] = {
       validateBankId(bankId, callContext)
@@ -2387,6 +2677,8 @@ object NewStyle {
         collected: Option[CardCollectionInfo],
         posted: Option[CardPostedInfo],
         customerId: String,
+        cvv: String,
+        brand: String,
         callContext: Option[CallContext]
       ) map {
         i => (unboxFullOrFail(i._1, callContext, s"$CreateCardError"), i._2)
@@ -2451,6 +2743,12 @@ object NewStyle {
       Connector.connector.vend.getPhysicalCardsForBank(bank: Bank, user : User, queryParams: List[OBPQueryParam], callContext:Option[CallContext]) map {
         i => (unboxFullOrFail(i._1, callContext, CardNotFound), i._2)
       }
+
+    def getPhysicalCardByCardNumber(bankCardNumber: String,  callContext:Option[CallContext]) : OBPReturnType[PhysicalCardTrait] = {
+      Connector.connector.vend.getPhysicalCardByCardNumber(bankCardNumber: String,  callContext:Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, InvalidCardNumber), i._2)
+      }
+    }
 
     def getPhysicalCardForBank(bankId: BankId, cardId:String ,callContext:Option[CallContext]) : OBPReturnType[PhysicalCardTrait] =
       Connector.connector.vend.getPhysicalCardForBank(bankId: BankId, cardId: String, callContext:Option[CallContext]) map {
@@ -2707,10 +3005,14 @@ object NewStyle {
     }
     
     private def createDynamicEntity(dynamicEntity: DynamicEntityT, callContext: Option[CallContext]): Future[Box[DynamicEntityT]] = {
-      val existsDynamicEntity = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(dynamicEntity.entityName)
+      val existsDynamicEntity = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(dynamicEntity.bankId, dynamicEntity.entityName)
 
       if(existsDynamicEntity.isDefined) {
-        val errorMsg = s"$DynamicEntityNameAlreadyExists current entityName is '${dynamicEntity.entityName}'."
+        val errorMsg = if (dynamicEntity.bankId.isEmpty)
+          s"$DynamicEntityNameAlreadyExists current entityName is '${dynamicEntity.entityName}'."
+        else
+          s"$DynamicEntityNameAlreadyExists current entityName is '${dynamicEntity.entityName}' bankId is ${dynamicEntity.bankId.getOrElse("")}."
+          
         return Helper.booleanToFuture(errorMsg, cc=callContext)(existsDynamicEntity.isEmpty).map(_.asInstanceOf[Box[DynamicEntityT]])
       }
 
@@ -2731,10 +3033,14 @@ object NewStyle {
       val originEntityName = originEntity.map(_.entityName).orNull
       // if entityName changed and the new entityName already exists, return error message
       if(dynamicEntity.entityName != originEntityName) {
-        val existsDynamicEntity = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(dynamicEntity.entityName)
+        val existsDynamicEntity = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(dynamicEntity.bankId, dynamicEntity.entityName)
 
         if(existsDynamicEntity.isDefined) {
-          val errorMsg = s"$DynamicEntityNameAlreadyExists current entityName is '${dynamicEntity.entityName}'."
+          val errorMsg = if (dynamicEntity.bankId.isDefined)
+            s"$DynamicEntityNameAlreadyExists current entityName is '${dynamicEntity.entityName}' bankId(${dynamicEntity.bankId.getOrElse("")})"
+          else
+            s"$DynamicEntityNameAlreadyExists current entityName is '${dynamicEntity.entityName}'."
+            
           return Helper.booleanToFuture(errorMsg, cc=callContext)(existsDynamicEntity.isEmpty).map(_.asInstanceOf[Box[DynamicEntityT]])
         }
       }
@@ -2789,7 +3095,7 @@ object NewStyle {
     def getDynamicEntityByEntityName(bankId: Option[String], entityName : String, callContext: Option[CallContext]): OBPReturnType[Box[DynamicEntityT]] = {
       validateBankId(bankId, callContext)
       Future {
-        val boxedDynamicEntity = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(entityName)
+        val boxedDynamicEntity = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(bankId, entityName)
         (boxedDynamicEntity, callContext)
       }
     }
@@ -2799,7 +3105,7 @@ object NewStyle {
       else APIUtil.getPropsValue(s"dynamicEntity.cache.ttl.seconds", "30").toInt
     }
 
-    def getDynamicEntities(bankId: Option[String]): List[DynamicEntityT] = {
+    def getDynamicEntities(bankId: Option[String], returnBothBankAndSystemLevel: Boolean): List[DynamicEntityT] = {
       import scala.concurrent.duration._
 
       validateBankId(bankId, None)
@@ -2807,7 +3113,7 @@ object NewStyle {
       var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
       CacheKeyFromArguments.buildCacheKey {
         Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(dynamicEntityTTL second) {
-          DynamicEntityProvider.connectorMethodProvider.vend.getDynamicEntities(bankId)
+          DynamicEntityProvider.connectorMethodProvider.vend.getDynamicEntities(bankId, returnBothBankAndSystemLevel)
         }
       }
     }
@@ -2856,11 +3162,13 @@ object NewStyle {
                                entityId: Option[String],
                                bankId: Option[String],
                                queryParameters: Option[Map[String, List[String]]],
+                               userId: Option[String],
+                               isPersonalEntity: Boolean,
                                callContext: Option[CallContext]): OBPReturnType[Box[JValue]] = {
       import DynamicEntityOperation._
       validateBankId(bankId, callContext)
 
-      val dynamicEntityBox = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(entityName)
+      val dynamicEntityBox = DynamicEntityProvider.connectorMethodProvider.vend.getByEntityName(bankId, entityName)
       // do validate, any validate process fail will return immediately
       if(dynamicEntityBox.isEmpty) {
         return Helper.booleanToFuture(s"$DynamicEntityNotExists entity's name is '$entityName'", cc=callContext)(false)
@@ -2884,10 +3192,7 @@ object NewStyle {
       // check if there is (entityIdName, entityIdValue) pair in the requestBody, if no, we will add it. 
       val requestBodyDynamicInstance: Option[JObject] = requestBody.map { requestJsonJObject =>
        
-        // (?<=[a-z0-9])(?=[A-Z]) --> mean `Positive Lookbehind (?<=[a-z0-9])` && Positive Lookahead (?=[A-Z]) --> So we can find the space to replace to  `_`
-        val regexPattern = "(?<=[a-z0-9])(?=[A-Z])|-"
-        // eg: entityName = PetEntity => entityIdName = pet_entity_id
-        val entityIdName = s"${entityName}_Id".replaceAll(regexPattern, "_").toLowerCase
+        val entityIdName = DynamicEntityHelper.createEntityId(entityName)
         
         val entityIdValue = requestJsonJObject \ entityIdName
 
@@ -2911,7 +3216,7 @@ object NewStyle {
           // @(variable-binding pattern), we can use the empty variable 
           // If there is not instance in requestBody, we just call the `dynamicEntityProcess` directly.
         case empty @None => 
-          Connector.connector.vend.dynamicEntityProcess(operation, entityName, empty, entityId, bankId, queryParameters, callContext)
+          Connector.connector.vend.dynamicEntityProcess(operation, entityName, empty, entityId, bankId, queryParameters, userId, isPersonalEntity, callContext)
         // @(variable-binding pattern), we can use both v and body variables.
         case requestBody @Some(body) =>
           // If the request body is existing, we need to validate the body first. 
@@ -2919,7 +3224,7 @@ object NewStyle {
           dynamicEntity.validateEntityJson(body, callContext).flatMap {
             // If there is no error in the request body
             case None => 
-              Connector.connector.vend.dynamicEntityProcess(operation, entityName, requestBody, entityId, bankId, queryParameters, callContext)
+              Connector.connector.vend.dynamicEntityProcess(operation, entityName, requestBody, entityId, bankId, queryParameters, userId,  isPersonalEntity, callContext)
             // If there are errors, we need to show them to end user. 
             case Some(errorMsg) => 
               Helper.booleanToFuture(s"$DynamicEntityInstanceValidateFail details: $errorMsg", cc=callContext)(false)
@@ -3150,10 +3455,22 @@ object NewStyle {
         counterpartyName:String
       ), callContext, CreateOrUpdateCounterpartyMetadataError), callContext)}
     }
+    def deleteMetadata(
+      bankId: BankId, 
+      accountId : AccountId, 
+      counterpartyId:String, 
+      callContext: Option[CallContext]
+    )  : OBPReturnType[Boolean]= {
+      Future{(unboxFullOrFail(Counterparties.counterparties.vend.deleteMetadata(
+        bankId: BankId,
+        accountId : AccountId,
+        counterpartyId:String
+      ), callContext, DeleteCounterpartyMetadataError), callContext)}
+    }
 
     def getPhysicalCardsForUser(user : User, callContext: Option[CallContext]) : OBPReturnType[List[PhysicalCard]] = {
-      Future{Connector.connector.vend.getPhysicalCardsForUser(user : User)} map {
-        i => (unboxFullOrFail(i, callContext, CardNotFound), callContext)
+      Connector.connector.vend.getPhysicalCardsForUser(user : User, callContext) map {
+        i => (unboxFullOrFail(i._1, callContext, s"$CardNotFound"), i._2)
       }
     }
 
@@ -3176,6 +3493,10 @@ object NewStyle {
 
     def getApiCollectionsByUserId(userId : String, callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
       Future(MappedApiCollectionsProvider.getApiCollectionsByUserId(userId), callContext) 
+    }
+
+    def getAllApiCollections(callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
+      Future(MappedApiCollectionsProvider.getAllApiCollections(), callContext) 
     }
 
     def getFeaturedApiCollections(callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
@@ -3201,12 +3522,38 @@ object NewStyle {
       ) map {
         i => (unboxFullOrFail(i, callContext, CreateApiCollectionError), callContext)
       }
+    }    
+    
+    def updateApiCollection(apiCollectionId : String, 
+                            apiCollectionName: String, 
+                            isSharable: Boolean, 
+                            description: String, 
+                            callContext: Option[CallContext]
+    ) : OBPReturnType[ApiCollectionTrait] = {
+      Future(MappedApiCollectionsProvider.updateApiCollectionById(
+        apiCollectionId: String,
+        apiCollectionName: String,
+        description: String,
+        isSharable: Boolean)
+      ) map {
+        i => (unboxFullOrFail(i, callContext, UpdateApiCollectionError), callContext)
+      }
     }
 
     def getUserByUserId(userId : String, callContext: Option[CallContext]) : OBPReturnType[User] = {
       Users.users.vend.getUserByUserIdFuture(userId) map {
         x => (unboxFullOrFail(x, callContext, s"$UserNotFoundByUserId Current USER_ID($userId) "),callContext)
       }
+    }
+    def getUsersByUserIds(userIds : List[String], callContext: Option[CallContext]) : OBPReturnType[List[User]] = {
+      val users = for {
+        userId <- userIds
+        user <- Users.users.vend.getUserByUserId(userId)
+        //(attributes, callContext) <- NewStyle.function.getUserAttributes(userId, callContext)
+      } yield {
+        user
+      }
+      Future(users,callContext)
     }
 
     def deleteApiCollectionById(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[Boolean] = {
@@ -3336,9 +3683,9 @@ object NewStyle {
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
-    def updateJsonConnectorMethod(connectorMethodId: String, connectorMethodBody: String, callContext: Option[CallContext]): OBPReturnType[JsonConnectorMethod] =
+    def updateJsonConnectorMethod(connectorMethodId: String, connectorMethodBody: String, programmingLang: String, callContext: Option[CallContext]): OBPReturnType[JsonConnectorMethod] =
       Future {
-        val updatedConnectorMethod = ConnectorMethodProvider.provider.vend.update(connectorMethodId, connectorMethodBody)
+        val updatedConnectorMethod = ConnectorMethodProvider.provider.vend.update(connectorMethodId, connectorMethodBody, programmingLang)
         val errorMsg = s"$UnknownError Can not update Connector Method in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }
@@ -3462,5 +3809,36 @@ object NewStyle {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
+    
+    def createCustomerAccountLink(customerId: String, bankId: String, accountId: String, relationshipType: String, callContext: Option[CallContext]): OBPReturnType[CustomerAccountLinkTrait] =
+      Connector.connector.vend.createCustomerAccountLink(customerId: String, bankId, accountId: String, relationshipType: String, callContext: Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, CreateCustomerAccountLinkError), i._2)
+      }
+    
+    def getCustomerAccountLinksByCustomerId(customerId: String, callContext: Option[CallContext]): OBPReturnType[List[CustomerAccountLinkTrait]] =
+      Connector.connector.vend.getCustomerAccountLinksByCustomerId(customerId: String, callContext: Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, GetCustomerAccountLinksError), i._2)
+      }
+    
+    def getCustomerAccountLinksByBankIdAccountId(bankId: String, accountId: String, callContext: Option[CallContext]): OBPReturnType[List[CustomerAccountLinkTrait]] =
+      Connector.connector.vend.getCustomerAccountLinksByBankIdAccountId(bankId, accountId: String, callContext: Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, GetCustomerAccountLinksError), i._2)
+      }
+    
+    def getCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]): OBPReturnType[CustomerAccountLinkTrait] =
+      Connector.connector.vend.getCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, CustomerAccountLinkNotFoundById), i._2)
+      }
+    
+    def deleteCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]): OBPReturnType[Boolean] =
+      Connector.connector.vend.deleteCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, DeleteCustomerAccountLinkError), i._2)
+      }
+    
+    def updateCustomerAccountLinkById(customerAccountLinkId: String, relationshipType: String, callContext: Option[CallContext]): OBPReturnType[CustomerAccountLinkTrait] =
+      Connector.connector.vend.updateCustomerAccountLinkById(customerAccountLinkId: String, relationshipType: String, callContext: Option[CallContext]) map {
+        i => (unboxFullOrFail(i._1, callContext, UpdateCustomerAccountLinkError), i._2)
+      }
   }
+
 }

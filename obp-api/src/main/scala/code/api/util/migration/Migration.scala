@@ -61,17 +61,18 @@ object Migration extends MdcLoggable {
     
     def executeScripts(startedBeforeSchemifier: Boolean): Boolean = executeScript {
       dummyScript()
+      addAccountAccessConsumerId()
       populateTableViewDefinition()
       populateTableAccountAccess()
-      generateAndPopulateMissingCustomerUUIDs()
-      generateAndPopulateMissingConsumersUUIDs()
+      generateAndPopulateMissingCustomerUUIDs(startedBeforeSchemifier)
+      generateAndPopulateMissingConsumersUUIDs(startedBeforeSchemifier)
       populateTableRateLimiting()
       updateTableViewDefinition()
-      bankAccountHoldersAndOwnerViewAccessInfo()
+      bankAccountHoldersAndOwnerViewAccessInfo(startedBeforeSchemifier)
       alterTableMappedConsent()
       alterColumnChallengeAtTableMappedConsent()
       alterTableOpenIDConnectToken()
-      alterTableMappedUserAuthContext()
+      alterTableMappedUserAuthContext(startedBeforeSchemifier)
       alterTableMappedUserAuthContextUpdate()
       populateNameAndAppTypeFieldsAtConsumerTable()
       populateAzpAndSubFieldsAtConsumerTable()
@@ -79,7 +80,7 @@ object Migration extends MdcLoggable {
       populateSettlementBankAccounts()
       alterColumnStatusAtTableMappedConsent()
       alterColumnDetailsAtTableTransactionRequest()
-      deleteDuplicatedRowsInTheTableUserAuthContext()
+      deleteDuplicatedRowsInTheTableUserAuthContext(startedBeforeSchemifier)
       populateTheFieldDeletedAtResourceUser(startedBeforeSchemifier)
       populateTheFieldIsActiveAtProductAttribute(startedBeforeSchemifier)
       alterColumnUsernameProviderFirstnameAndLastnameAtAuthUser(startedBeforeSchemifier)
@@ -90,6 +91,11 @@ object Migration extends MdcLoggable {
       alterUserAuthContextColumnKeyAndValueLength(startedBeforeSchemifier)
       dropIndexAtColumnUsernameAtTableAuthUser(startedBeforeSchemifier)
       dropIndexAtUserAuthContext()
+      alterWebhookColumnUrlLength()
+      dropConsentAuthContextDropIndex()
+      alterMappedExpectedChallengeAnswerChallengeTypeLength()
+      alterTransactionRequestChallengeChallengeTypeLength()
+      alterMappedCustomerAttribute(startedBeforeSchemifier)
     }
     
     private def dummyScript(): Boolean = {
@@ -119,36 +125,47 @@ object Migration extends MdcLoggable {
       }
     }  
     
-    private def generateAndPopulateMissingCustomerUUIDs(): Boolean = {
-      val name = nameOf(generateAndPopulateMissingCustomerUUIDs)
-      runOnce(name) {
-        val startDate = System.currentTimeMillis()
-        val commitId: String = APIUtil.gitCommit
-        val isSuccessful = CustomerX.customerProvider.vend.populateMissingUUIDs()
-        val endDate = System.currentTimeMillis()
+    private def generateAndPopulateMissingCustomerUUIDs(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.generateAndPopulateMissingCustomerUUIDs(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(generateAndPopulateMissingCustomerUUIDs(startedBeforeSchemifier))
+        runOnce(name) {
+          val startDate = System.currentTimeMillis()
+          val commitId: String = APIUtil.gitCommit
+          val isSuccessful = CustomerX.customerProvider.vend.populateMissingUUIDs()
+          val endDate = System.currentTimeMillis()
 
-        val comment: String =
-          s"""Execute `generateAndPopulateMissingCustomerUUIDs` 
-             |Duration: ${endDate - startDate} ms;
+          val comment: String =
+            s"""Execute `generateAndPopulateMissingCustomerUUIDs` 
+               |Duration: ${endDate - startDate} ms;
              """.stripMargin
-        saveLog(name, commitId, isSuccessful, startDate, endDate, comment)
-        isSuccessful
+          saveLog(name, commitId, isSuccessful, startDate, endDate, comment)
+          isSuccessful
+        }
       }
+      
     }
 
-    private def generateAndPopulateMissingConsumersUUIDs(): Boolean = {
-      val name = nameOf(generateAndPopulateMissingConsumersUUIDs)
-      runOnce(name) {
-        val startDate = System.currentTimeMillis()
-        val commitId: String = APIUtil.gitCommit
-        val isSuccessful = Consumers.consumers.vend.populateMissingUUIDs()
-        val endDate = System.currentTimeMillis()
-        val comment: String =
-          s"""Execute `generateAndPopulateMissingConsumersUUIDs` 
-             |Duration: ${endDate - startDate} ms;
+    private def generateAndPopulateMissingConsumersUUIDs(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.generateAndPopulateMissingConsumersUUIDs(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(generateAndPopulateMissingConsumersUUIDs(startedBeforeSchemifier))
+        runOnce(name) {
+          val startDate = System.currentTimeMillis()
+          val commitId: String = APIUtil.gitCommit
+          val isSuccessful = Consumers.consumers.vend.populateMissingUUIDs()
+          val endDate = System.currentTimeMillis()
+          val comment: String =
+            s"""Execute `generateAndPopulateMissingConsumersUUIDs` 
+               |Duration: ${endDate - startDate} ms;
              """.stripMargin
-        saveLog(name, commitId, isSuccessful, startDate, endDate, comment)
-        isSuccessful
+          saveLog(name, commitId, isSuccessful, startDate, endDate, comment)
+          isSuccessful
+        }
       }
     }
 
@@ -166,10 +183,15 @@ object Migration extends MdcLoggable {
       }
     }
 
-    private def bankAccountHoldersAndOwnerViewAccessInfo(): Boolean = {
-      val name = nameOf(bankAccountHoldersAndOwnerViewAccessInfo)
-      runOnce(name) {
-        BankAccountHoldersAndOwnerViewAccess.saveInfoBankAccountHoldersAndOwnerViewAccessInfo(name)
+    private def bankAccountHoldersAndOwnerViewAccessInfo(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.bankAccountHoldersAndOwnerViewAccessInfo(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(bankAccountHoldersAndOwnerViewAccessInfo(startedBeforeSchemifier))
+        runOnce(name) {
+          BankAccountHoldersAndOwnerViewAccess.saveInfoBankAccountHoldersAndOwnerViewAccessInfo(name)
+        }
       }
     }
     private def alterTableMappedConsent(): Boolean = {
@@ -203,10 +225,15 @@ object Migration extends MdcLoggable {
         MigrationOfConsumer.populateAzpAndSub(name)
       }
     }
-    private def alterTableMappedUserAuthContext(): Boolean = {
-      val name = nameOf(alterTableMappedUserAuthContext)
-      runOnce(name) {
-        MigrationOfMappedUserAuthContext.dropUniqueIndex(name)
+    private def alterTableMappedUserAuthContext(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.alterTableMappedUserAuthContext(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(alterTableMappedUserAuthContext(startedBeforeSchemifier))
+        runOnce(name) {
+          MigrationOfMappedUserAuthContext.dropUniqueIndex(name)
+        }
       }
     }
     private def alterTableMappedUserAuthContextUpdate(): Boolean = {
@@ -239,10 +266,15 @@ object Migration extends MdcLoggable {
         MigrationOfTransactionRequerst.alterColumnDetails(name)
       }
     }
-    private def deleteDuplicatedRowsInTheTableUserAuthContext(): Boolean = {
-      val name = nameOf(deleteDuplicatedRowsInTheTableUserAuthContext)
-      runOnce(name) {
-        MigrationOfUserAuthContext.removeDuplicates(name)
+    private def deleteDuplicatedRowsInTheTableUserAuthContext(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.deleteDuplicatedRowsInTheTableUserAuthContext(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(deleteDuplicatedRowsInTheTableUserAuthContext(startedBeforeSchemifier))
+        runOnce(name) {
+          MigrationOfUserAuthContext.removeDuplicates(name)
+        }
       }
     }
     private def populateTheFieldDeletedAtResourceUser(startedBeforeSchemifier: Boolean): Boolean = {
@@ -354,6 +386,51 @@ object Migration extends MdcLoggable {
       }
     }
     
+    private def addAccountAccessConsumerId(): Boolean = {
+      val name = nameOf(addAccountAccessConsumerId)
+      runOnce(name) {
+        MigrationOfAccountAccessAddedConsumerId.addAccountAccessConsumerId(name)
+      }
+    }
+
+    private def alterWebhookColumnUrlLength(): Boolean = {
+      val name = nameOf(alterWebhookColumnUrlLength)
+      runOnce(name) {
+        MigrationOfWebhookUrlFieldLength.alterColumnUrlLength(name)
+      }
+    }
+
+    private def dropConsentAuthContextDropIndex(): Boolean = {
+      val name = nameOf(dropConsentAuthContextDropIndex)
+      runOnce(name) {
+        MigrationOfConsentAuthContextDropIndex.dropUniqueIndex(name)
+      }
+    }
+  
+    private def alterMappedExpectedChallengeAnswerChallengeTypeLength(): Boolean = {
+      val name = nameOf(alterMappedExpectedChallengeAnswerChallengeTypeLength)
+      runOnce(name) {
+        MigrationOfMappedExpectedChallengeAnswerFieldLength.alterColumnLength(name)
+      }
+    }
+  
+    private def alterTransactionRequestChallengeChallengeTypeLength(): Boolean = {
+      val name = nameOf(alterTransactionRequestChallengeChallengeTypeLength)
+      runOnce(name) {
+        MigrationOfTransactionRequestChallengeChallengeTypeLength.alterColumnChallengeChallengeTypeLength(name)
+      }
+    }  
+    private def alterMappedCustomerAttribute(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.alterMappedCustomerAttribute(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(alterMappedCustomerAttribute(startedBeforeSchemifier))
+        runOnce(name) {
+          MigrationOfCustomerAttributes.alterColumnValue(name)
+        }
+      }
+    }
   }
 
   /**

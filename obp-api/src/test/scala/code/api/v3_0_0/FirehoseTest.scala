@@ -2,7 +2,7 @@ package code.api.v3_0_0
 
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole
-import code.api.util.ApiRole.CanUseAccountFirehoseAtAnyBank
+import code.api.util.ApiRole.{CanUseAccountFirehose, CanUseAccountFirehoseAtAnyBank}
 import code.api.util.ErrorMessages.AccountFirehoseNotAllowedOnThisInstance
 import code.api.v3_0_0.OBPAPI3_0_0.Implementations3_0_0
 import code.entitlement.Entitlement
@@ -31,7 +31,7 @@ class FirehoseTest extends V300ServerSetup with PropsReset{
       setPropsValues("enable.force_error"->"true")
       Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, ApiRole.CanUseAccountFirehoseAtAnyBank.toString)
       When("We send the request")
-      val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / "views"/"owner").GET <@ (user1)
+      val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / "views"/"firehose").GET <@ (user1)
       val response = makeGetRequest(request)
       Then("We should get a 200 and check the response body")
       response.code should equal(200)
@@ -41,7 +41,7 @@ class FirehoseTest extends V300ServerSetup with PropsReset{
       setPropsValues("allow_firehose_views" -> "true")
       Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, ApiRole.CanUseAccountFirehoseAtAnyBank.toString)
       When("We send the request")
-      val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / "views"/"owner").GET <@ (user1)
+      val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / "views"/"firehose").GET <@ (user1)
       val response = makeGetRequest(request)
       Then("We should get a 200 and check the response body")
       response.code should equal(200)
@@ -52,7 +52,7 @@ class FirehoseTest extends V300ServerSetup with PropsReset{
     scenario("We will call the endpoint missing role", VersionOfApi, ApiEndpoint2) {
       setPropsValues("allow_account_firehose" -> "true")
       When("We send the request")
-      val request = (v3_0Request / "banks" / testBankId1.value / "firehose" / "accounts" / "views" / "owner").GET <@ (user1)
+      val request = (v3_0Request / "banks" / testBankId1.value / "firehose" / "accounts" / "views" / "firehose").GET <@ (user1)
       val response = makeGetRequest(request)
       Then("We should get a 403 and check the response body")
       response.code should equal(403)
@@ -62,7 +62,7 @@ class FirehoseTest extends V300ServerSetup with PropsReset{
     scenario("We will call the endpoint missing props ", VersionOfApi, ApiEndpoint2) {
       Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, ApiRole.CanUseAccountFirehoseAtAnyBank.toString)
       When("We send the request")
-      val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / "views"/"owner").GET <@ (user1)
+      val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / "views"/"firehose").GET <@ (user1)
       val response = makeGetRequest(request)
       Then("We should get a 400 and check the response body")
       response.code should equal(400)
@@ -78,6 +78,18 @@ class FirehoseTest extends V300ServerSetup with PropsReset{
       Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, ApiRole.CanUseAccountFirehoseAtAnyBank.toString)
       When("We send the request")
       val request = (v3_0Request / "banks" / testBankId1.value /"firehose" / "accounts" / testAccountId1.value / "views"/"owner"/"transactions").GET <@ (user1)
+      val response = makeGetRequest(request)
+      Then("We should get a 200 and check the response body")
+      response.code should equal(200)
+      response.body.extract[ModeratedCoreAccountsJsonV300]
+    }
+
+    scenario("We will call the endpoint with user credentials - bank level role", VersionOfApi, ApiEndpoint4) {
+      setPropsValues("allow_account_firehose" -> "true")
+      setPropsValues("enable.force_error" -> "true")
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, ApiRole.CanUseAccountFirehose.toString)
+      When("We send the request")
+      val request = (v3_0Request / "banks" / testBankId1.value / "firehose" / "accounts" / testAccountId1.value / "views" / "owner" / "transactions").GET <@ (user1)
       val response = makeGetRequest(request)
       Then("We should get a 200 and check the response body")
       response.code should equal(200)
@@ -104,6 +116,7 @@ class FirehoseTest extends V300ServerSetup with PropsReset{
       Then("We should get a 403 and check the response body")
       response.code should equal(403)
       response.body.toString contains (CanUseAccountFirehoseAtAnyBank.toString()) should be(true)
+      response.body.toString contains (CanUseAccountFirehose.toString()) should be(true)
     }
 
     scenario("We will call the endpoint missing props ", VersionOfApi, ApiEndpoint4) {

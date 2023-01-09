@@ -1,10 +1,10 @@
 package code.api.v3_0_0
 
 import java.util.regex.Pattern
-
 import code.accountattribute.AccountAttributeX
 import code.accountholders.AccountHolders
 import code.api.APIFailureNewStyle
+import code.api.Constant.{PARAM_LOCALE, PARAM_TIMESTAMP}
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.{bankJSON, banksJSON, branchJsonV300, _}
 import code.api.util.APIUtil.{getGlossaryItems, _}
@@ -93,7 +93,7 @@ trait APIMethods300 {
         |Returns the list of the views created for account ACCOUNT_ID at BANK_ID.
         |
         |${authenticationRequiredMessage(true)} and the user needs to have access to the owner view.""",
-      emptyObjectJson,
+      EmptyBody,
       viewsJsonV300,
       List(
         UserNotLoggedIn,
@@ -148,7 +148,7 @@ trait APIMethods300 {
         |
         | You MUST use a leading _ (underscore) in the view name because other view names are reserved for OBP [system views](/index#group-View-System).
         | """,
-      SwaggerDefinitionsJSON.createViewJson,
+      SwaggerDefinitionsJSON.createViewJsonV300,
       viewJsonV300,
       List(
         UserNotLoggedIn,
@@ -198,7 +198,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
          |
         |The user needs to have access to the owner view.""",
-      emptyObjectJson,
+      EmptyBody,
       viewsJsonV300,
       List(UserNotLoggedIn,BankNotFound, AccountNotFound,UnknownError),
       List(apiTagView, apiTagAccount, apiTagUser, apiTagNewStyle))
@@ -233,7 +233,7 @@ trait APIMethods300 {
         |
         |The json sent is the same as during view creation (above), with one difference: the 'name' field
         |of a view is not editable (it is only set when a view is created)""",
-      updateViewJSON,
+      updateViewJsonV300,
       viewJsonV300,
       List(
         InvalidJsonFormat,
@@ -251,7 +251,7 @@ trait APIMethods300 {
           val res =
             for {
               (Full(u), callContext) <-  authenticatedAccess(cc)
-              updateJson <- Future { tryo{json.extract[UpdateViewJSON]} } map {
+              updateJson <- Future { tryo{json.extract[UpdateViewJsonV300]} } map {
                 val msg = s"$InvalidJsonFormat The Json body should be the $UpdateViewJSON "
                 x => unboxFullOrFail(x, callContext, msg)
               }
@@ -270,7 +270,7 @@ trait APIMethods300 {
               (account, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
             } yield {
               for {
-                updatedView <- account.updateView(u, viewId, updateJson)
+                updatedView <- account.updateView(u, viewId, updateJson.toUpdateViewJson)
               } yield {
                 (JSONFactory300.createViewJSON(updatedView), HttpCode.`200`(callContext))
               }
@@ -302,7 +302,7 @@ trait APIMethods300 {
         |
         |Authentication is required if the 'is_public' field in view (VIEW_ID) is not set to `true`.
         |""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       moderatedCoreAccountJsonV300,
       List(BankNotFound,AccountNotFound,ViewNotFound, UserNoPermissionAccessView, UnknownError),
       apiTagAccount ::  apiTagNewStyle :: Nil)
@@ -345,7 +345,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(false)}
         |
         |""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       moderatedCoreAccountJsonV300,
       List(BankNotFound,AccountNotFound,ViewNotFound, UnknownError),
       apiTagAccountPublic :: apiTagAccount ::  apiTagNewStyle :: Nil)
@@ -387,7 +387,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
         |
         |""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       newModeratedCoreAccountJsonV300,
       List(BankAccountNotFound,UnknownError),
       apiTagAccount :: apiTagPSD2AIS ::  apiTagNewStyle :: apiTagPsd2 :: Nil)
@@ -422,7 +422,7 @@ trait APIMethods300 {
          |
          |${authenticationRequiredMessage(true)}
          |""",
-      emptyObjectJson,
+      EmptyBody,
       coreAccountsJsonV300,
       List(UserNotLoggedIn,UnknownError),
       List(apiTagAccount, apiTagPSD2AIS, apiTagPrivateData, apiTagPsd2, apiTagNewStyle)
@@ -479,7 +479,7 @@ trait APIMethods300 {
          |${authenticationRequiredMessage(true)}
          |
          |""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       moderatedCoreAccountsJsonV300,
       List(UserNotLoggedIn,AccountFirehoseNotAllowedOnThisInstance,UnknownError),
       List(apiTagAccount, apiTagAccountFirehose, apiTagFirehoseData, apiTagNewStyle),
@@ -501,7 +501,8 @@ trait APIMethods300 {
             availableBankIdAccountIdList <- Future {
               Views.views.vend.getAllFirehoseAccounts(bank.bankId).map(a => BankIdAccountId(a.bankId,a.accountId)) 
             }
-            params = req.params.filterNot(_._1 == "_timestamp_") // ignore `_timestamp_` parameter, it is for invalid Browser caching
+            params = req.params.filterNot(_._1 == PARAM_TIMESTAMP) // ignore `_timestamp_` parameter, it is for invalid Browser caching
+              .filterNot(_._1 == PARAM_LOCALE)
             availableBankIdAccountIdList2 <- if(params.isEmpty) {
               Future.successful(availableBankIdAccountIdList)
             } else {
@@ -567,28 +568,31 @@ trait APIMethods300 {
          |${authenticationRequiredMessage(true)}
          |
          |""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       transactionsJsonV300,
       List(UserNotLoggedIn, AccountFirehoseNotAllowedOnThisInstance, UserHasMissingRoles, UnknownError),
       List(apiTagTransaction, apiTagAccountFirehose, apiTagTransactionFirehose, apiTagFirehoseData, apiTagNewStyle),
-      Some(List(canUseAccountFirehoseAtAnyBank)))
+      Some(List(canUseAccountFirehoseAtAnyBank, ApiRole.canUseAccountFirehose))
+    )
 
     lazy val getFirehoseTransactionsForBankAccount : OBPEndpoint = {
       //get private accounts for all banks
       case "banks" :: BankId(bankId):: "firehose" :: "accounts" ::  AccountId(accountId) :: "views" :: ViewId(viewId) :: "transactions" :: Nil JsonGet req => {
         cc =>
+          val allowedEntitlements = canUseAccountFirehoseAtAnyBank :: ApiRole.canUseAccountFirehose :: Nil
+          val allowedEntitlementsTxt = allowedEntitlements.mkString(" or ")
           for {
             (Full(u), callContext) <-  authenticatedAccess(cc)
             _ <- Helper.booleanToFuture(failMsg = AccountFirehoseNotAllowedOnThisInstance , cc=callContext) {
               allowAccountFirehose
             }
-            _ <- NewStyle.function.hasEntitlement("", u.userId, ApiRole.canUseAccountFirehoseAtAnyBank, callContext)
+            _ <- NewStyle.function.hasAtLeastOneEntitlement(failMsg = UserHasMissingRoles + allowedEntitlementsTxt)(bankId.value, u.userId, allowedEntitlements, callContext)
             (bank, callContext) <- NewStyle.function.getBank(bankId, callContext)
             (bankAccount, callContext) <- NewStyle.function.getBankAccount(bankId, accountId, callContext)
             view <- NewStyle.function.checkViewAccessAndReturnView(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId),Some(u), callContext)
             allowedParams = List("sort_direction", "limit", "offset", "from_date", "to_date")
             httpParams <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
-            obpQueryParams <- NewStyle.function.createObpParams(httpParams, allowedParams, callContext)
+            (obpQueryParams, callContext) <- NewStyle.function.createObpParams(httpParams, allowedParams, callContext)
             reqParams = req.params.filterNot(param => allowedParams.contains(param._1))
             (transactionIds, callContext) <- if(reqParams.nonEmpty) {
                NewStyle.function.getTransactionIdsByAttributeNameValues(bankId, reqParams, callContext)
@@ -629,7 +633,7 @@ trait APIMethods300 {
         |${urlParametersDocument(true, true)}
         |
         |""",
-      emptyObjectJson,
+      EmptyBody,
       coreTransactionsJsonV300,
       List(
         FilterSortDirectionError,
@@ -654,9 +658,7 @@ trait APIMethods300 {
             // Assume owner view was requested
             view <- NewStyle.function.checkOwnerViewAccessAndReturnOwnerView(user, BankIdAccountId(bankAccount.bankId, bankAccount.accountId), callContext)
             httpParams <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
-            params <- createQueriesByHttpParamsFuture(httpParams)map {
-              unboxFullOrFail(_, callContext, InvalidFilterParameterFormat)
-            }
+            (params, callContext) <- createQueriesByHttpParamsFuture(httpParams, callContext)
             (transactionsCore, callContext) <- bankAccount.getModeratedTransactionsCore(bank, Some(user), view, BankIdAccountId(bankId, accountId), params, callContext) map {
               i => (unboxFullOrFail(i._1, callContext, UnknownError), i._2)
             }
@@ -689,7 +691,7 @@ trait APIMethods300 {
         |${urlParametersDocument(true, true)}
         |
         |""",
-      emptyObjectJson,
+      EmptyBody,
       transactionsJsonV300,
       List(
         FilterSortDirectionError,
@@ -712,9 +714,7 @@ trait APIMethods300 {
             (bank, callContext) <- NewStyle.function.getBank(bankId, callContext)
             (bankAccount, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
             view <- NewStyle.function.checkViewAccessAndReturnView(viewId, BankIdAccountId(bankAccount.bankId, bankAccount.accountId), user, callContext)
-            params <- createQueriesByHttpParamsFuture(callContext.get.requestHeaders)map {
-              unboxFullOrFail(_, callContext, InvalidFilterParameterFormat)
-            }
+            (params, callContext) <- createQueriesByHttpParamsFuture(callContext.get.requestHeaders, callContext)
             //Note: error handling and messages for getTransactionParams are in the sub method
             (transactions, callContext) <- bankAccount.getModeratedTransactionsFuture(bank, user, view, callContext, params) map {
               connectorEmptyResponse(_, callContext)
@@ -903,7 +903,7 @@ trait APIMethods300 {
         |CanGetAnyUser entitlement is required,
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       usersJsonV200,
       List(UserNotLoggedIn, UserHasMissingRoles, UserNotFoundByEmail, UnknownError),
       List(apiTagUser, apiTagNewStyle),
@@ -936,7 +936,7 @@ trait APIMethods300 {
         |CanGetAnyUser entitlement is required,
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       usersJsonV200,
       List(UserNotLoggedIn, UserHasMissingRoles, UserNotFoundById, UnknownError),
       List(apiTagUser, apiTagNewStyle),
@@ -973,7 +973,7 @@ trait APIMethods300 {
         |CanGetAnyUser entitlement is required,
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       usersJsonV200,
       List(UserNotLoggedIn, UserHasMissingRoles, UserNotFoundByUsername, UnknownError),
       List(apiTagUser, apiTagNewStyle),
@@ -1009,18 +1009,21 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(false)}
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       adapterInfoJsonV300,
-      List(UserNotLoggedIn, UnknownError),
-      List(apiTagApi, apiTagNewStyle))
+      List(UserNotLoggedIn, UserHasMissingRoles, UnknownError),
+      List(apiTagApi, apiTagNewStyle),
+      Some(List(canGetAdapterInfoAtOneBank))
+    )
 
 
     lazy val getAdapterInfoForBank: OBPEndpoint = {
       case "banks" :: BankId(bankId) :: "adapter" :: Nil JsonGet _ => {
           cc =>
             for {
-              (_, callContext) <- anonymousAccess(cc)
+              (Full(u), callContext) <- authenticatedAccess(cc)
               (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+              _ <- NewStyle.function.hasEntitlement(bankId.value, u.userId, ApiRole.canGetAdapterInfoAtOneBank, callContext)
               (ai, callContext) <- NewStyle.function.getAdapterInfo(callContext)
             } yield {
               (createAdapterInfoJson(ai), callContext)
@@ -1201,7 +1204,7 @@ trait APIMethods300 {
          |* License the data under this endpoint is released under.
          |
         |${authenticationRequiredMessage(!getBranchesIsPublic)}""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       branchJsonV300,
       List(
         UserNotLoggedIn,
@@ -1262,7 +1265,7 @@ trait APIMethods300 {
          |note: withinMetersOf, nearLatitude and nearLongitude either all empty or all have value.
          |
         |${authenticationRequiredMessage(!getBranchesIsPublic)}""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       branchesJsonV300,
       List(
         UserNotLoggedIn,
@@ -1341,10 +1344,7 @@ trait APIMethods300 {
                 fullBoxOrException(Empty ?~! BranchesNotFound)
               case Full((List(), callContext)) =>
                 Full(List())
-              case Full((list, callContext)) =>
-                val branchesWithLicense = for { branch <- list if branch.meta.license.name.size > 3 } yield branch
-                if (branchesWithLicense.size == 0) fullBoxOrException(Empty ?~! BranchesNotFoundLicense)
-                else Full(branchesWithLicense)
+              case Full((list, callContext)) => Full(list)
               case Failure(msg, _, _) => fullBoxOrException(Empty ?~! msg)
               case ParamFailure(msg,_,_,_) => fullBoxOrException(Empty ?~! msg)
             } map { unboxFull(_) } map {
@@ -1381,7 +1381,7 @@ trait APIMethods300 {
          |
          |
           |${authenticationRequiredMessage(!getAtmsIsPublic)}""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       atmJsonV300,
       List(UserNotLoggedIn, BankNotFound, AtmNotFoundByAtmId, UnknownError),
       List(apiTagATM, apiTagNewStyle)
@@ -1422,7 +1422,7 @@ trait APIMethods300 {
           |You can use the url query parameters *limit* and *offset* for pagination
          |
          |${authenticationRequiredMessage(!getAtmsIsPublic)}""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       atmJsonV300,
       List(
         UserNotLoggedIn,
@@ -1465,10 +1465,7 @@ trait APIMethods300 {
                 fullBoxOrException(Empty ?~! atmsNotFound)
               case Full((List(), callContext)) =>
                 Full(List())
-              case Full((list, _)) =>
-                val branchesWithLicense = for { branch <- list if branch.meta.license.name.size > 3 } yield branch
-                if (branchesWithLicense.size == 0) fullBoxOrException(Empty ?~! atmsNotFoundLicense)
-                else Full(branchesWithLicense)
+              case Full((list, _)) => Full(list)
               case Failure(msg, _, _) => fullBoxOrException(Empty ?~! msg)
               case ParamFailure(msg,_,_,_) => fullBoxOrException(Empty ?~! msg)
             } map { unboxFull(_) } map {
@@ -1503,7 +1500,7 @@ trait APIMethods300 {
         |* locked_status (if null ignore)
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       usersJsonV200,
       List(
         UserNotLoggedIn,
@@ -1522,9 +1519,7 @@ trait APIMethods300 {
             
             httpParams <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
               
-            obpQueryParams <- createQueriesByHttpParamsFuture(httpParams) map {
-              x => unboxFullOrFail(x, callContext, InvalidFilterParameterFormat)
-            }
+            (obpQueryParams, callContext) <- createQueriesByHttpParamsFuture(httpParams, callContext)
             
             users <- Users.users.vend.getAllUsersF(obpQueryParams)
           } yield {
@@ -1547,8 +1542,8 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
         |
         |""",
-      emptyObjectJson,
-      customersJsonV300,
+      EmptyBody,
+      customersWithAttributesJsonV300,
       List(
         UserNotLoggedIn,
         UserCustomerLinksNotFoundForUser,
@@ -1595,7 +1590,7 @@ trait APIMethods300 {
         |
         |${authenticationRequiredMessage(true)}
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       userJsonV200,
       List(UserNotLoggedIn, UnknownError),
       List(apiTagUser, apiTagNewStyle))
@@ -1629,7 +1624,7 @@ trait APIMethods300 {
          |${accountTypeFilterText("/banks/BANK_ID/accounts/private")}
          |
          |${authenticationRequiredMessage(true)}""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       coreAccountsJsonV300,
       List(UserNotLoggedIn, BankNotFound, UnknownError),
       List(apiTagAccount,apiTagPSD2AIS, apiTagNewStyle, apiTagPsd2)
@@ -1668,7 +1663,7 @@ trait APIMethods300 {
          |${accountTypeFilterText("/banks/BANK_ID/accounts/account_ids/private")}
          |
          |${authenticationRequiredMessage(true)}""".stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       accountsIdsJsonV300,
       List(UserNotLoggedIn, BankNotFound, UnknownError),
       List(apiTagAccount, apiTagPSD2AIS, apiTagPsd2, apiTagNewStyle)
@@ -1703,7 +1698,7 @@ trait APIMethods300 {
          |${authenticationRequiredMessage(false)}
          |
          |Authentication is required if the view VIEW_ID is not public.""",
-      emptyObjectJson,
+      EmptyBody,
       otherAccountsJsonV300,
       List(
         UserNotLoggedIn,
@@ -1740,7 +1735,7 @@ trait APIMethods300 {
          |${authenticationRequiredMessage(false)}
          |
          |Authentication is required if the view is not public.""",
-      emptyObjectJson,
+      EmptyBody,
       otherAccountJsonV300,
       List(
         UserNotLoggedIn,
@@ -1812,7 +1807,7 @@ trait APIMethods300 {
                 val msg = s"$InvalidJsonFormat The Json body should be the $CreateEntitlementRequestJSON "
                 x => unboxFullOrFail(x, callContext, msg)
               }
-              _ <- Future { if (postedData.bank_id == "") Full() else NewStyle.function.getBank(BankId(postedData.bank_id), callContext)}
+              _ <- if (postedData.bank_id == "") Future.successful("") else NewStyle.function.getBank(BankId(postedData.bank_id), callContext)
               
               _ <- Helper.booleanToFuture(failMsg = IncorrectRoleName + postedData.role_name + ". Possible roles are " + ApiRole.availableRoles.sorted.mkString(", "), cc=callContext) {
                 availableRoles.exists(_ == postedData.role_name)
@@ -1845,7 +1840,7 @@ trait APIMethods300 {
         |
         |${authenticationRequiredMessage(true)}
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       entitlementRequestsJSON,
       List(
         UserNotLoggedIn,
@@ -1884,7 +1879,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
         |
         """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       entitlementRequestsJSON,
       List(
         UserNotLoggedIn,
@@ -1923,7 +1918,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
          |
         """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       entitlementRequestsJSON,
       List(
         UserNotLoggedIn,
@@ -1958,8 +1953,8 @@ trait APIMethods300 {
         |
         |${authenticationRequiredMessage(true)}
       """.stripMargin,
-      emptyObjectJson,
-      emptyObjectJson,
+      EmptyBody,
+      EmptyBody,
       List(
         UserNotLoggedIn,
         InvalidConnectorResponse,
@@ -1998,7 +1993,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
          |
         """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       entitlementJSONs,
       List(
         UserNotLoggedIn,
@@ -2033,7 +2028,7 @@ trait APIMethods300 {
         |Returns the glossary of the API
         |
         |""",
-      emptyObjectJson,
+      EmptyBody,
       glossaryItemsJsonV300,
       List(UnknownError),
       apiTagDocumentation :: apiTagNewStyle :: Nil)
@@ -2075,7 +2070,7 @@ trait APIMethods300 {
         |
         |
         """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       coreAccountsHeldJsonV300,
       List(UserNotLoggedIn, UnknownError),
       List(apiTagAccount, apiTagPSD2AIS, apiTagView, apiTagPsd2, apiTagNewStyle)
@@ -2151,7 +2146,7 @@ trait APIMethods300 {
         |${authenticationRequiredMessage(true)}
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       aggregateMetricsJSONV300,
       List(
         UserNotLoggedIn,
@@ -2168,9 +2163,7 @@ trait APIMethods300 {
               (Full(u), callContext) <- authenticatedAccess(cc)
               _ <- NewStyle.function.hasEntitlement("", u.userId, ApiRole.canReadAggregateMetrics, callContext)
               httpParams <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
-              obpQueryParams <- createQueriesByHttpParamsFuture(httpParams) map {
-                x => unboxFullOrFail(x, callContext, InvalidFilterParameterFormat)
-              }
+              (obpQueryParams, callContext) <- createQueriesByHttpParamsFuture(httpParams, callContext)
               aggregateMetrics <- APIMetrics.apiMetrics.vend.getAllAggregateMetricsFuture(obpQueryParams) map {
                 x => unboxFullOrFail(x, callContext, GetAggregateMetricsError)
               }
@@ -2278,8 +2271,8 @@ trait APIMethods300 {
         |
         |
       """.stripMargin,
-      emptyObjectJson,
-      emptyObjectJson,
+      EmptyBody,
+      EmptyBody,
       List(UserNotLoggedIn, EntitlementNotFound, UnknownError),
       List(apiTagScope, apiTagConsumer, apiTagNewStyle))
 
@@ -2316,7 +2309,7 @@ trait APIMethods300 {
         |
         |
       """.stripMargin,
-      emptyObjectJson,
+      EmptyBody,
       scopeJsons,
       List(UserNotLoggedIn, EntitlementNotFound, UnknownError),
       List(apiTagScope, apiTagConsumer, apiTagNewStyle))
@@ -2350,7 +2343,7 @@ trait APIMethods300 {
         |* Short and full name of bank
         |* Logo URL
         |* Website""",
-      emptyObjectJson,
+      EmptyBody,
       banksJSON,
       List(UnknownError),
       apiTagBank :: apiTagPSD2AIS:: apiTagPsd2 :: apiTagNewStyle :: Nil)
@@ -2380,7 +2373,7 @@ trait APIMethods300 {
         |* Short and full name of bank
         |* Logo URL
         |* Website""",
-      emptyObjectJson,
+      EmptyBody,
       bankJson400,
       List(UserNotLoggedIn, UnknownError, BankNotFound),
       apiTagBank :: apiTagPSD2AIS :: apiTagPsd2 :: apiTagNewStyle :: Nil

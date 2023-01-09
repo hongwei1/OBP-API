@@ -39,8 +39,6 @@ import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
 import code.api.util._
 import code.api.v2_1_0.TransactionRequestBodyCommonJSON
 import code.bankconnectors._
-import code.bankconnectors.vJune2017.{InternalCustomer, JsonFactory_vJune2017}
-import code.bankconnectors.vMar2017._
 import code.context.UserAuthContextProvider
 import code.customer._
 import code.kafka.{KafkaHelper, Topics}
@@ -85,7 +83,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
   // This is tricky for now. Because for GatewayLogin, we do not create any user for the first CBS Call. 
   // We get the username from gatewayLogin token -> call CBS (CBS checked the user and return the response) -> api create the users.  
-  def getAuthInfoFirstCbsCall (username: String, callContext: Option[CallContext]): Box[AuthInfo]=
+  def getAuthInfoFirstCbsCall (provider: String, username:String, callContext: Option[CallContext]): Box[AuthInfo]=
     for{
       cc <- tryo {callContext.get} ?~! NoCallContext
       gatewayLoginRequestPayLoad <- cc.gatewayLoginRequestPayload orElse (
@@ -486,11 +484,11 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     ),
     adapterImplementation = Some(AdapterImplementation("Accounts", 5))
   )
-  override def getBankAccountsForUserLegacy(username: String, callContext: Option[CallContext]): Box[(List[InboundAccount], Option[CallContext])] = saveConnectorMetric{
-    getValueFromFuture(getBankAccountsForUser(username: String, callContext: Option[CallContext]))
+  override def getBankAccountsForUserLegacy(provider: String, username:String, callContext: Option[CallContext]): Box[(List[InboundAccount], Option[CallContext])] = saveConnectorMetric{
+    getValueFromFuture(getBankAccountsForUser(provider: String, username:String, callContext: Option[CallContext]))
   }("getBankAccounts")
 
-  override def getBankAccountsForUser(username: String, callContext: Option[CallContext]):  Future[Box[(List[InboundAccountSept2018], Option[CallContext])]] = saveConnectorMetric{
+  override def getBankAccountsForUser(provider: String, username:String, callContext: Option[CallContext]):  Future[Box[(List[InboundAccountSept2018], Option[CallContext])]] = saveConnectorMetric{
      /**
         * Please note that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
         * is just a temporary value filed with UUID values in order to prevent any ambiguity.
@@ -502,7 +500,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
       Caching.memoizeWithProvider(Some(cacheKey.toString()))(accountsTTL second) {
 
         val req = OutboundGetAccounts(
-          getAuthInfoFirstCbsCall(username, callContext).openOrThrowException(s"$attemptedToOpenAnEmptyBox getBankAccountsFuture.callContext is Empty !"),
+          getAuthInfoFirstCbsCall(provider: String, username:String, callContext).openOrThrowException(s"$attemptedToOpenAnEmptyBox getBankAccountsFuture.callContext is Empty !"),
           InternalBasicCustomers(Nil)
         )
         logger.debug(s"Kafka getBankAccountsFuture says: req is: $req")
@@ -765,7 +763,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
   // TODO Get rid on these param lookups and document.
   override def getTransactionsLegacy(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]) = saveConnectorMetric {
     val limit = queryParams.collect { case OBPLimit(value) => value }.headOption.getOrElse(100)
-    val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString }.headOption.getOrElse(APIUtil.DefaultFromDate.toString)
+    val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString }.headOption.getOrElse(APIUtil.theEpochTime.toString)
     val toDate = queryParams.collect { case OBPToDate(date) => date.toString }.headOption.getOrElse(APIUtil.DefaultToDate.toString)
 
     // TODO What about offset?
@@ -827,7 +825,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
     CacheKeyFromArguments.buildCacheKey {Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(transactionsTTL second) {
       
     val limit = queryParams.collect { case OBPLimit(value) => value}.headOption.getOrElse(100)
-    val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString}.headOption.getOrElse(APIUtil.DefaultFromDate.toString)
+    val fromDate = queryParams.collect { case OBPFromDate(date) => date.toString}.headOption.getOrElse(APIUtil.theEpochTime.toString)
     val toDate = queryParams.collect { case OBPToDate(date) => date.toString}.headOption.getOrElse(APIUtil.DefaultToDate.toString)
   
     val req = OutboundGetTransactions(
@@ -1499,7 +1497,7 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
         future map {
           case Full(inbound) if (inbound.status.hasNoError) =>
-            Full(JsonFactory_vJune2017.createObpCustomers(inbound.data))
+            Full(KafkaMappedConnector_vSept2018.createObpCustomers(inbound.data))
           case Full(inbound) if (inbound.status.hasError) =>
             Failure("INTERNAL-"+ inbound.status.errorCode+". + CoreBank-Status:" + inbound.status.backendMessages)
           case failureOrEmpty => failureOrEmpty
@@ -3839,7 +3837,44 @@ trait KafkaMappedConnector_vSept2018 extends Connector with KafkaHelper with Mdc
 
 
 object KafkaMappedConnector_vSept2018 extends KafkaMappedConnector_vSept2018{
-  
+  def createCustomerJson(customer : Customer) : InternalBasicCustomer = {
+    InternalBasicCustomer(
+      bankId=customer.bankId,
+      customerId = customer.customerId,
+      customerNumber = customer.number,
+      legalName = customer.legalName,
+      dateOfBirth = customer.dateOfBirth
+    )
+  }
+  def createObpCustomer(customer : InternalCustomer) : Customer = {
+    ObpCustomer(
+      customerId = customer.customerId,
+      bankId = customer.bankId,
+      number = customer.number,
+      legalName = customer.legalName,
+      mobileNumber = customer.mobileNumber,
+      email = customer.email,
+      faceImage = customer.faceImage,
+      dateOfBirth = customer.dateOfBirth,
+      relationshipStatus = customer.relationshipStatus,
+      dependents = customer.dependents,
+      dobOfDependents = customer.dobOfDependents,
+      highestEducationAttained = customer.highestEducationAttained,
+      employmentStatus = customer.employmentStatus,
+      creditRating = customer.creditRating,
+      creditLimit = customer.creditLimit,
+      kycStatus = customer.kycStatus,
+      lastOkDate = customer.lastOkDate,
+    )
+  }
+
+  def createCustomersJson(customers : List[Customer]) : InternalBasicCustomers = {
+    InternalBasicCustomers(customers.map(createCustomerJson))
+  }
+
+  def createObpCustomers(customers : List[InternalCustomer]) : List[Customer] = {
+    customers.map(createObpCustomer)
+  }
 }
 
 

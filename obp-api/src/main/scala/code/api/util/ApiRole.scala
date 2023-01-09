@@ -1,7 +1,10 @@
 package code.api.util
 
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+
 import java.util.concurrent.ConcurrentHashMap
-import code.api.v4_0_0.dynamic.{DynamicEndpointHelper, DynamicEntityHelper}
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+import code.api.dynamic.entity.helper.DynamicEntityHelper
 import com.openbankproject.commons.util.{JsonAble, ReflectUtils}
 import net.liftweb.json.{Formats, JsonAST}
 import net.liftweb.json.JsonDSL._
@@ -80,8 +83,26 @@ object ApiRole {
   case class CanSearchMetrics(requiresBankId: Boolean = false) extends ApiRole
   lazy val canSearchMetrics = CanSearchMetrics()
 
+  case class CanGetCustomersAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetCustomersAtAnyBank = CanGetCustomersAtAnyBank()
+  
+  case class CanGetCustomersMinimalAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetCustomersMinimalAtAnyBank = CanGetCustomersMinimalAtAnyBank()
+  
+  case class CanGetCustomers(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomers = CanGetCustomers()
+  
+  case class CanGetCustomersMinimal(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomersMinimal = CanGetCustomersMinimal()
+  
   case class CanGetCustomer(requiresBankId: Boolean = true) extends ApiRole
   lazy val canGetCustomer = CanGetCustomer()
+  
+  case class CanGetCustomerOverview(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomerOverview = CanGetCustomerOverview()  
+  
+  case class CanGetCustomerOverviewFlat(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomerOverviewFlat = CanGetCustomerOverviewFlat()
 
   case class CanCreateCustomer(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateCustomer = CanCreateCustomer()
@@ -110,8 +131,17 @@ object ApiRole {
   case class CanUpdateCustomerCreditRatingAndSource(requiresBankId: Boolean = true) extends ApiRole
   lazy val canUpdateCustomerCreditRatingAndSource = CanUpdateCustomerCreditRatingAndSource()
 
+  case class CanUpdateCustomerCreditRatingAndSourceAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canUpdateCustomerCreditRatingAndSourceAtAnyBank = CanUpdateCustomerCreditRatingAndSourceAtAnyBank()
+
   case class CanCreateCustomerAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
   lazy val canCreateCustomerAtAnyBank = CanCreateCustomerAtAnyBank()
+  
+  case class CanGetCorrelatedUsersInfo(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCorrelatedUsersInfo = CanGetCorrelatedUsersInfo() 
+  
+  case class CanGetCorrelatedUsersInfoAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetCorrelatedUsersInfoAtAnyBank = CanGetCorrelatedUsersInfoAtAnyBank()
 
   case class CanCreateUserCustomerLink(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateUserCustomerLink = CanCreateUserCustomerLink()
@@ -220,6 +250,21 @@ object ApiRole {
 
   case class CanGetCardsForBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canGetCardsForBank = CanGetCardsForBank()
+
+  case class CanCreateCustomerAccountLink(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canCreateCustomerAccountLink = CanCreateCustomerAccountLink()
+
+  case class CanUpdateCustomerAccountLink(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canUpdateCustomerAccountLink = CanUpdateCustomerAccountLink()
+
+  case class CanDeleteCustomerAccountLink(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canDeleteCustomerAccountLink = CanDeleteCustomerAccountLink()
+
+  case class CanGetCustomerAccountLink(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomerAccountLink = CanGetCustomerAccountLink()
+  
+  case class CanGetCustomerAccountLinks(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomerAccountLinks = CanGetCustomerAccountLinks()
   
   case class CanCreateBranch(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateBranch = CanCreateBranch()
@@ -239,6 +284,12 @@ object ApiRole {
   case class CanCreateAtm(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateAtm = CanCreateAtm()  
   
+  case class CanDeleteAtm(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canDeleteAtm = CanDeleteAtm()
+
+  case class CanDeleteAtmAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canDeleteAtmAtAnyBank = CanDeleteAtmAtAnyBank()
+  
   case class CanUpdateAtm(requiresBankId: Boolean = true) extends ApiRole
   lazy val canUpdateAtm = CanUpdateAtm()
 
@@ -253,12 +304,27 @@ object ApiRole {
   
   case class CanCreateCounterpartyAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
   lazy val canCreateCounterpartyAtAnyBank = CanCreateCounterpartyAtAnyBank()
+
+  case class CanDeleteCounterparty(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canDeleteCounterparty = CanDeleteCounterparty()
+  
+  case class CanDeleteCounterpartyAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canDeleteCounterpartyAtAnyBank = CanDeleteCounterpartyAtAnyBank()
   
   case class CanGetCounterparty(requiresBankId: Boolean = true) extends ApiRole
-  lazy val canGetCounterparty = CanGetCounterparty()
+  lazy val canGetCounterparty = CanGetCounterparty() 
+  
+  case class CanGetCounterpartiesAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetCounterpartiesAtAnyBank = CanGetCounterpartiesAtAnyBank()
+  
+  case class CanGetCounterparties(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCounterparties = CanGetCounterparties()
 
   case class CanGetApiCollection(requiresBankId: Boolean = false) extends ApiRole
   lazy val canGetApiCollection = CanGetApiCollection()
+
+  case class CanGetApiCollectionsForUser(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetApiCollectionsForUser = CanGetApiCollectionsForUser()
 
   case class CanGetAllApiCollections(requiresBankId: Boolean = false) extends ApiRole
   lazy val canGetAllApiCollections = CanGetAllApiCollections()
@@ -289,9 +355,18 @@ object ApiRole {
 
   case class CanReadMetrics (requiresBankId: Boolean = false) extends ApiRole
   lazy val canReadMetrics = CanReadMetrics()
+  
+  case class CanGetMetricsAtOneBank(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetMetricsAtOneBank = CanGetMetricsAtOneBank()
 
   case class CanGetConfig(requiresBankId: Boolean = false) extends ApiRole
   lazy val canGetConfig = CanGetConfig()
+  
+  case class CanGetAdapterInfo(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetAdapterInfo = CanGetAdapterInfo()
+  
+  case class CanGetAdapterInfoAtOneBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetAdapterInfoAtOneBank = CanGetAdapterInfoAtOneBank()
   
   case class CanGetDatabaseInfo(requiresBankId: Boolean = false) extends ApiRole
   lazy val canGetDatabaseInfo = CanGetDatabaseInfo()
@@ -358,6 +433,12 @@ object ApiRole {
 
   case class CanSetCallLimits(requiresBankId: Boolean = false) extends ApiRole
   lazy val canSetCallLimits = CanSetCallLimits()
+  
+  case class CanCreateCustomerMessage(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canCreateCustomerMessage = CanCreateCustomerMessage()  
+  
+  case class CanGetCustomerMessages(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetCustomerMessages = CanGetCustomerMessages()
 
   case class CanReadCallLimits(requiresBankId: Boolean = false) extends ApiRole
   lazy val canReadCallLimits = CanReadCallLimits()
@@ -368,6 +449,12 @@ object ApiRole {
   case class CanCreateWebhook(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateWebhook = CanCreateWebhook()
 
+  case class CanCreateSystemAccountNotificationWebhook(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canCreateSystemAccountNotificationWebhook = CanCreateSystemAccountNotificationWebhook()
+  
+  case class CanCreateAccountNotificationWebhookAtOneBank(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canCreateAccountNotificationWebhookAtOneBank = CanCreateAccountNotificationWebhookAtOneBank()
+  
   case class CanUpdateWebhook(requiresBankId: Boolean = true) extends ApiRole
   lazy val canUpdateWebhook = CanUpdateWebhook()
 
@@ -483,23 +570,23 @@ object ApiRole {
   case class CanDeleteWebUiProps(requiresBankId: Boolean = false) extends ApiRole
   lazy val canDeleteWebUiProps = CanDeleteWebUiProps()
 
-  case class CanGetDynamicEntities(requiresBankId: Boolean = false) extends ApiRole
-  lazy val canGetDynamicEntities = CanGetDynamicEntities()
+  case class CanGetSystemLevelDynamicEntities(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetSystemLevelDynamicEntities = CanGetSystemLevelDynamicEntities()
 
-  case class CanCreateDynamicEntity(requiresBankId: Boolean = false) extends ApiRole
-  lazy val canCreateDynamicEntity = CanCreateDynamicEntity()
+  case class CanCreateSystemLevelDynamicEntity(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canCreateSystemLevelDynamicEntity = CanCreateSystemLevelDynamicEntity()
 
   case class CanCreateBankLevelDynamicEntity(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateBankLevelDynamicEntity = CanCreateBankLevelDynamicEntity()
   
-  case class CanUpdateDynamicEntity(requiresBankId: Boolean = false) extends ApiRole
-  lazy val canUpdateDynamicEntity = CanUpdateDynamicEntity()
+  case class CanUpdateSystemLevelDynamicEntity(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canUpdateSystemDynamicEntity = CanUpdateSystemLevelDynamicEntity()
   
   case class CanUpdateBankLevelDynamicEntity(requiresBankId: Boolean = true) extends ApiRole
   lazy val canUpdateBankLevelDynamicEntity = CanUpdateBankLevelDynamicEntity()
 
-  case class CanDeleteDynamicEntity(requiresBankId: Boolean = false) extends ApiRole
-  lazy val canDeleteDynamicEntity = CanDeleteDynamicEntity()
+  case class CanDeleteSystemLevelDynamicEntity(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canDeleteSystemLevelDynamicEntity = CanDeleteSystemLevelDynamicEntity()
 
   case class CanDeleteBankLevelDynamicEntity(requiresBankId: Boolean = true) extends ApiRole
   lazy val canDeleteBankLevelDynamicEntity = CanDeleteBankLevelDynamicEntity()
@@ -573,17 +660,32 @@ object ApiRole {
   case class CanCreateCustomerAttributeAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateCustomerAttributeAtOneBank = CanCreateCustomerAttributeAtOneBank()
 
+  case class CanCreateCustomerAttributeAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canCreateCustomerAttributeAtAnyBank = CanCreateCustomerAttributeAtAnyBank()
+
   case class CanUpdateCustomerAttributeAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canUpdateCustomerAttributeAtOneBank = CanUpdateCustomerAttributeAtOneBank()
 
+  case class CanUpdateCustomerAttributeAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canUpdateCustomerAttributeAtAnyBank = CanUpdateCustomerAttributeAtAnyBank()
+
   case class CanDeleteCustomerAttributeAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canDeleteCustomerAttributeAtOneBank = CanDeleteCustomerAttributeAtOneBank()
+  
+  case class CanDeleteCustomerAttributeAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canDeleteCustomerAttributeAtAnyBank = CanDeleteCustomerAttributeAtAnyBank()
 
   case class CanGetCustomerAttributesAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canGetCustomerAttributesAtOneBank = CanGetCustomerAttributesAtOneBank()
 
+  case class CanGetCustomerAttributesAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetCustomerAttributesAtAnyBank = CanGetCustomerAttributesAtAnyBank()
+
   case class CanGetCustomerAttributeAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canGetCustomerAttributeAtOneBank = CanGetCustomerAttributeAtOneBank()
+
+  case class CanGetCustomerAttributeAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetCustomerAttributeAtAnyBank = CanGetCustomerAttributeAtAnyBank()
 
   case class CanCreateTransactionAttributeAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateTransactionAttributeAtOneBank = CanCreateTransactionAttributeAtOneBank()
@@ -617,6 +719,9 @@ object ApiRole {
 
   case class CanGetDoubleEntryTransactionAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canGetDoubleEntryTransactionAtOneBank = CanGetDoubleEntryTransactionAtOneBank()
+  
+  case class CanGetDoubleEntryTransactionAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetDoubleEntryTransactionAtAnyBank = CanGetDoubleEntryTransactionAtAnyBank()
 
   case class CanReadResourceDoc(requiresBankId: Boolean = false) extends ApiRole
   lazy val canReadResourceDoc = CanReadResourceDoc()
@@ -856,6 +961,12 @@ object ApiRole {
   
   case class CanCreateHistoricalTransactionAtBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canCreateHistoricalTransactionAtBank = CanCreateHistoricalTransactionAtBank()
+
+  case class CanGetAccountsMinimalForCustomerAtAnyBank(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canGetAccountsMinimalForCustomerAtAnyBank = CanGetAccountsMinimalForCustomerAtAnyBank()
+  
+  case class CanRevokeConsentAtBank(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canRevokeConsentAtBank = CanRevokeConsentAtBank()
   
   private val dynamicApiRoles = new ConcurrentHashMap[String, ApiRole]
 

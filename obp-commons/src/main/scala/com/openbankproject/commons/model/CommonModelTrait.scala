@@ -65,7 +65,8 @@ case class InboundStatusMessage(
   source: String,
   status: String,
   errorCode: String,
-  text: String
+  text: String,
+  duration: Option[BigDecimal] = None //added from V500
 )
 
 case class Status(
@@ -112,6 +113,7 @@ trait AccountAttribute {
   def name: String
   def attributeType: AccountAttributeType.Value
   def value: String
+  def productInstanceCode: Option[String]
 }
 
 trait CardAttribute {
@@ -308,6 +310,7 @@ trait UserAuthContext {
   def key : String
   def value : String
   def timeStamp : Date
+  def consumerId : String
 }
 
 trait ConsentAuthContext {
@@ -315,6 +318,7 @@ trait ConsentAuthContext {
   def consentId : String
   def key : String
   def value : String
+  def timeStamp : Date
 }
 
 
@@ -462,6 +466,7 @@ trait CustomerMessage {
   def message : String
   def fromDepartment : String
   def fromPerson : String
+  def transport : Option[String] = None //TODO, introduced from V400, may set mandatory later, need to check V140.
 }
 
 trait BankAttributeTrait {
@@ -559,6 +564,8 @@ trait ChallengeTrait {
   def scaMethod: Option[SCA]
   def scaStatus: Option[SCAStatus]
   def authenticationMethodId: Option[String]
+  
+  def attemptCounter: Int
 }
 
 

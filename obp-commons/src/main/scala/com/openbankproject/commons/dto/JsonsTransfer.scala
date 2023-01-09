@@ -87,7 +87,7 @@ case class OutBoundGetBank(outboundAdapterCallContext: OutboundAdapterCallContex
 case class InBoundGetBank(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: BankCommons) extends InBoundTrait[BankCommons]
 
 case class OutBoundGetBankAccountsForUser(outboundAdapterCallContext: OutboundAdapterCallContext,
-                                          username: String) extends TopicTrait
+  provider: String, username: String) extends TopicTrait
 case class InBoundGetBankAccountsForUser(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: List[InboundAccountCommons]) extends InBoundTrait[List[InboundAccountCommons]]
 
 
@@ -401,7 +401,8 @@ case class OutBoundCreateOrUpdateAccountAttribute(outboundAdapterCallContext: Ou
                                                   productAttributeId: Option[String],
                                                   name: String,
                                                   accountAttributeType: enums.AccountAttributeType.Value,
-                                                  value: String) extends TopicTrait
+                                                  value: String,
+                                                  productInstanceCode: Option[String] = None) extends TopicTrait
 case class InBoundCreateOrUpdateAccountAttribute(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: AccountAttributeCommons) extends InBoundTrait[AccountAttributeCommons]
 
 
@@ -585,7 +586,8 @@ case class OutBoundCreateAccountAttributes(outboundAdapterCallContext: OutboundA
                                            bankId: BankId,
                                            accountId: AccountId,
                                            productCode: ProductCode,
-                                           accountAttributes: List[ProductAttribute]
+                                           accountAttributes: List[ProductAttribute],
+                                           productInstanceCode: Option[String] = None,
                                          ) extends TopicTrait
 case class InBoundCreateAccountAttributes(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: List[AccountAttributeCommons]) extends InBoundTrait[List[AccountAttributeCommons]]
 
@@ -689,7 +691,8 @@ case class OutBoundUpdatePhysicalCard(outboundAdapterCallContext: OutboundAdapte
                                       pinResets: List[PinResetInfo],
                                       collected: Option[CardCollectionInfo],
                                       posted: Option[CardPostedInfo],
-                                      customerId: String) extends TopicTrait
+                                      customerId: String
+                                    ) extends TopicTrait
 case class InBoundUpdatePhysicalCard(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: PhysicalCard) extends InBoundTrait[PhysicalCard]
 
 case class OutBoundDeletePhysicalCardForBank(outboundAdapterCallContext: OutboundAdapterCallContext,
@@ -732,7 +735,9 @@ case class OutBoundCreatePhysicalCard(outboundAdapterCallContext: OutboundAdapte
                                       pinResets: List[PinResetInfo],
                                       collected: Option[CardCollectionInfo],
                                       posted: Option[CardPostedInfo],
-                                      customerId: String
+                                      customerId: String,
+                                      cvv: String,
+                                      brand: String
                                       ) extends TopicTrait
 case class InBoundCreatePhysicalCard(inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: PhysicalCard) extends InBoundTrait[PhysicalCard]
 
@@ -863,7 +868,7 @@ case class InBoundGetBanksLegacy (inboundAdapterCallContext: InboundAdapterCallC
 
 
 case class OutBoundGetBankAccountsForUserLegacy (outboundAdapterCallContext: OutboundAdapterCallContext,
-                                                 username: String) extends TopicTrait
+                                                 provider: String, username:String ) extends TopicTrait
 case class InBoundGetBankAccountsForUserLegacy (inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: List[InboundAccountCommons]) extends InBoundTrait[List[InboundAccountCommons]]
 
 
@@ -945,7 +950,9 @@ case class OutBoundCreatePhysicalCardLegacy (outboundAdapterCallContext: Outboun
                                              pinResets: List[PinResetInfo],
                                              collected: Option[CardCollectionInfo],
                                              posted: Option[CardPostedInfo],
-                                             customerId: String) extends TopicTrait
+                                             customerId: String,
+                                             cvv: String = "",
+                                             brand: String = "") extends TopicTrait
 case class InBoundCreatePhysicalCardLegacy (inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: PhysicalCard) extends InBoundTrait[PhysicalCard]
 
 
@@ -979,7 +986,9 @@ case class OutBoundDynamicEntityProcess (outboundAdapterCallContext: OutboundAda
                                          requestBody: Option[JObject],
                                          entityId: Option[String],
                                          bankId: Option[String],
-                                         queryParameters: Option[Map[String, List[String]]]) extends TopicTrait
+                                         queryParameters: Option[Map[String, List[String]]],
+                                         userId: Option[String],
+                                         isPersonalEntity: Boolean)extends TopicTrait
 case class InBoundDynamicEntityProcess (inboundAdapterCallContext: InboundAdapterCallContext, status: Status, data: JValue) extends InBoundTrait[JValue]
 
 // because swagger generate not support JValue type, so here supply too xxxDoc TO generate correct request and response body example
@@ -1016,7 +1025,7 @@ case class InBoundGetCounterparty(status: Status, data: Counterparty) extends In
   override val inboundAdapterCallContext: InboundAdapterCallContext = InboundAdapterCallContext()
 }
 
-case class OutBoundGetPhysicalCardsForUser(user: User) extends TopicTrait
+case class OutBoundGetPhysicalCardsForUser(outboundAdapterCallContext: OutboundAdapterCallContext, user: User) extends TopicTrait
 case class InBoundGetPhysicalCardsForUser(status: Status, data: List[PhysicalCard]) extends InBoundTrait[List[PhysicalCard]] {
   override val inboundAdapterCallContext: InboundAdapterCallContext = InboundAdapterCallContext()
 }

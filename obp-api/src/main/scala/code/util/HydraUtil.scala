@@ -25,6 +25,11 @@ object HydraUtil extends MdcLoggable{
 
   val mirrorConsumerInHydra = APIUtil.getPropsAsBoolValue("mirror_consumer_in_hydra", false)
 
+  val clientSecretPost = "client_secret_post"
+  
+  val hydraTokenEndpointAuthMethod =
+    APIUtil.getPropsValue("hydra_token_endpoint_auth_method", "private_key_jwt")
+
   lazy val hydraPublicUrl = APIUtil.getPropsValue("hydra_public_url")
     .openOrThrowException(s"If props $INTEGRATE_WITH_HYDRA is true, hydra_public_url value should not be blank")
     .replaceFirst("/$", "")
@@ -37,7 +42,7 @@ object HydraUtil extends MdcLoggable{
     .openOrThrowException(s"If props $INTEGRATE_WITH_HYDRA is true, hydra_client_scope value should not be blank")
     .trim.split("""\s*,\s*""").toList
 
-  private lazy val allConsents = hydraConsents.mkString("openid offline ", " ","")
+  private lazy val allConsents = hydraConsents.mkString("openid offline email profile ", " ","")
 
 
   val grantTypes = ("authorization_code" :: "client_credentials" :: "refresh_token" :: "implicit" :: Nil).asJava
@@ -87,7 +92,11 @@ object HydraUtil extends MdcLoggable{
       val clientMeta = Map("client_certificate" -> consumer.clientCertificate.get).asJava
       oAuth2Client.setMetadata(clientMeta)
     }
-    oAuth2Client.setTokenEndpointAuthMethod("client_secret_post")
+    // TODO Set token_endpoint_auth_method in accordance to the Consumer.AppType value
+    // Consumer.AppType = Confidential => client_secret_post
+    // Consumer.AppType = Public => private_key_jwt
+    // Consumer.AppType = Unknown => private_key_jwt
+    oAuth2Client.setTokenEndpointAuthMethod(HydraUtil.hydraTokenEndpointAuthMethod)
 
     val decoratedClient = fun(oAuth2Client)
     val oAuth2ClientResult = Some(hydraAdmin.createOAuth2Client(decoratedClient))

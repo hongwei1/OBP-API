@@ -113,26 +113,33 @@ Berlin 13359, Germany
 							<a id ="navitem-logo" class="navlink " href="/" ><img src="/media/images/logo.png" alt="homepage logo"></a>
 						</li>
 						<li class="navitem">
-							<a class="navlink api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">API Explorer</a>
+							<a class="navlink api-explorer-link" data-lift="WebUI.apiExplorerLink" href="">
+								<lift:loc locid="api_explorer">API Explorer</lift:loc>
+							</a>
 						</li>
 						<li data-lift="Nav.item?name=Consumer%20Registration&showEvenIfRestricted=true" class="navitem">
 							<a id ="get-api-key-link" class="navlink" href="#">Link name. Has class "selected" if it's the current page.</a>
 						</li>
 						<li class="navitem">
-							<a class="navlink" id="sandbox-introduction-link" data-lift="WebUI.sandboxIntroductionLink" href="">Introduction</a>
+							<a class="navlink" id="sandbox-introduction-link" data-lift="WebUI.sandboxIntroductionLink" href="">
+								<lift:loc locid="introduction">Introduction</lift:loc>
+							</a>
 						</li>
 						<li class="navitem">
-							<a class="navlink" id="technical-faqs-anchor" data-lift="WebUI.technicalFaqsAnchor" href="">Support</a>
+							<a class="navlink" id="technical-faqs-anchor" data-lift="WebUI.technicalFaqsAnchor" href="">
+								<lift:loc locid="support">Support</lift:loc>
+							</a>
 						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
 						<!-- login state -->
 						<li data-lift="Nav.item?name=Login" class="navitem">
 							<!-- LOGGED OUT -->
-							<p>
-								<a href="/user_mgt/sign_up" class="navbar-btn" id ="register-link">Register</a><a data-lift="Login.loggedOut" href="#" class="btn btn-danger login">Log on</a>
+							<p data-lift="WebUI.userIsLoggedIn">
+								<a href="/user_mgt/sign_up" class="navbar-btn" id ="register-link"><lift:loc locid="register">Register</lift:loc></a><a data-lift="Login.loggedOut" href="#" class="btn btn-danger login"><lift:loc locid="logon">Log on</lift:loc></a>
 							</p>
 						</li>
+
 						<li class="navitem" data-lift="Login.loggedIn" >
 							<!-- LOGGED IN -->
 							<p class="navbar-btn"><a href="/user-information"><span id="loggedIn-username">username</span></a><a href="#" class="btn btn-default logout">Log off</a></p>
@@ -143,7 +150,9 @@ Berlin 13359, Germany
 		</nav>
 		<div id="small-screen-navbar">
 			<button tabindex="0" id="small-nav-collapse" onclick="openNav()" aria-label ="Open Navigation" aria-hidden="false"></button>
-			<div id="small-nav-logo"><a href="/" aria-label="HomePage Logo"></a></div>
+			<div id="small-nav-logo" data-lift="WebUI.headerLogoLeft">
+				<a href="/" aria-label="HomePage Logo"><img src="" class="logo-responsive-design-mobile" alt ="Home Page Logo"></a>
+			</div>
 			<div id="small-nav-log-on-button" data-lift="Nav.item?name=Login"> 
 				<a data-lift="Login.loggedOut" href="#" class="btn btn-danger login">Log on</a>
 			</div>
@@ -151,7 +160,9 @@ Berlin 13359, Germany
 		<div id="obp-sidebar" class="sidebar">
 			<div id="small-screen-navbar">
 				<button tabindex="0" id="small-nav-cross" onclick="closeNav()" aria-hidden="true" aria-label ="Close Navigation"></button>
-				<div id="small-nav-logo"><a href="/" aria-label="HomePage Logo"></a></div>
+				<div id="small-nav-logo" data-lift="WebUI.headerLogoLeft">
+					<a href="/" aria-label="HomePage Logo"><img src="" class="logo-responsive-design-mobile" alt ="Home Page Logo"></a>
+				</div>
 				<div id="small-nav-log-on-button" data-lift="Nav.item?name=Login">
 					<a data-lift="Login.loggedOut" href="#" class="btn btn-danger login">Log on</a>
 				</div>
@@ -174,12 +185,13 @@ Berlin 13359, Germany
 				</li>
 				<li>
 					<div class="navitem" id="technical-faqs-anchor-nav">
-						<a class="navlink" id="technical-faqs-anchor" data-lift="WebUI.technicalFaqsAnchor" href="">Support</a>
+						<a class="navlink" id="technical-faqs-anchor" data-lift="WebUI.technicalFaqsAnchor" href="">
+							<lift:loc locid="support">Support</lift:loc></a>
 					</div>
 				</li>
 				<li>
 					<div class="navitem" id="register-link-nav">
-						<a href="/user_mgt/sign_up" class="navbar-btn" id ="register-link">Register</a>
+						<a data-lift="WebUI.userIsLoggedIn" href="/user_mgt/sign_up" class="navbar-btn" id ="register-link">Register</a>
 						<a data-lift="Login.loggedIn" href="#" class="logout">Log off</a></p>
 					</div>
 				</li>
@@ -195,34 +207,44 @@ Berlin 13359, Germany
 			<div id="footer-div">
 				<ul>
 					<li>
-						<a class="termsAndConditions-link" data-lift="WebUI.termsAndConditions" href="">Terms and
-							Conditions</a>
+						<a class="termsAndConditions-link" data-lift="WebUI.termsAndConditions" href="">
+							<lift:loc locid="terms_conditions">Terms and Conditions</lift:loc></a>
 					</li>
 					<li>
-						<a class="privacy-policy-link" data-lift="WebUI.privacyPolicyLink" href="https://openbankproject.com/privacy-policy">Privacy Policy</a>
+						<a class="privacy-policy-link" data-lift="WebUI.privacyPolicyLink" href="https://openbankproject.com/privacy-policy">
+							<lift:loc locid="privacy_policy">Privacy Policy</lift:loc></a>
 					</li>
 					<li>
-						<a href="http://twitter.com/#!/OpenBankProject">Twitter</a>
+						<a id="footer-div-social" href="http://twitter.com/#!/OpenBankProject" data-lift="WebUI.footerSocialLink">Twitter</a>
 					</li>
 					<li>
 						<a href="https://github.com/OpenBankProject/OBP-API/">Github</a>
 					</li>
 					<li>
-						<a class="api-documentation-link" data-lift="WebUI.apiDocumentationLink" href="">API
-							Documentation</a>
+						<a class="api-documentation-link" data-lift="WebUI.apiDocumentationLink" href="">
+							<lift:loc locid="api_documentation">API Documentation</lift:loc></a>
 					</li>
 					<li>
 						<a class="sofi-link" data-lift="WebUI.sofiLink" href="">Sofit</a>
 					</li>
 					<li>
-						<a href="/user_mgt/sign_up?after-signup=link-to-customer" class="navbar-btn" id ="register-link">On Board</a>
+						<a href="/user_mgt/sign_up?after-signup=link-to-customer" class="navbar-btn" id ="register-link">
+							<lift:loc locid="register">On Board</lift:loc></a>
 					</li>
 					<li>
-						<a class="api-link" data-lift="WebUI.apiLinkHuman" href="">This API Host</a>
+						<a class="api-link" data-lift="WebUI.apiLinkHuman" href="">
+							<lift:loc locid="api_host">This API Host</lift:loc></a>
 					</li>
 				</ul>
+				<br>
+				<div class="language-tag" data-lift="WebUI.currentPage">
+					<span><a href="#">Language</a></span>
+					<span><a id="en" href="/">EN</a></span>
+					<span id="locale_separator">|</span>
+					<span><a id="es" href="/">ES</a></span>
+				</div>
 				<div id="copyright">
-					<a href="http://openbankproject.com">Open Bank Project is &copy;2011 - <span id="copyright-year" data-lift="WebUI.currentYearText">2018</span> </a> <a href="http://tesobe.com">TESOBE and distributed under the AGPL and commercial licenses.</a> 
+					<a href="http://openbankproject.com"><lift:loc locid="open_bank_project_is">Open Bank Project is &copy;2011 - </lift:loc> <span id="copyright-year" data-lift="WebUI.currentYearText">2018</span> </a> <a href="http://tesobe.com"><lift:loc locid="and_commercial_licenses">TESOBE and distributed under the AGPL and commercial licenses. </lift:loc></a>
 				</div>
 			</div>
 		</footer>

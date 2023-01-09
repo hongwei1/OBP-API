@@ -2,7 +2,7 @@ package code.api.v4_0_0
 
 import com.openbankproject.commons.model.ErrorMessage
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
-import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJson
+import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJsonV300
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole
 import com.openbankproject.commons.util.ApiVersion
@@ -16,6 +16,8 @@ import com.openbankproject.commons.model.AmountOfMoneyJsonV121
 import net.liftweb.common.Box
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
+
+import java.util.concurrent.TimeUnit
 
 class AccountAccessTest extends V400ServerSetup {
   /**
@@ -35,13 +37,17 @@ class AccountAccessTest extends V400ServerSetup {
   lazy val bankAccount = randomPrivateAccountViaEndpoint(bankId)
   lazy val ownerView = randomOwnerViewPermalinkViaEndpoint(bankId, bankAccount)
   lazy val postAccountAccessJson = PostAccountAccessJsonV400(resourceUser2.userId, PostViewJsonV400("_test_view", false))
-  lazy val postBodyViewJson = createViewJson
+  lazy val postBodyViewJson = createViewJsonV300.toCreateViewJson
   
   def createAnAccount(bankId: String, user: Option[(Consumer,Token)]): CreateAccountResponseJsonV310 = {
     val addAccountJson = SwaggerDefinitionsJSON.createAccountRequestJsonV310.copy(user_id = resourceUser1.userId, balance = AmountOfMoneyJsonV121("EUR","0"))
     val request400 = (v4_0_0_Request / "banks" / bankId / "accounts" ).POST <@(user1)
     val response400 = makePostRequest(request400, write(addAccountJson))
     Then("We should get a 201")
+    //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+    //it is an asynchronous process, need some time to be done.
+    TimeUnit.SECONDS.sleep(3)
+    
     response400.code should equal(201)
     response400.body.extract[CreateAccountResponseJsonV310]
   }

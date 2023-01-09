@@ -1,20 +1,23 @@
 package code.api.ResourceDocs1_4_0
 
+import code.api.Constant.PARAM_LOCALE
+
 import java.util.UUID.randomUUID
 import code.api.OBPRestHelper
 import code.api.builder.OBP_APIBuilder
 import code.api.cache.Caching
+import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
+import code.api.dynamic.entity.helper.DynamicEntityHelper
 import code.api.util.APIUtil._
 import code.api.util.ApiRole.{canReadDynamicResourceDocsAtOneBank, canReadResourceDoc, canReadStaticResourceDoc}
 import code.api.util.ApiTag._
 import code.api.util.ExampleValue.endpointMappingRequestBodyExample
-import code.api.util.{APIUtil, _}
+import code.api.util._
 import code.api.v1_4_0.JSONFactory1_4_0.ResourceDocsJson
 import code.api.v1_4_0.{APIMethods140, JSONFactory1_4_0, OBPAPI1_4_0}
 import code.api.v2_2_0.{APIMethods220, OBPAPI2_2_0}
 import code.api.v3_0_0.OBPAPI3_0_0
 import code.api.v3_1_0.OBPAPI3_1_0
-import code.api.v4_0_0.dynamic.{DynamicEndpointHelper, DynamicEndpoints, DynamicEntityHelper}
 import code.api.v4_0_0.{APIMethods400, OBPAPI4_0_0}
 import code.apicollectionendpoint.MappedApiCollectionEndpointsProvider
 import code.util.Helper.MdcLoggable
@@ -33,8 +36,11 @@ import net.liftweb.json.JsonAST.{JField, JString, JValue}
 import net.liftweb.json._
 import net.liftweb.util.Helpers.tryo
 import net.liftweb.util.Props
+
 import java.util.concurrent.ConcurrentHashMap
 import code.api.util.NewStyle.HttpCode
+import code.api.v5_0_0.OBPAPI5_0_0
+import code.api.v5_1_0.OBPAPI5_1_0
 import code.util.Helper
 
 import scala.collection.immutable.{List, Nil}
@@ -117,6 +123,8 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
 
       val resourceDocs = requestedApiVersion match {
         case ApiVersion.`b1`     => OBP_APIBuilder.allResourceDocs
+        case ApiVersion.v5_1_0 => OBPAPI5_1_0.allResourceDocs
+        case ApiVersion.v5_0_0 => OBPAPI5_0_0.allResourceDocs
         case ApiVersion.v4_0_0 => OBPAPI4_0_0.allResourceDocs
         case ApiVersion.v3_1_0 => OBPAPI3_1_0.allResourceDocs
         case ApiVersion.v3_0_0 => OBPAPI3_0_0.allResourceDocs
@@ -134,6 +142,8 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
 
       val versionRoutes = requestedApiVersion match {
         case ApiVersion.`b1`     => OBP_APIBuilder.routes
+        case ApiVersion.v5_1_0 => OBPAPI5_1_0.routes
+        case ApiVersion.v5_0_0 => OBPAPI5_0_0.routes
         case ApiVersion.v4_0_0 => OBPAPI4_0_0.routes
         case ApiVersion.v3_1_0 => OBPAPI3_1_0.routes
         case ApiVersion.v3_0_0 => OBPAPI3_0_0.routes
@@ -165,7 +175,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       activePlusLocalResourceDocs ++= activeResourceDocs
       requestedApiVersion match
       {
-        // only `obp` standard show the `localResouceDocs`
+        // only `obp` standard show the `localResourceDocs`
         case version: ScannedApiVersion 
           if(version.apiStandard == obp.toString && version==ApiVersion.v4_0_0) =>  
             activePlusLocalResourceDocs ++= localResourceDocs.filterNot(_.partialFunctionName == nameOf(getResourceDocsObp))
@@ -225,7 +235,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
      * @param contentParam if this is Some(`true`), only show dynamic endpoints, if Some(`false`), only show static. If it is None,  we will show all.  default is None
      * @return
      */
-    private def getStaticResourceDocsObpCached(requestedApiVersion : ApiVersion,
+    private def getStaticResourceDocsObpCached(requestedApiVersionString : String,
                                          resourceDocTags: Option[List[ResourceDocTag]],
                                          partialFunctionNames: Option[List[String]],
                                          languageParam: Option[LanguageParam],
@@ -242,9 +252,10 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
       CacheKeyFromArguments.buildCacheKey {
         Caching.memoizeSyncWithProvider (Some(cacheKey.toString())) (getStaticResourceDocsTTL second) {
-          logger.debug(s"Generating OBP Resource Docs requestedApiVersion is $requestedApiVersion")
+          logger.debug(s"Generating OBP Resource Docs requestedApiVersion is $requestedApiVersionString")
+          val requestedApiVersion  = ApiVersionUtils.valueOf(requestedApiVersionString)
 
-          val resourceDocJson = resourceDocsToResourceDocJson(getResourceDocsList(requestedApiVersion), resourceDocTags, partialFunctionNames, isVersion4OrHigher)
+          val resourceDocJson = resourceDocsToResourceDocJson(getResourceDocsList(requestedApiVersion), resourceDocTags, partialFunctionNames, isVersion4OrHigher, languageParam)
           resourceDocJson.map(resourceDocsJsonToJsonResponse)
         }
       }
@@ -258,7 +269,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
      * @param contentParam if this is Some(`true`), only show dynamic endpoints, if Some(`false`), only show static. If it is None,  we will show all.  default is None
      * @return
      */
-    private def getAllResourceDocsObpCached(requestedApiVersion : ApiVersion,
+    private def getAllResourceDocsObpCached(requestedApiVersionString :  String,
       resourceDocTags: Option[List[ResourceDocTag]],
       partialFunctionNames: Option[List[String]],
       languageParam: Option[LanguageParam],
@@ -275,7 +286,10 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
       CacheKeyFromArguments.buildCacheKey {
         Caching.memoizeSyncWithProvider (Some(cacheKey.toString())) (getStaticResourceDocsTTL second) {
-          val dynamicDocs = (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs)
+          logger.debug(s"Generating OBP Resource Docs requestedApiVersion is $requestedApiVersionString")
+          val requestedApiVersion  = ApiVersionUtils.valueOf(requestedApiVersionString)
+          
+          val dynamicDocs = allDynamicResourceDocs
             .filter(rd => rd.implementedInApiVersion == requestedApiVersion)
             .map(it => it.specifiedUrl match {
               case Some(_) => it
@@ -305,13 +319,13 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
           
           val allDocs = staticDocs.map( _ ++ filteredDocs)
           
-          val resourceDocJson = resourceDocsToResourceDocJson(allDocs, resourceDocTags, partialFunctionNames, isVersion4OrHigher)
+          val resourceDocJson = resourceDocsToResourceDocJson(allDocs, resourceDocTags, partialFunctionNames, isVersion4OrHigher, languageParam)
           resourceDocJson.map(resourceDocsJsonToJsonResponse)
         }
       }
     }
     
-    private def getResourceDocsObpDynamicCached(requestedApiVersion : ApiVersion,
+    private def getResourceDocsObpDynamicCached(
                                          resourceDocTags: Option[List[ResourceDocTag]],
                                          partialFunctionNames: Option[List[String]],
                                          languageParam: Option[LanguageParam],
@@ -323,13 +337,12 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
       CacheKeyFromArguments.buildCacheKey {
         Caching.memoizeSyncWithProvider (Some(cacheKey.toString())) (getDynamicResourceDocsTTL second) {
-          val dynamicDocs = (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs)
+          val dynamicDocs = allDynamicResourceDocs
             .filter(rd => if (bankId.isDefined) rd.createdByBankId == bankId else true)
-            .filter(rd => rd.implementedInApiVersion == requestedApiVersion)
             .map(it => it.specifiedUrl match {
               case Some(_) => it
               case _ =>
-                it.specifiedUrl = Some(s"/${it.implementedInApiVersion.urlPrefix}/${requestedApiVersion.vDottedApiVersion}${it.requestUrl}")
+                it.specifiedUrl = if(it.partialFunctionName.startsWith("dynamicEntity"))Some(s"/${it.implementedInApiVersion.urlPrefix}/${ApiVersion.`dynamic-entity`}${it.requestUrl}") else Some(s"/${it.implementedInApiVersion.urlPrefix}/${ApiVersion.`dynamic-endpoint`}${it.requestUrl}")
                 it
             })
             .toList
@@ -350,25 +363,27 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
             case None => dynamicDocs
           }
     
-          val resourceDocJson = resourceDocsToResourceDocJson(Some(filteredDocs), resourceDocTags, partialFunctionNames, isVersion4OrHigher)
+          val resourceDocJson = resourceDocsToResourceDocJson(Some(filteredDocs), resourceDocTags, partialFunctionNames, isVersion4OrHigher, languageParam)
           resourceDocJson.map(resourceDocsJsonToJsonResponse)
     }}}
 
 
 
     private def resourceDocsToResourceDocJson(rd: Option[List[ResourceDoc]],
-                                     resourceDocTags: Option[List[ResourceDocTag]],
-                                     partialFunctionNames: Option[List[String]],
-                                     isVersion4OrHigher:Boolean): Option[ResourceDocsJson] =
+                                              resourceDocTags: Option[List[ResourceDocTag]],
+                                              partialFunctionNames: Option[List[String]],
+                                              isVersion4OrHigher:Boolean, 
+                                              languageParam: Option[LanguageParam]): Option[ResourceDocsJson] = {
       for {
         resourceDocs <- rd
       } yield {
         // Filter
         val rdFiltered = ResourceDocsAPIMethodsUtil.filterResourceDocs(resourceDocs, resourceDocTags, partialFunctionNames)
         // Format the data as json
-        JSONFactory1_4_0.createResourceDocsJson(rdFiltered, isVersion4OrHigher)
+        JSONFactory1_4_0.createResourceDocsJson(rdFiltered, isVersion4OrHigher, languageParam)
       }
-
+    }
+    
     private val getChineseVersionResourceDocs : Box[JsonResponse] = {
       val stream = getClass().getClassLoader().getResourceAsStream("ResourceDocs/ResourceDocs-Chinese.json")
       val chineseVersion = try {
@@ -399,9 +414,9 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       List(apiTagDocumentation))
 
 
-    val exampleResourceDocsJson = JSONFactory1_4_0.createResourceDocsJson(List(exampleResourceDoc), false)
+    val exampleResourceDocsJson = JSONFactory1_4_0.createResourceDocsJson(List(exampleResourceDoc), false, None)
     
-    val exampleResourceDocsJsonV400 = JSONFactory1_4_0.createResourceDocsJson(List(exampleResourceDoc), true)
+    val exampleResourceDocsJsonV400 = JSONFactory1_4_0.createResourceDocsJson(List(exampleResourceDoc), true, None)
 
 
 
@@ -575,19 +590,19 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
             case _ if (apiCollectionIdParam.isDefined) =>
               val operationIds = MappedApiCollectionEndpointsProvider.getApiCollectionEndpoints(apiCollectionIdParam.getOrElse("")).map(_.operationId).map(getObpFormatOperationId)
               val resourceDocs = ResourceDoc.getResourceDocs(operationIds)
-              val resourceDocsJson = JSONFactory1_4_0.createResourceDocsJson(resourceDocs, isVersion4OrHigher)
+              val resourceDocsJson = JSONFactory1_4_0.createResourceDocsJson(resourceDocs, isVersion4OrHigher, languageParam)
               val resourceDocsJsonJValue = Full(resourceDocsJsonToJsonResponse(resourceDocsJson))
               Future(resourceDocsJsonJValue.map(successJsonResponse(_)))
             case _ =>
               contentParam match {
                 case Some(DYNAMIC) =>
-                  val dynamicDocs: Box[JValue] = getResourceDocsObpDynamicCached(requestedApiVersion, tags, partialFunctions, languageParam, contentParam, cacheModifierParam, None, isVersion4OrHigher)
+                  val dynamicDocs: Box[JValue] = getResourceDocsObpDynamicCached(tags, partialFunctions, languageParam, contentParam, cacheModifierParam, None, isVersion4OrHigher)
                   Future(dynamicDocs.map(successJsonResponse(_)))
                 case Some(STATIC) =>
-                  val staticDocs: Box[JValue] = getStaticResourceDocsObpCached(requestedApiVersion, tags, partialFunctions, languageParam, contentParam, cacheModifierParam, isVersion4OrHigher)
+                  val staticDocs: Box[JValue] = getStaticResourceDocsObpCached(requestedApiVersionString, tags, partialFunctions, languageParam, contentParam, cacheModifierParam, isVersion4OrHigher)
                   Future(staticDocs.map(successJsonResponse(_)))
                 case _ =>
-                  val docs: Box[JValue] = getAllResourceDocsObpCached(requestedApiVersion, tags, partialFunctions, languageParam, contentParam, cacheModifierParam, isVersion4OrHigher)
+                  val docs: Box[JValue] = getAllResourceDocsObpCached(requestedApiVersionString, tags, partialFunctions, languageParam, contentParam, cacheModifierParam, isVersion4OrHigher)
                   Future(docs.map(successJsonResponse(_)))
               }
           }
@@ -632,7 +647,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
             }
             requestedApiVersion <- NewStyle.function.tryons(s"$InvalidApiVersionString $requestedApiVersionString", 400, callContext) {ApiVersionUtils.valueOf(requestedApiVersionString)}
             json <- NewStyle.function.tryons(s"$UnknownError Can not create dynamic resource docs.", 400, callContext) {
-              getResourceDocsObpDynamicCached(requestedApiVersion, tags, partialFunctions, languageParam, contentParam,  cacheModifierParam, Some(bankId), false).map(successJsonResponse(_)).get
+              getResourceDocsObpDynamicCached(tags, partialFunctions, languageParam, contentParam,  cacheModifierParam, Some(bankId), false).map(successJsonResponse(_)).get
             }
           } yield {
             (Full(json), HttpCode.`200`(callContext))
@@ -807,7 +822,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable with APIMethods220 with APIMeth
       resourceDocs match {
         case docs @Some(_) => resourceDocsToJValue(docs)
         case _ =>
-          val dynamicDocs = (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs).toList
+          val dynamicDocs = allDynamicResourceDocs
           resourceDocsToJValue(Some(dynamicDocs))
       }
     }
@@ -915,6 +930,7 @@ object ResourceDocsAPIMethodsUtil extends MdcLoggable{
   def stringToLanguageParam (x: String) : Option[LanguageParam] = x.toLowerCase match {
     case "en"  => Some(EN)
     case "zh"  => Some(ZH)
+    case "es" | "es_ES"  => Some(ES)
     case _ => Empty
   }
 
@@ -975,7 +991,7 @@ object ResourceDocsAPIMethodsUtil extends MdcLoggable{
 
     // So we can produce a reduced list of resource docs to prevent manual editing of swagger files.
     val languageParam = for {
-      x <- S.param("language")
+      x <- S.param("language").or(S.param(PARAM_LOCALE))
       y <- stringToLanguageParam(x)
     } yield y
     logger.info(s"languageParam is $languageParam")

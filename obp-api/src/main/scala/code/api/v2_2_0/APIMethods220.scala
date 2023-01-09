@@ -312,8 +312,8 @@ trait APIMethods220 {
             (Full(u), callContext) <- authenticatedAccess(cc)
             (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
             view <- NewStyle.function.checkViewAccessAndReturnView(viewId, BankIdAccountId(account.bankId, account.accountId), Some(u), callContext)
-            _ <- Helper.booleanToFuture(failMsg = s"${NoViewPermission}canAddCounterparty", cc=callContext) {
-              view.canAddCounterparty == true
+            _ <- Helper.booleanToFuture(failMsg = s"${NoViewPermission} can_get_counterparty", cc=callContext) {
+              view.canGetCounterparty == true
             }
             (counterparties, callContext) <- NewStyle.function.getCounterparties(bankId,accountId,viewId, callContext)
             //Here we need create the metadata for all the explicit counterparties. maybe show them in json response.
@@ -362,8 +362,8 @@ trait APIMethods220 {
             (Full(u), callContext) <- authenticatedAccess(cc)
             (account, callContext) <- NewStyle.function.checkBankAccountExists(bankId, accountId, callContext)
             view <- NewStyle.function.checkViewAccessAndReturnView(viewId, BankIdAccountId(account.bankId, account.accountId), Some(u), callContext)
-            _ <- Helper.booleanToFuture(failMsg = s"${NoViewPermission}canAddCounterparty", cc=callContext) {
-              view.canAddCounterparty == true
+            _ <- Helper.booleanToFuture(failMsg = s"${NoViewPermission}can_get_counterparty", cc=callContext) {
+              view.canGetCounterparty == true
             }
             counterpartyMetadata <- NewStyle.function.getMetadata(bankId, accountId, counterpartyId.value, callContext)
             (counterparty, callContext) <- NewStyle.function.getCounterpartyTrait(bankId, accountId, counterpartyId.value, callContext)
@@ -386,7 +386,7 @@ trait APIMethods220 {
         |
         | Note: API Explorer provides a Message Docs page where these messages are displayed.
         | 
-        | `CONNECTOR`:kafka_vMar2017 , kafka_vJune2017, kafka_vSept2018, stored_procedure_vDec2019 ...
+        | `CONNECTOR`: kafka_vSept2018, stored_procedure_vDec2019 ...
       """.stripMargin,
       emptyObjectJson,
       messageDocsJson,
@@ -398,9 +398,8 @@ trait APIMethods220 {
       case "message-docs" :: connector :: Nil JsonGet _ => {
         cc => {
           for {
-            //kafka_vJune2017 --> vJune2017 : get the valid version for search the connector object.
             connectorObject <- Future(tryo{Connector.getConnectorInstance(connector)}) map { i =>
-              val msg = "$InvalidConnector Current Input is $connector. It should be eg: kafka_vJune2017, kafka_vSept2018..."
+              val msg = "$InvalidConnector Current Input is $connector. It should be eg: kafka_vSept2018..."
               unboxFullOrFail(i, cc.callContext, msg)
             }
           } yield {
@@ -441,6 +440,8 @@ trait APIMethods220 {
             bank <- tryo{ json.extract[BankJSONV220] } ?~! ErrorMessages.InvalidJsonFormat
             _ <- Helper.booleanToBox(
               bank.id.length > 5,s"$InvalidJsonFormat Min length of BANK_ID should be 5 characters.")
+            _ <- Helper.booleanToBox(
+              !`checkIfContains::::` (bank.id), s"$InvalidJsonFormat BANK_ID can not contain `::::` characters")
             u <- cc.user ?~!ErrorMessages.UserNotLoggedIn
             consumer <- cc.consumer ?~! ErrorMessages.InvalidConsumerCredentials
             _ <- NewStyle.function.hasEntitlementAndScope("", u.userId, consumer.id.get.toString,  canCreateBank, cc.callContext)
@@ -812,8 +813,7 @@ trait APIMethods220 {
             //1 Create or Update the `Owner` for the new account
             //2 Add permission to the user
             //3 Set the user as the account holder
-            BankAccountCreation.setAsOwner(bankId, accountId, postedOrLoggedInUser)
-
+            BankAccountCreation.setAccountHolderAndRefreshUserAccountAccess(bankId, accountId, postedOrLoggedInUser, callContext)
             (JSONFactory220.createAccountJSON(userIdAccountOwner, bankAccount), HttpCode.`200`(callContext))
 
           }
@@ -909,9 +909,7 @@ trait APIMethods220 {
             (Full(u), callContext) <- authenticatedAccess(cc)
             _ <- NewStyle.function.hasEntitlement("", u.userId, ApiRole.canGetConnectorMetrics, callContext)
             httpParams <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
-            obpQueryParams <- createQueriesByHttpParamsFuture(httpParams) map {
-              x => unboxFullOrFail(x, callContext, InvalidFilterParameterFormat)
-            }
+            (obpQueryParams, callContext) <- createQueriesByHttpParamsFuture(httpParams, callContext)
             metrics <- Future(ConnectorMetricsProvider.metrics.vend.getAllConnectorMetrics(obpQueryParams))
           } yield {
             (JSONFactory220.createConnectorMetricsJson(metrics), HttpCode.`200`(callContext))

@@ -15,14 +15,10 @@ object TransactionRequests extends SimpleInjector {
     val payments, bulk_payments, periodic_payments = Value
   }
   
-  object TransactionChallengeTypes extends Enumeration {
-    type TransactionChallengeTypes = Value
-    val OTP_VIA_API, OTP_VIA_WEB_FORM = Value
-  }
-  
   object TransactionRequestTypes extends Enumeration {
     type TransactionRequestTypes = Value
-    val SANDBOX_TAN, ACCOUNT, ACCOUNT_OTP, COUNTERPARTY, SEPA, FREE_FORM, TRANSFER_TO_PHONE, TRANSFER_TO_ATM, TRANSFER_TO_ACCOUNT, TRANSFER_TO_REFERENCE_ACCOUNT,
+    val SANDBOX_TAN, ACCOUNT, ACCOUNT_OTP, COUNTERPARTY, SEPA, FREE_FORM, SIMPLE, CARD,
+    TRANSFER_TO_PHONE, TRANSFER_TO_ATM, TRANSFER_TO_ACCOUNT, TRANSFER_TO_REFERENCE_ACCOUNT, 
     //The following are BerlinGroup Standard 
     SEPA_CREDIT_TRANSFERS, INSTANT_SEPA_CREDIT_TRANSFERS, TARGET_2_PAYMENTS, CROSS_BORDER_CREDIT_TRANSFERS, REFUND = Value
   }

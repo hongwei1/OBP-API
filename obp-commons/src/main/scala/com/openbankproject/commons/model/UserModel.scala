@@ -69,6 +69,7 @@ trait User {
   def isConsentUser  = createdByConsentId.nonEmpty
   def isDeleted: Option[Boolean]
   def lastMarketingAgreementSignedDate: Option[Date]
+  def lastUsedLocale: Option[String] = None
 }
 
 case class UserPrimaryKey(val value : Long) {
@@ -82,6 +83,7 @@ trait UserAuthContextUpdate {
   def value : String
   def challenge: String
   def status: String
+  def consumerId: String
 }
 case class UserAuthContextUpdateCommons(
                                          userAuthContextUpdateId: String,
@@ -89,7 +91,8 @@ case class UserAuthContextUpdateCommons(
                                          key: String,
                                          value: String,
                                          challenge: String,
-                                         status: String
+                                         status: String, 
+                                         consumerId: String
                                        ) extends UserAuthContextUpdate
 
 object UserAuthContextUpdateStatus extends Enumeration {

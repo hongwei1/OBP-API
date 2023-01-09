@@ -38,7 +38,12 @@ import code.UserRefreshes.UserRefreshes
 import code.accountholders.AccountHolders
 import code.api.Constant._
 import code.api.OAuthHandshake._
+import code.api.UKOpenBanking.v2_0_0.OBP_UKOpenBanking_200
+import code.api.UKOpenBanking.v3_1_0.OBP_UKOpenBanking_310
+import code.api.berlin.group.v1.OBP_BERLIN_GROUP_1
 import code.api.builder.OBP_APIBuilder
+import code.api.dynamic.endpoint.OBPAPIDynamicEndpoint
+import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
 import code.api.oauth1a.Arithmetics
 import code.api.oauth1a.OauthParams._
 import code.api.util.APIUtil.ResourceDoc.{findPathVariableNames, isPathVariable}
@@ -48,7 +53,11 @@ import code.api.util.Glossary.GlossaryItem
 import code.api.util.RateLimitingJson.CallLimit
 import code.api.v1_2.ErrorMessage
 import code.api.v2_0_0.CreateEntitlementJSON
-import code.api.v4_0_0.dynamic.{DynamicEndpointHelper, DynamicEndpoints, DynamicEntityHelper}
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+import code.api.dynamic.entity.OBPAPIDynamicEntity
+import code.api._
+import code.api.dynamic.entity.helper.DynamicEntityHelper
+import code.api.v5_0_0.OBPAPI5_0_0
 import code.api.{DirectLogin, _}
 import code.authtypevalidation.AuthenticationTypeValidationProvider
 import code.bankconnectors.Connector
@@ -63,14 +72,14 @@ import code.scope.Scope
 import code.usercustomerlinks.UserCustomerLink
 import code.util.Helper.{MdcLoggable, SILENCE_IS_GOLDEN}
 import code.util.{Helper, JsonSchemaUtil}
-import code.views.Views
+import code.views.{MapperViews, Views}
 import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 import com.alibaba.ttl.internal.javassist.CannotCompileException
 import com.github.dwickern.macros.NameOf.{nameOf, nameOfType}
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
 import com.openbankproject.commons.model.enums.{PemCertificateRole, StrongCustomerAuthentication}
-import com.openbankproject.commons.model.{Customer, _}
+import com.openbankproject.commons.model.{Customer, UserAuthContext, _}
 import com.openbankproject.commons.util.Functions.Implicits._
 import com.openbankproject.commons.util.Functions.Memo
 import com.openbankproject.commons.util._
@@ -78,7 +87,7 @@ import dispatch.url
 import javassist.expr.{ExprEditor, MethodCall}
 import javassist.{ClassPool, LoaderClassPath}
 import net.liftweb.actor.LAFuture
-import net.liftweb.common.{Empty, _}
+import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.provider.HTTPParam
@@ -104,6 +113,9 @@ import javassist.expr.{ExprEditor, MethodCall}
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import java.security.AccessControlException
+import java.util.regex.Pattern
+
+import code.users.Users
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -115,23 +127,29 @@ import scala.xml.{Elem, XML}
 
 object APIUtil extends MdcLoggable with CustomJsonFormats{
 
+  val DateWithYear = "yyyy"
+  val DateWithMonth = "yyyy-MM"
   val DateWithDay = "yyyy-MM-dd"
   val DateWithDay2 = "yyyyMMdd"
   val DateWithDay3 = "dd/MM/yyyy"
   val DateWithMinutes = "yyyy-MM-dd'T'HH:mm'Z'"
   val DateWithSeconds = "yyyy-MM-dd'T'HH:mm:ss'Z'"
   val DateWithMs = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-  val DateWithMsRollback = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+  val DateWithMsRollback = "yyyy-MM-dd'T'HH:mm:ss.SSSZ" //?? what does this `Rollback` mean ??
 
+  val DateWithYearFormat = new SimpleDateFormat(DateWithYear)
+  val DateWithMonthFormat = new SimpleDateFormat(DateWithMonth)
   val DateWithDayFormat = new SimpleDateFormat(DateWithDay)
   val DateWithSecondsFormat = new SimpleDateFormat(DateWithSeconds)
   val DateWithMsFormat = new SimpleDateFormat(DateWithMs)
   val DateWithMsRollbackFormat = new SimpleDateFormat(DateWithMsRollback)
 
-  val DateWithDayExampleString: String = "2017-09-19"
-  val DateWithSecondsExampleString: String = "2017-09-19T02:31:05Z"
-  val DateWithMsExampleString: String = "2017-09-19T02:31:05.000Z"
-  val DateWithMsRollbackExampleString: String = "2017-09-19T02:31:05.000+0000"
+  val DateWithYearExampleString: String = "1100"
+  val DateWithMonthExampleString: String = "1100-01"
+  val DateWithDayExampleString: String = "1100-01-01"
+  val DateWithSecondsExampleString: String = "1100-01-01T01:01:01Z"
+  val DateWithMsExampleString: String = "1100-01-01T01:01:01.000Z"
+  val DateWithMsRollbackExampleString: String = "1100-01-01T01:01:01.000+0000"
 
   // Use a fixed date far into the future (rather than current date/time so that cache keys are more static)
   // (Else caching is invalidated by constantly changing date)
@@ -148,12 +166,13 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     oneYearAgo.getTime()
   }
   def DefaultToDate = new Date()
-  def DefaultFromDate = oneYearAgo(DefaultToDate)
+  def oneYearAgoDate = oneYearAgo(DefaultToDate)
+  val theEpochTime: Date = new Date(0) // Set epoch time. The Unix epoch is 00:00:00 UTC on 1 January 1970.
 
   def formatDate(date : Date) : String = {
     CustomJsonFormats.losslessFormats.dateFormat.format(date)
   }
-  def DefaultFromDateString = formatDate(DefaultFromDate)
+  def epochTimeString = formatDate(theEpochTime)
   def DefaultToDateString = formatDate(DefaultToDate)
 
   implicit def errorToJson(error: ErrorMessage): JValue = Extraction.decompose(error)
@@ -435,6 +454,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     CustomResponseHeaders(
       getGatewayLoginHeader(cc).list ::: 
         getRateLimitHeadersNewStyle(cc).list ::: 
+        getPaginationHeadersNewStyle(cc).list ::: 
         getRequestHeadersToMirror(cc).list
     )
   }
@@ -444,13 +464,23 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       case (Some(x), true) =>
         CustomResponseHeaders(
           List(
-            ("X-Rate-Limit-Reset", x.`X-Rate-Limit-Reset`.toString),
-            ("X-Rate-Limit-Remaining", x.`X-Rate-Limit-Remaining`.toString),
-            ("X-Rate-Limit-Limit", x.`X-Rate-Limit-Limit`.toString)
+            ("X-Rate-Limit-Reset", x.xRateLimitReset.toString),
+            ("X-Rate-Limit-Remaining", x.xRateLimitRemaining.toString),
+            ("X-Rate-Limit-Limit", x.xRateLimitLimit.toString)
           )
         )
       case _ =>
         CustomResponseHeaders((Nil))
+    }
+  }
+  private def getPaginationHeadersNewStyle(cc: Option[CallContextLight]) = {
+    cc match {
+      case Some(x) if x.paginationLimit.isDefined && x.paginationOffset.isDefined =>
+        CustomResponseHeaders(
+          List(("Range", s"items=${x.paginationOffset.getOrElse("")}-${x.paginationLimit.getOrElse("")}"))
+        )
+      case _ =>
+        CustomResponseHeaders(Nil)
     }
   }
   private def getSignRequestHeadersNewStyle(cc: Option[CallContext], httpBody: Box[String]): CustomResponseHeaders = {
@@ -542,7 +572,6 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   def getHeadersCommonPart() = headers ::: List((ResponseHeader.`Correlation-Id`, getCorrelationId()))
 
   def getHeaders() = getHeadersCommonPart() ::: getGatewayResponseHeader()
-
   case class CustomResponseHeaders(list: List[(String, String)])
   //This is used for get the value from props `email_domain_to_space_mappings`
   case class EmailDomainToSpaceMapping(
@@ -571,25 +600,37 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     JsonResponse(jsonAst, getHeaders() ::: headers.list, Nil, httpCode)
   }
 
+  // exclude all values that defined in props "excluded.response.field.values"
+  val excludedFieldValues = APIUtil.getPropsValue("excluded.response.field.values").map[JArray](it => json.parse(it).asInstanceOf[JArray])
+
   def successJsonResponseNewStyle(cc: Any, callContext: Option[CallContext], httpCode : Int = 200)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
     val jsonAst: JValue = ApiSession.processJson((Extraction.decompose(cc)), callContext)
+    val excludeOptionalFieldsParam = getHttpRequestUrlParam(callContext.map(_.url).getOrElse(""),"exclude-optional-fields")
+    val excludedResponseBehaviour = APIUtil.getPropsAsBoolValue("excluded.response.behaviour", false)
+    //excludeOptionalFieldsParamValue has top priority, then the excludedResponseBehaviour props.
+    val jsonValue = excludedFieldValues match {
+      case Full(JArray(arr:List[JValue])) if (excludeOptionalFieldsParam.equalsIgnoreCase("true") || (excludeOptionalFieldsParam.equalsIgnoreCase("") && excludedResponseBehaviour))=>
+        JsonUtils.deleteFieldRec(jsonAst)(v => arr.contains(v.value))
+      case _ => jsonAst
+    }
+
     callContext match {
       case Some(c) if c.httpCode.isDefined && c.httpCode.get == 204 =>
         val httpBody = None
         val jwsHeaders: CustomResponseHeaders = getSignRequestHeadersNewStyle(callContext,httpBody)
         JsonResponse(JsRaw(""), getHeaders() ::: headers.list ::: jwsHeaders.list, Nil, 204)
       case Some(c) if c.httpCode.isDefined =>
-        val httpBody = Full(JsonAST.compactRender(jsonAst))
+        val httpBody = Full(JsonAST.compactRender(jsonValue))
         val jwsHeaders: CustomResponseHeaders = getSignRequestHeadersNewStyle(callContext,httpBody)
-        JsonResponse(jsonAst, getHeaders() ::: headers.list ::: jwsHeaders.list, Nil, c.httpCode.get)
+        JsonResponse(jsonValue, getHeaders() ::: headers.list ::: jwsHeaders.list, Nil, c.httpCode.get)
       case Some(c) if c.verb.toUpperCase() == "DELETE" =>
         val httpBody = None
         val jwsHeaders: CustomResponseHeaders = getSignRequestHeadersNewStyle(callContext,httpBody)
         JsonResponse(JsRaw(""), getHeaders() ::: headers.list ::: jwsHeaders.list, Nil, 204)
       case _ =>
-        val httpBody = Full(JsonAST.compactRender(jsonAst))
+        val httpBody = Full(JsonAST.compactRender(jsonValue))
         val jwsHeaders: CustomResponseHeaders = getSignRequestHeadersNewStyle(callContext,httpBody)
-        JsonResponse(jsonAst, getHeaders() ::: headers.list ::: jwsHeaders.list, Nil, httpCode)
+        JsonResponse(jsonValue, getHeaders() ::: headers.list ::: jwsHeaders.list, Nil, httpCode)
     }
   }
 
@@ -601,14 +642,14 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
 
   def errorJsonResponse(message : String = "error", httpCode : Int = 400, callContextLight: Option[CallContextLight] = None)(implicit headers: CustomResponseHeaders = CustomResponseHeaders(Nil)) : JsonResponse = {
     def check403(message: String): Boolean = {
-      message.contains(UserHasMissingRoles) ||
-        message.contains(UserNoPermissionAccessView) ||
-        message.contains(UserHasMissingRoles) ||
-        message.contains(UserNotSuperAdminOrMissRole) ||
-        message.contains(ConsumerHasMissingRoles)
+      message.contains(extractErrorMessageCode(UserHasMissingRoles)) ||
+        message.contains(extractErrorMessageCode(UserNoPermissionAccessView)) ||
+        message.contains(extractErrorMessageCode(UserHasMissingRoles)) ||
+        message.contains(extractErrorMessageCode(UserNotSuperAdminOrMissRole)) ||
+        message.contains(extractErrorMessageCode(ConsumerHasMissingRoles))
     }
     def check401(message: String): Boolean = {
-      message.contains(UserNotLoggedIn)
+      message.contains(extractErrorMessageCode(UserNotLoggedIn))
     }
     val (code, responseHeaders) =
       message match {
@@ -667,7 +708,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
    * 1) length is >16 characters without validations but max length <= 512
    * 2) or Min 10 characters with mixed numbers + letters + upper+lower case + at least one special character.
    * */
-  def validatePasswordOnCreation(password: String): Boolean = {
+  def fullPasswordValidation(password: String): Boolean = {
     /**
      * (?=.*\d)                    //should contain at least one digit
      * (?=.*[a-z])                 //should contain at least one lower case
@@ -678,9 +719,8 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     val regex =
       """^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'\(\)*+,-./:;<=>?@\\[\\\\]^_\\`{|}~])([A-Za-z0-9!"#$%&'\(\)*+,-./:;<=>?@\\[\\\\]^_\\`{|}~]{10,16})$""".r
     password match {
-      case password if(validatePasswordOnUsage(password) ==SILENCE_IS_GOLDEN) => true
-      case password if(password.length > 16 && password.length <= 512) => true
-      case regex(password) => true
+      case password if(password.length > 16 && password.length <= 512 && basicPasswordValidation(password) ==SILENCE_IS_GOLDEN) => true
+      case regex(password) if(basicPasswordValidation(password) ==SILENCE_IS_GOLDEN) => true
       case _ => false
     }
   }
@@ -703,19 +743,19 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   }
 
   /** only  A-Z, a-z, 0-9 and max length <= 512  */
-  def checkMediumAlphaNumeric(value:String): String ={
+  def basicConsumerKeyValidation(value:String): String ={
     val valueLength = value.length
     val regex = """^([A-Za-z0-9]+)$""".r
     value match {
       case regex(e) if(valueLength <= 512) => SILENCE_IS_GOLDEN
-      case regex(e) if(valueLength > 512) => ErrorMessages.InvalidValueLength
-      case _ => ErrorMessages.InvalidValueCharacters
+      case regex(e) if(valueLength > 512) => ErrorMessages.ConsumerKeyIsToLong
+      case _ => ErrorMessages.ConsumerKeyIsInvalid
     }
   }
 
   /** only  A-Z, a-z, 0-9, all allowed characters for password and max length <= 512  */
   /** also support space now  */
-  def validatePasswordOnUsage(value:String): String ={
+  def basicPasswordValidation(value:String): String ={
     val valueLength = value.length
     val regex = """^([A-Za-z0-9!"#$%&'\(\)*+,-./:;<=>?@\\[\\\\]^_\\`{|}~ ]+)$""".r
     value match {
@@ -770,6 +810,12 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   
   def stringOrNull(text : String) =
     if(text == null || text.isEmpty)
+      null
+    else
+      text
+  
+  def nullToString(text : String) =
+    if(text == null)
       null
     else
       text
@@ -846,9 +892,8 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       case (_, Full(right)) =>
         parseObpStandardDate(right.head)
       case _ =>
-        Full(DefaultFromDate)
+        Full(theEpochTime) // Set epoch time. The Unix epoch is 00:00:00 UTC on 1 January 1970.
     }
-
     date.map(OBPFromDate(_))
   }
 
@@ -867,7 +912,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   }
 
   def getOffset(httpParams: List[HTTPParam]): Box[OBPOffset] = {
-    (getPaginationParam(httpParams, "offset", None, 0, FilterOffersetError), getPaginationParam(httpParams, "obp_offset", Some(0), 0, FilterOffersetError)) match {
+    (getPaginationParam(httpParams, "offset", None, 0, FilterOffersetError), getPaginationParam(httpParams, "obp_offset", Some(Constant.Pagination.offset), 0, FilterOffersetError)) match {
       case (Full(left), _) =>
         Full(OBPOffset(left))
       case (Failure(m, e, c), _) =>
@@ -876,12 +921,12 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
         Full(OBPOffset(right))
       case (_, Failure(m, e, c)) =>
         Failure(m, e, c)
-      case _ => Full(OBPOffset(0))
+      case _ => Full(OBPOffset(Constant.Pagination.offset))
     }
   }
 
   def getLimit(httpParams: List[HTTPParam]): Box[OBPLimit] = {
-    (getPaginationParam(httpParams, "limit", None, 1, FilterLimitError), getPaginationParam(httpParams, "obp_limit", Some(50), 1, FilterLimitError)) match {
+    (getPaginationParam(httpParams, "limit", None, 1, FilterLimitError), getPaginationParam(httpParams, "obp_limit", Some(Constant.Pagination.limit), 1, FilterLimitError)) match {
       case (Full(left), _) =>
         Full(OBPLimit(left))
       case (Failure(m, e, c), _) =>
@@ -890,7 +935,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
         Full(OBPLimit(right))
       case (_, Failure(m, e, c)) =>
         Failure(m, e, c)
-      case _ => Full(OBPLimit(50))
+      case _ => Full(OBPLimit(Constant.Pagination.limit))
     }
   }
 
@@ -1018,8 +1063,16 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     }
   }
 
-  def createQueriesByHttpParamsFuture(httpParams: List[HTTPParam]) = Future {
-    createQueriesByHttpParams(httpParams: List[HTTPParam])
+  def createQueriesByHttpParamsFuture(httpParams: List[HTTPParam], callContext: Option[CallContext]): OBPReturnType[List[OBPQueryParam]] = {
+    Future(createQueriesByHttpParams(httpParams: List[HTTPParam])) map { i =>
+      (i, callContext) 
+    } map { x => 
+      fullBoxOrException(x._1 ~> APIFailureNewStyle(InvalidFilterParameterFormat, 400, callContext.map(_.toLight)))
+    } map { unboxFull(_) } map { i => 
+      val limit: Option[String] = i.collectFirst { case OBPLimit(value) => value.toString }
+      val offset: Option[String] = i.collectFirst { case OBPOffset(value) => value.toString }
+      (i, callContext.map(_.copy(paginationOffset = offset, paginationLimit = limit))) 
+    }
   }
 
   /**
@@ -1900,7 +1953,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     val dateParameter = if(containsDate){
       s"""
          |
-         |* from_date=DATE => example value: $DefaultFromDateString. NOTE! The default value is one year ago ($DefaultFromDateString).
+         |* from_date=DATE => example value: $epochTimeString. NOTE! The default value is one year ago ($epochTimeString).
          |* to_date=DATE => example value: $DefaultToDateString. NOTE! The default value is now ($DefaultToDateString).
          |
          |Date format parameter: $DateWithMs($DateWithMsExampleString) ==> time zone is UTC.
@@ -2143,7 +2196,9 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     } 
     // Consumer OR User has the Role
     else if(getPropsAsBoolValue("allow_entitlements_or_scopes", false)) {
-      roles.isEmpty || roles.exists(hasEntitlement(bankId, userId, _)) || roles.exists(hasScope(bankId, consumerId, _))
+      roles.isEmpty || 
+        roles.exists(hasEntitlement(bankId, userId, _)) || 
+        roles.exists(role => hasScope(if (role.requiresBankId) bankId else "", consumerId, role))
     }
     // User has the Role
     else {
@@ -2433,6 +2488,10 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
         case ApiVersion.v3_0_0 => LiftRules.statelessDispatch.append(v3_0_0.OBPAPI3_0_0)
         case ApiVersion.v3_1_0 => LiftRules.statelessDispatch.append(v3_1_0.OBPAPI3_1_0)
         case ApiVersion.v4_0_0 => LiftRules.statelessDispatch.append(v4_0_0.OBPAPI4_0_0)
+        case ApiVersion.v5_0_0 => LiftRules.statelessDispatch.append(v5_0_0.OBPAPI5_0_0)
+        case ApiVersion.v5_1_0 => LiftRules.statelessDispatch.append(v5_1_0.OBPAPI5_1_0)
+        case ApiVersion.`dynamic-endpoint` => LiftRules.statelessDispatch.append(OBPAPIDynamicEndpoint)
+        case ApiVersion.`dynamic-entity` => LiftRules.statelessDispatch.append(OBPAPIDynamicEntity)
         case ApiVersion.`b1` => LiftRules.statelessDispatch.append(OBP_APIBuilder)
         case version: ScannedApiVersion => LiftRules.statelessDispatch.append(ScannedApis.versionMapScannedApis(version))
         case _ => logger.info(s"There is no ${version.toString}")
@@ -2702,7 +2761,18 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       if (APIUtil.`hasConsent-ID`(reqHeaders)) { // Berlin Group's Consent
         Consent.applyBerlinGroupRules(APIUtil.`getConsent-ID`(reqHeaders), cc)
       } else if (APIUtil.hasConsentJWT(reqHeaders)) { // Open Bank Project's Consent
-        Consent.applyRules(APIUtil.getConsentJWT(reqHeaders), cc)
+        val consentValue = APIUtil.getConsentJWT(reqHeaders)
+        Consent.getConsentJwtValueByConsentId(consentValue.getOrElse("")) match {
+          case Some(jwt) => // JWT value obtained via "Consent-Id" request header
+            Consent.applyRules(Some(jwt), cc)
+          case _ => 
+            JwtUtil.checkIfStringIsJWTValue(consentValue.getOrElse("")).isDefined match {
+              case true => // It's JWT obtained via "Consent-JWT" request header
+                Consent.applyRules(APIUtil.getConsentJWT(reqHeaders), cc)
+              case false => // Unrecognised consent value
+                Future { (Failure(ErrorMessages.ConsentHeaderValueInvalid), None) }
+            }
+        }
       } else if (hasAnOAuthHeader(cc.authReqHeaderField)) { // OAuth 1
         getUserFromOAuthHeaderFuture(cc)
       } else if (hasAnOAuth2Header(cc.authReqHeaderField)) { // OAuth 2
@@ -2891,7 +2961,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
    */
   def refreshUserIfRequired(user: Box[User], callContext: Option[CallContext]) = {
     if(user.isDefined && UserRefreshes.UserRefreshes.vend.needToRefreshUser(user.head.userId))
-      user.map(AuthUser.updateUserAccountViewsFuture(_, callContext))
+      user.map(AuthUser.refreshUser(_, callContext))
     else
       None
   }
@@ -2914,7 +2984,8 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
 
         // make sure, if `refreshUserIfRequired` throw exception, do not break the `authenticatedAccess`, 
         // TODO better move `refreshUserIfRequired` to other place.
-        tryo{refreshUserIfRequired(x._1,x._2)}.openOr(logger.error(s"${x._1} authenticatedAccess.refreshUserIfRequired throw exception! "))
+        // 2022-02-18 from now, we will put this method after user create UserAuthContext successfully.
+//        tryo{refreshUserIfRequired(x._1,x._2)}.openOr(logger.error(s"${x._1} authenticatedAccess.refreshUserIfRequired throw exception! "))
         x
     }
   }
@@ -3022,8 +3093,10 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
         throw new Exception("Empty Box not allowed")
       case obj1@ParamFailure(m,e,c,af: APIFailureNewStyle) =>
         val obj = (m,e, c) match {
-          case ("", Empty, Empty) => Empty ?~! af.failMsg
-          case _ => Failure (m, e, c) ?~! af.failMsg
+          case ("", Empty, Empty) => 
+            Empty ?~! af.translatedErrorMessage
+          case _ => 
+            Failure (m, e, c) ?~! af.translatedErrorMessage
         }
         val failuresMsg = filterMessage(obj)
         val callContext = af.ccl.map(_.copy(httpCode = Some(af.failCode)))
@@ -3309,25 +3382,25 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
    * to the account specified by parameter bankIdAccountId over the view specified by parameter viewId
    * Note: The public views means you can use anonymous access which implies that the user is an optional value
    */
-  final def checkViewAccessAndReturnView(viewId : ViewId, bankIdAccountId: BankIdAccountId, user: Option[User]): Box[View] = {
-    val customView = Views.views.vend.customView(viewId, bankIdAccountId)
+  final def checkViewAccessAndReturnView(viewId : ViewId, bankIdAccountId: BankIdAccountId, user: Option[User], consumerId: Option[String] = None): Box[View] = {
+    val customView = MapperViews.customView(viewId, bankIdAccountId)
     customView match { // CHECK CUSTOM VIEWS
       // 1st: View is Pubic and Public views are NOT allowed on this instance.
       case Full(v) if(v.isPublic && !allowPublicViews) => Failure(PublicViewsNotAllowedOnThisInstance)
       // 2nd: View is Pubic and Public views are allowed on this instance.
       case Full(v) if(isPublicView(v)) => customView
       // 3rd: The user has account access to this custom view
-      case Full(v) if(user.isDefined && user.get.hasAccountAccess(v, bankIdAccountId)) => customView
+      case Full(v) if(user.isDefined && user.get.hasAccountAccess(v, bankIdAccountId, consumerId)) => customView
       // The user has NO account access via custom view
       case _ =>
-        val systemView = Views.views.vend.systemView(viewId)
+        val systemView = MapperViews.systemView(viewId)
         systemView match  { // CHECK SYSTEM VIEWS
           // 1st: View is Pubic and Public views are NOT allowed on this instance.
           case Full(v) if(v.isPublic && !allowPublicViews) => Failure(PublicViewsNotAllowedOnThisInstance)
           // 2nd: View is Pubic and Public views are allowed on this instance.
           case Full(v) if(isPublicView(v)) => systemView
           // 3rd: The user has account access to this system view
-          case Full(v) if (user.isDefined && user.get.hasAccountAccess(v, bankIdAccountId)) => systemView
+          case Full(v) if (user.isDefined && user.get.hasAccountAccess(v, bankIdAccountId, consumerId)) => systemView
           // 4th: The user has firehose access to this system view
           case Full(v) if (user.isDefined && hasAccountFirehoseAccess(v, user.get)) => systemView
           // 5th: The user has firehose access at a bank to this system view
@@ -3342,7 +3415,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   def isOwnerView(viewId: ViewId): Boolean = {
     viewId.value == SYSTEM_OWNER_VIEW_ID ||
       viewId.value == "_" + SYSTEM_OWNER_VIEW_ID || // New views named like this are forbidden from this commit
-      viewId.value == CUSTOM_OWNER_VIEW_ID // New views named like this are forbidden from this commit
+      viewId.value == SYSTEM_OWNER_VIEW_ID // New views named like this are forbidden from this commit
   }
 
   /**
@@ -3415,6 +3488,20 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
    * @return UUID as a String value
    */
   def generateUUID(): String = UUID.randomUUID().toString
+
+  /**
+   * This function validates UUID (Universally Unique Identifier) strings 
+   * @param value a string we're trying to validate
+   * @return false in case the string doesn't represent a UUID, true in case the string represents a UUID
+   *         
+   *A Version 1 UUID is a universally unique identifier that is generated using 
+   * a timestamp and the MAC address of the computer on which it was generated.
+   */
+  def checkIfStringIsUUIDVersion1(value: String): Boolean = {
+    Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+      .matcher(value).matches()
+  }
+  
 
   def mockedDataText(isMockedData: Boolean) =
     if (isMockedData)
@@ -3639,6 +3726,20 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     }
   }
 
+  /**
+   * This function finds accounts of a Customer
+   * @param customerId The CUSTOMER_ID
+   * @return The list of Accounts
+   */
+  def getAccountsByCustomer(customerId: CustomerId): List[BankIdAccountId] = {
+    for {
+      userCustomerLink <- UserCustomerLink.userCustomerLink.vend.getUserCustomerLinksByCustomerId(customerId.value)
+      user <- Users.users.vend.getUserByUserId(userCustomerLink.userId).toList
+      availablePrivateAccounts <- Views.views.vend.getPrivateBankAccounts(user)
+    } yield {
+      availablePrivateAccounts
+    }
+  }
   /**
    * This function finds a phone number of an Customer in accordance to next rule:
    * - account -> holders -> User -> User Customer Links -> Customer.phone_number
@@ -4183,4 +4284,72 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       |* You can define a collection (also known as baskets or buckets) of products using Product Collections.
       |
       """.stripMargin
+
+  val transactionRequestChallengeTtl = APIUtil.getPropsAsLongValue("transactionRequest.challenge.ttl.seconds", 600)
+  val userAuthContextUpdateRequestChallengeTtl = APIUtil.getPropsAsLongValue("userAuthContextUpdateRequest.challenge.ttl.seconds", 600)
+  
+  val obpErrorMessageCodeRegex = "^(OBP-\\d+)"
+  
+  //eg: UserHasMissingRoles = "OBP-20006: User is missing one or more roles:" -->
+  //  errorCode = "OBP-20006:"
+  // So far we support the i180n, we need to separate the errorCode and errorBody 
+  def extractErrorMessageCode (errorMessage: String) = {
+    val regex = obpErrorMessageCodeRegex.r
+    regex.findFirstIn(errorMessage).mkString
+  }
+  //eg: UserHasMissingRoles = "OBP-20006: User is missing one or more roles:" -->
+  //  errorBody = " User is missing one or more roles:"
+  // So far we support the i180n, we need to separate the errorCode and errorBody 
+  def extractErrorMessageBody(errorMessage: String) = {
+    
+    errorMessage.replaceFirst(obpErrorMessageCodeRegex,"")
+  }
+  
+  val allowedAnswerTransactionRequestChallengeAttempts = APIUtil.getPropsAsIntValue("answer_transactionRequest_challenge_allowed_attempts").openOr(3)
+  
+  lazy val allStaticResourceDocs = (OBPAPI5_0_0.allResourceDocs
+    ++ OBP_UKOpenBanking_200.allResourceDocs
+    ++ OBP_UKOpenBanking_310.allResourceDocs
+    ++ code.api.Polish.v2_1_1_1.OBP_PAPI_2_1_1_1.allResourceDocs
+    ++ code.api.STET.v1_4.OBP_STET_1_4.allResourceDocs
+    ++ OBP_BERLIN_GROUP_1.allResourceDocs
+    ++ code.api.AUOpenBanking.v1_0_0.ApiCollector.allResourceDocs
+    ++ code.api.MxOF.CNBV9_1_0_0.allResourceDocs
+    ++ code.api.berlin.group.v1_3.OBP_BERLIN_GROUP_1_3.allResourceDocs
+    ++ code.api.MxOF.OBP_MXOF_1_0_0.allResourceDocs
+    ++ code.api.BahrainOBF.v1_0_0.ApiCollector.allResourceDocs).toList
+  
+  def allDynamicResourceDocs= (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs).toList
+  
+  def getAllResourceDocs = allStaticResourceDocs ++ allDynamicResourceDocs
+
+  /**
+   * @param userAuthContexts
+   * {
+      "key": "BANK_ID::::CUSTOMER_NUMBER",
+      "value": "gh.29.uk::::1907911253"
+      }
+  
+      {
+        "key": "BANK_ID::::CUSTOMER_NUMBER",
+        "value": "gh.28.uk::::1907911252"
+      }
+   * @return
+   * 
+   * ==> Set(("gh.29.uk","1907911253"),("gh.28.uk","1907911252"))
+   */
+  def getBankIdAccountIdPairsFromUserAuthContexts(userAuthContexts: List[UserAuthContext]): Set[(String, String)] = userAuthContexts
+    .filter(_.key.trim.equalsIgnoreCase("BANK_ID::::CUSTOMER_NUMBER"))
+    .map(_.value)
+    .map(_.split("::::"))
+    .filter(_.length == 2)
+    .map(a =>(a.apply(0),a.apply(1))).toSet
+
+  /**
+   * We support the `::::` as the delimiter in UserAuthContext, so we need a guard for it.
+   * @param value
+   * @return
+   */
+  def `checkIfContains::::` (value: String) = value.contains("::::")
+    
 }

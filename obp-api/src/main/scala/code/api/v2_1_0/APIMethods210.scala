@@ -1,7 +1,6 @@
 package code.api.v2_1_0
 
 import java.util.Date
-
 import code.TransactionTypes.TransactionType
 import code.api.util
 import code.api.util.ApiTag._
@@ -23,12 +22,13 @@ import code.fx.fx
 import code.metrics.APIMetrics
 import code.model.{BankAccountX, BankX, Consumer, UserX, toUserExtended}
 import code.sandbox.SandboxData
-import code.transactionrequests.TransactionRequests.{TransactionChallengeTypes, TransactionRequestTypes}
+import code.transactionrequests.TransactionRequests.TransactionRequestTypes
 import code.usercustomerlinks.UserCustomerLink
 import code.users.Users
 import code.util.Helper.booleanToBox
 import code.views.Views
 import com.openbankproject.commons.model._
+import com.openbankproject.commons.model.enums.ChallengeType
 import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.json.Extraction
 import net.liftweb.util.Helpers.tryo
@@ -637,14 +637,9 @@ trait APIMethods210 {
                 existingTransactionRequest.challenge.id.equals(challengeAnswerJson.id)
               }
               
-              //Check the allowed attemps, Note: not support yet, the default value is 3
-              _ <- Helper.booleanToFuture(s"${AllowedAttemptsUsedUp}", cc=callContext) {
-                existingTransactionRequest.challenge.allowed_attempts > 0
-              }
-
               //Check the challenge type, Note: not support yet, the default value is SANDBOX_TAN
               _ <- Helper.booleanToFuture(s"${InvalidChallengeType} ", cc=callContext) {
-                existingTransactionRequest.challenge.challenge_type == TransactionChallengeTypes.OTP_VIA_API.toString
+                existingTransactionRequest.challenge.challenge_type == ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString
               }
             
               (isChallengeAnswerValidated, callContext) <- NewStyle.function.validateChallengeAnswer(challengeAnswerJson.id, challengeAnswerJson.answer, callContext)
@@ -1006,6 +1001,8 @@ trait APIMethods210 {
               collected= Option(CardCollectionInfo(postJson.collected)),
               posted= Option(CardPostedInfo(postJson.posted)),
               customerId = "",// this field is introduced from V310
+              cvv = "",// this field is introduced from V500
+              brand = "",// this field is introduced from V500
               callContext
             )
             
@@ -1355,6 +1352,8 @@ trait APIMethods210 {
             _ <- tryo(assert(isValidID(bankId.value)))?~! InvalidBankIdFormat
             (bank, callContext ) <- BankX(bankId, Some(cc)) ?~! {BankNotFound}
             postedData <- tryo{json.extract[PostCustomerJsonV210]} ?~! InvalidJsonFormat
+            _ <- Helper.booleanToBox(
+              !`checkIfContains::::` (postedData.customer_number), s"$InvalidJsonFormat customer_number can not contain `::::` characters")
             _ <- NewStyle.function.hasAllEntitlements(bankId.value, u.userId, createCustomerEntitlementsRequiredForSpecificBank, createCustomerEntitlementsRequiredForAnyBank, callContext)
             _ <- tryo(assert(CustomerX.customerProvider.vend.checkCustomerNumberAvailable(bankId, postedData.customer_number) == true)) ?~! CustomerNumberAlreadyExists
             user_id <- tryo (if (postedData.user_id.nonEmpty) postedData.user_id else u.userId) ?~! s"Problem getting user_id"
@@ -1676,9 +1675,7 @@ trait APIMethods210 {
             (Full(u), callContext) <- authenticatedAccess(cc)
             _ <- NewStyle.function.hasEntitlement("", u.userId, ApiRole.canReadMetrics, callContext)
             httpParams <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
-            obpQueryParams <- createQueriesByHttpParamsFuture(httpParams) map {
-              x => unboxFullOrFail(x, callContext, InvalidFilterParameterFormat)
-            }
+            (obpQueryParams, callContext) <- createQueriesByHttpParamsFuture(httpParams, callContext)
             metrics <- Future(APIMetrics.apiMetrics.vend.getAllMetrics(obpQueryParams)) 
           } yield {
             (JSONFactory210.createMetricsJson(metrics), HttpCode.`200`(callContext))

@@ -1,14 +1,18 @@
 package code.transactionChallenge
 
-import code.api.util.ErrorMessages
+import code.api.util.APIUtil.transactionRequestChallengeTtl
+import code.api.util.{APIUtil, ErrorMessages}
 import com.openbankproject.commons.model.{ChallengeTrait, ErrorMessage}
 import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
 import com.openbankproject.commons.model.enums.StrongCustomerAuthenticationStatus
 import com.openbankproject.commons.model.enums.StrongCustomerAuthenticationStatus.SCAStatus
 import net.liftweb.common.{Box, Failure, Full}
 import net.liftweb.mapper.By
+import net.liftweb.util.Helpers
 import org.mindrot.jbcrypt.BCrypt
 import net.liftweb.util.Helpers.tryo
+
+import scala.compat.Platform
 
 object MappedChallengeProvider extends ChallengeProvider {
   
@@ -21,12 +25,14 @@ object MappedChallengeProvider extends ChallengeProvider {
     scaMethod: Option[SCA],
     scaStatus: Option[SCAStatus],
     consentId: Option[String], // Note: consentId and transactionRequestId are exclusive here.
-    authenticationMethodId: Option[String], 
+    authenticationMethodId: Option[String],
+    challengeType: String, 
   ): Box[ChallengeTrait] = 
     tryo (
       MappedExpectedChallengeAnswer
         .create
         .mChallengeId(challengeId)
+        .mChallengeType(challengeType)
         .mTransactionRequestId(transactionRequestId)
         .mSalt(salt)
         .mExpectedAnswer(expectedAnswer)
@@ -52,25 +58,42 @@ object MappedChallengeProvider extends ChallengeProvider {
     challengeAnswer: String,
     userId: Option[String]
   ): Box[ChallengeTrait] = {
-    
-    val challenge = getChallenge(challengeId).openOrThrowException(s"${ErrorMessages.InvalidChallengeAnswer}")
-    
-    val currentHashedAnswer = BCrypt.hashpw(challengeAnswer, challenge.salt).substring(0, 44)
-    val expectedHashedAnswer = challenge.expectedAnswer
+    for{
+       challenge <-  getChallenge(challengeId) ?~! s"${ErrorMessages.InvalidTransactionRequestChallengeId}"
+       currentAttemptCounterValue = challenge.attemptCounter
+        //We update the counter anyway.
+       _ = challenge.mAttemptCounter(currentAttemptCounterValue+1).saveMe()
+       createDateTime = challenge.createdAt.get
+       challengeTTL : Long = Helpers.seconds(APIUtil.transactionRequestChallengeTtl)
 
-    userId match {
-      case None => 
-        if(currentHashedAnswer==expectedHashedAnswer) {
-          tryo{challenge.mSuccessful(true).mScaStatus(StrongCustomerAuthenticationStatus.finalised.toString).saveMe()}
-        } else {
-          Failure(s"${ErrorMessages.InvalidChallengeAnswer}")
+       expiredDateTime: Long = createDateTime.getTime+challengeTTL
+       currentTime: Long = Platform.currentTime
+       challenge <- if(currentAttemptCounterValue < APIUtil.allowedAnswerTransactionRequestChallengeAttempts){
+        if(expiredDateTime > currentTime) {
+          val currentHashedAnswer = BCrypt.hashpw(challengeAnswer, challenge.salt).substring(0, 44)
+          val expectedHashedAnswer = challenge.expectedAnswer
+          userId match {
+            case None =>
+              if(currentHashedAnswer==expectedHashedAnswer) {
+                tryo{challenge.mSuccessful(true).mScaStatus(StrongCustomerAuthenticationStatus.finalised.toString).saveMe()}
+              } else {
+                Failure(s"${ErrorMessages.InvalidChallengeAnswer}")
+              }
+            case Some(id) =>
+              if(currentHashedAnswer==expectedHashedAnswer && id==challenge.expectedUserId) {
+                tryo{challenge.mSuccessful(true).mScaStatus(StrongCustomerAuthenticationStatus.finalised.toString).saveMe()}
+              } else {
+                Failure(s"${ErrorMessages.InvalidChallengeAnswer}")
+              }
+          }
+        }else{
+          Failure(s"${ErrorMessages.OneTimePasswordExpired} Current expiration time is $transactionRequestChallengeTtl seconds")
         }
-      case Some(id) =>
-        if(currentHashedAnswer==expectedHashedAnswer && id==challenge.expectedUserId) {
-          tryo{challenge.mSuccessful(true).mScaStatus(StrongCustomerAuthenticationStatus.finalised.toString).saveMe()}
-        } else {
-          Failure(s"${ErrorMessages.InvalidChallengeAnswer}")
-        }
+      }else{
+        Failure(s"${ErrorMessages.AllowedAttemptsUsedUp}")
+      }
+    } yield{
+      challenge
     }
   }
 }

@@ -1,5 +1,6 @@
 package code.accountattribute
 
+import code.api.Constant.{PARAM_LOCALE, PARAM_TIMESTAMP}
 import code.api.attributedefinition.AttributeDefinition
 import code.products.MappedProduct
 import code.util.{AttributeQueryTrait, MappedUUID, UUIDString}
@@ -90,7 +91,8 @@ object MappedAccountAttributeProvider extends AccountAttributeProvider {
                                               accountAttributeId: Option[String],
                                               name: String,
                                               attributeType: AccountAttributeType.Value,
-                                              value: String): Future[Box[AccountAttribute]] =  {
+                                              value: String,
+                                              productInstanceCode: Option[String]): Future[Box[AccountAttribute]] =  {
     accountAttributeId match {
       case Some(id) => Future {
         MappedAccountAttribute.find(By(MappedAccountAttribute.mAccountAttributeId, id)) match {
@@ -102,6 +104,7 @@ object MappedAccountAttributeProvider extends AccountAttributeProvider {
                 .mName(name)
                 .mType(attributeType.toString)
                 .mValue(value)
+                .mProductInstanceCode(productInstanceCode.getOrElse(""))
                 .saveMe()
             }
             case _ => Empty
@@ -116,6 +119,7 @@ object MappedAccountAttributeProvider extends AccountAttributeProvider {
             .mName(name)
             .mType(attributeType.toString())
             .mValue(value)
+            .mProductInstanceCode(productInstanceCode.getOrElse(""))
             .saveMe()
         }
       }
@@ -124,7 +128,8 @@ object MappedAccountAttributeProvider extends AccountAttributeProvider {
   override def createAccountAttributes(bankId: BankId, 
                                        accountId: AccountId,
                                        productCode: ProductCode,
-                                       accountAttributes: List[ProductAttribute]): Future[Box[List[AccountAttribute]]] = {
+                                       accountAttributes: List[ProductAttribute],
+                                       productInstanceCode: Option[String]): Future[Box[List[AccountAttribute]]] = {
     Future {
       tryo {
         for {
@@ -136,6 +141,7 @@ object MappedAccountAttributeProvider extends AccountAttributeProvider {
             .mName(accountAttribute.name)
             .mType(accountAttribute.attributeType.toString())
             .mValue(accountAttribute.value)
+            .mProductInstanceCode(productInstanceCode.getOrElse(""))
             .saveMe()
         }
       }
@@ -149,11 +155,14 @@ object MappedAccountAttributeProvider extends AccountAttributeProvider {
   }
 
   override def getAccountIdsByParams(bankId: BankId, params: Map[String, List[String]]): Future[Box[List[String]]] = Future {
+    val paramFiltered = params.filterNot(_._1 == PARAM_TIMESTAMP) // ignore `_timestamp_` parameter, it is for invalid Browser caching
+      .filterNot(_._1 == PARAM_LOCALE)
+    
     Box !! {
-      if (params.isEmpty) {
+      if (paramFiltered.isEmpty) {
         MappedAccountAttribute.findAll(By(MappedAccountAttribute.mBankIdId, bankId.value)).map(_.accountId.value)
       } else {
-        val paramList = params.toList
+        val paramList = paramFiltered.toList.filterNot(_._1 == PARAM_TIMESTAMP).filterNot(_._1 == PARAM_LOCALE)
         val parameters: List[String] = MappedAccountAttribute.getParameters(paramList)
         val sqlParametersFilter = MappedAccountAttribute.getSqlParametersFilter(paramList)
         val accountIdList = paramList.isEmpty match {
@@ -188,6 +197,8 @@ class MappedAccountAttribute extends AccountAttribute with LongKeyedMapper[Mappe
   object mType extends MappedString(this, 50)
 
   object mValue extends MappedString(this, 255)
+  
+  object mProductInstanceCode extends MappedString(this, 255)
 
 
   override def bankId: BankId = BankId(mBankIdId.get)
@@ -203,6 +214,8 @@ class MappedAccountAttribute extends AccountAttribute with LongKeyedMapper[Mappe
   override def attributeType: AccountAttributeType.Value = AccountAttributeType.withName(mType.get)
 
   override def value: String = mValue.get
+  
+  override def productInstanceCode: Option[String] = Some(mProductInstanceCode.get)
 
 
 }

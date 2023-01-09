@@ -29,21 +29,22 @@ package code.model.dataAccess
 import code.api.util.CommonFunctions.validUri
 import code.UserRefreshes.UserRefreshes
 import code.accountholders.AccountHolders
-import code.api.util.APIUtil.{hasAnOAuthHeader, logger, validatePasswordOnCreation, _}
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
+import code.api.util.APIUtil._
 import code.api.util.ErrorMessages._
 import code.api.util._
-import code.api.v4_0_0.dynamic.DynamicEndpointHelper
 import code.api.{APIFailure, Constant, DirectLogin, GatewayLogin, OAuthHandshake}
 import code.bankconnectors.Connector
 import code.context.UserAuthContextProvider
 import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
+import code.snippet.WebUI
 import code.token.TokensOpenIDConnect
-import code.users.Users
+import code.users.{UserAgreementProvider, Users}
 import code.util.Helper
 import code.util.Helper.MdcLoggable
 import code.views.Views
-import com.openbankproject.commons.model.{User, _}
+import com.openbankproject.commons.model._
 import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.mapper._
@@ -59,6 +60,9 @@ import code.util.HydraUtil._
 import com.github.dwickern.macros.NameOf.nameOf
 import sh.ory.hydra.model.AcceptLoginRequest
 import net.liftweb.http.S.fmapFunc
+import net.liftweb.sitemap.Loc.{If, LocParam, Template}
+import sh.ory.hydra.api.AdminApi
+import net.liftweb.sitemap.Loc.strToFailMsg
 
 import scala.concurrent.Future
 
@@ -273,7 +277,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with CreatedUpdated with MdcLogga
             invalidMsg = Helper.i18n("please.enter.your.password")
             S.error("authuser_password_repeat", Text(Helper.i18n("please.re-enter.your.password")))
           case false =>
-            if (validatePasswordOnCreation(passwordValue))
+            if (fullPasswordValidation(passwordValue))
               invalidPw = false
             else {
               invalidPw = true
@@ -318,6 +322,7 @@ class AuthUser extends MegaProtoUser[AuthUser] with CreatedUpdated with MdcLogga
     override def displayName = S.?("provider")
     override val fieldId = Some(Text("txtProvider"))
     override def validations = validUri(this) _ :: super.validations
+    override def defaultValue: String = Constant.HostName
   }
 
 
@@ -510,6 +515,17 @@ import net.liftweb.util.Helpers._
     } else { 
       "This information is not allowed at this instance."
     }
+  }  
+  def getAccessTokenOfCurrentUser(): String = {
+    if(APIUtil.getPropsAsBoolValue("openid_connect.show_tokens", false)) {
+      AuthUser.currentUser match {
+        case Full(authUser) =>
+          TokensOpenIDConnect.tokens.vend.getOpenIDConnectTokenByAuthUser(authUser.id.get).map(_.accessToken).getOrElse("")
+        case _ => ""
+      }
+    } else { 
+      "This information is not allowed at this instance."
+    }
   }
   
   /**
@@ -615,7 +631,14 @@ import net.liftweb.util.Helpers._
       grantDefaultEntitlementsToAuthUser(user)
       logUserIn(user, () => {
         S.notice(S.?("account.validated"))
-        S.redirectTo(homePage)
+        APIUtil.getPropsValue("user_account_validated_redirect_url") match {
+          case Full(redirectUrl) => 
+            logger.debug(s"user_account_validated_redirect_url = $redirectUrl")
+            S.redirectTo(redirectUrl)
+          case _ =>
+            logger.debug(s"user_account_validated_redirect_url is NOT defined")
+            S.redirectTo(homePage)
+        }
       })
 
     case _ => S.error(S.?("invalid.validation.link")); S.redirectTo(homePage)
@@ -624,6 +647,13 @@ import net.liftweb.util.Helpers._
   override def actionsAfterSignup(theUser: TheUserType, func: () => Nothing): Nothing = {
     theUser.setValidated(skipEmailValidation).resetUniqueId()
     theUser.save
+    val privacyPolicyValue: String = getWebUiPropsValue("webui_privacy_policy", "")
+    val termsAndConditionsValue: String = getWebUiPropsValue("webui_terms_and_conditions", "")
+    // User Agreement table
+    UserAgreementProvider.userAgreementProvider.vend.createOrUpdateUserAgreement(
+      theUser.user.foreign.map(_.userId).getOrElse(""), "privacy_conditions", privacyPolicyValue)
+    UserAgreementProvider.userAgreementProvider.vend.createOrUpdateUserAgreement(
+      theUser.user.foreign.map(_.userId).getOrElse(""), "terms_and_conditions", termsAndConditionsValue)
     if (!skipEmailValidation) {
       sendValidationEmail(theUser)
       S.notice(S.?("sign.up.message"))
@@ -645,17 +675,22 @@ import net.liftweb.util.Helpers._
 
 
   def agreeTermsDiv = {
-    val agreeTermsHtml = getWebUiPropsValue("webui_agree_terms_html", "")
-    if(agreeTermsHtml.isEmpty){
-      val url = getWebUiPropsValue("webui_agree_terms_url", "")
-      if (url.isEmpty) {
-        s""
-      } else {
-        scala.xml.Unparsed(s"""<div id="signup-agree-terms" class="checkbox"><label><input type="checkbox" />I hereby agree to the <a href="$url" title="T &amp; C">Terms and Conditions</a></label></div>""")
-      }
-    } else{
-      scala.xml.Unparsed(s"""$agreeTermsHtml""")
-    }
+    val webUi = new WebUI
+    val webUiPropsValue = getWebUiPropsValue("webui_terms_and_conditions", "")
+    val termsAndConditionsCheckboxTitle = Helper.i18n("terms_and_conditions_checkbox_text", Some("I agree to the above Terms and Conditions"))
+    val termsAndConditionsCheckboxLabel = Helper.i18n("terms_and_conditions_checkbox_label", Some("Terms and Conditions"))
+    val agreeTermsHtml = s"""<hr>
+                |                        <div class="form-group" id="terms-and-conditions-div" onclick="enableDisableButton()">
+                |                            <details open style="cursor:s-resize;">
+                |                                <summary style="display:list-item;"><a class="api_group_name">$termsAndConditionsCheckboxLabel</a></summary>
+                |                                <div id="terms-and-conditions-page">${webUi.makeHtml(webUiPropsValue)}</div>
+                |                            </details>
+                |                            <input type="checkbox" class="form-check-input" id="terms_checkbox" >
+                |                            <label id="terms_checkbox_value" class="form-check-label" for="terms_checkbox">$termsAndConditionsCheckboxTitle</label>
+                |                        </div>
+                |                        """.stripMargin
+
+    scala.xml.Unparsed(agreeTermsHtml)
   }
 
   def legalNoticeDiv = {
@@ -668,13 +703,38 @@ import net.liftweb.util.Helpers._
   }
   
   def agreePrivacyPolicy = {
-    val url = getWebUiPropsValue("webui_agree_privacy_policy_url", "")
-    val text = getWebUiPropsValue("webui_agree_privacy_policy_html_text", s"""<div id="signup-agree-privacy-policy"><label>By submitting this information you consent to processing your data by TESOBE GmbH according to our <a href="$url" title="Privacy Policy">Privacy Policy</a>. TESOBE shall use this information to send you emails and provide customer support.</label></div>""")
-    if (url.isEmpty) {
-      s""
-    } else {
-      scala.xml.Unparsed(s"""$text""")
-    }
+    val webUi = new WebUI
+    val privacyPolicyCheckboxText = Helper.i18n("privacy_policy_checkbox_text", Some("I agree to the above Privacy Policy"))
+    val privacyPolicyCheckboxLabel = Helper.i18n("privacy_policy_checkbox_label", Some("Privacy Policy"))
+    val webUiPropsValue = getWebUiPropsValue("webui_privacy_policy", "")
+    val agreePrivacyPolicy = s"""<hr>
+                           |                        <div class="form-group" id="privacy-conditions-div" onclick="enableDisableButton()">
+                           |                            <details open style="cursor:s-resize;">
+                           |                                <summary style="display:list-item;"><a class="api_group_name">$privacyPolicyCheckboxLabel</a></summary>
+                           |                                <div id="privacy-policy-page">${webUi.makeHtml(webUiPropsValue)}</div>
+                           |                            </details>
+                           |                            <input id="privacy_checkbox" type="checkbox" class="form-check-input">
+                           |                            <label class="form-check-label" for="privacy_checkbox">$privacyPolicyCheckboxText</label>
+                           |                        </div>
+                           |                        <hr>""".stripMargin
+
+    scala.xml.Unparsed(agreePrivacyPolicy)
+  }  
+  def enableDisableSignUpButton = {
+    val javaScriptCode = """<script>
+                               |                function enableDisableButton() {
+                               |                  var checkBox = document.getElementById("terms-and-conditions-div").querySelector("input[type=checkbox]");
+                               |                  var checkBox2 = document.getElementById("privacy-conditions-div").querySelector("input[type=checkbox]");
+                               |                  var button = document.getElementById("submit-button");
+                               |                  if (checkBox.checked == true && checkBox2.checked == true){
+                               |                    button.disabled = false;
+                               |                  } else {
+                               |                     button.disabled = true;
+                               |                  }
+                               |                }
+                               |                </script>""".stripMargin
+
+    scala.xml.Unparsed(javaScriptCode)
   }
 
   def signupFormTitle = getWebUiPropsValue("webui_signup_form_title_text", S.?("sign.up"))
@@ -689,8 +749,9 @@ import net.liftweb.util.Helpers._
           {agreeTermsDiv}
           {agreePrivacyPolicy}
           <div id="signup-submit">
-            <input type="submit" />
+            <input onmouseover="enableDisableButton()" onfocus="enableDisableButton()" disabled="true" id="submit-button" type="submit" class="btn btn-danger"/>
           </div>
+          {enableDisableSignUpButton}
       </form>
     </div>
   }
@@ -762,20 +823,20 @@ import net.liftweb.util.Helpers._
           ! LoginAttempt.userIsLocked(username) &&
           ! user.testPassword(Full(password))
         ) {
-          LoginAttempt.incrementBadLoginAttempts(username)
+          LoginAttempt.incrementBadLoginAttempts(username, user.getProvider())
           Empty
         }
         // User is locked
         else if (LoginAttempt.userIsLocked(username))
         {
-          LoginAttempt.incrementBadLoginAttempts(username)
+          LoginAttempt.incrementBadLoginAttempts(username, user.getProvider())
           logger.info(ErrorMessages.UsernameHasBeenLocked)
           //TODO need to fix, use Failure instead, it is used to show the error message to the GUI
           Full(usernameLockedStateCode)
         }
         else {
           // Nothing worked, so just increment bad login attempts
-          LoginAttempt.incrementBadLoginAttempts(username)
+          LoginAttempt.incrementBadLoginAttempts(username, user.getProvider())
           Empty
         }
       // We have a user from an external provider.
@@ -795,16 +856,16 @@ import net.liftweb.util.Helpers._
               userId match {
                 case Full(l: Long) => Full(l)
                 case _ =>
-                  LoginAttempt.incrementBadLoginAttempts(username)
+                  LoginAttempt.incrementBadLoginAttempts(username, user.getProvider())
                   Empty
               }
             case false =>
-              LoginAttempt.incrementBadLoginAttempts(username)
+              LoginAttempt.incrementBadLoginAttempts(username, user.getProvider())
               Empty
           }
       // Everything else.
       case _ =>
-        LoginAttempt.incrementBadLoginAttempts(username)
+        LoginAttempt.incrementBadLoginAttempts(username, user.foreign.map(_.provider).getOrElse(Constant.HostName))
         Empty
     }
   }
@@ -912,6 +973,18 @@ def restoreSomeSessions(): Unit = {
 
   override protected def capturePreLoginState(): () => Unit = () => {restoreSomeSessions}
 
+
+  /**
+    * The LocParams for the menu item for login.
+    * Overridden in order to add custom error message. Attention: Not calling super will change the default behavior!
+    */
+  override protected def loginMenuLocParams: List[LocParam[Unit]] = {
+    If(notLoggedIn_? _, () => RedirectResponse("/already-logged-in")) ::
+      Template(() => wrapIt(login)) ::
+      Nil
+  }
+
+
   //overridden to allow a redirection if login fails
   /**
     * Success cases: 
@@ -927,6 +1000,8 @@ def restoreSomeSessions(): Unit = {
     *  case5: UnKnow error     --> UnexpectedErrorDuringLogin
     */
   override def login: NodeSeq = {
+    // This query parameter is specific to Hydra ORA login request
+    val loginChallenge: Box[String] = S.param("login_challenge").or(S.getSessionAttribute("login_challenge"))
     def redirectUri(): String = {
       loginRedirect.get match {
         case Full(url) =>
@@ -955,7 +1030,23 @@ def restoreSomeSessions(): Unit = {
                 tryo{AuthUser.grantEmailDomainEntitlementsToUser(user)}
                   .openOr(logger.error(s"${user} checkInternalRedirectAndLogUserIn.grantEmailDomainEntitlementsToUser throw exception! "))
             }}
-          S.redirectTo(redirect)
+          // We use Hydra as an Headless Identity Provider which implies OBP-API must provide User Management.
+          // If there is the query parameter login_challenge in a url we know it is tha Hydra request
+          // TODO Write standalone application for Login and Consent Request of Hydra as Identity Provider
+          integrateWithHydra match {
+            case true =>
+              if (loginChallenge.isEmpty == false) {
+                val acceptLoginRequest = new AcceptLoginRequest
+                val adminApi: AdminApi = new AdminApi
+                acceptLoginRequest.setSubject(user.username.get)
+                val result = adminApi.acceptLoginRequest(loginChallenge.getOrElse(""), acceptLoginRequest)
+                S.redirectTo(result.getRedirectTo)
+              } else {
+                S.redirectTo(redirect)
+              }
+            case false =>
+              S.redirectTo(redirect)
+          }
         })
       } else {
         S.error(S.?(ErrorMessages.InvalidInternalRedirectUrl))
@@ -1007,13 +1098,13 @@ def restoreSomeSessions(): Unit = {
                   val redirect = redirectUri()
                   checkInternalRedirectAndLogUserIn(preLoginState, redirect, user)
                 } else { // If user is NOT locked AND password is wrong => increment bad login attempt counter.
-                  LoginAttempt.incrementBadLoginAttempts(usernameFromGui)
+                  LoginAttempt.incrementBadLoginAttempts(usernameFromGui, user.getProvider())
                   S.error(Helper.i18n("invalid.login.credentials"))
                 }
 
               // If user is locked, send the error to GUI
               case Full(user) if LoginAttempt.userIsLocked(usernameFromGui) =>
-                LoginAttempt.incrementBadLoginAttempts(usernameFromGui)
+                LoginAttempt.incrementBadLoginAttempts(usernameFromGui, user.getProvider())
                 S.error(S.?(ErrorMessages.UsernameHasBeenLocked))
     
               // Check if user came from kafka/obpjvm/stored_procedure and
@@ -1034,8 +1125,7 @@ def restoreSomeSessions(): Unit = {
     
               // If user cannot be found locally, try to authenticate user via connector
               case Empty if (APIUtil.getPropsAsBoolValue("connector.user.authentication", false) || 
-                APIUtil.getPropsAsBoolValue("kafka.user.authentication", false) ||
-                APIUtil.getPropsAsBoolValue("obpjvm.user.authentication", false)) =>
+                APIUtil.getPropsAsBoolValue("kafka.user.authentication", false) ) =>
                 
                 val preLoginState = capturePreLoginState()
                 logger.info("login redirect: " + loginRedirect.get)
@@ -1047,7 +1137,7 @@ def restoreSomeSessions(): Unit = {
                       AfterApiAuth.innerLoginUserInitAction(Full(user))
                       checkInternalRedirectAndLogUserIn(preLoginState, redirect, user)
                     case _ =>
-                      LoginAttempt.incrementBadLoginAttempts(username.get)
+                      LoginAttempt.incrementBadLoginAttempts(username.get, user.foreign.map(_.provider).getOrElse(Constant.HostName))
                       Empty
                       S.error(Helper.i18n("invalid.login.credentials"))
                 }
@@ -1056,7 +1146,7 @@ def restoreSomeSessions(): Unit = {
               case Empty => 
                 S.error(Helper.i18n("invalid.login.credentials"))
               case _ =>
-                LoginAttempt.incrementBadLoginAttempts(usernameFromGui)
+                LoginAttempt.incrementBadLoginAttempts(usernameFromGui, user.foreign.map(_.provider).getOrElse(Constant.HostName))
                 S.error(S.?(ErrorMessages.UnexpectedErrorDuringLogin)) // Note we hit this if user has not clicked email validation link
             }
         }
@@ -1092,7 +1182,7 @@ def restoreSomeSessions(): Unit = {
     */
  def testExternalPassword(usernameFromGui: String, passwordFromGui: String): Boolean = {
    // TODO Remove kafka and obpjvm special cases
-   if (connector.startsWith("kafka") || connector == "obpjvm") {
+   if (connector.startsWith("kafka")) {
      getUserFromConnector(usernameFromGui, passwordFromGui) match {
        case Full(user:AuthUser) => true
        case _ => false
@@ -1110,7 +1200,7 @@ def restoreSomeSessions(): Unit = {
     */
   def externalUserHelper(name: String, password: String): Box[AuthUser] = {
     // TODO Remove kafka and obpjvm special cases
-    if (connector.startsWith("kafka") || connector == "obpjvm") {
+    if (connector.startsWith("kafka") ) {
       for {
        user <- getUserFromConnector(name, password)
        u <- Users.users.vend.getUserByUserName(name)
@@ -1132,11 +1222,12 @@ def restoreSomeSessions(): Unit = {
     * This method will update the views and createAccountHolder ....
     */
   def registeredUserHelper(username: String) = {
-    if (connector.startsWith("kafka") || connector == "obpjvm") {
+    if (connector.startsWith("kafka")) {
       for {
        u <- Users.users.vend.getUserByUserName(username)
-       v <- Full (updateUserAccountViews(u, None))
-      } yield v
+      } yield {
+        refreshUser(u, None)
+      }
     }
   }
 
@@ -1254,48 +1345,119 @@ def restoreSomeSessions(): Unit = {
   }
   
   /**
-    * This is a helper method 
-    * update the views, accountHolders for OBP side when sign up new remote user
-    * 
-    */
-  def updateUserAccountViews(user: User, callContext: Option[CallContext]): Unit = {
-    //get all accounts from Kafka
-    val accounts = Connector.connector.vend.getBankAccountsForUserLegacy(user.name,callContext).openOrThrowException(attemptedToOpenAnEmptyBox)
-    logger.debug(s"-->AuthUser.updateUserAccountViews.accounts : ${accounts} ")
-
-    updateUserAccountViews(user, accounts._1)
-  }
-  
-  def updateUserAccountViewsFuture(user: User, callContext: Option[CallContext]) = {
+   * This method is used for onboarding bank customer to OBP.
+   *  1st: we will get all the accountsHeld from CBS side.
+   *  2rd: we will create the account Holder, view and account accesses.
+   */
+  def refreshUser(user: User, callContext: Option[CallContext]) = {
     for{
-      (accounts, _) <- Connector.connector.vend.getBankAccountsForUser(user.name,callContext) map {
+      (accountsHeld, _) <- Connector.connector.vend.getBankAccountsForUser(user.provider, user.name,callContext) map {
         connectorEmptyResponse(_, callContext)
       }
+      _ = logger.debug(s"--> for user($user): AuthUser.refreshUserAccountAccess.accounts : ${accountsHeld}")
     }yield {
-      updateUserAccountViews(user, accounts)
-      UserRefreshes.UserRefreshes.vend.createOrUpdateRefreshUser(user.userId)
+      refreshViewsAccountAccessAndHolders(user, accountsHeld)
     }
   }
 
   /**
     * This is a helper method
-    * update the views, accountHolders for OBP side when sign up new remote user
+    * create/update/delete the views, accountAccess, accountHolders for OBP get accounts from CBS side.
     * This method can only be used by the original user(account holder).
    *  InboundAccount return many fields, but in this method, we only need bankId, accountId and viewId so far. 
     */
-    def updateUserAccountViews(user: User, accounts: List[InboundAccount]): Unit = {
-    for {
-      account <- accounts
-      viewId <- account.viewsToGenerate if(user.isOriginalUser) // for now, we support four views here: Owner, Accountant, Auditor, _Public, first three are system views, the last is custom view.
-      bankAccountUID <- Full(BankIdAccountId(BankId(account.bankId), AccountId(account.accountId)))
-      view <- Views.views.vend.getOrCreateAccountView(bankAccountUID, viewId)//this method will return both system views and custom views back.
-    } yield {
-      if (view.isSystem)//if the view is a system view, we will call `grantAccessToSystemView`
-        Views.views.vend.grantAccessToSystemView(BankId(account.bankId), AccountId(account.accountId), view, user)
-      else //otherwise, we will call `grantAccessToCustomView`
-        Views.views.vend.grantAccessToCustomView(view.uid, user)
-      AccountHolders.accountHolders.vend.getOrCreateAccountHolder(user,bankAccountUID)
-    }
+    def refreshViewsAccountAccessAndHolders(user: User, accountsHeld: List[InboundAccount]): Unit = {
+      if(user.isOriginalUser){
+        //first, we compare the accounts in obp  and the accounts in cbs,   
+        val (_, privateAccountAccess) = Views.views.vend.privateViewsUserCanAccess(user)
+        val obpAccountAccessBankAccountIds = privateAccountAccess.map(accountAccess =>BankIdAccountId(BankId(accountAccess.bank_id.get), AccountId(accountAccess.account_id.get))).toSet
+        
+        // This will return all account held for the user, no mater what the source is.
+        val userOwnBankAccountIds = AccountHolders.accountHolders.vend.getAccountsHeldByUser(user)
+
+        //The accounts from AccountAccess may contains other users' account info, so here we filter the accounts By account holder, only show the user's own accounts
+        val obpBankAccountIds = obpAccountAccessBankAccountIds.filter(bankAccountId => userOwnBankAccountIds.contains(bankAccountId)).toSet
+        
+        //The accounts from AccountAccess may contains other users' account info, so here we filter the accounts By account holder, only show the user's own accounts
+        val cbsBankAccountIds = accountsHeld.map(account =>BankIdAccountId(BankId(account.bankId),AccountId(account.accountId))).toSet
+        
+        //cbs removed this accounts, but OBP still contains the data for them, so we need to clean data in OBP side.
+        val cbsRemovedBankAccountIds = obpBankAccountIds diff cbsBankAccountIds
+        
+        //cbs has new accounts which are not in obp yet, we need to create new data for these accounts.
+        val csbNewBankAccountIds = cbsBankAccountIds diff obpBankAccountIds
+
+        logger.debug("refreshViewsAccountAccessAndHolders.cbsRemovedBankAccountIds-------"+cbsRemovedBankAccountIds)
+        logger.debug("refreshViewsAccountAccessAndHolders.csbNewBankAccountIds-------" + csbNewBankAccountIds)
+        //1rd remove the deprecated accounts
+        //TODO. need to double check if we need to clean accountidmapping table, account meta data (MappedTag) ....
+        for{
+          cbsRemovedBankAccountId <- cbsRemovedBankAccountIds
+          bankId = cbsRemovedBankAccountId.bankId
+          accountId = cbsRemovedBankAccountId.accountId
+          _ = Views.views.vend.revokeAccountAccessByUser(bankId, accountId, user)
+          _ = AccountHolders.accountHolders.vend.deleteAccountHolder(user,cbsRemovedBankAccountId)
+          cbsAccount = accountsHeld.find(cbsAccount =>cbsAccount.bankId == bankId.value && cbsAccount.accountId == accountId.value)
+          viewId <- cbsAccount.map(_.viewsToGenerate).getOrElse(List.empty[String])
+        } yield {
+          UserRefreshes.UserRefreshes.vend.createOrUpdateRefreshUser(user.userId)
+          Views.views.vend.removeCustomView(ViewId(viewId), cbsRemovedBankAccountId)
+        }
+        
+        //2st: create views/accountAccess/accountHolders for the new coming accounts
+        for {
+          newBankAccountId <- csbNewBankAccountIds
+          _ = AccountHolders.accountHolders.vend.getOrCreateAccountHolder(user,newBankAccountId,Some("UserAuthContext"))
+          bankId = newBankAccountId.bankId
+          accountId = newBankAccountId.accountId
+          newBankAccount = accountsHeld.find(cbsAccount =>cbsAccount.bankId == bankId.value && cbsAccount.accountId == accountId.value)
+          viewId <- newBankAccount.map(_.viewsToGenerate).getOrElse(List.empty[String])
+          view <- Views.views.vend.getOrCreateAccountView(newBankAccountId, viewId)//this method will return both system views and custom views back.
+        } yield {
+          UserRefreshes.UserRefreshes.vend.createOrUpdateRefreshUser(user.userId)
+          if (view.isSystem)//if the view is a system view, we will call `grantAccessToSystemView`
+            Views.views.vend.grantAccessToSystemView(bankId, accountId, view, user)
+          else //otherwise, we will call `grantAccessToCustomView`
+            Views.views.vend.grantAccessToCustomView(view.uid, user)
+        }
+
+        //3rd: if the ids are not change, but views are changed, we still need compare the view for each account:
+        if(cbsRemovedBankAccountIds.equals(csbNewBankAccountIds)) {
+          for {
+            bankAccountId <- obpBankAccountIds
+            // we can not get the views from the `viewDefinition` table, because we can not delete system views at all. we need to read the view from accountAccess table.
+            //obpViewsForAccount = MapperViews.availableViewsForAccount(bankAccountId).map(_.viewId.value)
+            obpViewsForAccount = Views.views.vend.privateViewsUserCanAccessForAccount(user, bankAccountId).map(_.viewId.value)
+            
+            cbsViewsForAccount = accountsHeld.find(account => account.bankId.equals(bankAccountId.bankId.value) && account.accountId.equals(bankAccountId.accountId.value)).map(_.viewsToGenerate).getOrElse(Nil)
+           
+            //cbs removed these views, but OBP still contains the data for them, so we need to clean data in OBP side.
+            cbsRemovedViewsForAccount = obpViewsForAccount diff cbsViewsForAccount
+            _ = if(cbsRemovedViewsForAccount.nonEmpty){
+              val cbsRemovedViewIdBankIdAccountIds = cbsRemovedViewsForAccount.map(view => ViewIdBankIdAccountId(ViewId(view), bankAccountId.bankId, bankAccountId.accountId))
+              Views.views.vend.revokeAccessToMultipleViews(cbsRemovedViewIdBankIdAccountIds, user) 
+              cbsRemovedViewsForAccount.map(view =>Views.views.vend.removeCustomView(ViewId(view), bankAccountId))
+              UserRefreshes.UserRefreshes.vend.createOrUpdateRefreshUser(user.userId)
+            } 
+            //cbs has new views which are not in obp yet, we need to create new data for these accounts.
+            csbNewViewsForAccount = cbsViewsForAccount diff obpViewsForAccount
+            _ = if(csbNewViewsForAccount.nonEmpty){
+              for{
+                newViewForAccount <- csbNewViewsForAccount
+                view <- Views.views.vend.getOrCreateAccountView(bankAccountId, newViewForAccount) //this method will return both system views and custom views back.
+              }yield{
+                if (view.isSystem)//if the view is a system view, we will call `grantAccessToSystemView`
+                  Views.views.vend.grantAccessToSystemView(bankAccountId.bankId, bankAccountId.accountId, view, user)
+                else //otherwise, we will call `grantAccessToCustomView`
+                  Views.views.vend.grantAccessToCustomView(view.uid, user)
+                UserRefreshes.UserRefreshes.vend.createOrUpdateRefreshUser(user.userId)
+              }
+            } 
+          } yield {
+            bankAccountId
+          }
+        }
+      } 
   }
   /**
     * Find the authUser by author user name(authUser and resourceUser are the same).
@@ -1347,7 +1509,7 @@ def restoreSomeSessions(): Unit = {
     val usernames: List[String] = this.getResourceUsersByEmail(email).map(_.user.name)
     findAll(ByList(this.username, usernames))
   }
-  lazy val signupSubmitButtonValue = getWebUiPropsValue("webui_signup_form_submit_button_value", S.?("sign.up"))
+  def signupSubmitButtonValue() = getWebUiPropsValue("webui_signup_form_submit_button_value", S.?("sign.up"))
 
   //overridden to allow redirect to loginRedirect after signup. This is mostly to allow
   // loginFirst menu items to work if the user doesn't have an account. Without this,
@@ -1399,7 +1561,7 @@ def restoreSomeSessions(): Unit = {
     }
 
     def innerSignup = {
-      val bind = "type=submit" #> signupSubmitButton(signupSubmitButtonValue, testSignup _)
+      val bind = "type=submit" #> signupSubmitButton(signupSubmitButtonValue(), testSignup _)
       bind(signupXhtml(theUser))
     }
     

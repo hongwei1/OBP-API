@@ -2,16 +2,15 @@ package code.api.v4_0_0
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
 import code.api.Constant._
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
-import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJson
+import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJsonV300
 import code.api.util.APIUtil.OAuth.{Consumer, Token, _}
 import code.api.util.ApiRole.{CanCreateAccountAttributeAtOneBank, CanCreateCustomer, CanCreateProduct, _}
 import code.api.util.{APIUtil, ApiRole}
 import code.api.v1_2_1._
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
-import code.api.v2_0_0.{BasicAccountsJSON, TransactionRequestBodyJsonV200}
+import code.api.v2_0_0.{BasicAccountsJSON, TransactionRequestBodyJsonV200, UserCustomerLinkJson}
 import code.api.v2_1_0.{TransactionRequestWithChargeJSON210, TransactionRequestWithChargeJSONs210}
 import code.api.v3_0_0.{CustomerAttributeResponseJsonV300, TransactionJsonV300, TransactionsJsonV300, UserJsonV300, ViewJsonV300}
 import code.api.v3_1_0._
@@ -24,17 +23,22 @@ import code.metadata.wheretags.MappedWhereTag
 import code.setup.{APIResponse, DefaultUsers, ServerSetupWithTestData}
 import code.transactionattribute.MappedTransactionAttribute
 import com.openbankproject.commons.model.{AccountId, AccountRoutingJsonV121, AmountOfMoneyJsonV121, BankId, CreateViewJson, UpdateViewJSON}
+import com.openbankproject.commons.util.ApiShortVersions
 import dispatch.Req
 import net.liftweb.json.Serialization.write
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.randomString
 
+import java.util.concurrent.TimeUnit
 import scala.util.Random
 import scala.util.Random.nextInt
 
 trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
 
   def v4_0_0_Request: Req = baseRequest / "obp" / "v4.0.0"
+  def v5_0_0_Request: Req = baseRequest / "obp" / "v5.0.0"
+  def dynamicEndpoint_Request: Req = baseRequest / "obp" / ApiShortVersions.`dynamic-endpoint`.toString
+  def dynamicEntity_Request: Req = baseRequest / "obp" / ApiShortVersions.`dynamic-entity`.toString
 
   def randomBankId : String = {
     def getBanksInfo : APIResponse  = {
@@ -66,7 +70,7 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
   def randomOwnerViewPermalinkViaEndpoint(bankId: String, account: AccountJSON) : String = {
     val request = v4_0_0_Request / "banks" / bankId / "accounts" / account.id / "views" <@(consumer, token1)
     val reply = makeGetRequest(request)
-    val possibleViewsPermalinks = reply.body.extract[ViewsJSONV121].views.filterNot(_.is_public==true).filter(_.id == CUSTOM_OWNER_VIEW_ID)
+    val possibleViewsPermalinks = reply.body.extract[ViewsJSONV121].views.filterNot(_.is_public==true).filter(_.id == SYSTEM_OWNER_VIEW_ID)
     val randomPosition = nextInt(possibleViewsPermalinks.size)
     possibleViewsPermalinks(randomPosition).id
   }
@@ -148,7 +152,7 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
     product
   }
 
-  def createAccountAttributeViaEndpoint(bankId: String, accountId: String, name: String, value: String, `type`: String): AccountAttributeResponseJson = {
+  def createAccountAttributeViaEndpoint(bankId: String, accountId: String, name: String, value: String, `type`: String, productInstanceCode: Option[String]): AccountAttributeResponseJson = {
     val putProductJsonV400 = PutProductJsonV400(
       name = "product name",
       parent_product_code = "",
@@ -166,7 +170,8 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
     val accountAttributeJson = AccountAttributeJson(
       name = name,
       `type` = `type`,
-      value = value
+      value = value,
+      productInstanceCode
     )
     val entitlement = Entitlement.entitlement.vend.addEntitlement(bankId, resourceUser1.userId, CanCreateAccountAttributeAtOneBank.toString)
     val requestCreate310 = (v4_0_0_Request / "banks" / bankId / "accounts" / accountId /
@@ -178,19 +183,34 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
     responseCreate310.body.extract[AccountAttributeResponseJson]
   }
   
-  // This will call create customer ,then return the customerId
-  def createAndGetCustomerIdViaEndpoint(bankId:String, consumerAndToken: Option[(Consumer, Token)]) = {
+  private def createCustomer(bankId:String, userId: String) = {
     val postCustomerJson = SwaggerDefinitionsJSON.postCustomerJsonV310
-    def createCustomer(consumerAndToken: Option[(Consumer, Token)]) ={
-      Entitlement.entitlement.vend.addEntitlement(bankId, resourceUser1.userId, CanCreateCustomer.toString)
-      When("We make a request v3.1.0")
-      val request310 = (v4_0_0_Request / "banks" / bankId / "customers").POST <@(user1)
-      val response310 = makePostRequest(request310, write(postCustomerJson))
-      Then("We should get a 201")
-      response310.code should equal(201)
-      response310.body.extract[CustomerJsonV310]
-    }
-    createCustomer(consumerAndToken).customer_id
+    Entitlement.entitlement.vend.addEntitlement(bankId, userId, CanCreateCustomer.toString)
+    When("We make a request v3.1.0")
+    val request310 = (v4_0_0_Request / "banks" / bankId / "customers").POST <@(user1)
+    val response310 = makePostRequest(request310, write(postCustomerJson))
+    Then("We should get a 201")
+    response310.code should equal(201)
+    response310.body.extract[CustomerJsonV310]
+  }
+  
+  // This will call create customer ,then return the customerId
+  def createAndGetCustomerIdViaEndpoint(bankId:String, userId: String = resourceUser1.userId) = {
+    createCustomer(bankId, userId).customer_id
+  }
+  // This will call create customer ,then return the customerId
+  def createCustomerViaEndpointAndGetNumber(bankId:String, userId: String) = {
+    createCustomer(bankId, userId).customer_number
+  } 
+  
+  //This will call create user customer link
+  def createUserCustomerLink(bankId:String, userId:String, customerId:String ) = {
+    val postJson = SwaggerDefinitionsJSON.createUserCustomerLinkJson
+      .copy(user_id = userId, customer_id = customerId)
+    Entitlement.entitlement.vend.addEntitlement(bankId, userId, CanCreateUserCustomerLink.toString())
+    val createRequest = (v4_0_0_Request / "banks" / bankId / "user_customer_links" ).POST <@(user1)
+    val response = makePostRequest(createRequest, write(postJson)).body.extract[UserCustomerLinkJson]
+    response
   }
   
   def createAndGetCustomerAttributeIdViaEndpoint(bankId:String, customerId:String, consumerAndToken: Option[(Consumer, Token)], postCustomerAttributeJson: Option[CustomerAttributeJsonV400] = None) = {
@@ -257,6 +277,10 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
     And("We make a request v4.0.0")
     val request400 = (v4_0_0_Request / "banks" / bankId / "accounts" ).POST <@(consumerAndToken)
     val response400 = makePostRequest(request400, write(json))
+    //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+    //it is an asynchronous process, need some time to be done.
+    TimeUnit.SECONDS.sleep(3)
+    
     Then("We should get a 201")
     response400.code should equal(201)
     val account = response400.body.extract[CreateAccountResponseJsonV310]
@@ -340,12 +364,12 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
     // Create to account
     val toAccount = createAccountViaEndpoint(bank.bankId.value, addAccountJson2, user1)
     // Create a custom view
-    val customViewJson = createViewJson.copy(name = "_cascade_delete", metadata_view = "_cascade_delete", is_public = false)
-    val customView = createViewViaEndpoint(bank.bankId.value, toAccount.account_id, customViewJson, user1)
+    val customViewJson = createViewJsonV300.copy(name = "_cascade_delete", metadata_view = "_cascade_delete", is_public = false).toCreateViewJson
+    val customView = createViewViaEndpoint(bank.bankId.value, fromAccount.account_id, customViewJson, user1)
     // Grant access to the view
     grantUserAccessToViewViaEndpoint(
       bank.bankId.value,
-      toAccount.account_id,
+      fromAccount.account_id,
       resourceUser1.userId,
       user1,
       PostViewJsonV400(view_id = customView.id, is_system = false)

@@ -32,7 +32,6 @@ import code.api.util.ErrorMessages._
 import code.api.util.ExampleValue._
 import code.api.util.{APIUtil, CallContext, HashUtil, OBPQueryParam}
 import code.bankconnectors._
-import code.bankconnectors.vJune2017.AuthInfo
 import code.customer.internalMapping.MappedCustomerIdMappingProvider
 import code.model.dataAccess.internalMapping.MappedAccountIdMappingProvider
 import code.util.Helper
@@ -76,7 +75,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
   val connectorName = "stored_procedure_vDec2019"
 
 //---------------- dynamic start -------------------please don't modify this line
-// ---------- created on 2021-08-24T13:22:36Z
+// ---------- created on 2022-03-11T18:45:01Z
 
   messageDocs += getAdapterInfoDoc
   def getAdapterInfoDoc = MessageDoc(
@@ -610,7 +609,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     inboundTopic = None,
     exampleOutboundMessage = (
      OutBoundGetBankAccountsForUser(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      username=usernameExample.value)
+       provider=providerExample.value,
+       username=usernameExample.value)
     ),
     exampleInboundMessage = (
      InBoundGetBankAccountsForUser(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -634,9 +634,9 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def getBankAccountsForUser(username: String, callContext: Option[CallContext]): Future[Box[(List[InboundAccount], Option[CallContext])]] = {
+  override def getBankAccountsForUser(provider: String, username:String, callContext: Option[CallContext]): Future[Box[(List[InboundAccount], Option[CallContext])]] = {
         import com.openbankproject.commons.dto.{InBoundGetBankAccountsForUser => InBound, OutBoundGetBankAccountsForUser => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, username)
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, provider: String, username:String)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_accounts_for_user", req, callContext)
         response.map(convertToTuple[List[InboundAccountCommons]](callContext))        
   }
@@ -1497,7 +1497,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     outboundTopic = None,
     inboundTopic = None,
     exampleOutboundMessage = (
-          OutBoundGetPhysicalCardsForUser( UserCommons(userPrimaryKey=UserPrimaryKey(123),
+     OutBoundGetPhysicalCardsForUser(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      user= UserCommons(userPrimaryKey=UserPrimaryKey(123),
       userId=userIdExample.value,
       idGivenByProvider="string",
       provider=providerExample.value,
@@ -1505,7 +1506,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)))
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))))
     ),
     exampleInboundMessage = (
      InBoundGetPhysicalCardsForUser(status=MessageDocsSwaggerDefinitions.inboundStatus,
@@ -1553,10 +1555,9 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def getPhysicalCardsForUser(user: User): Box[List[PhysicalCard]] = {
+  override def getPhysicalCardsForUser(user: User, callContext: Option[CallContext]): OBPReturnType[Box[List[PhysicalCard]]] = {
         import com.openbankproject.commons.dto.{InBoundGetPhysicalCardsForUser => InBound, OutBoundGetPhysicalCardsForUser => OutBound}  
-        val callContext: Option[CallContext] = None
-        val req = OutBound(user)
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, user)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_physical_cards_for_user", req, callContext)
         response.map(convertToTuple[List[PhysicalCard]](callContext))        
   }
@@ -1615,7 +1616,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value))
+      customerId=customerIdExample.value
+      ))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -1680,7 +1682,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       limit=limitExample.value.toInt,
       offset=offsetExample.value.toInt,
       fromDate=fromDateExample.value,
@@ -1728,7 +1731,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value)))
+      customerId=customerIdExample.value
+      )))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -1770,7 +1774,9 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value)
+      customerId=customerIdExample.value,
+      cvv = cvvExample.value,
+      brand = brandExample.value)
     ),
     exampleInboundMessage = (
      InBoundCreatePhysicalCard(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -1814,14 +1820,20 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value))
+      customerId=customerIdExample.value
+      ))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def createPhysicalCard(bankCardNumber: String, nameOnCard: String, cardType: String, issueNumber: String, serialNumber: String, validFrom: Date, expires: Date, enabled: Boolean, cancelled: Boolean, onHotList: Boolean, technology: String, networks: List[String], allows: List[String], accountId: String, bankId: String, replacement: Option[CardReplacementInfo], pinResets: List[PinResetInfo], collected: Option[CardCollectionInfo], posted: Option[CardPostedInfo], customerId: String, callContext: Option[CallContext]): OBPReturnType[Box[PhysicalCard]] = {
-        import com.openbankproject.commons.dto.{InBoundCreatePhysicalCard => InBound, OutBoundCreatePhysicalCard => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankCardNumber, nameOnCard, cardType, issueNumber, serialNumber, validFrom, expires, enabled, cancelled, onHotList, technology, networks, allows, accountId, bankId, replacement, pinResets, collected, posted, customerId)
+  override def createPhysicalCard(bankCardNumber: String, nameOnCard: String, cardType: String, issueNumber: String, serialNumber: String, 
+    validFrom: Date, expires: Date, enabled: Boolean, cancelled: Boolean, onHotList: Boolean, technology: String, networks: List[String], 
+    allows: List[String], accountId: String, bankId: String, replacement: Option[CardReplacementInfo], pinResets: List[PinResetInfo], 
+    collected: Option[CardCollectionInfo], posted: Option[CardPostedInfo], customerId: String, cvv: String,
+    brand: String, callContext: Option[CallContext]): OBPReturnType[Box[PhysicalCard]] = {
+    import com.openbankproject.commons.dto.{InBoundCreatePhysicalCard => InBound, OutBoundCreatePhysicalCard => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankCardNumber, nameOnCard, cardType, issueNumber, 
+          serialNumber, validFrom, expires, enabled, cancelled, onHotList, technology, networks, allows, accountId, bankId, replacement, pinResets, collected, posted, customerId, cvv, brand)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_physical_card", req, callContext)
         response.map(convertToTuple[PhysicalCard](callContext))        
   }
@@ -1999,7 +2011,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -2143,7 +2156,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -2319,7 +2333,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceExample.value),
@@ -2828,7 +2843,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       data=List( ProductCommons(bankId=BankId(bankIdExample.value),
       code=ProductCode(productCodeExample.value),
       parentProductCode=ProductCode(parentProductCodeExample.value),
-      name=nameExample.value,
+      name=productNameExample.value,
       category=categoryExample.value,
       family=familyExample.value,
       superFamily=superFamilyExample.value,
@@ -2836,8 +2851,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       termsAndConditionsUrl=termsAndConditionsUrlExample.value,
       details=detailsExample.value,
       description=descriptionExample.value,
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)))))
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -2866,7 +2881,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       data= ProductCommons(bankId=BankId(bankIdExample.value),
       code=ProductCode(productCodeExample.value),
       parentProductCode=ProductCode(parentProductCodeExample.value),
-      name=nameExample.value,
+      name=productNameExample.value,
       category=categoryExample.value,
       family=familyExample.value,
       superFamily=superFamilyExample.value,
@@ -2874,8 +2889,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       termsAndConditionsUrl=termsAndConditionsUrlExample.value,
       details=detailsExample.value,
       description=descriptionExample.value,
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value))))
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -2922,8 +2937,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       username=usernameExample.value))),
       lobbyString=Some(LobbyString("string")),
       driveUpString=Some(DriveUpString("string")),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       branchRouting=Some( Routing(scheme=branchRoutingSchemeExample.value,
       address=branchRoutingAddressExample.value)),
       lobby=Some( Lobby(monday=List( OpeningTimes(openingTime=openingTimeExample.value,
@@ -3008,8 +3023,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       username=usernameExample.value))),
       lobbyString=Some(LobbyString("string")),
       driveUpString=Some(DriveUpString("string")),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       branchRouting=Some( Routing(scheme=branchRoutingSchemeExample.value,
       address=branchRoutingAddressExample.value)),
       lobby=Some( Lobby(monday=List( OpeningTimes(openingTime=openingTimeExample.value,
@@ -3089,8 +3104,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       user=Some( BasicResourceUser(userId=userIdExample.value,
       provider=providerExample.value,
       username=usernameExample.value))),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       OpeningTimeOnMonday=Some("string"),
       ClosingTimeOnMonday=Some("string"),
       OpeningTimeOnTuesday=Some("string"),
@@ -3168,8 +3183,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       user=Some( BasicResourceUser(userId=userIdExample.value,
       provider=providerExample.value,
       username=usernameExample.value))),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       OpeningTimeOnMonday=Some("string"),
       ClosingTimeOnMonday=Some("string"),
       OpeningTimeOnTuesday=Some("string"),
@@ -3261,7 +3276,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceExample.value),
@@ -3380,7 +3396,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceExample.value),
@@ -3474,7 +3491,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -4640,7 +4658,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       userId=userIdExample.value,
       key=keyExample.value,
       value=valueExample.value,
-      timeStamp=parseDate(timeStampExample.value).getOrElse(sys.error("dateOfBirthExample.value is not validate date format."))))
+      timeStamp=toDate(timeStampExample), 
+      consumerId=consumerIdExample.value))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4673,8 +4692,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       key=keyExample.value,
       value=valueExample.value,
       challenge=challengeExample.value,
-      status=statusExample.value))
-    ),
+      status=statusExample.value,
+      consumerId=consumerIdExample.value))),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
@@ -4755,7 +4774,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       userId=userIdExample.value,
       key=keyExample.value,
       value=valueExample.value,
-      timeStamp=parseDate(timeStampExample.value).getOrElse(sys.error("dateOfBirthExample.value is not validate date format.")))))
+      timeStamp=toDate(timeStampExample), 
+      consumerId=consumerIdExample.value)))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4990,7 +5010,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def createOrUpdateAccountAttribute(bankId: BankId, accountId: AccountId, productCode: ProductCode, productAttributeId: Option[String], name: String, accountAttributeType: AccountAttributeType.Value, value: String, callContext: Option[CallContext]): OBPReturnType[Box[AccountAttribute]] = {
+  override def createOrUpdateAccountAttribute(bankId: BankId, accountId: AccountId, productCode: ProductCode, productAttributeId: Option[String], name: String, accountAttributeType: AccountAttributeType.Value, value: String,
+    productInstanceCode: Option[String],callContext: Option[CallContext]): OBPReturnType[Box[AccountAttribute]] = {
         import com.openbankproject.commons.dto.{InBoundCreateOrUpdateAccountAttribute => InBound, OutBoundCreateOrUpdateAccountAttribute => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, productCode, productAttributeId, name, accountAttributeType, value)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_or_update_account_attribute", req, callContext)
@@ -5103,7 +5124,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def createAccountAttributes(bankId: BankId, accountId: AccountId, productCode: ProductCode, accountAttributes: List[ProductAttribute], callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = {
+  override def createAccountAttributes(bankId: BankId, accountId: AccountId, productCode: ProductCode, accountAttributes: List[ProductAttribute],
+    productInstanceCode: Option[String], callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = {
         import com.openbankproject.commons.dto.{InBoundCreateAccountAttributes => InBound, OutBoundCreateAccountAttributes => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, productCode, accountAttributes)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_account_attributes", req, callContext)
@@ -5700,7 +5722,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       product= ProductCommons(bankId=BankId(bankIdExample.value),
       code=ProductCode(productCodeExample.value),
       parentProductCode=ProductCode(parentProductCodeExample.value),
-      name=nameExample.value,
+      name=productNameExample.value,
       category=categoryExample.value,
       family=familyExample.value,
       superFamily=superFamilyExample.value,
@@ -5708,8 +5730,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       termsAndConditionsUrl=termsAndConditionsUrlExample.value,
       details=detailsExample.value,
       description=descriptionExample.value,
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value))),
       attributes=List( ProductAttributeCommons(bankId=BankId(bankIdExample.value),
       productCode=ProductCode(productCodeExample.value),
       productAttributeId=productAttributeIdExample.value,
@@ -5746,7 +5768,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       customerUser= UserCommons(userPrimaryKey=UserPrimaryKey(123),
       userId=userIdExample.value,
       idGivenByProvider="string",
@@ -5755,7 +5778,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       providerId=providerIdExample.value,
       purposeId=purposeIdExample.value,
       when=toDate(whenExample),
@@ -5819,7 +5843,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)))
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))))
     ),
     exampleInboundMessage = (
      InBoundGetMeetings(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -5870,7 +5895,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       meetingId=meetingIdExample.value)
     ),
     exampleInboundMessage = (
@@ -6216,7 +6242,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       bankId=BankId(bankIdExample.value),
       message=messageExample.value,
       fromDepartment=fromDepartmentExample.value,
@@ -6378,8 +6405,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[Boolean](callContext))        
   }
           
-// ---------- created on 2021-08-24T13:22:36Z
-//---------------- dynamic end ---------------------please don't modify this line                       
+// ---------- created on 2022-03-11T18:45:01Z
+//---------------- dynamic end ---------------------please don't modify this line                          
 
   private val availableOperation = DynamicEntityOperation.values.map(it => s""""$it"""").mkString("[", ", ", "]")
 
@@ -6443,10 +6470,12 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
                                     entityId: Option[String],
                                     bankId: Option[String],
                                     queryParameters: Option[Map[String, List[String]]],
+                                    userId: Option[String],
+                                    isPersonalEntity: Boolean,
                                     callContext: Option[CallContext]): OBPReturnType[Box[JValue]] = {
     import com.openbankproject.commons.dto.{InBoundDynamicEntityProcess => InBound, OutBoundDynamicEntityProcess => OutBound}
     val procedureName = StringHelpers.snakify("dynamicEntityProcess")
-    val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull , operation, entityName, requestBody, entityId, bankId, queryParameters)
+    val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull , operation, entityName, requestBody, entityId, bankId, queryParameters,userId, isPersonalEntity)
     val result: OBPReturnType[Box[JValue]] = sendRequest[InBound](procedureName, req, callContext).map(convertToTuple(callContext))
     result
   }

@@ -28,7 +28,7 @@ package code.api.v3_0_0
 
 import code.api.OBPRestHelper
 import code.api.util.APIUtil.{OBPEndpoint, getAllowedEndpoints}
-import com.openbankproject.commons.util.ApiVersion
+import com.openbankproject.commons.util.{ApiVersion,ApiVersionStatus}
 import code.api.util.VersionedOBPApis
 import code.api.v1_3_0.APIMethods130
 import code.api.v1_4_0.APIMethods140
@@ -53,7 +53,7 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
 
   val version : ApiVersion = ApiVersion.v3_0_0
 
-  val versionStatus = "STABLE" // TODO this should be a property of ApiVersion.
+  val versionStatus = ApiVersionStatus.STABLE.toString // TODO this should be a property of ApiVersion.
 
 
   // Possible Endpoints from 1.2.1
@@ -151,7 +151,7 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_0_0.getPrivateAccountsAtOneBank ::
                           //now in V220
                           //Implementations2_0_0.createAccount ::
-                          Implementations2_0_0.createMeeting ::
+//                          Implementations2_0_0.createMeeting ::
                           Implementations2_0_0.createUser ::
                           Implementations2_0_0.createUserCustomerLinks ::
                           Implementations2_0_0.deleteEntitlement ::
@@ -166,8 +166,8 @@ object OBPAPI3_0_0 extends OBPRestHelper with APIMethods130 with APIMethods140 w
                           Implementations2_0_0.getKycDocuments ::
                           Implementations2_0_0.getKycMedia ::
                           Implementations2_0_0.getKycStatuses ::
-                          Implementations2_0_0.getMeeting ::
-                          Implementations2_0_0.getMeetings ::
+//                          Implementations2_0_0.getMeeting ::
+//                          Implementations2_0_0.getMeetings ::
                           Implementations2_0_0.getPermissionsForBankAccount ::
                           Implementations2_0_0.getSocialMediaHandles ::
                           Implementations2_0_0.getTransactionTypes ::

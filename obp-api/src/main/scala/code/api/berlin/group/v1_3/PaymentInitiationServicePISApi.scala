@@ -17,8 +17,10 @@ import code.util.Helper
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.model._
+import com.openbankproject.commons.model.enums.ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE
 import com.openbankproject.commons.model.enums.TransactionRequestStatus._
 import com.openbankproject.commons.model.enums.{ChallengeType, StrongCustomerAuthenticationStatus, TransactionRequestStatus}
+import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.common.Full
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.rest.RestHelper
@@ -31,7 +33,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
 
 object APIMethods_PaymentInitiationServicePISApi extends RestHelper {
-    val apiVersion =  OBP_BERLIN_GROUP_1_3.apiVersion
+    val apiVersion =  ApiVersion.berlinGroupV13
     val resourceDocs = ArrayBuffer[ResourceDoc]()
     val apiRelations = ArrayBuffer[ApiRelation]()
     protected implicit def JvalueToSuper(what: JValue): JvalueCaseClass = JvalueCaseClass(what)
@@ -588,7 +590,7 @@ $additionalInstructions
                      ),
                      transDetailsSerialized,
                      "",
-                     None,
+                     Some(BERLINGROUP_PAYMENT_CHALLENGE),
                      None,
                      None,
                      Some(transDetailsJson),
@@ -675,7 +677,7 @@ This applies in the following scenarios:
 
           (challenges, callContext) <- NewStyle.function.createChallengesC2(
             List(u.userId),
-            ChallengeType.BERLINGROUP_PAYMENT,
+            ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE,
             Some(paymentId),
             getScaMethodAtInstance(SEPA_CREDIT_TRANSFERS.toString).toOption,
             Some(StrongCustomerAuthenticationStatus.received),
@@ -765,7 +767,7 @@ This applies in the following scenarios:
              }
              (challenges, callContext) <- NewStyle.function.createChallengesC2(
                List(u.userId),
-               ChallengeType.BERLINGROUP_PAYMENT,
+               ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE,
                Some(paymentId),
                getScaMethodAtInstance(SEPA_CREDIT_TRANSFERS.toString).toOption,
                Some(StrongCustomerAuthenticationStatus.received),
@@ -877,7 +879,7 @@ There are the following request types on this access path:
              }
              (_, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
              (challenge, callContext) <- NewStyle.function.validateChallengeAnswerC2(
-               ChallengeType.BERLINGROUP_PAYMENT,
+               ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE,
                Some(paymentId),
                None,
                cancellationId,
@@ -997,7 +999,7 @@ There are the following request types on this access path:
                existingTransactionRequest.status == TransactionRequestStatus.INITIATED.toString
              }
              (challenge, callContext) <- NewStyle.function.validateChallengeAnswerC2(
-               ChallengeType.BERLINGROUP_PAYMENT,
+               ChallengeType.BERLINGROUP_PAYMENT_CHALLENGE,
                Some(paymentId),
                None,
                authorisationid,

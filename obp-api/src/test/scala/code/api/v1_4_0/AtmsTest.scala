@@ -6,6 +6,7 @@ import code.api.v1_4_0.JSONFactory1_4_0.{AtmJson, AtmsJson}
 import code.atms.{Atms, AtmsProvider}
 import code.setup.DefaultUsers
 import com.openbankproject.commons.model.{LicenseT, _}
+import net.liftweb.common.Box
 
 class AtmsTest extends V140ServerSetup with DefaultUsers {
 
@@ -166,6 +167,14 @@ class AtmsTest extends V140ServerSetup with DefaultUsers {
       }
     }
 
+    override def createOrUpdateAtm(atm: AtmT): Box[AtmT] = {
+      Atms.atmsProvider.vend.createOrUpdateAtm(atm)
+    }
+    
+    override def deleteAtm(atm: AtmT): Box[Boolean] = {
+      Atms.atmsProvider.vend.deleteAtm(atm)
+    }
+
   }
 
   // TODO Extend to more fields
@@ -230,7 +239,7 @@ class AtmsTest extends V140ServerSetup with DefaultUsers {
       val atms = responseBody.atms
 
       // Order of ATMs in the list is arbitrary
-      atms.size should equal(2)
+      atms.size should equal(3)
       val first = atms(0)
       if(first.id == fakeAtm1.atmId.value) {
         verifySameData(fakeAtm1, first)

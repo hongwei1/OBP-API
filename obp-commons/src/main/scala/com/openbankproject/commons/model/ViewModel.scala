@@ -52,6 +52,8 @@ trait ViewSpecification {
   def which_alias_to_use: String
   def hide_metadata_if_alias_used: Boolean
   def allowed_actions : List[String]
+  def can_grant_access_to_views : Option[List[String]] = None
+  def can_revoke_access_to_views : Option[List[String]] = None
 }
 
 /*
@@ -64,7 +66,9 @@ case class CreateViewJson(
                            is_public: Boolean,
                            which_alias_to_use: String,
                            hide_metadata_if_alias_used: Boolean,
-                           allowed_actions : List[String]
+                           allowed_actions : List[String],
+                           override val can_grant_access_to_views : Option[List[String]] = None,
+                           override val can_revoke_access_to_views : Option[List[String]] = None
                          ) extends ViewSpecification
 
 
@@ -78,7 +82,9 @@ case class UpdateViewJSON(
                            override val is_firehose: Option[Boolean] = None,
                            which_alias_to_use: String,
                            hide_metadata_if_alias_used: Boolean,
-                           allowed_actions: List[String]) extends ViewSpecification
+                           allowed_actions: List[String],
+                           override val can_grant_access_to_views : Option[List[String]] = None,
+                           override val can_revoke_access_to_views : Option[List[String]] = None) extends ViewSpecification
 
 
 
@@ -228,7 +234,7 @@ trait View {
     * 2rd: the view can grant the access to any other (not owner) users. eg: Simon's accountant view can grant access to Carola, then Carola can see Simon's accountant data
     * also look into some createView methods in code, you can understand more:
     * create1: code.bankconnectors.Connector.createViews
-    * need also look into here code.bankconnectors.vMar2017.KafkaMappedConnector_vMar2017.updateUserAccountViewsOld
+    * need also look into here KafkaMappedConnector_vMar2017.updateUserAccountViewsOld
     * after createViews method, always need call addPermission(v.uid, user). This will create this field
     * Create2: code.model.dataAccess.BankAccountCreation.createOwnerView
     * after create view, always need call `addPermission(ownerViewUID, user)`, this will create this field
@@ -244,6 +250,10 @@ trait View {
   def usePrivateAliasIfOneExists: Boolean
 
   def hideOtherAccountMetadataIfAlias: Boolean
+
+  // Introduced in version 5.0.0
+  def canGrantAccessToViews : Option[List[String]] = None
+  def canRevokeAccessToViews : Option[List[String]] = None
 
   //reading access
 
@@ -366,6 +376,10 @@ trait View {
   def canAddPrivateAlias: Boolean
 
   def canAddCounterparty: Boolean
+  
+  def canGetCounterparty: Boolean
+  
+  def canDeleteCounterparty: Boolean
 
   def canDeleteCorporateLocation: Boolean
 

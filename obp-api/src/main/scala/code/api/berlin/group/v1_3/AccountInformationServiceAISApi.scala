@@ -22,6 +22,7 @@ import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.model._
 import com.openbankproject.commons.model.enums.{ChallengeType, StrongCustomerAuthentication, StrongCustomerAuthenticationStatus}
+import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.common.{Empty, Full}
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.rest.RestHelper
@@ -33,7 +34,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
 
 object APIMethods_AccountInformationServiceAISApi extends RestHelper {
-    val apiVersion =  OBP_BERLIN_GROUP_1_3.apiVersion
+    val apiVersion = ApiVersion.berlinGroupV13
     val resourceDocs = ArrayBuffer[ResourceDoc]()
     val apiRelations = ArrayBuffer[ApiRelation]()
     protected implicit def JvalueToSuper(what: JValue): JvalueCaseClass = JvalueCaseClass(what)
@@ -1078,7 +1079,7 @@ The ASPSP might make the usage of this access method unnecessary, since the rela
               }
              (challenges, callContext) <- NewStyle.function.createChallengesC2(
                List(u.userId),
-               ChallengeType.BERLINGROUP_CONSENT,
+               ChallengeType.BERLINGROUP_CONSENT_CHALLENGE,
                None,
                getSuggestedDefaultScaMethod(),
                Some(StrongCustomerAuthenticationStatus.received),
@@ -1154,7 +1155,7 @@ Maybe in a later version the access path will change.
                challenges.filter(_.challengeId == authorisationId).size == 1
              }
              (challenge, callContext) <- NewStyle.function.validateChallengeAnswerC2(
-               ChallengeType.BERLINGROUP_CONSENT,
+               ChallengeType.BERLINGROUP_CONSENT_CHALLENGE,
                None,
                Some(consentId),
                challenges.filter(_.challengeId == authorisationId).head.challengeId,

@@ -2,7 +2,6 @@ package code.bankconnectors
 
 import java.util.Date
 import java.util.UUID.randomUUID
-
 import _root_.akka.http.scaladsl.model.HttpMethod
 import code.accountholders.{AccountHolders, MapperAccountHolders}
 import code.api.attributedefinition.AttributeDefinition
@@ -20,10 +19,9 @@ import code.bankconnectors.LocalMappedConnector.setUnimplementedError
 import code.bankconnectors.akka.AkkaConnector_vDec2018
 import code.bankconnectors.rest.RestConnector_vMar2019
 import code.bankconnectors.storedprocedure.StoredProcedureConnector_vDec2019
-import code.bankconnectors.vJune2017.KafkaMappedConnector_vJune2017
-import code.bankconnectors.vMar2017.KafkaMappedConnector_vMar2017
 import code.bankconnectors.vMay2019.KafkaMappedConnector_vMay2019
 import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
+import code.customeraccountlinks.CustomerAccountLinkTrait
 import code.endpointTag.EndpointTagT
 import code.fx.fx.TTL
 import code.management.ImporterAPI.ImporterTransaction
@@ -82,11 +80,6 @@ object Connector extends SimpleInjector {
     "mapped" -> lazyValue(LocalMappedConnector),
     "akka_vDec2018" -> lazyValue(AkkaConnector_vDec2018),
     "mongodb" -> lazyValue(LocalRecordConnector),
-    "obpjvm" -> lazyValue(ObpJvmMappedConnector),
-    "kafka" -> lazyValue(KafkaMappedConnector),
-    "kafka_JVMcompatible" -> lazyValue(KafkaMappedConnector_JVMcompatible),
-    "kafka_vMar2017" -> lazyValue(KafkaMappedConnector_vMar2017),
-    "kafka_vJune2017" -> lazyValue(KafkaMappedConnector_vJune2017),
     "kafka_vSept2018" -> lazyValue(KafkaMappedConnector_vSept2018),
     "kafka_vMay2019" -> lazyValue(KafkaMappedConnector_vMay2019),
     "rest_vMar2019" -> lazyValue(RestConnector_vMar2019),
@@ -407,6 +400,13 @@ trait Connector extends MdcLoggable {
   // Validates an answer for a challenge and returns if the answer is correct or not
   def validateChallengeAnswer(challengeId: String, hashOfSuppliedAnswer: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Full(true), callContext)}
   
+  def allChallengesSuccessfullyAnswered(
+    bankId: BankId,
+    accountId: AccountId,
+    transReqId: TransactionRequestId,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[Boolean]]= Future{(Full(true), callContext)}
+  
   def validateChallengeAnswerC2(
     transactionRequestId: Option[String],
     consentId: Option[String],
@@ -432,18 +432,25 @@ trait Connector extends MdcLoggable {
   def getBanks(callContext: Option[CallContext]): Future[Box[(List[Bank], Option[CallContext])]] = Future{(Failure(setUnimplementedError))}
 
   /**
-    *
-    * @param username username of the user.
-    * @return all the accounts, get from Main Frame.
-    */
-  def getBankAccountsForUserLegacy(username: String, callContext: Option[CallContext]) : Box[(List[InboundAccount], Option[CallContext])] = Failure(setUnimplementedError)
+   * please see @getBankAccountsForUser
+   */
+  def getBankAccountsForUserLegacy(provider: String, username:String, callContext: Option[CallContext]) : Box[(List[InboundAccount], Option[CallContext])] = Failure(setUnimplementedError)
 
   /**
-    *
+    * Get Accounts from cbs, this method is mainly used for onboarding Bank Customer to OBP.
+   *  If it is CBS connector: 
+   *   the input is the username + userAuthContext (we can get it from callContext),
+   *    userAuthContext can be CustomerNumber, AccountNumber, TelephoneNumber ..., any values which CBS need to identify a bank Customer
+   *  the output is the CBS accounts belong to the user:
+   *    So far the InboundAccount.BankId, InboundAccount.AccountId and InboundAccount.viewsToGenerate are mandatory, OBP need these to 
+   *    create view and grant the account access.
+   *  If it is Mapped connector:  
+   *    OBP will return all the accounts from accountHolder
     * @param username username of the user.
+    * @param callContext inside, should contains the proper values for CBS to identify a bank Customer 
     * @return all the accounts, get from Main Frame.
     */
-  def getBankAccountsForUser(username: String, callContext: Option[CallContext]) : Future[Box[(List[InboundAccount], Option[CallContext])]] = Future{
+  def getBankAccountsForUser(provider: String, username:String, callContext: Option[CallContext]) : Future[Box[(List[InboundAccount], Option[CallContext])]] = Future{
     Failure(setUnimplementedError)
   }
 
@@ -558,6 +565,8 @@ trait Connector extends MdcLoggable {
   def getCounterpartyByCounterpartyIdLegacy(counterpartyId: CounterpartyId, callContext: Option[CallContext]): Box[(CounterpartyTrait, Option[CallContext])]= Failure(setUnimplementedError)
 
   def getCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def deleteCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Failure(setUnimplementedError), callContext)}
 
 
   /**
@@ -567,6 +576,37 @@ trait Connector extends MdcLoggable {
   def getCounterpartyByIban(iban: String, callContext: Option[CallContext]) : OBPReturnType[Box[CounterpartyTrait]] = Future {(Failure(setUnimplementedError), callContext)}
 
   def getCounterpartyByIbanAndBankAccountId(iban: String, bankId: BankId, accountId: AccountId, callContext: Option[CallContext]) : OBPReturnType[Box[CounterpartyTrait]] = Future {(Failure(setUnimplementedError), callContext)}
+  
+  def getOrCreateCounterparty(
+    name: String,
+    description: String,
+    currency: String,
+    createdByUserId: String,
+    thisBankId: String,
+    thisAccountId: String,
+    thisViewId: String,
+    other_bank_routing_scheme: String,
+    other_bank_routing_address: String,
+    other_branch_routing_scheme: String,
+    other_branch_routing_address: String,
+    other_account_routing_scheme: String,
+    other_account_routing_address: String,
+    other_account_secondary_routing_scheme: String,
+    other_account_secondary_routing_address: String,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[CounterpartyTrait]] = Future {(Failure(setUnimplementedError), callContext)}  
+  
+  def getCounterpartyByRoutings(
+    otherBankRoutingScheme: String,
+    otherBankRoutingAddress: String,
+    otherBranchRoutingScheme: String,
+    otherBranchRoutingAddress: String,
+    otherAccountRoutingScheme: String,
+    otherAccountRoutingAddress: String,
+    otherAccountSecondaryRoutingScheme: String,
+    otherAccountSecondaryRoutingAddress: String,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[CounterpartyTrait]] = Future {(Failure(setUnimplementedError), callContext)}
 
   def getCounterpartiesLegacy(thisBankId: BankId, thisAccountId: AccountId, viewId :ViewId, callContext: Option[CallContext] = None): Box[(List[CounterpartyTrait], Option[CallContext])]= Failure(setUnimplementedError)
 
@@ -585,9 +625,12 @@ trait Connector extends MdcLoggable {
 
   def getTransaction(bankId: BankId, accountId : AccountId, transactionId : TransactionId, callContext: Option[CallContext] = None): OBPReturnType[Box[Transaction]] = Future{(Failure(setUnimplementedError), callContext)}
 
-  def getPhysicalCardsForUser(user : User) : Box[List[PhysicalCard]] = Failure(setUnimplementedError)
+  def getPhysicalCardsForUser(user : User, callContext: Option[CallContext] = None) : OBPReturnType[Box[List[PhysicalCard]]] = Future{(Failure(setUnimplementedError), callContext)}
 
   def getPhysicalCardForBank(bankId: BankId, cardId: String,  callContext:Option[CallContext]) : OBPReturnType[Box[PhysicalCardTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def getPhysicalCardByCardNumber(bankCardNumber: String,  callContext:Option[CallContext]) : OBPReturnType[Box[PhysicalCardTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
   def deletePhysicalCardForBank(bankId: BankId, cardId: String,  callContext:Option[CallContext]) : OBPReturnType[Box[Boolean]] = Future{(Failure(setUnimplementedError), callContext)}
 
   def getPhysicalCardsForBankLegacy(bank: Bank, user : User, queryParams: List[OBPQueryParam]) : Box[List[PhysicalCard]] = Failure(setUnimplementedError)
@@ -614,6 +657,8 @@ trait Connector extends MdcLoggable {
     collected: Option[CardCollectionInfo],
     posted: Option[CardPostedInfo],
     customerId: String,
+    cvv: String,
+    brand: String,
     callContext: Option[CallContext]
   ): Box[PhysicalCard] = Failure(setUnimplementedError)
 
@@ -638,6 +683,8 @@ trait Connector extends MdcLoggable {
     collected: Option[CardCollectionInfo],
     posted: Option[CardPostedInfo],
     customerId: String,
+    cvv: String,
+    brand: String,
     callContext: Option[CallContext]
   ): OBPReturnType[Box[PhysicalCard]] = Future{(Failure{setUnimplementedError}, callContext)}
 
@@ -739,6 +786,8 @@ trait Connector extends MdcLoggable {
 
   def getDoubleEntryBookTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId,
                                      callContext: Option[CallContext]): OBPReturnType[Box[DoubleEntryTransaction]]= Future{(Failure(setUnimplementedError), callContext)}
+  def getBalancingTransaction(transactionId: TransactionId,
+                              callContext: Option[CallContext]): OBPReturnType[Box[DoubleEntryTransaction]]= Future{(Failure(setUnimplementedError), callContext)}
 
   protected def makePaymentImpl(fromAccount: BankAccount, toAccount: BankAccount, transactionRequestCommonBody: TransactionRequestCommonBodyJSON, amt: BigDecimal, description: String, transactionRequestType: TransactionRequestType, chargePolicy: String): Box[TransactionId]= Failure(setUnimplementedError)
 
@@ -802,7 +851,7 @@ trait Connector extends MdcLoggable {
       }
     } else {
       //if challenge necessary, create a new one
-      val challenge = TransactionRequestChallenge(id = generateUUID(), allowed_attempts = 3, challenge_type = TransactionChallengeTypes.OTP_VIA_API.toString)
+      val challenge = TransactionRequestChallenge(id = generateUUID(), allowed_attempts = 3, challenge_type = ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString)
       saveTransactionRequestChallenge(result.id, challenge)
       result = result.copy(challenge = challenge)
     }
@@ -870,7 +919,7 @@ trait Connector extends MdcLoggable {
       }
     } else {
       //if challenge necessary, create a new one
-      val challenge = TransactionRequestChallenge(id = generateUUID(), allowed_attempts = 3, challenge_type = TransactionChallengeTypes.OTP_VIA_API.toString)
+      val challenge = TransactionRequestChallenge(id = generateUUID(), allowed_attempts = 3, challenge_type = ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString)
       saveTransactionRequestChallenge(result.id, challenge)
       result = result.copy(challenge = challenge)
     }
@@ -1000,7 +1049,7 @@ trait Connector extends MdcLoggable {
               (unboxFullOrFail(i._1, callContext, s"$InvalidConnectorResponseForCreateChallenge ", 400), i._2)
             }
 
-            newChallenge = TransactionRequestChallenge(challengeId, allowed_attempts = 3, challenge_type = challengeType.getOrElse(TransactionChallengeTypes.OTP_VIA_API.toString))
+            newChallenge = TransactionRequestChallenge(challengeId, allowed_attempts = 3, challenge_type = challengeType.getOrElse(ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString))
             _ <- Future (saveTransactionRequestChallenge(transactionRequest.id, newChallenge))
             transactionRequest <- Future(transactionRequest.copy(challenge = newChallenge))
           } yield {
@@ -1180,7 +1229,7 @@ trait Connector extends MdcLoggable {
     tr.map(_._1) match {
       case Full(tr: TransactionRequest) =>
         if (tr.challenge.allowed_attempts > 0) {
-          if (tr.challenge.challenge_type == TransactionChallengeTypes.OTP_VIA_API.toString) {
+          if (tr.challenge.challenge_type == ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString) {
             //check if answer supplied is correct (i.e. for now, TAN -> some number and not empty)
             for {
               nonEmpty <- booleanToBox(answer.nonEmpty) ?~ "Need a non-empty answer"
@@ -1373,7 +1422,7 @@ trait Connector extends MdcLoggable {
         }yield{
           (createdTransactionId,callContext)
         }
-        case transactionRequestType => Future((throw new Exception(s"${InvalidTransactionRequestType}: '${transactionRequestType}'. Not supported in this version.")), callContext)
+        case _ => Future((throw new Exception(s"${InvalidTransactionRequestType}: '${transactionRequestType}'. Not completed in this version.")), callContext)
       }
 
       didSaveTransId <- Future{saveTransactionRequestTransaction(transactionRequestId, transactionId).openOrThrowException(attemptedToOpenAnEmptyBox)}
@@ -1568,6 +1617,8 @@ trait Connector extends MdcLoggable {
   def createOrUpdateAtmLegacy(atm: AtmT): Box[AtmT] = Failure(setUnimplementedError)
   
   def createOrUpdateAtm(atm: AtmT,  callContext: Option[CallContext]): OBPReturnType[Box[AtmT]] = Future{Failure(setUnimplementedError)}
+  
+  def deleteAtm(atm: AtmT,  callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{Failure(setUnimplementedError)}
   
   def createSystemLevelEndpointTag(operationId:String, tagName:String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = Future{Failure(setUnimplementedError)}
   
@@ -1894,7 +1945,31 @@ trait Connector extends MdcLoggable {
                       nameSuffix: String,
                       callContext: Option[CallContext],
                     ): OBPReturnType[Box[Customer]] = Future{(Failure(setUnimplementedError), callContext)}
-  
+
+  def createCustomerC2(
+                        bankId: BankId,
+                        legalName: String,
+                        customerNumber: String,
+                        mobileNumber: String,
+                        email: String,
+                        faceImage:
+                        CustomerFaceImageTrait,
+                        dateOfBirth: Date,
+                        relationshipStatus: String,
+                        dependents: Int,
+                        dobOfDependents: List[Date],
+                        highestEducationAttained: String,
+                        employmentStatus: String,
+                        kycStatus: Boolean,
+                        lastOkDate: Date,
+                        creditRating: Option[CreditRatingTrait],
+                        creditLimit: Option[AmountOfMoneyTrait],
+                        title: String,
+                        branchId: String,
+                        nameSuffix: String,
+                        callContext: Option[CallContext],
+                      ): OBPReturnType[Box[Customer]] = Future{(Failure(setUnimplementedError), callContext)}
+
   def updateCustomerScaData(customerId: String, 
                             mobileNumber: Option[String], 
                             email: Option[String],
@@ -1970,6 +2045,8 @@ trait Connector extends MdcLoggable {
 
   def deleteTaxResidence(taxResourceId : String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Failure(setUnimplementedError), callContext)}
 
+  def getCustomersAtAllBanks(callContext: Option[CallContext], queryParams: List[OBPQueryParam] = Nil): OBPReturnType[Box[List[Customer]]] = Future{Failure(setUnimplementedError)}
+  
   def getCustomers(bankId : BankId, callContext: Option[CallContext], queryParams: List[OBPQueryParam] = Nil): Future[Box[List[Customer]]] = Future{Failure(setUnimplementedError)}
   
   def getCustomersByCustomerPhoneNumber(bankId : BankId, phoneNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[List[Customer]]] = Future{(Failure(setUnimplementedError), callContext)}
@@ -2083,6 +2160,7 @@ trait Connector extends MdcLoggable {
                                       name: String,
                                       accountAttributeType: AccountAttributeType.Value,
                                       value: String,
+                                      productInstanceCode: Option[String],
                                       callContext: Option[CallContext]
                                     ): OBPReturnType[Box[AccountAttribute]] = Future{(Failure(setUnimplementedError), callContext)}
 
@@ -2125,6 +2203,9 @@ trait Connector extends MdcLoggable {
     }
   
   def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = 
+    Future{(Failure(setUnimplementedError), callContext)}   
+  
+  def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = 
     Future{(Failure(setUnimplementedError), callContext)}  
   
   def createOrUpdateUserAttribute(
@@ -2151,6 +2232,7 @@ trait Connector extends MdcLoggable {
                               accountId: AccountId,
                               productCode: ProductCode,
                               accountAttributes: List[ProductAttribute],
+                              productInstanceCode: Option[String],
                               callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = 
     Future{(Failure(setUnimplementedError), callContext)} 
   
@@ -2409,6 +2491,20 @@ trait Connector extends MdcLoggable {
                     fromDepartment : String,
                     fromPerson : String,
                     callContext: Option[CallContext]) : OBPReturnType[Box[CustomerMessage]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def createCustomerMessage(customer: Customer,
+                    bankId : BankId,
+                    transport : String,
+                    message : String,
+                    fromDepartment : String,
+                    fromPerson : String,
+                    callContext: Option[CallContext]) : OBPReturnType[Box[CustomerMessage]] = Future{(Failure(setUnimplementedError), callContext)}
+
+  def getCustomerMessages(
+    customer: Customer,
+    bankId: BankId,
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[List[CustomerMessage]]] = Future{(Failure(setUnimplementedError), callContext)}
 
   def makeHistoricalPayment(fromAccount: BankAccount,
                             toAccount: BankAccount,
@@ -2438,6 +2534,8 @@ trait Connector extends MdcLoggable {
                              entityId: Option[String],
                              bankId: Option[String],
                              queryParameters: Option[Map[String, List[String]]],
+                             userId: Option[String],
+                             isPersonalEntity: Boolean,
                              callContext: Option[CallContext]): OBPReturnType[Box[JValue]] = Future{(Failure(setUnimplementedError), callContext)}
 
   def dynamicEndpointProcess(url: String, jValue: JValue, method: HttpMethod, params: Map[String, List[String]], pathParams: Map[String, String],
@@ -2495,4 +2593,26 @@ trait Connector extends MdcLoggable {
 
   def checkAnswer(authContextUpdateId: String, challenge: String, callContext: Option[CallContext]): OBPReturnType[Box[UserAuthContextUpdate]] = Future{(Failure(setUnimplementedError), callContext)}
 
+  def sendCustomerNotification(
+    scaMethod: StrongCustomerAuthentication,
+    recipient: String, 
+    subject: Option[String], //Only for EMAIL, SMS do not need it, so here it is Option
+    message: String, 
+    callContext: Option[CallContext]
+  ): OBPReturnType[Box[String]] = Future{(Failure(setUnimplementedError), callContext)}
+
+  def getCustomerAccountLink(customerId: String, accountId: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def getCustomerAccountLinksByCustomerId(customerId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerAccountLinkTrait]]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def getCustomerAccountLinksByBankIdAccountId(bankId: String, accountId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerAccountLinkTrait]]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def getCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def deleteCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def createCustomerAccountLink(customerId: String, bankId: String, accountId: String, relationshipType: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
+  def updateCustomerAccountLinkById(customerAccountLinkId: String, relationshipType: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = Future{(Failure(setUnimplementedError), callContext)}
+  
 }

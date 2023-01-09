@@ -8,8 +8,7 @@ import code.api.v1_4_0.JSONFactory1_4_0._
 import code.bankconnectors.Connector
 import code.setup.DefaultUsers
 import code.transactionrequests.TransactionRequests.TransactionRequestTypes._
-import code.transactionrequests.TransactionRequests.TransactionChallengeTypes
-import com.openbankproject.commons.model.enums.TransactionRequestStatus
+import com.openbankproject.commons.model.enums.{ChallengeType, TransactionRequestStatus}
 import net.liftweb.json.JsonAST.JString
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
@@ -24,7 +23,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
   object TransactionRequest extends Tag("transactionRequests")
 
   feature("we can make transaction requests") {
-    val view = CUSTOM_OWNER_VIEW_ID
+    val view = SYSTEM_OWNER_VIEW_ID
 
     def transactionCount(accounts: BankAccount*) : Int = {
       accounts.foldLeft(0)((accumulator, account) => {
@@ -76,7 +75,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
 
         //call createTransactionRequest
         var request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-                        CUSTOM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests").POST <@(user1)
+                        SYSTEM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests").POST <@(user1)
         var response = makePostRequest(request, write(transactionRequestBody))
         Then("we should get a 201 created code")
         response.code should equal(201)
@@ -106,7 +105,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
 
         //call getTransactionRequests, check that we really created a transaction request
         request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-                    CUSTOM_OWNER_VIEW_ID / "transaction-requests").GET <@(user1)
+                    SYSTEM_OWNER_VIEW_ID / "transaction-requests").GET <@(user1)
         response = makeGetRequest(request)
 
         Then("we should get a 200 ok code")
@@ -127,8 +126,8 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
 
         //check that we created a new transaction (since no challenge)
         request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-          CUSTOM_OWNER_VIEW_ID / "transactions").GET <@(user1)
-        response = makeGetRequest(request, List(("from_date", APIUtil.DefaultFromDateString),("to_date", APIUtil.DefaultToDateString)))
+          SYSTEM_OWNER_VIEW_ID / "transactions").GET <@(user1)
+        response = makeGetRequest(request, List(("from_date", APIUtil.epochTimeString),("to_date", APIUtil.DefaultToDateString)))
 
         Then("we should get a 200 ok code")
         response.code should equal(200)
@@ -202,11 +201,11 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
         //amount over 100 €, so should trigger challenge request
         val amt = BigDecimal("1250.00")
         val bodyValue = AmountOfMoneyJsonV121("EUR", amt.toString())
-        val transactionRequestBody = TransactionRequestBodyJsonV140(toAccountJson, bodyValue, "Test Transaction Request description", TransactionChallengeTypes.OTP_VIA_API.toString)
+        val transactionRequestBody = TransactionRequestBodyJsonV140(toAccountJson, bodyValue, "Test Transaction Request description", ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString)
 
         //call createTransactionRequest API method
         var request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-          CUSTOM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests").POST <@ (user1)
+          SYSTEM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests").POST <@ (user1)
         var response = makePostRequest(request, write(transactionRequestBody))
         Then("we should get a 201 created code")
         response.code should equal(201)
@@ -241,7 +240,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
 
         //call getTransactionRequests, check that we really created a transaction request
         request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-          CUSTOM_OWNER_VIEW_ID / "transaction-requests").GET <@ (user1)
+          SYSTEM_OWNER_VIEW_ID / "transaction-requests").GET <@ (user1)
         response = makeGetRequest(request)
 
         Then("we should get a 200 ok code")
@@ -262,7 +261,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
         //call answerTransactionRequestChallenge, give a false answer
         var answerJson = ChallengeAnswerJSON(id = challenge_id, answer = "hello") //wrong answer, not a number
         request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-          CUSTOM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests" / transId / "challenge").POST <@ (user1)
+          SYSTEM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests" / transId / "challenge").POST <@ (user1)
         response = makePostRequest(request, write(answerJson))
         Then("we should get a 400 bad request code")
         response.code should equal(400)
@@ -272,7 +271,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
         //call answerTransactionRequestChallenge again, give a good answer
         answerJson = ChallengeAnswerJSON(id = challenge_id, answer = "12345") //wrong answer, not a number
         request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-          CUSTOM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests" / transId / "challenge").POST <@ (user1)
+          SYSTEM_OWNER_VIEW_ID / "transaction-request-types" / SANDBOX_TAN.toString / "transaction-requests" / transId / "challenge").POST <@ (user1)
         response = makePostRequest(request, write(answerJson))
         Then("we should get a 202 accepted code")
         response.code should equal(202)
@@ -292,7 +291,7 @@ class TransactionRequestsTest extends V140ServerSetup with DefaultUsers {
 
         //call getTransactionRequests, check that we really created a transaction
         request = (v1_4Request / "banks" / testBank.bankId.value / "accounts" / fromAccount.accountId.value /
-          CUSTOM_OWNER_VIEW_ID / "transaction-requests").GET <@ (user1)
+          SYSTEM_OWNER_VIEW_ID / "transaction-requests").GET <@ (user1)
         response = makeGetRequest(request)
 
         Then("we should get a 200 ok code")

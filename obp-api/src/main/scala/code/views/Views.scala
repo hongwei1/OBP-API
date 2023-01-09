@@ -45,13 +45,17 @@ trait Views {
   def revokeAccessToMultipleViews(views : List[ViewIdBankIdAccountId], user : User) : Box[List[View]]
   def revokeAccess(viewIdBankIdAccountId : ViewIdBankIdAccountId, user : User) : Box[Boolean]
   def revokeAccessToSystemView(bankId: BankId, accountId: AccountId, view : View, user : User) : Box[Boolean]
-  def revokeAllAccountAccesses(bankId : BankId, accountId : AccountId, user : User) : Box[Boolean]
-  def revokeAccountAccessesByUser(bankId : BankId, accountId : AccountId, user : User) : Box[Boolean]
+  def revokeAllAccountAccess(bankId : BankId, accountId : AccountId, user : User) : Box[Boolean]
+  def revokeAccountAccessByUser(bankId : BankId, accountId : AccountId, user : User) : Box[Boolean]
+
+  def revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String) : Box[Boolean]
+  def revokeAccessToCustomViewForConsumer(view : View, consumerId : String) : Box[Boolean]
 
   def customView(viewId : ViewId, bankAccountId: BankIdAccountId) : Box[View]
   def systemView(viewId : ViewId) : Box[View]
   def customViewFuture(viewId : ViewId, bankAccountId: BankIdAccountId) : Future[Box[View]]
   def systemViewFuture(viewId : ViewId) : Future[Box[View]]
+  def getSystemViews(): Future[List[View]]
 
   //always return a view id String, not error here. 
   def getMetadataViewId(bankAccountId: BankIdAccountId, viewId : ViewId) = Views.views.vend.customView(viewId, bankAccountId).map(_.metadataView).openOr(viewId.value)
@@ -129,8 +133,8 @@ class RemotedataViewsCaseClasses {
   case class revokePermissions(views: List[ViewIdBankIdAccountId], user: User)
   case class revokePermission(viewUID: ViewIdBankIdAccountId, user: User)
   case class revokeSystemViewPermission(bankId: BankId, accountId: AccountId, view : View, user : User)
-  case class revokeAllAccountAccesses(bankId: BankId, accountId: AccountId, user: User)
-  case class revokeAccountAccessesByUser(bankId: BankId, accountId: AccountId, user: User)
+  case class revokeAllAccountAccess(bankId: BankId, accountId: AccountId, user: User)
+  case class revokeAccountAccessByUser(bankId: BankId, accountId: AccountId, user: User)
   case class createView(bankAccountId: BankIdAccountId, view: CreateViewJson)
   case class createSystemView(view: CreateViewJson)
   case class removeCustomView(viewId: ViewId, bankAccountId: BankIdAccountId)
@@ -151,6 +155,7 @@ class RemotedataViewsCaseClasses {
     def apply(viewId: ViewId, bankAccountId: BankIdAccountId): Box[View] = this (viewId, bankAccountId)
   }
   case class systemView(viewId : ViewId)
+  case class getSystemViews()
   case class customViewFuture(viewId : ViewId, bankAccountId: BankIdAccountId)
   case class systemViewFuture(viewId : ViewId)
   case class getOrCreateAccountView(account: BankIdAccountId, viewName: String)
@@ -168,6 +173,10 @@ class RemotedataViewsCaseClasses {
   case class removeAllViews(bankId: BankId, accountId: AccountId)
 
   case class bulkDeleteAllPermissionsAndViews()
+
+  case class revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String)
+  case class revokeAccessToCustomViewForConsumer(view : View, consumerId : String)
+
 }
 
 object RemotedataViewsCaseClasses extends RemotedataViewsCaseClasses

@@ -3,11 +3,11 @@ package code.api.v4_0_0
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.accountAttributeJson
 import code.api.util.APIUtil.OAuth._
-import code.api.util.ApiRole.CanCreateAccountAttributeAtOneBank
+import code.api.util.ApiRole.{CanCreateAccountAttributeAtOneBank, CanCreateUserCustomerLink, CanGetAccountsMinimalForCustomerAtAnyBank, canGetCustomersMinimalAtAnyBank}
 import code.api.util.ErrorMessages.{BankAccountNotFoundByAccountRouting, UserHasMissingRoles, UserNotLoggedIn}
 import code.api.util.{APIUtil, ApiRole}
 import code.api.v2_0_0.BasicAccountJSON
-import code.api.v3_1_0.{CreateAccountResponseJsonV310, PostPutProductJsonV310, ProductJsonV310}
+import code.api.v3_1_0.{CreateAccountResponseJsonV310, CustomerJsonV310, PostCustomerNumberJsonV310, PostPutProductJsonV310, ProductJsonV310}
 import code.api.v4_0_0.OBPAPI4_0_0.Implementations4_0_0
 import code.entitlement.Entitlement
 import com.github.dwickern.macros.NameOf.nameOf
@@ -18,6 +18,7 @@ import net.liftweb.common.Box
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
 
+import java.util.concurrent.TimeUnit
 import scala.collection.immutable.List
 import scala.util.Random
 
@@ -36,6 +37,7 @@ class AccountTest extends V400ServerSetup {
   object ApiEndpoint4 extends Tag(nameOf(Implementations4_0_0.getPrivateAccountsAtOneBank))
   object ApiEndpoint5 extends Tag(nameOf(Implementations4_0_0.getAccountByAccountRouting))
   object ApiEndpoint6 extends Tag(nameOf(Implementations4_0_0.getAccountsByAccountRoutingRegex))
+  object ApiEndpoint7 extends Tag(nameOf(Implementations4_0_0.getAccountsMinimalByCustomerId))
 
   lazy val testBankId = testBankId1
   lazy val addAccountJson = SwaggerDefinitionsJSON.createAccountRequestJsonV310.copy(user_id = resourceUser1.userId, balance = AmountOfMoneyJsonV121("EUR","0"))
@@ -104,6 +106,10 @@ class AccountTest extends V400ServerSetup {
 
       Then("We should get a 201")
       response400.code should equal(201)
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
+      
       val account = response400.body.extract[CreateAccountResponseJsonV310]
       account.account_id should not be empty
       account.product_code should be (addAccountJson.product_code)
@@ -115,6 +121,10 @@ class AccountTest extends V400ServerSetup {
       account.label should be (addAccountJson.label)
       account.account_routings should be (addAccountJson.account_routings)
 
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(3)
+      
 
       Then(s"We call $ApiEndpoint1 to get the account back")
       val request = (v4_0_0_Request /"my" / "banks" / testBankId.value/ "accounts" / account.account_id / "account").GET <@ (user1)
@@ -159,6 +169,11 @@ class AccountTest extends V400ServerSetup {
       val response400_1 = makePostRequest(request400_1, write(addAccountJson))
       Then("We should get a 201")
       response400_1.code should equal(201)
+
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(2)
+      
       val account = response400_1.body.extract[CreateAccountResponseJsonV310]
       account.account_id should not be empty
       account.product_code should be (addAccountJson.product_code)
@@ -410,6 +425,38 @@ class AccountTest extends V400ServerSetup {
       val responseGet = makeGetRequest(requestGet)
       responseGet.code should equal(200)
       responseGet.body.extract[AccountsBalancesJsonV400].accounts.size > 0 should be (true)
+    }
+  }
+  
+  feature(s"test ${ApiEndpoint7.name}") {
+    scenario(s"We will test ${ApiEndpoint7.name}", ApiEndpoint7, VersionOfApi) {
+      // Create customer
+      val bankId = randomBankId
+      val customerId = createAndGetCustomerIdViaEndpoint(bankId, resourceUser1.userId)
+      
+      // Link Customer to a User
+      val postJson = SwaggerDefinitionsJSON.createUserCustomerLinkJson
+        .copy(user_id = resourceUser1.userId, customer_id = customerId)
+      Entitlement.entitlement.vend.addEntitlement(bankId, resourceUser1.userId, CanCreateUserCustomerLink.toString())
+      val createRequest = (v4_0_0_Request / "banks" / bankId / "user_customer_links" ).POST <@(user1)
+      val createResponse = makePostRequest(createRequest, write(postJson))
+      Then("We should get a 201")
+      createResponse.code should equal(201)
+      
+      // Call endpoint without the entitlement
+      val requestGet = (v4_0_0_Request / "customers" / customerId / "accounts-minimal").GET <@ (user1)
+      val badResponseGet = makeGetRequest(requestGet)
+      badResponseGet.code should equal(403)
+      val errorMessage = badResponseGet.body.extract[ErrorMessage].message
+      errorMessage contains UserHasMissingRoles should be (true)
+      errorMessage contains CanGetAccountsMinimalForCustomerAtAnyBank.toString() should be (true)
+
+      // All good
+      Entitlement.entitlement.vend.addEntitlement("", resourceUser1.userId, CanGetAccountsMinimalForCustomerAtAnyBank.toString())
+      val goodResponseGet = makeGetRequest(requestGet)
+      goodResponseGet.code should equal(200)
+      goodResponseGet.body.extract[AccountsMinimalJson400]
+      
     }
   }
   

@@ -3,6 +3,18 @@
 ### Most recent changes at top of file
 ```
 Date          Commit        Action
+29/09/2022    eaa32f41      Added props excluded.response.behaviour, default is false. Set it to true to activate the props: excluded.response.field.values. Note: excluded.response.field.values can also be activated on a per call basis by the url param ?exclude-optional-fields=true
+07/09/2022    53564924      renamed props `language_tag` to `default_locale`, default is en_GB.
+08/08/2022    1ff7bf0a      removed props `meeting.tokbox_enabled`, `meeting.tokbox_api_key` and `meeting.tokbox_api_secret`. 
+                            removed three endpoints: getMeetings, getMeeting and createMeeting in V200.
+05/08/2022    ba690c1f      renamed props `transaction_request_challenge_ttl` to `transactionRequest.challenge.ttl.seconds`. 
+02/08/2022    7b06563f      added new props `userAuthContextUpdateRequest.challenge.ttl.seconds`, default is 600 seconds. 
+01/08/2022    d94687d6      added new props `answer_transactionRequest_challenge_allowed_attempts`, default is 3 .  
+03/05/2022    5fe70270      added new props `transaction_request_challenge_ttl`, default is 600 seconds.  
+31/03/2022    a0262c3f      added new value SIMPLE to props `transactionRequests_supported_types`  
+                            added new props `SIMPLE_OTP_INSTRUCTION_TRANSPORT`, default value is `DUMMY`
+24/02/2022    2882805c      removed `kafka`,`kafka_vJune2017` and `kafka_vMar2017` connectors
+24/02/2022    c7a206fc      removed `obpjvm` relevent connectors and java adapter `obp-ri-xxx` dependences
 18/01/2022    150a4d53      Added the security manager relevant props,they only used for the dynamic code endpoints
                             dynamic_code_sandbox_enable, default is false 
                             dynamic_code_sandbox_permissions, default is a list, please check sample.props.template

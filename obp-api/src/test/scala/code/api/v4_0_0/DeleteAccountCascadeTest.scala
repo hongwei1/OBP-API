@@ -1,7 +1,7 @@
 package code.api.v4_0_0
 
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
-import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJson
+import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJsonV300
 import code.api.util.APIUtil.OAuth._
 import code.api.util.ApiRole
 import code.api.util.ApiRole.CanDeleteAccountCascade
@@ -14,6 +14,8 @@ import com.openbankproject.commons.model.{AmountOfMoneyJsonV121, ErrorMessage}
 import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
+
+import java.util.concurrent.TimeUnit
 
 class DeleteAccountCascadeTest extends V400ServerSetup {
 
@@ -68,7 +70,11 @@ class DeleteAccountCascadeTest extends V400ServerSetup {
       val account = response400.body.extract[CreateAccountResponseJsonV310]
       account.account_id should not be empty
 
-      val postBodyView = createViewJson.copy(name = "_cascade_delete", metadata_view = "_cascade_delete", is_public = false)
+      //for create account endpoint, we need to wait for `setAccountHolderAndRefreshUserAccountAccess` method, 
+      //it is an asynchronous process, need some time to be done.
+      TimeUnit.SECONDS.sleep(3)
+      
+      val postBodyView = createViewJsonV300.copy(name = "_cascade_delete", metadata_view = "_cascade_delete", is_public = false).toCreateViewJson
       createViewViaEndpoint(bankId, account.account_id, postBodyView, user1)
       
       createAccountAttributeViaEndpoint(
@@ -76,7 +82,8 @@ class DeleteAccountCascadeTest extends V400ServerSetup {
         account.account_id,
         "REQUIRED_CHALLENGE_ANSWERS",
         "2",
-        "INTEGER"
+        "INTEGER",
+        Some("LKJL98769F")
       )
 
       grantUserAccessToViewViaEndpoint(

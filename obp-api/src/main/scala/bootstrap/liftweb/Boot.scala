@@ -29,7 +29,6 @@ package bootstrap.liftweb
 import java.io.{File, FileInputStream}
 import java.util.stream.Collectors
 import java.util.{Locale, TimeZone}
-
 import code.CustomerDependants.MappedCustomerDependant
 import code.DynamicData.DynamicData
 import code.DynamicEndpoint.DynamicEndpoint
@@ -39,7 +38,7 @@ import code.accountattribute.MappedAccountAttribute
 import code.accountholders.MapperAccountHolders
 import code.actorsystem.ObpActorSystem
 import code.api.Constant._
-import code.api.ResourceDocs1_4_0.ResourceDocs300.{ResourceDocs310, ResourceDocs400}
+import code.api.ResourceDocs1_4_0.ResourceDocs300.{ResourceDocs310, ResourceDocs400, ResourceDocs500, ResourceDocs510}
 import code.api.ResourceDocs1_4_0._
 import code.api._
 import code.api.attributedefinition.AttributeDefinition
@@ -55,7 +54,7 @@ import code.bankconnectors.{Connector, ConnectorEndpoints}
 import code.branches.MappedBranch
 import code.cardattribute.MappedCardAttribute
 import code.cards.{MappedPhysicalCard, PinReset}
-import code.consent.MappedConsent
+import code.consent.{ConsentRequest, MappedConsent}
 import code.consumer.Consumers
 import code.context.{MappedConsentAuthContext, MappedUserAuthContext, MappedUserAuthContextUpdate}
 import code.crm.MappedCrmEvent
@@ -84,7 +83,7 @@ import code.metadata.tags.MappedTag
 import code.metadata.transactionimages.MappedTransactionImage
 import code.metadata.wheretags.MappedWhereTag
 import code.methodrouting.MethodRouting
-import code.metrics.{MappedConnectorMetric, MappedMetric}
+import code.metrics.{MappedConnectorMetric, MappedMetric, MetricsArchive}
 import code.migration.MigrationScriptLog
 import code.model.{Consumer, _}
 import code.model.dataAccess._
@@ -96,12 +95,13 @@ import code.productcollectionitem.MappedProductCollectionItem
 import code.products.MappedProduct
 import code.ratelimiting.RateLimiting
 import code.remotedata.RemotedataActors
-import code.scheduler.DatabaseDriverScheduler
+import code.scheduler.{DatabaseDriverScheduler, MetricsArchiveScheduler}
 import code.scope.{MappedScope, MappedUserScope}
 import code.apicollectionendpoint.ApiCollectionEndpoint
 import code.apicollection.ApiCollection
 import code.bankattribute.BankAttribute
 import code.connectormethod.ConnectorMethod
+import code.customeraccountlinks.CustomerAccountLink
 import code.dynamicMessageDoc.DynamicMessageDoc
 import code.dynamicResourceDoc.DynamicResourceDoc
 import code.endpointMapping.EndpointMapping
@@ -121,23 +121,25 @@ import code.transactionattribute.MappedTransactionAttribute
 import code.transactionrequests.{MappedTransactionRequest, MappedTransactionRequestTypeCharge, TransactionRequestReasons}
 import code.usercustomerlinks.MappedUserCustomerLink
 import code.userlocks.UserLocks
-import code.users.{UserAgreement, UserAttribute, UserInitAction, UserInvitation}
+import code.users.{UserAgreement, UserAttribute, UserInitAction, UserInvitation, Users}
 import code.util.Helper.MdcLoggable
 import code.util.{Helper, HydraUtil}
 import code.validation.JsonSchemaValidation
 import code.views.Views
 import code.views.system.{AccountAccess, ViewDefinition}
-import code.webhook.{MappedAccountWebhook, WebhookHelperActors}
+import code.webhook.{BankAccountNotificationWebhook, MappedAccountWebhook, SystemAccountNotificationWebhook, WebhookHelperActors}
 import code.webuiprops.WebUiProps
-import com.openbankproject.commons.model.ErrorMessage
+import com.openbankproject.commons.model.{ErrorMessage, User}
 import com.openbankproject.commons.util.Functions.Implicits._
 import com.openbankproject.commons.util.{ApiVersion, Functions}
+
 import javax.mail.{Authenticator, PasswordAuthentication}
 import javax.mail.internet.MimeMessage
 import net.liftweb.common._
 import net.liftweb.db.DBLogEntry
 import net.liftweb.http.LiftRules.DispatchPF
 import net.liftweb.http._
+import net.liftweb.http.provider.HTTPCookie
 import net.liftweb.json.Extraction
 import net.liftweb.mapper._
 import net.liftweb.sitemap.Loc._
@@ -245,14 +247,14 @@ class Boot extends MdcLoggable {
           case Props.RunModes.Test =>
             new StandardDBVendor(
               driver,
-              APIUtil.getPropsValue("db.url") openOr "jdbc:h2:mem:OBPTest;DB_CLOSE_DELAY=-1",
+              APIUtil.getPropsValue("db.url") openOr Constant.h2DatabaseDefaultUrlValue,
               APIUtil.getPropsValue("db.user").orElse(Empty), 
               APIUtil.getPropsValue("db.password").orElse(Empty)
             )
           case _ =>
             new StandardDBVendor(
               driver,
-              "jdbc:h2:mem:OBPTest;DB_CLOSE_DELAY=-1",
+              h2DatabaseDefaultUrlValue,
               Empty, Empty)
         }
 
@@ -407,7 +409,11 @@ class Boot extends MdcLoggable {
     enableVersionIfAllowed(ApiVersion.v3_0_0)
     enableVersionIfAllowed(ApiVersion.v3_1_0)
     enableVersionIfAllowed(ApiVersion.v4_0_0)
+    enableVersionIfAllowed(ApiVersion.v5_0_0)
+    enableVersionIfAllowed(ApiVersion.v5_1_0)
     enableVersionIfAllowed(ApiVersion.b1)
+    enableVersionIfAllowed(ApiVersion.`dynamic-endpoint`)
+    enableVersionIfAllowed(ApiVersion.`dynamic-entity`)
 
     def enableOpenIdConnectApis = {
       //  OpenIdConnect endpoint and validator
@@ -462,6 +468,8 @@ class Boot extends MdcLoggable {
     LiftRules.statelessDispatch.append(ResourceDocs300)
     LiftRules.statelessDispatch.append(ResourceDocs310)
     LiftRules.statelessDispatch.append(ResourceDocs400)
+    LiftRules.statelessDispatch.append(ResourceDocs500)
+    LiftRules.statelessDispatch.append(ResourceDocs510)
     ////////////////////////////////////////////////////
 
 
@@ -526,6 +534,7 @@ class Boot extends MdcLoggable {
       Menu.i("Consumer Admin") / "admin" / "consumers" >> Admin.loginFirst >> LocGroup("admin")
         submenus(Consumer.menus : _*),
       Menu("Consumer Registration", Helper.i18n("consumer.registration.nav.name")) / "consumer-registration" >> AuthUser.loginFirst,
+      Menu("Consent Screen", Helper.i18n("consent.screen")) / "consent-screen" >> AuthUser.loginFirst,
       Menu("Dummy user tokens", "Get Dummy user tokens") / "dummy-user-tokens" >> AuthUser.loginFirst,
     
       Menu("Validate OTP", "Validate OTP") / "otp" >> AuthUser.loginFirst,
@@ -534,6 +543,7 @@ class Boot extends MdcLoggable {
       Menu("User Invitation Info", "User Invitation Info") / "user-invitation-info",
       Menu("User Invitation Invalid", "User Invitation Invalid") / "user-invitation-invalid",
       Menu("User Invitation Warning", "User Invitation Warning") / "user-invitation-warning",
+      Menu("Already Logged In", "Already Logged In") / "already-logged-in",
       Menu("Terms and Conditions", "Terms and Conditions") / "terms-and-conditions",
       Menu("Privacy Policy", "Privacy Policy") / "privacy-policy",
       // Menu.i("Metrics") / "metrics", //TODO: allow this page once we can make the account number anonymous in the URL
@@ -584,14 +594,37 @@ class Boot extends MdcLoggable {
 
     LiftRules.explicitlyParsedSuffixes = Helpers.knownSuffixes &~ (Set("com"))
 
-    //set base localization to english (instead of computer default)
-    Locale.setDefault(Locale.ENGLISH)
-    logger.info("Current Project Locale is :" +Locale.getDefault)
-
-    //override locale calculated from client request with default (until we have translations)
+    val locale = I18NUtil.getDefaultLocale()
+    Locale.setDefault(locale)
+    logger.info("Default Project Locale is :" + locale)
+    
+    // Cookie name
+    val localeCookieName = "SELECTED_LOCALE"
     LiftRules.localeCalculator = {
-      case fullReq @ Full(req) => Locale.ENGLISH
-      case _ => Locale.ENGLISH
+      case fullReq @ Full(req) => {
+        // Check against a set cookie, or the locale sent in the request 
+        def currentLocale : Locale = {
+          S.findCookie(localeCookieName).flatMap {
+            cookie => cookie.value.map(I18NUtil.computeLocale)
+          } openOr locale
+        }
+
+        // Check to see if the user explicitly requests a new locale 
+        // In case it's true we use that value to set up a new cookie value
+        S.param(PARAM_LOCALE) match {
+          case Full(requestedLocale) if requestedLocale != null => {
+            val computedLocale: Locale = I18NUtil.computeLocale(requestedLocale)
+            val id: Long = AuthUser.getCurrentUser.map(_.user.userPrimaryKey.value).getOrElse(0)
+            Users.users.vend.getResourceUserByResourceUserId(id).map { 
+              u => u.LastUsedLocale(computedLocale.toString).save
+            }
+            S.addCookie(HTTPCookie(localeCookieName, requestedLocale))
+            computedLocale
+          }
+          case _ => currentLocale
+        }
+      }
+      case _ => locale
     }
 
     //for XSS vulnerability, set X-Frame-Options header as DENY
@@ -652,6 +685,7 @@ class Boot extends MdcLoggable {
       case Full(i) => DatabaseDriverScheduler.start(i)
       case _ => // Do not start it
     }
+    MetricsArchiveScheduler.start(intervalInSeconds = 86400)
     
 
     APIUtil.akkaSanityCheck() match {
@@ -700,6 +734,8 @@ class Boot extends MdcLoggable {
       val owner = Views.views.vend.getOrCreateSystemView(SYSTEM_OWNER_VIEW_ID).isDefined
       val auditor = Views.views.vend.getOrCreateSystemView(SYSTEM_AUDITOR_VIEW_ID).isDefined
       val accountant = Views.views.vend.getOrCreateSystemView(SYSTEM_ACCOUNTANT_VIEW_ID).isDefined
+      val standard = Views.views.vend.getOrCreateSystemView(SYSTEM_STANDARD_VIEW_ID).isDefined
+      val stageOne = Views.views.vend.getOrCreateSystemView(SYSTEM_STAGE_ONE_VIEW_ID).isDefined
       // Only create Firehose view if they are enabled at instance.
       val accountFirehose = if (ApiPropsWithAlias.allowAccountFirehose)
         Views.views.vend.getOrCreateSystemView(SYSTEM_FIREHOSE_VIEW_ID).isDefined
@@ -711,6 +747,8 @@ class Boot extends MdcLoggable {
            |System view ${SYSTEM_AUDITOR_VIEW_ID} exists/created at the instance: ${auditor}
            |System view ${SYSTEM_ACCOUNTANT_VIEW_ID} exists/created at the instance: ${accountant}
            |System view ${SYSTEM_FIREHOSE_VIEW_ID} exists/created at the instance: ${accountFirehose}
+           |System view ${SYSTEM_STANDARD_VIEW_ID} exists/created at the instance: ${standard}
+           |System view ${SYSTEM_STAGE_ONE_VIEW_ID} exists/created at the instance: ${stageOne}
            |""".stripMargin
       logger.info(comment)
 
@@ -746,15 +784,23 @@ class Boot extends MdcLoggable {
     if(HydraUtil.mirrorConsumerInHydra) {
       createHydraClients()
     }
+    
+    Props.get("session_inactivity_timeout_in_minutes") match {
+      case Full(x) if tryo(x.toLong).isDefined =>
+        LiftRules.sessionInactivityTimeout.default.set(Full((x.toLong.minutes): Long))
+      case _ =>
+      // Do not change default value
+    }
+    
   }
 
   private def sanityCheckOPropertiesRegardingScopes() = {
-    if (checkPropertiesRegardingScopes()) {
+    if (propertiesRegardingScopesAreValid()) {
       throw new Exception(s"Incompatible Props values for Scopes.")
     }
   }
 
-  def checkPropertiesRegardingScopes() = {
+  def propertiesRegardingScopesAreValid() = {
     (ApiPropsWithAlias.requireScopesForAllRoles || !getPropsValue("require_scopes_for_listed_roles").toList.map(_.split(",")).isEmpty) &&
       APIUtil.getPropsAsBoolValue("allow_entitlements_or_scopes", false)
   }
@@ -835,8 +881,8 @@ class Boot extends MdcLoggable {
    */
   private def createDefaultBankAndDefaultAccountsIfNotExisting() ={
     val defaultBankId= APIUtil.defaultBankId
-    val incomingAccountId= INCOMING_ACCOUNT_ID
-    val outgoingAccountId= OUTGOING_ACCOUNT_ID
+    val incomingAccountId= INCOMING_SETTLEMENT_ACCOUNT_ID
+    val outgoingAccountId= OUTGOING_SETTLEMENT_ACCOUNT_ID
     
     MappedBank.find(By(MappedBank.permalink, defaultBankId)) match {
       case Full(b) =>
@@ -883,6 +929,8 @@ class Boot extends MdcLoggable {
 
 object ToSchemify {
   // The following tables will be accessed via Akka to the OBP Storage instance which in turn uses Mapper / JDBC
+  // TODO EPIC The aim is to have all models prefixed with "Mapped" but table names should not be prefixed with "Mapped
+  // TODO EPIC The aim is to remove all field name prefixes("m")
   val modelsRemotedata: List[MetaMapper[_]] = List(
     AccountAccess,
     ViewDefinition,
@@ -908,6 +956,7 @@ object ToSchemify {
     MappedTransactionRequest,
     TransactionRequestAttribute,
     MappedMetric,
+    MetricsArchive,
     MapperAccountHolders,
     MappedEntitlement,
     MappedConnectorMetric,
@@ -930,7 +979,8 @@ object ToSchemify {
     BankAttribute,
     RateLimiting,
     MappedCustomerDependant,
-    AttributeDefinition
+    AttributeDefinition,
+    CustomerAccountLink
   )
 
   // The following tables are accessed directly via Mapper / JDBC
@@ -965,9 +1015,12 @@ object ToSchemify {
     MappedCurrency,
     MappedTransactionRequestTypeCharge,
     MappedAccountWebhook,
+    SystemAccountNotificationWebhook,
+    BankAccountNotificationWebhook,
     MappedCustomerIdMapping,
     MappedProductAttribute,
     MappedConsent,
+    ConsentRequest,
     MigrationScriptLog,
     MethodRouting,
     EndpointMapping,

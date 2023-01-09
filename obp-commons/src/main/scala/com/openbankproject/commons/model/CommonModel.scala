@@ -35,6 +35,7 @@ import com.openbankproject.commons.util.{ReflectUtils, optional}
 import net.liftweb.json.JsonAST.{JObject, JValue}
 import net.liftweb.json.{JInt, JString}
 
+import java.lang
 import scala.collection.immutable.List
 import scala.reflect.runtime.universe._
 //import code.customeraddress.CustomerAddress
@@ -90,7 +91,8 @@ case class AccountAttributeCommons(
                                     accountAttributeId :String,
                                     name :String,
                                     attributeType : AccountAttributeType.Value,
-                                    value :String) extends AccountAttribute
+                                    value :String,
+                                    productInstanceCode: Option[String] = None) extends AccountAttribute
 
 object AccountAttributeCommons extends Converter[AccountAttribute, AccountAttributeCommons]
 
@@ -111,7 +113,8 @@ case class UserAuthContextCommons(
                                    userId :String,
                                    key :String,
                                    value :String,
-                                   timeStamp :Date) extends UserAuthContext
+                                   timeStamp :Date,
+                                   consumerId :String) extends UserAuthContext
 
 object UserAuthContextCommons extends Converter[UserAuthContext, UserAuthContextCommons]
 
@@ -450,7 +453,8 @@ case class CustomerMessageCommons(
   override val date: Date,
   override val message: String,
   override val fromDepartment: String,
-  override val fromPerson: String
+  override val fromPerson: String,
+  override val transport: Option[String] = None,
 ) extends CustomerMessage
 object CustomerMessageCommons extends Converter[CustomerMessage, CustomerMessageCommons]
 
@@ -529,6 +533,7 @@ case class ChallengeCommons(
   override val scaMethod: Option[SCA],
   override val scaStatus: Option[SCAStatus],
   override val authenticationMethodId: Option[String] ,
+  override val attemptCounter: Int  = 0 //NOTE: set the default value here, so do not break current connectors
 ) extends ChallengeTrait
 object ChallengeCommons extends Converter[ChallengeTrait, ChallengeCommons]
 
@@ -647,6 +652,17 @@ case class TransactionRequestTransferToAtm(
 //For COUNTERPATY, it need the counterparty_id to find the toCounterpaty--> toBankAccount
 case class TransactionRequestCounterpartyId (counterparty_id : String)
 
+case class TransactionRequestSimple (
+  otherBankRoutingScheme: String,
+  otherBankRoutingAddress: String,
+  otherBranchRoutingScheme: String,
+  otherBranchRoutingAddress: String,
+  otherAccountRoutingScheme: String,
+  otherAccountRoutingAddress: String,
+  otherAccountSecondaryRoutingScheme: String,
+  otherAccountSecondaryRoutingAddress: String
+)
+
 case class TransactionRequestTransferToAccount(
                                                 value: AmountOfMoneyJsonV121,
                                                 description: String,
@@ -703,6 +719,8 @@ case class TransactionRequestBodyAllTypes (
                                             to_sepa: Option[TransactionRequestIban],
                                             @optional
                                             to_counterparty: Option[TransactionRequestCounterpartyId],
+                                            @optional
+                                            to_simple: Option[TransactionRequestSimple] = None,
                                             @optional
                                             to_transfer_to_phone: Option[TransactionRequestTransferToPhone] = None, //TODO not stable
                                             @optional
@@ -886,6 +904,125 @@ case class InboundAdapterCallContext(
   generalContext: Option[List[BasicGeneralContext]]= None,  //be set by backend, send it back to the header? not finish yet.
 )
 
+case class BasicCustomer(
+  customerId: String,
+  customerNumber: String,
+  legalName: String,
+)
+
+case class AuthInfo(
+  userId: String = "",
+  username: String = "",
+  cbsToken: String = "",
+  isFirst: Boolean = true,
+  correlationId: String = "",
+  sessionId: String = "",
+  linkedCustomers: List[BasicCustomer] = Nil,
+  userAuthContexts: List[BasicUserAuthContext]= Nil,
+  authViews: List[AuthView] = Nil,
+)
+
+case class ObpCustomer(
+  customerId: String,
+  bankId: String,
+  number: String,
+  legalName: String,
+  mobileNumber: String,
+  email: String,
+  faceImage: CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Integer,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating: CreditRating,
+  creditLimit: CreditLimit,
+  kycStatus: lang.Boolean,
+  lastOkDate: Date,
+  title: String = "", //These new fields for V310, not from Connector for now. 
+  branchId: String = "", //These new fields for V310, not from Connector for now. 
+  nameSuffix: String = "", //These new fields for V310, not from Connector for now. 
+) extends Customer
+
+case class InternalCustomer(
+  customerId: String,
+  bankId: String,
+  number: String,
+  legalName: String,
+  mobileNumber: String,
+  email: String,
+  faceImage: CustomerFaceImage,
+  dateOfBirth: Date,
+  relationshipStatus: String,
+  dependents: Integer,
+  dobOfDependents: List[Date],
+  highestEducationAttained: String,
+  employmentStatus: String,
+  creditRating: CreditRating,
+  creditLimit: CreditLimit,
+  kycStatus: lang.Boolean,
+  lastOkDate: Date
+)
+
+case class InboundAccountJune2017(
+  errorCode: String,
+  cbsToken: String, //TODO, this maybe move to AuthInfo, but it is used in GatewayLogin
+  bankId: String,
+  branchId: String,
+  accountId: String,
+  accountNumber: String,
+  accountType: String,
+  balanceAmount: String,
+  balanceCurrency: String,
+  owners: List[String],
+  viewsToGenerate: List[String],
+  bankRoutingScheme: String,
+  bankRoutingAddress: String,
+  branchRoutingScheme: String,
+  branchRoutingAddress: String,
+  accountRoutingScheme: String,
+  accountRoutingAddress: String,
+  accountRouting: List[AccountRouting],
+  accountRules: List[AccountRule]
+) extends InboundMessageBase with InboundAccount
+
+case class Bank2(r: InboundBank) extends Bank {
+  def fullName = r.name
+  def shortName = r.name
+  def logoUrl = r.logo
+  def bankId = BankId(r.bankId)
+  def nationalIdentifier = "None"
+  def swiftBic = "None"
+  def websiteUrl = r.url
+  def bankRoutingScheme = "None"
+  def bankRoutingAddress = "None"
+}
+
+case class InboundBank(
+  bankId: String,
+  name: String,
+  logo: String,
+  url: String
+)
+
+case class InboundValidatedUser(
+  errorCode: String,
+  backendMessages: List[InboundStatusMessage],
+  email: String,
+  displayName: String
+) extends InboundMessageBase
+
+case class OutboundChallengeBase(
+  messageFormat: String,
+  action: String,
+  bankId: String,
+  accountId: String,
+  userId: String,
+  username: String,
+  transactionRequestType: String,
+  transactionRequestId: String
+) extends OutboundMessageBase
 
 //Note: this is used for connector method: 'def getUser(name: String, password: String): Box[InboundUser]'
 case class InboundUser(

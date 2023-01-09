@@ -1,7 +1,6 @@
 package code.bankconnectors.akka
 
 import java.util.Date
-
 import akka.pattern.ask
 import code.actorsystem.ObpLookupSystem
 import code.api.ResourceDocs1_4_0.MessageDocsSwaggerDefinitions
@@ -12,6 +11,7 @@ import code.api.util.ExampleValue._
 import code.api.util._
 import code.bankconnectors._
 import code.bankconnectors.akka.actor.{AkkaConnectorActorInit, AkkaConnectorHelperActor}
+
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.dto._
 import com.openbankproject.commons.model._
@@ -128,6 +128,7 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
     exampleOutboundMessage = (
       OutBoundGetBankAccountsForUser(
         outboundAdapterCallContext,
+        provider=providerExample.value,
         usernameExample.value)
       ),
     exampleInboundMessage = (
@@ -139,8 +140,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       ),
     adapterImplementation = Some(AdapterImplementation("Accounts", 5))
   )
-  override def getBankAccountsForUser(username: String, callContext: Option[CallContext]): Future[Box[(List[InboundAccount], Option[CallContext])]] = {
-    val req = OutBoundGetBankAccountsForUser(callContext.map(_.toOutboundAdapterCallContext).get, username)
+  override def getBankAccountsForUser(provider: String, username:String, callContext: Option[CallContext]): Future[Box[(List[InboundAccount], Option[CallContext])]] = {
+    val req = OutBoundGetBankAccountsForUser(callContext.map(_.toOutboundAdapterCallContext).get, provider: String, username:String)
     val response = (southSideActor ? req).mapTo[InBoundGetBankAccountsForUser] recoverWith { recoverFunction }
     response.map(a =>(Full(a.data, callContext)))
   }
@@ -268,7 +269,7 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
   override def getTransactions(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]): OBPReturnType[Box[List[Transaction]]] = {
     val limit = queryParams.collect { case OBPLimit(value) => value }.headOption.getOrElse(100)
     val offset = queryParams.collect { case OBPOffset(value) => value }.headOption.getOrElse(0)
-    val fromDate = queryParams.collect { case OBPFromDate(date) => APIUtil.DateWithMsFormat.format(date) }.headOption.getOrElse(APIUtil.DefaultFromDate.toString)
+    val fromDate = queryParams.collect { case OBPFromDate(date) => APIUtil.DateWithMsFormat.format(date) }.headOption.getOrElse(APIUtil.theEpochTime.toString)
     val toDate = queryParams.collect { case OBPToDate(date) => APIUtil.DateWithMsFormat.format(date) }.headOption.getOrElse(APIUtil.DefaultToDate.toString)
 
     val req = OutBoundGetTransactions(callContext.map(_.toOutboundAdapterCallContext).get, bankId, accountId, limit, offset, fromDate, toDate)
@@ -307,7 +308,7 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
 
 
 //---------------- dynamic start -------------------please don't modify this line
-// ---------- created on 2021-08-24T13:21:14Z
+// ---------- created on 2022-03-11T18:42:02Z
 
   messageDocs += validateAndCheckIbanNumberDoc
   def validateAndCheckIbanNumberDoc = MessageDoc(
@@ -1377,7 +1378,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
     outboundTopic = None,
     inboundTopic = None,
     exampleOutboundMessage = (
-          OutBoundGetPhysicalCardsForUser( UserCommons(userPrimaryKey=UserPrimaryKey(123),
+     OutBoundGetPhysicalCardsForUser(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      user= UserCommons(userPrimaryKey=UserPrimaryKey(123),
       userId=userIdExample.value,
       idGivenByProvider="string",
       provider=providerExample.value,
@@ -1385,7 +1387,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)))
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))))
     ),
     exampleInboundMessage = (
      InBoundGetPhysicalCardsForUser(status=MessageDocsSwaggerDefinitions.inboundStatus,
@@ -1428,15 +1431,15 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value)))
+      customerId=customerIdExample.value
+      )))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def getPhysicalCardsForUser(user: User): Box[List[PhysicalCard]] = {
+  override def getPhysicalCardsForUser(user: User, callContext: Option[CallContext]): OBPReturnType[Box[List[PhysicalCard]]] = {
         import com.openbankproject.commons.dto.{InBoundGetPhysicalCardsForUser => InBound, OutBoundGetPhysicalCardsForUser => OutBound}  
-        val callContext: Option[CallContext] = None
-        val req = OutBound(user)
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, user)
         val response: Future[Box[InBound]] = (southSideActor ? req).mapTo[InBound].recoverWith(recoverFunction).map(Box !! _) 
         response.map(convertToTuple[List[PhysicalCard]](callContext))        
   }
@@ -1495,7 +1498,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value))
+      customerId=customerIdExample.value
+      ))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -1560,7 +1564,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       limit=limitExample.value.toInt,
       offset=offsetExample.value.toInt,
       fromDate=fromDateExample.value,
@@ -1650,7 +1655,9 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
       collected=Some(CardCollectionInfo(toDate(collectedExample))),
       posted=Some(CardPostedInfo(toDate(postedExample))),
-      customerId=customerIdExample.value)
+      customerId=customerIdExample.value,
+      cvv = cvvExample.value,
+      brand = brandExample.value)
     ),
     exampleInboundMessage = (
      InBoundCreatePhysicalCard(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -1699,9 +1706,14 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def createPhysicalCard(bankCardNumber: String, nameOnCard: String, cardType: String, issueNumber: String, serialNumber: String, validFrom: Date, expires: Date, enabled: Boolean, cancelled: Boolean, onHotList: Boolean, technology: String, networks: List[String], allows: List[String], accountId: String, bankId: String, replacement: Option[CardReplacementInfo], pinResets: List[PinResetInfo], collected: Option[CardCollectionInfo], posted: Option[CardPostedInfo], customerId: String, callContext: Option[CallContext]): OBPReturnType[Box[PhysicalCard]] = {
+  override def createPhysicalCard(bankCardNumber: String, nameOnCard: String, cardType: String, issueNumber: String, 
+    serialNumber: String, validFrom: Date, expires: Date, enabled: Boolean, cancelled: Boolean, onHotList: Boolean, 
+    technology: String, networks: List[String], allows: List[String], accountId: String, bankId: String, 
+    replacement: Option[CardReplacementInfo], pinResets: List[PinResetInfo], collected: Option[CardCollectionInfo], 
+    posted: Option[CardPostedInfo], customerId: String, cvv: String, brand: String,
+    callContext: Option[CallContext]): OBPReturnType[Box[PhysicalCard]] = {
         import com.openbankproject.commons.dto.{InBoundCreatePhysicalCard => InBound, OutBoundCreatePhysicalCard => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankCardNumber, nameOnCard, cardType, issueNumber, serialNumber, validFrom, expires, enabled, cancelled, onHotList, technology, networks, allows, accountId, bankId, replacement, pinResets, collected, posted, customerId)
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankCardNumber, nameOnCard, cardType, issueNumber, serialNumber, validFrom, expires, enabled, cancelled, onHotList, technology, networks, allows, accountId, bankId, replacement, pinResets, collected, posted, customerId, cvv, brand)
         val response: Future[Box[InBound]] = (southSideActor ? req).mapTo[InBound].recoverWith(recoverFunction).map(Box !! _) 
         response.map(convertToTuple[PhysicalCard](callContext))        
   }
@@ -1879,7 +1891,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -2023,7 +2036,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -2199,7 +2213,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceExample.value),
@@ -2708,7 +2723,7 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       data=List( ProductCommons(bankId=BankId(bankIdExample.value),
       code=ProductCode(productCodeExample.value),
       parentProductCode=ProductCode(parentProductCodeExample.value),
-      name=nameExample.value,
+      name=productNameExample.value,
       category=categoryExample.value,
       family=familyExample.value,
       superFamily=superFamilyExample.value,
@@ -2716,8 +2731,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       termsAndConditionsUrl=termsAndConditionsUrlExample.value,
       details=detailsExample.value,
       description=descriptionExample.value,
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)))))
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -2746,7 +2761,7 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       data= ProductCommons(bankId=BankId(bankIdExample.value),
       code=ProductCode(productCodeExample.value),
       parentProductCode=ProductCode(parentProductCodeExample.value),
-      name=nameExample.value,
+      name=productNameExample.value,
       category=categoryExample.value,
       family=familyExample.value,
       superFamily=superFamilyExample.value,
@@ -2754,8 +2769,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       termsAndConditionsUrl=termsAndConditionsUrlExample.value,
       details=detailsExample.value,
       description=descriptionExample.value,
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value))))
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -2802,8 +2817,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       username=usernameExample.value))),
       lobbyString=Some(LobbyString("string")),
       driveUpString=Some(DriveUpString("string")),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       branchRouting=Some( Routing(scheme=branchRoutingSchemeExample.value,
       address=branchRoutingAddressExample.value)),
       lobby=Some( Lobby(monday=List( OpeningTimes(openingTime=openingTimeExample.value,
@@ -2888,8 +2903,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       username=usernameExample.value))),
       lobbyString=Some(LobbyString("string")),
       driveUpString=Some(DriveUpString("string")),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       branchRouting=Some( Routing(scheme=branchRoutingSchemeExample.value,
       address=branchRoutingAddressExample.value)),
       lobby=Some( Lobby(monday=List( OpeningTimes(openingTime=openingTimeExample.value,
@@ -2969,8 +2984,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       user=Some( BasicResourceUser(userId=userIdExample.value,
       provider=providerExample.value,
       username=usernameExample.value))),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       OpeningTimeOnMonday=Some("string"),
       ClosingTimeOnMonday=Some("string"),
       OpeningTimeOnTuesday=Some("string"),
@@ -3048,8 +3063,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       user=Some( BasicResourceUser(userId=userIdExample.value,
       provider=providerExample.value,
       username=usernameExample.value))),
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value)),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
       OpeningTimeOnMonday=Some("string"),
       ClosingTimeOnMonday=Some("string"),
       OpeningTimeOnTuesday=Some("string"),
@@ -3141,7 +3156,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceExample.value),
@@ -3260,7 +3276,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
       balance=BigDecimal(balanceExample.value),
@@ -3354,7 +3371,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       viewId=ViewId(viewIdExample.value),
       fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
       accountType=accountTypeExample.value,
@@ -4471,8 +4489,10 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       data= UserAuthContextCommons(userAuthContextId=userAuthContextIdExample.value,
       userId=userIdExample.value,
       key=keyExample.value,
-      value=valueExample.value, 
-      timeStamp=parseDate(timeStampExample.value).getOrElse(sys.error("dateOfBirthExample.value is not validate date format."))))
+      value=valueExample.value,
+      timeStamp=toDate(timeStampExample),
+      consumerId=consumerIdExample.value
+      ))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4505,7 +4525,9 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       key=keyExample.value,
       value=valueExample.value,
       challenge=challengeExample.value,
-      status=statusExample.value))
+      status=statusExample.value,
+      consumerId=consumerIdExample.value
+      ))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4587,8 +4609,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       userId=userIdExample.value,
       key=keyExample.value,
       value=valueExample.value,
-      timeStamp=parseDate(timeStampExample.value).getOrElse(sys.error("dateOfBirthExample.value is not validate date format.")),
-      )))
+      timeStamp=toDate(timeStampExample), 
+      consumerId=consumerIdExample.value)))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4823,7 +4845,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def createOrUpdateAccountAttribute(bankId: BankId, accountId: AccountId, productCode: ProductCode, productAttributeId: Option[String], name: String, accountAttributeType: AccountAttributeType.Value, value: String, callContext: Option[CallContext]): OBPReturnType[Box[AccountAttribute]] = {
+  override def createOrUpdateAccountAttribute(bankId: BankId, accountId: AccountId, productCode: ProductCode, productAttributeId: Option[String], name: String, accountAttributeType: AccountAttributeType.Value, value: String,
+    productInstanceCode: Option[String],callContext: Option[CallContext]): OBPReturnType[Box[AccountAttribute]] = {
         import com.openbankproject.commons.dto.{InBoundCreateOrUpdateAccountAttribute => InBound, OutBoundCreateOrUpdateAccountAttribute => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, productCode, productAttributeId, name, accountAttributeType, value)
         val response: Future[Box[InBound]] = (southSideActor ? req).mapTo[InBound].recoverWith(recoverFunction).map(Box !! _) 
@@ -4936,7 +4959,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def createAccountAttributes(bankId: BankId, accountId: AccountId, productCode: ProductCode, accountAttributes: List[ProductAttribute], callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = {
+  override def createAccountAttributes(bankId: BankId, accountId: AccountId, productCode: ProductCode, accountAttributes: List[ProductAttribute],
+    productInstanceCode: Option[String], callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = {
         import com.openbankproject.commons.dto.{InBoundCreateAccountAttributes => InBound, OutBoundCreateAccountAttributes => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, productCode, accountAttributes)
         val response: Future[Box[InBound]] = (southSideActor ? req).mapTo[InBound].recoverWith(recoverFunction).map(Box !! _) 
@@ -5528,12 +5552,12 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
     exampleInboundMessage = (
      InBoundGetProductCollectionItemsTree(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
       status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data=List(ProductCollectionItemsTree(productCollectionItem= ProductCollectionItemCommons(collectionCode=collectionCodeExample.value,
+      data=List( ProductCollectionItemsTree(productCollectionItem= ProductCollectionItemCommons(collectionCode=collectionCodeExample.value,
       memberProductCode=memberProductCodeExample.value),
       product= ProductCommons(bankId=BankId(bankIdExample.value),
       code=ProductCode(productCodeExample.value),
       parentProductCode=ProductCode(parentProductCodeExample.value),
-      name=nameExample.value,
+      name=productNameExample.value,
       category=categoryExample.value,
       family=familyExample.value,
       superFamily=superFamilyExample.value,
@@ -5541,8 +5565,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       termsAndConditionsUrl=termsAndConditionsUrlExample.value,
       details=detailsExample.value,
       description=descriptionExample.value,
-      meta=Meta( License(id=idExample.value,
-      name=nameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value))),
       attributes=List( ProductAttributeCommons(bankId=BankId(bankIdExample.value),
       productCode=ProductCode(productCodeExample.value),
       productAttributeId=productAttributeIdExample.value,
@@ -5579,7 +5603,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       customerUser= UserCommons(userPrimaryKey=UserPrimaryKey(123),
       userId=userIdExample.value,
       idGivenByProvider="string",
@@ -5588,7 +5613,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       providerId=providerIdExample.value,
       purposeId=purposeIdExample.value,
       when=toDate(whenExample),
@@ -5652,7 +5678,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)))
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))))
     ),
     exampleInboundMessage = (
      InBoundGetMeetings(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -5703,7 +5730,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       meetingId=meetingIdExample.value)
     ),
     exampleInboundMessage = (
@@ -6049,7 +6077,8 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
       name=userNameExample.value,
       createdByConsentId=Some("string"),
       createdByUserInvitationId=Some("string"),
-      isDeleted=Some(true)),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))),
       bankId=BankId(bankIdExample.value),
       message=messageExample.value,
       fromDepartment=fromDepartmentExample.value,
@@ -6211,6 +6240,6 @@ object AkkaConnector_vDec2018 extends Connector with AkkaConnectorActorInit {
         response.map(convertToTuple[Boolean](callContext))        
   }
           
-// ---------- created on 2021-08-24T13:21:14Z
-//---------------- dynamic end ---------------------please don't modify this line   
+// ---------- created on 2022-03-11T18:42:02Z
+//---------------- dynamic end ---------------------please don't modify this line       
 }

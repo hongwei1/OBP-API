@@ -1,8 +1,12 @@
 #this is a sample props file you should edit and rename
 #see https://www.assembla.com/wiki/show/liftweb/Properties for all the naming options, or just use "default.props" in this same folder
 
+## REQUIREMENTS
+# see https://github.com/OpenBankProject/OBP-API#from-the-command-line for minimal memory requirements
+
 ####################################
 ## Minimum Settings
+
 
 ### Log level
 #logger.loglevel=INFO
@@ -19,8 +23,9 @@
 #connector=obpjvm
 ## proxy connector get data from LocalMappedConnector, and set the follow corresponding fields to be null: @optional, inbound.optional.fields props, outbound.optional.fields props
 #connector=proxy
-connector=mapped
-
+#connector=mapped
+connector=star
+starConnector_supported_types = mapped,internal
 # Connector cache time-to-live in seconds, caching disabled if not set
 #connector.cache.ttl.seconds=3
 
@@ -61,10 +66,11 @@ tests.port=8016
 End of minimum settings
 ####################################
 
-#if connector is mapped, set a database backend. If not set, this will be set to an in-memory h2 database by default
-#you can use a no config needed h2 database by setting db.driver=org.h2.Driver and not including db.url
+# if connector is mapped, set a database backend. If not set, this will be set to an in-memory h2 database by default
+# you can use a no config needed h2 database by setting db.driver=org.h2.Driver and not including db.url
+# Please note that since update o version 2.1.214 we use NON_KEYWORDS=VALUE to bypass reserved word issue in SQL statements
 #db.driver=org.h2.Driver
-#db.url=jdbc:h2:./lift_proto.db;DB_CLOSE_ON_EXIT=FALSE
+#db.url=jdbc:h2:./lift_proto.db;NON_KEYWORDS=VALUE;DB_CLOSE_ON_EXIT=FALSE
 
 #set this to false if you don't want the api payments call to work
 payments_enabled=false
@@ -104,7 +110,14 @@ sandbox_data_import_secret=change_me
 allow_account_deletion=true
 
 # This needs to be a list all the types of transaction_requests that we have tests for. Else those tests will fail
-transactionRequests_supported_types=SANDBOX_TAN,FREE_FORM,SEPA,COUNTERPARTY,TRANSFER_TO_PHONE
+transactionRequests_supported_types=SANDBOX_TAN,COUNTERPARTY,SEPA,ACCOUNT_OTP,ACCOUNT,SIMPLE
+ACCOUNT_OTP_INSTRUCTION_TRANSPORT=dummy
+SIMPLE_OTP_INSTRUCTION_TRANSPORT=dummy
+SEPA_OTP_INSTRUCTION_TRANSPORT=dummy
+FREE_FORM_OTP_INSTRUCTION_TRANSPORT=dummy
+COUNTERPARTY_OTP_INSTRUCTION_TRANSPORT=dummy
+SEPA_CREDIT_TRANSFERS_OTP_INSTRUCTION_TRANSPORT=dummy
+
 
 # control the create and access to public views. 
 allow_public_views =true

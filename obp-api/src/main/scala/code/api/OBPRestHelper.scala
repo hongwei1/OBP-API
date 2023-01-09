@@ -31,12 +31,14 @@ import java.net.URLDecoder
 import code.api.Constant._
 import code.api.OAuthHandshake._
 import code.api.builder.AccountInformationServiceAISApi.APIMethods_AccountInformationServiceAISApi
-import code.api.util.APIUtil._
+import code.api.util.APIUtil.{getClass, _}
 import code.api.util.ErrorMessages.{InvalidDAuthHeaderToken, UserIsDeleted, UsernameHasBeenLocked, attemptedToOpenAnEmptyBox}
 import code.api.util._
 import code.api.v3_0_0.APIMethods300
 import code.api.v3_1_0.APIMethods310
-import code.api.v4_0_0.APIMethods400
+import code.api.v4_0_0.{APIMethods400, OBPAPI4_0_0}
+import code.api.v5_0_0.OBPAPI5_0_0
+import code.api.v5_1_0.OBPAPI5_1_0
 import code.loginattempts.LoginAttempt
 import code.model.dataAccess.AuthUser
 import code.util.Helper.MdcLoggable
@@ -45,15 +47,18 @@ import com.openbankproject.commons.model.ErrorMessage
 import com.openbankproject.commons.util.{ApiVersion, ReflectUtils, ScannedApiVersion}
 import net.liftweb.common.{Box, Full, _}
 import net.liftweb.http.rest.RestHelper
-import net.liftweb.http.{JsonResponse, LiftResponse, Req, S}
+import net.liftweb.http.{JsonResponse, LiftResponse, LiftRules, Req, S, TransientRequestMemoize}
 import net.liftweb.json.Extraction
 import net.liftweb.json.JsonAST.JValue
-import net.liftweb.util.Helpers
+import net.liftweb.util.{Helpers, NamedPF, Props, ThreadGlobal}
+import net.liftweb.util.Helpers.tryo
 
+import java.util.{Locale, ResourceBundle}
 import scala.collection.immutable.List
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering
 import scala.util.control.NoStackTrace
+import scala.xml.{Node, NodeSeq}
 
 trait APIFailure{
   val msg : String
@@ -72,7 +77,82 @@ object APIFailure {
 case class APIFailureNewStyle(failMsg: String,
                               failCode: Int = 400,
                               ccl: Option[CallContextLight] = None
-                             )
+                             ){
+  def translatedErrorMessage = {
+  
+    val errorCode = extractErrorMessageCode(failMsg)
+    val errorBody = extractErrorMessageBody(failMsg)
+    
+    val localeUrlParameter = getHttpRequestUrlParam(ccl.map(_.url).getOrElse(""),PARAM_LOCALE)
+    val localeFromUrl = I18NUtil.computeLocale(localeUrlParameter)
+    
+    
+    val locale: Locale = 
+      if(localeFromUrl.toString.equals("")) //if the url local parameter is invalid, then we use the default Locale.
+        I18NUtil.getDefaultLocale() 
+      else 
+        localeFromUrl
+
+    val liftCoreResourceBundle = tryo(ResourceBundle.getBundle(LiftRules.liftCoreResourceName, locale)).toList
+    
+    val _resBundle = new ThreadGlobal[List[ResourceBundle]]
+    object resourceValueCache extends TransientRequestMemoize[(String, Locale), String]
+  
+    def resourceBundles(loc: Locale): List[ResourceBundle] = {
+      _resBundle.box match {
+        case Full(bundles) => bundles
+        case _ => {
+          _resBundle.set(
+            LiftRules.resourceForCurrentLoc.vend() :::
+              LiftRules.resourceNames.flatMap(name => tryo{
+                if (Props.devMode) {
+                  tryo{
+                    val clz = this.getClass.getClassLoader.loadClass("java.util.ResourceBundle")
+                    val meth = clz.getDeclaredMethods.
+                      filter{m => m.getName == "clearCache" && m.getParameterTypes.length == 0}.
+                      toList.head
+                    meth.invoke(null)
+                  }
+                }
+                List(ResourceBundle.getBundle(name, loc))
+              }.openOr(
+                NamedPF.applyBox((name, loc), LiftRules.resourceBundleFactories.toList).map(List(_)) openOr Nil
+                )))
+          _resBundle.value
+        }
+      }
+    }
+   
+  
+    def resourceBundleList: List[ResourceBundle] = resourceBundles(locale) ++ liftCoreResourceBundle
+  
+    def ?!(str: String, resBundle: List[ResourceBundle]): String =
+      resBundle.flatMap(
+        r => tryo(
+          r.getObject(str) match {
+            case s: String => Full(s)
+            case n: Node => Full(n.text)
+            case ns: NodeSeq => Full(ns.text)
+            case _ => Empty
+          })
+          .flatMap(s => s)).find(s => true) getOrElse {
+        LiftRules.localizationLookupFailureNotice.foreach(_ (str, locale));
+        str
+      }
+  
+    def ?(str: String, locale: Locale): String = resourceValueCache.get(
+      str -> 
+        locale,
+      if(locale.toString.startsWith("en") || ?!(str, resourceBundleList)==str) //If can not find the value from props or the local is `en`, then return 
+        errorBody 
+      else 
+        s": ${?!(str, resourceBundleList)}"
+      )
+    
+    val translatedErrorBody = ?(errorCode, locale)
+    s"$errorCode$translatedErrorBody"
+  }
+}
 
 //if you change this, think about backwards compatibility! All existing
 //versions of the API return this failure message, so if you change it, make sure
@@ -331,7 +411,7 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
       val (user, callContext) = OAuth2Login.getUser(cc)
       user match {
         case Full(u) =>
-          AuthUser.updateUserAccountViews(u, callContext)
+          AuthUser.refreshUser(u, callContext)
           fn(cc.copy(user = Full(u))) // Authentication is successful
         case ParamFailure(a, b, c, apiFailure : APIFailure) => ParamFailure(a, b, c, apiFailure : APIFailure)
         case Failure(msg, t, c) => Failure(msg, t, c)
@@ -586,8 +666,9 @@ trait OBPRestHelper extends RestHelper with MdcLoggable {
                                apiPrefix:OBPEndpoint => OBPEndpoint,
                                autoValidateAll: Boolean = false): Unit = {
 
-    def isAutoValidate(doc: ResourceDoc): Boolean =
-      doc.isValidateEnabled || (autoValidateAll && !doc.isValidateDisabled && doc.implementedInApiVersion == version)
+    def isAutoValidate(doc: ResourceDoc): Boolean = {                         //note: only support v5.0.0 and v4.0.0 at the moment.
+      doc.isValidateEnabled || (autoValidateAll && !doc.isValidateDisabled && List(OBPAPI5_1_0.version,OBPAPI5_0_0.version,OBPAPI4_0_0.version).contains(doc.implementedInApiVersion))
+    }
 
     for(route <- routes) {
       // one endpoint can have multiple ResourceDocs, so here use filter instead of find, e.g APIMethods400.Implementations400.createTransactionRequest
