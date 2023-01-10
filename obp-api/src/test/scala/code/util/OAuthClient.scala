@@ -36,7 +36,7 @@ import oauth.signpost.basic.{DefaultOAuthConsumer, DefaultOAuthProvider}
 import oauth.signpost.{OAuthConsumer, OAuthProvider}
 import org.apache.http.client.utils.URLEncodedUtils
 import org.openqa.selenium._
-import org.openqa.selenium.htmlunit.HtmlUnitDriver
+//import org.openqa.selenium.htmlunit.HtmlUnitDriver
 import code.api.oauth1a.OauthParams._
 import scala.collection.JavaConverters._
 
@@ -123,38 +123,38 @@ object OAuthClient extends MdcLoggable {
     Empty
   }
 
-  def authenticateWithOBPCredentials(username: String, password: String) = {
-    val provider = OBPDemo
-    mostRecentLoginAttemptProvider = Full(provider)
-    val credential = setNewCredential(provider)
-
-    val authUrl = provider.oAuthProvider.retrieveRequestToken(credential.consumer, "http://dummyurl.com/oauthcallback")
-
-    //use selenium to submit login form
-    val webdriver = new HtmlUnitDriver()
-    webdriver.get(authUrl)
-    webdriver.findElement(By.xpath("//input[@name='username']")).sendKeys(username)
-    val element = webdriver.findElement(By.xpath("//input[@name='password']"))
-    element.sendKeys(password)
-    element.submit()
-
-    //get redirect urls oauth_verifier
-    val params = URLEncodedUtils.parse(new URI(webdriver.getCurrentUrl()), "UTF-8").asScala
-    var verifier : Box[String] = Empty
-    params.foreach(p => {
-      if (p.getName() == "redirectUrl") {
-        val decoded = URLDecoder.decode(p.getValue(), "UTF-8")
-        val params = URLEncodedUtils.parse(new URI(decoded), "UTF-8").asScala
-        params.foreach(p => {
-          if (p.getName() == VerifierName) {
-            verifier = Full(p.getValue())
-          }
-        })
-      }
-    })
-
-    handleCallback(verifier, provider)
-  }
+//  def authenticateWithOBPCredentials(username: String, password: String) = {
+//    val provider = OBPDemo
+//    mostRecentLoginAttemptProvider = Full(provider)
+//    val credential = setNewCredential(provider)
+//
+//    val authUrl = provider.oAuthProvider.retrieveRequestToken(credential.consumer, "http://dummyurl.com/oauthcallback")
+//
+//    //use selenium to submit login form
+//    val webdriver = new HtmlUnitDriver()
+//    webdriver.get(authUrl)
+//    webdriver.findElement(By.xpath("//input[@name='username']")).sendKeys(username)
+//    val element = webdriver.findElement(By.xpath("//input[@name='password']"))
+//    element.sendKeys(password)
+//    element.submit()
+//
+//    //get redirect urls oauth_verifier
+//    val params = URLEncodedUtils.parse(new URI(webdriver.getCurrentUrl()), "UTF-8").asScala
+//    var verifier : Box[String] = Empty
+//    params.foreach(p => {
+//      if (p.getName() == "redirectUrl") {
+//        val decoded = URLDecoder.decode(p.getValue(), "UTF-8")
+//        val params = URLEncodedUtils.parse(new URI(decoded), "UTF-8").asScala
+//        params.foreach(p => {
+//          if (p.getName() == VerifierName) {
+//            verifier = Full(p.getValue())
+//          }
+//        })
+//      }
+//    })
+//
+//    handleCallback(verifier, provider)
+//  }
 
   def loggedIn : Boolean = credentials.map(_.readyToSign).getOrElse(false)
 
