@@ -531,6 +531,10 @@ class Boot extends MdcLoggable {
       Menu.i("Plain") / "plain",
       Menu.i("Static") / "static",
       Menu.i("SDKs") / "sdks",
+      Menu.i("Basic") / "basic",
+      Menu.i("Debug Webui props exists") / "debug-webui-props-exists",
+      Menu.i("Debug Webui props exists with loc") / "debug-webui-props-exists-with-loc",
+      Menu.i("Debug Webui props not exists") / "debug-webui-props-not-exists",
       Menu.i("Consumer Admin") / "admin" / "consumers" >> Admin.loginFirst >> LocGroup("admin")
         submenus(Consumer.menus : _*),
       Menu("Consumer Registration", Helper.i18n("consumer.registration.nav.name")) / "consumer-registration" >> AuthUser.loginFirst,
