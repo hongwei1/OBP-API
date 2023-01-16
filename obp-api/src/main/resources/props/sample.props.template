@@ -150,7 +150,7 @@ write_connector_metrics=true
 #allow_elasticsearch_metrics=true
 #es.cluster.name=elasticsearch
 
-
+WEBUI_PROPS_CACHE_TTL_SECONDS
 ## ElasticSearch warehouse
 #es.warehouse.index=warehouse
 #es.warehouse.host=localhost
