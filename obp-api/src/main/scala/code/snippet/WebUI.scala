@@ -155,7 +155,19 @@ class WebUI extends MdcLoggable{
   }
 
   def aboutText: CssSel = {
-    "#main-about-text *" #> scala.xml.Unparsed(getWebUiPropsValue("webui_index_page_about_section_text", ""))
+    logger.debug("aboutText - start")
+    val tags = S.?("1")
+//    val tags = S.?("2")
+//    val tags = S.?("3")
+//    val tags = S.?("123")
+//    val tags = S.?("123")
+//    val tags = S.?("123")
+//    val tags = S.?("123")
+//    val tags = S.?("123")
+//    val tags = S.?("123")
+    logger.debug("aboutText - end")
+    ".api-explorer-link a [href]" #> scala.xml.Unparsed("1232")
+
   }
 
   def topText: CssSel = {
@@ -220,16 +232,11 @@ class WebUI extends MdcLoggable{
 
 
   def apiExplorerLink: CssSel = {
-    val tags = S.attr("tags") openOr ""
-    val locale = S.locale.toString
-    // Note the Props value might contain a query parameter e.g. ?psd2=true
-    val baseUrl = getWebUiPropsValue("webui_api_explorer_url", "")
-    // hack (we should use url operators instead) so we can add further query parameters if one is already included in the the baseUrl
-    val baseUrlWithQ =  baseUrl.contains("?") match {
-      case true => baseUrl +  s"&tags=$tags${brandString}&locale=${locale}" // ? found so add & instead
-      case false => baseUrl + s"?tags=$tags${brandString}&locale=${locale}" // ? not found so add it.
-    }
-    ".api-explorer-link a [href]" #> scala.xml.Unparsed(baseUrlWithQ)
+    logger.debug("S.loc - start")
+    val tags = S.loc("123")
+    logger.debug("S.loc - end")
+   
+    ".api-explorer-link a [href]" #> scala.xml.Unparsed("1232")
   }
   
   def wrapPropsUrlLocaleParameter (propsKey: String) = {
@@ -453,6 +460,13 @@ class WebUI extends MdcLoggable{
 
 
   val displayForBanks = if (APIUtil.getPropsAsBoolValue("webui_display_for_banks_section", true)) {
+
+    import org.apache.commons.lang3.time.StopWatch;
+
+    val stopWatch = new StopWatch();
+    // 开始时间
+        
+    
     logger.info("show for banks section")
     "block"
   } else {
