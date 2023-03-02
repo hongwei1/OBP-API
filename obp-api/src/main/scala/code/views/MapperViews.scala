@@ -614,9 +614,9 @@ object MapperViews extends Views with MdcLoggable {
       case ParamFailure(x,y,z,q) => ParamFailure(x,y,z,q)
     }
   }  
-  def getOrCreateSystemView(name: String) : Box[View] = {
-    getExistingSystemView(name) match {
-      case Empty => createDefaultSystemView(name)
+  def getOrCreateSystemView(viewId: String) : Box[View] = {
+    getExistingSystemView(viewId) match {
+      case Empty => createDefaultSystemView(viewId)
       case Full(v) => Full(v)
       case Failure(msg, t, c) => Failure(msg, t, c)
       case ParamFailure(x,y,z,q) => ParamFailure(x,y,z,q)
@@ -913,15 +913,15 @@ object MapperViews extends Views with MdcLoggable {
       .canAddTransactionRequestToOwnAccount_(true) //added following two for payments
       .canAddTransactionRequestToAnyAccount_(true)
   }
-  def unsavedSystemView(name: String) : ViewDefinition = {
+  def unsavedSystemView(viewId: String) : ViewDefinition = {
     val entity = create
       .isSystem_(true)
       .isFirehose_(false)
       .bank_id(null)
       .account_id(null)
-      .name_(StringHelpers.capify(name))
-      .view_id(name)
-      .description_(name)
+      .name_(StringHelpers.capify(viewId))
+      .view_id(viewId)
+      .description_(viewId)
       .isPublic_(false) //(default is false anyways)
       .usePrivateAliasIfOneExists_(false) //(default is false anyways)
       .usePublicAliasIfOneExists_(false) //(default is false anyways)
@@ -1000,7 +1000,7 @@ object MapperViews extends Views with MdcLoggable {
       .canAddTransactionRequestToOwnAccount_(true) //added following two for payments
       .canAddTransactionRequestToAnyAccount_(true)
     
-    name match {
+    viewId match {
       case SYSTEM_STAGE_ONE_VIEW_ID =>
         entity
           .canSeeTransactionDescription_(false)

@@ -101,13 +101,13 @@ trait Views {
   def getOrCreateAccountView(bankAccountUID: BankIdAccountId, viewId: String): Box[View]
   def getOrCreateFirehoseView(bankId: BankId, accountId: AccountId, description: String) : Box[View]
   
-  def getOrCreateSystemView(name: String) : Box[View]
+  def getOrCreateSystemView(viewId: String) : Box[View]
   def getOrCreateCustomPublicView(bankId: BankId, accountId: AccountId, description: String) : Box[View]
   def createCustomRandomView(bankId: BankId, accountId: AccountId) : Box[View]
 
-  @deprecated("There is no custom `Accountant` view, only support system owner view now","2020-01-13")
+  @deprecated("There is no custom `Accountant` view, only support system accountant view now","2020-01-13")
   def getOrCreateAccountantsView(bankId: BankId, accountId: AccountId, description: String) : Box[View]
-  @deprecated("There is no custom `Auditor` view, only support system owner view now","2020-01-13")
+  @deprecated("There is no custom `Auditor` view, only support system auditor view now","2020-01-13")
   def getOrCreateAuditorsView(bankId: BankId, accountId: AccountId, description: String) : Box[View]
   @deprecated("There is no custom `owner` view, only support system owner view now","2020-01-13")
   def getOrCreateOwnerView(bankId: BankId, accountId: AccountId, description: String) : Box[View]
@@ -158,9 +158,9 @@ class RemotedataViewsCaseClasses {
   case class getSystemViews()
   case class customViewFuture(viewId : ViewId, bankAccountId: BankIdAccountId)
   case class systemViewFuture(viewId : ViewId)
-  case class getOrCreateAccountView(account: BankIdAccountId, viewName: String)
+  case class getOrCreateAccountView(account: BankIdAccountId, viewId: String)
   case class getOrCreateOwnerView(bankId: BankId, accountId: AccountId, description: String)
-  case class getOrCreateSystemView(name: String)
+  case class getOrCreateSystemView(viewId: String)
   case class getOrCreateFirehoseView(bankId: BankId, accountId: AccountId, description: String)
   case class getOrCreatePublicView(bankId: BankId, accountId: AccountId, description: String)
   case class getOrCreateAccountantsView(bankId: BankId, accountId: AccountId, description: String)
