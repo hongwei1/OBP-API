@@ -126,22 +126,41 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   //
   override def getAdapterInfo(callContext: Option[CallContext]): Future[Box[(InboundAdapterInfoInternal, Option[CallContext])]] = Future {
-    val startTime = Helpers.now.getTime
-    val source = APIUtil.getPropsValue("db.driver","org.h2.Driver")
-    Full(InboundAdapterInfoInternal(
-      errorCode = "",
-      backendMessages = List(
-        InboundStatusMessage(
-          source = source,
-          status = "Success",
-          errorCode = "",
-          text =s"Get data from $source database",
-          duration = Some(BigDecimal(Helpers.now.getTime - startTime)/1000))),
-      name = "LocalMappedConnector",
-      version = "mapped",
-      git_commit = APIUtil.gitCommit,
-      date = DateWithMsFormat.format(new Date())
-    ), callContext)
+     {
+      import scalikejdbc.{ConnectionPool, ConnectionPoolSettings, MultipleConnectionPoolContext}
+      import scalikejdbc.DB.CPContext
+      import scalikejdbc.{DB => scalikeDB, _}
+
+      val startTime = new Date().getTime
+
+      val result = scalikeDB readOnly { implicit session =>
+        val sqlQuery =
+          sql"""SELECT * FROM MappedConnectorMetric a
+               |JOIN mappedmetric b
+               |ON b.correlationid = a.correlationid
+               |ORDER BY a.correlationid""".stripMargin
+        net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery.statement)
+        for (i <- 1 to 10) sqlQuery.map(
+          rs => rs
+        ).list().apply()
+      }
+      net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlResult --:  " + result.toString)
+
+      net.liftweb.common.Full((InboundAdapterInfoInternal(
+        errorCode = "",
+        backendMessages = List(
+          InboundStatusMessage(
+            source = "dyanmic connector",
+            status = "Success",
+            errorCode = "",
+            text = s"Get data from database",
+            duration = Some(BigDecimal(new Date().getTime - startTime) / 1000))),
+        name = "LocalMappedConnector",
+        version = "mapped",
+        git_commit = APIUtil.gitCommit,
+        date = DateWithMsFormat.format(new Date())
+      ), callContext))
+    }
   }
   
   override def validateAndCheckIbanNumber(iban: String, callContext: Option[CallContext]): OBPReturnType[Box[IbanChecker]] = Future {

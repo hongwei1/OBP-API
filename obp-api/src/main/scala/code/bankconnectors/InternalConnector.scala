@@ -18,7 +18,68 @@ import com.github.dwickern.macros.NameOf.{nameOf, qualifiedNameOfType}
 import com.openbankproject.commons.util.ReflectUtils
 
 import scala.reflect.runtime.universe.{MethodSymbol, TermSymbol, typeOf}
+import code.api.util.DynamicUtil.compileScalaCode
+import code.api.util.ErrorMessages._
+import net.liftweb.common.Full
 
+import scala.concurrent.Future
+import code.connectormethod.{ConnectorMethodProvider, JsonConnectorMethod}
+import com.github.dwickern.macros.NameOf.nameOf
+import net.liftweb.common.{Box, Failure}
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+
+import java.lang.reflect.Method
+import code.api.util.{CallContext, DynamicUtil}
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.text.StringEscapeUtils
+import com.github.dwickern.macros.NameOf.{nameOf, qualifiedNameOfType}
+import com.openbankproject.commons.util.ReflectUtils
+import code.api.util.DynamicUtil.compileScalaCode
+import code.connectormethod.{ConnectorMethodProvider, JsonConnectorMethod}
+import com.github.dwickern.macros.NameOf.nameOf
+import net.liftweb.common.{Box, Failure, Full}
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+import org.apache.commons.lang3.StringUtils
+
+import java.lang.reflect.Method
+import java.util.Date
+import code.api.BerlinGroup.{AuthenticationType, ScaStatus}
+import code.api.Constant.HostName
+import code.api.util.APIUtil.{DateWithMsFormat, OBPReturnType, connectorEmptyResponse, defaultBankId, getHttpRequestUrlParam, unboxFullOrFail}
+import code.api.util._
+import code.api.v4_0_0.CallLimitPostJsonV400
+import code.bankconnectors.LocalMappedConnector.{createChallengeInternal, getBankAccountsHeldLegacy, getTransactionLegacy, logger}
+import code.model.dataAccess.MappedBankAccount
+import code.model.dataAccess.internalMapping.MappedAccountIdMappingProvider
+import com.openbankproject.commons.model._
+import com.openbankproject.commons.util.optional
+import net.liftweb.mapper.By
+
+import scala.collection.immutable.List
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.reflect.runtime.universe.{MethodSymbol, TermSymbol, typeOf}
+import code.api.util.DynamicUtil
+import code.util.AkkaHttpClient.{makeHttpRequest, prepareHttpRequest}
+import code.util.Helper.MdcLoggable
+import code.bankconnectors.{akka => obpakka}
+import code.context.UserAuthContextProvider
+import code.database.authorisation.Authorisations
+import code.metrics.{APIMetrics, AggregateMetrics}
+import code.metrics.MappedMetrics.{falseOrTrue, logger, trueOrFalse}
+import code.transactionChallenge.Challenges
+import com.openbankproject.commons.dto.GetProductsParam
+import com.openbankproject.commons.model.enums.{ChallengeType, StrongCustomerAuthentication}
+import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
+import com.openbankproject.commons.model.enums.StrongCustomerAuthenticationStatus.SCAStatus
+import com.typesafe.sslconfig.akka.AkkaSSLConfig
+import com.typesafe.sslconfig.ssl.{TrustManagerConfig, TrustStoreConfig}
+import net.liftweb.json.parse
+import net.liftweb.util.Helpers
+import net.liftweb.util.Helpers.tryo
+
+import java.sql.Timestamp
+import scala.reflect.runtime.universe.{MethodSymbol, TermSymbol, typeOf}
 
 object InternalConnector {
 
@@ -33,6 +94,40 @@ object InternalConnector {
   private object connector extends Connector {
     // you can create method at here and copy the method body to create `ConnectorMethod`, but never keep the code
     // in this object, you must make sure this object is empty.
+   override def getAdapterInfo(callContext: Option[CallContext])=  
+    Future{
+      import scalikejdbc.{DB => scalikeDB, _}
+      
+      val startTime = new Date().getTime
+
+      val result = scalikeDB readOnly { implicit session =>
+        val sqlQuery =sql"""SELECT * FROM MappedConnectorMetric a
+                           |JOIN mappedmetric b
+                           |ON b.correlationid = a.correlationid
+                           |ORDER BY a.correlationid""".stripMargin
+        net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery.statement)
+        for (i <- 1 to 10) sqlQuery.map(
+          rs => rs
+        ).list().apply()
+      }
+      net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlResult --:  " + result.toString)
+
+      net.liftweb.common.Full((InboundAdapterInfoInternal(
+        errorCode = "",
+        backendMessages = List(
+          InboundStatusMessage(
+            source = "dyanmic connector",
+            status = "Success",
+            errorCode = "",
+            text = s"Get data from database",
+            duration = Some(BigDecimal(new Date().getTime - startTime) / 1000))),
+        name = "LocalMappedConnector",
+        version = "mapped",
+        git_commit = APIUtil.gitCommit,
+        date = DateWithMsFormat.format(new Date())
+      ), callContext))
+    }
+
   }
 
   private val intercept:MethodInterceptor = (_: Any, method: Method, args: Array[AnyRef], _: MethodProxy) => {

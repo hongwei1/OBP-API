@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 object MappedMetrics extends APIMetrics with MdcLoggable{
 
   val cachedAllMetrics = APIUtil.getPropsValue(s"MappedMetrics.cache.ttl.seconds.getAllMetrics", "7").toInt
-  val cachedAllAggregateMetrics = APIUtil.getPropsValue(s"MappedMetrics.cache.ttl.seconds.getAllAggregateMetrics", "7").toInt
+  val cachedAllAggregateMetrics = APIUtil.getPropsValue(s"MappedMetrics.cache.ttl.seconds.getAllAggregateMetrics", "0").toInt
   val cachedTopApis = APIUtil.getPropsValue(s"MappedMetrics.cache.ttl.seconds.getTopApis", "3600").toInt
   val cachedTopConsumers = APIUtil.getPropsValue(s"MappedMetrics.cache.ttl.seconds.getTopConsumers", "3600").toInt
 
@@ -258,8 +258,8 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
       * The real value will be assigned by Macro during compile time at this line of a code:
       * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
       */
-    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-    CacheKeyFromArguments.buildCacheKey { Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(cachedAllAggregateMetrics days){
+//    var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
+//    CacheKeyFromArguments.buildCacheKey { Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(cachedAllAggregateMetrics days){
       val fromDate = queryParams.collect { case OBPFromDate(value) => value }.headOption
       val toDate = queryParams.collect { case OBPToDate(value) => value }.headOption
       val consumerId = queryParams.collect { case OBPConsumerId(value) => value }.headOption.flatMap(consumerIdToPrimaryKey)
@@ -294,23 +294,8 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
       
       val result = scalikeDB readOnly { implicit session =>
         val sqlQuery = if(isNewVersion) // in the version, we use includeXxx instead of excludeXxx, the performance should be better. 
-          sql"""SELECT count(*), avg(duration), min(duration), max(duration)  
-              FROM metric
-              WHERE date_c >= ${new Timestamp(fromDate.get.getTime)} 
-              AND date_c <= ${new Timestamp(toDate.get.getTime)}
-              AND (${trueOrFalse(consumerId.isEmpty)} or consumerid = ${consumerId.getOrElse("")})
-              AND (${trueOrFalse(userId.isEmpty)} or userid = ${userId.getOrElse("")})
-              AND (${trueOrFalse(implementedByPartialFunction.isEmpty)} or implementedbypartialfunction = ${implementedByPartialFunction.getOrElse("")})
-              AND (${trueOrFalse(implementedInVersion.isEmpty)} or implementedinversion = ${implementedInVersion.getOrElse("")})
-              AND (${trueOrFalse(url.isEmpty)} or url = ${url.getOrElse("")})
-              AND (${trueOrFalse(appName.isEmpty)} or appname = ${appName.getOrElse("")})
-              AND (${trueOrFalse(verb.isEmpty)} or verb = ${verb.getOrElse("")})
-              AND (${falseOrTrue(anon.isDefined && anon.equals(Some(true)))} or userid = 'null')
-              AND (${falseOrTrue(anon.isDefined && anon.equals(Some(false)))} or userid != 'null') 
-              AND (${trueOrFalse(correlationId.isEmpty)} or correlationId = ${correlationId.getOrElse("")})
-              AND (${trueOrFalse(includeUrlPatterns.isEmpty) } or (url LIKE ($includeUrlPatternsQueriesSql)))
-              AND (${trueOrFalse(includeAppNames.isEmpty) } or (appname in ($includeAppNamesList)))
-              AND (${trueOrFalse(includeImplementedByPartialFunctions.isEmpty) } or implementedbypartialfunction in ($includeImplementedByPartialFunctionsList))
+          sql"""SELECT *
+              FROM MappedConnectorMetric
               """.stripMargin
         else
           sql"""SELECT count(*), avg(duration), min(duration), max(duration)  
@@ -332,7 +317,16 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
             AND (${trueOrFalse(excludeImplementedByPartialFunctions.isEmpty) } or implementedbypartialfunction not in ($excludeImplementedByPartialFunctionsList))
             """.stripMargin
         logger.debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " +sqlQuery.statement)
-        val sqlResult = sqlQuery.map(
+        for (i <- 1 to 10) sqlQuery.map(
+          rs => rs
+        ).list().apply()
+
+        val sqlQuery1 =sql"""SELECT count(*), avg(duration), min(duration), max(duration)  
+              FROM MappedConnectorMetric
+              """.stripMargin
+       
+            
+        var sqlResult = sqlQuery1.map(
               rs => // Map result to case class
                 AggregateMetrics(
                   rs.stringOpt(1).map(_.toInt).getOrElse(0), 
@@ -345,7 +339,7 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
         sqlResult
       }
       tryo(result)
-    }}
+//    }}
   }
   
   override def getAllAggregateMetricsFuture(queryParams: List[OBPQueryParam], isNewVersion: Boolean): Future[Box[List[AggregateMetrics]]] = Future{
