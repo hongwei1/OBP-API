@@ -94,39 +94,39 @@ object InternalConnector {
   private object connector extends Connector {
     // you can create method at here and copy the method body to create `ConnectorMethod`, but never keep the code
     // in this object, you must make sure this object is empty.
-   override def getAdapterInfo(callContext: Option[CallContext])=  
-    Future{
-      import scalikejdbc.{DB => scalikeDB, _}
-      
-      val startTime = new Date().getTime
-
-      val result = scalikeDB readOnly { implicit session =>
-        val sqlQuery =sql"""SELECT * FROM MappedConnectorMetric a
-                           |JOIN mappedmetric b
-                           |ON b.correlationid = a.correlationid
-                           |ORDER BY a.correlationid""".stripMargin
-        net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery.statement)
-        for (i <- 1 to 10) sqlQuery.map(
-          rs => rs
-        ).list().apply()
-      }
-      net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlResult --:  " + result.toString)
-
-      net.liftweb.common.Full((InboundAdapterInfoInternal(
-        errorCode = "",
-        backendMessages = List(
-          InboundStatusMessage(
-            source = "dyanmic connector",
-            status = "Success",
-            errorCode = "",
-            text = s"Get data from database",
-            duration = Some(BigDecimal(new Date().getTime - startTime) / 1000))),
-        name = "LocalMappedConnector",
-        version = "mapped",
-        git_commit = APIUtil.gitCommit,
-        date = DateWithMsFormat.format(new Date())
-      ), callContext))
-    }
+//   override def getAdapterInfo(callContext: Option[CallContext])=  
+//    Future{
+//      import scalikejdbc.{DB => scalikeDB, _}
+//      
+//      val startTime = new Date().getTime
+//
+//      val result = scalikeDB readOnly { implicit session =>
+//        val sqlQuery =sql"""SELECT * FROM MappedConnectorMetric a
+//                           |JOIN mappedmetric b
+//                           |ON b.correlationid = a.correlationid
+//                           |ORDER BY a.correlationid""".stripMargin
+//        net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery.statement)
+//        for (i <- 1 to 1) sqlQuery.map(
+//          rs => rs
+//        ).list().apply()
+//      }
+//      net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlResult --:  " + result.toString)
+//
+//      net.liftweb.common.Full((InboundAdapterInfoInternal(
+//        errorCode = "",
+//        backendMessages = List(
+//          InboundStatusMessage(
+//            source = "dyanmic connector",
+//            status = "Success",
+//            errorCode = "",
+//            text = s"Get data from database",
+//            duration = Some(BigDecimal(new Date().getTime - startTime) / 1000))),
+//        name = "LocalMappedConnector",
+//        version = "mapped",
+//        git_commit = APIUtil.gitCommit,
+//        date = DateWithMsFormat.format(new Date())
+//      ), callContext))
+//    }
 
   }
 

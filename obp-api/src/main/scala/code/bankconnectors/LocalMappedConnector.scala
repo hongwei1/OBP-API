@@ -130,24 +130,23 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       import scalikejdbc.{ConnectionPool, ConnectionPoolSettings, MultipleConnectionPoolContext}
       import scalikejdbc.DB.CPContext
       import scalikejdbc.{DB => scalikeDB, _}
-
-      val startTime = new Date().getTime
-
-      val result = scalikeDB readOnly { implicit session =>
-        val sqlQuery =
-          sql"""SELECT * FROM MappedConnectorMetric a
-               |JOIN mappedmetric b
-               |ON b.correlationid = a.correlationid
-               |ORDER BY a.correlationid""".stripMargin
-        net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery.statement)
-        for (i <- 1 to 10) sqlQuery.map(
-          rs => rs
-        ).list().apply()
-      }
-      net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlResult --:  " + result.toString)
+//       DB.queryTimeout = Full(3)
+       val startTime = new Date().getTime
+//       val (columnNames, rows) = DB.runQuery("SELECT * FROM MappedConnectorMetric a\nJOIN mappedmetric b\nON b.correlationid = a.correlationid\nORDER BY a.correlationid", List())
+       val (columnNames, rows) = DB.runQuery("SELECT * FROM MappedConnectorMetric", List())
+//       println(rows)
+//      val result = scalikeDB readOnly { implicit session =>
+//        val sqlQuery =
+//          sql"""SELECT * FROM MappedConnectorMetric""".stripMargin.queryTimeout(3)
+//        net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery.statement)
+//        for (i <- 1 to 1) sqlQuery.map(
+//          rs => rs
+//        ).list().apply()
+//      }
+      net.liftweb.common.Logger(this.getClass).debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlResult --:  " )
 
       net.liftweb.common.Full((InboundAdapterInfoInternal(
-        errorCode = "",
+        errorCode = "123",
         backendMessages = List(
           InboundStatusMessage(
             source = "dyanmic connector",
