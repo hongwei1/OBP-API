@@ -84,9 +84,6 @@ trait APIMethods510 {
         cc =>
           for {
             _ <- Future() // Just start async calGet Adapter Info l
-            aggregateMetrics <- APIMetrics.apiMetrics.vend.getAllAggregateMetricsFuture(Nil, true) map {
-              x => unboxFullOrFail(x, cc.callContext, GetAggregateMetricsError)
-            }
           } yield {
             (JSONFactory510.getApiInfoJSON(apiVersion,apiVersionStatus), HttpCode.`200`(cc.callContext))
           }
