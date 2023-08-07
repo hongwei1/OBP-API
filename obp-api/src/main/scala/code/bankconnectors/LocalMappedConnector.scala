@@ -133,7 +133,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 //       DB.queryTimeout = Full(3)
        val startTime = new Date().getTime
 //       val (columnNames, rows) = DB.runQuery("SELECT * FROM MappedConnectorMetric a\nJOIN mappedmetric b\nON b.correlationid = a.correlationid\nORDER BY a.correlationid", List())
-       val (columnNames, rows) = DB.runQuery("SELECT * FROM MappedConnectorMetric", List())
+       val (columnNames, rows) = DB.runQuery("SELECT count(*) FROM MappedConnectorMetric JOIN mappedmetric b ON b.correlationid = MappedConnectorMetric.correlationid", List())
 //       println(rows)
 //      val result = scalikeDB readOnly { implicit session =>
 //        val sqlQuery =
