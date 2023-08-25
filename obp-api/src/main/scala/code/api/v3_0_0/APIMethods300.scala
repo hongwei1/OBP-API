@@ -2378,7 +2378,7 @@ trait APIMethods300 {
         cc =>
           for {
             (_, callContext) <- anonymousAccess(cc)
-            _ <- booleanToFuture(ServiceIsTooBusy +"Current Service(NewStyle.function.getBanks)", 503, callContext) {
+            _ <- booleanToFuture(BackendServiceIsTooBusy +"Service(NewStyle.function.getBanks)", 503, callContext) {
               canOpenFuture("NewStyle.function.getBanks")
             }
             (banks, callContext) <- FutureUtil.futureWithLimits(NewStyle.function.getBanks(callContext), "NewStyle.function.getBanks")
