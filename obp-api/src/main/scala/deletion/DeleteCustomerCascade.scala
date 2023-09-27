@@ -18,7 +18,7 @@ import code.usercustomerlinks.MappedUserCustomerLink
 import com.openbankproject.commons.model.CustomerId
 import deletion.DeletionUtil.databaseAtomicTask
 import net.liftweb.common.{Box, Empty, Full}
-import net.liftweb.db.DB
+import net.liftweb.db.CustomDB
 import net.liftweb.mapper.By
 import net.liftweb.util.DefaultConnectionIdentifier
 
@@ -47,7 +47,7 @@ object DeleteCustomerCascade {
       case true =>
         Full(true)
       case false =>
-        DB.rollback(DefaultConnectionIdentifier)
+        CustomDB.rollback(DefaultConnectionIdentifier)
         fullBoxOrException(Empty ~> APIFailureNewStyle(CouldNotDeleteCascade, 400))
     }
   }

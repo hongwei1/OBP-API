@@ -10,6 +10,7 @@ import scalikejdbc.DB.CPContext
 import scalikejdbc._
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZonedDateTime}
+import net.liftweb.db.CustomDB
 
 object MigrationOfMappedBadLoginAttemptDropIndex {
 
@@ -36,14 +37,14 @@ object MigrationOfMappedBadLoginAttemptDropIndex {
   }
   
   def dropUniqueIndex(name: String): Boolean = {
-    DbFunction.tableExists(MappedBadLoginAttempt, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MappedBadLoginAttempt, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
         var isSuccessful = false
         
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
             APIUtil.getPropsValue("db.driver") match    {
               case _ =>
                 () => "DROP INDEX IF EXISTS mappedbadloginattempt_musername;"

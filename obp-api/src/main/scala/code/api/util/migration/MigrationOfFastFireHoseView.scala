@@ -8,6 +8,7 @@ import code.productfee.ProductFee
 import net.liftweb.common.Full
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.DefaultConnectionIdentifier
+import net.liftweb.db.CustomDB
 
 object MigrationOfFastFireHoseView {
 
@@ -16,14 +17,14 @@ object MigrationOfFastFireHoseView {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
 
   def addFastFireHoseView(name: String): Boolean = {
-    DbFunction.tableExists(ProductFee, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ProductFee, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
         var isSuccessful = false
 
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
             () =>
               """
                 |CREATE VIEW v_fast_firehose_accounts AS select

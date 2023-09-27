@@ -2,6 +2,7 @@ package code.util
 
 import com.openbankproject.commons.model.BankId
 import net.liftweb.mapper.{BaseMappedField, BaseMetaMapper, DB}
+import net.liftweb.db.CustomDB
 
 import scala.collection.immutable.List
 
@@ -39,7 +40,7 @@ trait AttributeQueryTrait { self: BaseMetaMapper =>
   def getParentIdByParams(bankId: BankId, params: Map[String, List[String]]): List[String] = {
     if (params.isEmpty) {
       val sql = s"SELECT DISTINCT attr.$parentIdColumn FROM $tableName attr where attr.$bankIdColumn = ? "
-      val (_, list) = DB.runQuery(sql, List(bankId.value))
+      val (_, list) = CustomDB.runQuery(sql, List(bankId.value))
       list.flatten
     } else {
       val paramList = params.toList
@@ -67,7 +68,7 @@ trait AttributeQueryTrait { self: BaseMetaMapper =>
            |     AND ($sqlParametersFilter)
            |""".stripMargin
 
-      val (columnNames: List[String], list: List[List[String]]) = DB.runQuery(sql, bankId.value :: parameters)
+      val (columnNames: List[String], list: List[List[String]]) = CustomDB.runQuery(sql, bankId.value :: parameters)
       val columnNamesLowerCase = columnNames.map(_.toLowerCase)
       val parentIdIndex = columnNamesLowerCase.indexOf(parentIdColumn.toLowerCase)
       val nameIndex = columnNamesLowerCase.indexOf(nameColumn.toLowerCase)

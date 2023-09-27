@@ -11,7 +11,7 @@ import code.products.MappedProduct
 import com.openbankproject.commons.model.{BankId, ProductCode}
 import deletion.DeletionUtil.databaseAtomicTask
 import net.liftweb.common.{Box, Empty, Full}
-import net.liftweb.db.DB
+import net.liftweb.db.CustomDB
 import net.liftweb.mapper.By
 import net.liftweb.util.DefaultConnectionIdentifier
 
@@ -33,7 +33,7 @@ object DeleteProductCascade {
       case true =>
         Full(true)
       case false =>
-        DB.rollback(DefaultConnectionIdentifier)
+        CustomDB.rollback(DefaultConnectionIdentifier)
         fullBoxOrException(Empty ~> APIFailureNewStyle(CouldNotDeleteCascade, 400))
     }
   }

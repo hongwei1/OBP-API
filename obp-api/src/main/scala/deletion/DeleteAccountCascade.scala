@@ -13,7 +13,7 @@ import code.webhook.MappedAccountWebhook
 import com.openbankproject.commons.model.{AccountId, BankId}
 import deletion.DeletionUtil.databaseAtomicTask
 import net.liftweb.common.{Box, Empty, Full}
-import net.liftweb.db.DB
+import net.liftweb.db.CustomDB
 import net.liftweb.mapper.{By, ByList}
 import net.liftweb.util.DefaultConnectionIdentifier
 
@@ -42,7 +42,7 @@ object DeleteAccountCascade {
       case true =>
         Full(true)
       case false =>
-        DB.rollback(DefaultConnectionIdentifier)
+        CustomDB.rollback(DefaultConnectionIdentifier)
         fullBoxOrException(Empty ~> APIFailureNewStyle(CouldNotDeleteCascade, 400))
     }
   }

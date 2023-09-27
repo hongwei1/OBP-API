@@ -1,32 +1,31 @@
 package code.util
 
-import java.net.{Socket, SocketException}
-import java.util.UUID.randomUUID
-import java.util.{Date, GregorianCalendar}
-
-import code.api.util.{APIUtil, CallContext, CallContextLight, CustomJsonFormats}
-import code.api.{APIFailureNewStyle, Constant}
 import code.api.util.APIUtil.fullBoxOrException
+import code.api.util.{APIUtil, CallContext, CustomJsonFormats}
+import code.api.{APIFailureNewStyle, Constant}
 import code.customer.internalMapping.MappedCustomerIdMappingProvider
 import code.model.dataAccess.internalMapping.MappedAccountIdMappingProvider
+import com.openbankproject.commons.ExecutionContext.Implicits.global
+import com.openbankproject.commons.model._
+import com.openbankproject.commons.util.{ReflectUtils, RequiredFieldValidation, RequiredInfo}
+import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common._
+import net.liftweb.http.S
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.{DateFormat, Formats}
-import org.apache.commons.lang3.StringUtils
-import com.openbankproject.commons.ExecutionContext.Implicits.global
-import com.openbankproject.commons.model.{AccountBalance, AccountBalances, AccountHeld, AccountId, CoreAccount, Customer, CustomerId}
-import com.openbankproject.commons.util.{ReflectUtils, RequiredFieldValidation, RequiredInfo}
-import com.tesobe.CacheKeyFromArguments
-import net.liftweb.http.S
 import net.liftweb.util.Helpers
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+import org.apache.commons.lang3.StringUtils
+
 import java.lang.reflect.Method
+import java.net.{Socket, SocketException}
+import java.util.UUID.randomUUID
+import java.util.{Date, GregorianCalendar}
 import scala.concurrent.Future
-import scala.util.Random
-import scala.reflect.runtime.universe.Type
-import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
+import scala.reflect.runtime.universe.{Type, _}
+import scala.util.Random
 
 
 
@@ -232,7 +231,7 @@ object Helper extends Loggable {
     //TODO need clean this format, we have set the TimeZone in boot.scala
   val DateFormatWithCurrentTimeZone = new Formats {
   
-    import java.text.{ParseException, SimpleDateFormat}
+    import java.text.ParseException
   
     val dateFormat = new DateFormat {
       def parse(s: String) = try {
@@ -508,5 +507,26 @@ object Helper extends Loggable {
     enhancer.setCallback(intercept)
     enhancer.create().asInstanceOf[S]
   }
+
+
+//  lazy val ObpDB: DB = {
+//    val intercept: MethodInterceptor = (_: Any, method: Method, args: Array[AnyRef], _: MethodProxy) => {
+//
+//      lazy val result = method.invoke(net.liftweb.http.S, args: _*)
+//      val methodName = method.getName
+//      
+//      if (methodName.equals("newConnection")&&result.isInstanceOf[Box[SuperConnection]]&&result.asInstanceOf[Box[SuperConnection]].isDefined) {
+////        DB,c
+//        new SuperConnection(c, () => cm.releaseConnection(c))
+//      } else {
+//        result
+//      }
+//    }
+//    
+//    val enhancer: Enhancer = new Enhancer()
+//    enhancer.setSuperclass(classOf[DB])
+//    enhancer.setCallback(intercept)
+//    enhancer.create().asInstanceOf[DB]
+//  }
 
 }

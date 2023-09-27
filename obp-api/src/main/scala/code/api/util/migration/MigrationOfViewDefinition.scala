@@ -4,12 +4,12 @@ import code.api.util.APIUtil
 import code.api.util.migration.Migration.{DbFunction, saveLog}
 import code.model.dataAccess.ViewImpl
 import code.views.system.ViewDefinition
-import net.liftweb.mapper.DB
+import net.liftweb.db.CustomDB
 import net.liftweb.util.DefaultConnectionIdentifier
 
 object TableViewDefinition {
   def populate(name: String): Boolean = {
-    DbFunction.tableExists(ViewImpl, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ViewImpl, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit

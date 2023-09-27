@@ -6,7 +6,7 @@ import code.transactionrequests.MappedTransactionRequest
 import net.liftweb.common.Full
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.DefaultConnectionIdentifier
-
+import net.liftweb.db.CustomDB
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZonedDateTime}
 
@@ -17,14 +17,14 @@ object MigrationOfTransactionRequestChallengeChallengeTypeLength {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
   
   def alterColumnChallengeChallengeTypeLength(name: String): Boolean = {
-    DbFunction.tableExists(MappedTransactionRequest, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MappedTransactionRequest, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
         var isSuccessful = false
 
         val executedSql = 
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
               APIUtil.getPropsValue("db.driver") match    {
                 case Full(value) if value.contains("com.microsoft.sqlserver.jdbc.SQLServerDriver") =>
                   () => "ALTER TABLE mappedtransactionrequest ALTER COLUMN mChallenge_ChallengeType varchar(100);"

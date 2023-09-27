@@ -15,6 +15,7 @@ import net.liftweb.http.LiftRules
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.Props
 import com.openbankproject.commons.ExecutionContext.Implicits.global
+import net.liftweb.db.CustomDB
 
 import scala.concurrent.duration._
 
@@ -85,7 +86,7 @@ object RemotedataActors extends MdcLoggable {
 
   def setupRemotedataDB(): Unit = {
     // set up the way to connect to the relational DB we're using (ok if other connector than relational)
-    if (!DB.jndiJdbcConnAvailable_?) {
+    if (!CustomDB.jndiJdbcConnAvailable_?) {
       val driver =
         Props.mode match {
           case Props.RunModes.Production | Props.RunModes.Staging | Props.RunModes.Development => APIUtil.getPropsValue("remotedata.db.driver") openOr "org.h2.Driver"
@@ -107,7 +108,7 @@ object RemotedataActors extends MdcLoggable {
       logger.debug("Using database driver: " + driver)
       LiftRules.unloadHooks.append(vendor.closeAllConnections_! _)
 
-      DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
+      CustomDB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
     }
     Schemifier.schemify(true, Schemifier.infoF _, ToSchemify.modelsRemotedata: _*)
   }

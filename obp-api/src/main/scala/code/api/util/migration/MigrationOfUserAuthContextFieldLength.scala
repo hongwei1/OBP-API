@@ -8,6 +8,7 @@ import code.context.MappedUserAuthContext
 import net.liftweb.common.Full
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.DefaultConnectionIdentifier
+import net.liftweb.db.CustomDB
 
 object MigrationOfUserAuthContextFieldLength {
 
@@ -16,14 +17,14 @@ object MigrationOfUserAuthContextFieldLength {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
 
   def alterColumnKeyAndValueLength(name: String): Boolean = {
-    DbFunction.tableExists(MappedUserAuthContext, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MappedUserAuthContext, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
         var isSuccessful = false
 
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
             APIUtil.getPropsValue("db.driver") match    {
               case Full(value) if value.contains("com.microsoft.sqlserver.jdbc.SQLServerDriver") =>
                 () =>

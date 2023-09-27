@@ -7,7 +7,7 @@ import code.api.util.APIUtil
 import code.api.util.migration.Migration.{DbFunction, saveLog}
 import code.model.Consumer
 import code.productAttributeattribute.MappedProductAttribute
-import net.liftweb.mapper.DB
+import net.liftweb.db.CustomDB
 import net.liftweb.util.DefaultConnectionIdentifier
 
 object MigrationOfProductAttribute {
@@ -17,7 +17,7 @@ object MigrationOfProductAttribute {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
   
   def populateTheFieldIsActive(name: String): Boolean = {
-    DbFunction.tableExists(MappedProductAttribute, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MappedProductAttribute, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit

@@ -722,7 +722,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     * if it is the case we put a message in the message queue to ask for
     * transactions updates
     *
-    * It will be used each time we fetch transactions from the DB. But the test
+    * It will be used each time we fetch transactions from the CustomDB. But the test
     * is performed in a different thread.
     */
   private def updateAccountTransactions(bankId: BankId, accountId: AccountId) = {

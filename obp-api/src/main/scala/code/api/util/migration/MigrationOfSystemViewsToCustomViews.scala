@@ -7,6 +7,7 @@ import code.api.util.APIUtil
 import code.api.util.migration.Migration.{DbFunction, saveLog}
 import code.views.system.{AccountAccess, ViewDefinition}
 import net.liftweb.mapper.{By, DB, NotNullRef, NullRef}
+import net.liftweb.db.CustomDB
 import net.liftweb.util.DefaultConnectionIdentifier
 
 object UpdateTableViewDefinition {
@@ -16,7 +17,7 @@ object UpdateTableViewDefinition {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
   
   def populate(name: String): Boolean = {
-    DbFunction.tableExists(ViewDefinition, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ViewDefinition, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit

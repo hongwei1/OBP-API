@@ -137,7 +137,7 @@ import com.openbankproject.commons.util.Functions.Implicits._
 import com.openbankproject.commons.util.{ApiVersion, Functions}
 import javax.mail.internet.MimeMessage
 import net.liftweb.common._
-import net.liftweb.db.{DB, DBLogEntry}
+import net.liftweb.db.{CustomDB, DBLogEntry}
 import net.liftweb.http.LiftRules.DispatchPF
 import net.liftweb.http._
 import net.liftweb.http.provider.HTTPCookie
@@ -232,7 +232,7 @@ class Boot extends MdcLoggable {
 
   def boot {
     // set up the way to connect to the relational DB we're using (ok if other connector than relational)
-    if (!DB.jndiJdbcConnAvailable_?) {
+    if (!CustomDB.jndiJdbcConnAvailable_?) {
       val driver =
         Props.mode match {
           case Props.RunModes.Production | Props.RunModes.Staging | Props.RunModes.Development => APIUtil.getPropsValue("db.driver") openOr "org.h2.Driver"
@@ -262,13 +262,13 @@ class Boot extends MdcLoggable {
       logger.debug("Using database driver: " + driver)
       LiftRules.unloadHooks.append(vendor.closeAllConnections_! _)
 
-      DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
+      CustomDB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
       DatabaseConnectionPoolScheduler.start(vendor, 10)// 10 seconds
 //      logger.debug("ThreadPoolConnectionsScheduler.start(vendor, 10)")
     }
     
     if (APIUtil.getPropsAsBoolValue("logging.database.queries.enable", false)) {
-      DB.addLogFunc
+      CustomDB.addLogFunc
      {
        case (log, duration) =>
        {
@@ -286,14 +286,14 @@ class Boot extends MdcLoggable {
     APIUtil.getPropsValue("database_query_timeout_in_seconds").map { timeoutInSeconds =>
       tryo(timeoutInSeconds.toInt).isDefined match {
         case true =>
-          DB.queryTimeout = Full(timeoutInSeconds.toInt)
+          CustomDB.queryTimeout = Full(timeoutInSeconds.toInt)
           logger.info(s"Query timeout database_query_timeout_in_seconds is set to ${timeoutInSeconds} seconds")
         case false =>
           logger.error(
             s"""
                |------------------------------------------------------------------------------------
                |Query timeout database_query_timeout_in_seconds [${timeoutInSeconds}] is not an integer value.
-               |Actual DB.queryTimeout value: ${DB.queryTimeout}
+               |Actual CustomDB.queryTimeout value: ${CustomDB.queryTimeout}
                |------------------------------------------------------------------------------------""".stripMargin)
       }
       
@@ -302,7 +302,7 @@ class Boot extends MdcLoggable {
     
     implicit val formats = CustomJsonFormats.formats 
     LiftRules.statelessDispatch.prepend {
-      case _ if tryo(DB.use(DefaultConnectionIdentifier){ conn => conn}.isClosed).isEmpty =>
+      case _ if tryo(CustomDB.use(DefaultConnectionIdentifier){ conn => conn}.isClosed).isEmpty =>
         Props.mode match {
           case Props.RunModes.Development =>
             () =>
@@ -342,7 +342,7 @@ class Boot extends MdcLoggable {
       }
     }
     
-    DbFunction.tableExists(ResourceUser, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ResourceUser, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true => // DB already exist
         // Migration Scripts are used to update the model of OBP-API DB to a latest version.
         // Please note that migration scripts are executed before Lift Mapper Schemifier
@@ -658,7 +658,7 @@ class Boot extends MdcLoggable {
     LiftRules.supplementalHeaders.default.set(List(("X-Frame-Options", "DENY")))
     
     // Make a transaction span the whole HTTP request
-    S.addAround(DB.buildLoanWrapper)
+    S.addAround(CustomDB.buildLoanWrapper)
 
     try {
       val useMessageQueue = APIUtil.getPropsAsBoolValue("messageQueue.createBankAccounts", false)
@@ -673,7 +673,7 @@ class Boot extends MdcLoggable {
     })
     
     LiftRules.exceptionHandler.prepend{
-      case(_, r, e) if DB.use(DefaultConnectionIdentifier){ conn => conn}.isClosed => {
+      case(_, r, e) if CustomDB.use(DefaultConnectionIdentifier){ conn => conn}.isClosed => {
         logger.error("Exception being returned to browser when processing " + r.uri.toString, e)
         JsonResponse(
           Extraction.decompose(ErrorMessage(code = 500, message = s"${ErrorMessages.DatabaseConnectionClosedError}")),

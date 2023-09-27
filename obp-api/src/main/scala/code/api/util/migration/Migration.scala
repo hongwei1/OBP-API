@@ -14,9 +14,9 @@ import code.migration.MigrationScriptLogProvider
 import code.util.Helper.MdcLoggable
 import com.github.dwickern.macros.NameOf.nameOf
 import net.liftweb.mapper.Schemifier.getDefaultSchemaName
-import net.liftweb.mapper.{BaseMetaMapper, DB, SuperConnection}
+import net.liftweb.mapper.{BaseMetaMapper, SuperConnection}
 import net.liftweb.util.DefaultConnectionIdentifier
-
+import net.liftweb.db.CustomDB
 import scala.collection.immutable
 import scala.collection.mutable.HashMap
 
@@ -525,7 +525,7 @@ object Migration extends MdcLoggable {
       * The purpose is to provide info about the database in mapper mode.
       */
     def mapperDatabaseInfo(): DatabaseInfoJson = {
-      val connection = DB.use(DefaultConnectionIdentifier){ conn => conn}
+      val connection = CustomDB.use(DefaultConnectionIdentifier){ conn => conn}
       val md = connection.getMetaData
       val productName = md.getDatabaseProductName()
       val productVersion = md.getDatabaseProductVersion()
@@ -562,13 +562,13 @@ object Migration extends MdcLoggable {
       * @return true in case of success or false otherwise
       */
     def makeBackUpOfTable(table: BaseMetaMapper): Boolean ={
-      DB.use(net.liftweb.util.DefaultConnectionIdentifier) {
+      CustomDB.use(net.liftweb.util.DefaultConnectionIdentifier) {
         conn =>
           try {
             val tableName = table.dbTableName
             val sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS")
             val resultDate = new Date(System.currentTimeMillis())
-            DB.prepareStatement(s"CREATE TABLE ${tableName}_backup_${sdf.format(resultDate)} AS (SELECT * FROM $tableName); ", conn){
+            CustomDB.prepareStatement(s"CREATE TABLE ${tableName}_backup_${sdf.format(resultDate)} AS (SELECT * FROM $tableName); ", conn){
               stmt => stmt.executeQuery()
             }
             true

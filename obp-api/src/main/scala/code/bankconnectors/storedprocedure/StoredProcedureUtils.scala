@@ -1,7 +1,6 @@
 package code.bankconnectors.storedprocedure
 
 import java.sql.Connection
-
 import code.api.util.APIUtil
 import code.api.util.migration.Migration
 import code.api.util.migration.Migration.DbFunction
@@ -9,8 +8,9 @@ import code.bankconnectors.Connector
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.TopicTrait
 import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.db.CustomDB
 import net.liftweb.json.Serialization.write
-import net.liftweb.mapper.{DB, Schemifier}
+import net.liftweb.mapper.Schemifier
 import net.liftweb.util.DefaultConnectionIdentifier
 import scalikejdbc.{DB => scalikeDB, _}
 
@@ -73,7 +73,7 @@ object StoredProcedureUtils extends MdcLoggable{
 object StoredProceduresMockedData {
   def createOrDropMockedPostgresStoredProcedures() = {
     def create(): String = {
-      DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+      DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
         () => """CREATE OR REPLACE FUNCTION public.get_banks(p_out_bound_json text, INOUT in_bound_json text)
                 | RETURNS text
                 | LANGUAGE plpgsql
@@ -113,13 +113,13 @@ object StoredProceduresMockedData {
       }
     }
     def drop(): String = {
-      DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+      DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
         () => "DROP FUNCTION public.get_banks(text, text);"
       }
     }
     val mapperDB = APIUtil.getPropsValue("stored_procedure_connector.driver")
     val connectorDB = APIUtil.getPropsValue("db.driver")
-    val thereIsTheProcedure = Migration.DbFunction.procedureExists("get_banks", DB.use(DefaultConnectionIdentifier){ conn => conn})
+    val thereIsTheProcedure = Migration.DbFunction.procedureExists("get_banks", CustomDB.use(DefaultConnectionIdentifier){ conn => conn})
     (mapperDB, connectorDB) match {
       case (Full(mapper), Full(connector)) if(mapper == connector && mapper == "org.postgresql.Driver" && thereIsTheProcedure) =>
         drop()

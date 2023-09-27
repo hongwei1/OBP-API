@@ -1,11 +1,11 @@
 package deletion
 
-import net.liftweb.db.DB
+import net.liftweb.db.CustomDB
 import net.liftweb.util.DefaultConnectionIdentifier
 
 object DeletionUtil {
   def databaseAtomicTask[R](blockOfCode: => R): R = {
-    DB.use(DefaultConnectionIdentifier){_ =>
+    CustomDB.use(DefaultConnectionIdentifier){_ =>
       blockOfCode
     }
   }

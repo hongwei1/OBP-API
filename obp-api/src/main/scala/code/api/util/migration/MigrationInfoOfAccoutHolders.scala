@@ -8,8 +8,9 @@ import code.api.util.APIUtil
 import code.api.util.migration.Migration.{DbFunction, saveLog}
 import code.model.dataAccess.MappedBankAccount
 import code.views.system.AccountAccess
-import net.liftweb.mapper.{By, ByList, DB}
+import net.liftweb.mapper.{By, ByList}
 import net.liftweb.util.DefaultConnectionIdentifier
+import net.liftweb.db.CustomDB
 
 object BankAccountHoldersAndOwnerViewAccess {
   
@@ -18,7 +19,7 @@ object BankAccountHoldersAndOwnerViewAccess {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
   
   def saveInfoBankAccountHoldersAndOwnerViewAccessInfo(name: String): Boolean = {
-    DbFunction.tableExists(MapperAccountHolders, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MapperAccountHolders, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit

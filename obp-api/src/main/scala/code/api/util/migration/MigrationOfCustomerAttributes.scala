@@ -10,6 +10,7 @@ import code.model.{AppType, Consumer}
 import net.liftweb.common.Full
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.{DefaultConnectionIdentifier, Helpers}
+import net.liftweb.db.CustomDB
 
 object MigrationOfCustomerAttributes {
   
@@ -18,14 +19,14 @@ object MigrationOfCustomerAttributes {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
   
   def alterColumnValue(name: String): Boolean = {
-    DbFunction.tableExists(MappedCustomerAttribute, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MappedCustomerAttribute, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
         var isSuccessful = false
 
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
             APIUtil.getPropsValue("db.driver") match    {
               case Full(value) if value.contains("com.microsoft.sqlserver.jdbc.SQLServerDriver") =>
                 () => "ALTER TABLE mappedcustomerattribute ALTER COLUMN mvalue varchar(2000);"
@@ -57,7 +58,7 @@ object MigrationOfCustomerAttributes {
     }
   }  
   def populateAzpAndSub(name: String): Boolean = {
-    DbFunction.tableExists(Consumer, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(Consumer, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit

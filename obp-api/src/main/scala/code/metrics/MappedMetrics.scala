@@ -13,8 +13,8 @@ import code.util.{MappedUUID, UUIDString}
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common.Box
-import net.liftweb.db.DB
-import net.liftweb.mapper.{Index, _}
+import net.liftweb.db.CustomDB
+import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo
 import org.apache.commons.lang3.StringUtils
 
@@ -321,7 +321,7 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
             AND (${trueOrFalse(excludeAppNames.isEmpty) } or appname not in ($excludeAppNamesList))
             AND (${trueOrFalse(excludeImplementedByPartialFunctions.isEmpty) } or implementedbypartialfunction not in ($excludeImplementedByPartialFunctionsList))
             """.stripMargin
-        val (_, rows) = DB.runQuery(sqlQuery, List())
+        val (_, rows) = CustomDB.runQuery(sqlQuery, List())
         logger.debug("code.metrics.MappedMetrics.getAllAggregateMetricsBox.sqlQuery --:  " + sqlQuery)
         val sqlResult = rows.map(
               rs => // Map result to case class
@@ -412,7 +412,7 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
                 ${otherDbLimit}
                 """.stripMargin
 
-        val (_, rows) = DB.runQuery(sqlQuery, List())
+        val (_, rows) = CustomDB.runQuery(sqlQuery, List())
         val sqlResult =
           rows.map { rs => // Map result to case class
             TopApi(
@@ -493,7 +493,7 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
                 ORDER BY count DESC
                 ${otherDbLimit}
                 """.stripMargin
-        val (_, rows) = DB.runQuery(sqlQuery, List())
+        val (_, rows) = CustomDB.runQuery(sqlQuery, List())
         val sqlResult =
           rows.map { rs => // Map result to case class
             TopConsumer(

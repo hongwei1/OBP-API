@@ -6,10 +6,11 @@ import code.model.dataAccess.{ViewImpl, ViewPrivileges}
 import code.views.system.{AccountAccess, ViewDefinition}
 import net.liftweb.mapper.{By, ByList, DB}
 import net.liftweb.util.DefaultConnectionIdentifier
+import net.liftweb.db.CustomDB
 
 object TableAccountAccess {
   def populate(name: String): Boolean = {
-    DbFunction.tableExists(ViewPrivileges, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ViewPrivileges, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit

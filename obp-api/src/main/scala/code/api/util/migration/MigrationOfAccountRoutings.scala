@@ -8,6 +8,7 @@ import code.api.util.migration.Migration.{DbFunction, saveLog}
 import code.model.dataAccess.{BankAccountRouting, MappedBankAccount}
 import net.liftweb.common.Full
 import net.liftweb.mapper.{By, DB, NotNullRef}
+import net.liftweb.db.CustomDB
 import net.liftweb.util.DefaultConnectionIdentifier
 
 object MigrationOfAccountRoutings {
@@ -17,7 +18,7 @@ object MigrationOfAccountRoutings {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
 
   def populate(name: String): Boolean = {
-    DbFunction.tableExists(BankAccountRouting, (DB.use(DefaultConnectionIdentifier) { conn => conn })) match {
+    DbFunction.tableExists(BankAccountRouting, (CustomDB.use(DefaultConnectionIdentifier) { conn => conn })) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
@@ -110,7 +111,7 @@ object MigrationOfAccountRoutings {
             // only accountId is different
             routing.AccountId(accountId).save
           case _ =>
-            // not exists corresponding routing in DB.
+            // not exists corresponding routing in CustomDB.
             BankAccountRouting.create
               .BankId(bankId)
               .AccountId(accountId)

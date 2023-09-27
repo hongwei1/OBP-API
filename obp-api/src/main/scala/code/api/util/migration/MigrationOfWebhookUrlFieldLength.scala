@@ -10,6 +10,7 @@ import code.webhook.SystemAccountNotificationWebhook
 import net.liftweb.common.Full
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.DefaultConnectionIdentifier
+import net.liftweb.db.CustomDB
 
 object MigrationOfWebhookUrlFieldLength {
 
@@ -18,9 +19,9 @@ object MigrationOfWebhookUrlFieldLength {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
 
   def alterColumnUrlLength(name: String): Boolean = {
-    DbFunction.tableExists(SystemAccountNotificationWebhook, (DB.use(DefaultConnectionIdentifier){ conn => conn})) &&
-      DbFunction.tableExists(BankAccountNotificationWebhook, (DB.use(DefaultConnectionIdentifier){ conn => conn}))&&
-      DbFunction.tableExists(MappedAccountWebhook, (DB.use(DefaultConnectionIdentifier){ conn => conn}))
+    DbFunction.tableExists(SystemAccountNotificationWebhook, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) &&
+      DbFunction.tableExists(BankAccountNotificationWebhook, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn}))&&
+      DbFunction.tableExists(MappedAccountWebhook, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn}))
     match {
       case true =>
         val startDate = System.currentTimeMillis()
@@ -28,7 +29,7 @@ object MigrationOfWebhookUrlFieldLength {
         var isSuccessful = false
 
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
             APIUtil.getPropsValue("db.driver") match    {
               case Full(value) if value.contains("com.microsoft.sqlserver.jdbc.SQLServerDriver") =>
                 () =>

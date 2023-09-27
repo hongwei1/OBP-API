@@ -5732,7 +5732,7 @@ trait APIMethods310 {
       "Get WebUiProps",
       s"""
       |
-      |Get the all WebUiProps key values, those props key with "webui_" can be stored in DB, this endpoint get all from DB.
+      |Get the all WebUiProps key values, those props key with "webui_" can be stored in DB, this endpoint get all from CustomDB.
       |
       |url query parameter: 
       |active: It must be a boolean string. and If active = true, it will show

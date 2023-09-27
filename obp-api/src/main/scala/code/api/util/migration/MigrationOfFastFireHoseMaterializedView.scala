@@ -6,7 +6,7 @@ import code.productfee.ProductFee
 import net.liftweb.common.Full
 import net.liftweb.mapper.{DB, Schemifier}
 import net.liftweb.util.DefaultConnectionIdentifier
-
+import net.liftweb.db.CustomDB
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZonedDateTime}
 
@@ -17,7 +17,7 @@ object MigrationOfFastFireHoseMaterializedView {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
 
   def addFastFireHoseMaterializedView(name: String): Boolean = {
-    DbFunction.tableExists(ProductFee, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ProductFee, (CustomDB.use(DefaultConnectionIdentifier){ conn => conn})) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
@@ -75,7 +75,7 @@ object MigrationOfFastFireHoseMaterializedView {
              |                   ON (mappedbankaccount.bank = mapperaccountholders.accountbankpermalink and mappedbankaccount.theaccountid = mapperaccountholders.accountpermalink);
              |""".stripMargin
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, CustomDB.use(DefaultConnectionIdentifier){ conn => conn}) {
             APIUtil.getPropsValue("db.driver") openOr("org.h2.Driver") match {
               case value if value.contains("org.h2.Driver") =>
                 () => migrationSql(false)//Note: H2 database, do not support the MATERIALIZED view
