@@ -108,7 +108,7 @@ import code.productfee.ProductFee
 import code.products.MappedProduct
 import code.ratelimiting.RateLimiting
 import code.remotedata.RemotedataActors
-import code.scheduler.{DatabaseDriverScheduler, JobScheduler, MetricsArchiveScheduler, DatabaseConnectionPoolScheduler}
+import code.scheduler.{DatabaseDriverScheduler, JobScheduler, MetricsArchiveScheduler}
 import code.scope.{MappedScope, MappedUserScope}
 import code.snippet.{OAuthAuthorisation, OAuthWorkedThanks}
 import code.socialmedia.MappedSocialMedia
@@ -242,28 +242,27 @@ class Boot extends MdcLoggable {
       val vendor =
         Props.mode match {
           case Props.RunModes.Production | Props.RunModes.Staging | Props.RunModes.Development =>
-            new CustomDBVendor(driver,
+            new StandardDBVendor(driver,
               APIUtil.getPropsValue("db.url") openOr "jdbc:h2:lift_proto.db;AUTO_SERVER=TRUE",
               APIUtil.getPropsValue("db.user"), APIUtil.getPropsValue("db.password"))
           case Props.RunModes.Test =>
-            new CustomDBVendor(
+            new StandardDBVendor(
               driver,
               APIUtil.getPropsValue("db.url") openOr Constant.h2DatabaseDefaultUrlValue,
               APIUtil.getPropsValue("db.user").orElse(Empty), 
               APIUtil.getPropsValue("db.password").orElse(Empty)
             )
           case _ =>
-            new CustomDBVendor(
+            new StandardDBVendor(
               driver,
               h2DatabaseDefaultUrlValue,
               Empty, Empty)
         }
 
-      logger.debug("Using database driver: " + driver)
       LiftRules.unloadHooks.append(vendor.closeAllConnections_! _)
 
       DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
-      DatabaseConnectionPoolScheduler.start(vendor, 10)// 10 seconds
+//      DatabaseConnectionPoolScheduler.start(vendor, 10)// 10 seconds
 //      logger.debug("ThreadPoolConnectionsScheduler.start(vendor, 10)")
     }
     

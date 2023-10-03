@@ -51,8 +51,19 @@
       <version>1.2.3</version>
     </dependency>
     <dependency>
+      <groupId>com.github.hongwei1</groupId>
+      <artifactId>obp-lift-db</artifactId>
+      <version>54d8c2f9b8</version>
+    </dependency>
+    <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-mapper_${scala.version}</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>lift-db_2.12</artifactId>
+          <groupId>net.liftweb</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>net.databinder.dispatch</groupId>

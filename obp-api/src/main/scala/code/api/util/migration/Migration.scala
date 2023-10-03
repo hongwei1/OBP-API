@@ -525,7 +525,7 @@ object Migration extends MdcLoggable {
       * The purpose is to provide info about the database in mapper mode.
       */
     def mapperDatabaseInfo(): DatabaseInfoJson = {
-      val connection = DB.use(DefaultConnectionIdentifier){ conn => conn}
+      val connection = DB.getConnection(DefaultConnectionIdentifier)
       val md = connection.getMetaData
       val productName = md.getDatabaseProductName()
       val productVersion = md.getDatabaseProductVersion()

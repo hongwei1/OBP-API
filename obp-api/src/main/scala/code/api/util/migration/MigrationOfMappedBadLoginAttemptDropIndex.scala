@@ -36,14 +36,14 @@ object MigrationOfMappedBadLoginAttemptDropIndex {
   }
   
   def dropUniqueIndex(name: String): Boolean = {
-    DbFunction.tableExists(MappedBadLoginAttempt, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(MappedBadLoginAttempt, (DB.getConnection(DefaultConnectionIdentifier))) match {
       case true =>
         val startDate = System.currentTimeMillis()
         val commitId: String = APIUtil.gitCommit
         var isSuccessful = false
         
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.getConnection(DefaultConnectionIdentifier)) {
             APIUtil.getPropsValue("db.driver") match    {
               case _ =>
                 () => "DROP INDEX IF EXISTS mappedbadloginattempt_musername;"

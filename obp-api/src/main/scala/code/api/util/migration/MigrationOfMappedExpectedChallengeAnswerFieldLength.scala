@@ -17,7 +17,7 @@ object MigrationOfMappedExpectedChallengeAnswerFieldLength {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'")
 
   def alterColumnLength(name: String): Boolean = {
-    DbFunction.tableExists(MappedExpectedChallengeAnswer, (DB.use(DefaultConnectionIdentifier){ conn => conn})) 
+    DbFunction.tableExists(MappedExpectedChallengeAnswer, (DB.getConnection(DefaultConnectionIdentifier))) 
     match {
       case true =>
         val startDate = System.currentTimeMillis()
@@ -25,7 +25,7 @@ object MigrationOfMappedExpectedChallengeAnswerFieldLength {
         var isSuccessful = false
 
         val executedSql =
-          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+          DbFunction.maybeWrite(true, Schemifier.infoF _, DB.getConnection(DefaultConnectionIdentifier)) {
             APIUtil.getPropsValue("db.driver") match    {
               case Full(value) if value.contains("com.microsoft.sqlserver.jdbc.SQLServerDriver") =>
                 () =>
