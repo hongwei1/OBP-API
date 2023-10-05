@@ -137,7 +137,7 @@ import com.openbankproject.commons.util.Functions.Implicits._
 import com.openbankproject.commons.util.{ApiVersion, Functions}
 import javax.mail.internet.MimeMessage
 import net.liftweb.common._
-import net.liftweb.db.{DB, DBLogEntry}
+import net.liftweb.db.{DB, DBLogEntry, StandardDBVendor}
 import net.liftweb.http.LiftRules.DispatchPF
 import net.liftweb.http._
 import net.liftweb.http.provider.HTTPCookie
@@ -264,6 +264,7 @@ class Boot extends MdcLoggable {
       DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
 //      DatabaseConnectionPoolScheduler.start(vendor, 10)// 10 seconds
 //      logger.debug("ThreadPoolConnectionsScheduler.start(vendor, 10)")
+      schemifyAll()
     }
     
     if (APIUtil.getPropsAsBoolValue("logging.database.queries.enable", false)) {
@@ -301,7 +302,7 @@ class Boot extends MdcLoggable {
     
     implicit val formats = CustomJsonFormats.formats 
     LiftRules.statelessDispatch.prepend {
-      case _ if tryo(DB.use(DefaultConnectionIdentifier){ conn => conn}.isClosed).isEmpty =>
+      case _ if tryo(DB.getConnection(DefaultConnectionIdentifier).isClosed).isEmpty =>
         Props.mode match {
           case Props.RunModes.Development =>
             () =>
@@ -341,7 +342,7 @@ class Boot extends MdcLoggable {
       }
     }
     
-    DbFunction.tableExists(ResourceUser, (DB.use(DefaultConnectionIdentifier){ conn => conn})) match {
+    DbFunction.tableExists(ResourceUser, DB.getConnection(DefaultConnectionIdentifier)) match {
       case true => // DB already exist
         // Migration Scripts are used to update the model of OBP-API DB to a latest version.
         // Please note that migration scripts are executed before Lift Mapper Schemifier
@@ -353,8 +354,6 @@ class Boot extends MdcLoggable {
     
     // ensure our relational database's tables are created/fit the schema
     val connector = APIUtil.getPropsValue("connector").openOrThrowException("no connector set")
-    schemifyAll()
-
 
     val runningMode = Props.mode match {
       case Props.RunModes.Production => "Production mode"
@@ -672,7 +671,7 @@ class Boot extends MdcLoggable {
     })
     
     LiftRules.exceptionHandler.prepend{
-      case(_, r, e) if DB.use(DefaultConnectionIdentifier){ conn => conn}.isClosed => {
+      case(_, r, e) if DB.getConnection(DefaultConnectionIdentifier).isClosed => {
         logger.error("Exception being returned to browser when processing " + r.uri.toString, e)
         JsonResponse(
           Extraction.decompose(ErrorMessage(code = 500, message = s"${ErrorMessages.DatabaseConnectionClosedError}")),
@@ -1119,4 +1118,34 @@ object ToSchemify {
     LiftRules.unloadHooks.append(server.stop)
   } 
   
+}
+
+object myApp extends App{
+
+  object UserPost extends UserPost with LongKeyedMetaMapper[UserPost] {
+  }
+
+  class UserPost extends LongKeyedMapper[UserPost] {
+
+    def getSingleton = UserPost // what's the "meta" server
+
+    def primaryKeyField = id
+
+    object id extends MappedLongIndex(this)
+
+    object title extends MappedString(this, 140)
+
+    object contents extends MappedText(this)
+
+  }
+
+  val vendor = new StandardDBVendor(
+    "driver",
+    "url",
+    None,
+    None
+  )
+
+  DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
+  Schemifier.schemify(true, Schemifier.infoF _, ToSchemify.models: _*)
 }

@@ -73,7 +73,7 @@ object StoredProcedureUtils extends MdcLoggable{
 object StoredProceduresMockedData {
   def createOrDropMockedPostgresStoredProcedures() = {
     def create(): String = {
-      DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+      DbFunction.maybeWrite(true, Schemifier.infoF _, DB.getConnection(DefaultConnectionIdentifier)) {
         () => """CREATE OR REPLACE FUNCTION public.get_banks(p_out_bound_json text, INOUT in_bound_json text)
                 | RETURNS text
                 | LANGUAGE plpgsql
@@ -113,13 +113,13 @@ object StoredProceduresMockedData {
       }
     }
     def drop(): String = {
-      DbFunction.maybeWrite(true, Schemifier.infoF _, DB.use(DefaultConnectionIdentifier){ conn => conn}) {
+      DbFunction.maybeWrite(true, Schemifier.infoF _, DB.getConnection(DefaultConnectionIdentifier)) {
         () => "DROP FUNCTION public.get_banks(text, text);"
       }
     }
     val mapperDB = APIUtil.getPropsValue("stored_procedure_connector.driver")
     val connectorDB = APIUtil.getPropsValue("db.driver")
-    val thereIsTheProcedure = Migration.DbFunction.procedureExists("get_banks", DB.use(DefaultConnectionIdentifier){ conn => conn})
+    val thereIsTheProcedure = Migration.DbFunction.procedureExists("get_banks", DB.getConnection(DefaultConnectionIdentifier))
     (mapperDB, connectorDB) match {
       case (Full(mapper), Full(connector)) if(mapper == connector && mapper == "org.postgresql.Driver" && thereIsTheProcedure) =>
         drop()
