@@ -231,8 +231,10 @@ class Boot extends MdcLoggable {
 
 
   def boot {
+
+    implicit val formats = CustomJsonFormats.formats
     // set up the way to connect to the relational DB we're using (ok if other connector than relational)
-    if (!DB.jndiJdbcConnAvailable_?) {
+//    if (!DB.jndiJdbcConnAvailable_?) {
       val driver =
         Props.mode match {
           case Props.RunModes.Production | Props.RunModes.Staging | Props.RunModes.Development => APIUtil.getPropsValue("db.driver") openOr "org.h2.Driver"
@@ -259,13 +261,23 @@ class Boot extends MdcLoggable {
               Empty, Empty)
         }
 
-      LiftRules.unloadHooks.append(vendor.closeAllConnections_! _)
+//      LiftRules.unloadHooks.append(vendor.closeAllConnections_! _)
 
       DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
 //      DatabaseConnectionPoolScheduler.start(vendor, 10)// 10 seconds
 //      logger.debug("ThreadPoolConnectionsScheduler.start(vendor, 10)")
+    /**
+     * Function that determines if foreign key constraints are
+     * created by Schemifier for the specified connection.
+     *
+     * Note: The chosen driver must also support foreign keys for
+     * creation to happen
+     *
+     * In case of PostgreSQL it works
+     */
+      MapperRules.createForeignKeys_? = (_) => APIUtil.getPropsAsBoolValue("mapper_rules.create_foreign_keys", false)
       schemifyAll()
-    }
+//    }
     
     if (APIUtil.getPropsAsBoolValue("logging.database.queries.enable", false)) {
       DB.addLogFunc
@@ -283,39 +295,37 @@ class Boot extends MdcLoggable {
     }
 
     // Database query timeout
-    APIUtil.getPropsValue("database_query_timeout_in_seconds").map { timeoutInSeconds =>
-      tryo(timeoutInSeconds.toInt).isDefined match {
-        case true =>
-          DB.queryTimeout = Full(timeoutInSeconds.toInt)
-          logger.info(s"Query timeout database_query_timeout_in_seconds is set to ${timeoutInSeconds} seconds")
-        case false =>
-          logger.error(
-            s"""
-               |------------------------------------------------------------------------------------
-               |Query timeout database_query_timeout_in_seconds [${timeoutInSeconds}] is not an integer value.
-               |Actual DB.queryTimeout value: ${DB.queryTimeout}
-               |------------------------------------------------------------------------------------""".stripMargin)
-      }
-      
-    }
+//    APIUtil.getPropsValue("database_query_timeout_in_seconds").map { timeoutInSeconds =>
+//      tryo(timeoutInSeconds.toInt).isDefined match {
+//        case true =>
+//          DB.queryTimeout = Full(timeoutInSeconds.toInt)
+//          logger.info(s"Query timeout database_query_timeout_in_seconds is set to ${timeoutInSeconds} seconds")
+//        case false =>
+//          logger.error(
+//            s"""
+//               |------------------------------------------------------------------------------------
+//               |Query timeout database_query_timeout_in_seconds [${timeoutInSeconds}] is not an integer value.
+//               |Actual DB.queryTimeout value: ${DB.queryTimeout}
+//               |------------------------------------------------------------------------------------""".stripMargin)
+//      }
+//      
+//    }
     
+//    LiftRules.statelessDispatch.prepend {
+//      case _ if tryo(DB.getConnection(DefaultConnectionIdentifier).isClosed).isEmpty =>
+//        Props.mode match {
+//          case Props.RunModes.Development =>
+//            () =>
+//              Full(
+//                JsonResponse(
+//                  Extraction.decompose(ErrorMessage(code = 500, message = s"${ErrorMessages.DatabaseConnectionClosedError}")),
+//                  500
+//                )
+//              )
+//        }
+//    }
     
-    implicit val formats = CustomJsonFormats.formats 
-    LiftRules.statelessDispatch.prepend {
-      case _ if tryo(DB.getConnection(DefaultConnectionIdentifier).isClosed).isEmpty =>
-        Props.mode match {
-          case Props.RunModes.Development =>
-            () =>
-              Full(
-                JsonResponse(
-                  Extraction.decompose(ErrorMessage(code = 500, message = s"${ErrorMessages.DatabaseConnectionClosedError}")),
-                  500
-                )
-              )
-        }
-    }
-    
-    logger.info("Mapper database info: " + Migration.DbFunction.mapperDatabaseInfo())
+//    logger.info("Mapper database info: " + Migration.DbFunction.mapperDatabaseInfo())
 
     //If use_custom_webapp=true, this will copy all the files from `OBP-API/obp-api/src/main/webapp` to `OBP-API/obp-api/src/main/resources/custom_webapp`
     if (APIUtil.getPropsAsBoolValue("use_custom_webapp", false)){
@@ -342,15 +352,15 @@ class Boot extends MdcLoggable {
       }
     }
     
-    DbFunction.tableExists(ResourceUser, DB.getConnection(DefaultConnectionIdentifier)) match {
-      case true => // DB already exist
-        // Migration Scripts are used to update the model of OBP-API DB to a latest version.
-        // Please note that migration scripts are executed before Lift Mapper Schemifier
-        Migration.database.executeScripts(startedBeforeSchemifier = true)
-        logger.info("The Mapper database already exits. The scripts are executed BEFORE Lift Mapper Schemifier.")
-      case false => // DB is still not created. The scripts will be executed after Lift Mapper Schemifier
-        logger.info("The Mapper database is still not created. The scripts are going to be executed AFTER Lift Mapper Schemifier.")
-    }
+//    DbFunction.tableExists(ResourceUser, DB.getConnection(DefaultConnectionIdentifier)) match {
+//      case true => // DB already exist
+//        // Migration Scripts are used to update the model of OBP-API DB to a latest version.
+//        // Please note that migration scripts are executed before Lift Mapper Schemifier
+//        Migration.database.executeScripts(startedBeforeSchemifier = true)
+//        logger.info("The Mapper database already exits. The scripts are executed BEFORE Lift Mapper Schemifier.")
+//      case false => // DB is still not created. The scripts will be executed after Lift Mapper Schemifier
+//        logger.info("The Mapper database is still not created. The scripts are going to be executed AFTER Lift Mapper Schemifier.")
+//    }
     
     // ensure our relational database's tables are created/fit the schema
     val connector = APIUtil.getPropsValue("connector").openOrThrowException("no connector set")
@@ -369,6 +379,7 @@ class Boot extends MdcLoggable {
     logger.debug(s"If you can read this, logging level is debug")
 
     val actorSystem = ObpActorSystem.startLocalActorSystem()
+    
     connector match {
       case "akka_vDec2018" =>
         // Start Actor system of Akka connector
@@ -378,9 +389,9 @@ class Boot extends MdcLoggable {
       case _ => // Do nothing
     }
 
-    if (Props.devMode || Props.testMode) {
-      StoredProceduresMockedData.createOrDropMockedPostgresStoredProcedures()
-    }
+//    if (Props.devMode || Props.testMode) {
+//      StoredProceduresMockedData.createOrDropMockedPostgresStoredProcedures()
+//    }
 
     // where to search snippets
     LiftRules.addToPackages("code")
@@ -395,21 +406,7 @@ class Boot extends MdcLoggable {
         case _ => false}
         ) => false})
     }
-
-    /**
-      * Function that determines if foreign key constraints are
-      * created by Schemifier for the specified connection.
-      *
-      * Note: The chosen driver must also support foreign keys for
-      * creation to happen
-      *
-      * In case of PostgreSQL it works
-      */
-    MapperRules.createForeignKeys_? = (_) => APIUtil.getPropsAsBoolValue("mapper_rules.create_foreign_keys", false)
-
-
-
-
+    
     // here must modify apiPathZero: initiate the value, because obp-commons can't get apiPathZero value.
     // obp-api depends obp-commons, but obp-commons should not depends obp-api
     ApiVersion.setUrlPrefix(ApiPathZero)
@@ -751,7 +748,7 @@ class Boot extends MdcLoggable {
 
     // Migration Scripts are used to update the model of OBP-API DB to a latest version.
     // Please note that migration scripts are executed after Lift Mapper Schemifier
-    Migration.database.executeScripts(startedBeforeSchemifier = false)
+//    Migration.database.executeScripts(startedBeforeSchemifier = false)
 
     // export one Connector's methods as endpoints, it is just for develop
     APIUtil.getPropsValue("connector.name.export.as.endpoints").foreach { connectorName =>
@@ -1120,32 +1117,32 @@ object ToSchemify {
   
 }
 
-object myApp extends App{
-
-  object UserPost extends UserPost with LongKeyedMetaMapper[UserPost] {
-  }
-
-  class UserPost extends LongKeyedMapper[UserPost] {
-
-    def getSingleton = UserPost // what's the "meta" server
-
-    def primaryKeyField = id
-
-    object id extends MappedLongIndex(this)
-
-    object title extends MappedString(this, 140)
-
-    object contents extends MappedText(this)
-
-  }
-
-  val vendor = new StandardDBVendor(
-    "driver",
-    "url",
-    None,
-    None
-  )
-
-  DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
-  Schemifier.schemify(true, Schemifier.infoF _, ToSchemify.models: _*)
-}
+//object myApp extends App{
+//
+//  object UserPost extends UserPost with LongKeyedMetaMapper[UserPost] {
+//  }
+//
+//  class UserPost extends LongKeyedMapper[UserPost] {
+//
+//    def getSingleton = UserPost // what's the "meta" server
+//
+//    def primaryKeyField = id
+//
+//    object id extends MappedLongIndex(this)
+//
+//    object title extends MappedString(this, 140)
+//
+//    object contents extends MappedText(this)
+//
+//  }
+//
+//  val vendor = new StandardDBVendor(
+//    "driver",
+//    "url",
+//    None,
+//    None
+//  )
+//
+//  DB.defineConnectionManager(net.liftweb.util.DefaultConnectionIdentifier, vendor)
+//  Schemifier.schemify(true, Schemifier.infoF _, ToSchemify.models: _*)
+//}

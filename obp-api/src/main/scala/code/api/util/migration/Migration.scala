@@ -529,6 +529,7 @@ object Migration extends MdcLoggable {
       val md = connection.getMetaData
       val productName = md.getDatabaseProductName()
       val productVersion = md.getDatabaseProductVersion()
+      connection.close()
       DatabaseInfoJson(product_name = productName, product_version = productVersion)
     }
 
