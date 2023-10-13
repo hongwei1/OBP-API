@@ -3484,8 +3484,21 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       case Full(_) =>
         logger.debug("System environment property value found for: " + sysEnvironmentPropertyName)
         sysEnvironmentPropertyValue
-      case _ =>
-        (Props.get(brandSpecificPropertyName), Props.get(brandSpecificPropertyName + ".is_encrypted"), Props.get(brandSpecificPropertyName + ".is_obfuscated")) match {
+      case _ =>// if can not find value from system env, we try to find it from Liftweb props
+        val propertyValueFromLiftweb = if (nameOfProperty.equals("db.driver")){
+          val dbDriver = APIUtil.vendor.HikariDatasource.config.getDriverClassName
+          if (dbDriver == null) Empty else Full(dbDriver)
+        }
+        else if (nameOfProperty.equals("db.url")){
+          val dbUrl = APIUtil.vendor.HikariDatasource.config.getJdbcUrl
+          if (dbUrl == null) Empty else Full(dbUrl)
+        } else {
+          Props.get(brandSpecificPropertyName)
+        }
+        val propertyValueFromLiftwebEncrypted = Props.get(brandSpecificPropertyName + ".is_encrypted")
+        val propertyValueFromLiftwebObfuscated = Props.get(brandSpecificPropertyName + ".is_obfuscated")
+        
+        (propertyValueFromLiftweb, propertyValueFromLiftwebEncrypted, propertyValueFromLiftwebObfuscated) match {
           case (Full(base64PropsValue), Full(isEncrypted), Empty) if isEncrypted == "true" =>
             val decryptedValueAsString = RSAUtil.decrypt(base64PropsValue)
             Full(decryptedValueAsString)
