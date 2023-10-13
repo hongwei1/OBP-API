@@ -35,7 +35,7 @@ class CustomDBVendor(driverName: String,
       case _ =>
         config.setJdbcUrl(dbUrl)
     }
-    
+    config.setMaximumPoolSize(20)
     config.addDataSourceProperty("cachePrepStmts", "true")
     config.addDataSourceProperty("prepStmtCacheSize", "250")
     config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
