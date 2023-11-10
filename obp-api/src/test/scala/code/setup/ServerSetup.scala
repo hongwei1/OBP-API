@@ -30,7 +30,7 @@ package code.setup
 import java.net.URI
 
 import _root_.net.liftweb.json.JsonAST.JObject
-import code.TestServer
+import code.{EmbeddedRedisServer, TestServer}
 import code.api.util.APIUtil._
 import code.api.util.{APIUtil, CustomJsonFormats}
 import code.util.Helper.MdcLoggable
@@ -58,6 +58,8 @@ trait ServerSetup extends FeatureSpec with SendServerRequests
   setPropsValues("connector" -> "star")
   
   val server = TestServer
+  val embeddedRedisServer = EmbeddedRedisServer
+  
   def baseRequest = host(server.host, server.port)
   val secured = APIUtil.getPropsAsBoolValue("external.https", false)
   def externalBaseRequest = (server.externalHost, server.externalPort) match {

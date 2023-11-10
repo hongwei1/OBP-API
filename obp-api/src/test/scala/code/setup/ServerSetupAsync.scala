@@ -30,7 +30,7 @@ package code.setup
 import java.text.SimpleDateFormat
 
 import _root_.net.liftweb.json.JsonAST.JObject
-import code.TestServer
+import code.{EmbeddedRedisServer, TestServer}
 import code.api.util.{APIUtil, CustomJsonFormats}
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.{AccountId, BankId}
@@ -47,6 +47,7 @@ trait ServerSetupAsync extends AsyncFeatureSpec with SendServerRequests
   implicit val formats = CustomJsonFormats.emptyHintFormats
 
   val server = TestServer
+  val embeddedRedisServer = EmbeddedRedisServer
   def baseRequest = host(server.host, server.port)
   val secured = APIUtil.getPropsAsBoolValue("external.https", false)
   def externalBaseRequest = (server.externalHost, server.externalPort) match {
