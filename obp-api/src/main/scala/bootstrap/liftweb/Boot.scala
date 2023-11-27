@@ -80,7 +80,6 @@ import code.endpointTag.EndpointTag
 import code.entitlement.MappedEntitlement
 import code.entitlementrequest.MappedEntitlementRequest
 import code.fx.{MappedCurrency, MappedFXRate}
-import code.kafka.{KafkaHelperActors, OBPKafkaConsumer}
 import code.kycchecks.MappedKycCheck
 import code.kycdocuments.MappedKycDocument
 import code.kycmedias.MappedKycMedia
@@ -539,13 +538,6 @@ class Boot extends MdcLoggable {
       }
     }
     
-
-    if (connector.startsWith("kafka") || (connector == "star" && APIUtil.getPropsValue("starConnector_supported_types","").split(",").contains("kafka"))) {
-      logger.info(s"KafkaHelperActors.startLocalKafkaHelperWorkers( ${actorSystem} ) starting")
-      KafkaHelperActors.startLocalKafkaHelperWorkers(actorSystem)
-      // Start North Side Consumer if it's not already started
-      OBPKafkaConsumer.primaryConsumer.start()
-    }
 
     if (APIUtil.getPropsAsBoolValue("use_akka", false) == true) {
       try {

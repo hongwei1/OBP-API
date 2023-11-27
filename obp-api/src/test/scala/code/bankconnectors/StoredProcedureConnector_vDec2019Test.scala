@@ -29,9 +29,7 @@ import code.api.JSONFactoryGateway.PayloadOfJwtJSON
 import code.api.util.{APIUtil, CallContext, CustomJsonFormats}
 import code.bankconnectors.Connector
 import code.bankconnectors.storedprocedure.StoredProcedureConnector_vDec2019
-import code.bankconnectors.vSept2018._
-import code.kafka.KafkaHelper
-import code.setup.{DefaultUsers, KafkaSetup, ServerSetupWithTestData}
+import code.setup.{DefaultUsers, ServerSetupWithTestData}
 import com.openbankproject.commons.dto.InBoundGetBanks
 import com.openbankproject.commons.model._
 import net.liftweb.common.{Box, Failure, Full}

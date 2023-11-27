@@ -22,8 +22,6 @@ import code.bankconnectors.LocalMappedConnector.setUnimplementedError
 import code.bankconnectors.akka.AkkaConnector_vDec2018
 import code.bankconnectors.rest.RestConnector_vMar2019
 import code.bankconnectors.storedprocedure.StoredProcedureConnector_vDec2019
-import code.bankconnectors.vMay2019.KafkaMappedConnector_vMay2019
-import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
 import code.customeraccountlinks.CustomerAccountLinkTrait
 import code.endpointTag.EndpointTagT
 import code.fx.fx.TTL
@@ -82,8 +80,6 @@ object Connector extends SimpleInjector {
   val nameToConnector: Map[String, () => Connector] = Map(
     "mapped" -> lazyValue(LocalMappedConnector),
     "akka_vDec2018" -> lazyValue(AkkaConnector_vDec2018),
-    "kafka_vSept2018" -> lazyValue(KafkaMappedConnector_vSept2018),
-    "kafka_vMay2019" -> lazyValue(KafkaMappedConnector_vMay2019),
     "rest_vMar2019" -> lazyValue(RestConnector_vMar2019),
     "stored_procedure_vDec2019" -> lazyValue(StoredProcedureConnector_vDec2019),
     // this proxy connector only for unit test, can set connector=proxy in test.default.props, but never set it in default.props

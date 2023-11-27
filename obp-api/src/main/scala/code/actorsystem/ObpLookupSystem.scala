@@ -28,34 +28,6 @@ trait ObpLookupSystem extends MdcLoggable {
     obpLookupSystem
   }
 
-  def getKafkaActor(actorName: String) = {
-
-    val actorPath: String = {
-      val hostname = ObpActorConfig.localHostname
-      val port = ObpActorConfig.localPort
-      val props_hostname = Helper.getHostname
-      if (port == 0) {
-        logger.error("Failed to connect to local Kafka actor")
-      }
-      s"akka.tcp://ObpActorSystem_${props_hostname}@${hostname}:${port}/user/${actorName}"
-    }
-
-    this.obpLookupSystem.actorSelection(actorPath)
-  }
-
-  def getKafkaActorChild(actorName: String, actorChildName: String) = {
-    val actorPath: String = {
-      val hostname = ObpActorConfig.localHostname
-      val port = ObpActorConfig.localPort
-      val props_hostname = Helper.getHostname
-      if (port == 0) {
-        logger.error("Failed to connect to local Kafka actor")
-      }
-      s"akka.tcp://ObpActorSystem_${props_hostname}@${hostname}:${port}/user/${actorName}/${actorChildName}"
-    }
-    this.obpLookupSystem.actorSelection(actorPath)
-  }
-
   def getRemotedataActor(actorName: String) = {
 
     val actorPath: String = APIUtil.getPropsAsBoolValue("remotedata.enable", false) match {

@@ -42,7 +42,6 @@ import code.api.util.{APIUtil, CallContext, OBPQueryParam}
 import code.bankconnectors._
 import code.context.UserAuthContextProvider
 import code.customer.internalMapping.MappedCustomerIdMappingProvider
-import code.kafka.KafkaHelper
 import code.model.dataAccess.internalMapping.MappedAccountIdMappingProvider
 import code.util.AkkaHttpClient._
 import code.util.Helper
@@ -72,7 +71,7 @@ import scala.language.postfixOps
 import scala.reflect.runtime.universe._
 
 
-trait RestConnector_vMar2019 extends Connector with KafkaHelper with MdcLoggable {
+trait RestConnector_vMar2019 extends Connector with MdcLoggable {
   //this one import is for implicit convert, don't delete
   import com.openbankproject.commons.model.{AmountOfMoney, CreditLimit, CreditRating, CustomerFaceImage}
 

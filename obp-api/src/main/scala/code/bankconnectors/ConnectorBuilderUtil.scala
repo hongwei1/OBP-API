@@ -5,7 +5,6 @@ import java.util.Date
 
 import code.api.util.{APIUtil, CallContext}
 import code.api.util.CodeGenerateUtils.createDocExample
-import code.bankconnectors.vSept2018.KafkaMappedConnector_vSept2018
 import com.openbankproject.commons.util.ReflectUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils.uncapitalize
@@ -142,7 +141,7 @@ object ConnectorBuilderUtil {
     private[this] val cacheMethodName = if(resultType.startsWith("Box[")) "memoizeSyncWithProvider" else "memoizeWithProvider"
 
     private[this] val timeoutFieldName = uncapitalize(methodName.replaceFirst("^[a-z]+", "")) + "TTL"
-    private[this] val cacheTimeout = ReflectUtils.findMethod(ru.typeOf[KafkaMappedConnector_vSept2018], timeoutFieldName)(_ => true)
+    private[this] val cacheTimeout = ReflectUtils.findMethod(ru.typeOf[Connector], timeoutFieldName)(_ => true)
       .map(_.name.toString)
       .getOrElse("accountTTL")
 

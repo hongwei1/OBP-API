@@ -30,7 +30,6 @@ import code.consent.{ConsentRequests, ConsentStatus, Consents}
 import code.consumer.Consumers
 import code.context.UserAuthContextUpdateProvider
 import code.entitlement.Entitlement
-import code.kafka.KafkaHelper
 import code.loginattempts.LoginAttempt
 import code.methodrouting.{MethodRouting, MethodRoutingCommons, MethodRoutingParam, MethodRoutingT}
 import code.metrics.APIMetrics
@@ -1877,14 +1876,12 @@ trait APIMethods310 {
             (_, callContext) <- anonymousAccess(cc)
             connectorVersion = APIUtil.getPropsValue("connector").openOrThrowException("connector props field `connector` not set")
             starConnectorProps = APIUtil.getPropsValue("starConnector_supported_types").openOr("notfound")
-            obpApiLoopback <- connectorVersion.contains("kafka") ||  (connectorVersion.contains("star") && starConnectorProps.contains("kafka")) match {
-              case false => throw new IllegalStateException(s"${NotImplemented}for connector ${connectorVersion}")
-              case true => KafkaHelper.echoKafkaServer.recover {
-                case e: Throwable => throw new IllegalStateException(s"${KafkaServerUnavailable} Timeout error, because kafka do not return message to OBP-API. ${e.getMessage}")
-              }
-            }
           } yield {
-            (createObpApiLoopbackJson(obpApiLoopback), HttpCode.`200`(callContext))
+            (createObpApiLoopbackJson(ObpApiLoopback(
+              connectorVersion,
+              APIUtil.gitCommit,
+              s"0 ms" //TODO need to change later
+            )), HttpCode.`200`(callContext))
           }
       }
     }

@@ -90,16 +90,6 @@
       <version>${log4j.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <version>${kafka.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>connect-json</artifactId>
-      <version>${kafka.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpg-jdk15on</artifactId>
       <version>1.70</version>
@@ -264,11 +254,6 @@
       <version>${akka.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.typesafe.akka</groupId>
-      <artifactId>akka-stream-kafka_${scala.version}</artifactId>
-      <version>${akka-streams-kafka.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.sksamuel.avro4s</groupId>
       <artifactId>avro4s-core_${scala.version}</artifactId>
       <version>${avro.version}</version>
@@ -360,15 +345,6 @@
       <artifactId>geocalc</artifactId>
       <version>0.5.7</version>
     </dependency>
-    <!-- embeded kafka for unit test start -->
-    <!-- https://mvnrepository.com/artifact/io.github.embeddedkafka/embedded-kafka -->
-    <dependency>
-      <groupId>io.github.embeddedkafka</groupId>
-      <artifactId>embedded-kafka_2.12</artifactId>
-      <version>2.4.1.1</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- embeded kafka for unit test end -->
     <!-- https://mvnrepository.com/artifact/com.twilio.sdk/twilio -->
     <dependency>
       <groupId>com.twilio.sdk</groupId>
