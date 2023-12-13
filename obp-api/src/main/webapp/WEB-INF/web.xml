@@ -15,6 +15,16 @@
 
     <filter-mapping>
         <filter-name>LiftFilter</filter-name>
+<!--        the following folder files will be redirected by Jetty-->
+<!--        /font-awesome/css eg: http://localhost:8080/font-awesome/css/all.min.css--> 
+<!--        /font-awesome/webfonts eg: http://localhost:8080/font-awesome/webfonts/fa-brands-400.ttf--> 
+<!--        /media/css eg: http://localhost:8080/media/css/toastr.min.css -->
+<!--        /media/font eg: http://localhost:8080/media/font/Roboto-Light.ttf-->
+<!--        /media/fonts eg: http://localhost:8080/media/fonts/glyphicons-halflings-regular.eot -->
+<!--        /media/icons eg: http://localhost:8080/media/icons/info-square.svg -->
+<!--        /media/images eg: http://localhost:8080/media/images/about-background.jpg -->
+<!--        /media/js eg: http://localhost:8080/media/js/bootstrap.min.js -->
+<!--        /media/xml eg: http://localhost:8080/media/xml/ISOCurrencyCodes.xml -->
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
