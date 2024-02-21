@@ -389,7 +389,12 @@
     <dependency>
       <groupId>com.thesamet.scalapb</groupId>
       <artifactId>scalapb-runtime-grpc_${scala.version}</artifactId>
-      <version>0.8.4</version>
+      <version>0.11.15</version>
+    </dependency>
+    <dependency>
+      <groupId>com.thesamet.scalapb</groupId>
+      <artifactId>scalapb-runtime_${scala.version}</artifactId>
+      <version>0.11.15</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/io.grpc/grpc-all -->
     <dependency>
@@ -663,26 +668,34 @@
         </executions>
       </plugin>
       <!--grpc related plugin begin-->
-      <!-- currently not need, enable this plugin when need generate new grpc code.
-      <plugin>
-       <groupId>net.catte</groupId>
-       <artifactId>scalapb-maven-plugin</artifactId>
-       <version>1.2</version>
-       <configuration>
-         <javaOutput>false</javaOutput>
-         <inputDirectory>${basedir}/src/main/protobuf</inputDirectory>
-         <outputDirectory>${basedir}/src/main/scala</outputDirectory>
-         <grpc>true</grpc>
-       </configuration>
-       <executions>
-         <execution>
-           <goals>
-             <goal>compile</goal>
-           </goals>
-           <phase>generate-sources</phase>
-         </execution>
-       </executions>
-     </plugin>-->
+      <!-- currently not need, enable this plugin when need generate new grpc code.-->
+<!--      <plugin>-->
+<!--        <groupId>com.github.os72</groupId>-->
+<!--        <artifactId>protoc-jar-maven-plugin</artifactId>-->
+<!--        <version>3.11.4</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <goals>-->
+<!--              <goal>run</goal>-->
+<!--            </goals>-->
+<!--            <phase>generate-sources</phase>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--        <configuration>-->
+<!--          <includeMavenTypes>transitive</includeMavenTypes>-->
+<!--          <inputDirectories>-->
+<!--            <include>${basedir}/src/main/protobuf</include>-->
+<!--          </inputDirectories>-->
+<!--          <outputTargets>-->
+<!--            <outputTarget>-->
+<!--              <type>scalapb</type>-->
+<!--              <outputDirectory>${basedir}/src/main/protobuf</outputDirectory>-->
+<!--              <outputOptions>grpc</outputOptions> &lt;!&ndash; more scalapb options can be added here &ndash;&gt;-->
+<!--              <pluginArtifact>com.thesamet.scalapb:protoc-gen-scala:0.11.15:sh:unix</pluginArtifact>-->
+<!--            </outputTarget>-->
+<!--          </outputTargets>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
      <!--grpc related plugin end-->
     </plugins>
   </build>
