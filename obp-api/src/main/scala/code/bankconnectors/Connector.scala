@@ -2,7 +2,6 @@ package code.bankconnectors
 
 import java.util.Date
 import java.util.UUID.randomUUID
-
 import _root_.akka.http.scaladsl.model.HttpMethod
 import code.accountholders.{AccountHolders, MapperAccountHolders}
 import code.api.Constant.{SYSTEM_ACCOUNTANT_VIEW_ID, SYSTEM_AUDITOR_VIEW_ID, SYSTEM_OWNER_VIEW_ID, localIdentityProvider}
@@ -20,6 +19,7 @@ import code.atmattribute.AtmAttribute
 import code.bankattribute.BankAttribute
 import code.bankconnectors.LocalMappedConnector.setUnimplementedError
 import code.bankconnectors.akka.AkkaConnector_vDec2018
+import code.bankconnectors.grpc.GrpcConnector_vFeb2024
 import code.bankconnectors.rest.RestConnector_vMar2019
 import code.bankconnectors.storedprocedure.StoredProcedureConnector_vDec2019
 import code.bankconnectors.vMay2019.KafkaMappedConnector_vMay2019
@@ -86,6 +86,7 @@ object Connector extends SimpleInjector {
     "kafka_vMay2019" -> lazyValue(KafkaMappedConnector_vMay2019),
     "rest_vMar2019" -> lazyValue(RestConnector_vMar2019),
     "stored_procedure_vDec2019" -> lazyValue(StoredProcedureConnector_vDec2019),
+    "grpc_vFeb2024" -> lazyValue(GrpcConnector_vFeb2024),
     // this proxy connector only for unit test, can set connector=proxy in test.default.props, but never set it in default.props
     "proxy" -> lazyValue(ConnectorUtils.proxyConnector),
     "internal" -> lazyValue(InternalConnector.instance)

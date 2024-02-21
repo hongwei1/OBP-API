@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package code.bankconnectors.grpc;
+//
+//import "scalapb/scalapb.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+message BankIdGrpc {
+  string id = 1;
+}
+
+message BankRoutingJsonV121Grpc {
+  string scheme = 1;
+  string address = 2;
+}
+
+message BankJson400Grpc{
+  string id = 1;
+  string short_name = 2;
+  string full_name = 3;
+  string logo = 4;
+  string website = 5;
+  repeated BankRoutingJsonV121Grpc bank_routings = 6;
+}
+
+//getBanks response
+message BanksJson400Grpc {
+  repeated BankJson400Grpc banks = 1;
+}
+
+service ObpService {
+  rpc getBanks(google.protobuf.Empty) returns (BanksJson400Grpc) {}
+  rpc getBank(BankIdGrpc) returns (BankJson400Grpc) {}
+}
