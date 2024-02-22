@@ -116,6 +116,51 @@ trait GrpcConnector_vFeb2024 extends Connector with MdcLoggable {
     Future{Full(bankCommons,callContext)}
   }
 
+  messageDocs += getBankDoc
+
+  def getBankDoc = MessageDoc(
+    process = "obp.getBank",
+    messageFormat = messageFormat,
+    description = "Get Bank",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+      OutBoundGetBank(outboundAdapterCallContext = MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+        bankId = BankId(bankIdExample.value))
+      ),
+    exampleInboundMessage = (
+      InBoundGetBank(inboundAdapterCallContext = MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+        status = MessageDocsSwaggerDefinitions.inboundStatus,
+        data = BankCommons(bankId = BankId(bankIdExample.value),
+          shortName = bankShortNameExample.value,
+          fullName = bankFullNameExample.value,
+          logoUrl = bankLogoUrlExample.value,
+          websiteUrl = bankWebsiteUrlExample.value,
+          bankRoutingScheme = bankRoutingSchemeExample.value,
+          bankRoutingAddress = bankRoutingAddressExample.value,
+          swiftBic = bankSwiftBicExample.value,
+          nationalIdentifier = bankNationalIdentifierExample.value))
+      ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBank(bankId: BankId, callContext: Option[CallContext]): Future[Box[(Bank, Option[CallContext])]] = {
+    val bankGrpc: BankJson400Grpc = obpService.getBank(BankIdGrpc(bankId.value))
+    Future {
+      Full(BankCommons(
+        bankId = BankId(bankGrpc.id),
+        shortName = bankGrpc.shortName,
+        fullName = bankGrpc.fullName,
+        logoUrl = bankGrpc.logo,
+        websiteUrl = bankGrpc.website,
+        bankRoutingScheme = bankGrpc.bankRoutings.map(_.scheme).headOption.getOrElse(""),
+        bankRoutingAddress = bankGrpc.bankRoutings.map(_.address).headOption.getOrElse(""),
+        swiftBic = "",
+        nationalIdentifier = ""
+      ), callContext)
+    }
+  }
+
 }
 object GrpcConnector_vFeb2024 extends GrpcConnector_vFeb2024
 
