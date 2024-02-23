@@ -59,13 +59,26 @@ trait GrpcConnector_vFeb2024 extends Connector with MdcLoggable {
   val authInfoExample = AuthInfo(userId = "userId", username = "username", cbsToken = "cbsToken")
   val errorCodeExample = "INTERNAL-OBP-ADAPTER-6001: ..."
 
-  private val channelBuilder = ManagedChannelBuilder.forAddress("localhost", 8085)
-    .usePlaintext()
-    .asInstanceOf[ManagedChannelBuilder[_]]
-  val channel: ManagedChannel = channelBuilder.build()
 
-  private val obpService: ObpServiceGrpc.ObpServiceBlockingStub = ObpServiceGrpc.blockingStub(channel)
-
+  def obpService (): ObpServiceGrpc.ObpServiceBlockingStub = {
+    val urlInMethodRouting: Option[String] = MethodRoutingHolder.methodRouting match {
+      case Full(routing) => routing.parameters.find(_.key == "url").map(_.value)
+      case _ => None
+    }
+    val portInMethodRouting: Option[String] = MethodRoutingHolder.methodRouting match {
+      case Full(routing) => routing.parameters.find(_.key == "port").map(_.value)
+      case _ => None
+    }
+    
+    val url = urlInMethodRouting.getOrElse("localhost")
+    val port = portInMethodRouting.getOrElse("8085").toInt
+    
+    ObpServiceGrpc.blockingStub(
+      ManagedChannelBuilder.forAddress(url, port)
+        .usePlaintext()
+        .asInstanceOf[ManagedChannelBuilder[_]].build()
+    )
+  }
 
   messageDocs += getBanksDoc
 
@@ -97,7 +110,7 @@ trait GrpcConnector_vFeb2024 extends Connector with MdcLoggable {
   override def getBanks(callContext: Option[CallContext]): Future[Box[(List[Bank], Option[CallContext])]] = {
     import com.openbankproject.commons.dto.{OutBoundGetBanks => OutBound}
     val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull)
-    val banksResponse: BanksJson400Grpc = obpService.getBanks(Empty.defaultInstance)
+    val banksResponse: BanksJson400Grpc = obpService().getBanks(Empty.defaultInstance)
     val banks: List[BankJson400Grpc] = banksResponse.banks.toList
     
     val bankCommons = banks.map(bank =>
@@ -145,7 +158,9 @@ trait GrpcConnector_vFeb2024 extends Connector with MdcLoggable {
   )
 
   override def getBank(bankId: BankId, callContext: Option[CallContext]): Future[Box[(Bank, Option[CallContext])]] = {
-    val bankGrpc: BankJson400Grpc = obpService.getBank(BankIdGrpc(bankId.value))
+    
+    val bankGrpc: BankJson400Grpc = obpService().getBank(BankIdGrpc(bankId.value))
+
     Future {
       Full(BankCommons(
         bankId = BankId(bankGrpc.id),
