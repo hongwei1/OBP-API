@@ -316,7 +316,7 @@ object ConnectorBuilderUtil extends MdcLoggable {
     "getDynamicEndpoints",                // Dynamic endpoint, should not be auto-generated
 
     // ── Group 4: Legacy methods ──
-    "getBankAccountByRoutingLegacy",      // Legacy method, also filtered by name suffix
+    // (empty) getBankAccountByRoutingLegacy removed — already filtered by filterNot(_.endsWith("Legacy")) pipeline step
 
     // ── Group 5: Missing standard OutBound/InBound DTO ──
     "getAccountRoutingsByScheme",         // Missing standard OutBound/InBound DTO
