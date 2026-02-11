@@ -532,6 +532,35 @@ case class BankAttributeTraitCommons (
 ) extends BankAttributeTrait
 object BankAttributeTraitCommons extends Converter[BankAttributeTrait, BankAttributeTraitCommons]
 
+case class AtmAttributeCommons(
+  override val bankId: BankId,
+  override val atmId: AtmId,
+  override val atmAttributeId: String,
+  override val attributeType: AtmAttributeType.Value,
+  override val name: String,
+  override val value: String,
+  override val isActive: Option[Boolean]
+) extends AtmAttributeTrait
+object AtmAttributeCommons extends Converter[AtmAttributeTrait, AtmAttributeCommons]
+
+case class UserAttributeCommons(
+  override val userAttributeId: String,
+  override val userId: String,
+  override val name: String,
+  override val attributeType: UserAttributeType.Value,
+  override val value: String,
+  override val insertDate: Date,
+  override val isPersonal: Boolean
+) extends UserAttributeTrait
+object UserAttributeCommons extends Converter[UserAttributeTrait, UserAttributeCommons]
+
+case class BankAccountRoutingCommons(
+  override val bankId: BankId,
+  override val accountId: AccountId,
+  override val accountRouting: AccountRouting
+) extends BankAccountRoutingTrait
+object BankAccountRoutingCommons extends Converter[BankAccountRoutingTrait, BankAccountRoutingCommons]
+
 case class FXRateCommons (
   override val bankId : BankId,
   override val fromCurrencyCode: String,
