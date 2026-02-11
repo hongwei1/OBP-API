@@ -136,7 +136,7 @@ object AdapterStubBuilder {
     else 
       null
     
-    val inboundAdapterCallContext = if(ConnectorBuilderUtil.specialMethods.contains(connectorMethodName))
+    val inboundAdapterCallContext = if(ConnectorBuilderUtil.excludeMethods.contains(connectorMethodName))
       ""
     else
       """          

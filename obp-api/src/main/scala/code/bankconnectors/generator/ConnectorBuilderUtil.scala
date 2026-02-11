@@ -3,6 +3,7 @@ package code.bankconnectors.generator
 import code.api.util.CodeGenerateUtils.createDocExample
 import code.api.util.{APIUtil, CallContext}
 import code.bankconnectors.Connector
+import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.util.ReflectUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils.uncapitalize
@@ -18,7 +19,7 @@ import scala.reflect.runtime.{universe => ru}
 /**
  * this is util for Connector builders, this should never be called by product code.
  */
-object ConnectorBuilderUtil {
+object ConnectorBuilderUtil extends MdcLoggable {
   
   def getClassesFromPackage(packageName: String): List[Class[_]] = {
     val classLoader = Thread.currentThread().getContextClassLoader
@@ -270,241 +271,106 @@ object ConnectorBuilderUtil {
     }
   }
 
-  //TODO WIP, need to fix the code to support the following methods
-//  val commonMethodNames = LocalMappedConnector.callableMethods.keySet.toList
+  // commonMethodNames is now dynamically computed — see definition after excludeMethods below
 
-    val commonMethodNames = List(
-      "getAdapterInfo",
-      "getChallengeThreshold",
-      "getChargeLevel",
-      "getChargeLevelC2",
-      "createChallenge",
-      "getBank",
-      "getBanks",
-      "getBankAccountsForUser",
-      "getBankAccountsBalances",
-      "getBankAccountBalances",
-      "getCoreBankAccounts",
-      "getBankAccountsHeld",
-      "getCounterpartyTrait",
-      "getCounterpartyByCounterpartyId",
-      "getCounterpartyByIban",
-      "getCounterparties",
-      "getTransactions",
-      "getTransactionsCore",
-      "getTransaction",
-      "getPhysicalCardForBank",
-      "deletePhysicalCardForBank",
-      "getPhysicalCardsForBank",
-      "createPhysicalCard",
-      "updatePhysicalCard",
-      "makePaymentv210",
-      "makePaymentV400",
-      "cancelPaymentV400",
-      "createTransactionRequestv210",
-      "getTransactionRequests210",
-      "getTransactionRequestImpl",
-      "createTransactionAfterChallengeV210",
-      "updateBankAccount",
-      "createBankAccount",
-      "getBranch",
-      "getBranches",
-      "getAtm",
-      "getAtms",
-      "createTransactionAfterChallengev300",
-      "makePaymentv300",
-      "createTransactionRequestv300",
-      "createCounterparty",
-      "checkCustomerNumberAvailable",
-      "createCustomer",
-      "updateCustomerScaData",
-      "updateCustomerCreditData",
-      "updateCustomerGeneralData",
-      "getCustomersByUserId",
-      "getCustomerByCustomerId",
-      "getCustomerByCustomerNumber",
-      "getCustomerAddress",
-      "createCustomerAddress",
-      "updateCustomerAddress",
-      "deleteCustomerAddress",
-      "createTaxResidence",
-      "getTaxResidence",
-      "deleteTaxResidence",
-      "getCustomers",
-      "getCheckbookOrders",
-      "getStatusOfCreditCardOrder",
-      "createUserAuthContext",
-      "createUserAuthContextUpdate",
-      "deleteUserAuthContexts",
-      "deleteUserAuthContextById",
-      "getUserAuthContexts",
-      "createOrUpdateProductAttribute",
-      "getProduct",
-      "getProducts",
-      "getProductAttributeById",
-      "getProductAttributesByBankAndCode",
-      "deleteProductAttribute",
-      "getAccountAttributeById",
-      "createOrUpdateAccountAttribute",
-      "createAccountAttributes",
-      "getAccountAttributesByAccount",
-      "createOrUpdateCardAttribute",
-      "getCardAttributeById",
-      "getCardAttributesFromProvider",
-      "createAccountApplication",
-      "getAllAccountApplication",
-      "getAccountApplicationById",
-      "updateAccountApplicationStatus",
-      "getOrCreateProductCollection",
-      "getProductCollection",
-      "getOrCreateProductCollectionItem",
-      "getProductCollectionItem",
-      "getProductCollectionItemsTree",
-      "createMeeting",
-      "getMeetings",
-      "getMeeting",
-      "createOrUpdateKycCheck",
-      "createOrUpdateKycDocument",
-      "createOrUpdateKycMedia",
-      "createOrUpdateKycStatus",
-      "getKycChecks",
-      "getKycDocuments",
-      "getKycMedias",
-      "getKycStatuses",
-      "createMessage",
-      "makeHistoricalPayment",
-      "validateChallengeAnswer",
-      //"getBankLegacy", // should not generate for Legacy methods
-      //"getBanksLegacy", // should not generate for Legacy methods
-      //"getBankAccountsForUserLegacy", // should not generate for Legacy methods
-      //"getBankAccountLegacy", // should not generate for Legacy methods
-      "getBankAccountByIban",
-      "getBankAccountByRouting",
-      "getBankAccounts",
-      "checkBankAccountExists",
-      //"getCoreBankAccountsLegacy", // should not generate for Legacy methods
-      //"getBankAccountsHeldLegacy", // should not generate for Legacy methods
-      //"checkBankAccountExistsLegacy", // should not generate for Legacy methods
-      //"getCounterpartyByCounterpartyIdLegacy", // should not generate for Legacy methods
-      //"getCounterpartiesLegacy", // should not generate for Legacy methods
-      //"getTransactionsLegacy", // should not generate for Legacy methods
-      //"getTransactionLegacy", // should not generate for Legacy methods
-      //"createPhysicalCardLegacy", // should not generate for Legacy methods
-      //"getCustomerByCustomerIdLegacy", // should not generate for Legacy methods
-
-      "createChallenges",
-      "createTransactionRequestv400",
-      "createTransactionRequestSepaCreditTransfersBGV1",
-      "createTransactionRequestPeriodicSepaCreditTransfersBGV1",
-      "getCustomersByCustomerPhoneNumber",
-      "getTransactionAttributeById",
-      "createOrUpdateCustomerAttribute",
-      "createOrUpdateTransactionAttribute",
-      "getCustomerAttributes",
-      "getCustomerIdsByAttributeNameValues",
-      "getCustomerAttributesForCustomers",
-      "getTransactionIdsByAttributeNameValues",
-      "getTransactionAttributes",
-      "getBankAttributesByBank",
-      "getCustomerAttributeById",
-      "createDirectDebit",
-      "deleteCustomerAttribute",
-      "getPhysicalCardsForUser",
-      "getChallengesByBasketId",
-      "createChallengesC2",
-      "createChallengesC3",
-      "getChallenge",
-      "getChallengesByTransactionRequestId",
-      "getChallengesByConsentId",
-      "validateAndCheckIbanNumber",
-      "validateChallengeAnswerC2",
-      "validateChallengeAnswerC3",
-      "validateChallengeAnswerC4",
-      "validateChallengeAnswerC5",
-      "validateChallengeAnswerV2",
-      "getCounterpartyByIbanAndBankAccountId",
-      "getChargeValue",
-      "saveTransactionRequestTransaction",
-      "saveTransactionRequestChallenge",
-      "getTransactionRequestTypes",
-      "updateAccountLabel",
-      "getProduct",
-      "saveTransactionRequestStatusImpl",
-      "getTransactionRequestTypeCharges",
-      "getAccountsHeld",
-      "getAccountsHeldByUser",
-      "getRegulatedEntities",
-      "getRegulatedEntityByEntityId",
-      "getBankAccountBalancesByAccountId",
-      "getBankAccountsBalancesByAccountIds",
-      "getBankAccountBalanceById",
-      "createOrUpdateBankAccountBalance",
-      "deleteBankAccountBalance",
-      "checkExternalUserCredentials",// this is not a standard connector method.
-      "checkExternalUserExists", // this is not a standard connector method. 
-      "getCurrentFxRate", // this is speical method
-    ).distinct
+  private def hasOutBoundInBoundDTO(methodName: String): Boolean = {
+    try {
+      Class.forName(s"com.openbankproject.commons.dto.OutBound${methodName.capitalize}")
+      Class.forName(s"com.openbankproject.commons.dto.InBound${methodName.capitalize}")
+      true
+    } catch {
+      case _: ClassNotFoundException =>
+        logger.debug(s"Method $methodName excluded: missing OutBound/InBound DTO")
+        false
+    }
+  }
 
   /**
-   * these connector methods have special parameter or return type
+   * Unified exclude list — merges the former `specialMethods` and `omitMethods`.
+   * Methods listed here are excluded from dynamic `commonMethodNames` computation.
+   * Each entry is annotated with the reason for exclusion to guide future removal.
    */
-  val specialMethods = List(
-    "getStatus",
-    "createOrUpdateBranch",
-    "createOrUpdateBank",
-    "createOrUpdateAtm",
-    "createOrUpdateProduct",
-    "createOrUpdateFXRate",
-//    "getCurrentFxRate",
-    "getCounterpartyFromTransaction",
-    "getCounterpartiesFromTransaction",
+  val excludeMethods: List[String] = List(
+    // ── Group 1: Non-standard parameter / return types (formerly specialMethods) ──
+    "getStatus",                          // Returns enum TransactionRequestStatus.Value, non-standard return type
+    "createOrUpdateBranch",               // Takes BranchT trait param, non-standard parameter type
+    "createOrUpdateBank",                 // Returns Box[Bank], non-standard return type
+    "createOrUpdateAtm",                  // Takes AtmT trait param, non-standard parameter type
+    "createOrUpdateProduct",              // Too many parameters, non-standard signature
+    "createOrUpdateFXRate",               // Returns Box[FXRate], non-standard return type
+    "getCurrentFxRate",                   // Returns Box[FXRate], non-standard return type
+    "getCounterpartyFromTransaction",     // Non-standard signature
+    "getCounterpartiesFromTransaction",   // Non-standard signature
+
+    // ── Group 2: Should not be auto-generated (attribute definitions, standing orders) ──
+    "createOrUpdateAttributeDefinition",  // Attribute definition method, should not be auto-generated
+    "deleteAttributeDefinition",          // Attribute definition method, should not be auto-generated
+    "getAttributeDefinition",             // Attribute definition method, should not be auto-generated
+    "createStandingOrder",                // Standing order method, should not be auto-generated
+
+    // ── Group 3: Dynamic entity / endpoint methods ──
+    "dynamicEntityProcess",               // Dynamic entity, should not be auto-generated
+    "dynamicEndpointProcess",             // Dynamic endpoint, should not be auto-generated
+    "createDynamicEndpoint",              // Dynamic endpoint, should not be auto-generated
+    "getDynamicEndpoint",                 // Dynamic endpoint, should not be auto-generated
+    "getDynamicEndpoints",                // Dynamic endpoint, should not be auto-generated
+
+    // ── Group 4: Legacy methods ──
+    "getBankAccountByRoutingLegacy",      // Legacy method, also filtered by name suffix
+
+    // ── Group 5: Missing standard OutBound/InBound DTO ──
+    "getAccountRoutingsByScheme",         // Missing standard OutBound/InBound DTO
+    "getAccountRouting",                  // Missing standard OutBound/InBound DTO
+    "getBankAccountsWithAttributes",      // Missing standard OutBound/InBound DTO
+    "getBankSettlementAccounts",          // Missing standard OutBound/InBound DTO
+    "getCountOfTransactionsFromAccountToCounterparty", // Missing standard OutBound/InBound DTO
+    "getAllAtms",                          // Missing standard OutBound/InBound DTO
+    "getCurrentCurrencies",               // Missing standard OutBound/InBound DTO
+    "getAgents",                          // Missing standard OutBound/InBound DTO
+    "getCustomersAtAllBanks",             // Missing standard OutBound/InBound DTO
+    "createOrUpdateBankAttribute",        // Missing standard OutBound/InBound DTO
+    "getBankAttribute",                   // Missing standard OutBound/InBound DTO
+    "createOrUpdateAtmAttribute",         // Missing standard OutBound/InBound DTO
+    "getAtmAttribute",                    // Missing standard OutBound/InBound DTO
+    "getBankAttributeById",               // Missing standard OutBound/InBound DTO
+    "getAtmAttributeById",                // Missing standard OutBound/InBound DTO
+    "getUserAttributes",                  // Missing standard OutBound/InBound DTO
+    "getPersonalUserAttributes",          // Missing standard OutBound/InBound DTO
+    "getNonPersonalUserAttributes",       // Missing standard OutBound/InBound DTO
+    "getUserAttributesByUsers",           // Missing standard OutBound/InBound DTO
+    "createOrUpdateUserAttribute",        // Missing standard OutBound/InBound DTO
+    "getUserAttribute",                   // Missing standard OutBound/InBound DTO
+    "getUserAttributeById",               // Missing standard OutBound/InBound DTO
+    "deleteUserAttribute",                // Missing standard OutBound/InBound DTO
+    "getTransactionRequestIdsByAttributeNameValues", // Missing standard OutBound/InBound DTO
+    "sendCustomerNotification",           // Missing standard OutBound/InBound DTO
+    "getAtmAttributesByAtm",              // Missing standard OutBound/InBound DTOst
+
+    // ── Group 6: Scala / Java built-in methods ──
+    "equals",                             // Scala/Java built-in method
+    "==",                                 // Scala operator
+    "!=",                                 // Scala operator
   ).distinct
 
-  val omitMethods = List(
-    "createOrUpdateAttributeDefinition", // should not be auto generated
-    "deleteAttributeDefinition", // should not be auto generated
-    "getAttributeDefinition", // should not be auto generated
-    "createStandingOrder", // should not be auto generated
-    //** the follow 5 methods should not be generated, should create manually
-    "dynamicEntityProcess",
-    "dynamicEndpointProcess",
-    "createDynamicEndpoint",
-    "getDynamicEndpoint",
-    "getDynamicEndpoints",
-    "getBankAccountByRoutingLegacy",
-    "getAccountRoutingsByScheme",
-    "getAccountRouting",
-    "getBankAccountsWithAttributes",
-    "getBankSettlementAccounts",
-    "getCountOfTransactionsFromAccountToCounterparty",
-    "getStatus",
-    "createOrUpdateBank",
-    "createOrUpdateProduct",
-    "getAllAtms",
-    "getCurrentCurrencies",
-    "getAgents",
-    "getCustomersAtAllBanks",
-    "createOrUpdateBankAttribute",
-    "getBankAttribute",
-    "createOrUpdateAtmAttribute",
-    "getAtmAttribute",
-    "getBankAttributeById",
-    "getAtmAttributeById",
-    "getUserAttributes",
-    "getPersonalUserAttributes",
-    "getNonPersonalUserAttributes",
-    "getUserAttributesByUsers",
-    "createOrUpdateUserAttribute",
-    "getUserAttribute",
-    "getUserAttributeById",
-    "deleteUserAttribute",
-    "getTransactionRequestIdsByAttributeNameValues",
-    "sendCustomerNotification",
-    "equals",
-    "getAtmAttributesByAtm",
-    "==",
-    "!=",
-  ).distinct
+  /**
+   * Dynamically computed list of Connector method names eligible for code generation.
+   * Replaces the former hardcoded ~140-entry list.
+   *
+   * Pipeline:
+   *  1. Start from all OBP-compatible Connector methods (via reflection)
+   *  2. Filter out Legacy methods (names ending with "Legacy")
+   *  3. Filter out excludeMethods entries
+   *  4. Keep only methods that have both OutBound and InBound DTOs
+   *  5. Deduplicate and sort for stable, reviewable output
+   */
+  val commonMethodNames: List[String] = connectorDeclsMethodsReturnOBPRequiredType
+    .map(_.name.toString)
+    .filterNot(_.endsWith("Legacy"))
+    .filterNot(excludeMethods.contains(_))
+    .filter(hasOutBoundInBoundDTO)
+    .toList
+    .distinct
+    .sorted
 }
 
 
