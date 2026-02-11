@@ -69,7 +69,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
   val connectorName = "stored_procedure_vDec2019"
 
 //---------------- dynamic start -------------------please don't modify this line
-// ---------- created on 2026-02-10T15:25:46Z
+// ---------- created on 2026-02-11T11:49:56Z
 
   messageDocs += getAdapterInfoDoc
   def getAdapterInfoDoc = MessageDoc(
@@ -178,6 +178,39 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[AmountOfMoney](callContext))        
   }
           
+  messageDocs += getPaymentLimitDoc
+  def getPaymentLimitDoc = MessageDoc(
+    process = "obp.getPaymentLimit",
+    messageFormat = messageFormat,
+    description = "Get Payment Limit",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetPaymentLimit(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      viewId=viewIdExample.value,
+      transactionRequestType=transactionRequestTypeExample.value,
+      currency=currencyExample.value,
+      userId=userIdExample.value,
+      username=usernameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetPaymentLimit(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AmountOfMoney(currency=currencyExample.value,
+      amount=amountExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getPaymentLimit(bankId: String, accountId: String, viewId: String, transactionRequestType: String, currency: String, userId: String, username: String, callContext: Option[CallContext]): OBPReturnType[Box[AmountOfMoney]] = {
+        import com.openbankproject.commons.dto.{InBoundGetPaymentLimit => InBound, OutBoundGetPaymentLimit => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, transactionRequestType, currency, userId, username)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_payment_limit", req, callContext)
+        response.map(convertToTuple[AmountOfMoney](callContext))        
+  }
+          
   messageDocs += getChargeLevelDoc
   def getChargeLevelDoc = MessageDoc(
     process = "obp.getChargeLevel",
@@ -248,68 +281,6 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, userId, username, transactionRequestType, currency, amount, toAccountRoutings, customAttributes)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_charge_level_c2", req, callContext)
         response.map(convertToTuple[AmountOfMoney](callContext))        
-  }
-          
-  messageDocs += createChallengeDoc
-  def createChallengeDoc = MessageDoc(
-    process = "obp.createChallenge",
-    messageFormat = messageFormat,
-    description = "Create Challenge",
-    outboundTopic = None,
-    inboundTopic = None,
-    exampleOutboundMessage = (
-     OutBoundCreateChallenge(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      bankId=BankId(bankIdExample.value),
-      accountId=AccountId(accountIdExample.value),
-      userId=userIdExample.value,
-      transactionRequestType=TransactionRequestType(transactionRequestTypeExample.value),
-      transactionRequestId=transactionRequestIdExample.value,
-      scaMethod=Some(com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SMS))
-    ),
-    exampleInboundMessage = (
-     InBoundCreateChallenge(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
-      status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data="string")
-    ),
-    adapterImplementation = Some(AdapterImplementation("- Core", 1))
-  )
-
-  override def createChallenge(bankId: BankId, accountId: AccountId, userId: String, transactionRequestType: TransactionRequestType, transactionRequestId: String, scaMethod: Option[StrongCustomerAuthentication.SCA], callContext: Option[CallContext]): OBPReturnType[Box[String]] = {
-        import com.openbankproject.commons.dto.{InBoundCreateChallenge => InBound, OutBoundCreateChallenge => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, userId, transactionRequestType, transactionRequestId, scaMethod)
-        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_challenge", req, callContext)
-        response.map(convertToTuple[String](callContext))        
-  }
-          
-  messageDocs += createChallengesDoc
-  def createChallengesDoc = MessageDoc(
-    process = "obp.createChallenges",
-    messageFormat = messageFormat,
-    description = "Create Challenges",
-    outboundTopic = None,
-    inboundTopic = None,
-    exampleOutboundMessage = (
-     OutBoundCreateChallenges(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      bankId=BankId(bankIdExample.value),
-      accountId=AccountId(accountIdExample.value),
-      userIds=listExample.value.replace("[","").replace("]","").split(",").toList,
-      transactionRequestType=TransactionRequestType(transactionRequestTypeExample.value),
-      transactionRequestId=transactionRequestIdExample.value,
-      scaMethod=Some(com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SMS))
-    ),
-    exampleInboundMessage = (
-     InBoundCreateChallenges(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
-      status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data=listExample.value.replace("[","").replace("]","").split(",").toList)
-    ),
-    adapterImplementation = Some(AdapterImplementation("- Core", 1))
-  )
-
-  override def createChallenges(bankId: BankId, accountId: AccountId, userIds: List[String], transactionRequestType: TransactionRequestType, transactionRequestId: String, scaMethod: Option[StrongCustomerAuthentication.SCA], callContext: Option[CallContext]): OBPReturnType[Box[List[String]]] = {
-        import com.openbankproject.commons.dto.{InBoundCreateChallenges => InBound, OutBoundCreateChallenges => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, userIds, transactionRequestType, transactionRequestId, scaMethod)
-        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_challenges", req, callContext)
-        response.map(convertToTuple[List[String]](callContext))        
   }
           
   messageDocs += createChallengesC2Doc
@@ -459,6 +430,34 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         import com.openbankproject.commons.dto.{InBoundValidateChallengeAnswerV2 => InBound, OutBoundValidateChallengeAnswerV2 => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, challengeId, suppliedAnswer, suppliedAnswerType)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_validate_challenge_answer_v2", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += allChallengesSuccessfullyAnsweredDoc
+  def allChallengesSuccessfullyAnsweredDoc = MessageDoc(
+    process = "obp.allChallengesSuccessfullyAnswered",
+    messageFormat = messageFormat,
+    description = "All Challenges Successfully Answered",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundAllChallengesSuccessfullyAnswered(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      accountId=AccountId(accountIdExample.value),
+      transReqId=TransactionRequestId(transactionRequestIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundAllChallengesSuccessfullyAnswered(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def allChallengesSuccessfullyAnswered(bankId: BankId, accountId: AccountId, transReqId: TransactionRequestId, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundAllChallengesSuccessfullyAnswered => InBound, OutBoundAllChallengesSuccessfullyAnswered => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, transReqId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_all_challenges_successfully_answered", req, callContext)
         response.map(convertToTuple[Boolean](callContext))        
   }
           
@@ -913,7 +912,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_accounts_for_user", req, callContext)
         response.map(convertToTuple[List[InboundAccountCommons]](callContext))        
   }
-  
+          
   messageDocs += checkExternalUserCredentialsDoc
   def checkExternalUserCredentialsDoc = MessageDoc(
     process = "obp.checkExternalUserCredentials",
@@ -986,7 +985,7 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_check_external_user_exists", req, callContext)
         response.map(convertToTuple[InboundExternalUser](callContext))        
   }
-  
+          
   messageDocs += getBankAccountByIbanDoc
   def getBankAccountByIbanDoc = MessageDoc(
     process = "obp.getBankAccountByIban",
@@ -1373,6 +1372,160 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[BankAccountCommons](callContext))        
   }
           
+  messageDocs += getBankAccountFromCounterpartyDoc
+  def getBankAccountFromCounterpartyDoc = MessageDoc(
+    process = "obp.getBankAccountFromCounterparty",
+    messageFormat = messageFormat,
+    description = "Get Bank Account From Counterparty",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetBankAccountFromCounterparty(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      counterparty= CounterpartyTraitCommons(createdByUserId=createdByUserIdExample.value,
+      name=counterpartyNameExample.value,
+      description=descriptionExample.value,
+      currency=currencyExample.value,
+      thisBankId=thisBankIdExample.value,
+      thisAccountId=thisAccountIdExample.value,
+      thisViewId=thisViewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      otherAccountRoutingScheme=counterpartyOtherAccountRoutingSchemeExample.value,
+      otherAccountRoutingAddress=counterpartyOtherAccountRoutingAddressExample.value,
+      otherAccountSecondaryRoutingScheme=counterpartyOtherAccountSecondaryRoutingSchemeExample.value,
+      otherAccountSecondaryRoutingAddress=counterpartyOtherAccountSecondaryRoutingAddressExample.value,
+      otherBankRoutingScheme=counterpartyOtherBankRoutingSchemeExample.value,
+      otherBankRoutingAddress=counterpartyOtherBankRoutingAddressExample.value,
+      otherBranchRoutingScheme=counterpartyOtherBranchRoutingSchemeExample.value,
+      otherBranchRoutingAddress=counterpartyOtherBranchRoutingAddressExample.value,
+      isBeneficiary=isBeneficiaryExample.value.toBoolean,
+      bespoke=List( CounterpartyBespoke(key=keyExample.value,
+      value=valueExample.value))),
+      isOutgoingAccount=true)
+    ),
+    exampleInboundMessage = (
+     InBoundGetBankAccountFromCounterparty(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= BankAccountCommons(accountId=AccountId(accountIdExample.value),
+      accountType=accountTypeExample.value,
+      balance=BigDecimal(balanceExample.value),
+      currency=currencyExample.value,
+      name=bankAccountNameExample.value,
+      label=labelExample.value,
+      number=bankAccountNumberExample.value,
+      bankId=BankId(bankIdExample.value),
+      lastUpdate=toDate(bankAccountLastUpdateExample),
+      branchId=branchIdExample.value,
+      accountRoutings=List( AccountRouting(scheme=accountRoutingSchemeExample.value,
+      address=accountRoutingAddressExample.value)),
+      accountRules=List( AccountRule(scheme=accountRuleSchemeExample.value,
+      value=accountRuleValueExample.value)),
+      accountHolder=bankAccountAccountHolderExample.value,
+      attributes=Some(List( Attribute(name=attributeNameExample.value,
+      `type`=attributeTypeExample.value,
+      value=attributeValueExample.value)))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBankAccountFromCounterparty(counterparty: CounterpartyTrait, isOutgoingAccount: Boolean, callContext: Option[CallContext]): OBPReturnType[Box[BankAccount]] = {
+        import com.openbankproject.commons.dto.{InBoundGetBankAccountFromCounterparty => InBound, OutBoundGetBankAccountFromCounterparty => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, counterparty, isOutgoingAccount)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_account_from_counterparty", req, callContext)
+        response.map(convertToTuple[BankAccountCommons](callContext))        
+  }
+          
+  messageDocs += getBankAccountByNumberDoc
+  def getBankAccountByNumberDoc = MessageDoc(
+    process = "obp.getBankAccountByNumber",
+    messageFormat = messageFormat,
+    description = "Get Bank Account By Number",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetBankAccountByNumber(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=Some(BankId(bankIdExample.value)),
+      accountNumber=accountNumberExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetBankAccountByNumber(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= BankAccountCommons(accountId=AccountId(accountIdExample.value),
+      accountType=accountTypeExample.value,
+      balance=BigDecimal(balanceExample.value),
+      currency=currencyExample.value,
+      name=bankAccountNameExample.value,
+      label=labelExample.value,
+      number=bankAccountNumberExample.value,
+      bankId=BankId(bankIdExample.value),
+      lastUpdate=toDate(bankAccountLastUpdateExample),
+      branchId=branchIdExample.value,
+      accountRoutings=List( AccountRouting(scheme=accountRoutingSchemeExample.value,
+      address=accountRoutingAddressExample.value)),
+      accountRules=List( AccountRule(scheme=accountRuleSchemeExample.value,
+      value=accountRuleValueExample.value)),
+      accountHolder=bankAccountAccountHolderExample.value,
+      attributes=Some(List( Attribute(name=attributeNameExample.value,
+      `type`=attributeTypeExample.value,
+      value=attributeValueExample.value)))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBankAccountByNumber(bankId: Option[BankId], accountNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[BankAccount]] = {
+        import com.openbankproject.commons.dto.{InBoundGetBankAccountByNumber => InBound, OutBoundGetBankAccountByNumber => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountNumber)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_account_by_number", req, callContext)
+        response.map(convertToTuple[BankAccountCommons](callContext))        
+  }
+          
+  messageDocs += getBankAccountByRoutingsDoc
+  def getBankAccountByRoutingsDoc = MessageDoc(
+    process = "obp.getBankAccountByRoutings",
+    messageFormat = messageFormat,
+    description = "Get Bank Account By Routings",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetBankAccountByRoutings(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankAccountRoutings= BankAccountRoutings(bank= BankRoutingJson(scheme=schemeExample.value,
+      address=addressExample.value),
+      account= BranchRoutingJsonV141(scheme=schemeExample.value,
+      address=addressExample.value),
+      branch= AccountRoutingJsonV121(scheme=schemeExample.value,
+      address=addressExample.value)))
+    ),
+    exampleInboundMessage = (
+     InBoundGetBankAccountByRoutings(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= BankAccountCommons(accountId=AccountId(accountIdExample.value),
+      accountType=accountTypeExample.value,
+      balance=BigDecimal(balanceExample.value),
+      currency=currencyExample.value,
+      name=bankAccountNameExample.value,
+      label=labelExample.value,
+      number=bankAccountNumberExample.value,
+      bankId=BankId(bankIdExample.value),
+      lastUpdate=toDate(bankAccountLastUpdateExample),
+      branchId=branchIdExample.value,
+      accountRoutings=List( AccountRouting(scheme=accountRoutingSchemeExample.value,
+      address=accountRoutingAddressExample.value)),
+      accountRules=List( AccountRule(scheme=accountRuleSchemeExample.value,
+      value=accountRuleValueExample.value)),
+      accountHolder=bankAccountAccountHolderExample.value,
+      attributes=Some(List( Attribute(name=attributeNameExample.value,
+      `type`=attributeTypeExample.value,
+      value=attributeValueExample.value)))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBankAccountByRoutings(bankAccountRoutings: BankAccountRoutings, callContext: Option[CallContext]): OBPReturnType[Box[BankAccount]] = {
+        import com.openbankproject.commons.dto.{InBoundGetBankAccountByRoutings => InBound, OutBoundGetBankAccountByRoutings => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankAccountRoutings)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_account_by_routings", req, callContext)
+        response.map(convertToTuple[BankAccountCommons](callContext))        
+  }
+          
   messageDocs += getCounterpartyTraitDoc
   def getCounterpartyTraitDoc = MessageDoc(
     process = "obp.getCounterpartyTrait",
@@ -1463,6 +1616,32 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[CounterpartyTraitCommons](callContext))        
   }
           
+  messageDocs += deleteCounterpartyByCounterpartyIdDoc
+  def deleteCounterpartyByCounterpartyIdDoc = MessageDoc(
+    process = "obp.deleteCounterpartyByCounterpartyId",
+    messageFormat = messageFormat,
+    description = "Delete Counterparty By Counterparty Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteCounterpartyByCounterpartyId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      counterpartyId=CounterpartyId(counterpartyIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteCounterpartyByCounterpartyId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteCounterpartyByCounterpartyId(counterpartyId: CounterpartyId, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteCounterpartyByCounterpartyId => InBound, OutBoundDeleteCounterpartyByCounterpartyId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, counterpartyId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_counterparty_by_counterparty_id", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
   messageDocs += getCounterpartyByIbanDoc
   def getCounterpartyByIbanDoc = MessageDoc(
     process = "obp.getCounterpartyByIban",
@@ -1550,6 +1729,115 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         import com.openbankproject.commons.dto.{InBoundGetCounterpartyByIbanAndBankAccountId => InBound, OutBoundGetCounterpartyByIbanAndBankAccountId => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, iban, bankId, accountId)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_counterparty_by_iban_and_bank_account_id", req, callContext)
+        response.map(convertToTuple[CounterpartyTraitCommons](callContext))        
+  }
+          
+  messageDocs += getOrCreateCounterpartyDoc
+  def getOrCreateCounterpartyDoc = MessageDoc(
+    process = "obp.getOrCreateCounterparty",
+    messageFormat = messageFormat,
+    description = "Get Or Create Counterparty",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetOrCreateCounterparty(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      name=nameExample.value,
+      description=descriptionExample.value,
+      currency=currencyExample.value,
+      createdByUserId=createdByUserIdExample.value,
+      thisBankId=thisBankIdExample.value,
+      thisAccountId=thisAccountIdExample.value,
+      thisViewId=thisViewIdExample.value,
+      other_bank_routing_scheme="string",
+      other_bank_routing_address="string",
+      other_branch_routing_scheme="string",
+      other_branch_routing_address="string",
+      other_account_routing_scheme="string",
+      other_account_routing_address="string",
+      other_account_secondary_routing_scheme="string",
+      other_account_secondary_routing_address="string")
+    ),
+    exampleInboundMessage = (
+     InBoundGetOrCreateCounterparty(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CounterpartyTraitCommons(createdByUserId=createdByUserIdExample.value,
+      name=nameExample.value,
+      description=descriptionExample.value,
+      currency=currencyExample.value,
+      thisBankId=thisBankIdExample.value,
+      thisAccountId=thisAccountIdExample.value,
+      thisViewId=thisViewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      otherAccountRoutingScheme=otherAccountRoutingSchemeExample.value,
+      otherAccountRoutingAddress=otherAccountRoutingAddressExample.value,
+      otherAccountSecondaryRoutingScheme=otherAccountSecondaryRoutingSchemeExample.value,
+      otherAccountSecondaryRoutingAddress=otherAccountSecondaryRoutingAddressExample.value,
+      otherBankRoutingScheme=otherBankRoutingSchemeExample.value,
+      otherBankRoutingAddress=otherBankRoutingAddressExample.value,
+      otherBranchRoutingScheme=otherBranchRoutingSchemeExample.value,
+      otherBranchRoutingAddress=otherBranchRoutingAddressExample.value,
+      isBeneficiary=isBeneficiaryExample.value.toBoolean,
+      bespoke=List( CounterpartyBespoke(key=keyExample.value,
+      value=valueExample.value))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getOrCreateCounterparty(name: String, description: String, currency: String, createdByUserId: String, thisBankId: String, thisAccountId: String, thisViewId: String, other_bank_routing_scheme: String, other_bank_routing_address: String, other_branch_routing_scheme: String, other_branch_routing_address: String, other_account_routing_scheme: String, other_account_routing_address: String, other_account_secondary_routing_scheme: String, other_account_secondary_routing_address: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetOrCreateCounterparty => InBound, OutBoundGetOrCreateCounterparty => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, name, description, currency, createdByUserId, thisBankId, thisAccountId, thisViewId, other_bank_routing_scheme, other_bank_routing_address, other_branch_routing_scheme, other_branch_routing_address, other_account_routing_scheme, other_account_routing_address, other_account_secondary_routing_scheme, other_account_secondary_routing_address)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_or_create_counterparty", req, callContext)
+        response.map(convertToTuple[CounterpartyTraitCommons](callContext))        
+  }
+          
+  messageDocs += getCounterpartyByRoutingsDoc
+  def getCounterpartyByRoutingsDoc = MessageDoc(
+    process = "obp.getCounterpartyByRoutings",
+    messageFormat = messageFormat,
+    description = "Get Counterparty By Routings",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCounterpartyByRoutings(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      otherBankRoutingScheme=otherBankRoutingSchemeExample.value,
+      otherBankRoutingAddress=otherBankRoutingAddressExample.value,
+      otherBranchRoutingScheme=otherBranchRoutingSchemeExample.value,
+      otherBranchRoutingAddress=otherBranchRoutingAddressExample.value,
+      otherAccountRoutingScheme=otherAccountRoutingSchemeExample.value,
+      otherAccountRoutingAddress=otherAccountRoutingAddressExample.value,
+      otherAccountSecondaryRoutingScheme=otherAccountSecondaryRoutingSchemeExample.value,
+      otherAccountSecondaryRoutingAddress=otherAccountSecondaryRoutingAddressExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCounterpartyByRoutings(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CounterpartyTraitCommons(createdByUserId=createdByUserIdExample.value,
+      name=nameExample.value,
+      description=descriptionExample.value,
+      currency=currencyExample.value,
+      thisBankId=thisBankIdExample.value,
+      thisAccountId=thisAccountIdExample.value,
+      thisViewId=thisViewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      otherAccountRoutingScheme=otherAccountRoutingSchemeExample.value,
+      otherAccountRoutingAddress=otherAccountRoutingAddressExample.value,
+      otherAccountSecondaryRoutingScheme=otherAccountSecondaryRoutingSchemeExample.value,
+      otherAccountSecondaryRoutingAddress=otherAccountSecondaryRoutingAddressExample.value,
+      otherBankRoutingScheme=otherBankRoutingSchemeExample.value,
+      otherBankRoutingAddress=otherBankRoutingAddressExample.value,
+      otherBranchRoutingScheme=otherBranchRoutingSchemeExample.value,
+      otherBranchRoutingAddress=otherBranchRoutingAddressExample.value,
+      isBeneficiary=isBeneficiaryExample.value.toBoolean,
+      bespoke=List( CounterpartyBespoke(key=keyExample.value,
+      value=valueExample.value))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCounterpartyByRoutings(otherBankRoutingScheme: String, otherBankRoutingAddress: String, otherBranchRoutingScheme: String, otherBranchRoutingAddress: String, otherAccountRoutingScheme: String, otherAccountRoutingAddress: String, otherAccountSecondaryRoutingScheme: String, otherAccountSecondaryRoutingAddress: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCounterpartyByRoutings => InBound, OutBoundGetCounterpartyByRoutings => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, otherBankRoutingScheme, otherBankRoutingAddress, otherBranchRoutingScheme, otherBranchRoutingAddress, otherAccountRoutingScheme, otherAccountRoutingAddress, otherAccountSecondaryRoutingScheme, otherAccountSecondaryRoutingAddress)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_counterparty_by_routings", req, callContext)
         response.map(convertToTuple[CounterpartyTraitCommons](callContext))        
   }
           
@@ -1734,6 +2022,37 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, OBPQueryParam.getLimit(queryParams), OBPQueryParam.getOffset(queryParams), OBPQueryParam.getFromDate(queryParams), OBPQueryParam.getToDate(queryParams))
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transactions_core", req, callContext)
         response.map(convertToTuple[List[TransactionCore]](callContext))        
+  }
+          
+  messageDocs += getSumOfTransactionsFromAccountToCounterpartyDoc
+  def getSumOfTransactionsFromAccountToCounterpartyDoc = MessageDoc(
+    process = "obp.getSumOfTransactionsFromAccountToCounterparty",
+    messageFormat = messageFormat,
+    description = "Get Sum Of Transactions From Account To Counterparty",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetSumOfTransactionsFromAccountToCounterparty(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      fromBankId=BankId(bankIdExample.value),
+      fromAccountId=AccountId(accountIdExample.value),
+      counterpartyId=CounterpartyId(counterpartyIdExample.value),
+      fromDate=toDate(fromDateExample),
+      toDate=toDate(toDateExample))
+    ),
+    exampleInboundMessage = (
+     InBoundGetSumOfTransactionsFromAccountToCounterparty(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AmountOfMoney(currency=currencyExample.value,
+      amount=amountExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getSumOfTransactionsFromAccountToCounterparty(fromBankId: BankId, fromAccountId: AccountId, counterpartyId: CounterpartyId, fromDate: Date, toDate: Date, callContext: Option[CallContext]): OBPReturnType[Box[AmountOfMoney]] = {
+        import com.openbankproject.commons.dto.{InBoundGetSumOfTransactionsFromAccountToCounterparty => InBound, OutBoundGetSumOfTransactionsFromAccountToCounterparty => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, fromBankId, fromAccountId, counterpartyId, fromDate, toDate)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_sum_of_transactions_from_account_to_counterparty", req, callContext)
+        response.map(convertToTuple[AmountOfMoney](callContext))        
   }
           
   messageDocs += getTransactionDoc
@@ -1945,6 +2264,73 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, cardId)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_physical_card_for_bank", req, callContext)
         response.map(convertToTuple[PhysicalCard](callContext))        
+  }
+          
+  messageDocs += getPhysicalCardByCardNumberDoc
+  def getPhysicalCardByCardNumberDoc = MessageDoc(
+    process = "obp.getPhysicalCardByCardNumber",
+    messageFormat = messageFormat,
+    description = "Get Physical Card By Card Number",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetPhysicalCardByCardNumber(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankCardNumber=bankCardNumberExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetPhysicalCardByCardNumber(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= PhysicalCardTraitCommons(cardId=cardIdExample.value,
+      bankId=bankIdExample.value,
+      bankCardNumber=bankCardNumberExample.value,
+      cardType=cardTypeExample.value,
+      nameOnCard=nameOnCardExample.value,
+      issueNumber=issueNumberExample.value,
+      serialNumber=serialNumberExample.value,
+      validFrom=toDate(validFromExample),
+      expires=toDate(expiresDateExample),
+      enabled=enabledExample.value.toBoolean,
+      cancelled=cancelledExample.value.toBoolean,
+      onHotList=onHotListExample.value.toBoolean,
+      technology=technologyExample.value,
+      networks=networksExample.value.replace("[","").replace("]","").split(",").toList,
+      allows=List(com.openbankproject.commons.model.CardAction.DEBIT),
+      account= BankAccountCommons(accountId=AccountId(accountIdExample.value),
+      accountType=accountTypeExample.value,
+      balance=BigDecimal(balanceExample.value),
+      currency=currencyExample.value,
+      name=bankAccountNameExample.value,
+      label=labelExample.value,
+      number=accountNumberExample.value,
+      bankId=BankId(bankIdExample.value),
+      lastUpdate=toDate(bankAccountLastUpdateExample),
+      branchId=branchIdExample.value,
+      accountRoutings=List( AccountRouting(scheme=accountRoutingSchemeExample.value,
+      address=accountRoutingAddressExample.value)),
+      accountRules=List( AccountRule(scheme=accountRuleSchemeExample.value,
+      value=accountRuleValueExample.value)),
+      accountHolder=bankAccountAccountHolderExample.value,
+      attributes=Some(List( Attribute(name=attributeNameExample.value,
+      `type`=attributeTypeExample.value,
+      value=attributeValueExample.value)))),
+      replacement=Some( CardReplacementInfo(requestedDate=toDate(requestedDateExample),
+      reasonRequested=com.openbankproject.commons.model.CardReplacementReason.FIRST)),
+      pinResets=List( PinResetInfo(requestedDate=toDate(requestedDateExample),
+      reasonRequested=com.openbankproject.commons.model.PinResetReason.FORGOT)),
+      collected=Some(CardCollectionInfo(toDate(collectedExample))),
+      posted=Some(CardPostedInfo(toDate(postedExample))),
+      customerId=customerIdExample.value,
+      cvv=Some(cvvExample.value),
+      brand=Some(brandExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getPhysicalCardByCardNumber(bankCardNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[PhysicalCardTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetPhysicalCardByCardNumber => InBound, OutBoundGetPhysicalCardByCardNumber => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankCardNumber)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_physical_card_by_card_number", req, callContext)
+        response.map(convertToTuple[PhysicalCardTraitCommons](callContext))        
   }
           
   messageDocs += deletePhysicalCardForBankDoc
@@ -2311,31 +2697,116 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[TransactionId](callContext))        
   }
           
-  messageDocs += getChargeValueDoc
-  def getChargeValueDoc = MessageDoc(
-    process = "obp.getChargeValue",
+  messageDocs += saveDoubleEntryBookTransactionDoc
+  def saveDoubleEntryBookTransactionDoc = MessageDoc(
+    process = "obp.saveDoubleEntryBookTransaction",
     messageFormat = messageFormat,
-    description = "Get Charge Value",
+    description = "Save Double Entry Book Transaction",
     outboundTopic = None,
     inboundTopic = None,
     exampleOutboundMessage = (
-     OutBoundGetChargeValue(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      chargeLevelAmount=BigDecimal("123.321"),
-      transactionRequestCommonBodyAmount=BigDecimal("123.321"))
+     OutBoundSaveDoubleEntryBookTransaction(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      doubleEntryTransaction= DoubleEntryTransaction(transactionRequestBankId=Some(BankId(bankIdExample.value)),
+      transactionRequestAccountId=Some(AccountId(accountIdExample.value)),
+      transactionRequestId=Some(TransactionRequestId(transactionRequestIdExample.value)),
+      debitTransactionBankId=BankId(bankIdExample.value),
+      debitTransactionAccountId=AccountId(accountIdExample.value),
+      debitTransactionId=TransactionId(transactionIdExample.value),
+      creditTransactionBankId=BankId(bankIdExample.value),
+      creditTransactionAccountId=AccountId(accountIdExample.value),
+      creditTransactionId=TransactionId(transactionIdExample.value)))
     ),
     exampleInboundMessage = (
-     InBoundGetChargeValue(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+     InBoundSaveDoubleEntryBookTransaction(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
       status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data="string")
+      data= DoubleEntryTransaction(transactionRequestBankId=Some(BankId(bankIdExample.value)),
+      transactionRequestAccountId=Some(AccountId(accountIdExample.value)),
+      transactionRequestId=Some(TransactionRequestId(transactionRequestIdExample.value)),
+      debitTransactionBankId=BankId(bankIdExample.value),
+      debitTransactionAccountId=AccountId(accountIdExample.value),
+      debitTransactionId=TransactionId(transactionIdExample.value),
+      creditTransactionBankId=BankId(bankIdExample.value),
+      creditTransactionAccountId=AccountId(accountIdExample.value),
+      creditTransactionId=TransactionId(transactionIdExample.value)))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
 
-  override def getChargeValue(chargeLevelAmount: BigDecimal, transactionRequestCommonBodyAmount: BigDecimal, callContext: Option[CallContext]): OBPReturnType[Box[String]] = {
-        import com.openbankproject.commons.dto.{InBoundGetChargeValue => InBound, OutBoundGetChargeValue => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, chargeLevelAmount, transactionRequestCommonBodyAmount)
-        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_charge_value", req, callContext)
-        response.map(convertToTuple[String](callContext))        
+  override def saveDoubleEntryBookTransaction(doubleEntryTransaction: DoubleEntryTransaction, callContext: Option[CallContext]): OBPReturnType[Box[DoubleEntryTransaction]] = {
+        import com.openbankproject.commons.dto.{InBoundSaveDoubleEntryBookTransaction => InBound, OutBoundSaveDoubleEntryBookTransaction => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, doubleEntryTransaction)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_save_double_entry_book_transaction", req, callContext)
+        response.map(convertToTuple[DoubleEntryTransaction](callContext))        
+  }
+          
+  messageDocs += getDoubleEntryBookTransactionDoc
+  def getDoubleEntryBookTransactionDoc = MessageDoc(
+    process = "obp.getDoubleEntryBookTransaction",
+    messageFormat = messageFormat,
+    description = "Get Double Entry Book Transaction",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetDoubleEntryBookTransaction(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      accountId=AccountId(accountIdExample.value),
+      transactionId=TransactionId(transactionIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetDoubleEntryBookTransaction(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= DoubleEntryTransaction(transactionRequestBankId=Some(BankId(bankIdExample.value)),
+      transactionRequestAccountId=Some(AccountId(accountIdExample.value)),
+      transactionRequestId=Some(TransactionRequestId(transactionRequestIdExample.value)),
+      debitTransactionBankId=BankId(bankIdExample.value),
+      debitTransactionAccountId=AccountId(accountIdExample.value),
+      debitTransactionId=TransactionId(transactionIdExample.value),
+      creditTransactionBankId=BankId(bankIdExample.value),
+      creditTransactionAccountId=AccountId(accountIdExample.value),
+      creditTransactionId=TransactionId(transactionIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getDoubleEntryBookTransaction(bankId: BankId, accountId: AccountId, transactionId: TransactionId, callContext: Option[CallContext]): OBPReturnType[Box[DoubleEntryTransaction]] = {
+        import com.openbankproject.commons.dto.{InBoundGetDoubleEntryBookTransaction => InBound, OutBoundGetDoubleEntryBookTransaction => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, transactionId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_double_entry_book_transaction", req, callContext)
+        response.map(convertToTuple[DoubleEntryTransaction](callContext))        
+  }
+          
+  messageDocs += getBalancingTransactionDoc
+  def getBalancingTransactionDoc = MessageDoc(
+    process = "obp.getBalancingTransaction",
+    messageFormat = messageFormat,
+    description = "Get Balancing Transaction",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetBalancingTransaction(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      transactionId=TransactionId(transactionIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetBalancingTransaction(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= DoubleEntryTransaction(transactionRequestBankId=Some(BankId(bankIdExample.value)),
+      transactionRequestAccountId=Some(AccountId(accountIdExample.value)),
+      transactionRequestId=Some(TransactionRequestId(transactionRequestIdExample.value)),
+      debitTransactionBankId=BankId(bankIdExample.value),
+      debitTransactionAccountId=AccountId(accountIdExample.value),
+      debitTransactionId=TransactionId(transactionIdExample.value),
+      creditTransactionBankId=BankId(bankIdExample.value),
+      creditTransactionAccountId=AccountId(accountIdExample.value),
+      creditTransactionId=TransactionId(transactionIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBalancingTransaction(transactionId: TransactionId, callContext: Option[CallContext]): OBPReturnType[Box[DoubleEntryTransaction]] = {
+        import com.openbankproject.commons.dto.{InBoundGetBalancingTransaction => InBound, OutBoundGetBalancingTransaction => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, transactionId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_balancing_transaction", req, callContext)
+        response.map(convertToTuple[DoubleEntryTransaction](callContext))        
   }
           
   messageDocs += createTransactionRequestv210Doc
@@ -2796,6 +3267,148 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, initiator, paymentServiceType, transactionRequestType, transactionRequestBody)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_transaction_request_periodic_sepa_credit_transfers_bgv1", req, callContext)
         response.map(convertToTuple[TransactionRequestBGV1](callContext))        
+  }
+          
+  messageDocs += notifyTransactionRequestDoc
+  def notifyTransactionRequestDoc = MessageDoc(
+    process = "obp.notifyTransactionRequest",
+    messageFormat = messageFormat,
+    description = "Notify Transaction Request",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundNotifyTransactionRequest(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      fromAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
+      accountType=accountTypeExample.value,
+      balance=BigDecimal(balanceExample.value),
+      currency=currencyExample.value,
+      name=bankAccountNameExample.value,
+      label=labelExample.value,
+      number=bankAccountNumberExample.value,
+      bankId=BankId(bankIdExample.value),
+      lastUpdate=toDate(bankAccountLastUpdateExample),
+      branchId=branchIdExample.value,
+      accountRoutings=List( AccountRouting(scheme=accountRoutingSchemeExample.value,
+      address=accountRoutingAddressExample.value)),
+      accountRules=List( AccountRule(scheme=accountRuleSchemeExample.value,
+      value=accountRuleValueExample.value)),
+      accountHolder=bankAccountAccountHolderExample.value,
+      attributes=Some(List( Attribute(name=attributeNameExample.value,
+      `type`=attributeTypeExample.value,
+      value=attributeValueExample.value)))),
+      toAccount= BankAccountCommons(accountId=AccountId(accountIdExample.value),
+      accountType=accountTypeExample.value,
+      balance=BigDecimal(balanceExample.value),
+      currency=currencyExample.value,
+      name=bankAccountNameExample.value,
+      label=labelExample.value,
+      number=bankAccountNumberExample.value,
+      bankId=BankId(bankIdExample.value),
+      lastUpdate=toDate(bankAccountLastUpdateExample),
+      branchId=branchIdExample.value,
+      accountRoutings=List( AccountRouting(scheme=accountRoutingSchemeExample.value,
+      address=accountRoutingAddressExample.value)),
+      accountRules=List( AccountRule(scheme=accountRuleSchemeExample.value,
+      value=accountRuleValueExample.value)),
+      accountHolder=bankAccountAccountHolderExample.value,
+      attributes=Some(List( Attribute(name=attributeNameExample.value,
+      `type`=attributeTypeExample.value,
+      value=attributeValueExample.value)))),
+      transactionRequest= TransactionRequest(id=TransactionRequestId(transactionRequestIdExample.value),
+      `type`=transactionRequestTypeExample.value,
+      from= TransactionRequestAccount(bank_id=bank_idExample.value,
+      account_id=account_idExample.value),
+      body= TransactionRequestBodyAllTypes(to_sandbox_tan=Some( TransactionRequestAccount(bank_id=bank_idExample.value,
+      account_id=account_idExample.value)),
+      to_sepa=Some(TransactionRequestIban(transactionRequestIban.value)),
+      to_counterparty=Some(TransactionRequestCounterpartyId(transactionRequestCounterpartyIdExample.value)),
+      to_simple=Some( TransactionRequestSimple(otherBankRoutingScheme=otherBankRoutingSchemeExample.value,
+      otherBankRoutingAddress=otherBankRoutingAddressExample.value,
+      otherBranchRoutingScheme=otherBranchRoutingSchemeExample.value,
+      otherBranchRoutingAddress=otherBranchRoutingAddressExample.value,
+      otherAccountRoutingScheme=otherAccountRoutingSchemeExample.value,
+      otherAccountRoutingAddress=otherAccountRoutingAddressExample.value,
+      otherAccountSecondaryRoutingScheme=otherAccountSecondaryRoutingSchemeExample.value,
+      otherAccountSecondaryRoutingAddress=otherAccountSecondaryRoutingAddressExample.value)),
+      to_transfer_to_phone=Some( TransactionRequestTransferToPhone(value= AmountOfMoneyJsonV121(currency=currencyExample.value,
+      amount=amountExample.value),
+      description=descriptionExample.value,
+      message=messageExample.value,
+      from= FromAccountTransfer(mobile_phone_number="string",
+      nickname=nicknameExample.value),
+      to=ToAccountTransferToPhone(toExample.value))),
+      to_transfer_to_atm=Some( TransactionRequestTransferToAtm(value= AmountOfMoneyJsonV121(currency=currencyExample.value,
+      amount=amountExample.value),
+      description=descriptionExample.value,
+      message=messageExample.value,
+      from= FromAccountTransfer(mobile_phone_number="string",
+      nickname=nicknameExample.value),
+      to= ToAccountTransferToAtm(legal_name="string",
+      date_of_birth="string",
+      mobile_phone_number="string",
+      kyc_document= ToAccountTransferToAtmKycDocument(`type`=typeExample.value,
+      number=numberExample.value)))),
+      to_transfer_to_account=Some( TransactionRequestTransferToAccount(value= AmountOfMoneyJsonV121(currency=currencyExample.value,
+      amount=amountExample.value),
+      description=descriptionExample.value,
+      transfer_type="string",
+      future_date="string",
+      to= ToAccountTransferToAccount(name=nameExample.value,
+      bank_code="string",
+      branch_number="string",
+      account= ToAccountTransferToAccountAccount(number=accountNumberExample.value,
+      iban=ibanExample.value)))),
+      to_sepa_credit_transfers=Some( SepaCreditTransfers(debtorAccount=PaymentAccount("string"),
+      instructedAmount= AmountOfMoneyJsonV121(currency=currencyExample.value,
+      amount=amountExample.value),
+      creditorAccount=PaymentAccount("string"),
+      creditorName="string")),
+      to_agent=Some( TransactionRequestAgentCashWithdrawal(bank_id=bank_idExample.value,
+      agent_number="string")),
+      value= AmountOfMoney(currency=currencyExample.value,
+      amount=amountExample.value),
+      description=descriptionExample.value),
+      transaction_ids="string",
+      status=statusExample.value,
+      start_date=toDate(transactionRequestStartDateExample),
+      end_date=toDate(transactionRequestEndDateExample),
+      challenge= TransactionRequestChallenge(id=challengeIdExample.value,
+      allowed_attempts=123,
+      challenge_type="string"),
+      charge= TransactionRequestCharge(summary=summaryExample.value,
+      value= AmountOfMoney(currency=currencyExample.value,
+      amount=amountExample.value)),
+      charge_policy="string",
+      counterparty_id=CounterpartyId(transactionRequestCounterpartyIdExample.value),
+      name=nameExample.value,
+      this_bank_id=BankId(bankIdExample.value),
+      this_account_id=AccountId(accountIdExample.value),
+      this_view_id=ViewId(viewIdExample.value),
+      other_account_routing_scheme="string",
+      other_account_routing_address="string",
+      other_bank_routing_scheme="string",
+      other_bank_routing_address="string",
+      is_beneficiary=true,
+      future_date=Some("string"),
+      payment_start_date=Some(toDate(dateExample)),
+      payment_end_date=Some(toDate(dateExample)),
+      payment_execution_Rule=Some("string"),
+      payment_frequency=Some("string"),
+      payment_day_of_execution=Some("string")))
+    ),
+    exampleInboundMessage = (
+     InBoundNotifyTransactionRequest(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=TransactionRequestStatusValue("string"))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def notifyTransactionRequest(fromAccount: BankAccount, toAccount: BankAccount, transactionRequest: TransactionRequest, callContext: Option[CallContext]): OBPReturnType[Box[TransactionRequestStatusValue]] = {
+        import com.openbankproject.commons.dto.{InBoundNotifyTransactionRequest => InBound, OutBoundNotifyTransactionRequest => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, fromAccount, toAccount, transactionRequest)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_notify_transaction_request", req, callContext)
+        response.map(convertToTuple[TransactionRequestStatusValue](callContext))        
   }
           
   messageDocs += saveTransactionRequestTransactionDoc
@@ -3585,6 +4198,562 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[ProductCommons](callContext))        
   }
           
+  messageDocs += getProductTreeDoc
+  def getProductTreeDoc = MessageDoc(
+    process = "obp.getProductTree",
+    messageFormat = messageFormat,
+    description = "Get Product Tree",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetProductTree(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      productCode=ProductCode(productCodeExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetProductTree(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( ProductCommons(bankId=BankId(bankIdExample.value),
+      code=ProductCode(productCodeExample.value),
+      parentProductCode=ProductCode(parentProductCodeExample.value),
+      name=productNameExample.value,
+      category=categoryExample.value,
+      family=familyExample.value,
+      superFamily=superFamilyExample.value,
+      moreInfoUrl=moreInfoUrlExample.value,
+      termsAndConditionsUrl=termsAndConditionsUrlExample.value,
+      details=detailsExample.value,
+      description=descriptionExample.value,
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getProductTree(bankId: BankId, productCode: ProductCode, callContext: Option[CallContext]): OBPReturnType[Box[List[Product]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetProductTree => InBound, OutBoundGetProductTree => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, productCode)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_product_tree", req, callContext)
+        response.map(convertToTuple[List[ProductCommons]](callContext))        
+  }
+          
+  messageDocs += deleteAtmDoc
+  def deleteAtmDoc = MessageDoc(
+    process = "obp.deleteAtm",
+    messageFormat = messageFormat,
+    description = "Delete Atm",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteAtm(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atm= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=atmNameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(atmServicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(atmNotesExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(atmLocationCategoriesExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some(atmMinimumWithdrawalExample.value),
+      branchIdentification=Some(atmBranchIdentificationExample.value),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some(atmSiteNameExample.value),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteAtm(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteAtm(atm: AtmT, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteAtm => InBound, OutBoundDeleteAtm => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atm)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_atm", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += createSystemLevelEndpointTagDoc
+  def createSystemLevelEndpointTagDoc = MessageDoc(
+    process = "obp.createSystemLevelEndpointTag",
+    messageFormat = messageFormat,
+    description = "Create System Level Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateSystemLevelEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateSystemLevelEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createSystemLevelEndpointTag(operationId: String, tagName: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateSystemLevelEndpointTag => InBound, OutBoundCreateSystemLevelEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, operationId, tagName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_system_level_endpoint_tag", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += updateSystemLevelEndpointTagDoc
+  def updateSystemLevelEndpointTagDoc = MessageDoc(
+    process = "obp.updateSystemLevelEndpointTag",
+    messageFormat = messageFormat,
+    description = "Update System Level Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateSystemLevelEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      endpointTagId=endpointTagIdExample.value,
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateSystemLevelEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateSystemLevelEndpointTag(endpointTagId: String, operationId: String, tagName: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateSystemLevelEndpointTag => InBound, OutBoundUpdateSystemLevelEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, endpointTagId, operationId, tagName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_system_level_endpoint_tag", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += createBankLevelEndpointTagDoc
+  def createBankLevelEndpointTagDoc = MessageDoc(
+    process = "obp.createBankLevelEndpointTag",
+    messageFormat = messageFormat,
+    description = "Create Bank Level Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateBankLevelEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateBankLevelEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createBankLevelEndpointTag(bankId: String, operationId: String, tagName: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateBankLevelEndpointTag => InBound, OutBoundCreateBankLevelEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, operationId, tagName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_bank_level_endpoint_tag", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += updateBankLevelEndpointTagDoc
+  def updateBankLevelEndpointTagDoc = MessageDoc(
+    process = "obp.updateBankLevelEndpointTag",
+    messageFormat = messageFormat,
+    description = "Update Bank Level Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateBankLevelEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      endpointTagId=endpointTagIdExample.value,
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateBankLevelEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateBankLevelEndpointTag(bankId: String, endpointTagId: String, operationId: String, tagName: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateBankLevelEndpointTag => InBound, OutBoundUpdateBankLevelEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, endpointTagId, operationId, tagName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_bank_level_endpoint_tag", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += getSystemLevelEndpointTagDoc
+  def getSystemLevelEndpointTagDoc = MessageDoc(
+    process = "obp.getSystemLevelEndpointTag",
+    messageFormat = messageFormat,
+    description = "Get System Level Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetSystemLevelEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetSystemLevelEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getSystemLevelEndpointTag(operationId: String, tagName: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundGetSystemLevelEndpointTag => InBound, OutBoundGetSystemLevelEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, operationId, tagName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_system_level_endpoint_tag", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += getBankLevelEndpointTagDoc
+  def getBankLevelEndpointTagDoc = MessageDoc(
+    process = "obp.getBankLevelEndpointTag",
+    messageFormat = messageFormat,
+    description = "Get Bank Level Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetBankLevelEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetBankLevelEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBankLevelEndpointTag(bankId: String, operationId: String, tagName: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundGetBankLevelEndpointTag => InBound, OutBoundGetBankLevelEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, operationId, tagName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_level_endpoint_tag", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += getEndpointTagByIdDoc
+  def getEndpointTagByIdDoc = MessageDoc(
+    process = "obp.getEndpointTagById",
+    messageFormat = messageFormat,
+    description = "Get Endpoint Tag By Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetEndpointTagById(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      endpointTagId=endpointTagIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetEndpointTagById(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getEndpointTagById(endpointTagId: String, callContext: Option[CallContext]): OBPReturnType[Box[EndpointTagT]] = {
+        import com.openbankproject.commons.dto.{InBoundGetEndpointTagById => InBound, OutBoundGetEndpointTagById => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, endpointTagId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_endpoint_tag_by_id", req, callContext)
+        response.map(convertToTuple[EndpointTagTCommons](callContext))        
+  }
+          
+  messageDocs += deleteEndpointTagDoc
+  def deleteEndpointTagDoc = MessageDoc(
+    process = "obp.deleteEndpointTag",
+    messageFormat = messageFormat,
+    description = "Delete Endpoint Tag",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteEndpointTag(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      endpointTagId=endpointTagIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteEndpointTag(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteEndpointTag(endpointTagId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteEndpointTag => InBound, OutBoundDeleteEndpointTag => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, endpointTagId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_endpoint_tag", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += getSystemLevelEndpointTagsDoc
+  def getSystemLevelEndpointTagsDoc = MessageDoc(
+    process = "obp.getSystemLevelEndpointTags",
+    messageFormat = messageFormat,
+    description = "Get System Level Endpoint Tags",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetSystemLevelEndpointTags(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      operationId=operationIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetSystemLevelEndpointTags(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getSystemLevelEndpointTags(operationId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[EndpointTagT]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetSystemLevelEndpointTags => InBound, OutBoundGetSystemLevelEndpointTags => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, operationId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_system_level_endpoint_tags", req, callContext)
+        response.map(convertToTuple[List[EndpointTagTCommons]](callContext))        
+  }
+          
+  messageDocs += getBankLevelEndpointTagsDoc
+  def getBankLevelEndpointTagsDoc = MessageDoc(
+    process = "obp.getBankLevelEndpointTags",
+    messageFormat = messageFormat,
+    description = "Get Bank Level Endpoint Tags",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetBankLevelEndpointTags(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      operationId=operationIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetBankLevelEndpointTags(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( EndpointTagTCommons(endpointTagId=Some(endpointTagIdExample.value),
+      operationId=operationIdExample.value,
+      tagName=tagNameExample.value,
+      bankId=Some(bankIdExample.value))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getBankLevelEndpointTags(bankId: String, operationId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[EndpointTagT]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetBankLevelEndpointTags => InBound, OutBoundGetBankLevelEndpointTags => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, operationId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_bank_level_endpoint_tags", req, callContext)
+        response.map(convertToTuple[List[EndpointTagTCommons]](callContext))        
+  }
+          
+  messageDocs += createOrUpdateProductFeeDoc
+  def createOrUpdateProductFeeDoc = MessageDoc(
+    process = "obp.createOrUpdateProductFee",
+    messageFormat = messageFormat,
+    description = "Create Or Update Product Fee",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateOrUpdateProductFee(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      productCode=ProductCode(productCodeExample.value),
+      productFeeId=Some(productFeeIdExample.value),
+      name=nameExample.value,
+      isActive=isActiveExample.value.toBoolean,
+      moreInfo=moreInfoExample.value,
+      currency=currencyExample.value,
+      amount=BigDecimal(amountExample.value),
+      frequency=frequencyExample.value,
+      `type`=typeExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateOrUpdateProductFee(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= ProductFeeTraitCommons(bankId=BankId(bankIdExample.value),
+      productCode=ProductCode(productCodeExample.value),
+      productFeeId=productFeeIdExample.value,
+      name=nameExample.value,
+      isActive=isActiveExample.value.toBoolean,
+      moreInfo=moreInfoExample.value,
+      currency=currencyExample.value,
+      amount=BigDecimal(amountExample.value),
+      frequency=frequencyExample.value,
+      `type`=typeExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createOrUpdateProductFee(bankId: BankId, productCode: ProductCode, productFeeId: Option[String], name: String, isActive: Boolean, moreInfo: String, currency: String, amount: BigDecimal, frequency: String, `type`: String, callContext: Option[CallContext]): OBPReturnType[Box[ProductFeeTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateOrUpdateProductFee => InBound, OutBoundCreateOrUpdateProductFee => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, productCode, productFeeId, name, isActive, moreInfo, currency, amount, frequency, `type`)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_or_update_product_fee", req, callContext)
+        response.map(convertToTuple[ProductFeeTraitCommons](callContext))        
+  }
+          
+  messageDocs += getProductFeesFromProviderDoc
+  def getProductFeesFromProviderDoc = MessageDoc(
+    process = "obp.getProductFeesFromProvider",
+    messageFormat = messageFormat,
+    description = "Get Product Fees From Provider",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetProductFeesFromProvider(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      productCode=ProductCode(productCodeExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetProductFeesFromProvider(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( ProductFeeTraitCommons(bankId=BankId(bankIdExample.value),
+      productCode=ProductCode(productCodeExample.value),
+      productFeeId=productFeeIdExample.value,
+      name=nameExample.value,
+      isActive=isActiveExample.value.toBoolean,
+      moreInfo=moreInfoExample.value,
+      currency=currencyExample.value,
+      amount=BigDecimal(amountExample.value),
+      frequency=frequencyExample.value,
+      `type`=typeExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getProductFeesFromProvider(bankId: BankId, productCode: ProductCode, callContext: Option[CallContext]): OBPReturnType[Box[List[ProductFeeTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetProductFeesFromProvider => InBound, OutBoundGetProductFeesFromProvider => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, productCode)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_product_fees_from_provider", req, callContext)
+        response.map(convertToTuple[List[ProductFeeTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getProductFeeByIdDoc
+  def getProductFeeByIdDoc = MessageDoc(
+    process = "obp.getProductFeeById",
+    messageFormat = messageFormat,
+    description = "Get Product Fee By Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetProductFeeById(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      productFeeId=productFeeIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetProductFeeById(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= ProductFeeTraitCommons(bankId=BankId(bankIdExample.value),
+      productCode=ProductCode(productCodeExample.value),
+      productFeeId=productFeeIdExample.value,
+      name=nameExample.value,
+      isActive=isActiveExample.value.toBoolean,
+      moreInfo=moreInfoExample.value,
+      currency=currencyExample.value,
+      amount=BigDecimal(amountExample.value),
+      frequency=frequencyExample.value,
+      `type`=typeExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getProductFeeById(productFeeId: String, callContext: Option[CallContext]): OBPReturnType[Box[ProductFeeTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetProductFeeById => InBound, OutBoundGetProductFeeById => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, productFeeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_product_fee_by_id", req, callContext)
+        response.map(convertToTuple[ProductFeeTraitCommons](callContext))        
+  }
+          
+  messageDocs += deleteProductFeeDoc
+  def deleteProductFeeDoc = MessageDoc(
+    process = "obp.deleteProductFee",
+    messageFormat = messageFormat,
+    description = "Delete Product Fee",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteProductFee(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      productFeeId=productFeeIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteProductFee(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteProductFee(productFeeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteProductFee => InBound, OutBoundDeleteProductFee => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, productFeeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_product_fee", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
   messageDocs += getBranchDoc
   def getBranchDoc = MessageDoc(
     process = "obp.getBranch",
@@ -3832,6 +5001,480 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[AtmTCommons](callContext))        
   }
           
+  messageDocs += updateAtmSupportedLanguagesDoc
+  def updateAtmSupportedLanguagesDoc = MessageDoc(
+    process = "obp.updateAtmSupportedLanguages",
+    messageFormat = messageFormat,
+    description = "Update Atm Supported Languages",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmSupportedLanguages(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      supportedLanguages=supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmSupportedLanguages(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmSupportedLanguages(bankId: BankId, atmId: AtmId, supportedLanguages: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmSupportedLanguages => InBound, OutBoundUpdateAtmSupportedLanguages => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, supportedLanguages)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_supported_languages", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmSupportedCurrenciesDoc
+  def updateAtmSupportedCurrenciesDoc = MessageDoc(
+    process = "obp.updateAtmSupportedCurrencies",
+    messageFormat = messageFormat,
+    description = "Update Atm Supported Currencies",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmSupportedCurrencies(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      supportedCurrencies=supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmSupportedCurrencies(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmSupportedCurrencies(bankId: BankId, atmId: AtmId, supportedCurrencies: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmSupportedCurrencies => InBound, OutBoundUpdateAtmSupportedCurrencies => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, supportedCurrencies)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_supported_currencies", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmAccessibilityFeaturesDoc
+  def updateAtmAccessibilityFeaturesDoc = MessageDoc(
+    process = "obp.updateAtmAccessibilityFeatures",
+    messageFormat = messageFormat,
+    description = "Update Atm Accessibility Features",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmAccessibilityFeatures(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      accessibilityFeatures=accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmAccessibilityFeatures(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmAccessibilityFeatures(bankId: BankId, atmId: AtmId, accessibilityFeatures: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmAccessibilityFeatures => InBound, OutBoundUpdateAtmAccessibilityFeatures => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, accessibilityFeatures)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_accessibility_features", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmServicesDoc
+  def updateAtmServicesDoc = MessageDoc(
+    process = "obp.updateAtmServices",
+    messageFormat = messageFormat,
+    description = "Update Atm Services",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmServices(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      supportedCurrencies=supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmServices(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmServices(bankId: BankId, atmId: AtmId, supportedCurrencies: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmServices => InBound, OutBoundUpdateAtmServices => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, supportedCurrencies)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_services", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmNotesDoc
+  def updateAtmNotesDoc = MessageDoc(
+    process = "obp.updateAtmNotes",
+    messageFormat = messageFormat,
+    description = "Update Atm Notes",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmNotes(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      notes=listExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmNotes(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmNotes(bankId: BankId, atmId: AtmId, notes: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmNotes => InBound, OutBoundUpdateAtmNotes => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, notes)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_notes", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmLocationCategoriesDoc
+  def updateAtmLocationCategoriesDoc = MessageDoc(
+    process = "obp.updateAtmLocationCategories",
+    messageFormat = messageFormat,
+    description = "Update Atm Location Categories",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmLocationCategories(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      locationCategories=listExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmLocationCategories(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmLocationCategories(bankId: BankId, atmId: AtmId, locationCategories: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmLocationCategories => InBound, OutBoundUpdateAtmLocationCategories => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, locationCategories)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_location_categories", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
   messageDocs += getAtmsDoc
   def getAtmsDoc = MessageDoc(
     process = "obp.getAtms",
@@ -3911,39 +5554,6 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, OBPQueryParam.getLimit(queryParams), OBPQueryParam.getOffset(queryParams), OBPQueryParam.getFromDate(queryParams), OBPQueryParam.getToDate(queryParams))
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_atms", req, callContext)
         response.map(convertToTuple[List[AtmTCommons]](callContext))        
-  }
-          
-  messageDocs += getCurrentFxRateDoc
-  def getCurrentFxRateDoc = MessageDoc(
-    process = "obp.getCurrentFxRate",
-    messageFormat = messageFormat,
-    description = "Get Current Fx Rate",
-    outboundTopic = None,
-    inboundTopic = None,
-    exampleOutboundMessage = (
-     OutBoundGetCurrentFxRate(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      bankId=BankId(bankIdExample.value),
-      fromCurrencyCode=fromCurrencyCodeExample.value,
-      toCurrencyCode=toCurrencyCodeExample.value)
-    ),
-    exampleInboundMessage = (
-     InBoundGetCurrentFxRate(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
-      status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data= FXRateCommons(bankId=BankId(bankIdExample.value),
-      fromCurrencyCode=fromCurrencyCodeExample.value,
-      toCurrencyCode=toCurrencyCodeExample.value,
-      conversionValue=conversionValueExample.value.toDouble,
-      inverseConversionValue=inverseConversionValueExample.value.toDouble,
-      effectiveDate=toDate(effectiveDateExample)))
-    ),
-    adapterImplementation = Some(AdapterImplementation("- Core", 1))
-  )
-
-  override def getCurrentFxRate(bankId: BankId, fromCurrencyCode: String, toCurrencyCode: String, callContext: Option[CallContext]): Box[FXRate] = {
-        import com.openbankproject.commons.dto.{InBoundGetCurrentFxRate => InBound, OutBoundGetCurrentFxRate => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, fromCurrencyCode, toCurrencyCode)
-        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_current_fx_rate", req, callContext)
-        response.map(convertToTuple[FXRateCommons](callContext))        
   }
           
   messageDocs += createTransactionAfterChallengev300Doc
@@ -4585,6 +6195,53 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[CounterpartyTraitCommons](callContext))        
   }
           
+  messageDocs += checkCounterpartyExistsDoc
+  def checkCounterpartyExistsDoc = MessageDoc(
+    process = "obp.checkCounterpartyExists",
+    messageFormat = messageFormat,
+    description = "Check Counterparty Exists",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCheckCounterpartyExists(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      name=nameExample.value,
+      thisBankId=thisBankIdExample.value,
+      thisAccountId=thisAccountIdExample.value,
+      thisViewId=thisViewIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCheckCounterpartyExists(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CounterpartyTraitCommons(createdByUserId=createdByUserIdExample.value,
+      name=nameExample.value,
+      description=descriptionExample.value,
+      currency=currencyExample.value,
+      thisBankId=thisBankIdExample.value,
+      thisAccountId=thisAccountIdExample.value,
+      thisViewId=thisViewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      otherAccountRoutingScheme=otherAccountRoutingSchemeExample.value,
+      otherAccountRoutingAddress=otherAccountRoutingAddressExample.value,
+      otherAccountSecondaryRoutingScheme=otherAccountSecondaryRoutingSchemeExample.value,
+      otherAccountSecondaryRoutingAddress=otherAccountSecondaryRoutingAddressExample.value,
+      otherBankRoutingScheme=otherBankRoutingSchemeExample.value,
+      otherBankRoutingAddress=otherBankRoutingAddressExample.value,
+      otherBranchRoutingScheme=otherBranchRoutingSchemeExample.value,
+      otherBranchRoutingAddress=otherBranchRoutingAddressExample.value,
+      isBeneficiary=isBeneficiaryExample.value.toBoolean,
+      bespoke=List( CounterpartyBespoke(key=keyExample.value,
+      value=valueExample.value))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def checkCounterpartyExists(name: String, thisBankId: String, thisAccountId: String, thisViewId: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCheckCounterpartyExists => InBound, OutBoundCheckCounterpartyExists => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, name, thisBankId, thisAccountId, thisViewId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_check_counterparty_exists", req, callContext)
+        response.map(convertToTuple[CounterpartyTraitCommons](callContext))        
+  }
+          
   messageDocs += checkCustomerNumberAvailableDoc
   def checkCustomerNumberAvailableDoc = MessageDoc(
     process = "obp.checkCustomerNumberAvailable",
@@ -4609,6 +6266,33 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         import com.openbankproject.commons.dto.{InBoundCheckCustomerNumberAvailable => InBound, OutBoundCheckCustomerNumberAvailable => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, customerNumber)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_check_customer_number_available", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += checkAgentNumberAvailableDoc
+  def checkAgentNumberAvailableDoc = MessageDoc(
+    process = "obp.checkAgentNumberAvailable",
+    messageFormat = messageFormat,
+    description = "Check Agent Number Available",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCheckAgentNumberAvailable(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      agentNumber=agentNumberExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCheckAgentNumberAvailable(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def checkAgentNumberAvailable(bankId: BankId, agentNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundCheckAgentNumberAvailable => InBound, OutBoundCheckAgentNumberAvailable => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, agentNumber)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_check_agent_number_available", req, callContext)
         response.map(convertToTuple[Boolean](callContext))        
   }
           
@@ -4680,6 +6364,75 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[CustomerCommons](callContext))        
   }
           
+  messageDocs += createCustomerC2Doc
+  def createCustomerC2Doc = MessageDoc(
+    process = "obp.createCustomerC2",
+    messageFormat = messageFormat,
+    description = "Create Customer C2",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateCustomerC2(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      legalName=legalNameExample.value,
+      customerNumber=customerNumberExample.value,
+      mobileNumber=mobileNumberExample.value,
+      email=emailExample.value,
+      faceImage= CustomerFaceImage(date=toDate(customerFaceImageDateExample),
+      url=urlExample.value),
+      dateOfBirth=toDate(dateOfBirthExample),
+      relationshipStatus=relationshipStatusExample.value,
+      dependents=dependentsExample.value.toInt,
+      dobOfDependents=dobOfDependentsExample.value.replace("[","").replace("]","").split(",").map(parseDate).flatMap(_.toSeq).toList,
+      highestEducationAttained=highestEducationAttainedExample.value,
+      employmentStatus=employmentStatusExample.value,
+      kycStatus=kycStatusExample.value.toBoolean,
+      lastOkDate=toDate(lastOkDateExample),
+      creditRating=Some( CreditRating(rating=ratingExample.value,
+      source=sourceExample.value)),
+      creditLimit=Some( AmountOfMoney(currency=currencyExample.value,
+      amount=creditLimitAmountExample.value)),
+      title=titleExample.value,
+      branchId=branchIdExample.value,
+      nameSuffix=nameSuffixExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateCustomerC2(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CustomerCommons(customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      number=customerNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      email=emailExample.value,
+      faceImage= CustomerFaceImage(date=toDate(customerFaceImageDateExample),
+      url=urlExample.value),
+      dateOfBirth=toDate(dateOfBirthExample),
+      relationshipStatus=relationshipStatusExample.value,
+      dependents=dependentsExample.value.toInt,
+      dobOfDependents=dobOfDependentsExample.value.replace("[","").replace("]","").split(",").map(parseDate).flatMap(_.toSeq).toList,
+      highestEducationAttained=highestEducationAttainedExample.value,
+      employmentStatus=employmentStatusExample.value,
+      creditRating= CreditRating(rating=ratingExample.value,
+      source=sourceExample.value),
+      creditLimit= CreditLimit(currency=currencyExample.value,
+      amount=creditLimitAmountExample.value),
+      kycStatus=kycStatusExample.value.toBoolean,
+      lastOkDate=toDate(customerLastOkDateExample),
+      title=customerTitleExample.value,
+      branchId=branchIdExample.value,
+      nameSuffix=nameSuffixExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createCustomerC2(bankId: BankId, legalName: String, customerNumber: String, mobileNumber: String, email: String, faceImage: CustomerFaceImageTrait, dateOfBirth: Date, relationshipStatus: String, dependents: Int, dobOfDependents: List[Date], highestEducationAttained: String, employmentStatus: String, kycStatus: Boolean, lastOkDate: Date, creditRating: Option[CreditRatingTrait], creditLimit: Option[AmountOfMoneyTrait], title: String, branchId: String, nameSuffix: String, callContext: Option[CallContext]): OBPReturnType[Box[Customer]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateCustomerC2 => InBound, OutBoundCreateCustomerC2 => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, legalName, customerNumber, mobileNumber, email, faceImage, dateOfBirth, relationshipStatus, dependents, dobOfDependents, highestEducationAttained, employmentStatus, kycStatus, lastOkDate, creditRating, creditLimit, title, branchId, nameSuffix)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_customer_c2", req, callContext)
+        response.map(convertToTuple[CustomerCommons](callContext))        
+  }
+          
   messageDocs += updateCustomerScaDataDoc
   def updateCustomerScaDataDoc = MessageDoc(
     process = "obp.updateCustomerScaData",
@@ -4729,6 +6482,140 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerId, mobileNumber, email, customerNumber)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_customer_sca_data", req, callContext)
         response.map(convertToTuple[CustomerCommons](callContext))        
+  }
+          
+  messageDocs += getAgentByAgentIdDoc
+  def getAgentByAgentIdDoc = MessageDoc(
+    process = "obp.getAgentByAgentId",
+    messageFormat = messageFormat,
+    description = "Get Agent By Agent Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetAgentByAgentId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      agentId=agentIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetAgentByAgentId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AgentCommons(agentId=agentIdExample.value,
+      bankId=bankIdExample.value,
+      number=agentNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      isConfirmedAgent=true,
+      isPendingAgent=true))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getAgentByAgentId(agentId: String, callContext: Option[CallContext]): OBPReturnType[Box[Agent]] = {
+        import com.openbankproject.commons.dto.{InBoundGetAgentByAgentId => InBound, OutBoundGetAgentByAgentId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, agentId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_agent_by_agent_id", req, callContext)
+        response.map(convertToTuple[AgentCommons](callContext))        
+  }
+          
+  messageDocs += getAgentByAgentNumberDoc
+  def getAgentByAgentNumberDoc = MessageDoc(
+    process = "obp.getAgentByAgentNumber",
+    messageFormat = messageFormat,
+    description = "Get Agent By Agent Number",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetAgentByAgentNumber(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      agentNumber=agentNumberExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetAgentByAgentNumber(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AgentCommons(agentId=agentIdExample.value,
+      bankId=bankIdExample.value,
+      number=agentNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      isConfirmedAgent=true,
+      isPendingAgent=true))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getAgentByAgentNumber(bankId: BankId, agentNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[Agent]] = {
+        import com.openbankproject.commons.dto.{InBoundGetAgentByAgentNumber => InBound, OutBoundGetAgentByAgentNumber => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, agentNumber)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_agent_by_agent_number", req, callContext)
+        response.map(convertToTuple[AgentCommons](callContext))        
+  }
+          
+  messageDocs += updateAgentStatusDoc
+  def updateAgentStatusDoc = MessageDoc(
+    process = "obp.updateAgentStatus",
+    messageFormat = messageFormat,
+    description = "Update Agent Status",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAgentStatus(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      agentId=agentIdExample.value,
+      isPendingAgent=true,
+      isConfirmedAgent=true)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAgentStatus(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AgentCommons(agentId=agentIdExample.value,
+      bankId=bankIdExample.value,
+      number=agentNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      isConfirmedAgent=true,
+      isPendingAgent=true))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAgentStatus(agentId: String, isPendingAgent: Boolean, isConfirmedAgent: Boolean, callContext: Option[CallContext]): OBPReturnType[Box[Agent]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAgentStatus => InBound, OutBoundUpdateAgentStatus => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, agentId, isPendingAgent, isConfirmedAgent)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_agent_status", req, callContext)
+        response.map(convertToTuple[AgentCommons](callContext))        
+  }
+          
+  messageDocs += createAgentDoc
+  def createAgentDoc = MessageDoc(
+    process = "obp.createAgent",
+    messageFormat = messageFormat,
+    description = "Create Agent",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateAgent(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      agentNumber=agentNumberExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateAgent(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AgentCommons(agentId=agentIdExample.value,
+      bankId=bankIdExample.value,
+      number=agentNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      isConfirmedAgent=true,
+      isPendingAgent=true))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createAgent(bankId: String, legalName: String, mobileNumber: String, agentNumber: String, callContext: Option[CallContext]): OBPReturnType[Box[Agent]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateAgent => InBound, OutBoundCreateAgent => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, legalName, mobileNumber, agentNumber)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_agent", req, callContext)
+        response.map(convertToTuple[AgentCommons](callContext))        
   }
           
   messageDocs += updateCustomerCreditDataDoc
@@ -5334,6 +7221,55 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[List[CustomerCommons]](callContext))        
   }
           
+  messageDocs += getCustomersByCustomerLegalNameDoc
+  def getCustomersByCustomerLegalNameDoc = MessageDoc(
+    process = "obp.getCustomersByCustomerLegalName",
+    messageFormat = messageFormat,
+    description = "Get Customers By Customer Legal Name",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCustomersByCustomerLegalName(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      legalName=legalNameExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCustomersByCustomerLegalName(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( CustomerCommons(customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      number=customerNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      email=emailExample.value,
+      faceImage= CustomerFaceImage(date=toDate(customerFaceImageDateExample),
+      url=urlExample.value),
+      dateOfBirth=toDate(dateOfBirthExample),
+      relationshipStatus=relationshipStatusExample.value,
+      dependents=dependentsExample.value.toInt,
+      dobOfDependents=dobOfDependentsExample.value.replace("[","").replace("]","").split(",").map(parseDate).flatMap(_.toSeq).toList,
+      highestEducationAttained=highestEducationAttainedExample.value,
+      employmentStatus=employmentStatusExample.value,
+      creditRating= CreditRating(rating=ratingExample.value,
+      source=sourceExample.value),
+      creditLimit= CreditLimit(currency=currencyExample.value,
+      amount=creditLimitAmountExample.value),
+      kycStatus=kycStatusExample.value.toBoolean,
+      lastOkDate=toDate(customerLastOkDateExample),
+      title=customerTitleExample.value,
+      branchId=branchIdExample.value,
+      nameSuffix=nameSuffixExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCustomersByCustomerLegalName(bankId: BankId, legalName: String, callContext: Option[CallContext]): OBPReturnType[Box[List[Customer]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCustomersByCustomerLegalName => InBound, OutBoundGetCustomersByCustomerLegalName => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, legalName)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customers_by_customer_legal_name", req, callContext)
+        response.map(convertToTuple[List[CustomerCommons]](callContext))        
+  }
+          
   messageDocs += getCheckbookOrdersDoc
   def getCheckbookOrdersDoc = MessageDoc(
     process = "obp.getCheckbookOrders",
@@ -5687,6 +7623,84 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[List[ProductAttributeCommons]](callContext))        
   }
           
+  messageDocs += deleteBankAttributeDoc
+  def deleteBankAttributeDoc = MessageDoc(
+    process = "obp.deleteBankAttribute",
+    messageFormat = messageFormat,
+    description = "Delete Bank Attribute",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteBankAttribute(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankAttributeId="string")
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteBankAttribute(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteBankAttribute(bankAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteBankAttribute => InBound, OutBoundDeleteBankAttribute => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankAttributeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_bank_attribute", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += deleteAtmAttributeDoc
+  def deleteAtmAttributeDoc = MessageDoc(
+    process = "obp.deleteAtmAttribute",
+    messageFormat = messageFormat,
+    description = "Delete Atm Attribute",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteAtmAttribute(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atmAttributeId=atmAttributeIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteAtmAttribute(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteAtmAttribute(atmAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteAtmAttribute => InBound, OutBoundDeleteAtmAttribute => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atmAttributeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_atm_attribute", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += deleteAtmAttributesByAtmIdDoc
+  def deleteAtmAttributesByAtmIdDoc = MessageDoc(
+    process = "obp.deleteAtmAttributesByAtmId",
+    messageFormat = messageFormat,
+    description = "Delete Atm Attributes By Atm Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteAtmAttributesByAtmId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atmId=AtmId(atmIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteAtmAttributesByAtmId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteAtmAttributesByAtmId(atmId: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteAtmAttributesByAtmId => InBound, OutBoundDeleteAtmAttributesByAtmId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atmId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_atm_attributes_by_atm_id", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
   messageDocs += deleteProductAttributeDoc
   def deleteProductAttributeDoc = MessageDoc(
     process = "obp.deleteProductAttribute",
@@ -5966,6 +7980,109 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[List[AccountAttributeCommons]](callContext))        
   }
           
+  messageDocs += getAccountAttributesByAccountCanBeSeenOnViewDoc
+  def getAccountAttributesByAccountCanBeSeenOnViewDoc = MessageDoc(
+    process = "obp.getAccountAttributesByAccountCanBeSeenOnView",
+    messageFormat = messageFormat,
+    description = "Get Account Attributes By Account Can Be Seen On View",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetAccountAttributesByAccountCanBeSeenOnView(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      accountId=AccountId(accountIdExample.value),
+      viewId=ViewId(viewIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetAccountAttributesByAccountCanBeSeenOnView(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( AccountAttributeCommons(bankId=BankId(bankIdExample.value),
+      accountId=AccountId(accountIdExample.value),
+      productCode=ProductCode(productCodeExample.value),
+      accountAttributeId=accountAttributeIdExample.value,
+      name=nameExample.value,
+      attributeType=com.openbankproject.commons.model.enums.AccountAttributeType.example,
+      value=valueExample.value,
+      productInstanceCode=Some("string"))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getAccountAttributesByAccountCanBeSeenOnView(bankId: BankId, accountId: AccountId, viewId: ViewId, callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetAccountAttributesByAccountCanBeSeenOnView => InBound, OutBoundGetAccountAttributesByAccountCanBeSeenOnView => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_account_attributes_by_account_can_be_seen_on_view", req, callContext)
+        response.map(convertToTuple[List[AccountAttributeCommons]](callContext))        
+  }
+          
+  messageDocs += getAccountAttributesByAccountsCanBeSeenOnViewDoc
+  def getAccountAttributesByAccountsCanBeSeenOnViewDoc = MessageDoc(
+    process = "obp.getAccountAttributesByAccountsCanBeSeenOnView",
+    messageFormat = messageFormat,
+    description = "Get Account Attributes By Accounts Can Be Seen On View",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetAccountAttributesByAccountsCanBeSeenOnView(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      accounts=List( BankIdAccountId(bankId=BankId(bankIdExample.value),
+      accountId=AccountId(accountIdExample.value))),
+      viewId=ViewId(viewIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetAccountAttributesByAccountsCanBeSeenOnView(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( AccountAttributeCommons(bankId=BankId(bankIdExample.value),
+      accountId=AccountId(accountIdExample.value),
+      productCode=ProductCode(productCodeExample.value),
+      accountAttributeId=accountAttributeIdExample.value,
+      name=nameExample.value,
+      attributeType=com.openbankproject.commons.model.enums.AccountAttributeType.example,
+      value=valueExample.value,
+      productInstanceCode=Some("string"))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getAccountAttributesByAccountsCanBeSeenOnView(accounts: List[BankIdAccountId], viewId: ViewId, callContext: Option[CallContext]): OBPReturnType[Box[List[AccountAttribute]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetAccountAttributesByAccountsCanBeSeenOnView => InBound, OutBoundGetAccountAttributesByAccountsCanBeSeenOnView => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, accounts, viewId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_account_attributes_by_accounts_can_be_seen_on_view", req, callContext)
+        response.map(convertToTuple[List[AccountAttributeCommons]](callContext))        
+  }
+          
+  messageDocs += getTransactionAttributesByTransactionsCanBeSeenOnViewDoc
+  def getTransactionAttributesByTransactionsCanBeSeenOnViewDoc = MessageDoc(
+    process = "obp.getTransactionAttributesByTransactionsCanBeSeenOnView",
+    messageFormat = messageFormat,
+    description = "Get Transaction Attributes By Transactions Can Be Seen On View",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetTransactionAttributesByTransactionsCanBeSeenOnView(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      transactionIds=List(TransactionId(transactionIdsExample.value)),
+      viewId=ViewId(viewIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetTransactionAttributesByTransactionsCanBeSeenOnView(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionAttributeCommons(bankId=BankId(bankIdExample.value),
+      transactionId=TransactionId(transactionIdExample.value),
+      transactionAttributeId=transactionAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionAttributeType.example,
+      name=transactionAttributeNameExample.value,
+      value=transactionAttributeValueExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getTransactionAttributesByTransactionsCanBeSeenOnView(bankId: BankId, transactionIds: List[TransactionId], viewId: ViewId, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionAttribute]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetTransactionAttributesByTransactionsCanBeSeenOnView => InBound, OutBoundGetTransactionAttributesByTransactionsCanBeSeenOnView => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionIds, viewId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_attributes_by_transactions_can_be_seen_on_view", req, callContext)
+        response.map(convertToTuple[List[TransactionAttributeCommons]](callContext))        
+  }
+          
   messageDocs += getCustomerAttributesDoc
   def getCustomerAttributesDoc = MessageDoc(
     process = "obp.getCustomerAttributes",
@@ -5996,33 +8113,6 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, customerId)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_attributes", req, callContext)
         response.map(convertToTuple[List[CustomerAttributeCommons]](callContext))        
-  }
-          
-  messageDocs += getCustomerIdsByAttributeNameValuesDoc
-  def getCustomerIdsByAttributeNameValuesDoc = MessageDoc(
-    process = "obp.getCustomerIdsByAttributeNameValues",
-    messageFormat = messageFormat,
-    description = "Get Customer Ids By Attribute Name Values",
-    outboundTopic = None,
-    inboundTopic = None,
-    exampleOutboundMessage = (
-     OutBoundGetCustomerIdsByAttributeNameValues(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      bankId=BankId(bankIdExample.value),
-      nameValues=Map("some_name" -> List("name1", "name2")))
-    ),
-    exampleInboundMessage = (
-     InBoundGetCustomerIdsByAttributeNameValues(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
-      status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data=listExample.value.replace("[","").replace("]","").split(",").toList)
-    ),
-    adapterImplementation = Some(AdapterImplementation("- Core", 1))
-  )
-
-  override def getCustomerIdsByAttributeNameValues(bankId: BankId, nameValues: Map[String,List[String]], callContext: Option[CallContext]): OBPReturnType[Box[List[String]]] = {
-        import com.openbankproject.commons.dto.{InBoundGetCustomerIdsByAttributeNameValues => InBound, OutBoundGetCustomerIdsByAttributeNameValues => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, nameValues)
-        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_ids_by_attribute_name_values", req, callContext)
-        response.map(convertToTuple[List[String]](callContext))        
   }
           
   messageDocs += getCustomerAttributesForCustomersDoc
@@ -6079,33 +8169,6 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[List[CustomerAndAttribute]](callContext))        
   }
           
-  messageDocs += getTransactionIdsByAttributeNameValuesDoc
-  def getTransactionIdsByAttributeNameValuesDoc = MessageDoc(
-    process = "obp.getTransactionIdsByAttributeNameValues",
-    messageFormat = messageFormat,
-    description = "Get Transaction Ids By Attribute Name Values",
-    outboundTopic = None,
-    inboundTopic = None,
-    exampleOutboundMessage = (
-     OutBoundGetTransactionIdsByAttributeNameValues(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
-      bankId=BankId(bankIdExample.value),
-      nameValues=Map("some_name" -> List("name1", "name2")))
-    ),
-    exampleInboundMessage = (
-     InBoundGetTransactionIdsByAttributeNameValues(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
-      status=MessageDocsSwaggerDefinitions.inboundStatus,
-      data=listExample.value.replace("[","").replace("]","").split(",").toList)
-    ),
-    adapterImplementation = Some(AdapterImplementation("- Core", 1))
-  )
-
-  override def getTransactionIdsByAttributeNameValues(bankId: BankId, nameValues: Map[String,List[String]], callContext: Option[CallContext]): OBPReturnType[Box[List[String]]] = {
-        import com.openbankproject.commons.dto.{InBoundGetTransactionIdsByAttributeNameValues => InBound, OutBoundGetTransactionIdsByAttributeNameValues => OutBound}  
-        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, nameValues)
-        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_ids_by_attribute_name_values", req, callContext)
-        response.map(convertToTuple[List[String]](callContext))        
-  }
-          
   messageDocs += getTransactionAttributesDoc
   def getTransactionAttributesDoc = MessageDoc(
     process = "obp.getTransactionAttributes",
@@ -6135,6 +8198,39 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         import com.openbankproject.commons.dto.{InBoundGetTransactionAttributes => InBound, OutBoundGetTransactionAttributes => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionId)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_attributes", req, callContext)
+        response.map(convertToTuple[List[TransactionAttributeCommons]](callContext))        
+  }
+          
+  messageDocs += getTransactionAttributesCanBeSeenOnViewDoc
+  def getTransactionAttributesCanBeSeenOnViewDoc = MessageDoc(
+    process = "obp.getTransactionAttributesCanBeSeenOnView",
+    messageFormat = messageFormat,
+    description = "Get Transaction Attributes Can Be Seen On View",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetTransactionAttributesCanBeSeenOnView(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      transactionId=TransactionId(transactionIdExample.value),
+      viewId=ViewId(viewIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetTransactionAttributesCanBeSeenOnView(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionAttributeCommons(bankId=BankId(bankIdExample.value),
+      transactionId=TransactionId(transactionIdExample.value),
+      transactionAttributeId=transactionAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionAttributeType.example,
+      name=transactionAttributeNameExample.value,
+      value=transactionAttributeValueExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getTransactionAttributesCanBeSeenOnView(bankId: BankId, transactionId: TransactionId, viewId: ViewId, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionAttribute]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetTransactionAttributesCanBeSeenOnView => InBound, OutBoundGetTransactionAttributesCanBeSeenOnView => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionId, viewId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_attributes_can_be_seen_on_view", req, callContext)
         response.map(convertToTuple[List[TransactionAttributeCommons]](callContext))        
   }
           
@@ -6265,6 +8361,271 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, cardId)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_card_attributes_from_provider", req, callContext)
         response.map(convertToTuple[List[CardAttributeCommons]](callContext))        
+  }
+          
+  messageDocs += getTransactionRequestAttributesFromProviderDoc
+  def getTransactionRequestAttributesFromProviderDoc = MessageDoc(
+    process = "obp.getTransactionRequestAttributesFromProvider",
+    messageFormat = messageFormat,
+    description = "Get Transaction Request Attributes From Provider",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetTransactionRequestAttributesFromProvider(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetTransactionRequestAttributesFromProvider(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getTransactionRequestAttributesFromProvider(transactionRequestId: TransactionRequestId, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionRequestAttributeTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetTransactionRequestAttributesFromProvider => InBound, OutBoundGetTransactionRequestAttributesFromProvider => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, transactionRequestId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_request_attributes_from_provider", req, callContext)
+        response.map(convertToTuple[List[TransactionRequestAttributeTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getTransactionRequestAttributesDoc
+  def getTransactionRequestAttributesDoc = MessageDoc(
+    process = "obp.getTransactionRequestAttributes",
+    messageFormat = messageFormat,
+    description = "Get Transaction Request Attributes",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetTransactionRequestAttributes(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetTransactionRequestAttributes(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getTransactionRequestAttributes(bankId: BankId, transactionRequestId: TransactionRequestId, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionRequestAttributeTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetTransactionRequestAttributes => InBound, OutBoundGetTransactionRequestAttributes => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionRequestId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_request_attributes", req, callContext)
+        response.map(convertToTuple[List[TransactionRequestAttributeTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getTransactionRequestAttributesCanBeSeenOnViewDoc
+  def getTransactionRequestAttributesCanBeSeenOnViewDoc = MessageDoc(
+    process = "obp.getTransactionRequestAttributesCanBeSeenOnView",
+    messageFormat = messageFormat,
+    description = "Get Transaction Request Attributes Can Be Seen On View",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetTransactionRequestAttributesCanBeSeenOnView(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      viewId=ViewId(viewIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetTransactionRequestAttributesCanBeSeenOnView(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getTransactionRequestAttributesCanBeSeenOnView(bankId: BankId, transactionRequestId: TransactionRequestId, viewId: ViewId, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionRequestAttributeTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetTransactionRequestAttributesCanBeSeenOnView => InBound, OutBoundGetTransactionRequestAttributesCanBeSeenOnView => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionRequestId, viewId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_request_attributes_can_be_seen_on_view", req, callContext)
+        response.map(convertToTuple[List[TransactionRequestAttributeTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getTransactionRequestAttributeByIdDoc
+  def getTransactionRequestAttributeByIdDoc = MessageDoc(
+    process = "obp.getTransactionRequestAttributeById",
+    messageFormat = messageFormat,
+    description = "Get Transaction Request Attribute By Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetTransactionRequestAttributeById(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetTransactionRequestAttributeById(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getTransactionRequestAttributeById(transactionRequestAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[TransactionRequestAttributeTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetTransactionRequestAttributeById => InBound, OutBoundGetTransactionRequestAttributeById => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, transactionRequestAttributeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_transaction_request_attribute_by_id", req, callContext)
+        response.map(convertToTuple[TransactionRequestAttributeTraitCommons](callContext))        
+  }
+          
+  messageDocs += getByAttributeNameValuesDoc
+  def getByAttributeNameValuesDoc = MessageDoc(
+    process = "obp.getByAttributeNameValues",
+    messageFormat = messageFormat,
+    description = "Get By Attribute Name Values",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetByAttributeNameValues(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      params=Map("some_name" -> List("name1", "name2")),
+      isPersonal=true)
+    ),
+    exampleInboundMessage = (
+     InBoundGetByAttributeNameValues(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getByAttributeNameValues(bankId: BankId, params: Map[String,List[String]], isPersonal: Boolean, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionRequestAttributeTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetByAttributeNameValues => InBound, OutBoundGetByAttributeNameValues => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, params, isPersonal)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_by_attribute_name_values", req, callContext)
+        response.map(convertToTuple[List[TransactionRequestAttributeTraitCommons]](callContext))        
+  }
+          
+  messageDocs += createOrUpdateTransactionRequestAttributeDoc
+  def createOrUpdateTransactionRequestAttributeDoc = MessageDoc(
+    process = "obp.createOrUpdateTransactionRequestAttribute",
+    messageFormat = messageFormat,
+    description = "Create Or Update Transaction Request Attribute",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateOrUpdateTransactionRequestAttribute(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=Some(transactionRequestAttributeIdExample.value),
+      name=nameExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      value=valueExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateOrUpdateTransactionRequestAttribute(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createOrUpdateTransactionRequestAttribute(bankId: BankId, transactionRequestId: TransactionRequestId, transactionRequestAttributeId: Option[String], name: String, attributeType: TransactionRequestAttributeType.Value, value: String, callContext: Option[CallContext]): OBPReturnType[Box[TransactionRequestAttributeTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateOrUpdateTransactionRequestAttribute => InBound, OutBoundCreateOrUpdateTransactionRequestAttribute => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionRequestId, transactionRequestAttributeId, name, attributeType, value)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_or_update_transaction_request_attribute", req, callContext)
+        response.map(convertToTuple[TransactionRequestAttributeTraitCommons](callContext))        
+  }
+          
+  messageDocs += createTransactionRequestAttributesDoc
+  def createTransactionRequestAttributesDoc = MessageDoc(
+    process = "obp.createTransactionRequestAttributes",
+    messageFormat = messageFormat,
+    description = "Create Transaction Request Attributes",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateTransactionRequestAttributes(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributes=List( TransactionRequestAttributeJsonV400(name=nameExample.value,
+      attribute_type="string",
+      value=valueExample.value)),
+      isPersonal=true)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateTransactionRequestAttributes(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( TransactionRequestAttributeTraitCommons(bankId=BankId(bankIdExample.value),
+      transactionRequestId=TransactionRequestId(transactionRequestIdExample.value),
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value,
+      attributeType=com.openbankproject.commons.model.enums.TransactionRequestAttributeType.example,
+      name=nameExample.value,
+      value=valueExample.value,
+      isPersonal=true)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createTransactionRequestAttributes(bankId: BankId, transactionRequestId: TransactionRequestId, transactionRequestAttributes: List[TransactionRequestAttributeJsonV400], isPersonal: Boolean, callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionRequestAttributeTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateTransactionRequestAttributes => InBound, OutBoundCreateTransactionRequestAttributes => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, transactionRequestId, transactionRequestAttributes, isPersonal)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_transaction_request_attributes", req, callContext)
+        response.map(convertToTuple[List[TransactionRequestAttributeTraitCommons]](callContext))        
+  }
+          
+  messageDocs += deleteTransactionRequestAttributeDoc
+  def deleteTransactionRequestAttributeDoc = MessageDoc(
+    process = "obp.deleteTransactionRequestAttribute",
+    messageFormat = messageFormat,
+    description = "Delete Transaction Request Attribute",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteTransactionRequestAttribute(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      transactionRequestAttributeId=transactionRequestAttributeIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteTransactionRequestAttribute(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteTransactionRequestAttribute(transactionRequestAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteTransactionRequestAttribute => InBound, OutBoundDeleteTransactionRequestAttribute => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, transactionRequestAttributeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_transaction_request_attribute", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
   }
           
   messageDocs += createAccountApplicationDoc
@@ -7070,6 +9431,118 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[CustomerMessageCommons](callContext))        
   }
           
+  messageDocs += createCustomerMessageDoc
+  def createCustomerMessageDoc = MessageDoc(
+    process = "obp.createCustomerMessage",
+    messageFormat = messageFormat,
+    description = "Create Customer Message",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateCustomerMessage(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customer= CustomerCommons(customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      number=customerNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      email=emailExample.value,
+      faceImage= CustomerFaceImage(date=toDate(customerFaceImageDateExample),
+      url=urlExample.value),
+      dateOfBirth=toDate(dateOfBirthExample),
+      relationshipStatus=relationshipStatusExample.value,
+      dependents=dependentsExample.value.toInt,
+      dobOfDependents=dobOfDependentsExample.value.replace("[","").replace("]","").split(",").map(parseDate).flatMap(_.toSeq).toList,
+      highestEducationAttained=highestEducationAttainedExample.value,
+      employmentStatus=employmentStatusExample.value,
+      creditRating= CreditRating(rating=ratingExample.value,
+      source=sourceExample.value),
+      creditLimit= CreditLimit(currency=currencyExample.value,
+      amount=creditLimitAmountExample.value),
+      kycStatus=kycStatusExample.value.toBoolean,
+      lastOkDate=toDate(customerLastOkDateExample),
+      title=customerTitleExample.value,
+      branchId=branchIdExample.value,
+      nameSuffix=nameSuffixExample.value),
+      bankId=BankId(bankIdExample.value),
+      transport=transportExample.value,
+      message=messageExample.value,
+      fromDepartment=fromDepartmentExample.value,
+      fromPerson=fromPersonExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateCustomerMessage(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CustomerMessageCommons(messageId="string",
+      date=toDate(dateExample),
+      message=messageExample.value,
+      fromDepartment=fromDepartmentExample.value,
+      fromPerson=fromPersonExample.value,
+      transport=Some(transportExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createCustomerMessage(customer: Customer, bankId: BankId, transport: String, message: String, fromDepartment: String, fromPerson: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerMessage]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateCustomerMessage => InBound, OutBoundCreateCustomerMessage => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customer, bankId, transport, message, fromDepartment, fromPerson)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_customer_message", req, callContext)
+        response.map(convertToTuple[CustomerMessageCommons](callContext))        
+  }
+          
+  messageDocs += getCustomerMessagesDoc
+  def getCustomerMessagesDoc = MessageDoc(
+    process = "obp.getCustomerMessages",
+    messageFormat = messageFormat,
+    description = "Get Customer Messages",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCustomerMessages(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customer= CustomerCommons(customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      number=customerNumberExample.value,
+      legalName=legalNameExample.value,
+      mobileNumber=mobileNumberExample.value,
+      email=emailExample.value,
+      faceImage= CustomerFaceImage(date=toDate(customerFaceImageDateExample),
+      url=urlExample.value),
+      dateOfBirth=toDate(dateOfBirthExample),
+      relationshipStatus=relationshipStatusExample.value,
+      dependents=dependentsExample.value.toInt,
+      dobOfDependents=dobOfDependentsExample.value.replace("[","").replace("]","").split(",").map(parseDate).flatMap(_.toSeq).toList,
+      highestEducationAttained=highestEducationAttainedExample.value,
+      employmentStatus=employmentStatusExample.value,
+      creditRating= CreditRating(rating=ratingExample.value,
+      source=sourceExample.value),
+      creditLimit= CreditLimit(currency=currencyExample.value,
+      amount=creditLimitAmountExample.value),
+      kycStatus=kycStatusExample.value.toBoolean,
+      lastOkDate=toDate(customerLastOkDateExample),
+      title=customerTitleExample.value,
+      branchId=branchIdExample.value,
+      nameSuffix=nameSuffixExample.value),
+      bankId=BankId(bankIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundGetCustomerMessages(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( CustomerMessageCommons(messageId="string",
+      date=toDate(dateExample),
+      message=messageExample.value,
+      fromDepartment=fromDepartmentExample.value,
+      fromPerson=fromPersonExample.value,
+      transport=Some(transportExample.value))))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCustomerMessages(customer: Customer, bankId: BankId, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerMessage]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCustomerMessages => InBound, OutBoundGetCustomerMessages => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customer, bankId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_messages", req, callContext)
+        response.map(convertToTuple[List[CustomerMessageCommons]](callContext))        
+  }
+          
   messageDocs += makeHistoricalPaymentDoc
   def makeHistoricalPaymentDoc = MessageDoc(
     process = "obp.makeHistoricalPayment",
@@ -7204,6 +9677,503 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         import com.openbankproject.commons.dto.{InBoundDeleteCustomerAttribute => InBound, OutBoundDeleteCustomerAttribute => OutBound}  
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerAttributeId)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_customer_attribute", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += validateUserAuthContextUpdateRequestDoc
+  def validateUserAuthContextUpdateRequestDoc = MessageDoc(
+    process = "obp.validateUserAuthContextUpdateRequest",
+    messageFormat = messageFormat,
+    description = "Validate User Auth Context Update Request",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundValidateUserAuthContextUpdateRequest(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      userId=userIdExample.value,
+      key=keyExample.value,
+      value=valueExample.value,
+      scaMethod=scaMethodExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundValidateUserAuthContextUpdateRequest(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= UserAuthContextUpdateCommons(userAuthContextUpdateId=userAuthContextUpdateIdExample.value,
+      userId=userIdExample.value,
+      key=keyExample.value,
+      value=valueExample.value,
+      challenge=challengeExample.value,
+      status=statusExample.value,
+      consumerId=consumerIdExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def validateUserAuthContextUpdateRequest(bankId: String, userId: String, key: String, value: String, scaMethod: String, callContext: Option[CallContext]): OBPReturnType[Box[UserAuthContextUpdate]] = {
+        import com.openbankproject.commons.dto.{InBoundValidateUserAuthContextUpdateRequest => InBound, OutBoundValidateUserAuthContextUpdateRequest => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, userId, key, value, scaMethod)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_validate_user_auth_context_update_request", req, callContext)
+        response.map(convertToTuple[UserAuthContextUpdateCommons](callContext))        
+  }
+          
+  messageDocs += checkAnswerDoc
+  def checkAnswerDoc = MessageDoc(
+    process = "obp.checkAnswer",
+    messageFormat = messageFormat,
+    description = "Check Answer",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCheckAnswer(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      authContextUpdateId=authContextUpdateIdExample.value,
+      challenge=challengeExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCheckAnswer(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= UserAuthContextUpdateCommons(userAuthContextUpdateId=userAuthContextUpdateIdExample.value,
+      userId=userIdExample.value,
+      key=keyExample.value,
+      value=valueExample.value,
+      challenge=challengeExample.value,
+      status=statusExample.value,
+      consumerId=consumerIdExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def checkAnswer(authContextUpdateId: String, challenge: String, callContext: Option[CallContext]): OBPReturnType[Box[UserAuthContextUpdate]] = {
+        import com.openbankproject.commons.dto.{InBoundCheckAnswer => InBound, OutBoundCheckAnswer => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, authContextUpdateId, challenge)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_check_answer", req, callContext)
+        response.map(convertToTuple[UserAuthContextUpdateCommons](callContext))        
+  }
+          
+  messageDocs += getCustomerAccountLinkDoc
+  def getCustomerAccountLinkDoc = MessageDoc(
+    process = "obp.getCustomerAccountLink",
+    messageFormat = messageFormat,
+    description = "Get Customer Account Link",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCustomerAccountLink(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customerId=customerIdExample.value,
+      accountId=accountIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCustomerAccountLink(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCustomerAccountLink(customerId: String, accountId: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCustomerAccountLink => InBound, OutBoundGetCustomerAccountLink => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerId, accountId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_account_link", req, callContext)
+        response.map(convertToTuple[CustomerAccountLinkTraitCommons](callContext))        
+  }
+          
+  messageDocs += getCustomerAccountLinksByCustomerIdDoc
+  def getCustomerAccountLinksByCustomerIdDoc = MessageDoc(
+    process = "obp.getCustomerAccountLinksByCustomerId",
+    messageFormat = messageFormat,
+    description = "Get Customer Account Links By Customer Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCustomerAccountLinksByCustomerId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customerId=customerIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCustomerAccountLinksByCustomerId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCustomerAccountLinksByCustomerId(customerId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerAccountLinkTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCustomerAccountLinksByCustomerId => InBound, OutBoundGetCustomerAccountLinksByCustomerId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_account_links_by_customer_id", req, callContext)
+        response.map(convertToTuple[List[CustomerAccountLinkTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getAgentAccountLinksByAgentIdDoc
+  def getAgentAccountLinksByAgentIdDoc = MessageDoc(
+    process = "obp.getAgentAccountLinksByAgentId",
+    messageFormat = messageFormat,
+    description = "Get Agent Account Links By Agent Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetAgentAccountLinksByAgentId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      agnetId="string")
+    ),
+    exampleInboundMessage = (
+     InBoundGetAgentAccountLinksByAgentId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getAgentAccountLinksByAgentId(agnetId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerAccountLinkTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetAgentAccountLinksByAgentId => InBound, OutBoundGetAgentAccountLinksByAgentId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, agnetId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_agent_account_links_by_agent_id", req, callContext)
+        response.map(convertToTuple[List[CustomerAccountLinkTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getCustomerAccountLinksByBankIdAccountIdDoc
+  def getCustomerAccountLinksByBankIdAccountIdDoc = MessageDoc(
+    process = "obp.getCustomerAccountLinksByBankIdAccountId",
+    messageFormat = messageFormat,
+    description = "Get Customer Account Links By Bank Id Account Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCustomerAccountLinksByBankIdAccountId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCustomerAccountLinksByBankIdAccountId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=List( CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCustomerAccountLinksByBankIdAccountId(bankId: String, accountId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[CustomerAccountLinkTrait]]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCustomerAccountLinksByBankIdAccountId => InBound, OutBoundGetCustomerAccountLinksByBankIdAccountId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_account_links_by_bank_id_account_id", req, callContext)
+        response.map(convertToTuple[List[CustomerAccountLinkTraitCommons]](callContext))        
+  }
+          
+  messageDocs += getCustomerAccountLinkByIdDoc
+  def getCustomerAccountLinkByIdDoc = MessageDoc(
+    process = "obp.getCustomerAccountLinkById",
+    messageFormat = messageFormat,
+    description = "Get Customer Account Link By Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCustomerAccountLinkById(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customerAccountLinkId=customerAccountLinkIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCustomerAccountLinkById(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCustomerAccountLinkById => InBound, OutBoundGetCustomerAccountLinkById => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerAccountLinkId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_customer_account_link_by_id", req, callContext)
+        response.map(convertToTuple[CustomerAccountLinkTraitCommons](callContext))        
+  }
+          
+  messageDocs += deleteCustomerAccountLinkByIdDoc
+  def deleteCustomerAccountLinkByIdDoc = MessageDoc(
+    process = "obp.deleteCustomerAccountLinkById",
+    messageFormat = messageFormat,
+    description = "Delete Customer Account Link By Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteCustomerAccountLinkById(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customerAccountLinkId=customerAccountLinkIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteCustomerAccountLinkById(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteCustomerAccountLinkById(customerAccountLinkId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteCustomerAccountLinkById => InBound, OutBoundDeleteCustomerAccountLinkById => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerAccountLinkId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_customer_account_link_by_id", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += createCustomerAccountLinkDoc
+  def createCustomerAccountLinkDoc = MessageDoc(
+    process = "obp.createCustomerAccountLink",
+    messageFormat = messageFormat,
+    description = "Create Customer Account Link",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateCustomerAccountLink(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateCustomerAccountLink(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createCustomerAccountLink(customerId: String, bankId: String, accountId: String, relationshipType: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateCustomerAccountLink => InBound, OutBoundCreateCustomerAccountLink => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerId, bankId, accountId, relationshipType)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_customer_account_link", req, callContext)
+        response.map(convertToTuple[CustomerAccountLinkTraitCommons](callContext))        
+  }
+          
+  messageDocs += createAgentAccountLinkDoc
+  def createAgentAccountLinkDoc = MessageDoc(
+    process = "obp.createAgentAccountLink",
+    messageFormat = messageFormat,
+    description = "Create Agent Account Link",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateAgentAccountLink(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      agentId=agentIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateAgentAccountLink(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AgentAccountLinkTraitCommons(agentAccountLinkId="string",
+      agentId=agentIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createAgentAccountLink(agentId: String, bankId: String, accountId: String, callContext: Option[CallContext]): OBPReturnType[Box[AgentAccountLinkTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateAgentAccountLink => InBound, OutBoundCreateAgentAccountLink => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, agentId, bankId, accountId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_agent_account_link", req, callContext)
+        response.map(convertToTuple[AgentAccountLinkTraitCommons](callContext))        
+  }
+          
+  messageDocs += updateCustomerAccountLinkByIdDoc
+  def updateCustomerAccountLinkByIdDoc = MessageDoc(
+    process = "obp.updateCustomerAccountLinkById",
+    messageFormat = messageFormat,
+    description = "Update Customer Account Link By Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateCustomerAccountLinkById(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      customerAccountLinkId=customerAccountLinkIdExample.value,
+      relationshipType=relationshipTypeExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateCustomerAccountLinkById(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CustomerAccountLinkTraitCommons(customerAccountLinkId=customerAccountLinkIdExample.value,
+      customerId=customerIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      relationshipType=relationshipTypeExample.value))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateCustomerAccountLinkById(customerAccountLinkId: String, relationshipType: String, callContext: Option[CallContext]): OBPReturnType[Box[CustomerAccountLinkTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateCustomerAccountLinkById => InBound, OutBoundUpdateCustomerAccountLinkById => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, customerAccountLinkId, relationshipType)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_customer_account_link_by_id", req, callContext)
+        response.map(convertToTuple[CustomerAccountLinkTraitCommons](callContext))        
+  }
+          
+  messageDocs += getConsentImplicitSCADoc
+  def getConsentImplicitSCADoc = MessageDoc(
+    process = "obp.getConsentImplicitSCA",
+    messageFormat = messageFormat,
+    description = "Get Consent Implicit SC A",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetConsentImplicitSCA(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      user= UserCommons(userPrimaryKey=UserPrimaryKey(123),
+      userId=userIdExample.value,
+      idGivenByProvider="string",
+      provider=providerExample.value,
+      emailAddress=emailAddressExample.value,
+      name=userNameExample.value,
+      createdByConsentId=Some("string"),
+      createdByUserInvitationId=Some("string"),
+      isDeleted=Some(true),
+      lastMarketingAgreementSignedDate=Some(toDate(dateExample))))
+    ),
+    exampleInboundMessage = (
+     InBoundGetConsentImplicitSCA(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= ConsentImplicitSCATCommons(scaMethod=com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SMS,
+      recipient="string"))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getConsentImplicitSCA(user: User, callContext: Option[CallContext]): OBPReturnType[Box[ConsentImplicitSCAT]] = {
+        import com.openbankproject.commons.dto.{InBoundGetConsentImplicitSCA => InBound, OutBoundGetConsentImplicitSCA => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, user)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_consent_implicit_sca", req, callContext)
+        response.map(convertToTuple[ConsentImplicitSCATCommons](callContext))        
+  }
+          
+  messageDocs += createOrUpdateCounterpartyLimitDoc
+  def createOrUpdateCounterpartyLimitDoc = MessageDoc(
+    process = "obp.createOrUpdateCounterpartyLimit",
+    messageFormat = messageFormat,
+    description = "Create Or Update Counterparty Limit",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateOrUpdateCounterpartyLimit(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      viewId=viewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      currency=currencyExample.value,
+      maxSingleAmount=BigDecimal(maxSingleAmountExample.value),
+      maxMonthlyAmount=BigDecimal(maxMonthlyAmountExample.value),
+      maxNumberOfMonthlyTransactions=maxNumberOfMonthlyTransactionsExample.value.toInt,
+      maxYearlyAmount=BigDecimal(maxYearlyAmountExample.value),
+      maxNumberOfYearlyTransactions=maxNumberOfYearlyTransactionsExample.value.toInt,
+      maxTotalAmount=BigDecimal(maxTotalAmountExample.value),
+      maxNumberOfTransactions=maxNumberOfTransactionsExample.value.toInt)
+    ),
+    exampleInboundMessage = (
+     InBoundCreateOrUpdateCounterpartyLimit(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CounterpartyLimitTraitCommons(counterpartyLimitId=counterpartyLimitIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      viewId=viewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      currency=currencyExample.value,
+      maxSingleAmount=BigDecimal(maxSingleAmountExample.value),
+      maxMonthlyAmount=BigDecimal(maxMonthlyAmountExample.value),
+      maxNumberOfMonthlyTransactions=maxNumberOfMonthlyTransactionsExample.value.toInt,
+      maxYearlyAmount=BigDecimal(maxYearlyAmountExample.value),
+      maxNumberOfYearlyTransactions=maxNumberOfYearlyTransactionsExample.value.toInt,
+      maxTotalAmount=BigDecimal(maxTotalAmountExample.value),
+      maxNumberOfTransactions=maxNumberOfTransactionsExample.value.toInt))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createOrUpdateCounterpartyLimit(bankId: String, accountId: String, viewId: String, counterpartyId: String, currency: String, maxSingleAmount: BigDecimal, maxMonthlyAmount: BigDecimal, maxNumberOfMonthlyTransactions: Int, maxYearlyAmount: BigDecimal, maxNumberOfYearlyTransactions: Int, maxTotalAmount: BigDecimal, maxNumberOfTransactions: Int, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyLimitTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateOrUpdateCounterpartyLimit => InBound, OutBoundCreateOrUpdateCounterpartyLimit => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, counterpartyId, currency, maxSingleAmount, maxMonthlyAmount, maxNumberOfMonthlyTransactions, maxYearlyAmount, maxNumberOfYearlyTransactions, maxTotalAmount, maxNumberOfTransactions)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_or_update_counterparty_limit", req, callContext)
+        response.map(convertToTuple[CounterpartyLimitTraitCommons](callContext))        
+  }
+          
+  messageDocs += getCounterpartyLimitDoc
+  def getCounterpartyLimitDoc = MessageDoc(
+    process = "obp.getCounterpartyLimit",
+    messageFormat = messageFormat,
+    description = "Get Counterparty Limit",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundGetCounterpartyLimit(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      viewId=viewIdExample.value,
+      counterpartyId=counterpartyIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundGetCounterpartyLimit(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= CounterpartyLimitTraitCommons(counterpartyLimitId=counterpartyLimitIdExample.value,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      viewId=viewIdExample.value,
+      counterpartyId=counterpartyIdExample.value,
+      currency=currencyExample.value,
+      maxSingleAmount=BigDecimal(maxSingleAmountExample.value),
+      maxMonthlyAmount=BigDecimal(maxMonthlyAmountExample.value),
+      maxNumberOfMonthlyTransactions=maxNumberOfMonthlyTransactionsExample.value.toInt,
+      maxYearlyAmount=BigDecimal(maxYearlyAmountExample.value),
+      maxNumberOfYearlyTransactions=maxNumberOfYearlyTransactionsExample.value.toInt,
+      maxTotalAmount=BigDecimal(maxTotalAmountExample.value),
+      maxNumberOfTransactions=maxNumberOfTransactionsExample.value.toInt))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def getCounterpartyLimit(bankId: String, accountId: String, viewId: String, counterpartyId: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyLimitTrait]] = {
+        import com.openbankproject.commons.dto.{InBoundGetCounterpartyLimit => InBound, OutBoundGetCounterpartyLimit => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, counterpartyId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_counterparty_limit", req, callContext)
+        response.map(convertToTuple[CounterpartyLimitTraitCommons](callContext))        
+  }
+          
+  messageDocs += deleteCounterpartyLimitDoc
+  def deleteCounterpartyLimitDoc = MessageDoc(
+    process = "obp.deleteCounterpartyLimit",
+    messageFormat = messageFormat,
+    description = "Delete Counterparty Limit",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteCounterpartyLimit(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=bankIdExample.value,
+      accountId=accountIdExample.value,
+      viewId=viewIdExample.value,
+      counterpartyId=counterpartyIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteCounterpartyLimit(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteCounterpartyLimit(bankId: String, accountId: String, viewId: String, counterpartyId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteCounterpartyLimit => InBound, OutBoundDeleteCounterpartyLimit => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, accountId, viewId, counterpartyId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_counterparty_limit", req, callContext)
         response.map(convertToTuple[Boolean](callContext))        
   }
           
@@ -7444,8 +10414,8 @@ trait StoredProcedureConnector_vDec2019 extends Connector with MdcLoggable {
         response.map(convertToTuple[Boolean](callContext))        
   }
           
-// ---------- created on 2026-02-10T15:25:46Z
-//---------------- dynamic end ---------------------please don't modify this line                                              
+// ---------- created on 2026-02-11T11:49:56Z
+//---------------- dynamic end ---------------------please don't modify this line                                                   
 
   private val availableOperation = DynamicEntityOperation.values.map(it => s""""$it"""").mkString("[", ", ", "]")
 
