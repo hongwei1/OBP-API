@@ -148,6 +148,7 @@ object BigDecimalSerializer extends Serializer[BigDecimal] {
       case JString(s) => BigDecimal(s)
 //      case JDouble(s) => BigDecimal(s)// not safe,from JInt to BigDecimal, it may lose precision
 //      case JInt(s) => BigDecimal(s) // not safe,from JInt to BigDecimal, it may lose precision
+      case JNull | JNothing => BigDecimal(0) // handle missing or null BigDecimal fields gracefully
       case x => throw new MappingException("Can't convert " + x + " to BigDecimal")
     }
   }
@@ -162,6 +163,7 @@ object JavaMathBigDecimalSerializer extends Serializer[java.math.BigDecimal] {
   override def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), java.math.BigDecimal] = {
     case (TypeInfo(IntervalClass, _), json) => json match {
       case JString(s) => BigDecimal(s).bigDecimal
+      case JNull | JNothing => java.math.BigDecimal.ZERO // handle missing or null BigDecimal fields gracefully
       case x => throw new MappingException("Can't convert " + x + " to BigDecimal")
     }
   }
