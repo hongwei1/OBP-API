@@ -48,7 +48,17 @@ object ConnectorBuilderUtil extends MdcLoggable {
     val ctClass = pool.getCtClass("code.webuiprops.MappedWebUiPropsProvider$")
     val m = ctClass.getDeclaredMethod("getWebUiPropsValue")
     m.insertBefore("""return ""; """)
-    ctClass.toClass
+    // Check if the class is already loaded by the classloader (e.g. IntelliJ IDE runs all tests in one JVM).
+    // If already loaded, ctClass.toClass will throw LinkageError: duplicate class definition.
+    val alreadyLoaded = try {
+      Class.forName("code.webuiprops.MappedWebUiPropsProvider$", false, Thread.currentThread().getContextClassLoader)
+      true
+    } catch {
+      case _: ClassNotFoundException => false
+    }
+    if (!alreadyLoaded) {
+      ctClass.toClass
+    }
     // if(ctClass != null) ctClass.detach()
   }
 
