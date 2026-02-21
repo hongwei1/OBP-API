@@ -85,6 +85,8 @@ object CodeGenerateUtils {
       return "com.openbankproject.commons.model.PinResetReason.FORGOT"
     } else if(tp =:= typeOf[StrongCustomerAuthentication.Value]) {
       return "com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SMS"
+    } else if(tp =:= typeOf[TransactionRequestStatus.Value]) {
+      return "com.openbankproject.commons.model.enums.TransactionRequestStatus.COMPLETED"
     } else if(tp <:< typeOf[EnumValue]) {
       return s"${tp.typeSymbol.fullName}.example"
     }

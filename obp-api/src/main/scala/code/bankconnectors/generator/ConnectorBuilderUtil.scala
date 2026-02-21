@@ -155,6 +155,12 @@ object ConnectorBuilderUtil extends MdcLoggable {
 
     private[this] val isOBPReturnType = resultType.startsWith("OBPReturnType[")
 
+    // Detect if the method returns Box[T] directly (not wrapped in Future or OBPReturnType)
+    private[this] val isDirectBoxReturnType = resultType.startsWith("Box[") && !resultType.startsWith("Box[Future[")
+
+    // Detect if the Box return type contains a CallContext tuple, e.g. Box[(T, Option[CallContext])]
+    private[this] val isBoxWithCallContextTuple = isDirectBoxReturnType && resultType.contains("Option[CallContext]")
+
     private[this] val outBoundExample = {
       var typeName = s"com.openbankproject.commons.dto.OutBound${methodName.capitalize}"
       val outBoundType = ReflectUtils.getTypeByName(typeName)
@@ -222,10 +228,33 @@ object ConnectorBuilderUtil extends MdcLoggable {
       }
 
       var body =
-      s"""|    import com.openbankproject.commons.dto.{$inBoundName => InBound, $outBoundName => OutBound}  $callContext
-          |        val req = OutBound($parametersNamesString)
-          |        val response: Future[Box[InBound]] = ${responseExpression(methodName)}
-          |        response.map(convertToTuple[$inboundDataFieldType](callContext))        """.stripMargin
+      if (isDirectBoxReturnType) {
+        // Synchronous Box[T] return type — no Future wrapping
+        if (isBoxWithCallContextTuple) {
+          // Box[(T, Option[CallContext])] — call procedure synchronously, extract tuple
+          s"""|    import com.openbankproject.commons.dto.{$inBoundName => InBound, $outBoundName => OutBound}
+              |        import scala.concurrent.Await
+              |        import scala.concurrent.duration.Duration  $callContext
+              |        val req = OutBound($parametersNamesString)
+              |        val response: Future[Box[InBound]] = ${responseExpression(methodName)}
+              |        val result = Await.result(response.map(convertToTuple[$inboundDataFieldType](callContext)), Duration.Inf)
+              |        result._1.map((_, result._2))        """.stripMargin
+        } else {
+          // Simple Box[T] — call procedure synchronously, return Box[T] directly
+          s"""|    import com.openbankproject.commons.dto.{$inBoundName => InBound, $outBoundName => OutBound}
+              |        import scala.concurrent.Await
+              |        import scala.concurrent.duration.Duration  $callContext
+              |        val req = OutBound($parametersNamesString)
+              |        val response: Future[Box[InBound]] = ${responseExpression(methodName)}
+              |        Await.result(response.map(convertToTuple[$inboundDataFieldType](callContext)), Duration.Inf)._1        """.stripMargin
+        }
+      } else {
+        // Standard async path — Future[Box[...]] or OBPReturnType[Box[...]]
+        s"""|    import com.openbankproject.commons.dto.{$inBoundName => InBound, $outBoundName => OutBound}  $callContext
+            |        val req = OutBound($parametersNamesString)
+            |        val response: Future[Box[InBound]] = ${responseExpression(methodName)}
+            |        response.map(convertToTuple[$inboundDataFieldType](callContext))        """.stripMargin
+      }
 
 
       if(doCache && methodName.matches("^(get|check|validate).+")) {
@@ -292,59 +321,50 @@ object ConnectorBuilderUtil extends MdcLoggable {
    */
   val excludeMethods: List[String] = List(
     // ── Group 1: Non-standard parameter / return types (formerly specialMethods) ──
-    "getStatus",                          // Returns enum TransactionRequestStatus.Value, non-standard return type
-    "createOrUpdateBranch",               // Takes BranchT trait param, non-standard parameter type
-    "createOrUpdateBank",                 // Returns Box[Bank], non-standard return type
-    "createOrUpdateAtm",                  // Takes AtmT trait param, non-standard parameter type
-    "createOrUpdateProduct",              // Too many parameters, non-standard signature
-    "createOrUpdateFXRate",               // Returns Box[FXRate], non-standard return type
-    "getCurrentFxRate",                   // Returns Box[FXRate], non-standard return type
-    "getCounterpartyFromTransaction",     // Non-standard signature
-    "getCounterpartiesFromTransaction",   // Non-standard signature
+    // getStatus removed — Phase 3 Task 11.2 added enum return type support
+    // BranchT/AtmT trait param methods removed — Phase 3 Task 11 verified generator handles trait params via OutBound DTO accepting trait types directly
+    // Box[T] return type methods removed — Phase 3 Task 10 enhanced ConnectorMethodGenerator + DTOs created
+    // createOrUpdateProduct removed — DTOs already exist, generator handles multi-param methods
+    // getCounterpartyFromTransaction/getCounterpartiesFromTransaction removed — Phase 3 Task 12.2 analysis:
+    //   Both have standard OBPReturnType[Box[...]] return types, standard parameter types (BankId, AccountId, String),
+    //   Counterparty is a case class (not a trait), and OutBound/InBound DTOs already exist in JsonsTransfer.scala.
+    //   The original "Non-standard signature" comment was incorrect — these methods are fully compatible with ConnectorMethodGenerator.
 
-    // ── Group 2: Should not be auto-generated (attribute definitions, standing orders) ──
-    "createOrUpdateAttributeDefinition",  // Attribute definition method, should not be auto-generated
-    "deleteAttributeDefinition",          // Attribute definition method, should not be auto-generated
-    "getAttributeDefinition",             // Attribute definition method, should not be auto-generated
-    "createStandingOrder",                // Standing order method, should not be auto-generated
+    // ── Group 2: Attribute definition methods — cannot auto-generate because AttributeDefinitionTrait
+    //    is defined in obp-api module, not obp-commons. InBound DTOs in obp-commons cannot reference it,
+    //    and no AttributeDefinitionCommons exists. Moving the trait to obp-commons would unblock these. ──
+    "createOrUpdateAttributeDefinition",  // Return type AttributeDefinition (obp-api only, no Commons type in obp-commons)
+    "deleteAttributeDefinition",          // Part of AttributeDefinition family (obp-api only, no DTOs)
+    "getAttributeDefinition",             // Returns List[AttributeDefinition] (obp-api only, no DTOs)
 
     // ── Group 3: Dynamic entity / endpoint methods ──
-    "dynamicEntityProcess",               // Dynamic entity, should not be auto-generated
-    "dynamicEndpointProcess",             // Dynamic endpoint, should not be auto-generated
-    "createDynamicEndpoint",              // Dynamic endpoint, should not be auto-generated
-    "getDynamicEndpoint",                 // Dynamic endpoint, should not be auto-generated
-    "getDynamicEndpoints",                // Dynamic endpoint, should not be auto-generated
+    //    These methods use fundamentally different processing patterns from standard typed Connector methods.
+    //    They operate on schema-less JSON (JValue/JObject) rather than typed DTOs, making them incompatible
+    //    with the standard OutBound/InBound code generation pipeline. Must remain excluded.
+    "dynamicEntityProcess",               // Uses JValue return, DynamicEntityOperation enum, JObject body, and Map params;
+                                          //   processes arbitrary dynamic entities with schema-less JSON — not a typed data operation.
+                                          //   Has hand-written DTOs (OutBoundDynamicEntityProcess) with special Doc variants for Swagger.
+    "dynamicEndpointProcess",             // Uses JValue return, Pekko HttpMethod, Map[String,List[String]] params, Map[String,String] pathParams;
+                                          //   proxies arbitrary HTTP requests to dynamic endpoints — raw HTTP semantics, not typed connector pattern.
+                                          //   No standard DTOs exist; would require non-standard serialization for HttpMethod.
+    "createDynamicEndpoint",              // Not defined in Connector.scala — only exists in NewStyle.scala;
+                                          //   delegates to DynamicEndpointProvider (local persistence), not the adapter/connector pattern.
+    "getDynamicEndpoint",                 // Not defined in Connector.scala — only exists in NewStyle.scala;
+                                          //   delegates to DynamicEndpointProvider (local persistence), not the adapter/connector pattern.
+    "getDynamicEndpoints",                // Not defined in Connector.scala — only exists in NewStyle.scala;
+                                          //   delegates to DynamicEndpointProvider (local persistence), not the adapter/connector pattern.
 
     // ── Group 4: Legacy methods ──
     // (empty) getBankAccountByRoutingLegacy removed — already filtered by filterNot(_.endsWith("Legacy")) pipeline step
 
     // ── Group 5: Missing standard OutBound/InBound DTO ──
-    "getAccountRoutingsByScheme",         // Missing standard OutBound/InBound DTO
-    "getAccountRouting",                  // Missing standard OutBound/InBound DTO
-    "getBankAccountsWithAttributes",      // Missing standard OutBound/InBound DTO
-    "getBankSettlementAccounts",          // Missing standard OutBound/InBound DTO
-    "getCountOfTransactionsFromAccountToCounterparty", // Missing standard OutBound/InBound DTO
-    "getAllAtms",                          // Missing standard OutBound/InBound DTO
-    "getCurrentCurrencies",               // Missing standard OutBound/InBound DTO
-    "getAgents",                          // Missing standard OutBound/InBound DTO
-    "getCustomersAtAllBanks",             // Missing standard OutBound/InBound DTO
-    "createOrUpdateBankAttribute",        // Missing standard OutBound/InBound DTO
-    "getBankAttribute",                   // Missing standard OutBound/InBound DTO
-    "createOrUpdateAtmAttribute",         // Missing standard OutBound/InBound DTO
-    "getAtmAttribute",                    // Missing standard OutBound/InBound DTO
-    "getBankAttributeById",               // Missing standard OutBound/InBound DTO
-    "getAtmAttributeById",                // Missing standard OutBound/InBound DTO
-    "getUserAttributes",                  // Missing standard OutBound/InBound DTO
-    "getPersonalUserAttributes",          // Missing standard OutBound/InBound DTO
-    "getNonPersonalUserAttributes",       // Missing standard OutBound/InBound DTO
-    "getUserAttributesByUsers",           // Missing standard OutBound/InBound DTO
-    "createOrUpdateUserAttribute",        // Missing standard OutBound/InBound DTO
-    "getUserAttribute",                   // Missing standard OutBound/InBound DTO
-    "getUserAttributeById",               // Missing standard OutBound/InBound DTO
-    "deleteUserAttribute",                // Missing standard OutBound/InBound DTO
-    "getTransactionRequestIdsByAttributeNameValues", // Missing standard OutBound/InBound DTO
-    "sendCustomerNotification",           // Missing standard OutBound/InBound DTO
-    "getAtmAttributesByAtm",              // Missing standard OutBound/InBound DTOst
+    // Account/Transaction methods removed — OutBound/InBound DTOs created in Phase 2 Task 6.1
+    // NOTE: getAccountRouting returns Box[T] (not Future) — Phase 3 will enhance ConnectorMethodGenerator for this
+    // Remaining Group 5 methods (batch 4) removed — OutBound/InBound DTOs created in Phase 2 Task 7.1
+    // NOTE: getAllAtms returns Future[Box[(List[AtmT], ...)]] with type parameter — may need Phase 3 enhancement
+    // Bank/Atm attribute methods removed — OutBound/InBound DTOs created in Phase 2 Task 5.1
+    // User attribute methods removed — OutBound/InBound DTOs created in Phase 2 Task 4.1
+    // Last Group 5 methods removed — OutBound/InBound DTOs created in Phase 2 Tasks 7.1 and 8.1
 
     // ── Group 6: Scala / Java built-in methods ──
     "equals",                             // Scala/Java built-in method
