@@ -658,6 +658,9 @@ trait APIMethods400 extends MdcLoggable {
           ) { APIUtil.isValidCurrencyISOCode(currency) }
 
           (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+          _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = callContext) {
+            !createAccountJson.account_routings.exists(r => isImplicitOBPAccountScheme(r.scheme))
+          }
           _ <- Helper.booleanToFuture(
             s"$InvalidAccountRoutings Duplication detected in account routings, please specify only one value per routing scheme",
             cc = callContext
@@ -3321,6 +3324,9 @@ trait APIMethods400 extends MdcLoggable {
             }
             currency = createAccountJson.balance.currency
             (_, callContext) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = callContext) {
+              !createAccountJson.account_routings.exists(r => isImplicitOBPAccountScheme(r.scheme))
+            }
             _ <- Helper.booleanToFuture(
               s"$InvalidAccountRoutings Duplication detected in account routings, please specify only one value per routing scheme",
               cc = callContext

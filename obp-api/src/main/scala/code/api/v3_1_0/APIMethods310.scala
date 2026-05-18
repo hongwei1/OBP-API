@@ -4823,6 +4823,9 @@ trait APIMethods310 {
             consentJson <- NewStyle.function.tryons(failMsg, 400, callContext) {
               json.extract[UpdateAccountRequestJsonV310]
             }
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc=callContext){
+              !consentJson.account_routings.exists(r => isImplicitOBPAccountScheme(r.scheme))
+            }
             _ <- Helper.booleanToFuture(s"$UpdateBankAccountException Duplication detected in account routings, please specify only one value per routing scheme", cc=callContext){
               consentJson.account_routings.map(_.scheme).distinct.size == consentJson.account_routings.size
             }
@@ -5485,6 +5488,9 @@ trait APIMethods310 {
             _ <-  Helper.booleanToFuture(InvalidISOCurrencyCode, cc=callContext){isValidCurrencyISOCode(createAccountJson.balance.currency)}
             currency = createAccountJson.balance.currency
             (_, callContext ) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc=callContext){
+              !createAccountJson.account_routings.exists(r => isImplicitOBPAccountScheme(r.scheme))
+            }
             _ <- Helper.booleanToFuture(s"$InvalidAccountRoutings Duplication detected in account routings, please specify only one value per routing scheme", 400, cc=callContext){
               createAccountJson.account_routings.map(_.scheme).distinct.size == createAccountJson.account_routings.size
             }

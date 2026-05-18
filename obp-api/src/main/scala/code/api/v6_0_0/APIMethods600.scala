@@ -2244,6 +2244,10 @@ trait APIMethods600 {
               json.extract[PostBankJson600]
             }
 
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = cc.callContext) {
+              !postJson.bank_routings.getOrElse(Nil).exists(r => isImplicitOBPBankScheme(r.scheme))
+            }
+
             // TODO: Improve this error message to not hardcode "16" - should reference the max length from checkOptionalShortString function
             checkShortStringValue = APIUtil.checkOptionalShortString(postJson.bank_id)
             _ <- Helper.booleanToFuture(failMsg = s"$InvalidJsonFormat BANK_ID: $checkShortStringValue BANK_ID must contain only characters A-Z, a-z, 0-9, -, _, . and be max 16 characters.", cc = cc.callContext) {

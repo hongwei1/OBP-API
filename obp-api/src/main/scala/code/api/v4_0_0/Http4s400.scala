@@ -235,6 +235,9 @@ object Http4s400 {
               s"$InvalidJsonFormat The Json body should be the $BankJson400 ", 400, Some(cc)) {
               net.liftweb.json.parse(cc.httpBody.getOrElse("")).extract[BankJson400]
             }
+            _ <- code.util.Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = Some(cc)) {
+              !bank.bank_routings.exists(r => isImplicitOBPBankScheme(r.scheme))
+            }
             _ <- code.util.Helper.booleanToFuture(
               failMsg = InvalidConsumerCredentials, cc = Some(cc)) {
               cc.consumer.isDefined

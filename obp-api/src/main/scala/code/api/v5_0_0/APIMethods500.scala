@@ -182,6 +182,10 @@ trait APIMethods500 {
               json.extract[PostBankJson500]
             }
 
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = cc.callContext) {
+              !postJson.bank_routings.getOrElse(Nil).exists(r => isImplicitOBPBankScheme(r.scheme))
+            }
+
             //if postJson.id is empty, just return SILENCE_IS_GOLDEN, and will pass the guard.
             checkShortStringValue = APIUtil.checkOptionalShortString(postJson.id.getOrElse(SILENCE_IS_GOLDEN))
             _ <- Helper.booleanToFuture(failMsg = s"$checkShortStringValue.", cc = cc.callContext) {
@@ -394,6 +398,9 @@ trait APIMethods500 {
             _ <-  Helper.booleanToFuture(InvalidISOCurrencyCode, cc=callContext){isValidCurrencyISOCode(createAccountJson.balance.map(_.currency).getOrElse("EUR"))}
             currency = createAccountJson.balance.map(_.currency).getOrElse("EUR")
             (_, callContext ) <- NewStyle.function.getBank(bankId, callContext)
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc=callContext){
+              !createAccountJson.account_routings.getOrElse(Nil).exists(r => isImplicitOBPAccountScheme(r.scheme))
+            }
             _ <- Helper.booleanToFuture(s"$InvalidAccountRoutings Duplication detected in account routings, please specify only one value per routing scheme", 400, cc=callContext){
               createAccountJson.account_routings.getOrElse(Nil).map(_.scheme).distinct.size == createAccountJson.account_routings.getOrElse(Nil).size
             }

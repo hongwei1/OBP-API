@@ -430,6 +430,9 @@ object Http4s500 {
             postJson <- NewStyle.function.tryons(failMsg, 400, Some(cc)) {
               net.liftweb.json.parse(cc.httpBody.getOrElse("")).extract[PostBankJson500]
             }
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = Some(cc)) {
+              !postJson.bank_routings.getOrElse(Nil).exists(r => isImplicitOBPBankScheme(r.scheme))
+            }
             checkShortStringValue = APIUtil.checkOptionalShortString(postJson.id.getOrElse(SILENCE_IS_GOLDEN))
             _ <- Helper.booleanToFuture(s"$checkShortStringValue.", cc = Some(cc)) {
               checkShortStringValue == SILENCE_IS_GOLDEN
@@ -504,6 +507,9 @@ object Http4s500 {
           for {
             bank <- NewStyle.function.tryons(failMsg, 400, Some(cc)) {
               net.liftweb.json.parse(cc.httpBody.getOrElse("")).extract[PostBankJson500]
+            }
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = Some(cc)) {
+              !bank.bank_routings.getOrElse(Nil).exists(r => isImplicitOBPBankScheme(r.scheme))
             }
             _ <- Helper.booleanToFuture(InvalidConsumerCredentials, cc = Some(cc)) {
               cc.consumer.isDefined
@@ -585,6 +591,9 @@ object Http4s500 {
             }
             currency = createAccountJson.balance.map(_.currency).getOrElse("EUR")
             (_, _) <- NewStyle.function.getBank(bankId, Some(cc))
+            _ <- Helper.booleanToFuture(OBPSchemeIsImplicit, 409, cc = Some(cc)) {
+              !createAccountJson.account_routings.getOrElse(Nil).exists(r => isImplicitOBPAccountScheme(r.scheme))
+            }
             _ <- Helper.booleanToFuture(s"$InvalidAccountRoutings Duplication detected in account routings, please specify only one value per routing scheme", 400, cc = Some(cc)) {
               createAccountJson.account_routings.getOrElse(Nil).map(_.scheme).distinct.size == createAccountJson.account_routings.getOrElse(Nil).size
             }

@@ -201,6 +201,27 @@ object Constant extends MdcLoggable {
     SYSTEM_READ_TRANSACTIONS_BERLIN_GROUP_VIEW_ID ::
       SYSTEM_INITIATE_PAYMENTS_BERLIN_GROUP_VIEW_ID :: Nil
 
+  // OBP-family routing schemes.
+  //
+  // These schemes are *implicit self-identifiers*: the routing address by
+  // definition equals the entity's primary key (bank_id or account_id).
+  // They are NEVER persisted as explicit BankAccountRouting / bank routing
+  // rows; instead the lookup paths resolve them virtually, and the write
+  // paths reject any attempt to set them (OBP-30545 OBPSchemeIsImplicit).
+  //
+  // "OBP" alone is overloaded — it is accepted in BOTH bank- and account-
+  // routing contexts and resolved according to the lookup target.
+  final val OBP_ACCOUNT_ROUTING_SCHEMES: Set[String] = Set("OBP", "OBP_ACCOUNT_ID")
+  final val OBP_BANK_ROUTING_SCHEMES: Set[String]    = Set("OBP", "OBP_BANK_ID")
+
+  /** True if `scheme` is an implicit OBP-family account-routing self-identifier. */
+  def isImplicitOBPAccountScheme(scheme: String): Boolean =
+    scheme != null && OBP_ACCOUNT_ROUTING_SCHEMES.exists(_.equalsIgnoreCase(scheme))
+
+  /** True if `scheme` is an implicit OBP-family bank-routing self-identifier. */
+  def isImplicitOBPBankScheme(scheme: String): Boolean =
+    scheme != null && OBP_BANK_ROUTING_SCHEMES.exists(_.equalsIgnoreCase(scheme))
+
   //These are the default incoming and outgoing account ids. we will create both during the boot.scala.
   final val INCOMING_SETTLEMENT_ACCOUNT_ID = "OBP-INCOMING-SETTLEMENT-ACCOUNT"
   final val OUTGOING_SETTLEMENT_ACCOUNT_ID = "OBP-OUTGOING-SETTLEMENT-ACCOUNT"
