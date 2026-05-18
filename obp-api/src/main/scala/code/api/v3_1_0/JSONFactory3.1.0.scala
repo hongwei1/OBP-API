@@ -996,8 +996,10 @@ object JSONFactory310{
       label = bankAccount.label,
       `type` = bankAccount.accountType,
       branch_id = bankAccount.branchId,
-      account_routings= bankAccount.accountRoutings
-        .map(r => AccountRoutingJsonV121(r.scheme, r.address))
+      account_routings = code.api.Constant.accountRoutingsWithImplicitOBP(
+        bankAccount.accountId.value,
+        bankAccount.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address))
+      )
     )
   }
   
@@ -1376,12 +1378,15 @@ object JSONFactory310{
         account.balance.toString()
       ),
       branch_id = account.branchId,
-      account_routings = account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address)),
+      account_routings = code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address))
+      ),
       accountAttributes.map(createAccountAttributeJson)
     )
   }
 
-  def createBankAccountJSON(account : ModeratedBankAccountCore, 
+  def createBankAccountJSON(account : ModeratedBankAccountCore,
                             viewsAvailable : List[ViewJSONV121], 
                             accountAttributes: List[AccountAttribute]) : ModeratedAccountJSON310 =  {
     new ModeratedAccountJSON310(
@@ -1393,11 +1398,14 @@ object JSONFactory310{
       createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance.getOrElse("")),
       viewsAvailable,
       stringOrNull(account.bankId.value),
-      createAccountRoutingsJSON(account.accountRoutings),
+      code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        createAccountRoutingsJSON(account.accountRoutings)
+      ),
       accountAttributes.map(createAccountAttributeJson)
     )
   }
-  
+
   def createPostHistoricalTransactionResponseJson(
     transactionId: TransactionId,
     from: HistoricalTransactionAccountJsonV310,

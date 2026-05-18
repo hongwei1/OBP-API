@@ -1233,7 +1233,10 @@ object JSONFactory400 {
         account.balance.toString()
       ),
       branch_id = account.branchId,
-      account_routings = account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address)),
+      account_routings = code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address))
+      ),
       account_attributes = accountAttributes.map(createAccountAttributeJson)
     )
 
@@ -1247,7 +1250,10 @@ object JSONFactory400 {
         account.balance.toString()
       ),
       branch_id = account.branchId,
-      account_routings = account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address)),
+      account_routings = code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address))
+      ),
       account_attributes = accountAttributes.map(createAccountAttributeJson)
     )
 
@@ -1323,7 +1329,7 @@ object JSONFactory400 {
   }
 
   
-  def createNewCoreBankAccountJson(account : ModeratedBankAccountCore, 
+  def createNewCoreBankAccountJson(account : ModeratedBankAccountCore,
                                    availableViews: List[View]) : ModeratedCoreAccountJsonV400 =  {
     ModeratedCoreAccountJsonV400 (
       account.accountId.value,
@@ -1332,7 +1338,10 @@ object JSONFactory400 {
       stringOptionOrNull(account.number),
       stringOptionOrNull(account.accountType),
       createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance.getOrElse("")),
-      createAccountRoutingsJSON(account.accountRoutings),
+      code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        createAccountRoutingsJSON(account.accountRoutings)
+      ),
       views_basic = availableViews.map(view => view.viewId.value)
     )
   }
@@ -1351,7 +1360,10 @@ object JSONFactory400 {
       createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance.getOrElse("")),
       viewsAvailable,
       stringOrNull(account.bankId.value),
-      createAccountRoutingsJSON(account.accountRoutings),
+      code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        createAccountRoutingsJSON(account.accountRoutings)
+      ),
       accountAttributes.map(createAccountAttributeJson),
       tags.map(createAccountTagJSON)
     )
@@ -1390,7 +1402,10 @@ object JSONFactory400 {
             createOwnersJSON(account.owners.getOrElse(Set()), account.bankName.getOrElse("")),
             stringOptionOrNull(account.accountType),
             createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance),
-            createAccountRoutingsJSON(account.accountRoutings),
+            code.api.Constant.accountRoutingsWithImplicitOBP(
+              account.accountId.value,
+              createAccountRoutingsJSON(account.accountRoutings)
+            ),
             createAccountRulesJSON(account.accountRules),
             account_attributes = getAttributes(account.bankId, account.accountId)
           )
@@ -1687,6 +1702,12 @@ object JSONFactory400 {
         account => AccountBalanceJsonV400(
           account_id = account.id,
           bank_id = account.bankId,
+          // TODO(virtual-OBP-injection): account.accountRoutings here is `List[AccountRouting]`
+          // (model type), not `List[AccountRoutingJsonV121]`, so the
+          // `code.api.Constant.accountRoutingsWithImplicitOBP` helper doesn't fit
+          // directly. To inject OBP here we either need to (a) overload the helper for
+          // the model type, or (b) flip the case-class field to `AccountRoutingJsonV121`
+          // and convert at this callsite. Out of scope for the current sweep.
           account_routings = account.accountRoutings,
           label = account.label,
           balances = List(
@@ -1699,9 +1720,10 @@ object JSONFactory400 {
   
   def createAccountBalancesJson(accountBalances: AccountBalances) = {
      AccountBalanceJsonV400(
-       account_id = accountBalances.id, 
-       bank_id = accountBalances.bankId, 
-       account_routings = accountBalances.accountRoutings, 
+       account_id = accountBalances.id,
+       bank_id = accountBalances.bankId,
+       // TODO(virtual-OBP-injection): same shape mismatch as createBalancesJson above.
+       account_routings = accountBalances.accountRoutings,
        label = accountBalances.label, 
        balances = accountBalances.balances.map( balance => 
          BalanceJsonV400(`type`=balance.balanceType, currency = balance.balance.currency, amount = balance.balance.amount)

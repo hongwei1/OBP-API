@@ -852,7 +852,10 @@ object JSONFactory300{
       coreAccount.label,
       coreAccount.bankId,
       coreAccount.accountType,
-      coreAccount.accountRoutings.map(accountRounting =>AccountRoutingJsonV121(accountRounting.scheme, accountRounting.address)),
+      code.api.Constant.accountRoutingsWithImplicitOBP(
+        coreAccount.id,
+        coreAccount.accountRoutings.map(accountRounting => AccountRoutingJsonV121(accountRounting.scheme, accountRounting.address))
+      ),
       views = Views.views.vend
         .privateViewsUserCanAccessForAccount(user, BankIdAccountId(BankId(coreAccount.bankId), AccountId(coreAccount.id))).filter(_.isPrivate)
         .map(mappedView =>
@@ -871,7 +874,10 @@ object JSONFactory300{
         account.label,
         account.bankId,
         account.number,
-        account.accountRoutings.map(accountRounting =>AccountRoutingJsonV121(accountRounting.scheme, accountRounting.address))
+        code.api.Constant.accountRoutingsWithImplicitOBP(
+          account.id,
+          account.accountRoutings.map(accountRounting => AccountRoutingJsonV121(accountRounting.scheme, accountRounting.address))
+        )
         )))
 
   def createAccountsIdsByBankIdAccountIds(bankaccountIds :  List[BankIdAccountId]): AccountsIdsJsonV300 =
@@ -894,7 +900,10 @@ object JSONFactory300{
       createOwnersJSON(account.owners.getOrElse(Set()), ""),
       stringOptionOrNull(account.accountType),
       createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance.getOrElse("")),
-      createAccountRoutingsJSON(account.accountRoutings),
+      code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        createAccountRoutingsJSON(account.accountRoutings)
+      ),
       views_basic = availableViews.map(view => code.api.v3_0_0.ViewBasicV300(id = view.viewId.value, short_name = view.name, description = view.description, is_public = view.isPublic))
     )
   }
@@ -908,7 +917,10 @@ object JSONFactory300{
       createOwnersJSON(account.owners.getOrElse(Set()), ""),
       stringOptionOrNull(account.accountType),
       createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance.getOrElse("")),
-      createAccountRoutingsJSON(account.accountRoutings),
+      code.api.Constant.accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        createAccountRoutingsJSON(account.accountRoutings)
+      ),
       createAccountRulesJSON(account.accountRules)
     )
   }
@@ -933,7 +945,10 @@ object JSONFactory300{
             createOwnersJSON(account.owners.getOrElse(Set()), account.bankName.getOrElse("")),
             stringOptionOrNull(account.accountType),
             createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance),
-            createAccountRoutingsJSON(account.accountRoutings),
+            code.api.Constant.accountRoutingsWithImplicitOBP(
+              account.accountId.value,
+              createAccountRoutingsJSON(account.accountRoutings)
+            ),
             createAccountRulesJSON(account.accountRules),
             account_attributes = getAttributes(account.bankId, account.accountId)
           )
