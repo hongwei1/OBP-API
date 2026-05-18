@@ -5023,7 +5023,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
               //if challenge necessary, create a new one
               users <- getUsersForChallenges(fromAccount.bankId, fromAccount.accountId)
               //now we support multiple challenges. We can support multiple people to answer the challenges.
-              //So here we return the challengeIds. 
+              //So here we return the challengeIds.
               (challenges, callContext) <- Connector.connector.vend.createChallengesC2(
                 userIds = users.toList.flatten.map(_.userId),
                 challengeType = challengeTypeValue,
@@ -5041,7 +5041,12 @@ object LocalMappedConnector extends Connector with MdcLoggable {
               //Here only put the dummy date.
               newChallenge = TransactionRequestChallenge(s"challenges number:${challenges.length}", allowed_attempts = 3, challenge_type = ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE.toString)
               _ <- saveTransactionRequestChallenge(transactionRequest.id, newChallenge, callContext)
-              transactionRequest <- Future(transactionRequest.copy(challenge = newChallenge))
+              // Carry the just-created challenges on the TR so the JSON-building layer
+              // doesn't need to re-query the DB.  Avoids hitting a known fragility in
+              // the http4s→Lift Mapper bridge where a follow-up read inside the same
+              // request can run on a worker without the request-scoped proxy in scope
+              // and miss the uncommitted writes.
+              transactionRequest <- Future(transactionRequest.copy(challenge = newChallenge, challenges = challenges))
             } yield {
               (transactionRequest, callContext)
             }

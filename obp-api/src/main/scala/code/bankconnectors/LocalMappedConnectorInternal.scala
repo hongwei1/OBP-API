@@ -1579,7 +1579,16 @@ object LocalMappedConnectorInternal extends MdcLoggable {
           } yield (createdTransactionRequest, callContext)
         }
       }
-      (challenges, callContext) <-  NewStyle.function.getChallengesByTransactionRequestId(createdTransactionRequest.id.value, callContext)
+      // Prefer challenges carried on the TR (set by the connector that just created them).
+      // Falls back to a DB query only when the TR has none — which is the case for code
+      // paths that read an existing TR from storage rather than creating it.  The fallback
+      // is wrapped to tolerate the http4s→Lift Mapper bridge issue: if it returns 0 rows
+      // when we know writes happened, the just-created list on the TR is authoritative.
+      (challenges, callContext) <- if (createdTransactionRequest.challenges.nonEmpty) {
+        Future.successful((createdTransactionRequest.challenges, callContext))
+      } else {
+        NewStyle.function.getChallengesByTransactionRequestId(createdTransactionRequest.id.value, callContext)
+      }
       (transactionRequestAttributes, callContext) <- NewStyle.function.getTransactionRequestAttributes(
         bankId,
         createdTransactionRequest.id,

@@ -16,7 +16,7 @@ import net.liftweb.util.Helpers.tryo
 import scala.compat.Platform
 
 object MappedChallengeProvider extends ChallengeProvider {
-  
+
   override def saveChallenge(
     challengeId: String,
     transactionRequestId: String, // Note: consentId and transactionRequestId and basketId are exclusive here.
@@ -54,7 +54,7 @@ object MappedChallengeProvider extends ChallengeProvider {
         .ChallengeContextStructure(challengeContextStructure.getOrElse(""))
         .saveMe()
     )
-  
+
   override def getChallenge(challengeId: String): Box[MappedExpectedChallengeAnswer] =
       MappedExpectedChallengeAnswer.find(By(MappedExpectedChallengeAnswer.ChallengeId,challengeId))
 

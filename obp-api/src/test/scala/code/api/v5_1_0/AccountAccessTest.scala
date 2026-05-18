@@ -13,11 +13,13 @@ import code.api.v4_0_0.{AccountsMinimalJson400, RevokedJsonV400}
 import code.api.v5_1_0.OBPAPI5_1_0.Implementations5_1_0
 import code.entitlement.Entitlement
 import com.github.dwickern.macros.NameOf.nameOf
-import com.openbankproject.commons.model.{AmountOfMoneyJsonV121, ErrorMessage}
+import com.openbankproject.commons.model.{AccountRoutingJsonV121, AmountOfMoneyJsonV121, ErrorMessage}
 import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.common.Box
 import net.liftweb.json.Serialization.write
 import org.scalatest.Tag
+
+import scala.util.Random
 
 class AccountAccessTest extends V510ServerSetup {
   /**
@@ -43,11 +45,18 @@ class AccountAccessTest extends V510ServerSetup {
   lazy val postBodyViewJson = createViewJsonV300.toCreateViewJson
   
   def createAnAccount(bankId: String, user: Option[(Consumer,Token)]): CreateAccountResponseJsonV310 = {
-    val addAccountJson = SwaggerDefinitionsJSON.createAccountRequestJsonV310.copy(user_id = resourceUser1.userId, balance = AmountOfMoneyJsonV121("EUR","0"))
+    // Use random scheme + address so each scenario gets unique routings. The
+    // canned fixture re-uses the same routing across calls, which collides on
+    // 409 AccountRoutingAlreadyExist after the first scenario succeeds.
+    val addAccountJson = SwaggerDefinitionsJSON.createAccountRequestJsonV310.copy(
+      user_id          = resourceUser1.userId,
+      balance          = AmountOfMoneyJsonV121("EUR", "0"),
+      account_routings = List(AccountRoutingJsonV121(Random.nextString(10), Random.nextString(10)))
+    )
     val request510 = (v5_1_0_Request / "banks" / bankId / "accounts" ).POST <@(user1)
     val response510 = makePostRequest(request510, write(addAccountJson))
     Then("We should get a 201")
-    
+
     response510.code should equal(201)
     response510.body.extract[CreateAccountResponseJsonV310]
   }

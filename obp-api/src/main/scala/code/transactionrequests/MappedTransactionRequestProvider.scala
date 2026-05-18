@@ -454,18 +454,22 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
     // fields are empty) and the `source` discriminator on the JSON response live in the
     // JSONFactory layer — they need callContext / async lookup, which this sync method
     // cannot do.
+    //
+    // Null-safety: Lift's MappedString returns the underlying DB column value, which is
+    // NULL for rows pre-dating the auto-migration that added these columns (any TR
+    // created by code paths that don't set them — i.e. every type except OPEN_CORRIDOR).
+    // Calling `.nonEmpty` on null NPEs, so we wrap in `Option(...)` to coerce null → None.
     val t_originator: Option[Originator] =
-      if (mOriginator_Name.get.nonEmpty)
-        Some(Originator(
-          name = mOriginator_Name.get,
-          address = mOriginator_Address.get,
+      Option(mOriginator_Name.get).filter(_.nonEmpty).map { name =>
+        Originator(
+          name    = name,
+          address = Option(mOriginator_Address.get).getOrElse(""),
           account_routing = OriginatorAccountRouting(
-            scheme  = mOriginator_AccountRoutingScheme.get,
-            address = mOriginator_AccountRoutingAddress.get
+            scheme  = Option(mOriginator_AccountRoutingScheme.get).getOrElse(""),
+            address = Option(mOriginator_AccountRoutingAddress.get).getOrElse("")
           )
-        ))
-      else
-        None
+        )
+      }
 
     Some(
       TransactionRequest(
