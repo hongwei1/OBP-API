@@ -1111,7 +1111,27 @@ case class TransactionRequest (
                                 user_id :Option[String] = None,
                                 @optional
                                 on_behalf_of_user_id :Option[String] = None,
+                                @optional
+                                originator :Option[TransactionRequestOriginator] = None,
                               )
+
+// Originator (FATF Recommendation 16 "Travel Rule" — who the payment is from).
+// Optional at the model level; required by the OPEN_CORRIDOR Transaction Request
+// type, validated at the connector dispatch layer. When not explicitly stored on
+// the TR, OBP-API virtually fills this at JSON-response time from the from-account's
+// linked Customer via customer_account_link (see JSONFactory layer). The response
+// JSON wraps this with a `source` discriminator (`explicit` / `customer_link` /
+// `none`) computed at read time — never stored.
+case class TransactionRequestOriginator(
+                                         name: String,
+                                         address: String,
+                                         account_routing: TransactionRequestOriginatorAccountRouting
+                                       )
+
+case class TransactionRequestOriginatorAccountRouting(
+                                                       scheme: String,
+                                                       address: String
+                                                     )
 
 case class TransactionRequestBGV1(
   id: TransactionRequestId,

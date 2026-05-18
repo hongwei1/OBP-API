@@ -1,12 +1,18 @@
 package code.api.v7_0_0
 
 import code.api.Constant
-import code.api.util.APIUtil
+import code.api.util.{APIUtil, CallContext}
 import code.api.util.ErrorMessages
 import code.api.util.ErrorMessages.MandatoryPropertyIsNotSet
-import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400}
+import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, PostSimpleCounterpartyJson400}
+import code.bankconnectors.Connector
+import code.customer.CustomerX
 import code.util.Helper.MdcLoggable
+import com.openbankproject.commons.model.{AmountOfMoneyJsonV121, TransactionRequest, TransactionRequestCommonBodyJSON}
 import com.openbankproject.commons.util.ApiVersion
+import net.liftweb.common.Full
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
 
@@ -847,5 +853,119 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
       start_date = tr.start_date,
       end_date = tr.end_date
     )
+  }
+
+  // ---------------------------------------------------------------------------
+  // OPEN_CORRIDOR Transaction Request type — body + response originator block.
+  //
+  // SIMPLE-shaped beneficiary routing plus a REQUIRED `originator` block carrying
+  // FATF Recommendation 16 (Travel Rule) information about the actual payer
+  // upstream of the bank's settlement account. Unlike SIMPLE, OPEN_CORRIDOR's
+  // originator must be supplied explicitly — the connector dispatch rejects
+  // requests where it is missing or empty.
+  // ---------------------------------------------------------------------------
+
+  /** Body posted by clients when creating an OPEN_CORRIDOR Transaction Request. */
+  case class TransactionRequestBodyOpenCorridorJsonV700(
+    to: PostSimpleCounterpartyJson400,
+    value: AmountOfMoneyJsonV121,
+    description: String,
+    charge_policy: String,
+    originator: PostTransactionRequestOriginatorJsonV700,
+    future_date: Option[String] = None
+  ) extends TransactionRequestCommonBodyJSON
+
+  /** Inbound originator block on the OPEN_CORRIDOR create body. All three fields are
+    * required for a valid OPEN_CORRIDOR submission; the connector validates emptiness. */
+  case class PostTransactionRequestOriginatorJsonV700(
+    name: String,
+    address: String,
+    account_routing: PostTransactionRequestOriginatorAccountRoutingJsonV700
+  )
+
+  case class PostTransactionRequestOriginatorAccountRoutingJsonV700(
+    scheme: String,
+    address: String
+  )
+
+  /** Outbound originator block returned on every TR response (any type) in v7.0.0+.
+    * `source` discriminates how the block was populated:
+    *   - "explicit"      — taken from the TR's persisted originator fields
+    *   - "customer_link" — virtually filled at read time from customer_account_link
+    *   - "none"          — no explicit fields and no customer link for the from-account
+    */
+  case class TransactionRequestOriginatorJsonV700(
+    name: String,
+    address: String,
+    account_routing: TransactionRequestOriginatorAccountRoutingJsonV700,
+    source: String
+  )
+
+  case class TransactionRequestOriginatorAccountRoutingJsonV700(
+    scheme: String,
+    address: String
+  )
+
+  /** Build the originator block for a TR response, resolving the `source`
+    * discriminator at read time:
+    *   - "explicit"      — `tr.originator` is set, taken straight from persistence.
+    *   - "customer_link" — `tr.originator` is None, but customer_account_link points
+    *                       to a Customer for the from-account; populate name from
+    *                       Customer.legalName. Address is left empty for now (a
+    *                       follow-up will derive it from CustomerAddress, which is
+    *                       a separate multi-record table).
+    *   - "none"          — neither explicit nor a link; empty fields.
+    *
+    * Read-time computation is intentional: customer_account_link can be re-pointed
+    * after a TR is created (customer un-linked / re-linked), so we always reflect
+    * the current state of the link rather than a stale snapshot.
+    */
+  def buildTransactionRequestOriginatorJson(
+    tr: TransactionRequest,
+    callContext: Option[CallContext]
+  )(implicit ec: ExecutionContext): Future[(TransactionRequestOriginatorJsonV700, Option[CallContext])] = {
+
+    def emptyAccountRouting = TransactionRequestOriginatorAccountRoutingJsonV700(scheme = "", address = "")
+    def noneOriginator(cc: Option[CallContext]) =
+      (TransactionRequestOriginatorJsonV700(
+        name = "", address = "", account_routing = emptyAccountRouting, source = "none"
+      ), cc)
+
+    tr.originator match {
+      case Some(o) =>
+        Future.successful((
+          TransactionRequestOriginatorJsonV700(
+            name = o.name,
+            address = o.address,
+            account_routing = TransactionRequestOriginatorAccountRoutingJsonV700(
+              scheme = o.account_routing.scheme,
+              address = o.account_routing.address
+            ),
+            source = "explicit"
+          ),
+          callContext
+        ))
+      case None =>
+        Connector.connector.vend.getCustomerAccountLinksByBankIdAccountId(
+          tr.from.bank_id,
+          tr.from.account_id,
+          callContext
+        ).map {
+          case (Full(link :: _), cc) =>
+            CustomerX.customerProvider.vend.getCustomerByCustomerId(link.customerId) match {
+              case Full(customer) =>
+                (TransactionRequestOriginatorJsonV700(
+                  name = customer.legalName,
+                  address = "", // TODO: derive from CustomerAddress (multi-record, separate model).
+                  account_routing = emptyAccountRouting,
+                  source = "customer_link"
+                ), cc)
+              case _ =>
+                noneOriginator(cc)
+            }
+          case (_, cc) =>
+            noneOriginator(cc)
+        }
+    }
   }
 }

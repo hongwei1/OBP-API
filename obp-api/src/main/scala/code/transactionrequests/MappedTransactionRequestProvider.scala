@@ -4,6 +4,7 @@ import code.api.util.APIUtil.DateWithMsFormat
 import code.api.util.ErrorMessages._
 import code.api.util.{APIUtil, CallContext, CustomJsonFormats}
 import code.api.v2_1_0.TransactionRequestBodyCounterpartyJSON
+import code.api.v7_0_0.JSONFactory700.TransactionRequestBodyOpenCorridorJsonV700
 import code.bankconnectors.LocalMappedConnectorInternal
 import code.consent.Consents
 import code.model._
@@ -102,6 +103,14 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider with 
     val consentOption = consentIdOption.map(consentId =>Consents.consentProvider.vend.getConsentByConsentId(consentId).toOption).flatten
     val consentReferenceIdOption = consentOption.map(_.consentReferenceId)
 
+    // Explicit originator (FATF Rec 16). Only the OPEN_CORRIDOR body carries this today;
+    // other TR types leave the columns null and the JSON layer virtually-fills via
+    // customer_account_link at read time.
+    val explicitOriginator = transactionRequestCommonBody match {
+      case openCorridorBody: TransactionRequestBodyOpenCorridorJsonV700 => Some(openCorridorBody.originator)
+      case _ => None
+    }
+
     // Note: We don't save transaction_ids, status and challenge here.
     val mappedTransactionRequest = MappedTransactionRequest.create
 
@@ -158,6 +167,12 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider with 
       .mApiStandard(apiStandard.getOrElse(null))
       .mUserId(callContext.flatMap(_.user.map(_.userId)).getOrElse(null))
       .mOnBehalfOfUserId(callContext.flatMap(cc => cc.onBehalfOfUser.or(cc.consenter).map(_.userId)).getOrElse(null))
+
+      // Explicit originator fields (FATF Rec 16, OPEN_CORRIDOR type only — null otherwise).
+      .mOriginator_Name(explicitOriginator.map(_.name).getOrElse(null))
+      .mOriginator_Address(explicitOriginator.map(_.address).getOrElse(null))
+      .mOriginator_AccountRoutingScheme(explicitOriginator.map(_.account_routing.scheme).getOrElse(null))
+      .mOriginator_AccountRoutingAddress(explicitOriginator.map(_.account_routing.address).getOrElse(null))
 
       .saveMe
     Full(mappedTransactionRequest).flatMap(_.toTransactionRequest)
@@ -244,7 +259,8 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
   object mTo_AccountId extends MappedString(this, 128)
 
   //toCounterparty fields
-  object mName extends MappedString(this, 64)
+  // mName widened from 64 → 140 to match ISO 20022 `Nm` element. Lift auto-migrates VARCHAR widening.
+  object mName extends MappedString(this, 140)
   object mThisBankId extends UUIDString(this)
   object mThisAccountId extends AccountIdString(this)
   object mThisViewId extends UUIDString(this)
@@ -254,6 +270,17 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
   object mOtherBankRoutingScheme extends MappedString(this, 32)
   object mOtherBankRoutingAddress extends MappedString(this, 64)
   object mIsBeneficiary extends MappedBoolean(this)
+
+  // Originator fields (FATF Recommendation 16 "Travel Rule" — who the payment is from).
+  // Optional at the model level; required by the OPEN_CORRIDOR Transaction Request type
+  // (enforced in the connector dispatch, not here). When NOT explicitly set, the originator
+  // is virtually filled at read-time from customer_account_link → Customer (see
+  // `toTransactionRequest`). The `source` discriminator on the response JSON is computed,
+  // not stored, so it always reflects the current state of customer_account_link.
+  object mOriginator_Name extends MappedString(this, 140)
+  object mOriginator_Address extends MappedString(this, 2000)
+  object mOriginator_AccountRoutingScheme extends MappedString(this, 32)
+  object mOriginator_AccountRoutingAddress extends MappedString(this, 128)
 
   //Here are for Berlin Group V1.3
   object mPaymentStartDate extends MappedDate(this)           //BGv1.3 Open API Document example value: "startDate":"2024-08-12"
@@ -422,6 +449,23 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
     value = AmountOfMoney(currency = mCharge_Currency.get, amount = mCharge_Amount.get)
     )
 
+    // Explicit originator (FATF Rec 16). Populated here only when stored explicitly on
+    // the TR. The "virtual fill" path (deriving from customer_account_link when explicit
+    // fields are empty) and the `source` discriminator on the JSON response live in the
+    // JSONFactory layer — they need callContext / async lookup, which this sync method
+    // cannot do.
+    val t_originator: Option[TransactionRequestOriginator] =
+      if (mOriginator_Name.get.nonEmpty)
+        Some(TransactionRequestOriginator(
+          name = mOriginator_Name.get,
+          address = mOriginator_Address.get,
+          account_routing = TransactionRequestOriginatorAccountRouting(
+            scheme  = mOriginator_AccountRoutingScheme.get,
+            address = mOriginator_AccountRoutingAddress.get
+          )
+        ))
+      else
+        None
 
     Some(
       TransactionRequest(
@@ -447,7 +491,8 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
         other_bank_routing_address = mOtherBankRoutingAddress.get,
         is_beneficiary = mIsBeneficiary.get,
         user_id = Option(mUserId.get).filter(_.nonEmpty),
-        on_behalf_of_user_id = Option(mOnBehalfOfUserId.get).filter(_.nonEmpty)
+        on_behalf_of_user_id = Option(mOnBehalfOfUserId.get).filter(_.nonEmpty),
+        originator = t_originator
       )
     )
   }
