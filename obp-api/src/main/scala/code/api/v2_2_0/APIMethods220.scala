@@ -509,10 +509,12 @@ trait APIMethods220 {
           for {
             bank <- tryo{ json.extract[BankJSONV220] } ?~! ErrorMessages.InvalidJsonFormat
             _ <- Helper.booleanToBox(
+              !isImplicitOBPBankScheme(bank.bank_routing.scheme), OBPSchemeIsImplicit)
+            _ <- Helper.booleanToBox(
               bank.id.length > 5,s"$InvalidJsonFormat Min length of BANK_ID should be 5 characters.")
-            
+
             checkShortStringValue = APIUtil.checkShortString(bank.id)
-            
+
             _ <- Helper.booleanToBox(checkShortStringValue == SILENCE_IS_GOLDEN, s"$checkShortStringValue.")
             
             _ <- Helper.booleanToBox(

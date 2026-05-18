@@ -1330,6 +1330,26 @@ case class JoiningKeyJsonV600(joining_key: String)
 
 object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
 
+  /**
+   * Prepend the implicit OBP self-routing `{ "scheme": "OBP", "address": accountId }`
+   * to a list of stored account routings, unless the list already contains an
+   * OBP-family entry (in which case we leave the existing entry in place — this
+   * shouldn't happen for newly-created accounts since the write path rejects
+   * OBP schemes, but legacy data may still have them).
+   *
+   * Mirrors the bank-level virtual OBP routing injection in `createBankJSON600`
+   * (see this file, around the `createBankJSON600` definition). The OBP scheme
+   * is an implicit self-identifier — it's never stored in BankAccountRouting,
+   * so consumers expect to see it in API responses regardless.
+   */
+  def accountRoutingsWithImplicitOBP(
+      accountId: String,
+      stored: List[AccountRoutingJsonV121]
+  ): List[AccountRoutingJsonV121] = {
+    if (stored.exists(r => code.api.Constant.isImplicitOBPAccountScheme(r.scheme))) stored
+    else AccountRoutingJsonV121("OBP", accountId) :: stored
+  }
+
   def createRedisCallCountersJson(
     // Convert list to map for easy lookup by period
       rateLimits: List[((Option[Long], Option[Long], String), LimitCallPeriod)]
@@ -1648,8 +1668,11 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
         account.currency.getOrElse(""),
         account.balance.getOrElse("").toString
       ),
-      account_routings = account.accountRoutings.map(r =>
-        AccountRoutingJsonV121(scheme = r.scheme, address = r.address)
+      account_routings = accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        account.accountRoutings.map(r =>
+          AccountRoutingJsonV121(scheme = r.scheme, address = r.address)
+        )
       ),
       views_basic = availableViews.map(_.viewId.value)
     )
@@ -2982,7 +3005,10 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
       balance = createAmountOfMoneyJSON(account.currency.getOrElse(""), account.balance.getOrElse("")),
       views_available = viewsAvailable,
       bank_id = stringOrNull(account.bankId.value),
-      account_routings = createAccountRoutingsJSON(account.accountRoutings),
+      account_routings = accountRoutingsWithImplicitOBP(
+        account.accountId.value,
+        createAccountRoutingsJSON(account.accountRoutings)
+      ),
       account_attributes = accountAttributes.map(createAccountAttributeJson),
       tags = tags.map(createAccountTagJSON)
     )

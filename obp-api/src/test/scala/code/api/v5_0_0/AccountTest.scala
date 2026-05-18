@@ -219,6 +219,36 @@ class AccountTest extends V500ServerSetup with DefaultUsers {
       And("We should get a 404 in the getAccount response")
       responseApiGetAccount.code should equal(404)
     }
+
+    scenario("Create new account with an OBP-family routing scheme should be rejected with 409", ApiEndpoint2, VersionOfApi) {
+      When(s"We make a request $VersionOfApi to create the account with an explicit OBP scheme in account_routings")
+      Entitlement.entitlement.vend.addEntitlement(testBankId.value, resourceUser1.userId, ApiRole.canCreateAccount.toString)
+      val obpRejectedAccountId = UUID.randomUUID.toString
+      val request500 = (v5_0_0_Request / "banks" / testBankId.value / "accounts" / obpRejectedAccountId ).PUT <@(user1)
+      val putCreateAccountJsonWithImplicitOBPScheme = putCreateAccountJSONV310.copy(account_routings =
+        List(AccountRoutingJsonV121("OBP", obpRejectedAccountId)))
+      val response500 = makePutRequest(request500, write(putCreateAccountJsonWithImplicitOBPScheme))
+      Then("We should get a 409 in the createAccount response")
+      response500.code should equal(409)
+      response500.body.toString should include ("OBP-30545")
+
+      Then(s"The account should not be created")
+      val requestApiGetAccount = (v5_0_0_Request / "banks" / testBankId.value / "accounts" / obpRejectedAccountId / Constant.SYSTEM_OWNER_VIEW_ID / "account" ).GET <@(user1)
+      val responseApiGetAccount = makeGetRequest(requestApiGetAccount)
+      And("We should get a 404 in the getAccount response")
+      responseApiGetAccount.code should equal(404)
+    }
+
+    scenario("OBP_ACCOUNT_ID scheme is also rejected on createAccount", ApiEndpoint2, VersionOfApi) {
+      Entitlement.entitlement.vend.addEntitlement(testBankId.value, resourceUser1.userId, ApiRole.canCreateAccount.toString)
+      val rejectedAccountId = UUID.randomUUID.toString
+      val request = (v5_0_0_Request / "banks" / testBankId.value / "accounts" / rejectedAccountId ).PUT <@(user1)
+      val body = putCreateAccountJSONV310.copy(account_routings =
+        List(AccountRoutingJsonV121("OBP_ACCOUNT_ID", rejectedAccountId)))
+      val response = makePutRequest(request, write(body))
+      response.code should equal(409)
+      response.body.toString should include ("OBP-30545")
+    }
   }
 
 } 
