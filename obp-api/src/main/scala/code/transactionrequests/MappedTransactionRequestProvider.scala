@@ -454,12 +454,12 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
     // fields are empty) and the `source` discriminator on the JSON response live in the
     // JSONFactory layer — they need callContext / async lookup, which this sync method
     // cannot do.
-    val t_originator: Option[TransactionRequestOriginator] =
+    val t_originator: Option[Originator] =
       if (mOriginator_Name.get.nonEmpty)
-        Some(TransactionRequestOriginator(
+        Some(Originator(
           name = mOriginator_Name.get,
           address = mOriginator_Address.get,
-          account_routing = TransactionRequestOriginatorAccountRouting(
+          account_routing = OriginatorAccountRouting(
             scheme  = mOriginator_AccountRoutingScheme.get,
             address = mOriginator_AccountRoutingAddress.get
           )

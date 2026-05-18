@@ -1112,7 +1112,7 @@ case class TransactionRequest (
                                 @optional
                                 on_behalf_of_user_id :Option[String] = None,
                                 @optional
-                                originator :Option[TransactionRequestOriginator] = None,
+                                originator :Option[Originator] = None,
                               )
 
 // Originator (FATF Recommendation 16 "Travel Rule" — who the payment is from).
@@ -1122,13 +1122,13 @@ case class TransactionRequest (
 // linked Customer via customer_account_link (see JSONFactory layer). The response
 // JSON wraps this with a `source` discriminator (`explicit` / `customer_link` /
 // `none`) computed at read time — never stored.
-case class TransactionRequestOriginator(
+case class Originator(
                                          name: String,
                                          address: String,
-                                         account_routing: TransactionRequestOriginatorAccountRouting
+                                         account_routing: OriginatorAccountRouting
                                        )
 
-case class TransactionRequestOriginatorAccountRouting(
+case class OriginatorAccountRouting(
                                                        scheme: String,
                                                        address: String
                                                      )
