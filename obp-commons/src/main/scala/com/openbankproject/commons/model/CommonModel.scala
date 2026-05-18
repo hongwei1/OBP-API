@@ -1113,12 +1113,6 @@ case class TransactionRequest (
                                 on_behalf_of_user_id :Option[String] = None,
                                 @optional
                                 originator :Option[Originator] = None,
-                                // Transient: challenges created alongside this TR.  Populated by the
-                                // connector that creates a TR so the JSON-building layer can read them
-                                // without a follow-up DB query.  Empty when reading existing TRs from
-                                // storage (JSON layer falls back to querying ChallengeProvider).
-                                @optional
-                                challenges :List[ChallengeTrait] = Nil,
                               )
 
 // Originator (FATF Recommendation 16 "Travel Rule" — who the payment is from).
