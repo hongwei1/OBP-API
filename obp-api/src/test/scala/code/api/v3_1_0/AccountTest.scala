@@ -207,7 +207,10 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       account.branch_id should be (putCreateAccountJSONV310.branch_id)
       account.user_id should be (putCreateAccountJSONV310.user_id)
       account.label should be (putCreateAccountJSONV310.label)
-      account.account_routings should be (putCreateAccountJSONV310.account_routings)
+      // Strict OBP-injection semantics: response prepends the canonical {OBP, account_id} and
+      // drops any OBP-family entry from the stored list. Use the same helper the JSONFactory
+      // does so the assertion stays in sync with production behaviour.
+      account.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account.account_id, putCreateAccountJSONV310.account_routings))
 
       
       Then(s"we call $ApiEndpoint4 to get the account back")
@@ -255,7 +258,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       account2.branch_id should be (putCreateAccountOtherUserJsonV310.branch_id)
       account2.user_id should be (putCreateAccountOtherUserJsonV310.user_id)
       account2.label should be (putCreateAccountOtherUserJsonV310.label)
-      account2.account_routings should be (putCreateAccountOtherUserJsonV310.account_routings)
+      account2.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account2.account_id, putCreateAccountOtherUserJsonV310.account_routings))
 
     }
 
@@ -275,7 +278,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       account.branch_id should be (putCreateAccountJson.branch_id)
       account.user_id should be (putCreateAccountJson.user_id)
       account.label should be (putCreateAccountJson.label)
-      account.account_routings should be (putCreateAccountJson.account_routings)
+      account.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account.account_id, putCreateAccountJson.account_routings))
 
 
       Then(s"we call $ApiEndpoint6 to get the account back")
@@ -317,7 +320,10 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       account.branch_id should be (putCreateAccountJSONV310.branch_id)
       account.user_id should be (putCreateAccountJSONV310.user_id)
       account.label should be (putCreateAccountJSONV310.label)
-      account.account_routings should be (putCreateAccountJSONV310.account_routings)
+      // Strict OBP-injection semantics: response prepends the canonical {OBP, account_id} and
+      // drops any OBP-family entry from the stored list. Use the same helper the JSONFactory
+      // does so the assertion stays in sync with production behaviour.
+      account.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account.account_id, putCreateAccountJSONV310.account_routings))
 
       When("We make a request v3.1.0 to create the second account with an already existing scheme/address")
       val request310_2 = (v3_1_0_Request / "banks" / testBankId.value / "accounts" / user2AccountId ).PUT <@(user1)

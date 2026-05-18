@@ -3,6 +3,47 @@
 ### Most recent changes at top of file
 ```
 Date          Commit        Action
+18/05/2026    TBD           Behaviour change: account_routings responses now always include the implicit OBP routing.
+                            Endpoints returning `account_routings` for an account (Account,
+                            Settlement Account, Core Account, Firehose Core Bank Account, etc.)
+                            now ALWAYS prepend the canonical
+                                { scheme: "OBP", address: <account_id> }
+                            entry to the routings list — even when no OBP routing was previously
+                            stored or returned. This matches the bank-level virtual OBP routing
+                            injection already present in `createBankJSON600`.
+
+                            Strict semantics:
+                            - If the stored routings list contains an OBP-family entry (scheme
+                              `OBP` or `OBP_ACCOUNT_ID`), that stored entry is DROPPED and replaced
+                              by the canonical computed entry. The OBP scheme is an implicit
+                              self-identifier whose address equals the account_id by definition,
+                              and the write path rejects OBP storage (OBP-30545
+                              OBPSchemeIsImplicit), so any stored OBP row is legacy data and is no
+                              longer surfaced.
+                            - Non-OBP routings (IBAN, BIC, MOBILE_PHONE, ACCOUNT_NUMBER, …) are
+                              passed through unchanged after the canonical OBP entry.
+                            - Empty stored lists yield a single-element response with just the
+                              canonical OBP routing.
+
+                            Implemented by the shared helper
+                                code.api.Constant.accountRoutingsWithImplicitOBP(accountId, stored)
+                            and applied across JSONFactory300, JSONFactory310, JSONFactory400, and
+                            JSONFactory600 to the account-response factory functions called from
+                            Lift and from the http4s endpoint layer.
+
+                            Client impact: consumers / tests that compared response `account_routings`
+                            verbatim to the request body must update to expect the canonical OBP
+                            entry plus the non-OBP stored routings. The new contract:
+                                response.account_routings ==
+                                    { scheme: "OBP", address: <account_id> } ::
+                                    storedRoutings.filterNot(r => r.scheme is OBP-family)
+
+                            Known follow-up: `createBalancesJson`, `createAccountBalancesJson` (v4),
+                            and `createAccountDirectoryJsonV600` build `account_routings` from
+                            different model types (`List[AccountRouting]`, `List[FastFirehoseRoutings]`)
+                            so the helper signature doesn't fit directly. These three sites are NOT
+                            yet injecting the implicit OBP entry; a type-converting wrapper or a
+                            case-class field type flip is the path to close the gap.
 05/03/2026    TBD           BREAKING CHANGE: Removed allow_entitlements_or_scopes config flag.
                             This global flag allowed consumer scopes as an alternative to user
                             entitlements for ALL endpoints. It has been replaced by per-endpoint

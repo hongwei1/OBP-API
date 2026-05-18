@@ -116,7 +116,7 @@ class AccountTest extends V400ServerSetup {
       account.branch_id should be (addAccountJson.branch_id)
       account.user_id should be (addAccountJson.user_id)
       account.label should be (addAccountJson.label)
-      account.account_routings should be (addAccountJson.account_routings)
+      account.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account.account_id, addAccountJson.account_routings))
 
       Then(s"We call $ApiEndpoint1 to get the account back")
       val request = (v4_0_0_Request /"my" / "banks" / testBankId.value/ "accounts" / account.account_id / "account").GET <@ (user1)
@@ -151,7 +151,7 @@ class AccountTest extends V400ServerSetup {
       account2.branch_id should be (addAccountJsonOtherUser.branch_id)
       account2.user_id should be (addAccountJsonOtherUser.user_id)
       account2.label should be (addAccountJsonOtherUser.label)
-      account2.account_routings should be (addAccountJsonOtherUser.account_routings)
+      account2.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account2.account_id, addAccountJsonOtherUser.account_routings))
     }
 
     scenario("Create new account with an already existing routing scheme/address should not create the account", ApiEndpoint3, VersionOfApi) {
@@ -171,7 +171,7 @@ class AccountTest extends V400ServerSetup {
       account.branch_id should be (addAccountJson.branch_id)
       account.user_id should be (addAccountJson.user_id)
       account.label should be (addAccountJson.label)
-      account.account_routings should be (addAccountJson.account_routings)
+      account.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account.account_id, addAccountJson.account_routings))
 
       When("We make a request v4.0.0 to create the second account with an already existing scheme/address")
       val request400_2 = (v4_0_0_Request / "banks" / testBankId.value / "accounts").POST <@(user1)

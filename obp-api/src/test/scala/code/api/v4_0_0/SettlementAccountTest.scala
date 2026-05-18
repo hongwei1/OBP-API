@@ -74,7 +74,7 @@ class SettlementAccountTest extends V400ServerSetup {
       account.branch_id should be (createSettlementAccountJson.branch_id)
       account.user_id should be (createSettlementAccountJson.user_id)
       account.label should be (createSettlementAccountJson.label)
-      account.account_routings should be (createSettlementAccountJson.account_routings)
+      account.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account.account_id, createSettlementAccountJson.account_routings))
 
 
       Then("We make a request v4.0.0 but with other user")
@@ -97,7 +97,7 @@ class SettlementAccountTest extends V400ServerSetup {
       account2.branch_id should be (createSettlementAccountOtherUser.branch_id)
       account2.user_id should be (createSettlementAccountOtherUser.user_id)
       account2.label should be (createSettlementAccountOtherUser.label)
-      account2.account_routings should be (createSettlementAccountOtherUser.account_routings)
+      account2.account_routings should be (code.api.Constant.accountRoutingsWithImplicitOBP(account2.account_id, createSettlementAccountOtherUser.account_routings))
     }
   }
 
