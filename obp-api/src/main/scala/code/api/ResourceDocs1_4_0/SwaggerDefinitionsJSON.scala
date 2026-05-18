@@ -748,8 +748,8 @@ object SwaggerDefinitionsJSON {
   )
 
   lazy val accountRoutingJsonV121 = AccountRoutingJsonV121(
-    scheme = schemeExample.value,
-    address = accountIdExample.value
+    scheme = accountRoutingSchemeExample.value,
+    address = accountRoutingAddressExample.value
   )
 
   lazy val bankAccountRoutingJson = BankAccountRoutingJson(

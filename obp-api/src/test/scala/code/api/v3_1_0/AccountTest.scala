@@ -69,8 +69,10 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       responsePut2.body.extract[UpdateAccountResponseJsonV310].`type` should be (testPutJson.`type`)
       responsePut2.body.extract[UpdateAccountResponseJsonV310].branch_id should be (testPutJson.branch_id)
       responsePut2.body.extract[UpdateAccountResponseJsonV310].label should be (testPutJson.label)
-      responsePut2.body.extract[UpdateAccountResponseJsonV310].account_routings.head.scheme should be (testPutJson.account_routings.head.scheme)
-      responsePut2.body.extract[UpdateAccountResponseJsonV310].account_routings.head.address should be (testPutJson.account_routings.head.address)
+      // The server prepends the implicit {OBP, account_id} routing; assert membership rather
+      // than position so we're testing for items in the list, not where they appear.
+      val expectedPutRoutings = code.api.Constant.accountRoutingsWithImplicitOBP(testAccount.value, testPutJson.account_routings)
+      responsePut2.body.extract[UpdateAccountResponseJsonV310].account_routings should contain theSameElementsAs expectedPutRoutings
 
 
       val requestGet = (v3_1_0_Request /"my"/ "banks" / testBankId.value / "accounts" / testAccount.value / "account").PUT <@ (user1)
@@ -79,15 +81,17 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       responseGet.code should equal(200)
       responseGet.body.extract[ModeratedCoreAccountJsonV300].`type` should be (testPutJson.`type`)
       responseGet.body.extract[ModeratedCoreAccountJsonV300].label should be (testPutJson.label)
-      responseGet.body.extract[ModeratedCoreAccountJsonV300].account_routings.toString() contains (testPutJson.account_routings.head.scheme) should be (true)
-      responseGet.body.extract[ModeratedCoreAccountJsonV300].account_routings.toString() contains (testPutJson.account_routings.head.address) should be (true)
+      responseGet.body.extract[ModeratedCoreAccountJsonV300].account_routings should contain theSameElementsAs expectedPutRoutings
       
     }
 
     scenario("We will test update on account routings", ApiEndpoint1, VersionOfApi) {
       Given("The test bank and test account with a canUpdateAccount entitlement")
       val testAccount0 = testAccountId0
-      val testPutJson = updateAccountRequestJsonV310
+      // Start from an explicit non-IBAN routing so the "add IBAN" step is additive, not a
+      // duplicate of the shared default fixture (which is IBAN-based).
+      val baseRouting = List(AccountRoutingJsonV121("AccountNumber", "12345"))
+      val testPutJson = updateAccountRequestJsonV310.copy(account_routings = baseRouting)
       Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, ApiRole.canUpdateAccount.toString())
 
       val requestPut = (v3_1_0_Request / "management" / "banks" / testBankId.value / "accounts" / testAccount0.value).PUT <@ (user1)
@@ -95,18 +99,19 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
 
 
       When("We want to add an account routing scheme (IBAN)")
-      val newRoutingSchemeIban = List(AccountRoutingJsonV121(enums.AccountRoutingScheme.IBAN.toString, Random.nextString(10)))
+      val newRoutingSchemeIban = List(AccountRoutingJsonV121(enums.AccountRoutingScheme.IBAN.toString, "DE91 1000 0000 0123 4567 89"))
       val testPutJsonWithIban = testPutJson.copy(account_routings = testPutJson.account_routings ++ newRoutingSchemeIban)
 
       val responsePut1 = makePutRequest(requestPut, write(testPutJsonWithIban))
       Then("We should get 200 and updated account routings in the updateAccount response")
       responsePut1.code should equal(200)
-      responsePut1.body.extract[UpdateAccountResponseJsonV310].account_routings.sortBy(_.scheme) should be (testPutJsonWithIban.account_routings.sortBy(_.scheme))
+      val expectedRoutings1 = code.api.Constant.accountRoutingsWithImplicitOBP(testAccount0.value, testPutJsonWithIban.account_routings)
+      responsePut1.body.extract[UpdateAccountResponseJsonV310].account_routings should contain theSameElementsAs expectedRoutings1
 
       val responseGet1 = makeGetRequest(requestGet)
       And("We should get 200 and updated account routings in the getAccount response")
       responseGet1.code should equal(200)
-      responseGet1.body.extract[ModeratedCoreAccountJsonV300].account_routings.sortBy(_.scheme) should be (testPutJsonWithIban.account_routings.sortBy(_.scheme))
+      responseGet1.body.extract[ModeratedCoreAccountJsonV300].account_routings should contain theSameElementsAs expectedRoutings1
 
 
       When("We want to remove an account routing scheme (AccountNumber)")
@@ -115,28 +120,30 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       val responsePut2 = makePutRequest(requestPut, write(testPutJsonWithoutAccountNumber))
       Then("We should get 200 and updated account routings in the updateAccount response")
       responsePut2.code should equal(200)
-      responsePut2.body.extract[UpdateAccountResponseJsonV310].account_routings.sortBy(_.scheme) should be (testPutJsonWithoutAccountNumber.account_routings.sortBy(_.scheme))
+      val expectedRoutings2 = code.api.Constant.accountRoutingsWithImplicitOBP(testAccount0.value, testPutJsonWithoutAccountNumber.account_routings)
+      responsePut2.body.extract[UpdateAccountResponseJsonV310].account_routings should contain theSameElementsAs expectedRoutings2
 
-      
+
       val responseGet2 = makeGetRequest(requestGet)
       And("We should get 200 and updated account routings in the getAccount response")
       responseGet2.code should equal(200)
-      responseGet2.body.extract[ModeratedCoreAccountJsonV300].account_routings.sortBy(_.scheme) should be (testPutJsonWithoutAccountNumber.account_routings.sortBy(_.scheme))
+      responseGet2.body.extract[ModeratedCoreAccountJsonV300].account_routings should contain theSameElementsAs expectedRoutings2
 
 
       When("We want to update an account routing scheme (IBAN)")
-      val updatedRoutingSchemeIban = List(AccountRoutingJsonV121(enums.AccountRoutingScheme.IBAN.toString, Random.nextString(10)))
+      val updatedRoutingSchemeIban = List(AccountRoutingJsonV121(enums.AccountRoutingScheme.IBAN.toString, "GB29 NWBK 6016 1331 9268 19"))
       val testPutJsonWithUpdatedIban = testPutJsonWithIban.copy(account_routings = updatedRoutingSchemeIban)
 
       val responsePut3 = makePutRequest(requestPut, write(testPutJsonWithUpdatedIban))
       Then("We should get 200 and updated account routings in the updateAccount response")
       responsePut3.code should equal(200)
-      responsePut3.body.extract[UpdateAccountResponseJsonV310].account_routings.sortBy(_.scheme) should be (testPutJsonWithUpdatedIban.account_routings.sortBy(_.scheme))
+      val expectedRoutings3 = code.api.Constant.accountRoutingsWithImplicitOBP(testAccount0.value, testPutJsonWithUpdatedIban.account_routings)
+      responsePut3.body.extract[UpdateAccountResponseJsonV310].account_routings should contain theSameElementsAs expectedRoutings3
 
       val responseGet3 = makeGetRequest(requestGet)
       And("We should get 200 and updated account routings in the getAccount response")
       responseGet3.code should equal(200)
-      responseGet3.body.extract[ModeratedCoreAccountJsonV300].account_routings.sortBy(_.scheme) should be (testPutJsonWithUpdatedIban.account_routings.sortBy(_.scheme))
+      responseGet3.body.extract[ModeratedCoreAccountJsonV300].account_routings should contain theSameElementsAs expectedRoutings3
 
 
       When("We want to update an account with a routing scheme duplication")
@@ -152,7 +159,7 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       val responseGet4 = makeGetRequest(requestGet)
       And("We should get 200 and non-updated account routings on the getAccount response")
       responseGet4.code should equal(200)
-      responseGet4.body.extract[ModeratedCoreAccountJsonV300].account_routings.sortBy(_.scheme) should be (testPutJsonWithUpdatedIban.account_routings.sortBy(_.scheme))
+      responseGet4.body.extract[ModeratedCoreAccountJsonV300].account_routings should contain theSameElementsAs expectedRoutings3
 
 
       When("We want to add an account routing scheme (IBAN) with an already existing routing scheme (IBAN)")
@@ -176,6 +183,23 @@ class AccountTest extends V310ServerSetup with DefaultUsers {
       And("We should get 200 and non-updated account routings on the second getAccount response")
       responseGetOtherAccount_2.code should equal(200)
       responseGetOtherAccount_2.body.extract[ModeratedCoreAccountJsonV300].account_routings.sortBy(_.scheme) should be (originalAccountRoutings.sortBy(_.scheme))
+    }
+
+    scenario("Client attempt to set an implicit OBP routing scheme is rejected with 409 and OBP-30545", ApiEndpoint1, VersionOfApi) {
+      Given("The test bank and test account with a canUpdateAccount entitlement")
+      val testAccount0 = testAccountId0
+      Entitlement.entitlement.vend.addEntitlement(testBankId1.value, resourceUser1.userId, ApiRole.canUpdateAccount.toString())
+
+      When("We try to PUT account_routings containing the implicit OBP scheme")
+      val putWithObp = updateAccountRequestJsonV310.copy(
+        account_routings = List(AccountRoutingJsonV121("OBP", testAccount0.value))
+      )
+      val request = (v3_1_0_Request / "management" / "banks" / testBankId.value / "accounts" / testAccount0.value).PUT <@ (user1)
+      val response = makePutRequest(request, write(putWithObp))
+
+      Then("We should get 409 and the OBP-30545 OBPSchemeIsImplicit error message")
+      response.code should equal(409)
+      response.body.toString should include ("OBP-30545")
     }
   }
 

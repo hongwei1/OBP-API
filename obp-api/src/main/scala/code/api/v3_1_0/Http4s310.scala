@@ -3175,6 +3175,9 @@ object Http4s310 {
           for {
             _ <- NewStyle.function.hasEntitlement(bank.bankId.value, user.userId, ApiRole.canUpdateAccount, Some(cc))
             (_, _) <- NewStyle.function.getBankAccount(bank.bankId, AccountId(accountIdStr), Some(cc))
+            _ <- code.util.Helper.booleanToFuture(OBPSchemeIsImplicit, failCode = 409, cc = Some(cc)) {
+              !body.account_routings.exists(r => isImplicitOBPAccountScheme(r.scheme))
+            }
             _ <- code.util.Helper.booleanToFuture(
               s"$UpdateBankAccountException Duplication detected in account routings, please specify only one value per routing scheme",
               cc = Some(cc)) {
@@ -3244,6 +3247,9 @@ object Http4s310 {
             _ <- code.util.Helper.booleanToFuture(InitialBalanceMustBeZero, cc = Some(cc)) { 0 == initialBalanceAsNumber }
             _ <- code.util.Helper.booleanToFuture(InvalidISOCurrencyCode, cc = Some(cc)) {
               isValidCurrencyISOCode(body.balance.currency)
+            }
+            _ <- code.util.Helper.booleanToFuture(OBPSchemeIsImplicit, failCode = 409, cc = Some(cc)) {
+              !body.account_routings.exists(r => isImplicitOBPAccountScheme(r.scheme))
             }
             _ <- code.util.Helper.booleanToFuture(
               s"$InvalidAccountRoutings Duplication detected in account routings, please specify only one value per routing scheme",
