@@ -3,6 +3,7 @@ package code.api
 import code.api.util.{APIUtil, ErrorMessages}
 import code.api.cache.Redis
 import code.util.Helper.MdcLoggable
+import com.openbankproject.commons.model.AccountRoutingJsonV121
 import com.openbankproject.commons.util.ApiStandards
 import net.liftweb.common.Box
 import net.liftweb.util.Props
@@ -221,6 +222,33 @@ object Constant extends MdcLoggable {
   /** True if `scheme` is an implicit OBP-family bank-routing self-identifier. */
   def isImplicitOBPBankScheme(scheme: String): Boolean =
     scheme != null && OBP_BANK_ROUTING_SCHEMES.exists(_.equalsIgnoreCase(scheme))
+
+  /**
+   * Prepend the canonical implicit OBP self-routing
+   * `{ scheme: "OBP", address: accountId }` to a list of stored account
+   * routings, *replacing* any stored OBP-family entry.
+   *
+   * Behaviour:
+   *   - Empty input              → `[{OBP, accountId}]`
+   *   - No OBP-family in input   → `{OBP, accountId} :: stored`
+   *   - OBP-family in input      → `{OBP, accountId} :: (stored without OBP-family)`
+   *
+   * The OBP scheme is an implicit self-identifier whose address is by
+   * definition the account_id. The write path rejects attempts to store
+   * OBP schemes (OBP-30545 / OBPSchemeIsImplicit), so any stored OBP-family
+   * row is legacy / stale data — we deliberately drop it and surface only
+   * the computed canonical entry, so every response carries exactly one
+   * consistent OBP routing.
+   *
+   * Mirrors the bank-level implicit OBP routing injection done in createBankJSON600.
+   */
+  def accountRoutingsWithImplicitOBP(
+      accountId: String,
+      stored: List[AccountRoutingJsonV121]
+  ): List[AccountRoutingJsonV121] = {
+    val nonObp = stored.filterNot(r => isImplicitOBPAccountScheme(r.scheme))
+    AccountRoutingJsonV121("OBP", accountId) :: nonObp
+  }
 
   //These are the default incoming and outgoing account ids. we will create both during the boot.scala.
   final val INCOMING_SETTLEMENT_ACCOUNT_ID = "OBP-INCOMING-SETTLEMENT-ACCOUNT"
