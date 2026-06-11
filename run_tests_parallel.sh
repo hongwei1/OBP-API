@@ -221,7 +221,7 @@ rm -rf "$OBC_LOCK"
 if [ $PRECOMPILE_RC -eq 0 ]; then
   echo "Pre-compile 2/2: test-compile obp-api -> shared target/ ..."
   MAVEN_OPTS="$MVN_OPTS" \
-    mvn test-compile -pl obp-api -q >> test-results/parallel/precompile.log 2>&1
+    mvn test-compile -pl obp-commons,obp-api -q >> test-results/parallel/precompile.log 2>&1
   PRECOMPILE_RC=$?
 fi
 if [ $PRECOMPILE_RC -ne 0 ]; then
