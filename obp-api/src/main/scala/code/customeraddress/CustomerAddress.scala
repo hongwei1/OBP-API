@@ -11,7 +11,9 @@ object CustomerAddressX extends SimpleInjector {
 
   val address = new Inject(buildOne _) {}
 
-  def buildOne: CustomerAddressProvider = MappedCustomerAddressProvider
+  // Phase 5 of the Lift Mapper -> Doobie migration: customer-address access now goes through Doobie SQL.
+  // MappedCustomerAddressProvider / MappedCustomerAddress stay for schema during the coexistence phase.
+  def buildOne: CustomerAddressProvider = DoobieCustomerAddressProvider
   
 }
 
