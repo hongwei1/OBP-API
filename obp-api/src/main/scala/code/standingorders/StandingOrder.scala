@@ -10,7 +10,9 @@ import scala.math.BigDecimal
 
 object StandingOrders extends SimpleInjector {
   val provider = new Inject(buildOne _) {}
-  def buildOne: StandingOrderProvider = MappedStandingOrderProvider
+  // Phase 7 of the Lift Mapper -> Doobie migration: standing-order access now goes through Doobie SQL.
+  // MappedStandingOrderProvider / StandingOrder entity stay for schema during the coexistence phase.
+  def buildOne: StandingOrderProvider = DoobieStandingOrderProvider
 }
 
 trait StandingOrderProvider {
