@@ -263,6 +263,10 @@ class Boot extends MdcLoggable {
      */
     MapperRules.createForeignKeys_? = (_) => APIUtil.getPropsAsBoolValue("mapper_rules.create_foreign_keys", false)
 
+    // Flyway runs BEFORE Schemifier so it owns the schema once Schemifier is retired.
+    // Gated by flyway.enabled (default false) during the Mapper -> Doobie migration.
+    code.api.util.flyway.FlywaySchemaSetup.runIfEnabled()
+
     schemifyAll()
 
     logger.info("Mapper database info: " + Migration.DbFunction.mapperDatabaseInfo)

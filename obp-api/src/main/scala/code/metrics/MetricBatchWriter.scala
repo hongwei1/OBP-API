@@ -9,7 +9,6 @@ import code.api.util.{APIUtil, DoobieUtil}
 import code.util.Helper.MdcLoggable
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 
 /**
  * Batched metric writer that uses the Doobie connection pool instead of Lift's pool.

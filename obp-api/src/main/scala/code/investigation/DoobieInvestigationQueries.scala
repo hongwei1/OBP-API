@@ -6,7 +6,6 @@ import code.api.util.DoobieUtil
 import code.util.Helper.MdcLoggable
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 
 /**
  * Doobie queries for the Customer Investigation Report endpoint.

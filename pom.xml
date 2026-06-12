@@ -17,6 +17,10 @@
     <avro.version>1.8.2</avro.version>
     <lift.version>v1.0.0</lift.version>
     <http4s.version>0.23.30</http4s.version>
+    <doobie.version>1.0.0-RC12</doobie.version>
+    <cats-effect.version>3.6.3</cats-effect.version>
+    <fs2.version>3.12.2</fs2.version>
+    <flyway.version>9.22.3</flyway.version>
     <!-- Common plugin settings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
@@ -102,6 +106,33 @@
         <groupId>org.json4s</groupId>
         <artifactId>json4s-native_${scala.version}</artifactId>
         <version>3.6.12</version>
+      </dependency>
+      <!-- Pin the Typelevel runtime so http4s 0.23.x and doobie 1.0.0-RC12 agree
+           on one binary-compatible cats-effect/fs2 line. -->
+      <dependency>
+        <groupId>org.typelevel</groupId>
+        <artifactId>cats-effect_${scala.version}</artifactId>
+        <version>${cats-effect.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.typelevel</groupId>
+        <artifactId>cats-effect-kernel_${scala.version}</artifactId>
+        <version>${cats-effect.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.typelevel</groupId>
+        <artifactId>cats-effect-std_${scala.version}</artifactId>
+        <version>${cats-effect.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.fs2</groupId>
+        <artifactId>fs2-core_${scala.version}</artifactId>
+        <version>${fs2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.fs2</groupId>
+        <artifactId>fs2-io_${scala.version}</artifactId>
+        <version>${fs2.version}</version>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
       <dependency>

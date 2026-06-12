@@ -9,7 +9,6 @@ import code.api.util.{APIUtil, DoobieUtil}
 import code.util.Helper.MdcLoggable
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 
 /**
  * Batched connector-metric writer. Mirrors MetricBatchWriter: metrics are enqueued
