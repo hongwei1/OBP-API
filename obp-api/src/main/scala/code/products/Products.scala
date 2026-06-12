@@ -14,7 +14,9 @@ object Products extends SimpleInjector {
 
   val productsProvider = new Inject(buildOne _) {}
 
-  def buildOne: ProductsProvider = MappedProductsProvider
+  // Phase 3 of the Lift Mapper -> Doobie migration: product reads now go through Doobie SQL.
+  // MappedProductsProvider / MappedProduct stay for schema + writes during the coexistence phase.
+  def buildOne: ProductsProvider = DoobieProductsProvider
 
   // Helper to get the count out of an option
   def countOfProducts (listOpt: Option[List[Product]]) : Int = {
