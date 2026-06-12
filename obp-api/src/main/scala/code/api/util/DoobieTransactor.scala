@@ -156,28 +156,47 @@ object DoobieUtil extends MdcLoggable {
   }
 
   /**
+   * Autocommit transactor: each statement commits on its own, with NO surrounding
+   * transaction. Required for statements that refuse to run inside a transaction
+   * block — e.g. Postgres `CREATE INDEX CONCURRENTLY` (ProjectionDDL). The pool
+   * hands out connections with autoCommit=false (CustomDBVendor), so this strategy
+   * flips autoCommit on before running; HikariCP resets the flag when the
+   * connection returns to the pool.
+   */
+  private lazy val autoCommitTransactor: Transactor[IO] = {
+    val liftDataSource = APIUtil.vendor.HikariDatasource.ds
+    val xa = Transactor.fromDataSource[IO].apply(
+      liftDataSource,
+      ExecutionContext.global
+    )
+    xa.copy(strategy0 = Strategy.void.copy(before = FC.setAutoCommit(true)))
+  }
+
+  /**
    * Run a Doobie query asynchronously, returning a Future.
-   * Note: async queries always use the fallback pool transactor because
-   * Lift's request connection may not be available on a different thread.
+   * Runs in autocommit mode on a fresh pool connection — never joins a request
+   * transaction (the request connection may not be valid on another thread) and
+   * never opens its own transaction block.
    *
    * @param query The Doobie ConnectionIO query to execute
    * @param ec ExecutionContext for the Future
    * @return Future containing the query result
    */
   def runQueryAsync[A](query: ConnectionIO[A])(implicit ec: ExecutionContext): Future[A] = {
-    query.transact(fallbackTransactor).unsafeToFuture()
+    query.transact(autoCommitTransactor).unsafeToFuture()
   }
 
   /**
    * Run a Doobie query and return an IO.
-   * Note: IO queries always use the fallback pool transactor because
-   * the IO may be evaluated outside the Lift request context.
+   * Runs in autocommit mode on a fresh pool connection, with no surrounding
+   * transaction block — safe for DDL like Postgres `CREATE INDEX CONCURRENTLY`,
+   * which refuses to run inside a transaction.
    *
    * @param query The Doobie ConnectionIO query to execute
    * @return IO containing the query result
    */
   def runQueryIO[A](query: ConnectionIO[A]): IO[A] = {
-    query.transact(fallbackTransactor)
+    query.transact(autoCommitTransactor)
   }
 
   /**

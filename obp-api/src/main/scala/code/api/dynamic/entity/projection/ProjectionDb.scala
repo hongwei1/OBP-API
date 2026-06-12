@@ -13,9 +13,11 @@ import scala.concurrent.ExecutionContext
  * projection backend. Uses Doobie's default Strategy (autoCommit off → run → commit), so each
  * statement persists.
  *
- * Contrast with `DoobieUtil.runQuery`/`runQueryIO`, which use `Strategy.void` to *share* Lift's
- * request connection/transaction — that is the right tool for the dual-write hook (so the projection
- * upsert commits/rolls back with the canonical blob write), but it never commits on its own.
+ * Contrast with `DoobieUtil.runQuery`, which prefers the request-scoped connection (joining the
+ * request transaction with `Strategy.void`, committed by the request wrapper) — that is the right
+ * tool for the dual-write hook, so the projection upsert commits/rolls back with the canonical
+ * blob write. Outside a request scope `DoobieUtil` falls back to a committing pool transactor,
+ * equivalent to this one.
  */
 object ProjectionDb {
   private lazy val xa: Transactor[IO] =

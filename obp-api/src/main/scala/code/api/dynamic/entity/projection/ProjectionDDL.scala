@@ -14,8 +14,8 @@ import doobie.implicits._
  * so identifier safety rests on ProjectionNaming, never on raw user strings.
  *
  * Postgres-first (SQL Server backend deferred — Phase 5.3). `CREATE INDEX CONCURRENTLY` must run
- * outside a transaction; `DoobieUtil.runQueryIO` uses the autocommit fallback pool, not the request
- * connection.
+ * outside a transaction; `DoobieUtil.runQueryIO` uses an autocommit transactor (autoCommit=true,
+ * no transaction block), never the request connection.
  */
 object ProjectionDDL extends MdcLoggable {
 
