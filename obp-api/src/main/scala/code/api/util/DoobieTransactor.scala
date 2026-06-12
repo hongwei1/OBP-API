@@ -57,17 +57,24 @@ object DoobieUtil extends MdcLoggable {
 
   /**
    * Fallback transactor that shares Lift's HikariCP connection pool.
-   * Used when no Lift request context is available (background tasks, schedulers).
-   * Strategy.void: Doobie will not call setAutoCommit/commit/rollback.
+   * Used when no request-scoped connection is available (background tasks,
+   * schedulers, handler code running on a compute thread outside a request
+   * transaction scope).
+   *
+   * Strategy.default: each transact() acquires a fresh pool connection, runs the
+   * program, COMMITS on success and rolls back on failure. The pool is configured
+   * with autoCommit=false (CustomDBVendor), so without an explicit commit any
+   * write on this path would be silently rolled back when HikariCP returns the
+   * connection to the pool. This mirrors what Lift Mapper did for connections it
+   * owned: DB.use commits at the end of the use block.
    */
   private lazy val fallbackTransactor: Transactor[IO] = {
     val liftDataSource = APIUtil.vendor.HikariDatasource.ds
     logger.info("DoobieUtil: Initialized fallback transactor sharing Lift's HikariCP pool")
-    val xa = Transactor.fromDataSource[IO].apply(
+    Transactor.fromDataSource[IO].apply(
       liftDataSource,
       ExecutionContext.global
     )
-    xa.copy(strategy0 = Strategy.void)
   }
 
   /**
@@ -98,6 +105,29 @@ object DoobieUtil extends MdcLoggable {
   }
 
   /**
+   * Try to get the http4s request-scoped proxy Connection.
+   *
+   * RequestScopeConnection.withBusinessDBTransaction wraps every POST/PUT/DELETE
+   * request in a transaction on a single pool connection and propagates a proxy
+   * to Future worker threads via a TransmittableThreadLocal. Mapper joins that
+   * transaction through RequestAwareConnectionManager; Doobie must consult the
+   * same thread-local, otherwise its writes land on a separate fallback
+   * connection outside the request transaction. The proxy no-ops
+   * commit/rollback/close — the transaction is committed by the request wrapper.
+   */
+  private def requestScopeProxyConnection: Option[java.sql.Connection] = {
+    val proxy = code.api.util.http4s.RequestScopeConnection.currentProxy.get()
+    if (proxy == null) None
+    else {
+      try {
+        if (!proxy.isClosed) Some(proxy) else None
+      } catch {
+        case _: Throwable => None
+      }
+    }
+  }
+
+  /**
    * Run a Doobie query synchronously, sharing Lift's transaction when available.
    *
    * When called within a Lift HTTP request context:
@@ -112,13 +142,15 @@ object DoobieUtil extends MdcLoggable {
    * @return The query result
    */
   def runQuery[A](query: ConnectionIO[A]): A = {
-    liftCurrentConnection match {
+    requestScopeProxyConnection.orElse(liftCurrentConnection) match {
       case Some(conn) =>
-        // Inside Lift request: use the same connection for transaction unification
+        // Inside a request transaction scope: use the same connection so the
+        // query participates in the request's commit/rollback.
         query.transact(transactorFromConnection(conn)).unsafeRunSync()
       case None =>
-        // Outside Lift request: fallback to shared pool
-        logger.debug("DoobieUtil.runQuery: No Lift request context, using fallback pool transactor")
+        // Outside any request scope: fresh pool connection, committed by the
+        // fallback transactor's default strategy.
+        logger.debug("DoobieUtil.runQuery: No request connection in scope, using fallback pool transactor")
         query.transact(fallbackTransactor).unsafeRunSync()
     }
   }
