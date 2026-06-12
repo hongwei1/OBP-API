@@ -212,10 +212,17 @@ echo ""
 # The obp-commons install holds OBC_LOCK (see top) so concurrent checkouts don't
 # race on the shared ~/.m2 write.  The subsequent test-compile writes only to this
 # checkout's own target/ and is safe to run in parallel across checkouts.
-echo "Pre-compile 1/2: install obp-commons -> ~/.m2 ..."
+echo "Pre-compile 1/2: install parent POM + obp-commons -> ~/.m2 ..."
 until mkdir "$OBC_LOCK" 2>/dev/null; do sleep 2; done
+# Install the parent POM first (-N: non-recursive). obp-commons declares versionless
+# dependencies (lift-persistence, json4s, ...) resolved from the parent's
+# dependencyManagement; if ~/.m2 holds a parent installed from another branch, the
+# installed obp-commons POM is "invalid" and ALL its transitive dependencies silently
+# vanish from shard classpaths (first symptom: com.alibaba TTL missing in obp-api).
 MAVEN_OPTS="$MVN_OPTS" \
-  mvn install -DskipTests -pl obp-commons -q > test-results/parallel/precompile.log 2>&1
+  mvn install -DskipTests -N -q > test-results/parallel/precompile.log 2>&1 \
+&& MAVEN_OPTS="$MVN_OPTS" \
+  mvn install -DskipTests -pl obp-commons -q >> test-results/parallel/precompile.log 2>&1
 PRECOMPILE_RC=$?
 rm -rf "$OBC_LOCK"
 if [ $PRECOMPILE_RC -eq 0 ]; then
