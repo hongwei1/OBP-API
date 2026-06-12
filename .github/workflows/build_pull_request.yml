@@ -271,6 +271,12 @@ jobs:
           # can do JSON extraction (reflection) and read OBP props (getenv); without it the sandbox
           # denies these and DynamicResourceDocTest's native-execution scenarios fail.
           echo 'dynamic_code_sandbox_permissions=[new java.net.NetPermission("specifyStreamHandler"), new java.lang.reflect.ReflectPermission("suppressAccessChecks"), new java.lang.RuntimePermission("getenv.*"), new java.util.PropertyPermission("cglib.useCache", "read"), new java.util.PropertyPermission("net.sf.cglib.test.stressHashCodes", "read"), new java.util.PropertyPermission("cglib.debugLocation", "read"), new java.lang.RuntimePermission("accessDeclaredMembers"), new java.lang.RuntimePermission("getClassLoader")]' >> obp-api/src/main/resources/props/test.default.props
+          # Maven's scalatest:test goal reads props from target/classes (the compiled
+          # artifact), not src/main/resources.  Propagate the generated file so the
+          # runtime classpath sees all the settings written above (incl. flyway.enabled).
+          mkdir -p obp-api/target/classes/props
+          cp obp-api/src/main/resources/props/test.default.props \
+             obp-api/target/classes/props/test.default.props
 
       - name: Run tests — shard ${{ matrix.shard }} (${{ matrix.name }})
         run: |
