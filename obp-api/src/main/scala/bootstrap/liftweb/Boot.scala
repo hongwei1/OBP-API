@@ -982,6 +982,10 @@ object ToSchemify extends MdcLoggable {
     Token,
     OpenIDConnectToken,
     Nonce,
+    // Counterparty data access migrated to Doobie (Phase 2): the vend now uses DoobieCounterparties.
+    // The entities stay registered here so Schemifier owns their schema (Flyway skips already-created
+    // tables) and so the test-isolation reset (ServerSetup.resetDatabaseForTestClass iterates
+    // ToSchemify.models) still clears them. The Mapper classes are removed at the final teardown.
     MappedCounterparty,
     MappedCounterpartyBespoke,
     MappedCounterpartyMetadata,
