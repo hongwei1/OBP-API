@@ -265,6 +265,15 @@ jobs:
           echo 'dynamic_code_sandbox_permissions=[new java.net.NetPermission("specifyStreamHandler"), new java.lang.reflect.ReflectPermission("suppressAccessChecks"), new java.lang.RuntimePermission("getenv.*"), new java.util.PropertyPermission("cglib.useCache", "read"), new java.util.PropertyPermission("net.sf.cglib.test.stressHashCodes", "read"), new java.util.PropertyPermission("cglib.debugLocation", "read"), new java.lang.RuntimePermission("accessDeclaredMembers"), new java.lang.RuntimePermission("getClassLoader")]' >> obp-api/src/main/resources/props/test.default.props
 
       - name: Run tests — shard ${{ matrix.shard }} (${{ matrix.name }})
+        env:
+          # getPropsValue consults OBP_-prefixed environment variables BEFORE the
+          # Lift props file (APIUtil.scala:3276), and the scalatest plugin forks the
+          # test JVM with forkMode=once, which inherits this. Setting it here makes
+          # Flyway run (creating the Doobie-migrated metadata tables) independently of
+          # whether target/classes/props/test.default.props picked up flyway.enabled
+          # from the compiled-output artifact — the file-copy path proved unreliable
+          # across the compile→artifact→test-shard boundary.
+          OBP_FLYWAY_ENABLED: "true"
         run: |
           # wildcardSuites requires comma-separated package prefixes (-w per entry).
           # The YAML >- scalar collapses newlines to spaces, so we convert here.
@@ -315,6 +324,12 @@ jobs:
           # -pl obp-commons,obp-api: obp-commons' own 5 util suites run on whichever
           # shard's filter matches com.openbankproject.* (the catch-all shard); on every
           # other shard the filter matches nothing in obp-commons → 0 tests there.
+          # Diagnostic (prints to the job console, not the redirected maven log):
+          # confirm the env-var path for flyway.enabled is wired through.
+          echo "=== flyway.enabled diagnostic ==="
+          echo "OBP_FLYWAY_ENABLED env = ${OBP_FLYWAY_ENABLED:-UNSET}"
+          echo "================================="
+
           MAVEN_OPTS="-Xmx3G -Xss2m -XX:MaxMetaspaceSize=1G" \
             mvn process-resources scalatest:test -pl obp-commons,obp-api -DfailIfNoTests=false \
               -DwildcardSuites="$FILTER" \
