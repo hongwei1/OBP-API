@@ -16,7 +16,7 @@ object MethodRoutingProvider extends SimpleInjector {
 
   val connectorMethodProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedMethodRoutingProvider.type = MappedMethodRoutingProvider
+  def buildOne: MethodRoutingProvider = DoobieMethodRoutingProvider
 }
 
 trait MethodRoutingT {
