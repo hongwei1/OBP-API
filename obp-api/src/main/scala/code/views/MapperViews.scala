@@ -238,29 +238,19 @@ object MapperViews extends Views with MdcLoggable {
     val isRevokedCustomViewAccess =
     for {
       customViewDefinition <- DoobieViewProvider.findCustomView(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value)
-      accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
-        bankIdAccountIdViewId.bankId,
-        bankIdAccountIdViewId.accountId,
-        bankIdAccountIdViewId.viewId,
-        user.userPrimaryKey
-      ) ?~! CannotFindAccountAccess
+      _ <- if (DoobieAccountAccessProvider.existsByUserPrimaryKey(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value, user.userPrimaryKey.value)) Full(()) else Empty ?~! CannotFindAccountAccess
     } yield {
-      accountAccess.delete_!
+      DoobieAccountAccessProvider.deleteByUserPrimaryKey(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value, user.userPrimaryKey.value)
     }
-    
+
     val isRevokedSystemViewAccess =
       for {
         systemViewDefinition <- DoobieViewProvider.findSystemView(bankIdAccountIdViewId.viewId.value)
-        accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
-          bankIdAccountIdViewId.bankId,
-          bankIdAccountIdViewId.accountId,
-          bankIdAccountIdViewId.viewId,
-          user.userPrimaryKey
-        ) ?~! CannotFindAccountAccess
+        _ <- if (DoobieAccountAccessProvider.existsByUserPrimaryKey(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value, user.userPrimaryKey.value)) Full(()) else Empty ?~! CannotFindAccountAccess
         // Check if we are allowed to remove the View from the User
         _ <- canRevokeOwnerAccessAsBox(bankIdAccountIdViewId.bankId, bankIdAccountIdViewId.accountId,systemViewDefinition, user)
       } yield {
-        accountAccess.delete_!
+        DoobieAccountAccessProvider.deleteByUserPrimaryKey(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value, user.userPrimaryKey.value)
       }
     
     //For the app, there is no difference to see the two views here.
@@ -271,16 +261,11 @@ object MapperViews extends Views with MdcLoggable {
     val res =
     for {
       systemViewDefinition <- DoobieViewProvider.findSystemView(view.viewId.value)
-      accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
-        bankId,
-        accountId,
-        view.viewId,
-        user.userPrimaryKey
-      ) ?~! CannotFindAccountAccess
+      _ <- if (DoobieAccountAccessProvider.existsByUserPrimaryKey(bankId.value, accountId.value, view.viewId.value, user.userPrimaryKey.value)) Full(()) else Empty ?~! CannotFindAccountAccess
       // Check if we are allowed to remove the View from the User
       _ <- canRevokeOwnerAccessAsBox(bankId: BankId, accountId: AccountId, systemViewDefinition, user)
     } yield {
-      accountAccess.delete_!
+      DoobieAccountAccessProvider.deleteByUserPrimaryKey(bankId.value, accountId.value, view.viewId.value, user.userPrimaryKey.value)
     }
     res
   }
@@ -289,14 +274,9 @@ object MapperViews extends Views with MdcLoggable {
   def revokeAccessToCustomViewForConsumer(view : View, consumerId : String) : Box[Boolean] = {
     for {
       customViewDefinition <- DoobieViewProvider.findCustomView(view.bankId.value, view.accountId.value, view.viewId.value)
-      accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdConsumerId(
-        customViewDefinition.bankId,
-        customViewDefinition.accountId,
-        customViewDefinition.viewId,
-        consumerId
-      ) ?~! CannotFindAccountAccess
+      _ <- if (DoobieAccountAccessProvider.existsByConsumerId(customViewDefinition.bankId.value, customViewDefinition.accountId.value, customViewDefinition.viewId.value, consumerId)) Full(()) else Empty ?~! CannotFindAccountAccess
     } yield {
-      accountAccess.delete_!
+      DoobieAccountAccessProvider.deleteByConsumerId(customViewDefinition.bankId.value, customViewDefinition.accountId.value, customViewDefinition.viewId.value, consumerId)
     }
   }
   
@@ -304,14 +284,9 @@ object MapperViews extends Views with MdcLoggable {
   def revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String) : Box[Boolean] = {
     for {
       systemViewDefinition <- DoobieViewProvider.findSystemView(view.viewId.value)
-      accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdConsumerId(
-        bankId,
-        accountId,
-        systemViewDefinition.viewId,
-        consumerId
-      ) ?~! CannotFindAccountAccess
+      _ <- if (DoobieAccountAccessProvider.existsByConsumerId(bankId.value, accountId.value, systemViewDefinition.viewId.value, consumerId)) Full(()) else Empty ?~! CannotFindAccountAccess
     } yield {
-      accountAccess.delete_!
+      DoobieAccountAccessProvider.deleteByConsumerId(bankId.value, accountId.value, systemViewDefinition.viewId.value, consumerId)
     }
   }
 

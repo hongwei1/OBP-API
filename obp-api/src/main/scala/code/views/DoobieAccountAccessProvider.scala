@@ -43,4 +43,30 @@ object DoobieAccountAccessProvider {
       sql"DELETE FROM accountaccess WHERE bank_id = $bankId AND account_id = $accountId".update.run)
     true
   }
+
+  // ── per-row revoke: existence check (for the CannotFindAccountAccess error) then delete ──
+
+  def existsByUserPrimaryKey(bankId: String, accountId: String, viewId: String, userPrimaryKey: Long): Boolean =
+    DoobieUtil.runQuery(
+      sql"""SELECT COUNT(*) FROM accountaccess
+            WHERE bank_id = $bankId AND account_id = $accountId AND view_id = $viewId AND user_fk = $userPrimaryKey"""
+        .query[Long].unique) > 0L
+
+  def deleteByUserPrimaryKey(bankId: String, accountId: String, viewId: String, userPrimaryKey: Long): Boolean =
+    DoobieUtil.runQuery(
+      sql"""DELETE FROM accountaccess
+            WHERE bank_id = $bankId AND account_id = $accountId AND view_id = $viewId AND user_fk = $userPrimaryKey"""
+        .update.run) > 0
+
+  def existsByConsumerId(bankId: String, accountId: String, viewId: String, consumerId: String): Boolean =
+    DoobieUtil.runQuery(
+      sql"""SELECT COUNT(*) FROM accountaccess
+            WHERE bank_id = $bankId AND account_id = $accountId AND view_id = $viewId AND consumer_id = $consumerId"""
+        .query[Long].unique) > 0L
+
+  def deleteByConsumerId(bankId: String, accountId: String, viewId: String, consumerId: String): Boolean =
+    DoobieUtil.runQuery(
+      sql"""DELETE FROM accountaccess
+            WHERE bank_id = $bankId AND account_id = $accountId AND view_id = $viewId AND consumer_id = $consumerId"""
+        .update.run) > 0
 }
