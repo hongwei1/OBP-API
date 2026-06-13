@@ -18,7 +18,7 @@ import code.apicollectionendpoint.{ApiCollectionEndpointTrait, MappedApiCollecti
 import code.featuredapicollection.{FeaturedApiCollectionTrait, MappedFeaturedApiCollectionsProvider}
 import code.atmattribute.AtmAttribute
 import code.authtypevalidation.{AuthenticationTypeValidationProvider, JsonAuthTypeValidation}
-import code.bankattribute.BankAttribute
+import com.openbankproject.commons.model.BankAttributeTrait
 import code.bankconnectors.Connector
 import code.branches.Branches.{Branch, DriveUpString, LobbyString}
 import code.connectormethod.{ConnectorMethodProvider, JsonConnectorMethod}
@@ -1786,7 +1786,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isActive: Option[Boolean],
       callContext: Option[CallContext]
-    ): OBPReturnType[BankAttribute] = {
+    ): OBPReturnType[BankAttributeTrait] = {
       Connector.connector.vend.createOrUpdateBankAttribute(
         bankId: BankId,
         bankAttributeId: Option[String],
@@ -1870,7 +1870,7 @@ object NewStyle extends MdcLoggable{
     def getBankAttributeById(
       bankAttributeId: String,
       callContext: Option[CallContext]
-    ): OBPReturnType[BankAttribute] = {
+    ): OBPReturnType[BankAttributeTrait] = {
       Connector.connector.vend.getBankAttributeById(
         bankAttributeId: String,
         callContext: Option[CallContext]
