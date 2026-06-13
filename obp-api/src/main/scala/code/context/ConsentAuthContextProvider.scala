@@ -13,7 +13,7 @@ object ConsentAuthContextProvider extends SimpleInjector {
 
   val consentAuthContextProvider = new Inject(buildOne _) {}
 
-  def buildOne: ConsentAuthContextProvider = MappedConsentAuthContextProvider
+  def buildOne: ConsentAuthContextProvider = DoobieConsentAuthContextProvider
   
 }
 
