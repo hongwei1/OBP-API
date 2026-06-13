@@ -595,14 +595,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   //gets a particular bank handled by this connector
   override def getBankLegacy(bankId: BankId, callContext: Option[CallContext]): Box[(Bank, Option[CallContext])] = {
-    MappedBank
-      .find(By(MappedBank.permalink, bankId.value))
-      .map(
-        bank =>
-          bank
-            .mBankRoutingScheme(APIUtil.ValueOrOBP(bank.bankRoutingScheme))
-            .mBankRoutingAddress(APIUtil.ValueOrOBPId(bank.bankRoutingAddress, bank.bankId.value))
-      ).map(bank => (bank, callContext))
+    DoobieBankProvider.getBankByBankId(bankId).map(bank => (bank, callContext))
   }
 
   override def getBank(bankId: BankId, callContext: Option[CallContext]): Future[Box[(Bank, Option[CallContext])]] = Future {
@@ -611,16 +604,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
 
   override def getBanksLegacy(callContext: Option[CallContext]): Box[(List[Bank], Option[CallContext])] = {
-    Full(MappedBank
-      .findAll()
-      .map(
-        bank =>
-          bank
-            .mBankRoutingScheme(APIUtil.ValueOrOBP(bank.bankRoutingScheme))
-            .mBankRoutingAddress(APIUtil.ValueOrOBPId(bank.bankRoutingAddress, bank.bankId.value))
-      ),
-      callContext
-    )
+    Full((DoobieBankProvider.getAllBanks, callContext))
   }
 
   override def getBanks(callContext: Option[CallContext]): Future[Box[(List[Bank], Option[CallContext])]] = Future {
@@ -3347,36 +3331,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                    callContext: Option[CallContext]
                                  ): Box[Bank] = {
   //check the bank existence and update or insert data
-    val bank = getBankLegacy(BankId(bankId), None).map(_._1.asInstanceOf[MappedBank]) match {
-      case Full(mappedBank) =>
-        tryo {
-          mappedBank
-            .permalink(bankId)
-            .fullBankName(fullBankName)
-            .shortBankName(shortBankName)
-            .logoURL(logoURL)
-            .websiteURL(websiteURL)
-            .swiftBIC(swiftBIC)
-            .national_identifier(national_identifier)
-            .mBankRoutingScheme(bankRoutingScheme)
-            .mBankRoutingAddress(bankRoutingAddress)
-            .saveMe()
-        } ?~! ErrorMessages.CreateBankError
-      case _ =>
-        tryo {
-          MappedBank.create
-            .permalink(bankId)
-            .fullBankName(fullBankName)
-            .shortBankName(shortBankName)
-            .logoURL(logoURL)
-            .websiteURL(websiteURL)
-            .swiftBIC(swiftBIC)
-            .national_identifier(national_identifier)
-            .mBankRoutingScheme(bankRoutingScheme)
-            .mBankRoutingAddress(bankRoutingAddress)
-            .saveMe()
-        } ?~! ErrorMessages.UpdateBankError
-    }
+    val bank = DoobieBankProvider.createOrUpdateBank(
+      bankId, fullBankName, shortBankName, logoURL, websiteURL,
+      swiftBIC, national_identifier, bankRoutingScheme, bankRoutingAddress
+    ) ?~! ErrorMessages.CreateBankError
 
     // Insert the default settlement accounts if they doesn't exist
     MappedBankAccount.find(By(MappedBankAccount.bank, bankId), By(MappedBankAccount.theAccountId, INCOMING_SETTLEMENT_ACCOUNT_ID)) match {
