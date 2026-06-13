@@ -14,7 +14,7 @@ object Nonces extends SimpleInjector {
 
   val nonces = new Inject(buildOne _) {}
 
-  def buildOne: NoncesProvider = MappedNonceProvider
+  def buildOne: NoncesProvider = DoobieNonceProvider
   
 }
 
