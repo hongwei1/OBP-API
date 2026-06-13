@@ -58,6 +58,7 @@ import code.transactionRequestAttribute.TransactionRequestAttributeX
 import code.transactionattribute.TransactionAttributeX
 import code.transactionrequests._
 import code.users.{UserAttribute, UserAttributeProvider, Users}
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.util.Helper
 import code.util.Helper._
 import code.views.Views
@@ -4074,17 +4075,17 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
   }
 
-  override def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getUserAttributesByUser(userId: String) map {(_, callContext)}
   }
   
-  override def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getNonPersonalUserAttributes(userId: String) map {(_, callContext)}
   }
-  override def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getPersonalUserAttributes(userId: String) map {(_, callContext)}
   }
-  override def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getUserAttributesByUsers(userIds) map {(_, callContext)}
   }
   override def deleteUserAttribute(userAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
@@ -4098,7 +4099,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                             value: String,
                                             isPersonal: Boolean,
                                             callContext: Option[CallContext]
-                                          ): OBPReturnType[Box[UserAttribute]] = {
+                                          ): OBPReturnType[Box[UserAttributeTrait]] = {
     UserAttributeProvider.userAttributeProvider.vend.createOrUpdateUserAttribute(
       userId: String,
       userAttributeId: Option[String],

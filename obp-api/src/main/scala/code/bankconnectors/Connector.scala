@@ -17,7 +17,7 @@ import code.bankconnectors.rabbitmq.RabbitMQConnector_vOct2024
 import code.bankconnectors.rest.RestConnector_vMar2019
 import code.bankconnectors.storedprocedure.StoredProcedureConnector_vDec2019
 import code.model.dataAccess.BankAccountRouting
-import code.users.UserAttribute
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.util.Helper._
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.ExecutionContext.Implicits.global
@@ -1436,16 +1436,16 @@ trait Connector extends MdcLoggable {
       (Failure(setUnimplementedError(nameOf(getAttributeDefinition _))), callContext)
     }
   
-  def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = 
+  def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = 
     Future{(Failure(setUnimplementedError(nameOf(getUserAttributes _))), callContext)}   
   
-  def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = 
+  def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = 
     Future{(Failure(setUnimplementedError(nameOf(getPersonalUserAttributes _))), callContext)}  
     
-  def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = 
+  def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = 
     Future{(Failure(setUnimplementedError(nameOf(getNonPersonalUserAttributes _))), callContext)}   
   
-  def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = 
+  def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = 
     Future{(Failure(setUnimplementedError(nameOf(getUserAttributesByUsers _))), callContext)}  
   
   def createOrUpdateUserAttribute(
@@ -1456,7 +1456,7 @@ trait Connector extends MdcLoggable {
     value: String,
     isPersonal: Boolean,
     callContext: Option[CallContext]
-  ): OBPReturnType[Box[UserAttribute]] = Future{(Failure(setUnimplementedError(nameOf(createOrUpdateUserAttribute _))), callContext)} 
+  ): OBPReturnType[Box[UserAttributeTrait]] = Future{(Failure(setUnimplementedError(nameOf(createOrUpdateUserAttribute _))), callContext)} 
   
   def deleteUserAttribute(
     userAttributeId: String,

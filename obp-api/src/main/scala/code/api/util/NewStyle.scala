@@ -2019,7 +2019,7 @@ object NewStyle extends MdcLoggable{
       }
     }
     
-    def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getUserAttributes(
         userId: String, callContext: Option[CallContext]
       ) map {
@@ -2027,7 +2027,7 @@ object NewStyle extends MdcLoggable{
       }
     } 
     
-    def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getPersonalUserAttributes(
         userId: String, callContext: Option[CallContext]
       ) map {
@@ -2036,7 +2036,7 @@ object NewStyle extends MdcLoggable{
     } 
     
     
-    def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getNonPersonalUserAttributes(
         userId: String, callContext: Option[CallContext]
       ) map {
@@ -2044,7 +2044,7 @@ object NewStyle extends MdcLoggable{
       }
     } 
     
-    def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getUserAttributesByUsers(
         userIds, callContext: Option[CallContext]
       ) map {
@@ -2059,7 +2059,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isPersonal: Boolean,
       callContext: Option[CallContext]
-    ): OBPReturnType[UserAttribute] = {
+    ): OBPReturnType[UserAttributeTrait] = {
       Connector.connector.vend.createOrUpdateUserAttribute(
         userId: String,
         userAttributeId: Option[String],

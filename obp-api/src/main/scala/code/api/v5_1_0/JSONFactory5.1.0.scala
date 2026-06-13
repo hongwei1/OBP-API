@@ -54,7 +54,8 @@ import code.consent.MappedConsent
 import code.metrics.APIMetric
 import code.model.Consumer
 import code.ratelimiting.RateLimiting
-import code.users.{UserAttribute, Users}
+import code.users.Users
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.util.Helper.MdcLoggable
 import code.views.system.{AccountAccess, ViewDefinition, ViewPermission}
 import com.openbankproject.commons.model._
@@ -1117,7 +1118,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
   def createAtmAttributesJson(atmAttributes: List[AtmAttributeTrait]): AtmAttributesResponseJsonV510 =
     AtmAttributesResponseJsonV510(atmAttributes.map(createAtmAttributeJson))
 
-  def createUserAttributeJson(userAttribute: UserAttribute): UserAttributeResponseJsonV510 = {
+  def createUserAttributeJson(userAttribute: UserAttributeTrait): UserAttributeResponseJsonV510 = {
     UserAttributeResponseJsonV510(
       user_attribute_id = userAttribute.userAttributeId,
       name = userAttribute.name,
@@ -1132,7 +1133,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     SyncExternalUserJson(user.userId)
   }
 
-  def createUserAttributesJson(userAttribute: List[UserAttribute]): UserAttributesResponseJsonV510 = {
+  def createUserAttributesJson(userAttribute: List[UserAttributeTrait]): UserAttributesResponseJsonV510 = {
     UserAttributesResponseJsonV510(userAttribute.map(createUserAttributeJson))
   }
 

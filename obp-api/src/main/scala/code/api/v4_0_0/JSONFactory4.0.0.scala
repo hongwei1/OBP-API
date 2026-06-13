@@ -53,7 +53,8 @@ import code.model.dataAccess.ResourceUser
 import code.model.{Consumer, ModeratedBankAccount, ModeratedBankAccountCore}
 import code.ratelimiting.RateLimiting
 import code.userlocks.UserLocks
-import code.users.{UserAgreement, UserAttribute, UserInvitation}
+import code.users.{UserAgreement, UserInvitation}
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.views.system.AccountAccess
 import code.webhook.{BankAccountNotificationWebhookTrait, SystemAccountNotificationWebhookTrait}
 import com.openbankproject.commons.model._
@@ -1493,7 +1494,7 @@ object JSONFactory400 {
     )
   }
   
-  def createUserAttributeJson(userAttribute: UserAttribute) : UserAttributeResponseJsonV400 = {
+  def createUserAttributeJson(userAttribute: UserAttributeTrait) : UserAttributeResponseJsonV400 = {
     UserAttributeResponseJsonV400(
       user_attribute_id = userAttribute.userAttributeId,
       name = userAttribute.name,
@@ -1503,10 +1504,10 @@ object JSONFactory400 {
     )
   }
 
-  def createUserAttributesJson(userAttribute: List[UserAttribute]) : UserAttributesResponseJson = {
+  def createUserAttributesJson(userAttribute: List[UserAttributeTrait]) : UserAttributesResponseJson = {
     UserAttributesResponseJson(userAttribute.map(createUserAttributeJson))
   }
-  def createUserWithAttributesJson(user: User, userAttribute: List[UserAttribute]) : UserWithAttributesResponseJson = {
+  def createUserWithAttributesJson(user: User, userAttribute: List[UserAttributeTrait]) : UserWithAttributesResponseJson = {
     UserWithAttributesResponseJson(
       user_id = user.userId,
       email = user.emailAddress,
@@ -1518,7 +1519,7 @@ object JSONFactory400 {
   }
   def createCustomerAdUsersWithAttributesJson(customer: Customer,
                                               users: List[User],
-                                              userAttribute: List[UserAttribute]) : CustomerAndUsersWithAttributesResponseJson = {
+                                              userAttribute: List[UserAttributeTrait]) : CustomerAndUsersWithAttributesResponseJson = {
     CustomerAndUsersWithAttributesResponseJson(
       JSONFactory310.createCustomerJson(customer), 
       users.map(i => createUserWithAttributesJson(i, userAttribute.filter(_.userId==i.userId)))
