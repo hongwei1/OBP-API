@@ -23,7 +23,7 @@ object LiftUsers extends Users with MdcLoggable{
 
   //UserId here is the resourceuser.id field
   def getUserByResourceUserId(id : Long) : Box[User] = {
-    ResourceUser.find(id) ?~ { s"user $id not found"}
+    Box(DoobieResourceUserProvider.findByResourceUserId(id)) ?~ { s"user $id not found"}
   }
 
   //UserId here is the resourceuser.id field
@@ -32,7 +32,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   def getResourceUserByResourceUserIdF(id : Long) : Box[User] = {
-    ResourceUser.find(id) ?~ { s"user $id not found"}
+    Box(DoobieResourceUserProvider.findByResourceUserId(id)) ?~ { s"user $id not found"}
   }
 
   def getResourceUserByResourceUserIdFuture(id : Long) : Future[Box[User]] = {
@@ -41,7 +41,7 @@ object LiftUsers extends Users with MdcLoggable{
 
   def getUserByProviderId(provider : String, idGivenByProvider : String) : Box[User] = {
     // Note: providerId is generally human readable like a username. it is not a uuid like user_id.
-    ResourceUser.find(By(ResourceUser.provider_, provider), By(ResourceUser.providerId, idGivenByProvider))
+    Box(DoobieResourceUserProvider.findByProviderId(provider, idGivenByProvider))
   }
   def getUserByProviderIdFuture(provider : String, idGivenByProvider : String) : Future[Box[User]] = {
     Future {
@@ -78,7 +78,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   def getUserByUserId(userId : String) : Box[User] = {
-    ResourceUser.find(By(ResourceUser.userId_, userId))
+    Box(DoobieResourceUserProvider.findByUserId(userId))
   }
 
    def getUserByUserIdFuture(userId : String) : Future[Box[User]] = {
@@ -88,7 +88,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   def getUsersByUserIds(userIds : List[String]) : List[User] = {
-    ResourceUser.findAll(ByList(ResourceUser.userId_, userIds))
+    DoobieResourceUserProvider.findAllByUserIds(userIds)
   }
 
   def getUsersByUserIdsFuture(userIds : List[String]) : Future[List[User]] = {
@@ -96,10 +96,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   override def getUserByProviderAndUsername(provider : String, userName: String): Box[User] = {
-    ResourceUser.find(
-      By(ResourceUser.provider_, provider),
-      By(ResourceUser.name_, userName)
-    )
+    Box(DoobieResourceUserProvider.findByProviderAndUsername(provider, userName))
   }
 
   override def getUserByProviderAndUsernameFuture(provider: String, username: String): Future[Box[User]] = {
