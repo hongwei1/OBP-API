@@ -271,7 +271,7 @@ object MapperViews extends Views with MdcLoggable {
   def revokeAccessToSystemView(bankId: BankId, accountId: AccountId, view : View, user : User) : Box[Boolean] = {
     val res =
     for {
-      systemViewDefinition <- ViewDefinition.find(By(ViewDefinition.id_, view.id))
+      systemViewDefinition <- ViewDefinition.findSystemView(view.viewId.value)
       accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
         bankId,
         accountId,
@@ -304,7 +304,7 @@ object MapperViews extends Views with MdcLoggable {
   //System View only have the viewId in inside the `View`, both bankId and accountId are empty in the `View`. So we need both in the parameters
   def revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String) : Box[Boolean] = {
     for {
-      systemViewDefinition <- ViewDefinition.find(By(ViewDefinition.id_, view.id))
+      systemViewDefinition <- ViewDefinition.findSystemView(view.viewId.value)
       accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdConsumerId(
         bankId,
         accountId,
@@ -373,7 +373,7 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def customView(viewId : ViewId, account: BankIdAccountId) : Box[View] = {
-    val view = ViewDefinition.findCustomView(account.bankId.value, account.accountId.value, viewId.value)
+    val view = DoobieViewProvider.findCustomView(account.bankId.value, account.accountId.value, viewId.value)
     if(view.isDefined && view.openOrThrowException(attemptedToOpenAnEmptyBox).isPublic && !allowPublicViews) return Failure(PublicViewsNotAllowedOnThisInstance)
 
     view
@@ -385,7 +385,7 @@ object MapperViews extends Views with MdcLoggable {
     }
   }
   def systemView(viewId : ViewId) : Box[View] = {
-    ViewDefinition.findSystemView(viewId.value)
+    DoobieViewProvider.findSystemView(viewId.value)
   }
   def getSystemViews() : Future[List[View]] = {
     Future {
@@ -857,12 +857,12 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def getExistingCustomView(bankId: BankId, accountId: AccountId, viewId: String): Box[View] = {
-    val res = ViewDefinition.findCustomView(bankId.value, accountId.value, viewId)
+    val res = DoobieViewProvider.findCustomView(bankId.value, accountId.value, viewId)
     if(res.isDefined && res.openOrThrowException(attemptedToOpenAnEmptyBox).isPublic && !allowPublicViews) return Failure(PublicViewsNotAllowedOnThisInstance)
     res
   }
   def getExistingSystemView(viewId: String): Box[View] = {
-    val res = ViewDefinition.findSystemView(viewId)
+    val res = DoobieViewProvider.findSystemView(viewId)
     logger.debug(s"-->getExistingSystemView(viewId($viewId)) = result ${res} ")
     if(res.isDefined && res.openOrThrowException(attemptedToOpenAnEmptyBox).isPublic && !allowPublicViews) return Failure(PublicViewsNotAllowedOnThisInstance)
     res
