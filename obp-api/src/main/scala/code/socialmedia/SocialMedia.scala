@@ -9,7 +9,7 @@ object SocialMediaHandle extends SimpleInjector {
 
   val socialMediaHandleProvider = new Inject(buildOne _) {}
 
-  def buildOne: SocialMediaHandleProvider = MappedSocialMediasProvider
+  def buildOne: SocialMediaHandleProvider = DoobieSocialMediasProvider
 
 }
 
