@@ -10,7 +10,7 @@ object CustomerAccountLinkX extends SimpleInjector {
 
   val customerAccountLink = new Inject(buildOne _) {}
 
-  def buildOne: CustomerAccountLinkProvider = MappedCustomerAccountLinkProvider
+  def buildOne: CustomerAccountLinkProvider = DoobieCustomerAccountLinkProvider
 
 }
 
