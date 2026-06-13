@@ -68,7 +68,7 @@ object Atms extends SimpleInjector {
 
   val atmsProvider = new Inject(buildOne _) {}
 
-  def buildOne: AtmsProvider = MappedAtmsProvider
+  def buildOne: AtmsProvider = DoobieAtmsProvider
 
   // Helper to get the count out of an option
   def countOfAtms (listOpt: Option[List[AtmT]]) : Int = {
