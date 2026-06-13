@@ -13,7 +13,7 @@ object EndpointTagProvider extends SimpleInjector {
 
   val endpointTagProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedEndpointTagProvider.type = MappedEndpointTagProvider
+  def buildOne: EndpointTagProvider = DoobieEndpointTagProvider
 }
 
 case class EndpointTagCommons(

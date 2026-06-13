@@ -15,7 +15,7 @@ object BankAccountBalanceX extends SimpleInjector {
 
   val bankAccountBalanceProvider = new Inject(buildOne _) {}
 
-  def buildOne: BankAccountBalanceProviderTrait = MappedBankAccountBalanceProvider
+  def buildOne: BankAccountBalanceProviderTrait = DoobieBankAccountBalanceProvider
 
   // Helper to get the count out of an option
   def countOfBankAccountBalance(listOpt: Option[List[BankAccountBalance]]): Int = {

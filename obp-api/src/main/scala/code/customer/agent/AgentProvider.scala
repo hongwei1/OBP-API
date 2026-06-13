@@ -12,7 +12,7 @@ object AgentX extends SimpleInjector {
 
   val agentProvider = new Inject(buildOne _) {}
 
-  def buildOne: AgentProvider = MappedAgentProvider
+  def buildOne: AgentProvider = DoobieAgentProvider
 
 }
 
