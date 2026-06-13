@@ -8,7 +8,7 @@ import scala.concurrent.Future
 object GroupTrait extends SimpleInjector {
   val group = new Inject(buildOne _) {}
   
-  def buildOne: GroupProvider = MappedGroupProvider
+  def buildOne: GroupProvider = DoobieGroupProvider
 }
 
 trait GroupProvider {
