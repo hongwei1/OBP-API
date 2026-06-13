@@ -8,7 +8,6 @@ import code.api.util.APIUtil.{OBPReturnType, _}
 import code.api.util.ErrorMessages._
 import code.api.util._
 import code.api.{APIFailure, APIFailureNewStyle}
-import code.atmattribute.AtmAttribute
 import code.mandate.{MandateTrait, MandateProvisionTrait, SignatoryPanelTrait}
 import code.bankconnectors.akka.AkkaConnector_vDec2018
 import code.bankconnectors.cardano.CardanoConnector_vJun2025
@@ -1338,20 +1337,20 @@ trait Connector extends MdcLoggable {
                                  value: String,
                                  isActive: Option[Boolean],
                                  callContext: Option[CallContext]
-                                ): OBPReturnType[Box[AtmAttribute]] = Future{(Failure(setUnimplementedError(nameOf(createOrUpdateAtmAttribute _))), callContext)}
-  
+                                ): OBPReturnType[Box[AtmAttributeTrait]] = Future{(Failure(setUnimplementedError(nameOf(createOrUpdateAtmAttribute _))), callContext)}
+
   def getBankAttributesByBank(bankId: BankId, callContext: Option[CallContext]): OBPReturnType[Box[List[BankAttributeTrait]]] =
     Future{(Failure(setUnimplementedError(nameOf(getBankAttributesByBank _))), callContext)}
 
-  def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[List[AtmAttribute]]] =
+  def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[List[AtmAttributeTrait]]] =
     Future{(Failure(setUnimplementedError(nameOf(getAtmAttributesByAtm _))), callContext)}
 
   def getBankAttributeById(bankAttributeId: String,
                            callContext: Option[CallContext]
                           ): OBPReturnType[Box[BankAttributeTrait]] = Future{(Failure(setUnimplementedError(nameOf(getBankAttributeById _))), callContext)}
 
-  def getAtmAttributeById(atmAttributeId: String, 
-                          callContext: Option[CallContext]): OBPReturnType[Box[AtmAttribute]] = 
+  def getAtmAttributeById(atmAttributeId: String,
+                          callContext: Option[CallContext]): OBPReturnType[Box[AtmAttributeTrait]] =
     Future{(Failure(setUnimplementedError(nameOf(getAtmAttributeById _))), callContext)}
   
   def getProductAttributeById(

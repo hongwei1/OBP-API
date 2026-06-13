@@ -17,7 +17,7 @@ import code.api.util._
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0._
 import code.api.v4_0_0.{AgentCashWithdrawalJson, PostSimpleCounterpartyJson400, TransactionRequestBodyAgentJsonV400, TransactionRequestBodySimpleJsonV400}
-import code.atmattribute.{AtmAttribute, AtmAttributeX}
+import code.atmattribute.AtmAttributeX
 import code.atms.{Atms, MappedAtm}
 import code.bankaccountbalance.BankAccountBalanceX
 import code.bankattribute.BankAttributeX
@@ -3883,7 +3883,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                           value: String,
                                           isActive: Option[Boolean],
                                           callContext: Option[CallContext]
-                                          ): OBPReturnType[Box[AtmAttribute]] =
+                                          ): OBPReturnType[Box[AtmAttributeTrait]] =
     AtmAttributeX.atmAttributeProvider.vend.createOrUpdateAtmAttribute(
       bankId: BankId,
       atmId: AtmId,
@@ -3900,7 +3900,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (_, callContext)
     }
   
-  override def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[List[AtmAttribute]]] =
+  override def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[List[AtmAttributeTrait]]] =
     AtmAttributeX.atmAttributeProvider.vend.getAtmAttributesFromProvider(bank: BankId, atm: AtmId) map {
       (_, callContext)
     }
@@ -3919,7 +3919,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (_, callContext)
     }
   
-  override def getAtmAttributeById(atmAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[AtmAttribute]] =
+  override def getAtmAttributeById(atmAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[AtmAttributeTrait]] =
     AtmAttributeX.atmAttributeProvider.vend.getAtmAttributeById(atmAttributeId: String) map {
       (_, callContext)
     }

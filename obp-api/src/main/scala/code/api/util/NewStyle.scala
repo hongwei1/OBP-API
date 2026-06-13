@@ -16,7 +16,7 @@ import code.apiproduct.{ApiProductTrait, MappedApiProductsProvider}
 import code.apiproductattribute.{ApiProductAttributeTrait, MappedApiProductAttributesProvider}
 import code.apicollectionendpoint.{ApiCollectionEndpointTrait, MappedApiCollectionEndpointsProvider}
 import code.featuredapicollection.{FeaturedApiCollectionTrait, MappedFeaturedApiCollectionsProvider}
-import code.atmattribute.AtmAttribute
+import com.openbankproject.commons.model.AtmAttributeTrait
 import code.authtypevalidation.{AuthenticationTypeValidationProvider, JsonAuthTypeValidation}
 import com.openbankproject.commons.model.BankAttributeTrait
 import code.bankconnectors.Connector
@@ -1809,7 +1809,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isActive: Option[Boolean],
       callContext: Option[CallContext]
-    ): OBPReturnType[AtmAttribute] = {
+    ): OBPReturnType[AtmAttributeTrait] = {
       Connector.connector.vend.createOrUpdateAtmAttribute(
         bankId: BankId,
         atmId: AtmId,
@@ -1832,7 +1832,7 @@ object NewStyle extends MdcLoggable{
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
-    def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[List[AtmAttribute]] = {
+    def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[List[AtmAttributeTrait]] = {
       Connector.connector.vend.getAtmAttributesByAtm(
         bank: BankId,
         atm: AtmId,
@@ -1882,7 +1882,7 @@ object NewStyle extends MdcLoggable{
     def getAtmAttributeById(
       atmAttributeId: String,
       callContext: Option[CallContext]
-    ): OBPReturnType[AtmAttribute] = {
+    ): OBPReturnType[AtmAttributeTrait] = {
       Connector.connector.vend.getAtmAttributeById(
         atmAttributeId: String,
         callContext: Option[CallContext]
