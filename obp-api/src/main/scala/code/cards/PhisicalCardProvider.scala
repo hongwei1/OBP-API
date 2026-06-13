@@ -14,7 +14,7 @@ object PhysicalCard extends SimpleInjector {
 
   val physicalCardProvider = new Inject(buildOne _) {}
 
-  def buildOne: PhysicalCardProvider = MappedPhysicalCardProvider
+  def buildOne: PhysicalCardProvider = DoobiePhysicalCardProvider
 
 }
 
