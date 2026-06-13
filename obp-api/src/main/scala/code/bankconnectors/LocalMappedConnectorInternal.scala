@@ -508,11 +508,16 @@ object LocalMappedConnectorInternal extends MdcLoggable {
     for {
 
       currency <- Full(fromAccount.currency)
-      //update the balance of the fromAccount for which a transaction is being created
-      newAccountBalance <- Full(Helper.convertToSmallestCurrencyUnits(fromAccount.balance, currency) + Helper.convertToSmallestCurrencyUnits(amount, currency))
+      //update the balance of the fromAccount for which a transaction is being created.
+      //Re-read the current balance from the DB rather than the passed-in (possibly stale) in-memory
+      //object: makePayment debits then credits in two sequential calls, and for a self-transfer
+      //(same account) the credit must see the debit. Lift achieved this via in-place mutation of the
+      //shared MappedBankAccount; with Doobie we read the freshly-written balance on the same request connection.
+      currentBalance <- Full(code.model.dataAccess.DoobieBankAccountProvider.getBankAccount(fromAccount.bankId, fromAccount.accountId).map(_.balance).getOrElse(fromAccount.balance))
+      newAccountBalance <- Full(Helper.convertToSmallestCurrencyUnits(currentBalance, currency) + Helper.convertToSmallestCurrencyUnits(amount, currency))
 
-      //Here is the `LocalMappedConnector`, once get this point, fromAccount must be a mappedBankAccount. So can use asInstanceOf.... 
-      _ <- tryo(fromAccount.asInstanceOf[MappedBankAccount].accountBalance(newAccountBalance).save) ?~! UpdateBankAccountException
+      //Here is the `LocalMappedConnector`, once get this point, fromAccount must be a mappedBankAccount.
+      _ <- tryo(code.model.dataAccess.DoobieBankAccountProvider.updateAccountBalance(fromAccount.bankId, fromAccount.accountId, newAccountBalance)) ?~! UpdateBankAccountException
 
       mappedTransaction <- tryo(MappedTransaction.create
         //No matter which type (SANDBOX_TAN,SEPA,FREE_FORM,COUNTERPARTYE), always filled the following nine fields.

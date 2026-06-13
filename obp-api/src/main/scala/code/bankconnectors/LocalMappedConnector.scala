@@ -832,16 +832,16 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
     for {
       (bank, _) <- getBankLegacy(bankId, None)
-      account <- getBankAccountLegacy(bankId, accountId, None).map(_._1).map(_.asInstanceOf[MappedBankAccount])
+      account <- getBankAccountLegacy(bankId, accountId, None).map(_._1)
     } {
       Future {
         val useMessageQueue = APIUtil.getPropsAsBoolValue("messageQueue.updateBankAccountsTransaction", false)
-        val outDatedTransactions = Box !! account.accountLastUpdate.get match {
+        val outDatedTransactions = Box !! account.lastUpdate match {
           case Full(l) => now after time(l.getTime + hours(APIUtil.getPropsAsIntValue("messageQueue.updateTransactionsInterval", 1)))
           case _ => true
         }
         if (outDatedTransactions && useMessageQueue) {
-          UpdatesRequestSender.sendMsg(UpdateBankAccount(account.accountNumber.get, bank.nationalIdentifier))
+          UpdatesRequestSender.sendMsg(UpdateBankAccount(account.number, bank.nationalIdentifier))
         }
       }
     }
@@ -874,7 +874,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
           }
       }
     } else {
-      def handleRouting(routing: List[BankAccountRouting]): Box[(MappedBankAccount, Option[CallContext])] = {
+      def handleRouting(routing: List[BankAccountRouting]): Box[(BankAccount, Option[CallContext])] = {
         if (routing.size > 1) { // Handle more than 1 occurrence
           // Routing MUST be unique
           val errorMessage = s"$AccountRoutingNotUnique (scheme: $scheme, address: $address)"
@@ -933,31 +933,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
   }
 
-  def getBankAccountCommon(bankId: BankId, accountId: AccountId, callContext: Option[CallContext]): Box[(MappedBankAccount, Option[CallContext])] = {
-
-    def getByBankAndAccount(): Box[(MappedBankAccount, Option[CallContext])] = {
-      MappedBankAccount
-        .find(By(MappedBankAccount.bank, bankId.value), By(MappedBankAccount.theAccountId, accountId.value))
-        .map(bankAccount => (bankAccount, callContext))
-    }
-
-    if(APIUtil.checkIfStringIsUUID(accountId.value)) {
-      // Find bank accounts by accountId first
-      val bankAccounts = MappedBankAccount.findAll(By(MappedBankAccount.theAccountId, accountId.value))
-
-      // If exactly one account is found, return it, else filter by bankId
-      bankAccounts match {
-        case account :: Nil =>
-          // If exactly one account is found, return it
-          Some(account, callContext)
-        case _ =>
-          // If multiple or no accounts are found, filter by bankId
-          getByBankAndAccount()
-      }
-    } else {
-      getByBankAndAccount()
-    }
-
+  def getBankAccountCommon(bankId: BankId, accountId: AccountId, callContext: Option[CallContext]): Box[(BankAccount, Option[CallContext])] = {
+    DoobieBankAccountProvider.getBankAccount(bankId, accountId).map(account => (account, callContext))
   }
 
   override def getBankAccounts(bankIdAccountIds: List[BankIdAccountId], callContext: Option[CallContext]): OBPReturnType[Box[List[BankAccount]]] = {
@@ -1520,15 +1497,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     *
     */
   def createOrUpdateMappedBankAccount(bankId: BankId, accountId: AccountId, currency: String): Box[BankAccount] = {
-
-    val mappedBankAccount = getBankAccountLegacy(bankId, accountId, None).map(_._1).map(_.asInstanceOf[MappedBankAccount]) match {
-      case Full(f) =>
-        f.bank(bankId.value).theAccountId(accountId.value).accountCurrency(currency.toUpperCase).saveMe()
-      case _ =>
-        MappedBankAccount.create.bank(bankId.value).theAccountId(accountId.value).accountCurrency(currency.toUpperCase).saveMe()
-    }
-
-    Full(mappedBankAccount)
+    Full(DoobieBankAccountProvider.createOrUpdateAccountCurrency(bankId, accountId, currency))
   }
   
   override def getCounterpartyTrait(bankId: BankId, accountId: AccountId, counterpartyId: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = {
@@ -2301,11 +2270,14 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                        ): Box[TransactionId] =
       for {
         currency <- Full(fromAccount.currency)
-        //update the balance of the fromAccount for which a transaction is being created
-        newAccountBalance <- Full(Helper.convertToSmallestCurrencyUnits(fromAccount.balance, currency) + Helper.convertToSmallestCurrencyUnits(amount, currency))
+        //update the balance of the fromAccount for which a transaction is being created.
+        //Re-read the current balance from the DB (see saveTransaction): the debit/credit pair must
+        //observe each other for a self-transfer, which Lift got from in-place mutation of the shared entity.
+        currentBalance <- Full(DoobieBankAccountProvider.getBankAccount(fromAccount.bankId, fromAccount.accountId).map(_.balance).getOrElse(fromAccount.balance))
+        newAccountBalance <- Full(Helper.convertToSmallestCurrencyUnits(currentBalance, currency) + Helper.convertToSmallestCurrencyUnits(amount, currency))
 
-        //Here is the `LocalMappedConnector`, once get this point, fromAccount must be a mappedBankAccount. So can use asInstanceOf.... 
-        _ <- tryo(fromAccount.asInstanceOf[MappedBankAccount].accountBalance(newAccountBalance).save) ?~! UpdateBankAccountException
+        //Here is the `LocalMappedConnector`, once get this point, fromAccount must be a mappedBankAccount.
+        _ <- tryo(DoobieBankAccountProvider.updateAccountBalance(fromAccount.bankId, fromAccount.accountId, newAccountBalance)) ?~! UpdateBankAccountException
 
         mappedTransaction <- tryo(MappedTransaction.create
           .bank(fromAccount.bankId.value)
@@ -2504,15 +2476,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     oldAccountRoutings.filterNot(accountRouting => accountRoutings.exists(_.scheme == accountRouting.accountRouting.scheme))
       .foreach(_.delete_!)
 
-    (for {
-      (account, _) <- LocalMappedConnector.getBankAccountCommon(bankId, accountId, callContext)
-    } yield {
-      account
-        .kind(accountType)
-        .accountLabel(accountLabel)
-        .mBranchId(branchId)
-        .saveMe
-    }, callContext)
+    (DoobieBankAccountProvider.updateAccountTypeLabelBranch(bankId, accountId, accountType, accountLabel, branchId), callContext)
   }
   
   override def createBankAccount(
@@ -2545,10 +2509,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (
         for {
           _ <- getBankLegacy(bankId, None)
-          acc<- getBankAccountLegacy(bankId, accountId, None).map(_._1).map(_.asInstanceOf[MappedBankAccount])
+          acc<- getBankAccountLegacy(bankId, accountId, None).map(_._1)
         } yield {
-          acc.accountLabel(label).save
-        }, 
+          DoobieBankAccountProvider.updateAccountLabel(acc.bankId, acc.accountId, label)
+        },
         callContext
       )
     }
