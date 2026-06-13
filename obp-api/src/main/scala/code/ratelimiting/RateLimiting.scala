@@ -10,7 +10,7 @@ import scala.concurrent.Future
 
 object RateLimitingDI extends SimpleInjector {
   val rateLimiting = new Inject(buildOne _) {}
-  def buildOne: RateLimitingProviderTrait = MappedRateLimitingProvider
+  def buildOne: RateLimitingProviderTrait = DoobieRateLimitingProvider
 }
 
 trait RateLimitingProviderTrait {
