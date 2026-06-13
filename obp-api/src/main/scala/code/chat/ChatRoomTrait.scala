@@ -6,7 +6,7 @@ import net.liftweb.util.SimpleInjector
 
 object ChatRoomTrait extends SimpleInjector {
   val chatRoomProvider = new Inject(buildOne _) {}
-  def buildOne: ChatRoomProvider = MappedChatRoomProvider
+  def buildOne: ChatRoomProvider = DoobieChatRoomProvider
 }
 
 trait ChatRoomProvider {

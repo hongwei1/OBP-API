@@ -6,7 +6,7 @@ import net.liftweb.util.SimpleInjector
 
 object ReactionTrait extends SimpleInjector {
   val reactionProvider = new Inject(buildOne _) {}
-  def buildOne: ReactionProvider = MappedReactionProvider
+  def buildOne: ReactionProvider = DoobieReactionProvider
 }
 
 trait ReactionProvider {
