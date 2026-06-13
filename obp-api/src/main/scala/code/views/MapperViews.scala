@@ -131,22 +131,21 @@ object MapperViews extends Views with MdcLoggable {
   }
   // This is an idempotent function
   private def getOrGrantAccessToViewCommon(user: User, viewDefinition: View, bankId: String, accountId: String): Box[View] = {
-    if (AccountAccess.findByUniqueIndex(
-      BankId(bankId),
-      AccountId(accountId), 
-      viewDefinition.viewId,
-      user.userPrimaryKey, 
-      ALL_CONSUMERS).isEmpty) {
+    if (!DoobieAccountAccessProvider.existsByUniqueIndex(
+      bankId,
+      accountId,
+      viewDefinition.viewId.value,
+      user.userPrimaryKey.value,
+      ALL_CONSUMERS)) {
       logger.debug(s"getOrGrantAccessToViewCommon AccountAccess.create" +
         s"user(UserId(${user.userId}), ViewId(${viewDefinition.viewId.value}), bankId($bankId), accountId($accountId), consumerId($ALL_CONSUMERS)")
       // SQL Insert AccountAccessList
-      val saved = AccountAccess.create.
-        user_fk(user.userPrimaryKey.value).
-        bank_id(bankId).
-        account_id(accountId).
-        view_id(viewDefinition.viewId.value).
-        consumer_id(ALL_CONSUMERS).
-        save
+      val saved = DoobieAccountAccessProvider.grant(
+        user.userPrimaryKey.value,
+        bankId,
+        accountId,
+        viewDefinition.viewId.value,
+        ALL_CONSUMERS)
       if (saved) {
         //logger.debug("saved AccountAccessList")
         Full(viewDefinition)
@@ -869,10 +868,7 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def removeAllAccountAccess(bankId: BankId, accountId: AccountId) : Boolean = {
-    AccountAccess.bulkDelete_!!(
-      By(AccountAccess.bank_id, bankId.value),
-      By(AccountAccess.account_id, accountId.value)
-    )
+    DoobieAccountAccessProvider.deleteAllByBankAccount(bankId.value, accountId.value)
   }
 
   def removeAllViewsAndVierPermissions(bankId: BankId, accountId: AccountId) : Boolean = {

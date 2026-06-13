@@ -97,10 +97,7 @@ object DeleteAccountCascade {
     )
   }  
   private def deleteAccountAccess(bankId: BankId, accountId: AccountId): Boolean = {
-    AccountAccess.bulkDelete_!!(
-      By(AccountAccess.bank_id, bankId.value),
-      By(AccountAccess.account_id, accountId.value)
-    )
+    code.views.DoobieAccountAccessProvider.deleteAllByBankAccount(bankId.value, accountId.value)
   }
   private def deleteAccountRoutings(bankId: BankId, accountId: AccountId): Boolean = {
     BankAccountRouting.bulkDelete_!!(
