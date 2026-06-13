@@ -11,7 +11,7 @@ object KycMedias extends SimpleInjector {
 
   val kycMediaProvider = new Inject(buildOne _) {}
 
-  def buildOne: KycMediaProvider = MappedKycMediasProvider
+  def buildOne: KycMediaProvider = DoobieKycMediasProvider
 
 }
 

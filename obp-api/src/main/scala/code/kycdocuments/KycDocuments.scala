@@ -11,7 +11,7 @@ object KycDocuments extends SimpleInjector {
 
   val kycDocumentProvider = new Inject(buildOne _) {}
 
-  def buildOne: KycDocumentProvider = MappedKycDocumentsProvider
+  def buildOne: KycDocumentProvider = DoobieKycDocumentsProvider
 
 }
 
