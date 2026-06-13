@@ -7,7 +7,7 @@ object UserScope extends SimpleInjector {
 
   val userScope = new Inject(buildOne _) {}
 
-  def buildOne: UserScopeProvider = MappedUserScopeProvider
+  def buildOne: UserScopeProvider = DoobieUserScopeProvider
 }
 
 trait UserScope {
