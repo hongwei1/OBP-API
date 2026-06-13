@@ -10,7 +10,7 @@ object DynamicDataProvider extends SimpleInjector {
 
   val connectorMethodProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedDynamicDataProvider.type = MappedDynamicDataProvider
+  def buildOne: DynamicDataProvider = DoobieDynamicDataProvider
 }
 
 trait DynamicDataT {
@@ -41,6 +41,7 @@ trait DynamicDataProvider {
   def getAll(bankId: Option[String], entityName: String, userId: Option[String], isPersonalEntity: Boolean): List[DynamicDataT]
   def delete(bankId: Option[String], entityName: String, id: String, userId: Option[String], isPersonalEntity: Boolean): Box[Boolean]
   def existsData(bankId: Option[String], dynamicEntityName: String, userId: Option[String], isPersonalEntity: Boolean): Boolean
+  def existsById(entityName: String, id: String): Boolean
 
   // Community access methods - return ALL records regardless of userId/IsPersonalEntity
   def getAllCommunity(bankId: Option[String], entityName: String): List[DynamicDataT]

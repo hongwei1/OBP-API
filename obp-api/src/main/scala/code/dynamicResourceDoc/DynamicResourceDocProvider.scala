@@ -17,7 +17,7 @@ object DynamicResourceDocProvider extends SimpleInjector {
 
   val provider = new Inject(buildOne _) {}
 
-  def buildOne: MappedDynamicResourceDocProvider.type = MappedDynamicResourceDocProvider
+  def buildOne: DynamicResourceDocProvider = DoobieDynamicResourceDocProvider
 }
 
 case class JsonDynamicResourceDoc(

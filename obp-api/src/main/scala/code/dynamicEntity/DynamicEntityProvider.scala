@@ -24,7 +24,7 @@ object DynamicEntityProvider extends SimpleInjector {
 
   val connectorMethodProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedDynamicEntityProvider.type = MappedDynamicEntityProvider
+  def buildOne: DynamicEntityProvider = DoobieDynamicEntityProvider
 }
 
 trait DynamicEntityT {
@@ -401,7 +401,7 @@ object ReferenceType extends MdcLoggable {
       logger.info(s"========== Validating reference field: propertyName='$propertyName', typeName='$typeName', dynamicEntityName='$dynamicEntityName', value='$value' ==========")
       
       Future {
-        val exists = code.DynamicData.MappedDynamicDataProvider.existsById(dynamicEntityName, value)
+        val exists = code.DynamicData.DynamicDataProvider.connectorMethodProvider.vend.existsById(dynamicEntityName, value)
         if (exists) {
           logger.info(s"========== Reference validation SUCCESS: propertyName='$propertyName', dynamicEntityName='$dynamicEntityName', value='$value' ==========")
           ""
@@ -667,7 +667,7 @@ trait DynamicEntityProvider {
 
   def getDynamicEntities(bankId: Option[String], returnBothBankAndSystemLevel: Boolean): List[DynamicEntityT]
   
-  def getDynamicEntitiesByUserId(userId: String): List[DynamicEntity]
+  def getDynamicEntitiesByUserId(userId: String): List[DynamicEntityT]
 
   def createOrUpdate(dynamicEntity: DynamicEntityT): Box[DynamicEntityT]
 

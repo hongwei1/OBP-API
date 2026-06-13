@@ -13,7 +13,7 @@ object DynamicMessageDocProvider extends SimpleInjector {
 
   val provider = new Inject(buildOne _) {}
 
-  def buildOne: MappedDynamicMessageDocProvider.type = MappedDynamicMessageDocProvider
+  def buildOne: DynamicMessageDocProvider = DoobieDynamicMessageDocProvider
 }
 
 case class JsonDynamicMessageDoc(
