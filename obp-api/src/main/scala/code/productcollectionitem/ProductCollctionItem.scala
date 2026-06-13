@@ -13,7 +13,7 @@ object ProductCollectionItems extends SimpleInjector {
 
   val productCollectionItem = new Inject(buildOne _) {}
 
-  def buildOne: ProductCollectionItemProvider = MappedProductCollectionItemProvider
+  def buildOne: ProductCollectionItemProvider = DoobieProductCollectionItemProvider
   
 }
 
