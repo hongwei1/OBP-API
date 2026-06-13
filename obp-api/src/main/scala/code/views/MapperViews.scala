@@ -50,10 +50,10 @@ object MapperViews extends Views with MdcLoggable {
 
   private def getViewFromAccountAccess(accountAccess: AccountAccess) = {
     if (isValidSystemViewId(accountAccess.view_id.get)) {
-      ViewDefinition.findSystemView(accountAccess.view_id.get)
+      DoobieViewProvider.findSystemView(accountAccess.view_id.get)
         .map(v => v.bank_id(accountAccess.bank_id.get).account_id(accountAccess.account_id.get)) // in case system view do not contains the bankId, and accountId.
     } else {
-      ViewDefinition.findCustomView(accountAccess.bank_id.get, accountAccess.account_id.get, accountAccess.view_id.get)
+      DoobieViewProvider.findCustomView(accountAccess.bank_id.get, accountAccess.account_id.get, accountAccess.view_id.get)
     }
   }
 
@@ -169,7 +169,7 @@ object MapperViews extends Views with MdcLoggable {
     val viewId = bankIdAccountIdViewId.viewId.value
     val bankId = bankIdAccountIdViewId.bankId.value
     val accountId = bankIdAccountIdViewId.accountId.value
-    val viewDefinition = ViewDefinition.findCustomView(bankId, accountId, viewId)
+    val viewDefinition = DoobieViewProvider.findCustomView(bankId, accountId, viewId)
 
     viewDefinition match {
       case Full(v) => {
@@ -192,12 +192,12 @@ object MapperViews extends Views with MdcLoggable {
 
   def grantAccessToMultipleViews(views: List[BankIdAccountIdViewId], user: User, callContext: Option[CallContext]): Box[List[View]] = {
     val viewDefinitions: List[(ViewDefinition, BankIdAccountIdViewId)] = views.map {
-      uid => ViewDefinition.findCustomView(uid.bankId.value,uid.accountId.value, uid.viewId.value).map((_, uid))
-          .or(ViewDefinition.findSystemView(uid.viewId.value).map((_, uid)))
+      uid => DoobieViewProvider.findCustomView(uid.bankId.value,uid.accountId.value, uid.viewId.value).map((_, uid))
+          .or(DoobieViewProvider.findSystemView(uid.viewId.value).map((_, uid)))
     }.collect { case Full(v) => v}
 
     if (viewDefinitions.size != views.size) {
-      val failMsg = s"View definitions could be found only for views ${viewDefinitions.map(_._1.viewIdInternal)} Missing views: ${viewDefinitions.map(_._2).diff(views)}"
+      val failMsg = s"View definitions could be found only for views ${viewDefinitions.map(_._1.viewId.value)} Missing views: ${viewDefinitions.map(_._2).diff(views)}"
       //logger.debug(failMsg)
       Failure(failMsg) ~>
         APIFailure(s"One or more views not found", 404) //TODO: this should probably be a 400, but would break existing behaviour
@@ -215,12 +215,12 @@ object MapperViews extends Views with MdcLoggable {
   }
   def revokeAccessToMultipleViews(views: List[BankIdAccountIdViewId], user: User): Box[List[View]] = {
     val viewDefinitions: List[(ViewDefinition, BankIdAccountIdViewId)] = views.map {
-      uid => ViewDefinition.findCustomView(uid.bankId.value,uid.accountId.value, uid.viewId.value).map((_, uid))
-          .or(ViewDefinition.findSystemView(uid.viewId.value).map((_, uid)))
+      uid => DoobieViewProvider.findCustomView(uid.bankId.value,uid.accountId.value, uid.viewId.value).map((_, uid))
+          .or(DoobieViewProvider.findSystemView(uid.viewId.value).map((_, uid)))
     }.collect { case Full(v) => v}
 
     if (viewDefinitions.size != views.size) {
-      val failMsg = s"View definitions could be found only for views ${viewDefinitions.map(_._1.viewIdInternal)} Missing views: ${viewDefinitions.map(_._2).diff(views)}"
+      val failMsg = s"View definitions could be found only for views ${viewDefinitions.map(_._1.viewId.value)} Missing views: ${viewDefinitions.map(_._2).diff(views)}"
       //logger.debug(failMsg)
       Failure(failMsg) ~>
         APIFailure(s"One or more views not found", 404) //TODO: this should probably be a 400, but would break existing behaviour
@@ -238,7 +238,7 @@ object MapperViews extends Views with MdcLoggable {
   def revokeAccess(bankIdAccountIdViewId : BankIdAccountIdViewId, user : User) : Box[Boolean] = {
     val isRevokedCustomViewAccess =
     for {
-      customViewDefinition <- ViewDefinition.findCustomView(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value)
+      customViewDefinition <- DoobieViewProvider.findCustomView(bankIdAccountIdViewId.bankId.value, bankIdAccountIdViewId.accountId.value, bankIdAccountIdViewId.viewId.value)
       accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
         bankIdAccountIdViewId.bankId,
         bankIdAccountIdViewId.accountId,
@@ -251,7 +251,7 @@ object MapperViews extends Views with MdcLoggable {
     
     val isRevokedSystemViewAccess =
       for {
-        systemViewDefinition <- ViewDefinition.findSystemView(bankIdAccountIdViewId.viewId.value)
+        systemViewDefinition <- DoobieViewProvider.findSystemView(bankIdAccountIdViewId.viewId.value)
         accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
           bankIdAccountIdViewId.bankId,
           bankIdAccountIdViewId.accountId,
@@ -271,7 +271,7 @@ object MapperViews extends Views with MdcLoggable {
   def revokeAccessToSystemView(bankId: BankId, accountId: AccountId, view : View, user : User) : Box[Boolean] = {
     val res =
     for {
-      systemViewDefinition <- ViewDefinition.findSystemView(view.viewId.value)
+      systemViewDefinition <- DoobieViewProvider.findSystemView(view.viewId.value)
       accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
         bankId,
         accountId,
@@ -289,7 +289,7 @@ object MapperViews extends Views with MdcLoggable {
   //Custom View will have bankId and accountId inside the `View`, so no need both in the parameters
   def revokeAccessToCustomViewForConsumer(view : View, consumerId : String) : Box[Boolean] = {
     for {
-      customViewDefinition <- ViewDefinition.findCustomView(view.bankId.value, view.accountId.value, view.viewId.value)
+      customViewDefinition <- DoobieViewProvider.findCustomView(view.bankId.value, view.accountId.value, view.viewId.value)
       accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdConsumerId(
         customViewDefinition.bankId,
         customViewDefinition.accountId,
@@ -304,7 +304,7 @@ object MapperViews extends Views with MdcLoggable {
   //System View only have the viewId in inside the `View`, both bankId and accountId are empty in the `View`. So we need both in the parameters
   def revokeAccessToSystemViewForConsumer(bankId: BankId, accountId: AccountId, view : View, consumerId : String) : Box[Boolean] = {
     for {
-      systemViewDefinition <- ViewDefinition.findSystemView(view.viewId.value)
+      systemViewDefinition <- DoobieViewProvider.findSystemView(view.viewId.value)
       accountAccess  <- AccountAccess.findByBankIdAccountIdViewIdConsumerId(
         bankId,
         accountId,
