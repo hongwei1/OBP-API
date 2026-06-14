@@ -66,6 +66,18 @@ object DoobieEntitlementsProvider extends EntitlementProvider {
   private def findList(where: Fragment): List[DoobieEntitlement] =
     DoobieUtil.runQuery((selectCols ++ where).query[EntRow].to[List]).map(DoobieEntitlement(_))
 
+  def findAllByUserIds(userIds: List[String]): Map[String, List[Entitlement]] =
+    if (userIds.isEmpty) Map.empty
+    else {
+      val inList = userIds.map(id => fr"$id").reduceLeft((a, b) => a ++ fr"," ++ b)
+      DoobieUtil.runQuery(
+        (selectCols ++ fr"WHERE muserid IN (" ++ inList ++ fr") ORDER BY mrolename")
+          .query[EntRow].to[List]
+      ).map(DoobieEntitlement(_))
+       .groupBy(_.userId)
+       .map { case (uid, ents) => uid -> ents }
+    }
+
   override def getEntitlement(bankId: String, userId: String, roleName: String): Box[Entitlement] =
     findOne(fr"WHERE mbankid = ${nn(bankId)} AND muserid = ${nn(userId)} AND mrolename = ${nn(roleName)}")
 

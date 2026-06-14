@@ -4,6 +4,7 @@ import code.api.util.{APIUtil, ConsentJWT, DoobieUtil, JwtUtil, OBPBankId, OBPCo
 import code.consent.ConsentStatus.ConsentStatus
 import code.model.Consumer
 import code.model.dataAccess.ResourceUser
+import code.users.DoobieResourceUserProvider
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.User
 import com.openbankproject.commons.util.ApiStandards
@@ -134,9 +135,9 @@ object DoobieConsentProvider extends ConsentProvider with MdcLoggable {
         queryParams.collectFirst {
           case ProviderProviderId(v) =>
             val parts = v.split("\\|") match { case Array(a, b) => (a, b); case _ => ("", "") }
-            ResourceUser.findAll(By(ResourceUser.provider_, parts._1), By(ResourceUser.providerId, parts._2)) match {
-              case x :: Nil => Some(fr"muserid = ${x.userId}")
-              case _        => None
+            DoobieResourceUserProvider.findByProviderId(parts._1, parts._2) match {
+              case Some(u) => Some(fr"muserid = ${u.userId}")
+              case None    => None
             }
         }.flatten
       }

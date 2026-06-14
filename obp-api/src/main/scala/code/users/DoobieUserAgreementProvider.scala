@@ -56,4 +56,21 @@ object DoobieUserAgreementProvider extends UserAgreementProvider {
       case Some(r) => Full(toEntity(r))
       case None    => Empty
     }
+
+  def findAllByUserIds(userIds: List[String]): Map[String, List[UserAgreement]] =
+    if (userIds.isEmpty) Map.empty
+    else {
+      val inList = userIds.map(id => fr"$id").reduceLeft((a, b) => a ++ fr"," ++ b)
+      DoobieUtil.runQuery(
+        (selectCols ++ fr"WHERE userid IN (" ++ inList ++ fr")")
+          .query[UaRow].to[List]
+      ).map(toEntity)
+       .groupBy(_.userId)
+       .map { case (uid, all) =>
+         uid -> all.groupBy(_.agreementType)
+           .values
+           .flatMap(_.sortBy(_.Date.get)(Ordering[Date].reverse).headOption)
+           .toList
+       }
+    }
 }

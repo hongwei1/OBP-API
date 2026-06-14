@@ -4,7 +4,7 @@ import code.api.util.Consent.logger
 
 import java.util.Date
 import code.api.util._
-import code.entitlement.{Entitlement, MappedEntitlement}
+import code.entitlement.{DoobieEntitlementsProvider, Entitlement, MappedEntitlement}
 import code.loginattempts.LoginAttempt.maxBadLoginAttempts
 import code.model.dataAccess.{AuthUser, ResourceUser}
 import doobie._
@@ -255,22 +255,13 @@ object LiftUsers extends Users with MdcLoggable{
     else {
       val userIds = rows.map(_.userId)
 
-      // Batch-fetch entitlements for all returned users (single IN query).
+      // Batch-fetch entitlements for all returned users (single Doobie IN query).
       val entitlementsByUserId: Map[String, List[Entitlement]] =
-        MappedEntitlement.findAll(ByList(MappedEntitlement.mUserId, userIds))
-          .groupBy(_.userId)
-          .map { case (uid, ents) => uid -> ents.sortBy(_.roleName).toList }
+        DoobieEntitlementsProvider.findAllByUserIds(userIds)
 
       // Batch-fetch agreements, then reduce to most-recent per (userId, agreementType).
       val agreementsByUserId: Map[String, List[UserAgreement]] =
-        UserAgreement.findAll(ByList(UserAgreement.UserId, userIds))
-          .groupBy(_.userId)
-          .map { case (uid, all) =>
-            uid -> all.groupBy(_.agreementType)
-              .values
-              .flatMap(_.sortBy(_.Date.get)(Ordering[Date].reverse).headOption)
-              .toList
-          }
+        DoobieUserAgreementProvider.findAllByUserIds(userIds)
 
       val totalEntitlements = entitlementsByUserId.values.map(_.size).sum
       val totalAgreements = agreementsByUserId.values.map(_.size).sum
@@ -370,15 +361,13 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   override def bulkDeleteAllResourceUsers(): Box[Boolean] = {
-    Full( ResourceUser.bulkDelete_!!() )
+    DoobieUtil.runQuery(sql"DELETE FROM resourceuser".update.run)
+    Full(true)
   }
 
   override def deleteResourceUser(userId: Long): Box[Boolean] = {
-    for {
-      u <- ResourceUser.find(By(ResourceUser.id, userId))
-    } yield {
-      u.delete_!
-    }
+    val deleted = DoobieUtil.runQuery(sql"DELETE FROM resourceuser WHERE id = $userId".update.run)
+    if (deleted > 0) Full(true) else Empty
   }
   override def scrambleDataOfResourceUser(userPrimaryKey: UserPrimaryKey): Box[Boolean] = {
     for {
