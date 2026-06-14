@@ -74,7 +74,7 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
       row.sub.foreach(c.sub(_))
       row.isActive.foreach(c.isActive(_))
       row.name.foreach(c.name(_))
-      row.appType.foreach(c.appType(_))
+      c.appType(row.appType.getOrElse(""))
       row.description.foreach(c.description(_))
       row.developerEmail.foreach(c.developerEmail(_))
       row.redirectUrl.foreach(c.redirectURL(_))

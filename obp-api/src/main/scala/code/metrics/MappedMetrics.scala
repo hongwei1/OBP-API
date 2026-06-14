@@ -275,25 +275,27 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
 
   private def metricRowToEntity(row: MetricRowDoobie): MappedMetric = {
     val m = MappedMetric.create
-    m.id(row.id)
-    row.url.foreach(m.url(_))
-    row.duration.foreach(m.duration(_))
-    row.userName.foreach(m.userName(_))
-    row.date.foreach(ts => m.date(new Date(ts.getTime)))
-    row.apiInstanceId.foreach(m.apiInstanceId(_))
-    row.sourceIp.foreach(m.sourceIp(_))
-    row.targetIp.foreach(m.targetIp(_))
-    row.developerEmail.foreach(m.developerEmail(_))
-    row.httpCode.foreach(m.httpCode(_))
-    row.consumerId.foreach(m.consumerId(_))
-    row.userId.foreach(m.userId(_))
-    row.correlationId.foreach(m.correlationId(_))
-    row.verb.foreach(m.verb(_))
-    row.consentReferenceId.foreach(m.consentReferenceId(_))
-    row.appName.foreach(m.appName(_))
-    row.implementedByPartialFunction.foreach(m.implementedByPartialFunction(_))
-    row.implementedInVersion.foreach(m.implementedInVersion(_))
-    row.responseBody.foreach(m.responseBody(_))
+    m.runSafe {
+      m.id(row.id)
+      row.url.foreach(m.url(_))
+      row.duration.foreach(m.duration(_))
+      row.userName.foreach(m.userName(_))
+      row.date.foreach(ts => m.date(new Date(ts.getTime)))
+      row.apiInstanceId.foreach(m.apiInstanceId(_))
+      row.sourceIp.foreach(m.sourceIp(_))
+      row.targetIp.foreach(m.targetIp(_))
+      row.developerEmail.foreach(m.developerEmail(_))
+      row.httpCode.foreach(m.httpCode(_))
+      row.consumerId.foreach(m.consumerId(_))
+      row.userId.foreach(m.userId(_))
+      row.correlationId.foreach(m.correlationId(_))
+      row.verb.foreach(m.verb(_))
+      row.consentReferenceId.foreach(m.consentReferenceId(_))
+      row.appName.foreach(m.appName(_))
+      row.implementedByPartialFunction.foreach(m.implementedByPartialFunction(_))
+      row.implementedInVersion.foreach(m.implementedInVersion(_))
+      row.responseBody.foreach(m.responseBody(_))
+    }
     m
   }
 

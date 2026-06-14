@@ -14,7 +14,7 @@ import net.liftweb.mapper._
  *
  * Table columns (created by Lift Schemifier, kept for backward compat):
  *   id, runid, apiinstanceid, startedat, endedat, durationms,
- *   rowsmovedtoarchive, rowsdeletefromarchive, success, remark
+ *   rowsmovedtoarchive, rowsdeletedfromarchive, success, remark
  */
 case class MetricsArchiveRunRow(
   runId: String,
@@ -88,7 +88,7 @@ object MetricsArchiveRun extends MetricsArchiveRun with LongKeyedMetaMapper[Metr
     DoobieUtil.runQuery(
       sql"""INSERT INTO metricsarchiverun
               (runid, apiinstanceid, startedat, endedat, durationms,
-               rowsmovedtoarchive, rowsdeletefromarchive, success, remark)
+               rowsmovedtoarchive, rowsdeletedfromarchive, success, remark)
             VALUES
               ($runId, $apiInstanceId, $startedAtTs, $endedAtTs, $durationMs,
                $rowsMovedToArchive, $rowsDeletedFromArchive, $success, $remarkStr)"""
@@ -118,7 +118,7 @@ object MetricsArchiveRun extends MetricsArchiveRun with LongKeyedMetaMapper[Metr
   /** Most recent run by start time, if any. */
   def lastRun: Option[MetricsArchiveRunRow] = DoobieUtil.runQuery(
     fr"""SELECT runid, apiinstanceid, startedat, endedat, durationms,
-                rowsmovedtoarchive, rowsdeletefromarchive, success, remark
+                rowsmovedtoarchive, rowsdeletedfromarchive, success, remark
          FROM metricsarchiverun ORDER BY startedat DESC LIMIT 1"""
       .query[MetricsArchiveRunRow].option
   )
@@ -126,7 +126,7 @@ object MetricsArchiveRun extends MetricsArchiveRun with LongKeyedMetaMapper[Metr
   /** Most recent successful run by start time, if any. */
   def lastSuccessfulRun: Option[MetricsArchiveRunRow] = DoobieUtil.runQuery(
     fr"""SELECT runid, apiinstanceid, startedat, endedat, durationms,
-                rowsmovedtoarchive, rowsdeletefromarchive, success, remark
+                rowsmovedtoarchive, rowsdeletedfromarchive, success, remark
          FROM metricsarchiverun WHERE success = true ORDER BY startedat DESC LIMIT 1"""
       .query[MetricsArchiveRunRow].option
   )
