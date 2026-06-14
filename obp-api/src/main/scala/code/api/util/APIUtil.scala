@@ -59,7 +59,8 @@ import code.bankconnectors.Connector
 import code.consumer.Consumers
 import code.customer.CustomerX
 import code.entitlement.Entitlement
-import code.etag.MappedETag
+import doobie._
+import doobie.implicits._
 import code.metrics._
 import code.model._
 import code.model.dataAccess.AuthUser
@@ -87,7 +88,6 @@ import org.json4s.JsonAST.{JField, JNothing, JObject, JString, JValue}
 import org.json4s.ParserUtil.ParseException
 import org.json4s._
 import com.openbankproject.commons.util.JsonAliases._
-import net.liftweb.mapper.By
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import org.apache.commons.io.IOUtils
@@ -398,28 +398,23 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       epochTime
     }
 
-    def asyncUpdate(row: MappedETag, hash: String): Future[Boolean] = {
-      Future { // Async update
-        row
-          .LastUpdatedMSSinceEpoch(System.currentTimeMillis)
-          .ETagValue(hash)
-          .save
-      }
+    def asyncUpdate(id: Long, hash: String): Future[Boolean] = Future {
+      DoobieUtil.runQuery(
+        sql"UPDATE etag SET etagvalue = $hash, lastupdatedmssinceepoch = ${System.currentTimeMillis()} WHERE id = $id".update.run
+      ) > 0
     }
 
-    def asyncCreate(cacheKey: String, hash: String): Future[Boolean] = {
-      Future { // Async create
-        tryo(MappedETag.create
-          .ETagResource(cacheKey)
-          .ETagValue(hash)
-          .LastUpdatedMSSinceEpoch(System.currentTimeMillis)
-          .save) match {
-          case Full(value) => value
-          case other =>
-            logger.debug(s"checkIfModifiedSinceHeader.asyncCreate($cacheKey, $hash)")
-            logger.debug(other)
-            false
-        }
+    def asyncCreate(cacheKey: String, hash: String): Future[Boolean] = Future {
+      try {
+        DoobieUtil.runQuery(
+          sql"""INSERT INTO etag (etagresource, etagvalue, lastupdatedmssinceepoch)
+                VALUES ($cacheKey, $hash, ${System.currentTimeMillis()})""".update.run
+        ) > 0
+      } catch {
+        case e: Exception =>
+          logger.debug(s"checkIfModifiedSinceHeader.asyncCreate($cacheKey, $hash)")
+          logger.debug(e)
+          false
       }
     }
 
@@ -440,16 +435,21 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     val eTag = HashUtil.calculateETag(url, httpBody)
 
     if(httpVerb.toUpperCase() == "GET" || httpVerb.toUpperCase() == "HEAD") { // If-Modified-Since can only be used with a GET or HEAD
-      val validETag = MappedETag.find(By(MappedETag.ETagResource, cacheKey)) match {
-        case Full(row) if row.lastUpdatedMSSinceEpoch < headerValueToMillis() =>
+      case class ETagRow(id: Long, eTagValue: String, lastUpdatedMSSinceEpoch: Long)
+      val rowOpt: Option[ETagRow] = DoobieUtil.runQuery(
+        fr"SELECT id, etagvalue, lastupdatedmssinceepoch FROM etag WHERE etagresource = $cacheKey LIMIT 1"
+          .query[ETagRow].option
+      )
+      val validETag = rowOpt match {
+        case Some(row) if row.lastUpdatedMSSinceEpoch < headerValueToMillis() =>
           val modified = row.eTagValue != eTag
           if(modified) {
-            asyncUpdate(row, eTag)
+            asyncUpdate(row.id, eTag)
             false // ETAg is outdated
           } else {
             true // ETAg is up to date
           }
-        case Empty =>
+        case None =>
           asyncCreate(cacheKey, eTag)
           false // There is no ETAg at all
         case _ =>

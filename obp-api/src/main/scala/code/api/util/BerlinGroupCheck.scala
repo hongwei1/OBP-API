@@ -5,15 +5,15 @@ import code.api.berlin.group.v1_3.BgSpecValidation
 import code.api.{APIFailureNewStyle, RequestHeader}
 import code.api.util.APIUtil.{HTTPParam, OBPReturnType, fullBoxOrException}
 import code.api.util.BerlinGroupSigning.{getCertificateFromTppSignatureCertificate, getHeaderValue}
-import code.metrics.MappedMetric
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.User
 import com.openbankproject.commons.util.ApiVersion
+import doobie._
+import doobie.implicits._
 import net.liftweb.common.{Box, Empty}
 
 import scala.concurrent.Future
 import com.openbankproject.commons.ExecutionContext.Implicits.global
-import net.liftweb.mapper.By
 
 object BerlinGroupCheck extends MdcLoggable {
 
@@ -109,7 +109,10 @@ object BerlinGroupCheck extends MdcLoggable {
     val resultWithRequestIdUsedTwiceCheck: Option[(Box[User], Option[CallContext])] = {
       val alreadyUsed = maybeRequestId match {
         case Some(id) =>
-          MappedMetric.findAll(By(MappedMetric.correlationId, id), By(MappedMetric.verb, "POST"), By(MappedMetric.httpCode, 201)).nonEmpty
+          DoobieUtil.runQuery(
+            fr"SELECT COUNT(*) FROM metric WHERE correlationid = $id AND verb = 'POST' AND httpcode = 201"
+              .query[Long].unique
+          ) > 0
         case None =>
           false
       }

@@ -40,6 +40,13 @@ object DoobieAuthUserProvider {
       (selectAuth ++ fr"WHERE username = $username AND provider = $provider LIMIT 1")
         .query[AuthRow].option)
 
+  /** Return (firstName, lastName) for the authuser whose user_c == userPk, or None if not found. */
+  def getNamesByUserFk(userPk: Long): Option[(String, String)] =
+    DoobieUtil.runQuery(
+      fr"SELECT firstname, lastname FROM authuser WHERE user_c = $userPk LIMIT 1"
+        .query[(Option[String], Option[String])].option
+    ).map { case (fn, ln) => (fn.getOrElse(""), ln.getOrElse("")) }
+
   /**
    * Verify a candidate password against the stored hash + salt, exactly as
    * Lift's `MappedPassword.match_?` does.

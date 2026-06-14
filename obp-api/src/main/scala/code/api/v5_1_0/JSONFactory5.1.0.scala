@@ -57,7 +57,7 @@ import code.ratelimiting.RateLimiting
 import code.users.Users
 import com.openbankproject.commons.model.UserAttributeTrait
 import code.util.Helper.MdcLoggable
-import code.views.system.{AccountAccess, ViewDefinition, ViewPermission}
+import code.views.system.{ViewDefinition, ViewPermission}
 import com.openbankproject.commons.model._
 import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.common.{Box, Full}
@@ -968,9 +968,9 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
       debug_info = debugInfo
     )
   }
-  def getAccountAccessUniqueIndexCheck(groupedRows: Map[String, List[AccountAccess]]): CheckSystemIntegrityJsonV510 = {
-    val success = groupedRows.size == 0
-    val debugInfo = if(success) None else Some(s"Incorrect system views: ${groupedRows.map(_._1).mkString(",")}")
+  def getAccountAccessUniqueIndexCheck(duplicateKeys: Map[String, Int]): CheckSystemIntegrityJsonV510 = {
+    val success = duplicateKeys.isEmpty
+    val debugInfo = if(success) None else Some(s"Incorrect system views: ${duplicateKeys.keys.mkString(",")}")
     CheckSystemIntegrityJsonV510(
       success = success,
       debug_info = debugInfo
