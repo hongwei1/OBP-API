@@ -5266,7 +5266,7 @@ object Http4s600 {
             date = new java.util.Date()
             (activeRateLimit, ids) <- RateLimitingUtil.getActiveRateLimitsWithIds(consumer.consumerId.get, date)
           } yield CurrentConsumerJsonV600(
-            consumer.name.get, consumer.appType.get, consumer.description.get, consumer.consumerId.get,
+            consumer.name.get, Option(consumer.appType.get).getOrElse(""), consumer.description.get, consumer.consumerId.get,
             JSONFactory600.createActiveRateLimitsJsonV600FromCallLimit(activeRateLimit, ids, date),
             JSONFactory600.createRedisCallCountersJson(counters))
         }
