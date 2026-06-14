@@ -23,8 +23,11 @@ class ConfirmationOfFundsServicePIISApiTest extends BerlinGroupServerSetupV1_3 w
   val checkAvailabilityOfFundsJsonBody = APIMethods_ConfirmationOfFundsServicePIISApi
     .resourceDocs
     .filter(_.partialFunctionName == "checkAvailabilityOfFunds")
-    .head.exampleRequestBody.asInstanceOf[JvalueCaseClass] //All the Json String convert to JvalueCaseClass implicitly
-    .jvalueToCaseclass
+    .head.exampleRequestBody match {
+      case jvc: JvalueCaseClass => jvc.jvalueToCaseclass
+      case jv: JValue           => jv
+      case x => throw new RuntimeException(s"Unexpected exampleRequestBody type: ${x.getClass}")
+    }
   
 
   feature(s"BG v1.3 - ${checkAvailabilityOfFunds.name}") {
