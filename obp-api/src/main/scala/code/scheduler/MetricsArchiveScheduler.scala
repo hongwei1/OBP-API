@@ -1,14 +1,15 @@
 package code.scheduler
 
+import java.sql.Timestamp
 import java.util.concurrent.TimeUnit
 import java.util.{Calendar, Date}
 import code.actorsystem.ObpActorSystem
 import code.api.Constant
-import code.api.util.APIUtil.generateUUID
-import code.metrics.{APIMetric, APIMetrics, MappedMetric, MetricArchive, MetricsArchiveRun, MetricsProps}
+import code.api.util.{APIUtil, DoobieUtil}
+import code.metrics.{APIMetric, APIMetrics, MetricsArchiveRun, MetricsProps}
 import code.util.Helper.MdcLoggable
-import net.liftweb.common.Full
-import net.liftweb.mapper.{Ascending, By, By_<=, By_>=, MaxRows, OrderBy}
+import doobie._
+import doobie.implicits._
 
 import scala.concurrent.duration._
 
@@ -47,6 +48,50 @@ object MetricsArchiveScheduler extends MdcLoggable {
   private val jobName = "MetricsArchiveScheduler"
   private val apiInstanceId = Constant.ApiInstanceId
 
+  private case class JobRow(id: Long, jobId: String, apiInstanceId: String, createdAt: Timestamp)
+
+  private case class MetricRow(
+    id: Long,
+    userId: Option[String],
+    url: Option[String],
+    dateC: Option[Timestamp],
+    duration: Option[Long],
+    userName: Option[String],
+    appName: Option[String],
+    developerEmail: Option[String],
+    consumerId: Option[String],
+    implementedByPartialFunction: Option[String],
+    implementedInVersion: Option[String],
+    verb: Option[String],
+    httpCode: Option[Int],
+    correlationId: String,
+    responseBody: Option[String],
+    sourceIp: Option[String],
+    targetIp: Option[String],
+    apiInstanceIdField: Option[String],
+    consentReferenceId: Option[String]
+  ) extends APIMetric {
+    override def getMetricId(): Long = id
+    override def getUrl(): String = url.getOrElse("")
+    override def getDate(): Date = dateC.map(t => new Date(t.getTime)).orNull
+    override def getDuration(): Long = duration.getOrElse(0L)
+    override def getUserId(): String = userId.getOrElse("")
+    override def getUserName(): String = userName.getOrElse("")
+    override def getAppName(): String = appName.getOrElse("")
+    override def getDeveloperEmail(): String = developerEmail.getOrElse("")
+    override def getConsumerId(): String = consumerId.getOrElse("")
+    override def getImplementedByPartialFunction(): String = implementedByPartialFunction.getOrElse("")
+    override def getImplementedInVersion(): String = implementedInVersion.getOrElse("")
+    override def getVerb(): String = verb.getOrElse("")
+    override def getHttpCode(): Int = httpCode.getOrElse(0)
+    override def getCorrelationId(): String = correlationId
+    override def getResponseBody(): String = responseBody.getOrElse("")
+    override def getSourceIp(): String = sourceIp.getOrElse("")
+    override def getTargetIp(): String = targetIp.getOrElse("")
+    override def getApiInstanceId(): String = apiInstanceIdField.getOrElse("")
+    override def getConsentReferenceId(): String = consentReferenceId.orNull
+  }
+
   def start(intervalInSeconds: Long): Unit = {
     logger.info("Hello from MetricsArchiveScheduler.start")
 
@@ -59,17 +104,17 @@ object MetricsArchiveScheduler extends MdcLoggable {
     // `By(Name, apiInstanceId)` never matched and a redeploy could not self-heal
     // (only the 5-day sweep below would, leaving archiving stalled up to 5 days).
     // Keyed on this instance's own id, so another node's running job is untouched.
-    JobScheduler.findAll(By(JobScheduler.ApiInstanceId, apiInstanceId)).map { i =>
-      logger.info(s"Deleting leftover Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: $apiInstanceId")
-      i
-    }.map(_.delete_!)
+    DoobieUtil.runQuery(
+      sql"DELETE FROM jobscheduler WHERE apiinstanceid = $apiInstanceId".update.run
+    )
+
     logger.info(s"Delete all Jobs older than 5 days")
     val fiveDaysAgo: Date = new Date(new Date().getTime - (oneDayInMillis * 5))
-    JobScheduler.findAll(By_<=(JobScheduler.createdAt, fiveDaysAgo)).map { i =>
-      println(s"Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: ${apiInstanceId}")
-      i
-    }.map(_.delete_!)
-    
+    val fiveDaysAgoTs = new Timestamp(fiveDaysAgo.getTime)
+    DoobieUtil.runQuery(
+      sql"DELETE FROM jobscheduler WHERE createdat <= $fiveDaysAgoTs".update.run
+    )
+
     scheduler.schedule(
       initialDelay = Duration(intervalInSeconds, TimeUnit.SECONDS),
       interval = Duration(intervalInSeconds, TimeUnit.SECONDS),
@@ -93,17 +138,21 @@ object MetricsArchiveScheduler extends MdcLoggable {
    * respects exactly the same checks and retention rules as a scheduled one.
    */
   def runOnce(): RunOutcome = {
-    JobScheduler.find(By(JobScheduler.Name, jobName)) match {
-      case Full(job) => // There is an ongoing/hanging job
-        logger.info(s"MetricsArchiveScheduler.runOnce skipped due to ongoing job. Job ID: ${job.JobId.get}, started at: ${job.createdAt.get}, api_instance_id: ${job.ApiInstanceId.get}")
-        RunSkippedAlreadyInProgress(job.JobId.get, job.ApiInstanceId.get, job.createdAt.get)
-      case _ => // Start a new job
-        val uniqueId = generateUUID()
-        val job = JobScheduler.create
-          .JobId(uniqueId)
-          .Name(jobName)
-          .ApiInstanceId(apiInstanceId)
-          .saveMe()
+    DoobieUtil.runQuery(
+      fr"SELECT id, jobid, apiinstanceid, createdat FROM jobscheduler WHERE name = $jobName LIMIT 1"
+        .query[JobRow].option
+    ) match {
+      case Some(job) =>
+        logger.info(s"MetricsArchiveScheduler.runOnce skipped due to ongoing job. Job ID: ${job.jobId}, started at: ${new Date(job.createdAt.getTime)}, api_instance_id: ${job.apiInstanceId}")
+        RunSkippedAlreadyInProgress(job.jobId, job.apiInstanceId, new Date(job.createdAt.getTime))
+      case None =>
+        val uniqueId = APIUtil.generateUUID()
+        val now = new Timestamp(System.currentTimeMillis())
+        val insertedId: Long = DoobieUtil.runQuery(
+          sql"""INSERT INTO jobscheduler (jobid, name, apiinstanceid, createdat, updatedat)
+                VALUES ($uniqueId, $jobName, $apiInstanceId, $now, $now)"""
+            .update.withUniqueGeneratedKeys[Long]("id")
+        )
         logger.info(s"Starting Job ID: $uniqueId")
         val startedAt = new Date()
         var rowsMoved = 0
@@ -129,7 +178,7 @@ object MetricsArchiveScheduler extends MdcLoggable {
               rowsMoved, rowsDeleted, success = false, Some(Option(e.getMessage).getOrElse(e.toString)))
             RunCompleted(run)
         } finally {
-          JobScheduler.delete_!(job) // Allow future jobs
+          DoobieUtil.runQuery(sql"DELETE FROM jobscheduler WHERE id = $insertedId".update.run)
           logger.info(s"End of Job ID: $uniqueId (rows moved to archive: $rowsMoved, outdated archive rows deleted: $rowsDeleted)")
         }
     }
@@ -141,10 +190,14 @@ object MetricsArchiveScheduler extends MdcLoggable {
     val currentTime = new Date()
     val days = MetricsProps.retainArchiveMetricsDays
     val someYearsAgo: Date = new Date(currentTime.getTime - (oneDayInMillis * days))
+    val someYearsAgoTs = new Timestamp(someYearsAgo.getTime)
     // Count before deleting so the run log records how many rows were removed.
-    val outdatedCount = MetricArchive.count(By_<=(MetricArchive.date, someYearsAgo)).toInt
-    // Delete the outdated rows from the table "MetricArchive"
-    MetricArchive.bulkDelete_!!(By_<=(MetricArchive.date, someYearsAgo))
+    val outdatedCount = DoobieUtil.runQuery(
+      fr"SELECT COUNT(*) FROM metricarchive WHERE date_c <= $someYearsAgoTs".query[Long].unique
+    ).toInt
+    DoobieUtil.runQuery(
+      fr"DELETE FROM metricarchive WHERE date_c <= $someYearsAgoTs".update.run
+    )
     logger.info(s"Bye from MetricsArchiveScheduler.deleteOutdatedRowsFromMetricsArchive (deleted $outdatedCount rows)")
     outdatedCount
   }
@@ -156,6 +209,7 @@ object MetricsArchiveScheduler extends MdcLoggable {
     val currentTime = new Date()
     val days = MetricsProps.retainMetricsDays
     val someDaysAgo: Date = new Date(currentTime.getTime - (oneDayInMillis * days))
+    val someDaysAgoTs = new Timestamp(someDaysAgo.getTime)
     // Batch-size rationale lives at MetricsProps.RetainMetricsMoveLimitDefault.
     val limit = MetricsProps.retainMetricsMoveLimit
     // Query the live Metric table directly — oldest first, up to `limit` rows.
@@ -168,10 +222,15 @@ object MetricsArchiveScheduler extends MdcLoggable {
     // permanently occupying the candidate window and stalling the job. copyRowToMetricsArchive
     // now assigns those rows a synthetic "ORIGINALLY_NOT_SET-<uuid>" correlation id so
     // they archive normally instead of accumulating forever in the live table.
-    val candidateMetricRowsToMove: List[MappedMetric] = MappedMetric.findAll(
-      By_<=(MappedMetric.date, someDaysAgo),
-      OrderBy(MappedMetric.date, Ascending),
-      MaxRows(limit)
+    val candidateMetricRowsToMove: List[MetricRow] = DoobieUtil.runQuery(
+      (fr"""SELECT id, userid, url, date_c, duration, username, appname, developeremail,
+                   consumerid, implementedbypartialfunction, implementedinversion, verb, httpcode,
+                   correlationid, responsebody, sourceip, targetip, apiinstanceid, consent_reference_id
+            FROM metric
+            WHERE date_c <= $someDaysAgoTs
+            ORDER BY date_c ASC
+            LIMIT $limit""")
+        .query[MetricRow].to[List]
     )
     logger.info(s"MetricsArchiveScheduler.conditionalDeleteMetricsRow: ${candidateMetricRowsToMove.length} candidate rows to move")
 
@@ -181,8 +240,11 @@ object MetricsArchiveScheduler extends MdcLoggable {
       // Copy first, then delete the source row only if the archive copy both saved
       // and is verifiably readable back by metricId.
       val copied = copyRowToMetricsArchive(i)
-      if (copied && MetricArchive.find(By(MetricArchive.metricId, i.getMetricId())).isDefined) {
-        MappedMetric.bulkDelete_!!(By(MappedMetric.id, i.getMetricId()))
+      val archiveExists = DoobieUtil.runQuery(
+        fr"SELECT COUNT(*) FROM metricarchive WHERE metricid = ${i.getMetricId()}".query[Long].unique
+      ) > 0
+      if (copied && archiveExists) {
+        DoobieUtil.runQuery(sql"DELETE FROM metric WHERE id = ${i.getMetricId()}".update.run)
         moved += 1
       } else {
         failed += 1
@@ -203,7 +265,7 @@ object MetricsArchiveScheduler extends MdcLoggable {
     val rawCorrelationId = i.getCorrelationId()
     val correlationId =
       if (rawCorrelationId == null || rawCorrelationId.isEmpty)
-        s"ORIGINALLY_NOT_SET-${generateUUID()}"
+        s"ORIGINALLY_NOT_SET-${APIUtil.generateUUID()}"
       else
         rawCorrelationId
     APIMetrics.apiMetrics.vend.saveMetricsArchive(
@@ -238,5 +300,5 @@ object MetricsArchiveScheduler extends MdcLoggable {
     c.set(Calendar.MILLISECOND, 0)
     c.getTimeInMillis - System.currentTimeMillis
   }
-  
+
 }
