@@ -47,6 +47,36 @@ object DoobieAuthUserProvider {
         .query[(Option[String], Option[String])].option
     ).map { case (fn, ln) => (fn.getOrElse(""), ln.getOrElse("")) }
 
+  /** Validation-email fields: (email, validated, uniqueId) for a local-provider user. */
+  case class ValidationAuthRow(email: Option[String], validated: Option[Boolean], uniqueId: Option[String])
+
+  def findValidationInfoByUsernameAndProvider(username: String, provider: String): Option[ValidationAuthRow] =
+    DoobieUtil.runQuery(
+      fr"SELECT email, validated, uniqueid FROM authuser WHERE username = $username AND provider = $provider LIMIT 1"
+        .query[ValidationAuthRow].option
+    )
+
+  /** Password-reset fields: id, username, email, validated for a user looked up by username. */
+  case class PasswordResetAuthRow(id: Long, username: Option[String], email: Option[String], validated: Option[Boolean])
+
+  def findPasswordResetInfoByUsername(username: String): Option[PasswordResetAuthRow] =
+    DoobieUtil.runQuery(
+      fr"SELECT id, username, email, validated FROM authuser WHERE username = $username LIMIT 1"
+        .query[PasswordResetAuthRow].option
+    )
+
+  def findPasswordResetInfoByUsernameAndProvider(username: String, provider: String): Option[PasswordResetAuthRow] =
+    DoobieUtil.runQuery(
+      fr"SELECT id, username, email, validated FROM authuser WHERE username = $username AND provider = $provider LIMIT 1"
+        .query[PasswordResetAuthRow].option
+    )
+
+  /** Update uniqueid for the authuser row with the given primary-key id. */
+  def updateUniqueId(id: Long, newUniqueId: String): Unit =
+    DoobieUtil.runQuery(
+      sql"UPDATE authuser SET uniqueid = $newUniqueId WHERE id = $id".update.run
+    )
+
   /**
    * Verify a candidate password against the stored hash + salt, exactly as
    * Lift's `MappedPassword.match_?` does.

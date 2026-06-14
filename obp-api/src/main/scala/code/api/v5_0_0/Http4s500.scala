@@ -25,7 +25,7 @@ import code.api.v4_0_0.PostCounterpartyJson400
 import code.api.v5_0_0.JSONFactory500.{createPhysicalCardJson, createViewJsonV500, createViewsIdsJsonV500, createViewsJsonV500}
 import code.api.v5_1_0.{CreateCustomViewJson, PostCounterpartyLimitV510, PostVRPConsentRequestJsonV510}
 import code.bankconnectors.Connector
-import code.consent.{ConsentRequests, ConsentStatus, Consents, MappedConsent}
+import code.consent.{ConsentRequests, ConsentStatus, Consents}
 import code.consumer.Consumers
 import code.entitlement.Entitlement
 import code.metadata.counterparties.MappedCounterparty
@@ -52,7 +52,6 @@ import com.openbankproject.commons.util.json
 import com.openbankproject.commons.util.JsonAliases.prettyRender
 import org.json4s.{Extraction, Formats}
 import com.openbankproject.commons.util.JsonAliases.compactRender
-import net.liftweb.mapper.By
 import net.liftweb.util.{Helpers, Props, StringHelpers}
 import org.http4s.{HttpRoutes, MediaType, Method, Request, Response, Status, Uri}
 import org.http4s.dsl.io._
@@ -1288,8 +1287,7 @@ object Http4s500 {
               APIUtil.ConsumerIdPair(grantorConsumerId, granteeConsumerId))
             mappedConsent <- if (shouldSkipConsentScaForConsumerIdPair) {
               Future {
-                MappedConsent.find(By(MappedConsent.mConsentId, createdConsent.consentId))
-                  .map(_.mStatus(ConsentStatus.ACCEPTED.toString).saveMe()).head
+                Consents.consentProvider.vend.updateConsentStatus(createdConsent.consentId, ConsentStatus.ACCEPTED)
               }
             } else {
               val challengeText = s"Your consent challenge : ${challengeAnswer}, Application: $applicationText"

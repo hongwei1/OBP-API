@@ -36,7 +36,6 @@ import com.openbankproject.commons.util.{ApiVersion, ApiVersionStatus, ScannedAp
 import net.liftweb.common._
 import org.json4s.JsonAST.JValue
 import org.json4s.{Extraction, Formats}
-import net.liftweb.mapper.By
 import org.http4s._
 import org.http4s.dsl.io._
 
@@ -943,7 +942,10 @@ object Http4s200 {
               fullPasswordValidation(body.password)
             }
             _ <- code.util.Helper.booleanToFuture(DuplicateUsername, failCode = 409, cc = Some(cc)) {
-              AuthUser.find(By(AuthUser.username, body.username)).isEmpty
+              import doobie._; import doobie.implicits._
+              code.api.util.DoobieUtil.runQuery(
+                fr"SELECT COUNT(*) FROM authuser WHERE username = ${body.username}".query[Long].unique
+              ) == 0L
             }
             userCreated <- Future {
               AuthUser.create

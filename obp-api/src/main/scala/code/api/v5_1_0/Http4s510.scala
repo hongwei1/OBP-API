@@ -37,7 +37,7 @@ import code.api.v4_0_0.JSONFactory400.{createAccountBalancesJson, createBalances
 import code.api.v5_0_0.{Http4s500, JSONFactory500}
 import code.api.v5_1_0.JSONFactory510.{createCallLimitJson, createConsentsInfoJsonV510, createConsentsJsonV510, createRegulatedEntitiesJson, createRegulatedEntityJson}
 import code.bankconnectors.Connector
-import code.consent.{ConsentRequests, ConsentStatus, Consents, MappedConsent}
+import code.consent.{ConsentRequests, ConsentStatus, Consents}
 import code.consumer.Consumers
 import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
@@ -4739,8 +4739,7 @@ object Http4s510 {
               APIUtil.ConsumerIdPair(grantorConsumerId, granteeConsumerId))
             mappedConsent <- if (shouldSkip) {
               Future {
-                MappedConsent.find(By(MappedConsent.mConsentId, createdConsent.consentId))
-                  .map(_.mStatus(ConsentStatus.ACCEPTED.toString).saveMe()).head
+                Consents.consentProvider.vend.updateConsentStatus(createdConsent.consentId, ConsentStatus.ACCEPTED)
               }
             } else {
               val challengeText = s"Your consent challenge : ${challengeAnswer}, Application: $applicationText"
