@@ -4,7 +4,7 @@ package code.TransactionTypes
 import code.api.util.APIUtil
 import code.api.v2_0_0.TransactionTypeJsonV200
 import code.model._
-import code.transaction_types.MappedTransactionTypeProvider
+import code.transaction_types.{DoobieTransactionTypeProvider, MappedTransactionTypeProvider}
 import com.openbankproject.commons.model.{AmountOfMoney, BankId, TransactionTypeId}
 import net.liftweb.common.{Box, Logger}
 import net.liftweb.util.SimpleInjector
@@ -44,11 +44,7 @@ object TransactionType extends SimpleInjector {
 
   val TransactionTypeProvider = new Inject(buildOne _) {}
 
-  def buildOne: TransactionTypeProvider  =
-    APIUtil.getPropsValue("TransactionTypes_connector", "mapped") match {
-      case "mapped" => MappedTransactionTypeProvider
-      case ttc: String => throw new IllegalArgumentException("No such connector for Transaction Types: " + ttc)
-    }
+  def buildOne: TransactionTypeProvider = DoobieTransactionTypeProvider
 
 }
 
