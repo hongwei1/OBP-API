@@ -150,52 +150,55 @@ object DoobieChallengeProvider extends ChallengeProvider {
     challengeAnswer: String,
     userId: Option[String]
   ): Box[ChallengeTrait] = {
+    val maxAttempts = APIUtil.allowedAnswerTransactionRequestChallengeAttempts
     for {
       row <- findRowByChallengeId(challengeId) ?~! s"${ErrorMessages.InvalidTransactionRequestChallengeId}"
       currentAttemptCounterValue = row.attemptcounter.getOrElse(0)
-      // We update the counter anyway.
-      _ = DoobieUtil.runQuery(
+      // Atomically increment the counter only when still under the limit.
+      // Using DB-side `attemptcounter + 1` prevents stale-read under-counting under
+      // concurrent requests (two threads both reading N would both write N+1 if a
+      // client-side value were used). The WHERE guard means the UPDATE returns 0 rows
+      // when the limit is already reached, so concurrent excess attempts are rejected
+      // without incrementing the counter further.
+      updatedRows = DoobieUtil.runQuery(
         sql"""UPDATE expectedchallengeanswer
-              SET attemptcounter = ${currentAttemptCounterValue + 1}, updatedat = ${new Timestamp(System.currentTimeMillis())}
-              WHERE challengeid = ${nn(challengeId)}""".update.run)
+              SET attemptcounter = attemptcounter + 1, updatedat = ${new Timestamp(System.currentTimeMillis())}
+              WHERE challengeid = ${nn(challengeId)} AND attemptcounter < $maxAttempts""".update.run)
+      _ <- if (updatedRows > 0) Full(())
+           else Failure(s"${ErrorMessages.AllowedAttemptsUsedUp}")
       createDateTime = row.createdat.getOrElse(new Timestamp(0L))
       challengeTTL: Long = Helpers.seconds(APIUtil.transactionRequestChallengeTtl)
-
       expiredDateTime: Long = createDateTime.getTime + challengeTTL
       currentTime: Long = Platform.currentTime
-      challenge <- if (currentAttemptCounterValue < APIUtil.allowedAnswerTransactionRequestChallengeAttempts) {
-        if (expiredDateTime > currentTime) {
-          val currentHashedAnswer = BCrypt.hashpw(challengeAnswer, row.salt.getOrElse("")).substring(0, 44)
-          val expectedHashedAnswer = row.expectedanswer.getOrElse("")
-          userId match {
-            case None =>
-              if (currentHashedAnswer == expectedHashedAnswer) {
-                tryo { markSuccessful(challengeId); successfulChallenge(row, currentAttemptCounterValue + 1) }
-              } else {
-                Failure(s"${
-                  s"${
-                    InvalidChallengeAnswer
-                      .replace("answer may be expired.", s"answer may be expired (${transactionRequestChallengeTtl} seconds).")
-                      .replace("up your allowed attempts.", s"up your allowed attempts (${allowedAnswerTransactionRequestChallengeAttempts} times).")
-                  }"}")
-              }
-            case Some(id) =>
-              if (currentHashedAnswer == expectedHashedAnswer && id == row.expecteduserid.getOrElse("")) {
-                tryo { markSuccessful(challengeId); successfulChallenge(row, currentAttemptCounterValue + 1) }
-              } else {
-                Failure(s"${
-                  s"${
-                    InvalidChallengeAnswer
-                      .replace("answer may be expired.", s"answer may be expired (${transactionRequestChallengeTtl} seconds).")
-                      .replace("up your allowed attempts.", s"up your allowed attempts (${allowedAnswerTransactionRequestChallengeAttempts} times).")
-                  }"}")
-              }
-          }
-        } else {
-          Failure(s"${ErrorMessages.OneTimePasswordExpired} Current expiration time is $transactionRequestChallengeTtl seconds")
+      challenge <- if (expiredDateTime > currentTime) {
+        val currentHashedAnswer = BCrypt.hashpw(challengeAnswer, row.salt.getOrElse("")).substring(0, 44)
+        val expectedHashedAnswer = row.expectedanswer.getOrElse("")
+        userId match {
+          case None =>
+            if (currentHashedAnswer == expectedHashedAnswer) {
+              tryo { markSuccessful(challengeId); successfulChallenge(row, currentAttemptCounterValue + 1) }
+            } else {
+              Failure(s"${
+                s"${
+                  InvalidChallengeAnswer
+                    .replace("answer may be expired.", s"answer may be expired (${transactionRequestChallengeTtl} seconds).")
+                    .replace("up your allowed attempts.", s"up your allowed attempts (${allowedAnswerTransactionRequestChallengeAttempts} times).")
+                }"}")
+            }
+          case Some(id) =>
+            if (currentHashedAnswer == expectedHashedAnswer && id == row.expecteduserid.getOrElse("")) {
+              tryo { markSuccessful(challengeId); successfulChallenge(row, currentAttemptCounterValue + 1) }
+            } else {
+              Failure(s"${
+                s"${
+                  InvalidChallengeAnswer
+                    .replace("answer may be expired.", s"answer may be expired (${transactionRequestChallengeTtl} seconds).")
+                    .replace("up your allowed attempts.", s"up your allowed attempts (${allowedAnswerTransactionRequestChallengeAttempts} times).")
+                }"}")
+            }
         }
       } else {
-        Failure(s"${ErrorMessages.AllowedAttemptsUsedUp}")
+        Failure(s"${ErrorMessages.OneTimePasswordExpired} Current expiration time is $transactionRequestChallengeTtl seconds")
       }
     } yield {
       challenge
