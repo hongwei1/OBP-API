@@ -517,7 +517,8 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
   }
   
   override def bulkDeleteMetrics(): Boolean = {
-    MappedMetric.bulkDelete_!!()
+    DoobieUtil.runQuery(sql"DELETE FROM metric".update.run)
+    true
   }
 
   // Smart caching applied - uses determineMetricsCacheTTL based on query date range
