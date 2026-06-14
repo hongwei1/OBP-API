@@ -537,7 +537,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       challengeSuccess = challenges.count(_.successful == true) match {
         case number if number >= quorum => true
         case _ =>
-          MappedTransactionRequestProvider.saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.NEXT_CHALLENGE_PENDING.toString)
+          TransactionRequests.transactionRequestProvider.vend.saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.NEXT_CHALLENGE_PENDING.toString)
           false
       }
     } yield {

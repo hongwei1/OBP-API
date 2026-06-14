@@ -330,20 +330,20 @@ object DoobieConsentProvider extends ConsentProvider with MdcLoggable {
   override def setJsonWebToken(consentId: String, jwt: String): Box[MappedConsent] = {
     findOne(fr"WHERE mconsentid = ${nn(consentId)}") match {
       case Full(consent) =>
-        val payload = code.api.util.JwtUtil.getSignedPayloadAsJson(jwt).openOr(null)
+        val payload: Option[String] = code.api.util.JwtUtil.getSignedPayloadAsJson(jwt).toOption
         val consentJWTParsed: Option[ConsentJWT] =
-          if (payload != null) {
+          payload.flatMap { p =>
             try {
               import org.json4s._
               import com.openbankproject.commons.util.JsonAliases._
               implicit val formats: DefaultFormats.type = DefaultFormats
-              Some(parse(payload).extract[ConsentJWT])
+              Some(parse(p).extract[ConsentJWT])
             } catch {
               case e: Exception =>
                 logger.error(s"setJsonWebToken: failed to parse JWT for consent $consentId: ${e.getMessage}")
                 None
             }
-          } else None
+          }
 
         val jwtExpiresAt: Option[Timestamp] = consentJWTParsed.map(j => new Timestamp(j.exp * 1000L))
 

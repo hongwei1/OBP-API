@@ -298,8 +298,11 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
   ): Box[Consumer] = {
     logger.info(s"getOrCreateConsumer says: BEGIN lookup. Input: consumerId=${consumerId.getOrElse("None")}, azp=${azp.getOrElse("None")}, iss=${iss.getOrElse("None")}, sub=${sub.getOrElse("None")}")
 
-    // 1st try: find by consumerId
-    val byConsumerId = findOne(fr"WHERE consumerid = ${consumerId.getOrElse("None")}")
+    // 1st try: find by consumerId (skip lookup when consumerId is None to avoid matching literal "None")
+    val byConsumerId: Box[Consumer] = consumerId match {
+      case Some(id) => findOne(fr"WHERE consumerid = $id")
+      case None     => Empty
+    }
     val consumer: Box[Consumer] = if (byConsumerId.isDefined) {
       val c = byConsumerId.openOrThrowException("checked isDefined")
       logger.info(s"getOrCreateConsumer says: MATCH on lookup 1 (by consumerId). Found consumer: consumerId=${c.consumerId.get}, key=${c.key.get}")
@@ -307,14 +310,20 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
     } else {
       logger.info(s"getOrCreateConsumer says: MISS on lookup 1 (by consumerId=${consumerId.getOrElse("None")}). Trying lookup 2 (by Consumer.key matching azp)...")
 
-      // 2nd try: find by consumer key matching azp
-      val byKeyMatchingAzp = findOne(fr"WHERE key_c = ${azp.getOrElse("None")}")
+      // 2nd try: find by consumer key matching azp (skip when azp is None)
+      val byKeyMatchingAzp: Box[Consumer] = azp match {
+        case Some(a) => findOne(fr"WHERE key_c = $a")
+        case None    => Empty
+      }
       if (byKeyMatchingAzp.isDefined) {
         val c = byKeyMatchingAzp.openOrThrowException("checked isDefined")
         logger.info(s"getOrCreateConsumer says: MATCH on lookup 2 (by Consumer.key matching azp). Found pre-registered consumer: consumerId=${c.consumerId.get}, key=${c.key.get}")
 
-        // Transitional cleanup: clear stale conflicting consumer's azp/sub
-        val conflicting = findOne(fr"WHERE azp = ${azp.getOrElse("None")} AND iss = ${iss.getOrElse("None")}")
+        // Transitional cleanup: clear stale conflicting consumer's azp/sub (skip when either is None)
+        val conflicting: Box[Consumer] = (azp, iss) match {
+          case (Some(a), Some(i)) => findOne(fr"WHERE azp = $a AND iss = $i")
+          case _                  => Empty
+        }
         for (stale <- conflicting if stale.id.get != c.id.get) {
           val newAzp = APIUtil.generateUUID()
           val newSub = APIUtil.generateUUID()
@@ -338,8 +347,11 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
       } else {
         logger.info(s"getOrCreateConsumer says: MISS on lookup 2 (no consumer has key=${azp.getOrElse("None")}). Trying lookup 3 (by azp+iss pair)...")
 
-        // 3rd try: find by (azp, iss) pair
-        val byAzpIss = findOne(fr"WHERE azp = ${azp.getOrElse("None")} AND iss = ${iss.getOrElse("None")}")
+        // 3rd try: find by (azp, iss) pair (skip when either is None)
+        val byAzpIss: Box[Consumer] = (azp, iss) match {
+          case (Some(a), Some(i)) => findOne(fr"WHERE azp = $a AND iss = $i")
+          case _                  => Empty
+        }
         if (byAzpIss.isDefined) {
           val c = byAzpIss.openOrThrowException("checked isDefined")
           logger.info(s"getOrCreateConsumer says: MATCH on lookup 3 (by azp+iss). Found auto-created consumer: consumerId=${c.consumerId.get}, key=${c.key.get}")
