@@ -79,8 +79,9 @@ object DoobieTokenProvider extends TokensProvider {
     insertDate: Option[Date],
     callbackURL: Option[String]
   ): Box[Token] = tryo {
-    val expirationTs = expirationDate.map(d => new Timestamp(d.getTime)).orNull
-    val insertTs     = insertDate.map(d => new Timestamp(d.getTime)).orNull
+    // Bind nullable timestamp columns as Option — Doobie's Put[Timestamp] rejects a raw null.
+    val expirationTs: Option[Timestamp] = expirationDate.map(d => new Timestamp(d.getTime))
+    val insertTs: Option[Timestamp]     = insertDate.map(d => new Timestamp(d.getTime))
     val tokenTypeStr = tokenType.toString
 
     val generatedId = DoobieUtil.runQuery(

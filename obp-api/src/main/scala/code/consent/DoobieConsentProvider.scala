@@ -205,8 +205,10 @@ object DoobieConsentProvider extends ConsentProvider with MdcLoggable {
       val now              = new Timestamp(System.currentTimeMillis())
       val lastActionDate   = new SqlDate(System.currentTimeMillis())
       val userId           = user.userId
-      val consumerId       = consumer.map(_.consumerId.get).getOrElse(null)
-      val reqId            = consentRequestId.getOrElse(null)
+      // Bind nullable text columns as Option[String] — Doobie's Put[String] rejects a raw
+      // null; consentRequestId/consumer are None on the v3.1.0 and v5.1.0 create-consent paths.
+      val consumerId: Option[String] = consumer.map(_.consumerId.get)
+      val reqId: Option[String]      = consentRequestId
       val apiStd           = ApiStandards.obp.toString
 
       DoobieUtil.runQuery(
@@ -241,10 +243,11 @@ object DoobieConsentProvider extends ConsentProvider with MdcLoggable {
     val now              = new Timestamp(System.currentTimeMillis())
     val lastActionDate   = new SqlDate(System.currentTimeMillis())
     val validUntilSql    = new SqlDate(validUntil.getTime)
-    val userId           = user.map(_.userId).getOrElse(null)
-    val consumerId       = consumer.map(_.consumerId.get).getOrElse(null)
-    val apiStd           = apiStandard.getOrElse(null)
-    val apiVer           = apiVersion.getOrElse(null)
+    // Bind nullable text columns as Option[String] — Doobie's Put[String] rejects a raw null.
+    val userId: Option[String]     = user.map(_.userId)
+    val consumerId: Option[String] = consumer.map(_.consumerId.get)
+    val apiStd: Option[String]     = apiStandard
+    val apiVer: Option[String]     = apiVersion
 
     DoobieUtil.runQuery(
       sql"""INSERT INTO mappedconsent
@@ -295,10 +298,11 @@ object DoobieConsentProvider extends ConsentProvider with MdcLoggable {
     val expirationTs    = new Timestamp(expirationDateTime.getTime)
     val fromTs          = new Timestamp(transactionFromDateTime.getTime)
     val toTs            = new Timestamp(transactionToDateTime.getTime)
-    val userId          = user.map(_.userId).getOrElse(null)
-    val cId             = consumerId.getOrElse(null)
-    val apiStd          = apiStandard.getOrElse(null)
-    val apiVer          = apiVersion.getOrElse(null)
+    // Bind nullable text columns as Option[String] — Doobie's Put[String] rejects a raw null.
+    val userId: Option[String] = user.map(_.userId)
+    val cId: Option[String]    = consumerId
+    val apiStd: Option[String] = apiStandard
+    val apiVer: Option[String] = apiVersion
 
     DoobieUtil.runQuery(
       sql"""INSERT INTO mappedconsent

@@ -84,7 +84,7 @@ object DoobieMethodRoutingProvider extends MethodRoutingProvider with CustomJson
           DoobieUtil.runQuery(
             sql"""UPDATE methodrouting
                   SET methodname = ${nn(methodRouting.methodName)},
-                      bankidpattern = ${bankIdPattern.orNull},
+                      bankidpattern = $bankIdPattern,
                       isbankidexactmatch = $isExactMatch,
                       connectorname = ${nn(methodRouting.connectorName)},
                       parameters = $paramsJson
@@ -95,7 +95,7 @@ object DoobieMethodRoutingProvider extends MethodRoutingProvider with CustomJson
           val newId = APIUtil.generateUUID()
           DoobieUtil.runQuery(
             sql"""INSERT INTO methodrouting (methodroutingid, methodname, bankidpattern, isbankidexactmatch, connectorname, parameters)
-                  VALUES ($newId, ${nn(methodRouting.methodName)}, ${bankIdPattern.orNull},
+                  VALUES ($newId, ${nn(methodRouting.methodName)}, $bankIdPattern,
                           $isExactMatch, ${nn(methodRouting.connectorName)}, $paramsJson)""".update.run)
           row2commons(RoutingRow(Some(newId), Some(methodRouting.methodName), bankIdPattern,
             Some(isExactMatch), Some(methodRouting.connectorName), Some(paramsJson)))

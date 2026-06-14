@@ -86,8 +86,11 @@ object DoobieCustomerProvider extends CustomerProvider with MdcLoggable {
     override def title: String                    = row.mtitle
     override def branchId: String                 = row.mbranchid
     override def nameSuffix: String               = row.mnamesuffix
-    override def customerType: Option[String]     = Option(row.mcustomertype).filter(_.nonEmpty)
-    override def parentCustomerId: Option[String] = Option(row.mparentcustomerid).filter(_.nonEmpty)
+    // Mirror Lift's `Option(mCustomerType.get)` exactly: MappedString.get never returns null,
+    // so an empty column is Some("") (NOT None). Filtering to None here diverged from Lift and
+    // made the v6 JSON factory emit "INDIVIDUAL" (its getOrElse default) instead of "".
+    override def customerType: Option[String]     = Option(row.mcustomertype)
+    override def parentCustomerId: Option[String] = Option(row.mparentcustomerid)
     override def agentId: String                  = row.mcustomerid
     override def isConfirmedAgent: Boolean        = row.misconfirmedagent
     override def isPendingAgent: Boolean          = row.mispendingagent

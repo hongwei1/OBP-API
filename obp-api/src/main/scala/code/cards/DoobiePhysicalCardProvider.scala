@@ -167,7 +167,7 @@ object DoobiePhysicalCardProvider extends PhysicalCardProvider {
         case None =>
           DoobieUtil.runQuery(
             sql"""INSERT INTO pinreset (card, mreplacementdate, mreplacementreason)
-                  VALUES ($cardPk, ${ts.orNull}, ${nn(reason)})""".update.run)
+                  VALUES ($cardPk, $ts, ${nn(reason)})""".update.run)
       }
     }
     pinResets.map(pr => PinResetRow(toTimestamp(pr.requestedDate), Some(pr.reasonRequested.toString)))
@@ -230,10 +230,10 @@ object DoobiePhysicalCardProvider extends PhysicalCardProvider {
                      mvalidfrom, mexpires, menabled, mcancelled, monhotlist, mtechnology, mnetworks, mallows,
                      mreplacementdate, mreplacementreason, mcollected, mposted, maccount, mcustomerid, mbrand, mcvv)
                   VALUES (${nn(cardId)}, ${nn(bankId)}, ${nn(bankCardNumber)}, ${nn(cardType)}, ${nn(issueNumber)},
-                          ${nn(nameOnCard)}, ${nn(serialNumber)}, ${toTimestamp(validFrom).orNull}, ${toTimestamp(expires).orNull},
+                          ${nn(nameOnCard)}, ${nn(serialNumber)}, ${toTimestamp(validFrom)}, ${toTimestamp(expires)},
                           $enabled, $cancelled, $onHotList, ${nn(technology)}, ${nn(networks.mkString(","))}, ${nn(allows.mkString(","))},
-                          ${toTimestamp(requestedDate).orNull}, ${nn(reasonRequested)}, ${toTimestamp(collectedDate).orNull},
-                          ${toTimestamp(postedDate).orNull}, $mappedBankAccountPrimaryKey, ${nn(customerId)}, ${nn(brand)},
+                          ${toTimestamp(requestedDate)}, ${nn(reasonRequested)}, ${toTimestamp(collectedDate)},
+                          ${toTimestamp(postedDate)}, $mappedBankAccountPrimaryKey, ${nn(customerId)}, ${nn(brand)},
                           ${nn(HashUtil.Sha256Hash(cvv))})""".update.run)
           findRow(fr"WHERE mbankid = ${nn(bankId)} AND mserialnumber = ${nn(serialNumber)} AND mbankcardnumber = ${nn(bankCardNumber)}")
             .getOrElse(throw new Exception(ErrorMessages.CreateCardError))
@@ -298,12 +298,12 @@ object DoobiePhysicalCardProvider extends PhysicalCardProvider {
             sql"""UPDATE mappedphysicalcard SET
                     mcardid = ${nn(cardId)}, mbankid = ${nn(bankId)}, mbankcardnumber = ${nn(bankCardNumber)},
                     mcardtype = ${nn(cardType)}, missuenumber = ${nn(issueNumber)}, mnameoncard = ${nn(nameOnCard)},
-                    mserialnumber = ${nn(serialNumber)}, mvalidfrom = ${toTimestamp(validFrom).orNull},
-                    mexpires = ${toTimestamp(expires).orNull}, menabled = $enabled, mcancelled = $cancelled,
+                    mserialnumber = ${nn(serialNumber)}, mvalidfrom = ${toTimestamp(validFrom)},
+                    mexpires = ${toTimestamp(expires)}, menabled = $enabled, mcancelled = $cancelled,
                     monhotlist = $onHotList, mtechnology = ${nn(technology)}, mnetworks = ${nn(networks.mkString(","))},
-                    mallows = ${nn(allows.mkString(","))}, mreplacementdate = ${toTimestamp(requestedDate).orNull},
-                    mreplacementreason = ${nn(reasonRequested)}, mcollected = ${toTimestamp(collectedDate).orNull},
-                    mposted = ${toTimestamp(postedDate).orNull}, maccount = $mappedBankAccountPrimaryKey,
+                    mallows = ${nn(allows.mkString(","))}, mreplacementdate = ${toTimestamp(requestedDate)},
+                    mreplacementreason = ${nn(reasonRequested)}, mcollected = ${toTimestamp(collectedDate)},
+                    mposted = ${toTimestamp(postedDate)}, maccount = $mappedBankAccountPrimaryKey,
                     mcustomerid = ${nn(customerId)}
                   WHERE mbankid = ${nn(bankId)} AND mcardid = ${nn(cardId)}""".update.run)
           findRow(fr"WHERE mbankid = ${nn(bankId)} AND mcardid = ${nn(cardId)}")
