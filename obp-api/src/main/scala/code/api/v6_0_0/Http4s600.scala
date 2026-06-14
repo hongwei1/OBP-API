@@ -4501,13 +4501,13 @@ object Http4s600 {
             userMetrics <- Future {
               import doobie._; import doobie.implicits._
               import java.sql.Timestamp
-              case class MetricSummaryRow(date: Option[Timestamp], fn: Option[String])
+              case class MetricSummaryRow(dateC: Option[Timestamp], fn: Option[String])
               code.api.util.DoobieUtil.runQuery(
-                fr"SELECT date, implementedbypartialfunction FROM metric WHERE userid = $userId ORDER BY date DESC LIMIT 5"
+                fr"SELECT date_c, implementedbypartialfunction FROM metric WHERE userid = $userId ORDER BY date_c DESC LIMIT 5"
                   .query[MetricSummaryRow].to[List]
               )
             }
-            lastActivityDate = userMetrics.headOption.flatMap(_.date).map(t => new java.util.Date(t.getTime))
+            lastActivityDate = userMetrics.headOption.flatMap(_.dateC).map(t => new java.util.Date(t.getTime))
             recentOperationIds = userMetrics.flatMap(_.fn).distinct.take(5)
           } yield JSONFactory600.createUserInfoJsonV600(
             user,

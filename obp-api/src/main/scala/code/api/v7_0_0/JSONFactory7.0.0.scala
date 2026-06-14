@@ -1281,13 +1281,13 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
 
     import doobie._; import doobie.implicits._
     import java.sql.Timestamp
-    val metricOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
-    val metricNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val metricOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date_c) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val metricNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date_c) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
     val metricCount  = code.api.util.DoobieUtil.runQuery(fr"SELECT COUNT(*) FROM metric".query[Long].unique)
     val metricStats  = statsFor("metric", metricCount, metricOldest, metricNewest)
 
-    val archiveOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
-    val archiveNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val archiveOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date_c) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val archiveNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date_c) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
     val archiveCount  = code.api.util.DoobieUtil.runQuery(fr"SELECT COUNT(*) FROM metricarchive".query[Long].unique)
     val archiveStats  = statsFor("metricarchive", archiveCount, archiveOldest, archiveNewest)
 
