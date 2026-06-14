@@ -1288,6 +1288,7 @@ object Http4s500 {
             mappedConsent <- if (shouldSkipConsentScaForConsumerIdPair) {
               Future {
                 Consents.consentProvider.vend.updateConsentStatus(createdConsent.consentId, ConsentStatus.ACCEPTED)
+                  .openOrThrowException("Could not update consent status to ACCEPTED")
               }
             } else {
               val challengeText = s"Your consent challenge : ${challengeAnswer}, Application: $applicationText"

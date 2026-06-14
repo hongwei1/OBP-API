@@ -1,7 +1,7 @@
 package code.consumer
 
 import code.api.util.{APIUtil, CallContext, OBPQueryParam}
-import code.model.{AppType, Consumer, MappedConsumersProvider}
+import code.model.{AppType, Consumer, DoobieConsumersProvider, MappedConsumersProvider}
 import com.openbankproject.commons.model.{BankIdAccountId, User, View}
 import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
@@ -12,7 +12,7 @@ object Consumers extends SimpleInjector {
 
   val consumers = new Inject(buildOne _) {}
 
-  def buildOne: ConsumersProvider = MappedConsumersProvider
+  def buildOne: ConsumersProvider = DoobieConsumersProvider
 
 }
 

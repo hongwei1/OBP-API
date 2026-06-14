@@ -99,7 +99,7 @@ import code.loginattempts.{LoginAttempt, MappedBadLoginAttempt}
 import code.meetings.{MappedMeeting, MappedMeetingInvitee}
 import code.metadata.counterparties.{MappedCounterparty, MappedCounterpartyBespoke, MappedCounterpartyMetadata, MappedCounterpartyWhereTag}
 import code.methodrouting.MethodRouting
-import code.metrics.{ConnectorTrace, MappedConnectorMetric, MappedMetric, MetricArchive, MetricsArchiveRun}
+import code.metrics.{ConnectorTrace, MappedMetric, MetricArchive, MetricsArchiveRun}
 import code.migration.MigrationScriptLog
 import code.model._
 import code.model.dataAccess._
@@ -997,7 +997,6 @@ object ToSchemify extends MdcLoggable {
     MetricsArchiveRun,
     MapperAccountHolders,
     MappedEntitlement,
-    MappedConnectorMetric,
     ConnectorTrace,
     MappedExpectedChallengeAnswer,
     MappedEntitlementRequest,

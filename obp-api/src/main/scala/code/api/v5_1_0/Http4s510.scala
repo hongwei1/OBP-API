@@ -1,5 +1,8 @@
 package code.api.v5_1_0
 
+import code.api.util.DoobieUtil
+import doobie._
+import doobie.implicits._
 import org.json4s._
 import cats.data.{Kleisli, OptionT}
 import cats.effect._
@@ -4740,6 +4743,7 @@ object Http4s510 {
             mappedConsent <- if (shouldSkip) {
               Future {
                 Consents.consentProvider.vend.updateConsentStatus(createdConsent.consentId, ConsentStatus.ACCEPTED)
+                  .openOrThrowException("Could not update consent status to ACCEPTED")
               }
             } else {
               val challengeText = s"Your consent challenge : ${challengeAnswer}, Application: $applicationText"

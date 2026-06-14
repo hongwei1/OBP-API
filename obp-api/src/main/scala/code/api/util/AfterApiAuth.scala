@@ -19,6 +19,7 @@ import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.openbankproject.commons.model.{AccountId, Bank, BankAccount, BankId, BankIdAccountId, User, ViewId}
 import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.mapper.By
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
