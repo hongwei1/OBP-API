@@ -7,14 +7,13 @@ import code.api.util.ErrorMessages.MandatoryPropertyIsNotSet
 import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, PostSimpleCounterpartyJson400}
 import code.bankconnectors.Connector
 import code.customer.CustomerX
-import code.metrics.{MappedMetric, MetricArchive, MetricsArchiveRun, MetricsProps}
+import code.metrics.{MetricsArchiveRun, MetricsProps}
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.openbankproject.commons.model.{AccountId, AccountRoutingJsonV121, AmountOfMoneyJsonV121, BankId, BankIdAccountId, CoreAccount, TransactionRequest, TransactionRequestCommonBodyJSON, User}
 import com.openbankproject.commons.util.ApiVersion
 import java.util.Date
 import net.liftweb.common.Full
-import net.liftweb.mapper.{Ascending, By, By_<=, Descending, MaxRows, OrderBy}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -1280,13 +1279,17 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
         newest_record_age_days = newest.map(metricsAgeInDays(_, now))
       )
 
-    val metricOldest = MappedMetric.findAll(OrderBy(MappedMetric.date, Ascending), MaxRows(1)).headOption.map(_.getDate())
-    val metricNewest = MappedMetric.findAll(OrderBy(MappedMetric.date, Descending), MaxRows(1)).headOption.map(_.getDate())
-    val metricStats  = statsFor("metric", MappedMetric.count, metricOldest, metricNewest)
+    import doobie._; import doobie.implicits._
+    import java.sql.Timestamp
+    val metricOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val metricNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val metricCount  = code.api.util.DoobieUtil.runQuery(fr"SELECT COUNT(*) FROM metric".query[Long].unique)
+    val metricStats  = statsFor("metric", metricCount, metricOldest, metricNewest)
 
-    val archiveOldest = MetricArchive.findAll(OrderBy(MetricArchive.date, Ascending), MaxRows(1)).headOption.map(_.getDate())
-    val archiveNewest = MetricArchive.findAll(OrderBy(MetricArchive.date, Descending), MaxRows(1)).headOption.map(_.getDate())
-    val archiveStats  = statsFor("metricarchive", MetricArchive.count, archiveOldest, archiveNewest)
+    val archiveOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val archiveNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val archiveCount  = code.api.util.DoobieUtil.runQuery(fr"SELECT COUNT(*) FROM metricarchive".query[Long].unique)
+    val archiveStats  = statsFor("metricarchive", archiveCount, archiveOldest, archiveNewest)
 
     val graceDays = 7L
     val checks = scala.collection.mutable.ListBuffer[MetricsIntegrityCheckJsonV700]()
