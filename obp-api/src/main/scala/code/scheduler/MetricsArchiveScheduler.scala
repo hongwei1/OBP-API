@@ -6,7 +6,7 @@ import java.util.{Calendar, Date}
 import code.actorsystem.ObpActorSystem
 import code.api.Constant
 import code.api.util.{APIUtil, DoobieUtil}
-import code.metrics.{APIMetric, APIMetrics, MetricsArchiveRun, MetricsProps}
+import code.metrics.{APIMetric, APIMetrics, MetricsArchiveRun, MetricsArchiveRunRow, MetricsProps}
 import code.util.Helper.MdcLoggable
 import doobie._
 import doobie.implicits._
@@ -28,8 +28,8 @@ case class ArchiveMoveResult(moved: Int, failed: Int)
 
 /** Outcome of a single [[MetricsArchiveScheduler.runOnce]] invocation. */
 sealed trait RunOutcome
-/** A run executed and was recorded (inspect `run.Success` for whether it errored). */
-case class RunCompleted(run: MetricsArchiveRun) extends RunOutcome
+/** A run executed and was recorded (inspect `run.success` for whether it errored). */
+case class RunCompleted(run: MetricsArchiveRunRow) extends RunOutcome
 /**
  * No run started because one was already in progress (a `JobScheduler` lock is
  * present). Carries the held lock's details so callers can tell a genuinely

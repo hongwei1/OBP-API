@@ -1,9 +1,32 @@
 package code.metrics
 
+import java.sql.Timestamp
 import java.util.Date
 
+import code.api.util.DoobieUtil
 import code.util.MappedUUID
+import doobie._
+import doobie.implicits._
 import net.liftweb.mapper._
+
+/**
+ * Result row read from / written to the `metricsarchiverun` table via Doobie.
+ *
+ * Table columns (created by Lift Schemifier, kept for backward compat):
+ *   id, runid, apiinstanceid, startedat, endedat, durationms,
+ *   rowsmovedtoarchive, rowsdeletefromarchive, success, remark
+ */
+case class MetricsArchiveRunRow(
+  runId: String,
+  apiInstanceId: String,
+  startedAt: Timestamp,
+  endedAt: Timestamp,
+  durationMs: Long,
+  rowsMovedToArchive: Int,
+  rowsDeletedFromArchive: Int,
+  success: Boolean,
+  remark: String
+)
 
 /**
  * Append-only audit log of `MetricsArchiveScheduler` runs.
@@ -57,37 +80,54 @@ object MetricsArchiveRun extends MetricsArchiveRun with LongKeyedMetaMapper[Metr
                 rowsMovedToArchive: Int,
                 rowsDeletedFromArchive: Int,
                 success: Boolean,
-                remark: Option[String]): MetricsArchiveRun = {
-    val saved = MetricsArchiveRun.create
-      .RunId(runId)
-      .ApiInstanceId(apiInstanceId)
-      .StartedAt(startedAt)
-      .EndedAt(endedAt)
-      .DurationMs(endedAt.getTime - startedAt.getTime)
-      .RowsMovedToArchive(rowsMovedToArchive)
-      .RowsDeletedFromArchive(rowsDeletedFromArchive)
-      .Success(success)
-      .Remark(remark.getOrElse(""))
-      .saveMe()
+                remark: Option[String]): MetricsArchiveRunRow = {
+    val startedAtTs = new Timestamp(startedAt.getTime)
+    val endedAtTs   = new Timestamp(endedAt.getTime)
+    val durationMs  = endedAt.getTime - startedAt.getTime
+    val remarkStr   = remark.getOrElse("")
+    DoobieUtil.runQuery(
+      sql"""INSERT INTO metricsarchiverun
+              (runid, apiinstanceid, startedat, endedat, durationms,
+               rowsmovedtoarchive, rowsdeletefromarchive, success, remark)
+            VALUES
+              ($runId, $apiInstanceId, $startedAtTs, $endedAtTs, $durationMs,
+               $rowsMovedToArchive, $rowsDeletedFromArchive, $success, $remarkStr)"""
+        .update.run
+    )
     pruneToMostRecent(maxRowsToKeep)
-    saved
+    MetricsArchiveRunRow(runId, apiInstanceId, startedAtTs, endedAtTs,
+      durationMs, rowsMovedToArchive, rowsDeletedFromArchive, success, remarkStr)
   }
 
   /**
    * Delete all but the most recent `keep` rows (by primary key, which is
    * monotonic). No-op when the table holds `keep` or fewer rows.
    */
-  def pruneToMostRecent(keep: Int): Unit =
-    MetricsArchiveRun
-      .findAll(OrderBy(id, Descending), MaxRows(keep))
-      .lastOption
-      .foreach(oldestToKeep => MetricsArchiveRun.bulkDelete_!!(By_<(id, oldestToKeep.id.get)))
+  def pruneToMostRecent(keep: Int): Unit = {
+    val ids = DoobieUtil.runQuery(
+      fr"SELECT id FROM metricsarchiverun ORDER BY id DESC LIMIT $keep"
+        .query[Long].to[List]
+    )
+    ids.lastOption.foreach { minId =>
+      DoobieUtil.runQuery(
+        sql"DELETE FROM metricsarchiverun WHERE id < $minId".update.run
+      )
+    }
+  }
 
   /** Most recent run by start time, if any. */
-  def lastRun: Option[MetricsArchiveRun] =
-    MetricsArchiveRun.findAll(OrderBy(StartedAt, Descending), MaxRows(1)).headOption
+  def lastRun: Option[MetricsArchiveRunRow] = DoobieUtil.runQuery(
+    fr"""SELECT runid, apiinstanceid, startedat, endedat, durationms,
+                rowsmovedtoarchive, rowsdeletefromarchive, success, remark
+         FROM metricsarchiverun ORDER BY startedat DESC LIMIT 1"""
+      .query[MetricsArchiveRunRow].option
+  )
 
   /** Most recent successful run by start time, if any. */
-  def lastSuccessfulRun: Option[MetricsArchiveRun] =
-    MetricsArchiveRun.findAll(By(Success, true), OrderBy(StartedAt, Descending), MaxRows(1)).headOption
+  def lastSuccessfulRun: Option[MetricsArchiveRunRow] = DoobieUtil.runQuery(
+    fr"""SELECT runid, apiinstanceid, startedat, endedat, durationms,
+                rowsmovedtoarchive, rowsdeletefromarchive, success, remark
+         FROM metricsarchiverun WHERE success = true ORDER BY startedat DESC LIMIT 1"""
+      .query[MetricsArchiveRunRow].option
+  )
 }
