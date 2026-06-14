@@ -293,6 +293,11 @@ object DoobieTransactionRequestProvider extends TransactionRequestProvider with 
         transactionRequest <- rowToTransactionRequest(row)
         if statuses.exists(i => i.transactionRequestId -> i.bulkTransactionsStatus == transactionRequest.id -> List("APVD"))
       } yield {
+        DoobieUtil.runQuery(
+          sql"""UPDATE mappedtransactionrequest
+                SET mstatus = ${TransactionRequestStatus.COMPLETED.toString}
+                WHERE mtransactionrequestid = ${transactionRequest.id.value}""".update.run
+        )
         logger.debug(s"updated ${transactionRequest.id} status: ${TransactionRequestStatus.COMPLETED}")
       }
     } match {
