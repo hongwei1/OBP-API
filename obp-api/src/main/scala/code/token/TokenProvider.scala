@@ -3,7 +3,7 @@ package code.token
 import java.util.Date
 
 import code.api.util.APIUtil
-import code.model.{MappedTokenProvider, Token, TokenType}
+import code.model.{DoobieTokenProvider, MappedTokenProvider, Token, TokenType}
 import net.liftweb.common.Box
 import net.liftweb.util.{Props, SimpleInjector}
 
@@ -13,7 +13,7 @@ object Tokens extends SimpleInjector {
 
   val tokens = new Inject(buildOne _) {}
 
-  def buildOne: TokensProvider = MappedTokenProvider
+  def buildOne: TokensProvider = DoobieTokenProvider
 
 }
 
