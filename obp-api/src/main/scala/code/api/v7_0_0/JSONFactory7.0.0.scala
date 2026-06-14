@@ -1197,6 +1197,8 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
   // job holds the scheduler lock (deleted when the job finishes), so a row here is
   // a currently-running job or a stale lock left by a dead JVM — `age_seconds`
   // tells them apart.
+  case class SchedulerJobRow(jobId: String, name: String, apiInstanceId: String, createdAt: Date)
+
   case class SchedulerJobJsonV700(
     job_id: String,
     name: String,
@@ -1210,16 +1212,15 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     count: Int
   )
 
-  def createSchedulerJobsJsonV700(rows: List[code.scheduler.JobScheduler]): SchedulerJobsJsonV700 = {
+  def createSchedulerJobsJsonV700(rows: List[SchedulerJobRow]): SchedulerJobsJsonV700 = {
     val now = System.currentTimeMillis
     val jobs = rows.map { r =>
-      val startedAt = r.createdAt.get
       SchedulerJobJsonV700(
-        job_id          = r.JobId.get,
-        name            = r.Name.get,
-        api_instance_id = r.ApiInstanceId.get,
-        started_at      = startedAt,
-        age_seconds     = (now - startedAt.getTime) / 1000L
+        job_id          = r.jobId,
+        name            = r.name,
+        api_instance_id = r.apiInstanceId,
+        started_at      = r.createdAt,
+        age_seconds     = (now - r.createdAt.getTime) / 1000L
       )
     }
     SchedulerJobsJsonV700(jobs, jobs.size)

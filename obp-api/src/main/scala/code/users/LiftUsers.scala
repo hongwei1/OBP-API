@@ -6,8 +6,9 @@ import java.util.Date
 import code.api.util._
 import code.entitlement.{Entitlement, MappedEntitlement}
 import code.loginattempts.LoginAttempt.maxBadLoginAttempts
-import code.loginattempts.MappedBadLoginAttempt
 import code.model.dataAccess.{AuthUser, ResourceUser}
+import doobie._
+import doobie.implicits._
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.model.{User, UserPrimaryKey}
@@ -177,18 +178,18 @@ object LiftUsers extends Users with MdcLoggable{
 
     val showUsers: List[ResourceUser] = locked.map(_.toLowerCase()) match {
       case Some("active") =>
-        val lockedUsers: immutable.Seq[MappedBadLoginAttempt] =
-          MappedBadLoginAttempt.findAll(
-            By_>(MappedBadLoginAttempt.mBadAttemptsSinceLastSuccessOrReset, maxBadLoginAttempts.toInt)
-          )
-        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsers.map(_.username)))
+        val lockedUsernames: List[String] = DoobieUtil.runQuery(
+          fr"SELECT musername FROM mappedbadloginattempt WHERE mbadattemptssincelastsuccessorreset > ${maxBadLoginAttempts.toInt}"
+            .query[String].to[List]
+        )
+        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsernames))
         getAllResourceUsers() diff exclude
       case Some("locked") =>
-        val lockedUsers: immutable.Seq[MappedBadLoginAttempt] =
-          MappedBadLoginAttempt.findAll(
-            By_>(MappedBadLoginAttempt.mBadAttemptsSinceLastSuccessOrReset, maxBadLoginAttempts.toInt)
-          )
-        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsers.map(_.username)))
+        val lockedUsernames: List[String] = DoobieUtil.runQuery(
+          fr"SELECT musername FROM mappedbadloginattempt WHERE mbadattemptssincelastsuccessorreset > ${maxBadLoginAttempts.toInt}"
+            .query[String].to[List]
+        )
+        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsernames))
         getAllResourceUsers() intersect exclude.toList
       case _ =>
         getAllResourceUsers()

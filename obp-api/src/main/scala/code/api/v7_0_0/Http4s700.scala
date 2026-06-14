@@ -56,6 +56,10 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
 import scala.language.{higherKinds, implicitConversions}
 import code.util.Helper
+import code.api.util.DoobieUtil
+import doobie._
+import doobie.implicits._
+import java.sql.Timestamp
 
 object Http4s700 {
 
@@ -3376,7 +3380,14 @@ object Http4s700 {
       case req @ GET -> `prefixPath` / "management" / "system" / "scheduler" / "job-locks" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future {
-            JSONFactory700.createSchedulerJobsJsonV700(code.scheduler.JobScheduler.mostRecent(100))
+            val dbRows = DoobieUtil.runQuery(
+              fr"SELECT jobid, name, apiinstanceid, createdat FROM jobscheduler ORDER BY createdat DESC LIMIT 100"
+                .query[(String, String, String, Timestamp)].to[List]
+            )
+            val schedulerRows = dbRows.map { case (jobId, name, apiInstanceId, ts) =>
+              JSONFactory700.SchedulerJobRow(jobId, name, apiInstanceId, new java.util.Date(ts.getTime))
+            }
+            JSONFactory700.createSchedulerJobsJsonV700(schedulerRows)
           }
         }
     }
@@ -3420,7 +3431,7 @@ object Http4s700 {
     val deleteSchedulerJob: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ DELETE -> `prefixPath` / "management" / "system" / "scheduler" / "job-locks" / jobId =>
         EndpointHelpers.withUserDelete(req) { (_, _) =>
-          Future { code.scheduler.JobScheduler.deleteByJobId(jobId); () }
+          Future { DoobieUtil.runQuery(sql"DELETE FROM jobscheduler WHERE jobid = $jobId".update.run); () }
         }
     }
 
