@@ -40,6 +40,19 @@ object DoobieAuthUserProvider {
       (selectAuth ++ fr"WHERE username = $username AND provider = $provider LIMIT 1")
         .query[AuthRow].option)
 
+  /** createdAt / updatedAt / validated for the authuser whose user_c == userPk. */
+  case class AuthUserMetaRow(
+    createdAt: Option[java.sql.Timestamp],
+    updatedAt: Option[java.sql.Timestamp],
+    validated: Option[Boolean]
+  )
+
+  def findMetaByUserFk(userPk: Long): Option[AuthUserMetaRow] =
+    DoobieUtil.runQuery(
+      fr"SELECT createdat, updatedat, validated FROM authuser WHERE user_c = $userPk LIMIT 1"
+        .query[AuthUserMetaRow].option
+    )
+
   /** Return (firstName, lastName) for the authuser whose user_c == userPk, or None if not found. */
   def getNamesByUserFk(userPk: Long): Option[(String, String)] =
     DoobieUtil.runQuery(
