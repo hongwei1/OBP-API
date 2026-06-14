@@ -91,6 +91,59 @@ object DoobieAuthUserProvider {
     )
 
   /**
+   * Full row needed for the email-validation and password-reset-complete flows.
+   * userId is sourced from the joined resourceuser row.
+   */
+  case class AuthFullRow(
+    id: Long,
+    userId: Option[String],   // resourceuser.userid_
+    email: Option[String],
+    username: Option[String],
+    provider: Option[String],
+    validated: Option[Boolean]
+  )
+
+  def findByUniqueId(uniqueId: String): Option[AuthFullRow] =
+    DoobieUtil.runQuery(
+      fr"""SELECT a.id, r.userid_, a.email, a.username, a.provider, a.validated
+           FROM authuser a
+           LEFT JOIN resourceuser r ON r.id = a.user_c
+           WHERE a.uniqueid = $uniqueId LIMIT 1"""
+        .query[AuthFullRow].option
+    )
+
+  /**
+   * Set validated=true and rotate the uniqueid token (mirrors validateAndResetToken in Lift).
+   * Returns the new uniqueid that was written.
+   */
+  def validateAndRotateToken(id: Long): String = {
+    val newUniqueId = java.util.UUID.randomUUID().toString.replace("-", "")
+    DoobieUtil.runQuery(
+      sql"UPDATE authuser SET validated = true, uniqueid = $newUniqueId WHERE id = $id".update.run
+    )
+    newUniqueId
+  }
+
+  /**
+   * Hash `newPassword` exactly as Lift's MappedPassword.set() does and persist it.
+   * Also rotates the uniqueid so the reset link can only be used once.
+   * Replicates: salt=BCrypt.gensalt(), hash=BCrypt.hashpw(pw,salt);
+   *   password_pw = "b;" + hash.take(44), password_slt = hash.drop(44).
+   */
+  def updatePassword(id: Long, newPassword: String): Unit = {
+    val salt = BCrypt.gensalt()
+    val hash = BCrypt.hashpw(newPassword, salt)
+    val pw   = "b;" + hash.take(44)
+    val slt  = hash.drop(44)
+    val newUniqueId = java.util.UUID.randomUUID().toString.replace("-", "")
+    DoobieUtil.runQuery(
+      sql"""UPDATE authuser
+            SET password_pw = $pw, password_slt = $slt, uniqueid = $newUniqueId
+            WHERE id = $id""".update.run
+    )
+  }
+
+  /**
    * Verify a candidate password against the stored hash + salt, exactly as
    * Lift's `MappedPassword.match_?` does.
    */

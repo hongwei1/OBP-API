@@ -4067,28 +4067,24 @@ object Http4s600 {
                 throw new Exception("Invalid token signature")
               signedJWT.getJWTClaimsSet.getSubject
             }
-            authUser <- Future {
-              code.model.dataAccess.AuthUser.findUserByValidationToken(uniqueId) match {
-                case Full(u) => Full(u)
-                case Empty => Empty
-                case f: net.liftweb.common.Failure => f
+            row <- NewStyle.function.tryons(
+              s"$UserNotFoundByToken Invalid or expired validation token", 404, Some(cc)) {
+              code.model.dataAccess.DoobieAuthUserProvider.findByUniqueId(uniqueId) match {
+                case Some(r) => r
+                case None    => throw new Exception("User not found")
               }
             }
-            user <- NewStyle.function.tryons(
-              s"$UserNotFoundByToken Invalid or expired validation token", 404, Some(cc)) {
-              authUser.openOrThrowException("User not found")
-            }
             _ <- Helper.booleanToFuture(s"$UserAlreadyValidated User email is already validated", cc = Some(cc)) {
-              !user.validated.get
+              !row.validated.getOrElse(true)
             }
-            validatedUser <- Future(code.model.dataAccess.AuthUser.validateAndResetToken(user))
-            _ <- Future(code.model.dataAccess.AuthUser.grantDefaultEntitlementsToAuthUser(validatedUser))
+            _ <- Future(code.model.dataAccess.DoobieAuthUserProvider.validateAndRotateToken(row.id))
+            _ <- Future(APIUtil.grantDefaultEntitlementsToNewUser(row.userId.getOrElse("")))
           } yield JSONFactory600.ValidateUserEmailResponseJsonV600(
-            user_id = validatedUser.user.obj.map(_.userId).getOrElse(""),
-            email = validatedUser.email.get,
-            username = validatedUser.username.get,
-            provider = validatedUser.provider.get,
-            validated = validatedUser.validated.get,
+            user_id = row.userId.getOrElse(""),
+            email = row.email.getOrElse(""),
+            username = row.username.getOrElse(""),
+            provider = row.provider.getOrElse(""),
+            validated = true,
             message = "Email validated successfully")
         }
     }
@@ -4121,15 +4117,15 @@ object Http4s600 {
                 throw new Exception("Token has expired")
               signedJWT.getJWTClaimsSet.getSubject
             }
-            authUserBox <- Future(code.model.dataAccess.AuthUser.findUserByValidationToken(uniqueId))
-            user <- NewStyle.function.tryons(
+            row <- NewStyle.function.tryons(
               s"$UnknownError Invalid or expired reset token", 400, Some(cc)) {
-              authUserBox.openOrThrowException("User not found")
+              code.model.dataAccess.DoobieAuthUserProvider.findByUniqueId(uniqueId) match {
+                case Some(r) => r
+                case None    => throw new Exception("User not found")
+              }
             }
           } yield {
-            user.password.set(postedData.new_password)
-            user.uniqueId.set(java.util.UUID.randomUUID().toString.replace("-", ""))
-            user.save
+            code.model.dataAccess.DoobieAuthUserProvider.updatePassword(row.id, postedData.new_password)
             JSONFactory600.ResetPasswordCompleteResponseJsonV600("Password has been reset successfully.")
           }
         }
