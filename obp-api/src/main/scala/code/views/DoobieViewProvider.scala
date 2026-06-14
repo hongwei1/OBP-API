@@ -82,6 +82,10 @@ object DoobieViewProvider {
       case None      => Empty
     }
 
+  private def runList(where: Fragment): List[ViewDefinition] =
+    DoobieUtil.runQuery((selectCols ++ where).query[ViewRow].to[List])
+      .map(toViewDefinition)
+
   /** Mirror of ViewDefinition.findSystemView: NULL bank/account, isSystem=true, matching view_id. */
   def findSystemView(viewId: String): Box[ViewDefinition] =
     runOne(fr"WHERE bank_id IS NULL AND account_id IS NULL AND isSystem_ = true AND view_id = $viewId")
@@ -89,4 +93,33 @@ object DoobieViewProvider {
   /** Mirror of ViewDefinition.findCustomView: matching bank/account, isSystem=false, matching view_id. */
   def findCustomView(bankId: String, accountId: String, viewId: String): Box[ViewDefinition] =
     runOne(fr"WHERE bank_id = $bankId AND account_id = $accountId AND isSystem_ = false AND view_id = $viewId")
+
+  /** All global system views (bank_id IS NULL, account_id IS NULL, isSystem=true). */
+  def findAllSystemViews(): List[ViewDefinition] =
+    runList(fr"WHERE bank_id IS NULL AND account_id IS NULL AND isSystem_ = true")
+
+  /** All custom views for a bank+account (not system). */
+  def findAllCustomViewsByBankAccount(bankId: String, accountId: String): List[ViewDefinition] =
+    runList(fr"WHERE bank_id = $bankId AND account_id = $accountId")
+
+  /** Bank-specific system views (bank_id set, account_id IS NULL, isSystem=true). */
+  def findAllBankSystemViews(bankId: String): List[ViewDefinition] =
+    runList(fr"WHERE bank_id = $bankId AND account_id IS NULL AND isSystem_ = true")
+
+  /** All views (custom or system) with isPublic=true. */
+  def findAllPublic(): List[ViewDefinition] =
+    runList(fr"WHERE isPublic_ = true")
+
+  /** Public views for a bank: custom public views of that bank + any system public views. */
+  def findAllPublicForBank(bankId: String): List[ViewDefinition] =
+    runList(fr"WHERE isPublic_ = true AND (isSystem_ = true OR bank_id = $bankId)")
+
+  /** Delete all viewdefinition rows for a bank+account. */
+  def deleteByBankAccount(bankId: String, accountId: String): Unit =
+    DoobieUtil.runQuery(
+      sql"DELETE FROM viewdefinition WHERE bank_id = $bankId AND account_id = $accountId".update.run)
+
+  /** Delete all viewdefinition rows (used by bulkDeleteAll). */
+  def deleteAll(): Unit =
+    DoobieUtil.runQuery(sql"DELETE FROM viewdefinition".update.run)
 }

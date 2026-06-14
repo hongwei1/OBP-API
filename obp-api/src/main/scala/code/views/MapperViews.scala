@@ -5,13 +5,15 @@ import code.api.APIFailure
 import code.api.Constant._
 import code.api.util.APIUtil._
 import code.api.util.ErrorMessages._
-import code.api.util.{APIUtil, AccountAccessWithViewRow, CallContext, DoobieAccountAccessViewQueries}
-import code.model.dataAccess.ResourceUser
+import code.api.util.{APIUtil, AccountAccessWithViewRow, CallContext, DoobieAccountAccessViewQueries, DoobieUtil}
+import code.users.DoobieResourceUserProvider
 import code.util.Helper.MdcLoggable
 import code.views.system.ViewDefinition.create
 import code.views.system.{AccountAccess, ViewDefinition, ViewPermission}
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.model._
+import doobie._
+import doobie.implicits._
 import net.liftweb.common._
 import net.liftweb.mapper._
 import net.liftweb.util.StringHelpers
@@ -95,9 +97,9 @@ object MapperViews extends Views with MdcLoggable {
 
     // 2. Batch-load users by primary key
     val distinctUserPks = viewPairs.map(_._1.resourceUserPrimaryKey).distinct
-    val usersMap: Map[Long, ResourceUser] = if (distinctUserPks.nonEmpty) {
-      ResourceUser.findAll(ByList(ResourceUser.id, distinctUserPks))
-        .map(u => u.id.get -> u).toMap
+    val usersMap: Map[Long, User] = if (distinctUserPks.nonEmpty) {
+      DoobieResourceUserProvider.findAllByPrimaryKeys(distinctUserPks)
+        .map(u => u.userPrimaryKey.value -> u).toMap
     } else Map.empty
 
     // 3. Group views by user PK and build Permission objects
@@ -117,13 +119,12 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def getViewByBankIdAccountIdViewIdUserPrimaryKey(bankIdAccountIdViewId: BankIdAccountIdViewId,  userPrimaryKey: UserPrimaryKey): Box[View] = {
-    val accountAccessList = AccountAccess.findByBankIdAccountIdViewIdUserPrimaryKey(
-      bankId = bankIdAccountIdViewId.bankId,
-      accountId = bankIdAccountIdViewId.accountId,
-      viewId = bankIdAccountIdViewId.viewId,
-      userPrimaryKey = userPrimaryKey
-    )
-    accountAccessList.map(getViewFromAccountAccess).flatten
+    DoobieAccountAccessProvider.findByBankAccountViewUser(
+      bankIdAccountIdViewId.bankId.value,
+      bankIdAccountIdViewId.accountId.value,
+      bankIdAccountIdViewId.viewId.value,
+      userPrimaryKey.value
+    ).flatMap(getViewFromAccountAccess)
   }
 
   def getPermissionForUser(user: User): Box[Permission] = {
@@ -306,11 +307,11 @@ object MapperViews extends Views with MdcLoggable {
       } else {
         // if it's the owner view, we can only revoke access if there would then still be someone else
         // with access
-        AccountAccess.findAllByBankIdAccountIdViewId(
-          bankId: BankId, 
-          accountId: AccountId,
-          viewDefinition.viewId
-        ).length > 1
+        DoobieAccountAccessProvider.countByBankAccountView(
+          bankId.value,
+          accountId.value,
+          viewDefinition.viewId.value
+        ) > 1
       }
     } else {
       true
@@ -323,23 +324,14 @@ object MapperViews extends Views with MdcLoggable {
    * we already has the guard `canRevokeAccessToAllViews` on the top level.
    */
   def revokeAllAccountAccess(bankId : BankId, accountId: AccountId, user : User) : Box[Boolean] = {
-    AccountAccess.find(
-      By(AccountAccess.bank_id, bankId.value),
-      By(AccountAccess.account_id, accountId.value),
-      By(AccountAccess.user_fk, user.userPrimaryKey.value)
-    ).foreach(_.delete_!)
+    DoobieAccountAccessProvider.deleteByBankAccountUser(bankId.value, accountId.value, user.userPrimaryKey.value)
     Full(true)
   }
 
   def revokeAccountAccessByUser(bankId : BankId, accountId: AccountId, user : User, callContext: Option[CallContext]) : Box[Boolean] = {
     canRevokeAccessToAllViews(bankId, accountId, user, callContext) match {
       case true =>
-        val permissions = AccountAccess.findAll(
-          By(AccountAccess.user_fk, user.userPrimaryKey.value),
-          By(AccountAccess.bank_id, bankId.value),
-          By(AccountAccess.account_id, accountId.value)
-        )
-        permissions.foreach(_.delete_!)
+        DoobieAccountAccessProvider.deleteByBankAccountUser(bankId.value, accountId.value, user.userPrimaryKey.value)
         Full(true)
       case false =>
         Failure(UserLacksPermissionCanRevokeAccessToViewForTargetAccount)
@@ -363,11 +355,7 @@ object MapperViews extends Views with MdcLoggable {
   }
   def getSystemViews() : Future[List[View]] = {
     Future {
-      ViewDefinition.findAll(
-        NullRef(ViewDefinition.bank_id),
-        NullRef(ViewDefinition.account_id),
-        By(ViewDefinition.isSystem_, true)
-      )
+      DoobieViewProvider.findAllSystemViews()
     }
   }
   def systemViewFuture(viewId : ViewId) : Future[Box[View]] = {
@@ -503,58 +491,45 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def assignedViewsForAccount(bankAccountId : BankIdAccountId) : List[View] = {
-    AccountAccess.findAllByBankIdAccountId(
-      bankAccountId.bankId,
-      bankAccountId.accountId
-    ).map(getViewFromAccountAccess).flatten.distinct
+    DoobieAccountAccessProvider.findAllByBankAccount(bankAccountId.bankId.value, bankAccountId.accountId.value)
+      .map(getViewFromAccountAccess).flatten
+      .groupBy(v => (v.bankId.value, v.accountId.value, v.viewId.value)).values.map(_.head).toList
   }
   
   //this is more like possible views, it contains the system views+custom views
   def availableViewsForAccount(bankAccountId : BankIdAccountId) : List[View] = {
-    ViewDefinition.findAll(
-      By(ViewDefinition.bank_id, bankAccountId.bankId.value), 
-      By(ViewDefinition.account_id, bankAccountId.accountId.value)) ::: // Custom views
-     ViewDefinition.findAll(
-       By(ViewDefinition.bank_id, bankAccountId.bankId.value),
-       NullRef(ViewDefinition.account_id),
-       By(ViewDefinition.isSystem_, true)) ::: // Bank specific system views
-     ViewDefinition.findAll(
-       NullRef(ViewDefinition.bank_id),
-       NullRef(ViewDefinition.account_id), 
-       By(ViewDefinition.isSystem_, true)) // Sandbox specific System views
+    DoobieViewProvider.findAllCustomViewsByBankAccount(bankAccountId.bankId.value, bankAccountId.accountId.value) ::: // Custom views
+    DoobieViewProvider.findAllBankSystemViews(bankAccountId.bankId.value) ::: // Bank specific system views
+    DoobieViewProvider.findAllSystemViews() // Sandbox specific System views
   }
   
-  private def getAccountAccessFromPublicViews(publicViews: List[ViewDefinition])={
+  private def getAccountAccessFromPublicViews(publicViews: List[ViewDefinition]): List[AccountAccess] = {
     val publicSystemViews = publicViews.filter(_.isSystem)
     val publicCustomViews = publicViews.filter(!_.isSystem)
-    val publicSystemViewAccountAccess = AccountAccess.findAll(
-      ByList(AccountAccess.view_id, publicSystemViews.map(_.viewId.value)),
+    val systemViewAccess = DoobieAccountAccessProvider.findAllByViewIds(publicSystemViews.map(_.viewId.value))
+    val customViewAccess = DoobieAccountAccessProvider.findAllByBankAccountViewTuples(
+      publicCustomViews.map(v => (v.bankId.value, v.accountId.value, v.viewId.value))
     )
-    val publicCustomViewAccountAccess = AccountAccess.findAll(
-      ByList(AccountAccess.bank_id, publicCustomViews.map(_.bankId.value)),
-      ByList(AccountAccess.account_id, publicCustomViews.map(_.accountId.value)),
-      ByList(AccountAccess.view_id, publicCustomViews.map(_.viewId.value)),
-    )
-    publicCustomViewAccountAccess++publicSystemViewAccountAccess
+    customViewAccess ++ systemViewAccess
   }
+
   def publicViews: (List[View], List[AccountAccess]) = {
     if (APIUtil.allowPublicViews) {
-      val publicViews = ViewDefinition.findAll(By(ViewDefinition.isPublic_, true)) //Both Custom and System views
-      val publicAccountAccess = getAccountAccessFromPublicViews(publicViews)
-      (publicViews, publicAccountAccess)
+      val views = DoobieViewProvider.findAllPublic()
+      val publicAccountAccess = getAccountAccessFromPublicViews(views)
+      (views, publicAccountAccess)
     } else {
       (Nil, Nil)
     }
   }
-  
-  def publicViewsForBank(bankId: BankId): (List[View], List[AccountAccess]) ={
+
+  def publicViewsForBank(bankId: BankId): (List[View], List[AccountAccess]) = {
     if (APIUtil.allowPublicViews) {
-      val publicViews = 
-        ViewDefinition.findAll(By(ViewDefinition.isPublic_, true), By(ViewDefinition.bank_id, bankId.value), By(ViewDefinition.isSystem_, false)) ::: // Custom views
-        ViewDefinition.findAll(By(ViewDefinition.isPublic_, true), By(ViewDefinition.isSystem_, true)) ::: // System views
-        ViewDefinition.findAll(By(ViewDefinition.isPublic_, true), By(ViewDefinition.bank_id, bankId.value), By(ViewDefinition.isSystem_, true)) // System views
-      val publicAccountAccess = getAccountAccessFromPublicViews(publicViews)
-      (publicViews.distinct, publicAccountAccess)
+      val rawViews = DoobieViewProvider.findAllPublicForBank(bankId.value)
+      val distinctViews = rawViews
+        .groupBy(v => (v.bank_id.get, v.account_id.get, v.viewId.value)).values.map(_.head).toList
+      val publicAccountAccess = getAccountAccessFromPublicViews(distinctViews)
+      (distinctViews, publicAccountAccess)
     } else {
       (Nil, Nil)
     }
@@ -803,9 +778,13 @@ object MapperViews extends Views with MdcLoggable {
    * @return
    */
   def getOwners(view: View) : Set[User] = {
-    val accountAccessList = AccountAccess.findAllByView(view)
-    val users: List[User] = accountAccessList.flatMap(_.user_fk.obj)
-    users.toSet
+    val accessList = if (view.isSystem)
+      DoobieAccountAccessProvider.findAllBySystemViewId(view.viewId.value)
+    else
+      DoobieAccountAccessProvider.findAllByBankAccountViewTuples(
+        List((view.bankId.value, view.accountId.value, view.viewId.value)))
+    val userPks = accessList.map(_.user_fk.get).distinct
+    DoobieResourceUserProvider.findAllByPrimaryKeys(userPks).toSet
   }
 
   def getOrCreateCustomPublicView(bankId: BankId, accountId: AccountId, description: String = "Public View") : Box[View] = {
@@ -847,17 +826,15 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def removeAllViewsAndVierPermissions(bankId: BankId, accountId: AccountId) : Boolean = {
-    ViewDefinition.bulkDelete_!!(
-      By(ViewDefinition.bank_id, bankId.value),
-      By(ViewDefinition.account_id, accountId.value)
-    )
-    ViewPermission.bulkDelete_!!()
+    DoobieViewProvider.deleteByBankAccount(bankId.value, accountId.value)
+    DoobieUtil.runQuery(sql"DELETE FROM viewpermission".update.run)
+    true
   }
 
   def bulkDeleteAllViewsAndAccountAccessAndViewPermission() : Boolean = {
-    ViewDefinition.bulkDelete_!!()
-    AccountAccess.bulkDelete_!!()
-    ViewPermission.bulkDelete_!!()
+    DoobieViewProvider.deleteAll()
+    DoobieAccountAccessProvider.deleteAll()
+    DoobieUtil.runQuery(sql"DELETE FROM viewpermission".update.run)
     true
   }
 

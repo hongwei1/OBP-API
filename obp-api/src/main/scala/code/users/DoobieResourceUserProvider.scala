@@ -84,4 +84,13 @@ object DoobieResourceUserProvider {
         .map(DoobieResourceUser(_))
     }
   }
+
+  def findAllByPrimaryKeys(pks: List[Long]): List[DoobieResourceUser] = {
+    if (pks.isEmpty) Nil
+    else {
+      val inList = pks.map(id => fr"$id").reduceLeft((a, b) => a ++ fr"," ++ b)
+      DoobieUtil.runQuery((selectCols ++ fr"WHERE id IN (" ++ inList ++ fr")").query[RuRow].to[List])
+        .map(DoobieResourceUser(_))
+    }
+  }
 }
