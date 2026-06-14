@@ -1,97 +1,114 @@
 package code.loginattempts
 
-import code.api.util.APIUtil
+import code.api.util.{APIUtil, DoobieUtil}
 import code.userlocks.UserLocksProvider
 import code.util.Helper.MdcLoggable
+import doobie._
+import doobie.implicits._
 import net.liftweb.common.{Box, Empty, Full}
-import net.liftweb.mapper.By
-import net.liftweb.util.Helpers._
+import net.liftweb.util.Helpers.now
+
+import java.sql.Timestamp
+import java.util.Date
 
 object LoginAttempt extends MdcLoggable {
 
-  def maxBadLoginAttempts = APIUtil.getPropsValue("max.bad.login.attempts") openOr "5"
-  
+  def maxBadLoginAttempts: String = APIUtil.getPropsValue("max.bad.login.attempts") openOr "5"
+
+  private case class LoginAttemptRow(
+    id: Long,
+    username: String,
+    provider: String,
+    attempts: Int,
+    lastFailure: Option[Timestamp]
+  )
+
+  private case class DoobieBadLoginAttempt(
+    username: String,
+    provider: String,
+    badAttemptsSinceLastSuccessOrReset: Int,
+    lastFailureDate: Date
+  ) extends BadLoginAttempt
+
+  private val selectCols: Fragment =
+    fr"SELECT id, musername, provider, mbadattemptssincethelastsuccessorreset, mlastfailuredate FROM mappedbadloginattempt"
+
+  private def findRow(provider: String, username: String): Option[LoginAttemptRow] =
+    DoobieUtil.runQuery(
+      (selectCols ++ fr"WHERE provider = $provider AND musername = $username LIMIT 1")
+        .query[LoginAttemptRow].option
+    )
+
+  private def toTrait(row: LoginAttemptRow): BadLoginAttempt =
+    DoobieBadLoginAttempt(
+      username  = row.username,
+      provider  = row.provider,
+      badAttemptsSinceLastSuccessOrReset = row.attempts,
+      lastFailureDate = row.lastFailure.map(t => new Date(t.getTime)).getOrElse(new Date(0L))
+    )
+
   def incrementBadLoginAttempts(provider: String, username: String): Unit = {
-    username.isEmpty() match {
-      case true => // Not a valid case. GitLab issue 389
-        logger.warn(s"Username is empty: incrementBadLoginAttempts(username=$username, provider=$provider")
-      case false =>
-        logger.debug(s"Hello from incrementBadLoginAttempts with $username")
-
-        // Find badLoginAttempt record if one exists for a user
-        MappedBadLoginAttempt.find(
-          By(MappedBadLoginAttempt.Provider, provider),
-          By(MappedBadLoginAttempt.mUsername, username)
-        ) match {
-          // If it exits update the date and increment
-          case Full(loginAttempt) =>
-
-            logger.debug(s"incrementBadLoginAttempts found ${loginAttempt.mBadAttemptsSinceLastSuccessOrReset} loginAttempt(s) with id ${loginAttempt.id}")
-
-            loginAttempt
-              .mLastFailureDate(now)
-              .mBadAttemptsSinceLastSuccessOrReset(loginAttempt.mBadAttemptsSinceLastSuccessOrReset + 1) // Increment
-              .save
-          case _ =>
-            // If none exists, add one
-            MappedBadLoginAttempt.create
-              .mUsername(username)
-              .Provider(provider)
-              .mLastFailureDate(now)
-              .mBadAttemptsSinceLastSuccessOrReset(1) // Start with 1
-              .save
-
-            logger.debug(s"incrementBadLoginAttempts created loginAttempt")
-        }
+    if (username.isEmpty) {
+      logger.warn(s"Username is empty: incrementBadLoginAttempts(username=$username, provider=$provider")
+      return
+    }
+    logger.debug(s"Hello from incrementBadLoginAttempts with $username")
+    val ts = new Timestamp(now.getTime)
+    findRow(provider, username) match {
+      case Some(row) =>
+        val newCount = row.attempts + 1
+        logger.debug(s"incrementBadLoginAttempts found ${row.attempts} loginAttempt(s) with id ${row.id}")
+        DoobieUtil.runQuery(
+          sql"""UPDATE mappedbadloginattempt
+                SET mbadattemptssincethelastsuccessorreset = $newCount, mlastfailuredate = $ts
+                WHERE id = ${row.id}""".update.run
+        )
+      case None =>
+        DoobieUtil.runQuery(
+          sql"""INSERT INTO mappedbadloginattempt (musername, provider, mbadattemptssincethelastsuccessorreset, mlastfailuredate)
+                VALUES ($username, $provider, 1, $ts)""".update.run
+        )
+        logger.debug(s"incrementBadLoginAttempts created loginAttempt")
     }
   }
-  
+
   def getOrCreateBadLoginStatus(provider: String, username: String): Box[BadLoginAttempt] = {
-    MappedBadLoginAttempt.find(
-      By(MappedBadLoginAttempt.Provider, provider),
-      By(MappedBadLoginAttempt.mUsername, username)
-    ).or(Full(MappedBadLoginAttempt.create
-      .mUsername(username)
-      .Provider(provider)
-      .mLastFailureDate(now)
-      .mBadAttemptsSinceLastSuccessOrReset(0)
-      .saveMe()
-    ))
+    findRow(provider, username) match {
+      case Some(row) => Full(toTrait(row))
+      case None =>
+        val ts = new Timestamp(now.getTime)
+        DoobieUtil.runQuery(
+          sql"""INSERT INTO mappedbadloginattempt (musername, provider, mbadattemptssincethelastsuccessorreset, mlastfailuredate)
+                VALUES ($username, $provider, 0, $ts)""".update.run
+        )
+        findRow(provider, username).map(r => Full(toTrait(r))).getOrElse(Empty)
+    }
   }
 
-  /**
-    * check the bad login attempts, if it exceed the "max.bad.login.attempts"(in default.props), it return false.
-    */
   def userIsLocked(provider: String, username: String): Boolean = {
-
-    val result : Boolean = MappedBadLoginAttempt.find( // Check the table MappedBadLoginAttempt
-      By(MappedBadLoginAttempt.Provider, provider),
-      By(MappedBadLoginAttempt.mUsername, username)
-    ) match {
-      case Full(loginAttempt)  => loginAttempt.badAttemptsSinceLastSuccessOrReset > maxBadLoginAttempts.toInt match {
-        case true => true
-        case false => UserLocksProvider.isLocked(provider, username) // Check the table UserLocks
-      }
-      case _ => UserLocksProvider.isLocked(provider, username) // Check the table UserLocks
+    val result: Boolean = findRow(provider, username) match {
+      case Some(row) =>
+        if (row.attempts > maxBadLoginAttempts.toInt) true
+        else UserLocksProvider.isLocked(provider, username)
+      case _ =>
+        UserLocksProvider.isLocked(provider, username)
     }
-
     logger.debug(s"userIsLocked result for $username is $result")
     result
-
   }
 
   def resetBadLoginAttempts(provider: String, username: String): Unit = {
-
-    MappedBadLoginAttempt.find(
-      By(MappedBadLoginAttempt.Provider, provider),
-      By(MappedBadLoginAttempt.mUsername, username)
-    ) match {
-      case Full(loginAttempt) =>
-        loginAttempt.mLastFailureDate(now).mBadAttemptsSinceLastSuccessOrReset(0).save
-      case _ =>
-        // don't need to create here
-        Empty // MappedBadLoginAttempt.create.mUsername(username).mBadAttemptsSinceLastSuccessOrReset(0).save()
+    findRow(provider, username) match {
+      case Some(row) =>
+        val ts = new Timestamp(now.getTime)
+        DoobieUtil.runQuery(
+          sql"""UPDATE mappedbadloginattempt
+                SET mbadattemptssincethelastsuccessorreset = 0, mlastfailuredate = $ts
+                WHERE id = ${row.id}""".update.run
+        )
+      case None =>
+        Empty
     }
   }
 
-} // End of Trait
+}
