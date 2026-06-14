@@ -35,7 +35,7 @@ object DoobieDynamicResourceDocProvider extends DynamicResourceDocProvider {
     successresponsebody: Option[String],
     errorresponsebodies: String,
     tags: String,
-    roles: String,
+    roles_c: String,
     methodbody: String
   )
 
@@ -52,13 +52,13 @@ object DoobieDynamicResourceDocProvider extends DynamicResourceDocProvider {
     successResponseBody  = row.successresponsebody.filter(StringUtils.isNotBlank(_)).flatMap(v => tryo(json.parse(v)).toOption),
     errorResponseBodies  = row.errorresponsebodies,
     tags                 = row.tags,
-    roles                = row.roles
+    roles                = row.roles_c
   )
 
   private val selectCols: Fragment =
     fr"""SELECT bankid, dynamicresourcedocid, partialfunctionname, requestverb, requesturl,
                summary, description, examplerequestbody, successresponsebody,
-               errorresponsebodies, tags, roles, methodbody
+               errorresponsebodies, tags, roles_c, methodbody
          FROM dynamicresourcedoc"""
 
   override def getById(bankId: Option[String], dynamicResourceDocId: String): Box[JsonDynamicResourceDoc] = {
@@ -101,7 +101,7 @@ object DoobieDynamicResourceDocProvider extends DynamicResourceDocProvider {
         sql"""INSERT INTO dynamicresourcedoc
               (bankid, dynamicresourcedocid, partialfunctionname, requestverb, requesturl,
                summary, description, examplerequestbody, successresponsebody,
-               errorresponsebodies, tags, roles, methodbody)
+               errorresponsebodies, tags, roles_c, methodbody)
               VALUES
               ($bankIdVal, $newId, ${nn(entity.partialFunctionName)}, ${nn(entity.requestVerb)}, ${nn(entity.requestUrl)},
                ${nn(entity.summary)}, ${nn(entity.description)}, $requestBody, $responseBody,
@@ -125,7 +125,7 @@ object DoobieDynamicResourceDocProvider extends DynamicResourceDocProvider {
               successresponsebody = $responseBody,
               errorresponsebodies = ${nn(entity.errorResponseBodies)},
               tags = ${nn(entity.tags)},
-              roles = ${nn(entity.roles)},
+              roles_c = ${nn(entity.roles)},
               methodbody = ${nn(entity.methodBody)}
             WHERE dynamicresourcedocid = $id
            """.update.run)
