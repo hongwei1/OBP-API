@@ -6,7 +6,7 @@ import java.util.Date
 import code.api.util._
 import code.entitlement.{DoobieEntitlementsProvider, Entitlement, MappedEntitlement}
 import code.loginattempts.LoginAttempt.maxBadLoginAttempts
-import code.model.dataAccess.{AuthUser, ResourceUser}
+import code.model.dataAccess.{DoobieAuthUserProvider, ResourceUser}
 import doobie._
 import doobie.implicits._
 import code.util.Helper.MdcLoggable
@@ -373,8 +373,8 @@ object LiftUsers extends Users with MdcLoggable{
     for {
       u <- ResourceUser.find(By(ResourceUser.id, userPrimaryKey.value))
     } yield {
-      AuthUser.find(By(AuthUser.user, userPrimaryKey.value)) match {
-        case Empty =>
+      DoobieAuthUserProvider.findMetaByUserFk(userPrimaryKey.value) match {
+        case None =>
           u
             .Company(Helpers.randomString(16))
             .IsDeleted(true)
@@ -382,7 +382,7 @@ object LiftUsers extends Users with MdcLoggable{
             .email(Helpers.randomString(10) + "@example.com")
             .providerId(Helpers.randomString(16))
             .save
-        case _ =>
+        case Some(_) =>
           u
             .Company(Helpers.randomString(16))
             .IsDeleted(true)
