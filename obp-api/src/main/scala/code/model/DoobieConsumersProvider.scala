@@ -162,13 +162,16 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
     company: Option[String],
     logoURL: Option[String]
   ): Box[Consumer] = tryo {
-    val actualName = name.map { n =>
+    // Bind nullable text columns as Option[String] — Doobie's Put[String] rejects a
+    // raw null ("Expected non-nullable param"), so .orNull would blow up whenever the
+    // caller passes None (e.g. appType = None in every test consumer).
+    val actualName: Option[String] = name.map { n =>
       val count = DoobieUtil.runQuery(sql"SELECT COUNT(*) FROM consumer WHERE name = $n".query[Int].unique)
       if (count == 0) n else s"${n}_${Helpers.randomString(10).toLowerCase}"
-    }.orNull
-    val appTypeStr  = appType.map(_.toString).orNull
+    }
+    val appTypeStr: Option[String] = appType.map(_.toString)
     val isActiveVal = isActive.getOrElse(APIUtil.getPropsAsBoolValue("consumers_enabled_by_default", false))
-    val certVal     = clientCertificate.filter(StringUtils.isNotBlank).orNull
+    val certVal: Option[String] = clientCertificate.filter(StringUtils.isNotBlank)
     val now         = new Timestamp(System.currentTimeMillis())
 
     val generatedId = DoobieUtil.runQuery(
@@ -318,14 +321,12 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
           logger.info(s"getOrCreateConsumer says: Cleared stale consumer.")
         }
 
-        // Populate azp, iss, sub on the pre-registered consumer
-        val azpVal = azp.orNull
-        val issVal = iss.orNull
-        val subVal = sub.orNull
+        // Populate azp, iss, sub on the pre-registered consumer. Bind Option[String]
+        // directly — .orNull would make Doobie's Put[String] reject a null when iss/sub is None.
         val ts = new Timestamp(System.currentTimeMillis())
         logger.info(s"getOrCreateConsumer says: Updating azp/iss/sub on pre-registered consumer...")
         DoobieUtil.runQuery(
-          sql"UPDATE consumer SET azp = $azpVal, iss = $issVal, sub = $subVal, updatedat = $ts WHERE id = ${c.id.get}".update.run
+          sql"UPDATE consumer SET azp = $azp, iss = $iss, sub = $sub, updatedat = $ts WHERE id = ${c.id.get}".update.run
         )
         logger.info(s"getOrCreateConsumer says: Updated pre-registered consumer.")
         findOne(fr"WHERE id = ${c.id.get}")
@@ -360,22 +361,15 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
               case None        => APIUtil.generateUUID()
             }
           }
-          val actualName = name.map { n =>
+          // Bind nullable text columns as Option[String] — Doobie's Put[String] rejects a
+          // raw null, so .orNull would blow up whenever the caller passes None (common on
+          // the OIDC auto-create path: aud/azp/iss/sub/description/etc. are frequently None).
+          val actualName: Option[String] = name.map { n =>
             val count = DoobieUtil.runQuery(sql"SELECT COUNT(*) FROM consumer WHERE name = $n".query[Int].unique)
             if (count == 0) n else s"${n}_${Helpers.randomString(10).toLowerCase}"
-          }.orNull
-          val appTypeStr  = appType.map(_.toString).orNull
+          }
+          val appTypeStr: Option[String] = appType.map(_.toString)
           val isActiveVal = isActive.getOrElse(APIUtil.getPropsAsBoolValue("consumers_enabled_by_default", false))
-          val audVal      = aud.orNull
-          val azpVal      = azp.orNull
-          val issVal      = iss.orNull
-          val subVal      = sub.orNull
-          val descVal     = description.orNull
-          val emailVal    = developerEmail.orNull
-          val redirectVal = redirectURL.orNull
-          val userId      = createdByUserId.orNull
-          val certVal     = certificate.orNull
-          val logoVal     = logoUrl.orNull
           val now         = new Timestamp(System.currentTimeMillis())
 
           val generatedId = DoobieUtil.runQuery(
@@ -384,9 +378,9 @@ object DoobieConsumersProvider extends ConsumersProvider with MdcLoggable {
                      description, developeremail, redirecturl, createdbyuserid, clientcertificate,
                      logourl, createdat, updatedat)
                   VALUES
-                    ($actualConsumerId, $actualKey, $actualSecret, $audVal, $azpVal, $issVal, $subVal,
-                     $isActiveVal, $actualName, $appTypeStr, $descVal, $emailVal, $redirectVal,
-                     $userId, $certVal, $logoVal, $now, $now)"""
+                    ($actualConsumerId, $actualKey, $actualSecret, $aud, $azp, $iss, $sub,
+                     $isActiveVal, $actualName, $appTypeStr, $description, $developerEmail, $redirectURL,
+                     $createdByUserId, $certificate, $logoUrl, $now, $now)"""
               .update.withUniqueGeneratedKeys[Long]("id")
           )
           val createdConsumer = findOne(fr"WHERE id = $generatedId")
