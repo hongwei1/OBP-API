@@ -31,7 +31,7 @@ object LoginAttempt extends MdcLoggable {
   ) extends BadLoginAttempt
 
   private val selectCols: Fragment =
-    fr"SELECT id, musername, provider, mbadattemptssincethelastsuccessorreset, mlastfailuredate FROM mappedbadloginattempt"
+    fr"SELECT id, musername, provider, mbadattemptssincelastsuccessorreset, mlastfailuredate FROM mappedbadloginattempt"
 
   private def findRow(provider: String, username: String): Option[LoginAttemptRow] =
     DoobieUtil.runQuery(
@@ -60,12 +60,12 @@ object LoginAttempt extends MdcLoggable {
         logger.debug(s"incrementBadLoginAttempts found ${row.attempts} loginAttempt(s) with id ${row.id}")
         DoobieUtil.runQuery(
           sql"""UPDATE mappedbadloginattempt
-                SET mbadattemptssincethelastsuccessorreset = $newCount, mlastfailuredate = $ts
+                SET mbadattemptssincelastsuccessorreset = $newCount, mlastfailuredate = $ts
                 WHERE id = ${row.id}""".update.run
         )
       case None =>
         DoobieUtil.runQuery(
-          sql"""INSERT INTO mappedbadloginattempt (musername, provider, mbadattemptssincethelastsuccessorreset, mlastfailuredate)
+          sql"""INSERT INTO mappedbadloginattempt (musername, provider, mbadattemptssincelastsuccessorreset, mlastfailuredate)
                 VALUES ($username, $provider, 1, $ts)""".update.run
         )
         logger.debug(s"incrementBadLoginAttempts created loginAttempt")
@@ -78,7 +78,7 @@ object LoginAttempt extends MdcLoggable {
       case None =>
         val ts = new Timestamp(now.getTime)
         DoobieUtil.runQuery(
-          sql"""INSERT INTO mappedbadloginattempt (musername, provider, mbadattemptssincethelastsuccessorreset, mlastfailuredate)
+          sql"""INSERT INTO mappedbadloginattempt (musername, provider, mbadattemptssincelastsuccessorreset, mlastfailuredate)
                 VALUES ($username, $provider, 0, $ts)""".update.run
         )
         findRow(provider, username).map(r => Full(toTrait(r))).getOrElse(Empty)
@@ -103,7 +103,7 @@ object LoginAttempt extends MdcLoggable {
         val ts = new Timestamp(now.getTime)
         DoobieUtil.runQuery(
           sql"""UPDATE mappedbadloginattempt
-                SET mbadattemptssincethelastsuccessorreset = 0, mlastfailuredate = $ts
+                SET mbadattemptssincelastsuccessorreset = 0, mlastfailuredate = $ts
                 WHERE id = ${row.id}""".update.run
         )
       case None =>
