@@ -92,6 +92,15 @@ TransactionIdMapping, CustomerIdMapping, AccountWebhook, BankAccountNotification
 | MapperViews.removeCustomView/removeSystemView | MapperViews.scala | DELETE viewpermission + viewdefinition via Doobie; COUNT(*) for orphan check |
 | LiftUsers.scrambleDataOfResourceUser | LiftUsers.scala | `AuthUser.find(By(...))` → `DoobieAuthUserProvider.findMetaByUserFk` |
 
+### Phase A finish 2026-06-14 (provider layer 100%)
+
+| Task | Change |
+|------|--------|
+| WebUiProps → Doobie | `MappedWebUiPropsProvider`: all 5 methods rewritten to Doobie SQL. Object name retained — ConnectorBuilderUtil rewrites it by exact string via Javassist during non-mapped connector generation. Entity classes `WebUiProps`/`object WebUiProps` kept on Lift (in ToSchemify, needed for table creation + test isolation). Verified: 33 WebUiProps tests pass (v3.1.0 + v5.1.0 + v6.0.0). |
+| YearlyCharge dead code removed | `MappedYearlyChargeProvider.scala` + `YearlyCharge.scala` deleted. Both files were entirely commented out with zero live references and no ToSchemify registration. |
+
+**Phase A provider layer is now 100% Doobie.** All active data-access paths go through Doobie SQL; no `find(By(...))` / `saveMe()` / `bulkDelete_!!` remains in any provider's live code path.
+
 ---
 
 ## What remains on Lift (intentional, with rationale)
