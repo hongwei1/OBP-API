@@ -7,8 +7,11 @@ import java.util.UUID.randomUUID
 
 import code.api.cache.Caching
 import code.api.util.APIUtil.generateUUID
+import code.api.util.DoobieUtil
 import code.api.util._
 import code.model.MappedConsumersProvider
+import doobie._
+import doobie.implicits._
 import code.util.Helper.MdcLoggable
 import code.util.{MappedUUID, UUIDString}
 import com.openbankproject.commons.ExecutionContext.Implicits.global
@@ -154,36 +157,43 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
     // archive's own auto-increment `id`. The two are unrelated id-spaces; matching on
     // `id` overwrites an unrelated archived row once the archive's id sequence grows
     // into the live metric id range.
-    val metric = MetricArchive.find(By(MetricArchive.metricId, primaryKey)).getOrElse(MetricArchive.create)
-
-    metric
-      .metricId(primaryKey)
-      .userId(userId)
-      .url(url)
-      .date(date)
-      .duration(duration)
-      .userName(userName)
-      .appName(appName)
-      .developerEmail(developerEmail)
-      .consumerId(consumerId)
-      .implementedByPartialFunction(implementedByPartialFunction)
-      .implementedInVersion(implementedInVersion)
-      .verb(verb)
-      .correlationId(correlationId)
-      .responseBody(responseBody)
-      .sourceIp(sourceIp)
-      .targetIp(targetIp)
-      .apiInstanceId(apiInstanceId)
-      .consentReferenceId(consentReferenceId)
-
-    httpCode match {
-      case Some(code) => metric.httpCode(code)
+    val ts = new Timestamp(date.getTime)
+    val httpCodeVal = httpCode.getOrElse(0)
+    val existingId = DoobieUtil.runQuery(
+      sql"SELECT id FROM metricarchive WHERE metricid = $primaryKey".query[Long].option
+    )
+    val saved = existingId match {
+      case Some(existId) =>
+        DoobieUtil.runQuery(
+          sql"""UPDATE metricarchive
+                   SET metricid = $primaryKey, userid = $userId, url = $url, date_c = $ts,
+                       duration = $duration, username = $userName, appname = $appName,
+                       developeremail = $developerEmail, consumerid = $consumerId,
+                       implementedbypartialfunction = $implementedByPartialFunction,
+                       implementedinversion = $implementedInVersion, verb = $verb,
+                       correlationid = $correlationId, responsebody = $responseBody,
+                       sourceip = $sourceIp, targetip = $targetIp, apiinstanceid = $apiInstanceId,
+                       consent_reference_id = $consentReferenceId, httpcode = $httpCodeVal
+                   WHERE id = $existId""".update.run
+        ) > 0
       case None =>
+        try {
+          DoobieUtil.runQuery(
+            sql"""INSERT INTO metricarchive
+                    (metricid, userid, url, date_c, duration, username, appname, developeremail,
+                     consumerid, implementedbypartialfunction, implementedinversion, verb,
+                     correlationid, responsebody, sourceip, targetip, apiinstanceid,
+                     consent_reference_id, httpcode)
+                  VALUES
+                    ($primaryKey, $userId, $url, $ts, $duration, $userName, $appName, $developerEmail,
+                     $consumerId, $implementedByPartialFunction, $implementedInVersion, $verb,
+                     $correlationId, $responseBody, $sourceIp, $targetIp, $apiInstanceId,
+                     $consentReferenceId, $httpCodeVal)""".update.run
+          ) > 0
+        } catch {
+          case _: Exception => false
+        }
     }
-    // Fix: Lift's .save returns false (it does NOT throw) on a failed insert.
-    // Returning that result lets the caller skip the source-row delete and mark
-    // the run as failed instead of silently stalling.
-    val saved = metric.save
     if (!saved) {
       logger.error(s"saveMetricsArchive: failed to persist MetricArchive row for metricId=$primaryKey (url=$url, date=$date)")
     }
@@ -241,93 +251,114 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
 //  }
 
   //TODO, maybe move to `APIUtil.scala`
- private def getQueryParams(queryParams: List[OBPQueryParam]) = {
-    val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedMetric](value) }.headOption
-    val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedMetric](value) }.headOption
-    val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedMetric.date, date) }.headOption
-    val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedMetric.date, date) }.headOption
-    val ordering = queryParams.collect {
-      case OBPOrdering(field, dir) =>
-        val direction = dir match {
-          case OBPAscending => Ascending
-          case OBPDescending => Descending
-        }
-        field match {
-          case Some(s) if s == "user_id" => OrderBy(MappedMetric.userId, direction)
-          case Some(s) if s == "username" || s == "user_name" => OrderBy(MappedMetric.userName, direction)
-          case Some(s) if s == "developer_email" => OrderBy(MappedMetric.developerEmail, direction)
-          case Some(s) if s == "app_name" => OrderBy(MappedMetric.appName, direction)
-          case Some(s) if s == "url" => OrderBy(MappedMetric.url, direction)
-          case Some(s) if s == "date" => OrderBy(MappedMetric.date, direction)
-          case Some(s) if s == "consumer_id" => OrderBy(MappedMetric.consumerId, direction)
-          case Some(s) if s == "verb" => OrderBy(MappedMetric.verb, direction)
-          case Some(s) if s == "implemented_in_version" => OrderBy(MappedMetric.implementedInVersion, direction)
-          case Some(s) if s == "implemented_by_partial_function" => OrderBy(MappedMetric.implementedByPartialFunction, direction)
-          case Some(s) if s == "correlation_id" => OrderBy(MappedMetric.correlationId, direction)
-          case Some(s) if s == "duration" => OrderBy(MappedMetric.duration, direction)
-          case Some(s) if s == "http_status_code" => OrderBy(MappedMetric.httpCode, direction)
-          case _ => OrderBy(MappedMetric.date, Descending)
-        }
-    }
-    // he optional variables:
-    val consumerId = queryParams.collect { case OBPConsumerId(value) => By(MappedMetric.consumerId, value)}.headOption
-    val bankId = queryParams.collect { case OBPBankId(value) => Like(MappedMetric.url, s"%banks/$value%") }.headOption
-    val userId = queryParams.collect { case OBPUserId(value) => By(MappedMetric.userId, value) }.headOption
-    val url = queryParams.collect { case OBPUrl(value) => By(MappedMetric.url, value) }.headOption
-    val appName = queryParams.collect { case OBPAppName(value) => By(MappedMetric.appName, value) }.headOption
-    val implementedInVersion = queryParams.collect { case OBPImplementedInVersion(value) => By(MappedMetric.implementedInVersion, value) }.headOption
-    val implementedByPartialFunction = queryParams.collect { case OBPImplementedByPartialFunction(value) => By(MappedMetric.implementedByPartialFunction, value) }.headOption
-    val verb = queryParams.collect { case OBPVerb(value) => By(MappedMetric.verb, value) }.headOption
-    val correlationId = queryParams.collect { case OBPCorrelationId(value) => By(MappedMetric.correlationId, value) }.headOption
-    val duration = queryParams.collect { case OBPDuration(value) => By_>(MappedMetric.duration, value) }.headOption
-    val httpStatusCode = queryParams.collect { case OBPHttpStatusCode(value) => By(MappedMetric.httpCode, value) }.headOption
-    val consentReferenceId = queryParams.collect { case OBPConsentReferenceId(value) => By(MappedMetric.consentReferenceId, value) }.headOption
-    val anon = queryParams.collect {
-      case OBPAnon(true) => By(MappedMetric.userId, "null")
-      case OBPAnon(false) => NotBy(MappedMetric.userId, "null")
-    }.headOption
-    val excludeAppNames = queryParams.collect { 
-      case OBPExcludeAppNames(values) => 
-        values.map(NotBy(MappedMetric.appName, _)) 
-    }.headOption
+  private case class MetricRowDoobie(
+    id: Long,
+    url: Option[String],
+    duration: Option[Long],
+    userName: Option[String],
+    date: Option[Timestamp],
+    apiInstanceId: Option[String],
+    sourceIp: Option[String],
+    targetIp: Option[String],
+    developerEmail: Option[String],
+    httpCode: Option[Int],
+    consumerId: Option[String],
+    userId: Option[String],
+    correlationId: Option[String],
+    verb: Option[String],
+    consentReferenceId: Option[String],
+    appName: Option[String],
+    implementedByPartialFunction: Option[String],
+    implementedInVersion: Option[String],
+    responseBody: Option[String]
+  )
 
-    Seq(
-      offset.toSeq,
-      fromDate.toSeq,
-      toDate.toSeq,
-      ordering,
-      consumerId.toSeq,
-      userId.toSeq,
-      bankId.toSeq,
-      url.toSeq,
-      appName.toSeq,
-      implementedInVersion.toSeq,
-      implementedByPartialFunction.toSeq,
-      verb.toSeq,
-      limit.toSeq,
-      correlationId.toSeq,
-      duration.toSeq,
-      httpStatusCode.toSeq,
-      consentReferenceId.toSeq,
-      anon.toSeq,
-      excludeAppNames.toSeq.flatten
-    ).flatten
+  private def metricRowToEntity(row: MetricRowDoobie): MappedMetric = {
+    val m = MappedMetric.create
+    m.id(row.id)
+    row.url.foreach(m.url(_))
+    row.duration.foreach(m.duration(_))
+    row.userName.foreach(m.userName(_))
+    row.date.foreach(ts => m.date(new Date(ts.getTime)))
+    row.apiInstanceId.foreach(m.apiInstanceId(_))
+    row.sourceIp.foreach(m.sourceIp(_))
+    row.targetIp.foreach(m.targetIp(_))
+    row.developerEmail.foreach(m.developerEmail(_))
+    row.httpCode.foreach(m.httpCode(_))
+    row.consumerId.foreach(m.consumerId(_))
+    row.userId.foreach(m.userId(_))
+    row.correlationId.foreach(m.correlationId(_))
+    row.verb.foreach(m.verb(_))
+    row.consentReferenceId.foreach(m.consentReferenceId(_))
+    row.appName.foreach(m.appName(_))
+    row.implementedByPartialFunction.foreach(m.implementedByPartialFunction(_))
+    row.implementedInVersion.foreach(m.implementedInVersion(_))
+    row.responseBody.foreach(m.responseBody(_))
+    m
   }
 
   // TODO Cache this as long as fromDate and toDate are in the past (before now)
   override def getAllMetrics(queryParams: List[OBPQueryParam]): List[APIMetric] = {
-    /**
-      * Please note that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
-      * is just a temporary value field with UUID values in order to prevent any ambiguity.
-      * The real value will be assigned by Macro during compile time at this line of a code:
-      * https://github.com/OpenBankProject/scala-macros/blob/master/macros/src/main/scala/com/tesobe/CacheKeyFromArgumentsMacro.scala#L49
-      */
     var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-      val cacheTTL = determineMetricsCacheTTL(queryParams)
-      CacheKeyFromArguments.buildCacheKey { 
-        Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(cacheTTL.seconds){
-          val optionalParams = getQueryParams(queryParams)
-          MappedMetric.findAll(optionalParams: _*)
+    val cacheTTL = determineMetricsCacheTTL(queryParams)
+    CacheKeyFromArguments.buildCacheKey {
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(cacheTTL.seconds) {
+        val conditions: List[Fragment] = List(
+          queryParams.collectFirst { case OBPFromDate(d)                       => fr"date_c >= ${new Timestamp(d.getTime)}" },
+          queryParams.collectFirst { case OBPToDate(d)                         => fr"date_c <= ${new Timestamp(d.getTime)}" },
+          queryParams.collectFirst { case OBPConsumerId(v)                     => fr"consumerid = $v" },
+          queryParams.collectFirst { case OBPBankId(v)                         => fr"url LIKE ${s"%banks/$v%"}" },
+          queryParams.collectFirst { case OBPUserId(v)                         => fr"userid = $v" },
+          queryParams.collectFirst { case OBPUrl(v)                            => fr"url = $v" },
+          queryParams.collectFirst { case OBPAppName(v)                        => fr"appname = $v" },
+          queryParams.collectFirst { case OBPImplementedInVersion(v)           => fr"implementedinversion = $v" },
+          queryParams.collectFirst { case OBPImplementedByPartialFunction(v)   => fr"implementedbypartialfunction = $v" },
+          queryParams.collectFirst { case OBPVerb(v)                           => fr"verb = $v" },
+          queryParams.collectFirst { case OBPCorrelationId(v)                  => fr"correlationid = $v" },
+          queryParams.collectFirst { case OBPDuration(v)                       => fr"duration > $v" },
+          queryParams.collectFirst { case OBPHttpStatusCode(v)                 => fr"httpcode = $v" },
+          queryParams.collectFirst { case OBPConsentReferenceId(v)             => fr"consent_reference_id = $v" },
+          queryParams.collectFirst { case OBPAnon(true)  => fr"userid = 'null'" },
+          queryParams.collectFirst { case OBPAnon(false) => fr"userid <> 'null'" },
+        ).flatten ++ queryParams.collect { case OBPExcludeAppNames(vs) => vs.map(v => fr"appname <> $v") }.flatten
+
+        val whereClause = if (conditions.isEmpty) Fragment.empty
+                          else fr"WHERE" ++ conditions.reduceLeft(_ ++ fr"AND" ++ _)
+
+        val ordering = queryParams.collectFirst {
+          case OBPOrdering(field, dir) =>
+            val dirStr = if (dir == OBPAscending) "ASC" else "DESC"
+            val colName = field match {
+              case Some("user_id")                         => "userid"
+              case Some("username") | Some("user_name")   => "username"
+              case Some("developer_email")                 => "developeremail"
+              case Some("app_name")                        => "appname"
+              case Some("url")                             => "url"
+              case Some("date")                            => "date_c"
+              case Some("consumer_id")                     => "consumerid"
+              case Some("verb")                            => "verb"
+              case Some("implemented_in_version")          => "implementedinversion"
+              case Some("implemented_by_partial_function") => "implementedbypartialfunction"
+              case Some("correlation_id")                  => "correlationid"
+              case Some("duration")                        => "duration"
+              case Some("http_status_code")                => "httpcode"
+              case _                                       => "date_c"
+            }
+            Fragment.const(s"ORDER BY $colName $dirStr")
+        }.getOrElse(Fragment.const("ORDER BY date_c DESC"))
+
+        val limitFr  = queryParams.collectFirst { case OBPLimit(v)  => fr"LIMIT $v"  }.getOrElse(Fragment.empty)
+        val offsetFr = queryParams.collectFirst { case OBPOffset(v) => fr"OFFSET $v" }.getOrElse(Fragment.empty)
+
+        val select = fr"""SELECT id, url, duration, username, date_c, apiinstanceid, sourceip, targetip,
+                                 developeremail, httpcode, consumerid, userid, correlationid, verb,
+                                 consent_reference_id, appname, implementedbypartialfunction, implementedinversion,
+                                 responsebody
+                          FROM metric"""
+
+        DoobieUtil.runQuery(
+          (select ++ whereClause ++ ordering ++ limitFr ++ offsetFr).query[MetricRowDoobie].to[List]
+        ).map(metricRowToEntity)
       }
     }
   }
