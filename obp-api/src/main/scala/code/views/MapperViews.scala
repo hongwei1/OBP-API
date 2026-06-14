@@ -462,31 +462,43 @@ object MapperViews extends Views with MdcLoggable {
   }
 
   def removeCustomView(viewId: ViewId, bankAccountId: BankIdAccountId): Box[Boolean] = {
+    val bankIdStr    = bankAccountId.bankId.value
+    val accountIdStr = bankAccountId.accountId.value
+    val viewIdStr    = viewId.value
     for {
-      customView <- ViewDefinition.findCustomView(bankAccountId.bankId.value, bankAccountId.accountId.value, viewId.value)
-      _ <- AccountAccess.findAllByBankIdAccountIdViewId(
-        bankAccountId.bankId,
-        bankAccountId.accountId,
-        viewId
-      ).length > 0 match {
-        case true => Failure("Account Access record uses this View.") // We want to prevent account access orphans
-        case false => Full(())
+      _ <- DoobieViewProvider.findCustomView(bankIdStr, accountIdStr, viewIdStr)
+      _ <- {
+        val count = DoobieUtil.runQuery(
+          sql"SELECT COUNT(*) FROM accountaccess WHERE bank_id = $bankIdStr AND account_id = $accountIdStr AND view_id = $viewIdStr"
+            .query[Int].unique)
+        if (count > 0) Failure("Account Access record uses this View.") else Full(())
       }
     } yield {
-      customView.deleteViewPermissions
-      customView.delete_!
+      DoobieUtil.runQuery(
+        sql"DELETE FROM viewpermission WHERE bank_id = $bankIdStr AND account_id = $accountIdStr AND view_id = $viewIdStr"
+          .update.run)
+      DoobieUtil.runQuery(
+        sql"DELETE FROM viewdefinition WHERE bank_id = $bankIdStr AND account_id = $accountIdStr AND view_id = $viewIdStr AND isSystem_ = false"
+          .update.run) > 0
     }
   }
   def removeSystemView(viewId: ViewId): Future[Box[Boolean]] = Future {
+    val viewIdStr = viewId.value
     for {
-      view <- ViewDefinition.findSystemView(viewId.value)
-      _ <- AccountAccess.findAllBySystemViewId(viewId).length > 0 match {
-        case true => Failure("Account Access record uses this View.") // We want to prevent account access orphans
-        case false => Full(())
+      _ <- DoobieViewProvider.findSystemView(viewIdStr)
+      _ <- {
+        val count = DoobieUtil.runQuery(
+          sql"SELECT COUNT(*) FROM accountaccess WHERE view_id = $viewIdStr"
+            .query[Int].unique)
+        if (count > 0) Failure("Account Access record uses this View.") else Full(())
       }
     } yield {
-      view.deleteViewPermissions
-      view.delete_!
+      DoobieUtil.runQuery(
+        sql"DELETE FROM viewpermission WHERE bank_id IS NULL AND account_id IS NULL AND view_id = $viewIdStr"
+          .update.run)
+      DoobieUtil.runQuery(
+        sql"DELETE FROM viewdefinition WHERE view_id = $viewIdStr AND isSystem_ = true"
+          .update.run) > 0
     }
   }
 
