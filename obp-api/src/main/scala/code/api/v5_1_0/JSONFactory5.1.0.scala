@@ -45,12 +45,10 @@ import code.api.v3_0_0.ViewsJSON300
 import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, UserAgreementJson}
 import code.api.v5_0_0.PostConsentRequestJsonV500
 import code.entitlement.Entitlement
-import code.model.dataAccess.AuthUser
 import code.users.UserAgreement
-import net.liftweb.mapper.By
 import com.openbankproject.commons.model.AtmAttributeTrait
 import code.atms.Atms.Atm
-import code.consent.MappedConsent
+import code.consent.ConsentTrait
 import code.metrics.APIMetric
 import code.model.Consumer
 import code.ratelimiting.RateLimiting
@@ -994,7 +992,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def getConsentInfoJson(consent: MappedConsent): ConsentJsonV510 = {
+  def getConsentInfoJson(consent: ConsentTrait): ConsentJsonV510 = {
     val jsonWebTokenAsJValue: Box[ConsentJWT] = JwtUtil.getSignedPayloadAsJson(consent.jsonWebToken).map(parse(_).extract[ConsentJWT])
     ConsentJsonV510(
       consent.consentId,
@@ -1006,7 +1004,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def createConsentsInfoJsonV510(consents: List[MappedConsent]): ConsentsInfoJsonV510 = {
+  def createConsentsInfoJsonV510(consents: List[ConsentTrait]): ConsentsInfoJsonV510 = {
 
     ConsentsInfoJsonV510(
       consents.map { c =>
@@ -1030,7 +1028,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def createConsentsJsonV510(consents: List[MappedConsent], totalPages: Long): ConsentsJsonV510 = {
+  def createConsentsJsonV510(consents: List[ConsentTrait], totalPages: Long): ConsentsJsonV510 = {
     // Temporary cache (cleared after function ends)
     val cache = scala.collection.mutable.HashMap.empty[String, Box[User]]
 

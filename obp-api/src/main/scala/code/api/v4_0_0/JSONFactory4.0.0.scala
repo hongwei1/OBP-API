@@ -46,7 +46,7 @@ import code.api.v3_1_0._
 import code.apicollection.ApiCollectionTrait
 import code.apicollectionendpoint.ApiCollectionEndpointTrait
 import code.atms.Atms.Atm
-import code.consent.MappedConsent
+import code.consent.ConsentTrait
 import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
 import code.model.dataAccess.ResourceUser
@@ -1711,10 +1711,10 @@ object JSONFactory400 {
      )
   }
 
-  def createConsentsJsonV400(consents: List[MappedConsent]): ConsentsJsonV400= {
+  def createConsentsJsonV400(consents: List[ConsentTrait]): ConsentsJsonV400= {
     ConsentsJsonV400(consents.map(c => ConsentJsonV400(c.consentId, c.jsonWebToken, c.status, c.apiStandard, c.apiVersion)))
   }
-  def createConsentInfosJsonV400(consents: List[MappedConsent]): ConsentInfosJsonV400= {
+  def createConsentInfosJsonV400(consents: List[ConsentTrait]): ConsentInfosJsonV400= {
     ConsentInfosJsonV400(consents.map(c => 
       ConsentInfoJsonV400(
         c.consentId,

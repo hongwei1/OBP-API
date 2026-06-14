@@ -44,7 +44,7 @@ import code.api.v2_2_0._
 import code.api.v3_0_0.{AccountRuleJsonV300, CustomerAttributeResponseJsonV300, JSONFactory300, ViewBasicV300, ViewJsonV300}
 import code.api.v3_0_0.JSONFactory300.{createAccountRoutingsJSON, createAccountRulesJSON}
 import code.api.v5_0_0.HelperInfoJson
-import code.consent.MappedConsent
+import code.consent.ConsentTrait
 import code.entitlement.Entitlement
 import code.loginattempts.BadLoginAttempt
 import code.metrics.{TopApi, TopConsumer}
@@ -1297,7 +1297,7 @@ object JSONFactory310{
     MeetingsJsonV310(meetings.map(createMeetingJson))
   }
   
-  def createConsentsJsonV310(consents: List[MappedConsent]): ConsentsJsonV310= {
+  def createConsentsJsonV310(consents: List[ConsentTrait]): ConsentsJsonV310= {
     ConsentsJsonV310(consents.map(c => ConsentJsonV310(c.consentId, c.jsonWebToken, c.status)))
   }
   
