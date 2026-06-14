@@ -22,7 +22,8 @@ import scala.concurrent.Future
 object DoobieCustomerProvider extends CustomerProvider with MdcLoggable {
 
   private def nn(s: String): String = if (s == null) "" else s
-  private def ts(d: Date): Timestamp = new Timestamp(d.getTime)
+  private def ts(d: Date): Option[Timestamp] = Option(d).map(x => new Timestamp(x.getTime))
+  private def tsReq(d: Date): Timestamp = new Timestamp(d.getTime)
   private def optDate(t: Option[Timestamp]): Date = t.map(x => new Date(x.getTime)).getOrElse(new Date(0))
 
   private case class Row(
@@ -113,8 +114,8 @@ object DoobieCustomerProvider extends CustomerProvider with MdcLoggable {
     else fr"WHERE" ++ conditions.reduceLeft((a, b) => a ++ fr"AND" ++ b)
 
   private def dateConditions(queryParams: List[OBPQueryParam]): List[Fragment] =
-    queryParams.collect { case OBPFromDate(d) => fr"updatedat >= ${ts(d)}" } :::
-    queryParams.collect { case OBPToDate(d)   => fr"updatedat <= ${ts(d)}" }
+    queryParams.collect { case OBPFromDate(d) => fr"updatedat >= ${tsReq(d)}" } :::
+    queryParams.collect { case OBPToDate(d)   => fr"updatedat <= ${tsReq(d)}" }
 
   private def paginationClause(queryParams: List[OBPQueryParam]): Fragment = {
     val orderFr = queryParams.collectFirst {
@@ -239,11 +240,11 @@ object DoobieCustomerProvider extends CustomerProvider with MdcLoggable {
     val creditLimitCurr  = creditLimit.map(_.currency).getOrElse("")
     val creditLimitAmt   = creditLimit.map(_.amount).getOrElse("")
     val faceImageUrl     = nn(faceImage.url)
-    val faceImageTime    = ts(faceImage.date)
-    val dobTs            = ts(dateOfBirth)
-    val lastOkTs         = ts(lastOkDate)
+    val faceImageTime    = ts(faceImage.date)   // Option[Timestamp], null-safe
+    val dobTs            = ts(dateOfBirth)       // Option[Timestamp], null-safe
+    val lastOkTs         = ts(lastOkDate)        // Option[Timestamp], null-safe
 
-    val pk = DoobieUtil.runQuery(sql"""
+    DoobieUtil.runQuery(sql"""
       INSERT INTO mappedcustomer
         (mcustomerid, mbank, mnumber, mmobilenumber, mlegalname, memail,
          mfaceimageurl, mfaceimagetime, mdateofbirth, mrelationshipstatus, mdependents,
@@ -257,8 +258,10 @@ object DoobieCustomerProvider extends CustomerProvider with MdcLoggable {
          ${nn(highestEducationAttained)}, ${nn(employmentStatus)}, $creditRatingStr, $creditSourceStr,
          $creditLimitCurr, $creditLimitAmt, $kycStatus, $lastOkTs,
          ${nn(title)}, ${nn(branchId)}, ${nn(nameSuffix)}, ${nn(customerType)}, ${nn(parentCustomerId)},
-         true, false, $now, $now)
-      RETURNING id""".query[Long].unique)
+         true, false, $now, $now)""".update.run)
+
+    val pk = DoobieUtil.runQuery(
+      fr"SELECT id FROM mappedcustomer WHERE mcustomerid = $newCustomerId LIMIT 1".query[Long].unique)
 
     CustomerDependants.CustomerDependants.vend
       .createCustomerDependants(pk, dobOfDependents.map(CustomerDependant(_)))
