@@ -14,7 +14,7 @@ import code.api.{APIFailure, APIFailureNewStyle, Constant, RequestHeader}
 import code.bankconnectors.Connector
 import code.consent
 import code.consent.ConsentStatus.ConsentStatus
-import code.consent.{ConsentStatus, Consents, MappedConsent}
+import code.consent.{ConsentStatus, ConsentTrait, Consents, MappedConsent}
 import code.consumer.Consumers
 import code.context.{ConsentAuthContextProvider, UserAuthContextProvider}
 import code.entitlement.Entitlement
@@ -1184,27 +1184,43 @@ object Consent extends MdcLoggable {
     consentsOfBank
   }
 
-  def expireAllPreviousValidBerlinGroupConsents(consent: MappedConsent, updateToStatus: ConsentStatus): Boolean = {
+  def expireAllPreviousValidBerlinGroupConsents(consent: ConsentTrait, updateToStatus: ConsentStatus): Boolean = {
+    import doobie._
+    import doobie.implicits._
     if(updateToStatus == ConsentStatus.valid &&
       consent.apiStandard == ConstantsBG.berlinGroupVersion1.apiStandard) {
-      MappedConsent.findAll( // Find all
-          By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard), // Berlin Group
-          By(MappedConsent.mRecurringIndicator, true), // recurring
-          By(MappedConsent.mStatus, ConsentStatus.valid.toString), // and valid consents
-          By(MappedConsent.mUserId, consent.userId), // for the same PSU
-          By(MappedConsent.mConsumerId, consent.consumerId), // from the same TPP
-        ).filterNot(_.consentId == consent.consentId) // Exclude current consent
-        .map{ c => // Set to terminatedByTpp
-          val message = s"|---> Changed status from ${c.status} to ${ConsentStatus.terminatedByTpp.toString} for consent ID: ${c.id}"
-          val newNote = s"$currentDate\n$message\n" + Option(consent.note).getOrElse("") // Prepend to existing note if any
-          val changedStatus =
-            c.mStatus(ConsentStatus.terminatedByTpp.toString)
-              .mNote(newNote)
-              .mLastActionDate(new Date())
-              .save
-          if(changedStatus) logger.warn(message)
-          changedStatus
-        }.forall(_ == true)
+      val bgApiStd    = ConstantsBG.berlinGroupVersion1.apiStandard
+      val validStatus = ConsentStatus.valid.toString
+      val terminated  = ConsentStatus.terminatedByTpp.toString
+      val userId      = consent.userId
+      val consumerId  = consent.consumerId
+      val excludeId   = consent.consentId
+      val baseNote    = Option(consent.note).getOrElse("")
+      val now         = new java.sql.Date(new Date().getTime)
+
+      val ids = DoobieUtil.runQuery(
+        fr"""SELECT mconsentid FROM mappedconsent
+             WHERE mapistandard = $bgApiStd
+               AND mrecurringindicator = true
+               AND mstatus = $validStatus
+               AND muserid = $userId
+               AND mconsumerid = $consumerId
+               AND mconsentid != $excludeId"""
+          .query[String].to[List]
+      )
+
+      ids.map { oldId =>
+        val message = s"|---> Changed status from $validStatus to $terminated for consent ID: $oldId"
+        val newNote = s"$currentDate\n$message\n$baseNote"
+        val count   = DoobieUtil.runQuery(
+          sql"""UPDATE mappedconsent
+                SET mstatus = $terminated, mnote = $newNote, mlastactiondate = $now
+                WHERE mconsentid = $oldId""".update.run
+        )
+        val changed = count > 0
+        if (changed) logger.warn(message)
+        changed
+      }.forall(_ == true)
     } else {
       true
     }
