@@ -35,20 +35,27 @@ object DoobieTokenProvider extends TokensProvider {
                 consumerid, secret
          FROM token"""
 
-  private def toEntity(row: TokenRow): Token =
-    Token.create
-      .id(row.id)
-      .key(row.key.getOrElse(""))
-      .duration(row.duration.getOrElse(0L))
-      .insertDate(row.insertDate.map(ts => new Date(ts.getTime)).orNull)
-      .tokenType(row.tokenType.getOrElse(""))
-      .userForeignKey(row.userForeignKey.getOrElse(0L))
-      .callbackURL(row.callbackUrl.getOrElse(""))
-      .verifier(row.verifier.getOrElse(""))
-      .expirationDate(row.expirationDate.map(ts => new Date(ts.getTime)).orNull)
-      .thirdPartyApplicationSecret(row.thirdPartyApplicationSecret.getOrElse(""))
-      .consumerId(row.consumerId.getOrElse(0L))
-      .secret(row.secret.getOrElse(""))
+  private def toEntity(row: TokenRow): Token = {
+    val t = Token.create
+    // Token.id is MappedLongIndex with writePermission_? = false; runSafe enables
+    // safe_? = true so the primary-key field can be set, matching how Lift Mapper
+    // populates entities when loading from the database.
+    t.runSafe {
+      t.id(row.id)
+        .key(row.key.getOrElse(""))
+        .duration(row.duration.getOrElse(0L))
+        .insertDate(row.insertDate.map(ts => new Date(ts.getTime)).orNull)
+        .tokenType(row.tokenType.getOrElse(""))
+        .userForeignKey(row.userForeignKey.getOrElse(0L))
+        .callbackURL(row.callbackUrl.getOrElse(""))
+        .verifier(row.verifier.getOrElse(""))
+        .expirationDate(row.expirationDate.map(ts => new Date(ts.getTime)).orNull)
+        .thirdPartyApplicationSecret(row.thirdPartyApplicationSecret.getOrElse(""))
+        .consumerId(row.consumerId.getOrElse(0L))
+        .secret(row.secret.getOrElse(""))
+    }
+    t
+  }
 
   private def findOne(where: Fragment): Box[Token] =
     DoobieUtil.runQuery((selectCols ++ where ++ fr"LIMIT 1").query[TokenRow].option) match {
