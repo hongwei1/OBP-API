@@ -160,10 +160,10 @@ object DoobieChallengeProvider extends ChallengeProvider {
       // client-side value were used). The WHERE guard means the UPDATE returns 0 rows
       // when the limit is already reached, so concurrent excess attempts are rejected
       // without incrementing the counter further.
-      updatedRows = DoobieUtil.runQuery(
+      updatedRows <- tryo(DoobieUtil.runQuery(
         sql"""UPDATE expectedchallengeanswer
               SET attemptcounter = attemptcounter + 1, updatedat = ${new Timestamp(System.currentTimeMillis())}
-              WHERE challengeid = ${nn(challengeId)} AND attemptcounter < $maxAttempts""".update.run)
+              WHERE challengeid = ${nn(challengeId)} AND attemptcounter < $maxAttempts""".update.run))
       _ <- if (updatedRows > 0) Full(())
            else Failure(s"${ErrorMessages.AllowedAttemptsUsedUp}")
       createDateTime = row.createdat.getOrElse(new Timestamp(0L))
