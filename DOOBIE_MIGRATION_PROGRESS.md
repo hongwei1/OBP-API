@@ -101,6 +101,21 @@ TransactionIdMapping, CustomerIdMapping, AccountWebhook, BankAccountNotification
 
 **Phase A provider layer is now 100% Doobie.** All active data-access paths go through Doobie SQL; no `find(By(...))` / `saveMe()` / `bulkDelete_!!` remains in any provider's live code path.
 
+### ATMs — first table fully off Lift (Phases A/B/C complete) 2026-06-16
+
+ATMs are the **first table to complete all phases** and serve as the Phase C template.
+
+| Phase | Change |
+|-------|--------|
+| B — connector | `LocalMappedConnector`'s 9 ATM methods (getAtm/getAtms/getAllAtms + 6 partial single-field updates) now delegate to `Atms.atmsProvider.vend`. `AtmsProvider` widened with `getAllAtms` + 6 `updateAtmXxx`; implemented in `DoobieAtmsProvider`. |
+| B — sandbox | `LocalMappedConnectorDataImport.createSaveableAtms` builds commons `Atms.Atm` + a new `SaveableAtm` (persists via the provider), replacing `MappedAtm.create`. `type AtmType = AtmT`. |
+| C — entity | `class/object MappedAtm` deleted; removed from `Boot.ToSchemify.models`. |
+| C — DDL | Flyway **V003** (h2 + postgres) adds the `(mbankid, matmid)` unique index the Schemifier's `UniqueIndex` owned but the V001 baseline lacked. Flyway is now the sole source of truth for `mappedatm`. |
+| C — test reset | Since `mappedatm` left `ToSchemify`, the generic `bulkDelete_!!` reset loop no longer clears it. Added an explicit Doobie `DELETE FROM mappedatm` to `ServerSetup`, `TestConnectorSetupWithStandardPermissions`, `LocalMappedConnectorTestSetup`, and `SandboxDataLoadingTest`'s own `beforeEach`. |
+| C — provider test | `MappedAtmsProviderTest` → `DoobieAtmsProviderTest`: fixtures built via `createOrUpdateAtm`, asserted against the re-read rows (both commons `Atm`, so equality holds — this also fixed a latent `Atm` vs `MappedAtm` equality failure in the old test). |
+
+**Phase C template for future tables**: remove from `ToSchemify` → ensure Flyway owns the full schema (incl. any Schemifier-only indexes) → replace `bulkDelete_!!` test reset with a Doobie `DELETE` in every setup path that loops `ToSchemify.models` (including suites with their own `beforeEach`). Test env must have `OBP_FLYWAY_ENABLED` (CI does).
+
 ---
 
 ## What remains on Lift (intentional, with rationale)
