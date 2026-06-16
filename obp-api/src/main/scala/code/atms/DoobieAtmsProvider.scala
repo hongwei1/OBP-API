@@ -5,7 +5,7 @@ import code.util.Helper.optionBooleanToString
 import com.openbankproject.commons.model.{Meta => CommonMeta, _}
 import doobie._
 import doobie.implicits._
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.util.Helpers.tryo
 
 import java.sql.Timestamp
@@ -259,4 +259,42 @@ object DoobieAtmsProvider extends AtmsProvider {
   override def deleteAtm(atm: AtmT): Box[Boolean] =
     Full(DoobieUtil.runQuery(
       sql"DELETE FROM mappedatm WHERE matmid = ${nn(atm.atmId.value)}".update.run) > 0)
+
+  // Mirrors Lift `MappedAtm.findAll()` (no bankId filter); keeps OBP LIMIT/OFFSET handling.
+  override def getAllAtms(queryParams: List[OBPQueryParam]): List[AtmT] = {
+    val limitFr  = queryParams.collectFirst { case OBPLimit(v)  => fr"LIMIT $v"  }.getOrElse(Fragment.empty)
+    val offsetFr = queryParams.collectFirst { case OBPOffset(v) => fr"OFFSET $v" }.getOrElse(Fragment.empty)
+    DoobieUtil.runQuery((selectCols ++ limitFr ++ offsetFr).query[AtmRow].to[List]).map(rowToAtm)
+  }
+
+  // Single-column update helper. Mirrors Lift `find().map(_.mXxx(..).saveMe())`: returns Empty when the
+  // ATM does not exist (the Lift `.map` over an empty Box yielded Empty), and the re-read row otherwise.
+  private def updateColumn(bankId: BankId, atmId: AtmId, setFr: Fragment): Box[AtmT] =
+    getAtmFromProvider(bankId, atmId) match {
+      case Some(_) =>
+        tryo {
+          DoobieUtil.runQuery((fr"UPDATE mappedatm SET" ++ setFr ++
+            fr", updatedat = $now WHERE mbankid = ${nn(bankId.value)} AND matmid = ${nn(atmId.value)}").update.run)
+          getAtmFromProvider(bankId, atmId).get
+        }
+      case None => Empty
+    }
+
+  override def updateAtmSupportedLanguages(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+    updateColumn(bankId, atmId, fr"msupportedlanguages = ${v.mkString(",")}")
+
+  override def updateAtmSupportedCurrencies(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+    updateColumn(bankId, atmId, fr"msupportedcurrencies = ${v.mkString(",")}")
+
+  override def updateAtmAccessibilityFeatures(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+    updateColumn(bankId, atmId, fr"maccessibilityfeatures = ${v.mkString(",")}")
+
+  override def updateAtmServices(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+    updateColumn(bankId, atmId, fr"mservices = ${v.mkString(",")}")
+
+  override def updateAtmNotes(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+    updateColumn(bankId, atmId, fr"mnotes = ${v.mkString(",")}")
+
+  override def updateAtmLocationCategories(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+    updateColumn(bankId, atmId, fr"mlocationcategories = ${v.mkString(",")}")
 }
