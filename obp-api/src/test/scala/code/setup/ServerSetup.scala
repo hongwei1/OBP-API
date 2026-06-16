@@ -32,7 +32,8 @@ import _root_.org.json4s.JsonAST.JObject
 import bootstrap.liftweb.ToSchemify
 import code.TestServer
 import code.api.util.APIUtil._
-import code.api.util.{APIUtil, CustomJsonFormats}
+import code.api.util.{APIUtil, CustomJsonFormats, DoobieUtil}
+import doobie.implicits._
 import code.model.{Consumer, Nonce, Token}
 import code.model.dataAccess.{AuthUser, ResourceUser}
 import code.util.Helper.MdcLoggable
@@ -142,6 +143,13 @@ trait ServerSetup extends FeatureSpec with SendServerRequests
         case e: Exception =>
           logger.warn(s"[TEST ISOLATION] Failed to clear table for ${model.getClass.getSimpleName}: ${e.getMessage}")
       }
+    }
+    // mappedatm is Doobie-managed (no longer in ToSchemify), so reset it explicitly.
+    try {
+      DoobieUtil.runQuery(sql"DELETE FROM mappedatm".update.run)
+    } catch {
+      case e: Exception =>
+        logger.warn(s"[TEST ISOLATION] Failed to clear mappedatm: ${e.getMessage}")
     }
   }
 

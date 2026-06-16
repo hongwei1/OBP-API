@@ -36,8 +36,9 @@ import code.api.Constant._
 import code.api.util.APIUtil.OAuth._
 import code.api.util.APIUtil._
 import code.api.util.ErrorMessages._
-import code.api.util.{APIUtil, ApiRole, OBPLimit}
+import code.api.util.{APIUtil, ApiRole, DoobieUtil, OBPLimit}
 import code.atms.Atms
+import doobie.implicits._
 import code.atms.Atms.countOfAtms
 import code.bankconnectors.Connector
 import code.branches.Branches
@@ -102,6 +103,8 @@ class SandboxDataLoadingTest extends FlatSpec with SendServerRequests with Match
     }
     //drop database tables before
     ToSchemify.models.filterNot(exclusion).foreach(_.bulkDelete_!!())
+    // mappedatm is Doobie-managed (no longer in ToSchemify), so reset it explicitly.
+    DoobieUtil.runQuery(sql"DELETE FROM mappedatm".update.run)
     //we need to delete the test uses manully here.
     AuthUser.bulkDelete_!!(By(AuthUser.username, user1Import.user_name))
     AuthUser.bulkDelete_!!(By(AuthUser.username, user2Import.user_name))

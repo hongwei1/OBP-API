@@ -4,8 +4,10 @@ import bootstrap.liftweb.ToSchemify
 import code.api.JedisMethod
 import code.api.cache.Redis
 import code.api.util.APIUtil
+import code.api.util.DoobieUtil
 import code.api.util.ErrorMessages._
 import code.entitlement.Entitlement
+import doobie.implicits._
 import code.metadata.counterparties.Counterparties
 import code.model._
 import code.model.dataAccess._
@@ -213,7 +215,9 @@ trait LocalMappedConnectorTestSetup extends TestConnectorSetupWithStandardPermis
 
     //empty the relational db tables after each test
     ToSchemify.models.filterNot(exclusion).foreach(_.bulkDelete_!!())
-    
+    // mappedatm is Doobie-managed (no longer in ToSchemify), so reset it explicitly.
+    tryo { DoobieUtil.runQuery(sql"DELETE FROM mappedatm".update.run) }
+
     // Delete only THIS shard's namespaced Redis keys. Each parallel shard uses a distinct
     // api_instance_id (OBP_API_INSTANCE_ID) -> distinct getGlobalCacheNamespacePrefix, so a
     // pattern-scoped delete avoids wiping other shards' rate-limit/cache state. A plain FLUSHDB
