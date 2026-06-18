@@ -6,7 +6,6 @@
 .gitignore
 .idea
 .settings
-.metals
 .vscode
 .claude/settings.local.json
 *.code-workspace
@@ -38,13 +37,9 @@ obp-api/src/main/scala/code/api/v3_0_0/custom/
 # Marketing diagram generation outputs
 marketing_diagram_generation/outputs/*
 
-.bloop
-!.bloop/*.json
 .bsp
 .specstory
-project/project
 coursier
-metals.sbt
 obp-http4s-runner/src/main/resources/git.properties
 test-results
 untracked_files/
