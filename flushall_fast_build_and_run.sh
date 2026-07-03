@@ -123,7 +123,9 @@ export MAVEN_OPTS="-Xms3G -Xmx6G -XX:MaxMetaspaceSize=2G -Xss4m \
 --add-opens java.base/java.util=ALL-UNNAMED \
 --add-opens java.base/java.lang.invoke=ALL-UNNAMED \
 --add-opens java.base/java.util.jar=ALL-UNNAMED \
---add-opens java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED"
+--add-opens java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED \
+--add-opens java.base/java.io=ALL-UNNAMED \
+--add-opens java.base/java.util.concurrent=ALL-UNNAMED"
 
 echo "Maven Options: Optimized for speed"
 echo "  Heap: 4-8GB"
@@ -315,7 +317,9 @@ JAVA_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED \
 --add-opens java.base/java.util=ALL-UNNAMED \
 --add-opens java.base/java.lang.invoke=ALL-UNNAMED \
 --add-opens java.base/java.util.jar=ALL-UNNAMED \
---add-opens java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED"
+--add-opens java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED \
+--add-opens java.base/java.io=ALL-UNNAMED \
+--add-opens java.base/java.util.concurrent=ALL-UNNAMED"
 
 if [ "$RUN_BACKGROUND" = true ]; then
     # Run in background with output to log file
