@@ -7,7 +7,7 @@ import scala.language.postfixOps
 
 // To regenerate the dynamic region in GrpcConnector_vFeb2026.scala, run:
 //   MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED" \
-//     mvn exec:java -pl obp-api -Dexec.mainClass="code.bankconnectors.grpc.GrpcConnectorBuilder" -Dexec.classpathScope=compile
+//     mvn exec:java -Dexec.mainClass="code.bankconnectors.grpc.GrpcConnectorBuilder" -Dexec.classpathScope=compile
 //
 // Notes:
 //   - The --add-opens flag is needed on Java 17+ because ConnectorBuilderUtil uses javassist

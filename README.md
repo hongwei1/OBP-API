@@ -68,7 +68,7 @@ The project uses Maven 3 as its build tool.
 To run the API using the http4s server, use the `obp-api` module from the project root:
 
 ```sh
-MAVEN_OPTS="-Xms3G -Xmx6G -XX:MaxMetaspaceSize=2G" mvn -pl obp-api -am clean package -DskipTests=true -Dmaven.test.skip=true && \
+MAVEN_OPTS="-Xms3G -Xmx6G -XX:MaxMetaspaceSize=2G" mvn clean package -DskipTests=true -Dmaven.test.skip=true && \
 java -jar obp-api/target/obp-api.jar
 ```
 

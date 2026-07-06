@@ -33,7 +33,7 @@ import scala.io.StdIn
  * The server keeps running until you press ENTER.
  *
  * Usage:
- *   mvn -pl obp-api -am test-compile exec:java \
+ *   mvn test-compile exec:java \
  *     -Dexec.mainClass="code.SandboxServer" \
  *     -Dexec.classpathScope="test"
  *

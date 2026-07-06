@@ -125,7 +125,7 @@ for test_class in "${SPECIFIC_TESTS[@]}"; do
   echo "=========================================="
   
   # Run test and capture output
-  if mvn -pl obp-api test -T 4 -Dsuites="$test_class" 2>&1 | tee -a "${DETAIL_LOG}"; then
+  if mvn test -T 4 -Dsuites="$test_class" 2>&1 | tee -a "${DETAIL_LOG}"; then
     echo "✓ $test_class completed"
   else
     echo "✗ $test_class FAILED"

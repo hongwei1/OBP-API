@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.tesobe</groupId>
-  <artifactId>obp-parent</artifactId>
+  <artifactId>obp-api</artifactId>
   <version>1.10.1</version>
-  <packaging>pom</packaging>
-  <name>Open Bank Project API Parent</name>
+  <packaging>jar</packaging>
+  <name>Open Bank Project API</name>
   <inceptionYear>2011</inceptionYear>
   <properties>
     <scala.version>2.12</scala.version>
@@ -18,30 +16,17 @@
     <apache.avro.version>1.11.4</apache.avro.version>
     <lift.version>v1.0.4</lift.version>
     <http4s.version>0.23.30</http4s.version>
-    <!-- Common plugin settings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
     <maven.test.failure.ignore>true</maven.test.failure.ignore>
-    <!-- vscaladoc settings -->
     <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion>
     <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
     <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
-
-    <!--java version-->
-    <java.version>25</java.version>
+    <java.version>17</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
-    <!-- mssql-jdbc jre classifier is decoupled from java.version because
-         13.4.0 only publishes a jre11 artifact; jre11 is ABI-compatible with
-         any JRE 11+ including 21 (JDBC 4.3 spec). -->
     <mssql.jre.version>11</mssql.jre.version>
   </properties>
-
-  <modules>
-    <module>obp-commons</module>
-    <module>obp-api</module>
-  </modules>
-
   <repositories>
     <repository>
       <id>scala-tools.releases</id>
@@ -58,20 +43,15 @@
       <url>https://jitpack.io</url>
     </repository>
   </repositories>
-
   <pluginRepositories>
     <pluginRepository>
       <id>org.sonatype.oss.groups.public</id>
-    <name>Sonatype Public</name>
+      <name>Sonatype Public</name>
       <url>https://oss.sonatype.org/content/groups/public</url>
     </pluginRepository>
   </pluginRepositories>
-
   <dependencyManagement>
     <dependencies>
-      <!-- Jackson BOM: forces all com.fasterxml.jackson.* 2.x artifacts to one
-           version. Mixing minor versions (databind 2.12 + core 2.14 + ...) is
-           unsupported and causes subtle runtime failures. -->
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
@@ -79,10 +59,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- Force json-smart 2.6.0 to override the 2.4.7 pulled in via
-           oauth2-oidc-sdk 9.27. Direct-dep override in obp-api/pom.xml did
-           not take effect — using dependencyManagement here works reliably.
-           Fixes CVE-2023-1370. -->
       <dependency>
         <groupId>net.minidev</groupId>
         <artifactId>json-smart</artifactId>
@@ -93,27 +69,21 @@
         <artifactId>accessors-smart</artifactId>
         <version>2.6.0</version>
       </dependency>
-      <!-- Pin org.json to 20250107. Fixes CVE-2022-45688 and CVE-2023-5072. -->
       <dependency>
         <groupId>org.json</groupId>
         <artifactId>json</artifactId>
         <version>20250107</version>
       </dependency>
-      <!-- Pin commons-validator to 1.9.0. Fixes CVE-2020-13956 (ReDoS in URL validation). -->
       <dependency>
         <groupId>commons-validator</groupId>
         <artifactId>commons-validator</artifactId>
         <version>1.9.0</version>
       </dependency>
-      <!-- Force gson to 2.11.0 to override the 2.8.5 pulled in transitively by
-           stripe-java 12.1.0. Fixes CVE-2022-25647 (DoS via deeply nested structures). -->
       <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>2.11.0</version>
       </dependency>
-      <!-- Force Java-WebSocket to 1.5.4 to override the 1.5.3 pulled in transitively
-           by web3j 4.9.8. Fixes CVE-2023-43669 (path traversal in WebSocket server). -->
       <dependency>
         <groupId>org.java-websocket</groupId>
         <artifactId>Java-WebSocket</artifactId>
@@ -134,19 +104,16 @@
         <artifactId>json4s-native_${scala.version}</artifactId>
         <version>3.6.12</version>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>3.18.0</version>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-text</artifactId>
         <version>1.12.0</version>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
@@ -164,10 +131,454 @@
         <version>3.0.8</version>
         <scope>test</scope>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
-
+  <dependencies>
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>transmittable-thread-local</artifactId>
+      <version>2.11.5</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.18</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.OpenBankProject.lift-persistence</groupId>
+      <artifactId>lift-persistence_${scala.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-native_${scala.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <version>2.0.16</version>
+    </dependency>
+    <dependency>
+      <artifactId>slf4j-ext</artifactId>
+      <groupId>org.slf4j</groupId>
+      <version>2.0.16</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpg-jdk18on</artifactId>
+      <version>1.84</version>
+    </dependency>
+    <dependency>
+      <groupId>org.http4s</groupId>
+      <artifactId>http4s-ember-server_${scala.version}</artifactId>
+      <version>${http4s.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.http4s</groupId>
+      <artifactId>http4s-dsl_${scala.version}</artifactId>
+      <version>${http4s.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk18on</artifactId>
+      <version>1.84</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.7.11</version>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc8-production</artifactId>
+      <version>23.2.0.0</version>
+      <type>pom</type>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.220</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <version>9.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.25.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>${apache.avro.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <version>1.1.10.4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>msal4j</artifactId>
+      <version>1.24.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.26.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.26.0</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+      <version>3.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+      <version>2.11.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <version>8.19.15</version>
+    </dependency>
+    <dependency>
+      <groupId>nl.gn0s1s</groupId>
+      <artifactId>elastic4s-client-esjava_${scala.version}</artifactId>
+      <version>8.19.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>elasticsearch-rest-client</artifactId>
+      <version>8.19.12</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>${scala.compiler}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.compiler}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pekko</groupId>
+      <artifactId>pekko-http-core_${scala.version}</artifactId>
+      <version>${pekko-http.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pekko</groupId>
+      <artifactId>pekko-actor_${scala.version}</artifactId>
+      <version>${pekko.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pekko</groupId>
+      <artifactId>pekko-remote_${scala.version}</artifactId>
+      <version>${pekko.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sksamuel.avro4s</groupId>
+      <artifactId>avro4s-core_${scala.version}</artifactId>
+      <version>${avro4s.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.26.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>chill_${scala.version}</artifactId>
+      <version>0.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>chill-bijection_${scala.version}</artifactId>
+      <version>0.9.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.cb372</groupId>
+      <artifactId>scalacache-redis_${scala.version}</artifactId>
+      <version>0.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.cb372</groupId>
+      <artifactId>scalacache-guava_${scala.version}</artifactId>
+      <version>0.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pekko</groupId>
+      <artifactId>pekko-slf4j_${scala.version}</artifactId>
+      <version>${pekko.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.dwickern</groupId>
+      <artifactId>scala-nameof_${scala.version}</artifactId>
+      <version>1.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>nimbus-jose-jwt</artifactId>
+      <version>10.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.OpenBankProject</groupId>
+      <artifactId>scala-macros</artifactId>
+      <version>v1.0.0-alpha.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scalameta</groupId>
+      <artifactId>scalameta_${scala.version}</artifactId>
+      <version>3.7.4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>oauth2-oidc-sdk</artifactId>
+      <version>11.37.1</version>
+    </dependency>
+    <dependency>
+      <groupId>net.minidev</groupId>
+      <artifactId>json-smart</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.vladsch.flexmark</groupId>
+      <artifactId>flexmark-profile-pegdown</artifactId>
+      <version>0.40.8</version>
+    </dependency>
+    <dependency>
+      <groupId>org.web3j</groupId>
+      <artifactId>core</artifactId>
+      <version>4.9.8</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcprov-jdk15on</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>4.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+      <version>0.10.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.grumlimited</groupId>
+      <artifactId>geocalc</artifactId>
+      <version>0.5.7</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twilio.sdk</groupId>
+      <artifactId>twilio</artifactId>
+      <version>9.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.parser.v3</groupId>
+      <artifactId>swagger-parser</artifactId>
+      <version>2.0.13</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>mailapi</artifactId>
+          <groupId>javax.mail</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.atteo</groupId>
+      <artifactId>evo-inflector</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.32.0-GA</version>
+    </dependency>
+    <dependency>
+      <groupId>com.stripe</groupId>
+      <artifactId>stripe-java</artifactId>
+      <version>12.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.thesamet.scalapb</groupId>
+      <artifactId>scalapb-runtime-grpc_${scala.version}</artifactId>
+      <version>0.8.4</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-netty-shaded</artifactId>
+      <version>1.75.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>1.75.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <version>1.75.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-services</artifactId>
+      <version>1.75.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.tpolecat</groupId>
+      <artifactId>doobie-core_${scala.version}</artifactId>
+      <version>1.0.0-RC4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.tpolecat</groupId>
+      <artifactId>doobie-hikari_${scala.version}</artifactId>
+      <version>1.0.0-RC4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>13.4.0.jre${mssql.jre.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang.modules</groupId>
+      <artifactId>scala-collection-compat_${scala.version}</artifactId>
+      <version>2.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang.modules</groupId>
+      <artifactId>scala-xml_${scala.version}</artifactId>
+      <version>2.4.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>1.0.87</version>
+    </dependency>
+    <dependency>
+      <groupId>org.iban4j</groupId>
+      <artifactId>iban4j</artifactId>
+      <version>3.2.7-RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>polyglot</artifactId>
+      <version>24.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.js</groupId>
+      <artifactId>js-language</artifactId>
+      <version>24.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.truffle</groupId>
+      <artifactId>truffle-api</artifactId>
+      <version>24.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.truffle</groupId>
+      <artifactId>truffle-runtime</artifactId>
+      <version>24.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.regex</groupId>
+      <artifactId>regex</artifactId>
+      <version>24.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.shadowed</groupId>
+      <artifactId>icu4j</artifactId>
+      <version>24.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.obermuhlner</groupId>
+      <artifactId>java-scriptengine</artifactId>
+      <version>2.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>sh.ory.hydra</groupId>
+      <artifactId>hydra-client</artifactId>
+      <version>1.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>4.12.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+      <version>4.12.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rabbitmq</groupId>
+      <artifactId>amqp-client</artifactId>
+      <version>5.22.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>rabbitmq</artifactId>
+      <version>1.20.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.angus</groupId>
+      <artifactId>jakarta.mail</artifactId>
+      <version>2.0.5</version>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.activation</groupId>
+      <artifactId>jakarta.activation-api</artifactId>
+      <version>2.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.activation</groupId>
+      <artifactId>jakarta.activation</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.nulab-inc</groupId>
+      <artifactId>zxcvbn</artifactId>
+      <version>1.9.0</version>
+    </dependency>
+  </dependencies>
   <build>
     <pluginManagement>
       <plugins>
@@ -178,18 +589,8 @@
           <configuration>
             <scalaVersion>${scala.compiler}</scalaVersion>
             <charset>${project.build.sourceEncoding}</charset>
-            <!-- Pin scalac's -release independently of ${java.version}. javac needs -release 25
-                 for JDK 25, but the Scala 2.12.21 compiler only accepts -release up to 17 (its
-                 max supported Java API/target). Without this, scala-maven-plugin derives -release
-                 from maven.compiler.target (=${java.version}=25) and passes an unsupported
-                 -release 25 to scalac, failing the build with
-                 "'25' is not a valid choice for '-release'". Scala 2.12 emits Java 8 bytecode
-                 regardless, so this only bounds the visible JDK API surface; the classes still run
-                 on JDK 25. Bump this only when moving to a Scala version that supports a higher
-                 -release. -->
             <release>17</release>
             <displayCmd>true</displayCmd>
-            <!-- Optimized JVM settings for faster Scala compilation -->
             <jvmArgs>
               <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
               <jvmArg>-Xms512m</jvmArg>
@@ -199,21 +600,12 @@
               <jvmArg>-XX:ReservedCodeCacheSize=512m</jvmArg>
               <jvmArg>-XX:+TieredCompilation</jvmArg>
             </jvmArgs>
-            <!-- Optimized compiler args for speed -->
             <args>
               <arg>-unchecked</arg>
-              <!-- Removed -explaintypes for faster compilation -->
-              <!--
-              <arg>-verbose</arg>
-              <arg>-deprecation</arg>
-              <arg>-explaintypes</arg>
-              -->
               <arg>-Ypartial-unification</arg>
-              <!-- Parallel compilation optimization -->
               <arg>-Ybackend-parallelism</arg>
               <arg>4</arg>
             </args>
-            <!-- Enable incremental compilation with Zinc -->
             <recompileMode>incremental</recompileMode>
           </configuration>
           <executions>
@@ -225,7 +617,6 @@
             </execution>
           </executions>
         </plugin>
-        <!-- https://mvnrepository.com/artifact/org.scalatest/scalatest-maven-plugin -->
         <plugin>
           <groupId>org.scalatest</groupId>
           <artifactId>scalatest-maven-plugin</artifactId>
@@ -242,78 +633,205 @@
           <skipTests>true</skipTests>
         </configuration>
       </plugin>
-        <plugin>
-          <groupId>net.alchim31.maven</groupId>
-          <artifactId>scala-maven-plugin</artifactId>
-          <configuration>
-            <compilerPlugins>
-              <!--scala 2.12.x need the paradise plugin to support macros annotation, 2.13.x value not need this plugin,
-              just add -Ymacro-annotations flag -->
-              <compilerPlugin>
-                <groupId>org.scalamacros</groupId>
-                <artifactId>paradise_${scala.compiler}</artifactId>
-                <version>2.1.1</version>
-              </compilerPlugin>
-            </compilerPlugins>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
-          <executions>
-            <execution>
-              <id>default-copy-resources</id>
-              <phase>process-resources</phase>
-              <goals>
-                <goal>copy-resources</goal>
-              </goals>
-              <configuration>
-                <overwrite>true</overwrite>
-                <outputDirectory>${project.build.directory}</outputDirectory>
-                <resources>
-                  <resource>
-                    <directory>${project.basedir}/src</directory>
-                    <includes>
-                      <include>packageLinkDefs.properties</include>
-                    </includes>
-                    <filtering>true</filtering>
-                  </resource>
-                </resources>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-
-
-
-        <plugin>
-          <groupId>io.github.git-commit-id</groupId>
-          <artifactId>git-commit-id-maven-plugin</artifactId>
-          <version>9.0.1</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>revision</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-            <generateGitPropertiesFile>true</generateGitPropertiesFile>
-            <generateGitPropertiesFilename>src/main/resources/git.properties</generateGitPropertiesFilename>
-            <failOnNoGitDirectory>false</failOnNoGitDirectory>
-          </configuration>
-        </plugin>
-
-
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <configuration>
+          <compilerPlugins>
+            <compilerPlugin>
+              <groupId>org.scalamacros</groupId>
+              <artifactId>paradise_${scala.compiler}</artifactId>
+              <version>2.1.1</version>
+            </compilerPlugin>
+          </compilerPlugins>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>default-copy-resources</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <overwrite>true</overwrite>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src</directory>
+                  <includes>
+                    <include>packageLinkDefs.properties</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <version>9.0.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+          <generateGitPropertiesFile>true</generateGitPropertiesFile>
+          <generateGitPropertiesFilename>obp-api/src/main/resources/git.properties</generateGitPropertiesFilename>
+          <failOnNoGitDirectory>false</failOnNoGitDirectory>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
         <version>4.0.0-M13</version>
       </plugin>
-
-      </plugins>
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+        <configuration>
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+          <forkMode>once</forkMode>
+          <junitxml>.</junitxml>
+          <filereports>WDF TestSuite.txt</filereports>
+          <argLine>-Drun.mode=test -XX:MaxMetaspaceSize=1g -Xms1g -Xmx2g --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.jar=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED</argLine>
+          <tagsToExclude>code.external,GetBanksPerf</tagsToExclude>
+          <testFailureIgnore>${maven.test.failure.ignore}</testFailureIgnore>
+        </configuration>
+        <executions>
+          <execution>
+            <id>test</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+          <outputDirectory>${project.build.directory}/surefire-reports</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>surefire-html-report</id>
+            <phase>package</phase>
+            <goals>
+              <goal>report-only</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>delete-surefire-xml-after-html</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete>
+                  <fileset dir="${project.build.directory}/surefire-reports">
+                    <include name="TEST-*.xml"/>
+                    <include name="TESTS-*.xml"/>
+                  </fileset>
+                </delete>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>obp-api/src/main/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>${java.version}</release>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>bootstrap.http4s.Http4sServer</mainClass>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>lib/</classpathPrefix>
+            </manifest>
+            <manifestEntries>
+              <Add-Opens>java.base/java.lang java.base/java.lang.reflect java.base/java.util java.base/java.lang.invoke java.base/java.util.jar java.base/sun.reflect.generics.reflectiveObjects java.base/java.io java.base/java.util.concurrent java.base/java.security</Add-Opens>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.8.1</version>
+        <executions>
+          <execution>
+            <id>copy-runtime-deps</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <includeScope>runtime</includeScope>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+    <sourceDirectory>obp-api/src/main/scala</sourceDirectory>
+    <testSourceDirectory>obp-api/src/test/scala</testSourceDirectory>
+    <directory>obp-api/target</directory>
+    <resources>
+      <resource>
+        <directory>obp-api/src/main/resources</directory>
+      </resource>
+    </resources>
+    <finalName>obp-api</finalName>
   </build>
   <reporting>
     <plugins>

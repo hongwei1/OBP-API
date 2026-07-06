@@ -5,10 +5,7 @@ RUN cp /usr/src/OBP-API/obp-api/pom.xml /tmp/pom.xml # For Packaging a local rep
 WORKDIR /usr/src/OBP-API
 RUN cp obp-api/src/main/resources/props/test.default.props.template obp-api/src/main/resources/props/test.default.props
 RUN cp obp-api/src/main/resources/props/sample.props.template obp-api/src/main/resources/props/default.props
-RUN --mount=type=cache,target=$HOME/.m2 MAVEN_OPTS="-Xmx3G -Xss2m" mvn install -pl .,obp-commons
-RUN --mount=type=cache,target=$HOME/.m2 MAVEN_OPTS="-Xmx3G -Xss2m" mvn install -DskipTests -pl obp-api
-
-FROM eclipse-temurin:25-jre-alpine
+RUN --mount=type=cache,target=$HOME/.m2 MAVEN_OPTS="-Xmx3G -Xss2m" mvn install RUN --mount=type=cache,target=$HOME/.m2 MAVEN_OPTS="-Xmx3G -Xss2m" mvn install -DskipTests FROM eclipse-temurin:25-jre-alpine
 COPY --from=maven /usr/src/OBP-API/obp-api/target/lib /app/lib
 COPY --from=maven /usr/src/OBP-API/obp-api/target/obp-api.jar /app/obp-api.jar
 ENTRYPOINT ["java", "-jar", "/app/obp-api.jar"]

@@ -54,4 +54,4 @@ fi
 
 # 3) Run just the projection suites.
 echo "==> Running projection test suites"
-mvn test -pl obp-api -DwildcardSuites="$SUITES" -DfailIfNoTests=false
+mvn test -DwildcardSuites="$SUITES" -DfailIfNoTests=false

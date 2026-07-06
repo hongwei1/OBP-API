@@ -39,8 +39,8 @@ To diagnose suspected pollution:
 
 ```bash
 # Reproduce: passes alone, fails when paired
-mvn test -pl obp-api -DwildcardSuites="<suspect-suite>"           # passes
-mvn test -pl obp-api -DwildcardSuites="<suspect>,<other-suite>"   # fails
+mvn test -DwildcardSuites="<suspect-suite>"           # passes
+mvn test -DwildcardSuites="<suspect>,<other-suite>"   # fails
 
 # Find culprits
 grep -rn "setPropsValues\|LiftRules\." obp-api/src/test/scala \

@@ -165,7 +165,7 @@ fi
 } > fast_build.log
 
 # Run Maven build and append to log
-mvn -pl obp-api -am \
+mvn \
     $DO_CLEAN \
     package \
     -T 1C \
@@ -238,7 +238,7 @@ if [ $BUILD_EXIT_CODE -ne 0 ] && [ -z "$DO_CLEAN" ]; then
         } > fast_build.log
         
         # Run clean build
-        mvn -pl obp-api -am \
+        mvn \
             clean \
             package \
             -T 1C \

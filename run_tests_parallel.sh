@@ -239,7 +239,7 @@ echo ""
 # uploads them; the test job downloads them and re-installs obp-commons / the
 # parent POM into the new machine's ~/.m2 via install-file. A single local machine
 # shares one ~/.m2, so we only install once — dropping upload/download/touch.
-# Key point: each shard runs `scalatest:test -pl obp-api` (no -am), so obp-commons
+# Key point: each shard runs `scalatest:test ` (no -am), so obp-commons
 # is resolved from ~/.m2, not from the reactor. We must install the CURRENT
 # obp-commons into ~/.m2, otherwise shards test against a stale obp-commons (the
 # old `test-compile -am` only built it in the reactor and never refreshed ~/.m2).
@@ -255,7 +255,7 @@ rm -rf "$OBC_LOCK"
 if [[ $PRECOMPILE_RC -eq 0 ]]; then
   echo "Pre-compile 2/2: test-compile obp-api -> shared target/ ..."
   MAVEN_OPTS="$MVN_OPTS" \
-    mvn test-compile -pl obp-api -q >> test-results/parallel/precompile.log 2>&1
+    mvn test-compile -q >> test-results/parallel/precompile.log 2>&1
   PRECOMPILE_RC=$?
 fi
 if [[ $PRECOMPILE_RC -ne 0 ]]; then

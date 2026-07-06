@@ -45,7 +45,7 @@ Notes
 * The script does not run `mvn`. After lifting you almost certainly need to
   add a few imports (helpers like `userAuthenticationMessage`, case classes
   like `ConsentChallengeJsonV310`, etc.) that the lifted bodies reference.
-  `mvn -pl obp-api -am compile -DskipTests` will name them; add to the
+  `mvn compile -DskipTests` will name them; add to the
   Http4sXYZ.scala import block and rebuild.
 * The lift step only touches an entry when the lift would change something —
   it's safe to re-run after manual edits.

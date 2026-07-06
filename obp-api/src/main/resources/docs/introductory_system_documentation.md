@@ -1697,8 +1697,8 @@ cp obp-api/src/main/resources/props/sample.props.template \
 nano obp-api/src/main/resources/props/default.props
 
 # Build
-mvn install -pl .,obp-commons -DskipTests
-mvn package -pl obp-api -DskipTests
+mvn install -DskipTests
+mvn package -DskipTests
 
 # Run (executable fat JAR)
 java -jar obp-api/target/obp-api.jar
@@ -1708,7 +1708,7 @@ java -jar obp-api/target/obp-api.jar
 
 ```bash
 export MAVEN_OPTS="-Xss128m"
-mvn install -pl .,obp-commons -DskipTests && mvn package -pl obp-api -DskipTests
+mvn install -DskipTests && mvn package -DskipTests
 java -Xss128m -jar obp-api/target/obp-api.jar
 ```
 
@@ -1827,7 +1827,7 @@ OBP-API runs as a standalone HTTP4S server packaged as an executable fat JAR. No
 **Build the fat JAR:**
 
 ```bash
-mvn clean package -pl obp-api -am -DskipTests
+mvn clean package -DskipTests
 # Output: obp-api/target/obp-api.jar
 ```
 
@@ -3824,8 +3824,8 @@ db.url=jdbc:h2:./obp_api.db;DB_CLOSE_ON_EXIT=FALSE
 connector=mapped
 
 # 3. Build and run
-mvn clean install -pl .,obp-commons -DskipTests
-mvn package -pl obp-api -DskipTests
+mvn clean install -DskipTests
+mvn package -DskipTests
 java -jar obp-api/target/obp-api.jar
 
 # 4. Access
@@ -3850,7 +3850,7 @@ connector=mapped
 allow_oauth2_login=true
 
 # 3. Build fat JAR
-mvn clean package -pl obp-api -am -DskipTests
+mvn clean package -DskipTests
 
 # 4. Deploy
 java -Drun.mode=production -jar obp-api/target/obp-api.jar
@@ -4126,9 +4126,7 @@ git clone https://github.com/OpenBankProject/OBP-API.git
 cd OBP-API
 
 # Build
-mvn clean install -pl .,obp-commons
-
-# Run tests
+mvn clean install # Run tests
 mvn test
 
 # Run single test

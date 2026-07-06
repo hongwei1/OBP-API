@@ -100,7 +100,7 @@ echo ""
 # Build obp-api module (includes obp-commons as dependency)
 # - clean: Remove old build artifacts
 # - package: Compile and create JAR with maven-shade-plugin
-# - -pl obp-api -am: Build obp-api and all required modules
+# - : Build obp-api and all required modules
 # - -DskipTests: Skip test execution for faster builds
 # - -T 4: Use 4 threads for parallel compilation
 echo "Building obp-api module..."
@@ -109,7 +109,7 @@ echo "Build output will be saved to: build.log"
 # Show last 3 lines of build output in real-time
 tail -n 3 -f build.log &
 TAIL_PID=$!
-mvn -pl obp-api -am clean package -DskipTests=true -Dmaven.test.skip=true -T 4 > build.log 2>&1
+mvn clean package -DskipTests=true -Dmaven.test.skip=true -T 4 > build.log 2>&1
 BUILD_EXIT=$?
 kill $TAIL_PID 2>/dev/null || true
 wait $TAIL_PID 2>/dev/null || true
