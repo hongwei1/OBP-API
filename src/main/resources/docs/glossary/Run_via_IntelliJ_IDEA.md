@@ -18,11 +18,11 @@
 
 * Navigate to obp-api/test/scala/code/RunWebApp. You may see a Setup Scala SDK link. Click this and check Scala 2.12.12 or so.
 
-* In obp-api/src/main/resources/props create a \<yourloginname\>.props (or default.props) for development. Set connector=mapped
+* In src/main/resources/props create a \<yourloginname\>.props (or default.props) for development. Set connector=mapped
 
 * Now **Rebuild** the project so everything is compiled. At this point you may need to select the SDK, see above.
 
-* Once you have rebuilt the project without compile errors, you should be able to RunWebApp/RunTLSWebApp/RunMTLSWebApp in obp-api/src/test/scala
+* Once you have rebuilt the project without compile errors, you should be able to RunWebApp/RunTLSWebApp/RunMTLSWebApp in src/test/scala
 
 * If you have trouble (re)building, try using the IntelliJ IDEA terminal: mvn clean test-compile
 
@@ -44,7 +44,7 @@ In `development` mode we use this option in order to try OpenID Connect function
 
 * Run RunMTLSWebApp by right clicking on it and selecting Run/Debug. The built in jetty server should start on localhost:8080
 
-* Import certificate obp-api/src/test/resources/cert/localhost_SAN_dns_ip.pfx into your browser.
+* Import certificate src/test/resources/cert/localhost_SAN_dns_ip.pfx into your browser.
 
 * Browse to https://localhost:8080 but don't try anything else there yet
 

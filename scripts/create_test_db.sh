@@ -91,7 +91,7 @@ cat <<MSG
 
 ==> Done. Dedicated test role '$DB_USER' owns database '$DB_NAME' (your shared 'obp'/'sandbox' setup is untouched).
 
-Point the TEST suite at it — set in obp-api/src/main/resources/props/test.default.props (do NOT commit):
+Point the TEST suite at it — set in src/main/resources/props/test.default.props (do NOT commit):
 
     db.driver=org.postgresql.Driver
     db.url=jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME?user=$DB_USER&password=$DB_PASS

@@ -6,7 +6,7 @@
 ## What Was Done
 
 ### 1. Added Cache API Tag
-**File**: `obp-api/src/main/scala/code/api/util/ApiTag.scala`
+**File**: `src/main/scala/code/api/util/ApiTag.scala`
 
 Added new tag for cache-related endpoints:
 ```scala
@@ -14,7 +14,7 @@ val apiTagCache = ResourceDocTag("Cache")
 ```
 
 ### 2. Updated Endpoint Tags
-**File**: `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+**File**: `src/main/scala/code/api/v6_0_0/APIMethods600.scala`
 
 The cache namespaces endpoint now has proper tags:
 ```scala
@@ -55,12 +55,12 @@ Search for "cache/namespaces" or filter by "Cache" tag
 ## Complete File Changes
 
 ```
-obp-api/src/main/scala/code/api/cache/Redis.scala             |  47 lines
-obp-api/src/main/scala/code/api/constant/constant.scala       |  17 lines
-obp-api/src/main/scala/code/api/util/ApiRole.scala            |   9 lines
-obp-api/src/main/scala/code/api/util/ApiTag.scala             |   1 line
-obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala    | 106 lines
-obp-api/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala |  35 lines
+src/main/scala/code/api/cache/Redis.scala             |  47 lines
+src/main/scala/code/api/constant/constant.scala       |  17 lines
+src/main/scala/code/api/util/ApiRole.scala            |   9 lines
+src/main/scala/code/api/util/ApiTag.scala             |   1 line
+src/main/scala/code/api/v6_0_0/APIMethods600.scala    | 106 lines
+src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala |  35 lines
 ---
 Total: 6 files changed, 215 insertions(+), 2 deletions(-)
 ```

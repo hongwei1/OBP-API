@@ -68,9 +68,9 @@ object OpenAPI31Exporter {
   def findProjectRoot(): String = {
     val currentDir = new File(".")
     val candidates = List(
-      "./obp-api/src/main/scala/code/api/v6_0_0",
-      "../obp-api/src/main/scala/code/api/v6_0_0",
-      "./OBP-API/obp-api/src/main/scala/code/api/v6_0_0"
+      "./src/main/scala/code/api/v6_0_0",
+      "../src/main/scala/code/api/v6_0_0",
+      "./OBP-API/src/main/scala/code/api/v6_0_0"
     )
     
     candidates.find(path => new File(path).exists()) match {
@@ -81,7 +81,7 @@ object OpenAPI31Exporter {
   }
   
   def extractEndpoints(projectRoot: String): List[ApiEndpoint] = {
-    val apiMethodsFile = new File(s"$projectRoot/obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala")
+    val apiMethodsFile = new File(s"$projectRoot/src/main/scala/code/api/v6_0_0/APIMethods600.scala")
     val endpoints = ListBuffer[ApiEndpoint]()
     
     if (!apiMethodsFile.exists()) {
@@ -123,7 +123,7 @@ object OpenAPI31Exporter {
   }
   
   def extractSchemas(projectRoot: String): List[JsonSchema] = {
-    val jsonFactoryFile = new File(s"$projectRoot/obp-api/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala")
+    val jsonFactoryFile = new File(s"$projectRoot/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala")
     val schemas = ListBuffer[JsonSchema]()
     
     if (!jsonFactoryFile.exists()) {

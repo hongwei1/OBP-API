@@ -178,7 +178,7 @@ PATCH, keep readable fields in responses with annotations.
 `Entitlement.entitlement.vend.addEntitlement("", userId, role)`; drive endpoints with
 `makePostRequest` / `makeGetRequest` / `makePutRequest` (add a `makePatchRequest` helper);
 multiple `resourceUser`s for privileged vs ordinary callers.
-**Home:** a new `obp-api/src/test/scala/code/api/v6_0_0/DynamicEntityFieldRolesTest.scala`, plus
+**Home:** a new `src/test/scala/code/api/v6_0_0/DynamicEntityFieldRolesTest.scala`, plus
 regression additions to the existing `DynamicEntityTest`, `DynamicEntityAccessFlagsTest`,
 `DynamicEntityFilterAndBankAccessTest`.
 
@@ -267,7 +267,7 @@ merge authorised fields into existing record; register route + resource doc.
 lacks `readRole` for (GET_ONE + GET_ALL); public/community omit all read-restricted.
 **Phase 6 — operation-aware resource docs (DynamicEntityHelper).** CREATE/UPDATE request examples exclude restricted
 fields; add PATCH docs; annotate read-restricted in responses.
-**Phase 7 — tests.** New `obp-api/src/test/scala/code/api/v7_0_0/DynamicEntityFieldRolesTest.scala` + `makePatchRequest`
+**Phase 7 — tests.** New `src/test/scala/code/api/v7_0_0/DynamicEntityFieldRolesTest.scala` + `makePatchRequest`
 helper, covering §13 A–I.
 **Phase 8 — docs/changelog.**
 
@@ -293,7 +293,7 @@ Phase 6 COMPLETE — pending compile: PATCH resource doc (generic + my/) via new
 enum value (obp-commons) + `buildPatchFunctionName` + createDocs branches; restriction notes appended to
 `fieldsDescription`. (The connector match in LocalMappedConnector casts to `Any`, so the new enum value is safe.)
 Phase 7 DONE — pending compile: added `makePatchRequest` to `SendServerRequests.scala`; new test
-`obp-api/src/test/scala/code/api/v6_0_0/DynamicEntityFieldRolesTest.scala` (placed in v6_0_0 because DE creation is
+`src/test/scala/code/api/v6_0_0/DynamicEntityFieldRolesTest.scala` (placed in v6_0_0 because DE creation is
 v6.0.0 + harness lives there) covering: definition-create, POST-drops-write-restricted, PUT-can't-set, PATCH 403→grant→200,
 GET read-omission→grant→visible. NOT yet run — may need iteration (role-string exactness, dispatch `.PATCH`).
 Phase 8 DONE — brief `release_notes.md` entry (2026-06-05) + field-level permissions section added to the

@@ -1,7 +1,7 @@
 # Summary of Changes
 
 ## 1. Added TODO Comment in Code
-**File:** `obp-api/src/main/scala/code/api/util/RateLimitingUtil.scala`
+**File:** `src/main/scala/code/api/util/RateLimitingUtil.scala`
 
 Added a TODO comment at line 154 explaining the optimization opportunity:
 - Remove redundant EXISTS check since GET returns None for non-existent keys

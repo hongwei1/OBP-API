@@ -72,13 +72,13 @@ now connect to the OBP database you want e.g.:
 now run the script from within the psql shell:
 
 ```sql
-\i ~/Documents/workspace_2024/OBP-API-C/OBP-API/obp-api/src/main/scripts/sql/create_oidc_user_and_views.sql
+\i ~/Documents/workspace_2024/OBP-API-C/OBP-API/src/main/scripts/sql/create_oidc_user_and_views.sql
 ```
 
 or you can cd to the sql directory first and make use of relative paths.
 
 ```bash
-cd ~/Documents/workspace_2024/OBP-API-C/OBP-API/obp-api/src/main/scripts/sql/OIDC
+cd ~/Documents/workspace_2024/OBP-API-C/OBP-API/src/main/scripts/sql/OIDC
 
 psql
 ```
@@ -90,7 +90,7 @@ psql
 or run it from the linux terminal specifying the database
 
 ```bash
-psql -d sandbox -f ~/Documents/workspace_2024/OBP-API-C/OBP-API/obp-api/src/main/scripts/sql/create_oidc_user_and_views.sql
+psql -d sandbox -f ~/Documents/workspace_2024/OBP-API-C/OBP-API/src/main/scripts/sql/create_oidc_user_and_views.sql
 ```
 
 either way, check the output of the script carefully.

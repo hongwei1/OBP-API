@@ -181,15 +181,15 @@ The `source` field enables UIs to:
 
 ## Files Changed
 
-1. `obp-api/src/main/scala/code/webuiprops/WebUiProps.scala`
+1. `src/main/scala/code/webuiprops/WebUiProps.scala`
    - Added `source` field to `WebUiPropsCommons`
 
-2. `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+2. `src/main/scala/code/api/v6_0_0/APIMethods600.scala`
    - Fixed `what=active` logic to return one value per prop
    - Added `source` field to all WebUiPropsCommons instantiations
    - Updated ResourceDoc for both endpoints
 
-3. `obp-api/src/main/scala/code/api/v6_0_0/OBPAPI6_0_0.scala`
+3. `src/main/scala/code/api/v6_0_0/OBPAPI6_0_0.scala`
    - Changed endpoint order to prioritize v6.0.0 over v5.1.0
 
 ## Testing

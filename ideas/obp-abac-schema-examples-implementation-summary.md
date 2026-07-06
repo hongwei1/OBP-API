@@ -7,7 +7,7 @@ Successfully implemented comprehensive ABAC rule examples in the `/obp/v6.0.0/ma
 ## Implementation Details
 
 ### File Modified
-- **Path**: `OBP-API/obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+- **Path**: `OBP-API/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
 - **Method**: `getAbacRuleSchema`
 - **Lines**: 5019-5196 (examples array)
 
@@ -293,10 +293,10 @@ Response structure:
 - `OBP-API/ideas/obp-abac-schema-examples-enhancement.md` - Original enhancement specification with 250+ examples (includes even more examples not all added to the API response to keep it manageable)
 
 ### Implementation
-- `OBP-API/obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala` - Actual implementation
+- `OBP-API/src/main/scala/code/api/v6_0_0/APIMethods600.scala` - Actual implementation
 
 ### JSON Schema
-- `OBP-API/obp-api/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala` - Contains `AbacRuleSchemaJsonV600` case class
+- `OBP-API/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala` - Contains `AbacRuleSchemaJsonV600` case class
 
 ## Future Enhancements
 

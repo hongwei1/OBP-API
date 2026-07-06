@@ -425,10 +425,10 @@ class Boot extends MdcLoggable {
 //        }
 //    }
 
-    //If use_custom_webapp=true, this will copy all the files from `OBP-API/obp-api/src/main/webapp` to `OBP-API/obp-api/src/main/resources/custom_webapp`
+    //If use_custom_webapp=true, this will copy all the files from `OBP-API/src/main/webapp` to `OBP-API/src/main/resources/custom_webapp`
     if (APIUtil.getPropsAsBoolValue("use_custom_webapp", false)){
       Option(getClass.getClassLoader.getResource("./")).map { url =>
-        // this following will get the path of `OBP-API/obp-api/src/main/resources/custom_webapp`
+        // this following will get the path of `OBP-API/src/main/resources/custom_webapp`
         val source = if (getClass().getClassLoader().getResource("custom_webapp") == null)
           throw new RuntimeException("If you set `use_custom_webapp = true`, custom_webapp folder can not be Empty!!")
         else

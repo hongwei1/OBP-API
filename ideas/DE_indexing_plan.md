@@ -54,7 +54,7 @@ Add declarative **filter / sort / paginate** and **spatial** querying to Dynamic
 | Field types | `number, integer, boolean, string, DATE_WITH_DAY, json` (+ reference types) | `obp-commons/.../enums/Enumerations.scala` L199–275 |
 | Endpoints | http4s only; `genericGet/Post/Put/Patch/Delete`, `publicGet`, `communityGet` | `Http4sDynamicEntity.scala` L231–403 |
 | DDL/migration | Lift Schemifier (static models); legacy `migration.Migration` uses Lift `DB.use`+JDBC | `bootstrap/liftweb/Boot.scala`, `code/api/util/migration/Migration.scala` |
-| **Raw SQL / DDL library** | **Doobie** (`doobie-core`/`doobie-hikari` 1.0.0-RC4) via `DoobieUtil` — already in use | `obp-api/pom.xml` L450–459, `code/api/util/DoobieTransactor.scala` |
+| **Raw SQL / DDL library** | **Doobie** (`doobie-core`/`doobie-hikari` 1.0.0-RC4) via `DoobieUtil` — already in use | `pom.xml` L450–459, `code/api/util/DoobieTransactor.scala` |
 | Spatial | none — greenfield | — |
 
 **Two architectural consequences:**

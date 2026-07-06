@@ -17,7 +17,7 @@ Two tables are printed:
   2. By API version (API v1 .. v7, all http4s) — per-version cost.
 
 A suite counts as integration when its test class extends `ServerSetup`
-(detected by scanning obp-api/src/test/scala) or is one of the self-starting
+(detected by scanning src/test/scala) or is one of the self-starting
 http4s server suites in HTTP4S_INTEGRATION_SUITES. Everything else is unit/pure.
 
 Usage:
@@ -47,7 +47,7 @@ HTTP4S_INTEGRATION_SUITES = {
     "code.api.v5_0_0.Http4s500SystemViewsTest",
 }
 
-DEFAULT_SRC_ROOT = "obp-api/src/test/scala"
+DEFAULT_SRC_ROOT = "src/test/scala"
 
 
 # ---------------------------------------------------------------------------

@@ -75,7 +75,7 @@ All cache keys should follow the pattern: `{category}_{subcategory}_{identifier}
 **Changes Implemented:**
 
 1. **✅ Rate Limiting Counters**
-   - File: `obp-api/src/main/scala/code/api/util/RateLimitingUtil.scala`
+   - File: `src/main/scala/code/api/util/RateLimitingUtil.scala`
    - Updated `createUniqueKey()` method to use `rl_counter_` prefix
    - Implementation:
      ```scala
@@ -84,7 +84,7 @@ All cache keys should follow the pattern: `{category}_{subcategory}_{identifier}
      ```
 
 2. **✅ Rate Limiting Active Limits**
-   - File: `obp-api/src/main/scala/code/ratelimiting/MappedRateLimiting.scala`
+   - File: `src/main/scala/code/ratelimiting/MappedRateLimiting.scala`
    - Updated cache key generation in `getActiveCallLimitsByConsumerIdAtDateCached()`
    - Implementation:
      ```scala
@@ -111,7 +111,7 @@ All cache keys should follow the pattern: `{category}_{subcategory}_{identifier}
 **Changes Required:**
 
 1. **Connector Methods**
-   - File: `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+   - File: `src/main/scala/code/api/v6_0_0/APIMethods600.scala`
    - Update cache key in `getConnectorMethodNames`:
 
      ```scala

@@ -208,7 +208,7 @@ FK cascade across `mappedtransaction`, `mappedaccountattribute`, `viewdefinition
 - [ ] `obp-api/.../bankconnectors/LocalMappedConnector.scala:3412-3442` — use shared helper (UUIDs + table rows)
 - [ ] `obp-api/.../bankconnectors/LocalMappedConnector.scala:2227-2334, 2385-2489` — dedupe into one cascade helper; `findSettlementAccount` + `tier` check; legacy fallback retained
 - [ ] `obp-api/.../api/util/Glossary.scala` — "Known exception" note on `Account.account_id` until PR 2/3 land
-- [ ] `obp-api/src/test/scala/code/api/v4_0_0/BankTests.scala`, `v5_0_0/BankTests.scala` — update assertions (legacy stays; add UUID path)
+- [ ] `src/test/scala/code/api/v4_0_0/BankTests.scala`, `v5_0_0/BankTests.scala` — update assertions (legacy stays; add UUID path)
 - [ ] (PR 2) backfill migration over `kind="SETTLEMENT"` accounts
 - [ ] (PR 3) rename + FK cascade
 
@@ -220,11 +220,11 @@ Audit run 2026-05-21. 45 hits across 7 files.
 
 ### Production code (3 files)
 
-#### `obp-api/src/main/scala/bootstrap/liftweb/Boot.scala:820-865`
+#### `src/main/scala/bootstrap/liftweb/Boot.scala:820-865`
 
 `createDefaultBankAndDefaultAccountsIfNotExisting` — creates the default sandbox bank's settlement pair on every API boot. Two hits.
 
-#### `obp-api/src/main/scala/code/bankconnectors/LocalMappedConnector.scala` — 20 hits
+#### `src/main/scala/code/bankconnectors/LocalMappedConnector.scala` — 20 hits
 
 **Creation (`:3411-3441`)** — per-bank: looks for each settlement account by `(bankId, theAccountId=literal)`, creates if missing. 8 hits. Runs whenever a bank is created via the local connector.
 
@@ -256,21 +256,21 @@ The discrimination check is the structural reason settlement accounts can't be c
 
 Plus 4 error-message hits at lines 2309, 2310, 2465, 2466 — diagnostic only, easy to update.
 
-#### `obp-api/src/main/scala/code/api/util/migration/MigrationOfSettlementAccounts.scala`
+#### `src/main/scala/code/api/util/migration/MigrationOfSettlementAccounts.scala`
 
 Retroactive migration. ~10 hits. For every existing bank found in `MappedBank`, ensure the two literal-id settlement accounts exist. Already executed on existing deployments — historical.
 
 ### Test code (2 files)
 
-- `obp-api/src/test/scala/code/api/v4_0_0/BankTests.scala`
-- `obp-api/src/test/scala/code/api/v5_0_0/BankTests.scala`
+- `src/test/scala/code/api/v4_0_0/BankTests.scala`
+- `src/test/scala/code/api/v5_0_0/BankTests.scala`
 
 Both assert that bank creation produces these settlement accounts. Tests will need updating in lockstep with whichever migration approach is chosen.
 
 ### Docs / definition
 
-- `obp-api/src/main/scala/code/api/constant/constant.scala:247-248` — the `final val` definitions themselves.
-- `obp-api/src/main/scala/code/api/util/Glossary.scala` — passing reference.
+- `src/main/scala/code/api/constant/constant.scala:247-248` — the `final val` definitions themselves.
+- `src/main/scala/code/api/util/Glossary.scala` — passing reference.
 
 ## What the lookup actually depends on
 
@@ -366,12 +366,12 @@ This is the scary one. Possibly never worth doing — the lookup-table indirecti
 ## File-by-file checklist (for whoever picks this up)
 
 - [ ] `obp-commons/src/main/scala/com/openbankproject/commons/model/` — new `SettlementDirection` and `SettlementTier` enums
-- [ ] `obp-api/src/main/scala/code/bankconnectors/settlement/MappedBankSettlementAccount.scala` — new Mapper
-- [ ] `obp-api/src/main/scala/code/api/util/migration/MigrationOfBankSettlementAccountTable.scala` — DDL for the new table
-- [ ] `obp-api/src/main/scala/code/bankconnectors/LocalMappedConnector.scala:2264-2310, 2421-2466` — refactor cascade
-- [ ] `obp-api/src/main/scala/code/bankconnectors/LocalMappedConnector.scala:3411-3441` — mint UUIDs for new settlement accounts, record in the new table
-- [ ] `obp-api/src/main/scala/bootstrap/liftweb/Boot.scala:820-865` — same change for default bank
-- [ ] `obp-api/src/test/scala/code/api/v4_0_0/BankTests.scala` and `v5_0_0/BankTests.scala` — update assertions
-- [ ] `obp-api/src/main/scala/code/api/util/Glossary.scala` — add a "Known exception" note to `Account.account_id` until/unless PR 3 happens
+- [ ] `src/main/scala/code/bankconnectors/settlement/MappedBankSettlementAccount.scala` — new Mapper
+- [ ] `src/main/scala/code/api/util/migration/MigrationOfBankSettlementAccountTable.scala` — DDL for the new table
+- [ ] `src/main/scala/code/bankconnectors/LocalMappedConnector.scala:2264-2310, 2421-2466` — refactor cascade
+- [ ] `src/main/scala/code/bankconnectors/LocalMappedConnector.scala:3411-3441` — mint UUIDs for new settlement accounts, record in the new table
+- [ ] `src/main/scala/bootstrap/liftweb/Boot.scala:820-865` — same change for default bank
+- [ ] `src/test/scala/code/api/v4_0_0/BankTests.scala` and `v5_0_0/BankTests.scala` — update assertions
+- [ ] `src/main/scala/code/api/util/Glossary.scala` — add a "Known exception" note to `Account.account_id` until/unless PR 3 happens
 - [ ] (PR 2) Backfill migration
 - [ ] (PR 3) Rename + FK cascade

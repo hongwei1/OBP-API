@@ -104,7 +104,7 @@ object RSAUtil  extends MdcLoggable {
     val uri = "https://api.qredo.network/api/v1/p/company"
     val body = """{"name":"Tesobe GmbH","city":"Berlin","country":"DE","domain":"tesobe.com","ref":"9827feec-4eae-4e80-bda3-daa7c3b97ad1"}"""
     val inputMessage = s"""${timestamp}${uri}${body}"""
-    val privateKey = getPrivateKeyFromFile("obp-api/src/test/resources/cert/private.pem")
+    val privateKey = getPrivateKeyFromFile("src/test/resources/cert/private.pem")
     computeXSign(inputMessage, privateKey)
     logger.debug("timestamp: " +  timestamp)
 

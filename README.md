@@ -69,13 +69,13 @@ To run the API using the http4s server, use the `obp-api` module from the projec
 
 ```sh
 MAVEN_OPTS="-Xms3G -Xmx6G -XX:MaxMetaspaceSize=2G" mvn clean package -DskipTests=true -Dmaven.test.skip=true && \
-java -jar obp-api/target/obp-api.jar
+java -jar target/obp-api.jar
 ```
 
 The http4s server binds to `hostname` / `dev.port` as configured in your props file (defaults are `127.0.0.1` and `8080`).
 
 `obp-api.jar` is a thin jar: it contains only this module's classes and resources. Its
-runtime dependencies are copied to the sibling `obp-api/target/lib/` directory by the build,
+runtime dependencies are copied to the sibling `target/lib/` directory by the build,
 and the jar's manifest carries a `Class-Path` entry pointing at `lib/`, so the jar and `lib/`
 must stay next to each other — copying the jar alone is not enough to run it.
 
@@ -95,14 +95,14 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
      --add-opens java.base/java.io=ALL-UNNAMED \
      --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
      --add-opens java.base/java.security=ALL-UNNAMED \
-     -cp "obp-api/target/obp-api.jar:obp-api/target/lib/*" bootstrap.http4s.Http4sServer
+     -cp "target/obp-api.jar:target/lib/*" bootstrap.http4s.Http4sServer
 ```
 
-[Note: How to run via IntelliJ IDEA](obp-api/src/main/docs/glossary/Run_via_IntelliJ_IDEA.md)
+[Note: How to run via IntelliJ IDEA](src/main/docs/glossary/Run_via_IntelliJ_IDEA.md)
 
 ## Run some tests
 
-- In `obp-api/src/main/resources/props` create a `test.default.props` for tests. Set `connector=mapped`.
+- In `src/main/resources/props` create a `test.default.props` for tests. Set `connector=mapped`.
 
 - Run a single test. For instance, right-click on `obp-api/test/scala/code/branches/MappedBranchProviderTest` and select "Run Mapp"...
 
@@ -304,8 +304,8 @@ Restart OBP-API, if you get an error, check your Java environment can connect to
 
 Note: You can copy the following example files to prepare your own configurations:
 
-- `/obp-api/src/main/resources/logback.xml.example` -> `/obp-api/src/main/resources/logback.xml` (try TRACE or DEBUG).
-- `/obp-api/src/main/resources/logback-test.xml.example` -> `/obp-api/src/main/resources/logback-test.xml` (try TRACE or DEBUG).
+- `/src/main/resources/logback.xml.example` -> `/src/main/resources/logback.xml` (try TRACE or DEBUG).
+- `/src/main/resources/logback-test.xml.example` -> `/src/main/resources/logback-test.xml` (try TRACE or DEBUG).
 
 There is a gist/tool which is useful for this. Search the web for SSLPoke. Note this is an external repository.
 
@@ -362,7 +362,7 @@ To populate the OBP database with sandbox data:
 
 1. In the API's props file, set `allow_sandbox_data_import=true`.
 2. Grant your user the role `CanCreateSandbox`. See the previous section on how to do this.
-3. Now, post the JSON data using the payload field at `/#2_1_0-sandboxDataImport`. An example of an import set of data (JSON) can be found [here](https://raw.githubusercontent.com/OpenBankProject/OBP-API/develop/obp-api/src/main/scala/code/api/sandbox/example_data/2016-04-28/example_import.json).
+3. Now, post the JSON data using the payload field at `/#2_1_0-sandboxDataImport`. An example of an import set of data (JSON) can be found [here](https://raw.githubusercontent.com/OpenBankProject/OBP-API/develop/src/main/scala/code/api/sandbox/example_data/2016-04-28/example_import.json).
 4. If successful you should see this result `{ "success": "Success" }` and no error message.
 
 ## Production Options
@@ -476,7 +476,7 @@ For UI customization, please use the separate [OBP-Portal](https://github.com/Op
 
 ## Rate Limiting
 
-We support rate limiting i.e functionality to limit calls per consumer key (App). Only `New Style Endpoins` support it. The list of they can be found at this file: [https://github.com/OpenBankProject/OBP-API/blob/develop/obp-api/src/main/scala/code/api/util/NewStyle.scala](https://github.com/OpenBankProject/OBP-API/blob/develop/obp-api/src/main/scala/code/api/util/NewStyle.scala).
+We support rate limiting i.e functionality to limit calls per consumer key (App). Only `New Style Endpoins` support it. The list of they can be found at this file: [https://github.com/OpenBankProject/OBP-API/blob/develop/src/main/scala/code/api/util/NewStyle.scala](https://github.com/OpenBankProject/OBP-API/blob/develop/src/main/scala/code/api/util/NewStyle.scala).
 
 There are two supported modes:
 
@@ -884,7 +884,7 @@ The `oauth2.jwk_set.url` property is resolved in the following order of priority
    export OBP_OAUTH2_JWK_SET_URL="https://your-oidc-server.com/jwks"
    ```
 
-2. **Properties Files** (located in `obp-api/src/main/resources/props/`)
+2. **Properties Files** (located in `src/main/resources/props/`)
    - `production.default.props` (for production deployments)
    - `default.props` (for development)
    - `test.default.props` (for testing)
@@ -939,7 +939,7 @@ If it is required for a "STABLE" api to be changed, then the class metadata must
 
 ### Steps to freeze an API
 
-- Run the FrozenClassUtil to regenerate persist file of frozen apis information, the file is `PROJECT_ROOT_PATH/obp-api/src/test/resources/frozen_type_meta_data`
+- Run the FrozenClassUtil to regenerate persist file of frozen apis information, the file is `PROJECT_ROOT_PATH/src/test/resources/frozen_type_meta_data`
 - push the file `frozen_type_meta_data` to github
 
 There is a video about the detail: [demonstrate the detail of the feature](https://www.youtube.com/watch?v=m9iYCSM0bKA)

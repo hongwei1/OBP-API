@@ -43,7 +43,7 @@ mvn test -DwildcardSuites="<suspect-suite>"           # passes
 mvn test -DwildcardSuites="<suspect>,<other-suite>"   # fails
 
 # Find culprits
-grep -rn "setPropsValues\|LiftRules\." obp-api/src/test/scala \
+grep -rn "setPropsValues\|LiftRules\." src/test/scala \
   | grep -v "scenario\|//\s*"   # rough filter
 ```
 
@@ -63,7 +63,7 @@ If it persists past the current request and there's no `afterEach` reverting it,
 
 ## Enforcement (in this repo)
 
-**Static lint** — `.github/scripts/check_test_isolation.py` scans every `*.scala` file under `obp-api/src/test/scala`, tracks brace-depth scoping, and fails the build if a `setPropsValues(` call appears outside a `scenario`, `def`, or `before*`/`after*` block. The check runs in `.github/workflows/build_pull_request.yml` as the `Lint — test-isolation` step, before `mvn install`. Run it locally with:
+**Static lint** — `.github/scripts/check_test_isolation.py` scans every `*.scala` file under `src/test/scala`, tracks brace-depth scoping, and fails the build if a `setPropsValues(` call appears outside a `scenario`, `def`, or `before*`/`after*` block. The check runs in `.github/workflows/build_pull_request.yml` as the `Lint — test-isolation` step, before `mvn install`. Run it locally with:
 
 ```bash
 python3 .github/scripts/check_test_isolation.py

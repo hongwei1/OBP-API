@@ -20,7 +20,7 @@ Fixed two critical bugs in the rate limiting cache/query mechanism that caused t
 
 ### Bug #1: Ignoring the Date Parameter (CRITICAL)
 
-**Location:** `obp-api/src/main/scala/code/ratelimiting/MappedRateLimiting.scala:283-289`
+**Location:** `src/main/scala/code/ratelimiting/MappedRateLimiting.scala:283-289`
 
 **The Problem:**
 ```scala
@@ -53,7 +53,7 @@ getActiveCallLimitsByConsumerIdAtDate(consumerId, Date(2025-12-31))
 
 ### Bug #2: Hour Truncation Off-By-Minute Issue (CRITICAL)
 
-**Location:** `obp-api/src/main/scala/code/ratelimiting/MappedRateLimiting.scala:264-280`
+**Location:** `src/main/scala/code/ratelimiting/MappedRateLimiting.scala:264-280`
 
 **The Problem:**
 
@@ -247,7 +247,7 @@ scenario("We will get aggregated call limits for two overlapping rate limit reco
 
 ## Files Changed
 
-- `obp-api/src/main/scala/code/ratelimiting/MappedRateLimiting.scala`
+- `src/main/scala/code/ratelimiting/MappedRateLimiting.scala`
   - Fixed `getActiveCallLimitsByConsumerIdAtDate()` to use actual date parameter
   - Fixed `getActiveCallLimitsByConsumerIdAtDateCached()` to query full hour range
 

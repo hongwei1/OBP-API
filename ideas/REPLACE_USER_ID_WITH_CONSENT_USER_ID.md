@@ -96,7 +96,7 @@ Works directly with the OBP database (Mapper/ORM layer) and does NOT use `Outbou
 
 ### For External Connectors
 
-**Location**: `OBP-API/obp-api/src/main/scala/code/api/util/ApiSession.scala`
+**Location**: `OBP-API/src/main/scala/code/api/util/ApiSession.scala`
 
 **Method**: `CallContext.toOutboundAdapterCallContext` (lines 65-115)
 
@@ -116,7 +116,7 @@ override def makePaymentv210(..., callContext: Option[CallContext]): ... = {
 
 **Challenge**: LocalMappedConnector does NOT use `toOutboundAdapterCallContext`. It works directly with database entities.
 
-**Key Location**: `OBP-API/obp-api/src/main/scala/code/bankconnectors/LocalMappedConnector.scala`
+**Key Location**: `OBP-API/src/main/scala/code/bankconnectors/LocalMappedConnector.scala`
 
 Methods like `savePayment` (line 2223) and `getBankAccountsForUserLegacy` (line 624) work directly with parameters and database objects.
 
@@ -373,7 +373,7 @@ Test scenarios:
 
 **Challenge**: Dynamic Entities pass `userId` explicitly as a parameter rather than relying solely on `CallContext`.
 
-**Location**: `OBP-API/obp-api/src/main/scala/code/api/dynamic/entity/APIMethodsDynamicEntity.scala`
+**Location**: `OBP-API/src/main/scala/code/api/dynamic/entity/APIMethodsDynamicEntity.scala`
 
 #### Current Implementation
 
@@ -513,8 +513,8 @@ For Dynamic Entities with consent support:
 
 #### Files to Modify
 
-- `OBP-API/obp-api/src/main/scala/code/api/dynamic/entity/APIMethodsDynamicEntity.scala` - Replace `Some(u.userId)` with `Some(callContext.effectiveUserId)`
-- `OBP-API/obp-api/src/main/scala/code/api/util/ApiSession.scala` - Add `effectiveUserId` helper to CallContext
+- `OBP-API/src/main/scala/code/api/dynamic/entity/APIMethodsDynamicEntity.scala` - Replace `Some(u.userId)` with `Some(callContext.effectiveUserId)`
+- `OBP-API/src/main/scala/code/api/util/ApiSession.scala` - Add `effectiveUserId` helper to CallContext
 
 ---
 
@@ -522,15 +522,15 @@ For Dynamic Entities with consent support:
 
 ### Key Files to Modify
 
-- `OBP-API/obp-api/src/main/scala/code/api/util/ApiSession.scala` - CallContext and toOutboundAdapterCallContext
-- `OBP-API/obp-api/src/main/scala/code/bankconnectors/LocalMappedConnector.scala` - Internal database operations
+- `OBP-API/src/main/scala/code/api/util/ApiSession.scala` - CallContext and toOutboundAdapterCallContext
+- `OBP-API/src/main/scala/code/bankconnectors/LocalMappedConnector.scala` - Internal database operations
 
 ### Files to Review
 
-- `OBP-API/obp-api/src/main/scala/code/api/util/ConsentUtil.scala` - Consent application logic
-- `OBP-API/obp-api/src/main/scala/code/bankconnectors/Connector.scala` - Base connector trait
-- `OBP-API/obp-api/src/main/scala/code/bankconnectors/rabbitmq/RabbitMQConnector_vOct2024.scala` - RabbitMQ example
-- `OBP-API/obp-api/src/main/scala/code/bankconnectors/rest/RestConnector_vMar2019.scala` - REST example
+- `OBP-API/src/main/scala/code/api/util/ConsentUtil.scala` - Consent application logic
+- `OBP-API/src/main/scala/code/bankconnectors/Connector.scala` - Base connector trait
+- `OBP-API/src/main/scala/code/bankconnectors/rabbitmq/RabbitMQConnector_vOct2024.scala` - RabbitMQ example
+- `OBP-API/src/main/scala/code/bankconnectors/rest/RestConnector_vMar2019.scala` - REST example
 - `OBP-API/obp-commons/src/main/scala/com/openbankproject/commons/model/CommonModel.scala` - DTO structures
 
 ---

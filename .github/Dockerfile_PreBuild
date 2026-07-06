@@ -4,8 +4,8 @@ RUN addgroup -S obp && adduser -S -h /app -G obp obp
 
 # Copy OBP source code
 # Copy build artifact (JAR file) and its runtime dependencies from maven build
-COPY /obp-api/target/lib /app/lib
-COPY /obp-api/target/obp-api.jar /app/obp-api.jar
+COPY /target/lib /app/lib
+COPY /target/obp-api.jar /app/obp-api.jar
 WORKDIR /app
 USER obp
 ENTRYPOINT ["java", \

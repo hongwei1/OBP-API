@@ -428,7 +428,7 @@ The Open Bank Project (OBP) is an open-source RESTful API platform for banks tha
 
 **Configuration:**
 
-- Properties files: `obp-api/src/main/resources/props/`
+- Properties files: `src/main/resources/props/`
   - `default.props` - Development
   - `production.default.props` - Production
   - `test.default.props` - Testing
@@ -1689,19 +1689,19 @@ git clone https://github.com/OpenBankProject/OBP-API.git
 cd OBP-API
 
 # Create configuration
-mkdir -p obp-api/src/main/resources/props
-cp obp-api/src/main/resources/props/sample.props.template \
-   obp-api/src/main/resources/props/default.props
+mkdir -p src/main/resources/props
+cp src/main/resources/props/sample.props.template \
+   src/main/resources/props/default.props
 
 # Edit configuration
-nano obp-api/src/main/resources/props/default.props
+nano src/main/resources/props/default.props
 
 # Build
 mvn install -DskipTests
 mvn package -DskipTests
 
 # Run (executable fat JAR)
-java -jar obp-api/target/obp-api.jar
+java -jar target/obp-api.jar
 ```
 
 **Alternative with increased stack size:**
@@ -1709,7 +1709,7 @@ java -jar obp-api/target/obp-api.jar
 ```bash
 export MAVEN_OPTS="-Xss128m"
 mvn install -DskipTests && mvn package -DskipTests
-java -Xss128m -jar obp-api/target/obp-api.jar
+java -Xss128m -jar target/obp-api.jar
 ```
 
 **For Java 11+ (if needed):**
@@ -1828,7 +1828,7 @@ OBP-API runs as a standalone HTTP4S server packaged as an executable fat JAR. No
 
 ```bash
 mvn clean package -DskipTests
-# Output: obp-api/target/obp-api.jar
+# Output: target/obp-api.jar
 ```
 
 **Run:**
@@ -1836,7 +1836,7 @@ mvn clean package -DskipTests
 ```bash
 java -Drun.mode=production \
   -Xmx768m \
-  -jar obp-api/target/obp-api.jar
+  -jar target/obp-api.jar
 ```
 
 **Systemd Service (recommended for production):**
@@ -2063,7 +2063,7 @@ This configuration creates a dedicated instance serving **only** management and 
 **Configuration:**
 
 ```properties
-# File: obp-api/src/main/resources/props/default.props
+# File: src/main/resources/props/default.props
 
 # Enable only OBP versions with management endpoints
 api_enabled_versions=[OBPv5.1.0,OBPv4.0.0,OBPv3.1.0]
@@ -2161,7 +2161,7 @@ This configuration creates an instance serving **only** Berlin Group (NextGenPSD
 **Configuration:**
 
 ```properties
-# File: obp-api/src/main/resources/props/default.props
+# File: src/main/resources/props/default.props
 
 # Enable only Berlin Group version
 api_enabled_versions=[BGv1.3]
@@ -3555,7 +3555,7 @@ use_consumer_limits=true
 export MAVEN_OPTS="-Xmx2048m -Xms1024m -XX:MaxPermSize=512m"
 
 # For production
-java -Xmx4096m -Xms2048m -jar obp-api/target/obp-api.jar
+java -Xmx4096m -Xms2048m -jar target/obp-api.jar
 
 # Monitor memory usage
 jconsole  # Connect to JVM process
@@ -3814,8 +3814,8 @@ GET /obp/v5.1.0/management/metrics?consumer_id=CONSUMER_ID
 # 1. Clone and setup
 git clone https://github.com/OpenBankProject/OBP-API.git
 cd OBP-API
-cp obp-api/src/main/resources/props/sample.props.template \
-   obp-api/src/main/resources/props/default.props
+cp src/main/resources/props/sample.props.template \
+   src/main/resources/props/default.props
 
 # 2. Configure for H2 (dev database)
 # Edit default.props
@@ -3826,7 +3826,7 @@ connector=mapped
 # 3. Build and run
 mvn clean install -DskipTests
 mvn package -DskipTests
-java -jar obp-api/target/obp-api.jar
+java -jar target/obp-api.jar
 
 # 4. Access
 # API: http://localhost:8080
@@ -3853,7 +3853,7 @@ allow_oauth2_login=true
 mvn clean package -DskipTests
 
 # 4. Deploy
-java -Drun.mode=production -jar obp-api/target/obp-api.jar
+java -Drun.mode=production -jar target/obp-api.jar
 
 # 5. Setup API Explorer II
 cd API-Explorer-II
@@ -3952,7 +3952,7 @@ backend obp_nodes
 ```bash
 # Deploy to all nodes
 for node in node1 node2 node3; do
-    scp obp-api/target/obp-api.jar $node:/opt/obp/obp-api.jar
+    scp target/obp-api.jar $node:/opt/obp/obp-api.jar
     ssh $node "sudo systemctl restart obp-api"
 done
 
@@ -4055,7 +4055,7 @@ pg_dump -h localhost -U obp obpdb | gzip > \
 
 # Backup props files
 tar -czf $BACKUP_DIR/props_$DATE.tar.gz \
-  /path/to/OBP-API/obp-api/src/main/resources/props/
+  /path/to/OBP-API/src/main/resources/props/
 
 # Upload to S3 (optional)
 aws s3 cp $BACKUP_DIR/obpdb_$DATE.sql.gz \
@@ -5817,7 +5817,7 @@ Authorization: DirectLogin token="TOKEN"
 **Via Source Code:**
 The complete list of roles is defined in:
 
-- `obp-api/src/main/scala/code/api/util/ApiRole.scala`
+- `src/main/scala/code/api/util/ApiRole.scala`
 
 **Via API Explorer II:**
 

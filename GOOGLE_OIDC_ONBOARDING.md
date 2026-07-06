@@ -20,7 +20,7 @@ login; the client/BFF does that against Google and then calls OBP with
 
 The validation path is `OAuth2Login.getUser` / `getUserFuture` →
 `Google.applyIdTokenRules` in
-`obp-api/src/main/scala/code/api/OAuth2.scala`. The `Google` provider object
+`src/main/scala/code/api/OAuth2.scala`. The `Google` provider object
 is hard-coded with:
 - issuer / discovery: `https://accounts.google.com/.well-known/openid-configuration`
 - `oidcProviderName = "google"` (enablement enforcement)
@@ -30,7 +30,7 @@ So onboarding is **configuration only** — no code change.
 
 ## Required props
 
-Edit your `props` file (in `obp-api/src/main/resources/props/sample.props.template`,
+Edit your `props` file (in `src/main/resources/props/sample.props.template`,
 search for the `OAuth2 Provider Selection` section, or the `oauth2.oidc_provider` prop):
 
 ```properties
@@ -125,6 +125,6 @@ curl -s http://localhost:8080/obp/v5.1.0/users/current \
 ---
 
 **Related:** `OAUTH2_IDENTITY_PROVIDERS.md` (trust model & security rationale),
-`obp-api/src/main/scala/code/api/OAuth2.scala` (`object Google`),
-`obp-api/src/main/resources/props/sample.props.template` (OAuth2 section),
+`src/main/scala/code/api/OAuth2.scala` (`object Google`),
+`src/main/resources/props/sample.props.template` (OAuth2 section),
 API-Explorer-II `docs/GOOGLE_OIDC_ONBOARDING.md` (client/BFF side).

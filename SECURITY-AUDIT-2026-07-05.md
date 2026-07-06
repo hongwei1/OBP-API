@@ -5,7 +5,7 @@
 ## Critical — act immediately
 
 ### 1. Dynamic code execution = Remote Code Execution
-`obp-api/src/main/scala/code/api/util/DynamicUtil.scala`
+`src/main/scala/code/api/util/DynamicUtil.scala`
 
 The project has a runtime "compile and execute user-supplied code" feature (JS / Java / Scala). All three paths are unguarded:
 
@@ -22,42 +22,42 @@ The project has a runtime "compile and execute user-supplied code" feature (JS /
 ## High — address soon
 
 ### 2. RabbitMQ RPC reply has no timeout → site-wide cascading failure
-`obp-api/src/main/scala/code/bankconnectors/rabbitmq/RabbitMQUtils.scala:60`
+`src/main/scala/code/bankconnectors/rabbitmq/RabbitMQUtils.scala:60`
 
 Reply wait is a bare `Promise.future` with no timeout. Adapter outage or dropped message → request hangs forever, leaking one channel + one reply queue per call. **Worst part**: the hung POST still holds its HikariCP connection — ≥10 in-flight requests during an adapter outage drains the default pool of 10 → **every DB-touching request across the whole site returns 500; recovery requires a restart.**
 
 ### 3. Live secrets committed in default.props
-`obp-api/src/main/resources/props/default.props`
+`src/main/resources/props/default.props`
 
 Uncommented, production-looking secrets: OIDC `client_secret` (lines 481, 467), `importer_secret` (line 138); `production.default.props` repeats `importer_secret` and carries an MSSQL password. Any operator deploying with the repo's default props unmodified (a known common OBP mistake) exposes live credentials that are also permanently in git history. **These need rotation regardless of code fix.**
 
 ### 4. Consent HMAC secret + token logged in cleartext at DEBUG
-`obp-api/src/main/scala/code/api/util/JwtUtil.scala:80`
+`src/main/scala/code/api/util/JwtUtil.scala:80`
 
 If DEBUG logging is ever enabled for troubleshooting, every consent verification writes the full consent JWT **and its HMAC signing secret** to logs. Anyone with log read access can forge arbitrary consent JWTs for that consent → full account/data access within (and beyond) the granted scope.
 
 ### 5. HikariCP pool defaults to 10, each write request holds a connection for its full lifetime
-`obp-api/src/main/scala/bootstrap/liftweb/CustomDBVendor.scala:31`
+`src/main/scala/bootstrap/liftweb/CustomDBVendor.scala:31`
 
 Any slow downstream + ≥10 concurrent writes exhausts the pool; even auth-check queries then queue and time out at 30s, so GETs fail too. The project's own CLAUDE.md documents this exact failure mode (tests bumped to pool=20) but **production default remains 10**.
 
 ### 6. Rate limiting fails open when Redis is unavailable
-`obp-api/src/main/scala/code/api/util/RateLimitingUtil.scala:212`
+`src/main/scala/code/api/util/RateLimitingUtil.scala:212`
 
 Redis outage/latency → rate limiting is bypassed entirely → an unbounded surge hits the DB pool and connectors with no guard, exactly when the system is already degraded. Exploitable for cascading DoS amplification.
 
 ### 7. SSRF via dynamic-endpoint / method-routing outbound URL
-`obp-api/src/main/scala/code/bankconnectors/rest/RestConnector_vMar2019.scala:7090`
+`src/main/scala/code/bankconnectors/rest/RestConnector_vMar2019.scala:7090`
 
 Outbound target URL for dynamic endpoints is user-controllable (OpenAPI `servers[0].url` or the MethodRouting `url` field) with no internal-address allow/deny list. A principal with `canCreateDynamicEndpoint` can make OBP fetch `169.254.169.254` (cloud metadata) or internal-only services and relay the response back.
 
 ### 8. Idempotency middleware allows cross-client response leakage + unbounded Redis writes
-`obp-api/src/main/scala/code/api/util/http4s/IdempotencyMiddleware.scala:184`
+`src/main/scala/code/api/util/http4s/IdempotencyMiddleware.scala:184`
 
 Anonymous clients share one scope; two callers using the same short `Idempotency-Key` + same body hash can receive each other's cached response (data leak/staleness). Each unique key writes a full response body to Redis for 24h with no quota — can be used to fill Redis and trigger finding #6's fail-open, a self-reinforcing DoS.
 
 ### 9. MethodRouting cache disabled by default → DB QPS amplified tens of times
-`obp-api/src/main/scala/code/api/util/NewStyle.scala:3301`
+`src/main/scala/code/api/util/NewStyle.scala:3301`
 
 `methodRouting.cache.ttl.seconds` defaults to `"0"` (no caching); `StarConnector` queries the routing table on every intercepted call, and a single API request typically triggers dozens of connector calls. Compounds with finding #5 to accelerate pool exhaustion.
 

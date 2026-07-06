@@ -45,7 +45,7 @@ docker run -it \
   -e OBP_CACHE_REDIS_URL=obp-redis \
   -e OBP_CACHE_REDIS_PORT=6379 \
   -e OBP_DB_URL="jdbc:postgresql://host.docker.internal:5432/obp_mapped?user=obp&password=yourpassword" \
-  -v $(pwd)/obp-api/src/main/resources/props:/app/props \
+  -v $(pwd)/src/main/resources/props:/app/props \
   --add-host=host.docker.internal:host-gateway \
   obp-api:dev
 核心参数拆解：
@@ -53,7 +53,7 @@ docker run -it \
 -p 8080:8080：将 API 服务暴露在宿主机的 8080 端口。
 -e OBP_CACHE_REDIS_URL=obp-redis：传入环境变量，告诉 API 到刚才创建的 obp-redis 容器去访问 Redis。
 -e OBP_DB_URL="..."：指定数据库连接。这里请将 yourpassword 替换为你本地 PostgreSQL 的真实密码。
--v $(pwd)/obp-api/src/main/resources/props:/app/props：把宿主机的 props 配置文件目录挂载进容器，以便它能找到配置文件。
+-v $(pwd)/src/main/resources/props:/app/props：把宿主机的 props 配置文件目录挂载进容器，以便它能找到配置文件。
 --add-host=host.docker.internal:host-gateway：关键参数，让容器内可以通过 host.docker.internal 这个域名访问到你宿主机上运行的数据库。
 你可以先在终端中执行 第一步 和 第二步，如果有任何报错或疑问，随时把终端输出发给我！
 
@@ -85,7 +85,7 @@ This Docker Compose setup provides a complete **live development environment** f
 1. **Prerequisites**
    - Docker and Docker Compose installed
    - Local PostgreSQL database running
-   - Props file configured at `obp-api/src/main/resources/props/default.props`
+   - Props file configured at `src/main/resources/props/default.props`
 
 2. **Start services**
    ```bash
@@ -157,7 +157,7 @@ All containers use consistent `obp-api-*` naming:
 The setup mounts your local props directory:
 ```yaml
 volumes:
-  - ../../obp-api/src/main/resources/props:/app/props
+  - ../../src/main/resources/props:/app/props
 ```
 
 Environment variables take precedence over props files using OBP's built-in system:
@@ -177,7 +177,7 @@ Environment variables take precedence over props files using OBP's built-in syst
 ```yaml
 # Automatically mounted by docker-compose:
 volumes:
-  - ../../obp-api/src/main/resources/props:/app/props  # Live props updates
+  - ../../src/main/resources/props:/app/props  # Live props updates
   # Source code is copied during build for optimal performance
 ```
 

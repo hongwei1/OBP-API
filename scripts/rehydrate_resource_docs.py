@@ -31,12 +31,12 @@ Usage
 
   # Rehydrate v5.1.0 endpoints (then rebuild with mvn).
   python3 scripts/rehydrate_resource_docs.py lift \
-      --api-methods obp-api/src/main/scala/code/api/v5_1_0/APIMethods510.scala \
-      --http4s      obp-api/src/main/scala/code/api/v5_1_0/Http4s510.scala
+      --api-methods src/main/scala/code/api/v5_1_0/APIMethods510.scala \
+      --http4s      src/main/scala/code/api/v5_1_0/Http4s510.scala
 
   # After rehydrating v6.0.0, the object init blew past 64KB. Split it.
   python3 scripts/rehydrate_resource_docs.py split-init \
-      --http4s      obp-api/src/main/scala/code/api/v6_0_0/Http4s600.scala \
+      --http4s      src/main/scala/code/api/v6_0_0/Http4s600.scala \
       --batch-size 30
 
 Notes

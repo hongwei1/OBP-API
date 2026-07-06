@@ -84,9 +84,9 @@ JWKS URL must be present in `oauth2.jwk_set.url` for signature validation.
 
 ## See also
 
-- `obp-api/src/main/resources/props/sample.props.template` — the
+- `src/main/resources/props/sample.props.template` — the
   `oauth2.oidc_provider` and `oauth2.*.allowed_audiences` sections
-- `obp-api/src/main/scala/code/api/OAuth2.scala` — `OAuth2Util.validateAudience`
+- `src/main/scala/code/api/OAuth2.scala` — `OAuth2Util.validateAudience`
   and `OAuth2Util.validateProviderEnabled`
-- `obp-api/src/test/scala/code/api/OAuth2AudienceValidationTest.scala` —
+- `src/test/scala/code/api/OAuth2AudienceValidationTest.scala` —
   executable specification of both checks

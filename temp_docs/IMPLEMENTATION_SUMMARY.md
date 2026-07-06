@@ -19,11 +19,11 @@ Returns live information about all cache namespaces:
 
 #### File Statistics
 ```
-obp-api/src/main/scala/code/api/cache/Redis.scala             |  47 lines added
-obp-api/src/main/scala/code/api/constant/constant.scala       |  17 lines added
-obp-api/src/main/scala/code/api/util/ApiRole.scala            |   9 lines added
-obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala    | 106 lines added
-obp-api/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala |  35 lines added
+src/main/scala/code/api/cache/Redis.scala             |  47 lines added
+src/main/scala/code/api/constant/constant.scala       |  17 lines added
+src/main/scala/code/api/util/ApiRole.scala            |   9 lines added
+src/main/scala/code/api/v6_0_0/APIMethods600.scala    | 106 lines added
+src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala |  35 lines added
 ---
 Total: 5 files changed, 212 insertions(+), 2 deletions(-)
 ```

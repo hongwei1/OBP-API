@@ -4,7 +4,7 @@
 
 ## Background
 
-OBP already has a `HOLD` transaction request type (`POST /banks/{BANK_ID}/accounts/{ACCOUNT_ID}/owner/transaction-request-types/HOLD/transaction-requests`, see `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala:180`). HOLD moves funds from a parent account into an auto-created `HOLDING`-type sub-account, linked back via the `RELEASER_ACCOUNT_ID` account attribute.
+OBP already has a `HOLD` transaction request type (`POST /banks/{BANK_ID}/accounts/{ACCOUNT_ID}/owner/transaction-request-types/HOLD/transaction-requests`, see `src/main/scala/code/api/v6_0_0/APIMethods600.scala:180`). HOLD moves funds from a parent account into an auto-created `HOLDING`-type sub-account, linked back via the `RELEASER_ACCOUNT_ID` account attribute.
 
 What's missing:
 

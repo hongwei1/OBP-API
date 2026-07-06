@@ -28,7 +28,7 @@ In more detail:
 
 1) For each API version, `enableVersionIfAllowed(ApiVersion.v3_0_0)` gates the version against the Props (`api_enabled_versions` / `api_disabled_versions`). This now only records and logs whether the version is enabled.
 
-2) Each version's endpoints are defined as native http4s `HttpRoutes[IO]` in `code.api.vX.Http4sXxx` (e.g. `Http4s300`) and exposed via `wrappedRoutesVXxxServices`. These are wired, in priority order, into `Http4sApp.baseServices` (see `obp-api/src/main/scala/code/api/util/http4s/Http4sApp.scala`). Each version's routes are wrapped by `Http4sApp.gate`, which returns `HttpRoutes.empty` when the version is disabled.
+2) Each version's endpoints are defined as native http4s `HttpRoutes[IO]` in `code.api.vX.Http4sXxx` (e.g. `Http4s300`) and exposed via `wrappedRoutesVXxxServices`. These are wired, in priority order, into `Http4sApp.baseServices` (see `src/main/scala/code/api/util/http4s/Http4sApp.scala`). Each version's routes are wrapped by `Http4sApp.gate`, which returns `HttpRoutes.empty` when the version is disabled.
 
 The matching Lift `OBPAPI3_0_0.scala` / `APIMethods300.scala` files are retained only as commented-out source-of-truth and as the `allResourceDocs` registry used by the resource-docs aggregation — they no longer serve requests.
 

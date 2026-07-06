@@ -5,7 +5,7 @@ Count the OBP endpoints reachable via /obp/v7.0.0/.
 Statically reproduces Http4s700.allResourceDocs.
 
 Inputs are derived from source — no hardcoded data tables:
-  * Version files are discovered by globbing obp-api/src/main/scala/code/api/v*/
+  * Version files are discovered by globbing src/main/scala/code/api/v*/
     for Http4s{NNN}.scala. All registrations live in Http4s files now — the
     older Lift APIMethods*.scala files have been emptied/commented out.
   * excludeEndpoints lists are extracted from each version's OBPAPI{a}_{b}_{c}.scala

@@ -34,11 +34,11 @@ exec > >(tee "$LOG_FILE") 2>&1
 
 printf 'security_check.sh run at %s (args: %s)\n' "$(date -Iseconds)" "${*:-<none>}"
 
-SCAN_PATHS=(obp-api/src/main obp-commons/src/main obp-http4s-runner/src/main)
+SCAN_PATHS=(src/main obp-commons/src/main obp-http4s-runner/src/main)
 if [[ $INCLUDE_TESTS -eq 1 ]]; then
-  SCAN_PATHS+=(obp-api/src/test obp-commons/src/test)
+  SCAN_PATHS+=(src/test obp-commons/src/test)
 fi
-CONFIG_PATHS=(obp-api/src/main/resources)
+CONFIG_PATHS=(src/main/resources)
 
 GREP_EXCLUDES=(
   --exclude-dir=target

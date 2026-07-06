@@ -292,7 +292,7 @@ fi
 
 echo ""
 echo "✓ Fast build completed successfully"
-echo "✓ JAR created: obp-api/target/obp-api.jar (thin jar — runtime deps in obp-api/target/lib/)"
+echo "✓ JAR created: target/obp-api.jar (thin jar — runtime deps in target/lib/)"
 echo "✓ Build log saved to: fast_build.log"
 echo ""
 
@@ -322,7 +322,7 @@ JAVA_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED \
 
 if [ "$RUN_BACKGROUND" = true ]; then
     # Run in background with output to log file
-    nohup java $JAVA_OPTS -jar obp-api/target/obp-api.jar > http4s-server.log 2>&1 &
+    nohup java $JAVA_OPTS -jar target/obp-api.jar > http4s-server.log 2>&1 &
     SERVER_PID=$!
     echo "✓ HTTP4S server started in background"
     echo "  PID: $SERVER_PID"
@@ -334,7 +334,7 @@ else
     # Run in foreground (Ctrl+C to stop)
     echo "Press Ctrl+C to stop the server"
     echo ""
-    java $JAVA_OPTS -jar obp-api/target/obp-api.jar
+    java $JAVA_OPTS -jar target/obp-api.jar
 fi
 
 ################################################################################

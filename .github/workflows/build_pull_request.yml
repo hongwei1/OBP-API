@@ -37,8 +37,8 @@ jobs:
 
       - name: Setup production props
         run: |
-          cp obp-api/src/main/resources/props/sample.props.template \
-             obp-api/src/main/resources/props/production.default.props
+          cp src/main/resources/props/sample.props.template \
+             src/main/resources/props/production.default.props
 
       - name: Lint — test-isolation (no setPropsValues at class/feature body)
         run: python3 .github/scripts/check_test_isolation.py
@@ -61,14 +61,14 @@ jobs:
           # Upload full target dirs — test shards download and run surefire:test
           # without recompiling (surefire:test goal bypasses compile lifecycle)
           path: |
-            obp-api/target/
+            target/
             obp-commons/target/
 
       - name: Save .jar artifact
         run: |
           mkdir -p ./pull
-          cp obp-api/target/obp-api.jar ./pull/
-          cp -r obp-api/target/lib ./pull/lib
+          cp target/obp-api.jar ./pull/
+          cp -r target/lib ./pull/lib
 
       - uses: actions/upload-artifact@v4
         with:
@@ -251,50 +251,50 @@ jobs:
 
       - name: Setup props
         run: |
-          cp obp-api/src/main/resources/props/sample.props.template \
-             obp-api/src/main/resources/props/production.default.props
-          echo connector=star > obp-api/src/main/resources/props/test.default.props
-          echo starConnector_supported_types=mapped,internal >> obp-api/src/main/resources/props/test.default.props
-          echo hostname=http://localhost:8016 >> obp-api/src/main/resources/props/test.default.props
-          echo tests.port=8016 >> obp-api/src/main/resources/props/test.default.props
-          echo End of minimum settings >> obp-api/src/main/resources/props/test.default.props
-          echo payments_enabled=false >> obp-api/src/main/resources/props/test.default.props
-          echo messageQueue.updateBankAccountsTransaction=false >> obp-api/src/main/resources/props/test.default.props
-          echo messageQueue.createBankAccounts=false >> obp-api/src/main/resources/props/test.default.props
-          echo allow_sandbox_account_creation=true >> obp-api/src/main/resources/props/test.default.props
-          echo allow_sandbox_data_import=true >> obp-api/src/main/resources/props/test.default.props
-          echo sandbox_data_import_secret=change_me >> obp-api/src/main/resources/props/test.default.props
-          echo allow_account_deletion=true >> obp-api/src/main/resources/props/test.default.props
-          echo allowed_internal_redirect_urls = /,/oauth/authorize >> obp-api/src/main/resources/props/test.default.props
-          echo transactionRequests_enabled=true >> obp-api/src/main/resources/props/test.default.props
-          echo transactionRequests_supported_types=SEPA,SANDBOX_TAN,FREE_FORM,COUNTERPARTY,ACCOUNT,SIMPLE >> obp-api/src/main/resources/props/test.default.props
-          echo SIMPLE_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo openredirects.hostname.whitlelist=http://127.0.0.1,http://localhost >> obp-api/src/main/resources/props/test.default.props
-          echo remotedata.secret = foobarbaz >> obp-api/src/main/resources/props/test.default.props
-          echo allow_public_views=true >> obp-api/src/main/resources/props/test.default.props
-          echo SIMPLE_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo ACCOUNT_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo SEPA_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo FREE_FORM_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo COUNTERPARTY_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo SEPA_CREDIT_TRANSFERS_OTP_INSTRUCTION_TRANSPORT=dummy >> obp-api/src/main/resources/props/test.default.props
-          echo allow_oauth2_login=true >> obp-api/src/main/resources/props/test.default.props
-          echo oauth2.jwk_set.url=https://www.googleapis.com/oauth2/v3/certs >> obp-api/src/main/resources/props/test.default.props
-          echo ResetPasswordUrlEnabled=true >> obp-api/src/main/resources/props/test.default.props
-          echo consents.allowed=true >> obp-api/src/main/resources/props/test.default.props
-          echo hikari.maximumPoolSize=20 >> obp-api/src/main/resources/props/test.default.props
-          echo write_metrics=false >> obp-api/src/main/resources/props/test.default.props
+          cp src/main/resources/props/sample.props.template \
+             src/main/resources/props/production.default.props
+          echo connector=star > src/main/resources/props/test.default.props
+          echo starConnector_supported_types=mapped,internal >> src/main/resources/props/test.default.props
+          echo hostname=http://localhost:8016 >> src/main/resources/props/test.default.props
+          echo tests.port=8016 >> src/main/resources/props/test.default.props
+          echo End of minimum settings >> src/main/resources/props/test.default.props
+          echo payments_enabled=false >> src/main/resources/props/test.default.props
+          echo messageQueue.updateBankAccountsTransaction=false >> src/main/resources/props/test.default.props
+          echo messageQueue.createBankAccounts=false >> src/main/resources/props/test.default.props
+          echo allow_sandbox_account_creation=true >> src/main/resources/props/test.default.props
+          echo allow_sandbox_data_import=true >> src/main/resources/props/test.default.props
+          echo sandbox_data_import_secret=change_me >> src/main/resources/props/test.default.props
+          echo allow_account_deletion=true >> src/main/resources/props/test.default.props
+          echo allowed_internal_redirect_urls = /,/oauth/authorize >> src/main/resources/props/test.default.props
+          echo transactionRequests_enabled=true >> src/main/resources/props/test.default.props
+          echo transactionRequests_supported_types=SEPA,SANDBOX_TAN,FREE_FORM,COUNTERPARTY,ACCOUNT,SIMPLE >> src/main/resources/props/test.default.props
+          echo SIMPLE_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo openredirects.hostname.whitlelist=http://127.0.0.1,http://localhost >> src/main/resources/props/test.default.props
+          echo remotedata.secret = foobarbaz >> src/main/resources/props/test.default.props
+          echo allow_public_views=true >> src/main/resources/props/test.default.props
+          echo SIMPLE_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo ACCOUNT_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo SEPA_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo FREE_FORM_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo COUNTERPARTY_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo SEPA_CREDIT_TRANSFERS_OTP_INSTRUCTION_TRANSPORT=dummy >> src/main/resources/props/test.default.props
+          echo allow_oauth2_login=true >> src/main/resources/props/test.default.props
+          echo oauth2.jwk_set.url=https://www.googleapis.com/oauth2/v3/certs >> src/main/resources/props/test.default.props
+          echo ResetPasswordUrlEnabled=true >> src/main/resources/props/test.default.props
+          echo consents.allowed=true >> src/main/resources/props/test.default.props
+          echo hikari.maximumPoolSize=20 >> src/main/resources/props/test.default.props
+          echo write_metrics=false >> src/main/resources/props/test.default.props
           # Log emails instead of opening a real SMTP socket: without this,
           # LocalMappedConnector.sendCustomerNotification's EMAIL branch calls
           # CommonsEmailWrapper.sendTextEmail which throws ConnectException because
           # there's no mail server in CI. That surfaces as 500 in any test that
           # hits an endpoint triggering the notification (v5 consent flows, etc.).
-          echo mail.test.mode=true >> obp-api/src/main/resources/props/test.default.props
+          echo mail.test.mode=true >> src/main/resources/props/test.default.props
           # Permissions granted to runtime-compiled dynamic-endpoint code inside the security sandbox
           # (mirrors default.props / production.default.props). Required so dynamic resource-doc bodies
           # can do JSON extraction (reflection) and read OBP props (getenv); without it the sandbox
           # denies these and DynamicResourceDocTest's native-execution scenarios fail.
-          echo 'dynamic_code_sandbox_permissions=[new java.net.NetPermission("specifyStreamHandler"), new java.lang.reflect.ReflectPermission("suppressAccessChecks"), new java.lang.RuntimePermission("getenv.*"), new java.util.PropertyPermission("cglib.useCache", "read"), new java.util.PropertyPermission("net.sf.cglib.test.stressHashCodes", "read"), new java.util.PropertyPermission("cglib.debugLocation", "read"), new java.lang.RuntimePermission("accessDeclaredMembers"), new java.lang.RuntimePermission("getClassLoader")]' >> obp-api/src/main/resources/props/test.default.props
+          echo 'dynamic_code_sandbox_permissions=[new java.net.NetPermission("specifyStreamHandler"), new java.lang.reflect.ReflectPermission("suppressAccessChecks"), new java.lang.RuntimePermission("getenv.*"), new java.util.PropertyPermission("cglib.useCache", "read"), new java.util.PropertyPermission("net.sf.cglib.test.stressHashCodes", "read"), new java.util.PropertyPermission("cglib.debugLocation", "read"), new java.lang.RuntimePermission("accessDeclaredMembers"), new java.lang.RuntimePermission("getClassLoader")]' >> src/main/resources/props/test.default.props
 
       - name: Run tests — shard ${{ matrix.shard }} (${{ matrix.name }})
         run: |
@@ -308,7 +308,7 @@ jobs:
           # shard 1" assumption actually true — a class list here could drift from the
           # real directory contents and leave a new test running on no shard at all.
           if [ "${{ matrix.shard }}" = "1" ]; then
-            FILTER=$(grep -l '^class.*extends' obp-api/src/test/scala/code/api/v4_0_0/*.scala \
+            FILTER=$(grep -l '^class.*extends' src/test/scala/code/api/v4_0_0/*.scala \
                        | xargs -I{} grep -hoP '^class \K[A-Z][A-Za-z0-9_]+' {} \
                        | grep -v '^Dynamic' \
                        | sed 's/^/code.api.v4_0_0./' \
@@ -335,7 +335,7 @@ jobs:
             ASSIGNED="$SHARD1 $SHARD2 $SHARD3 $SHARD4 $SHARD5 $SHARD6 $SHARD7 ${{ matrix.test_filter }}"
 
             # Discover all packages that contain at least one .scala test file
-            ALL_PKGS=$(find obp-api/src/test/scala obp-commons/src/test/scala \
+            ALL_PKGS=$(find src/test/scala obp-commons/src/test/scala \
                          -name "*.scala" 2>/dev/null \
                        | sed 's|.*/test/scala/||; s|/[^/]*\.scala$||; s|/|.|g' \
                        | sort -u)
@@ -429,7 +429,7 @@ jobs:
           name: test-reports-shard${{ matrix.shard }}
           if-no-files-found: ignore
           path: |
-            obp-api/target/surefire-reports/**
+            target/surefire-reports/**
             obp-commons/target/surefire-reports/**
             **/target/scalatest-reports/**
             **/target/site/surefire-report.html

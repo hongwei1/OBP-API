@@ -33,7 +33,7 @@ services:
       - OBP_DB_URL=${OBP_DB_URL:-jdbc:postgresql://host.docker.internal:5432/obp_mapped?user=obp&password=f}
     volumes:
       # Mount the props directory so the container uses your local props files
-      - ../../obp-api/src/main/resources/props:/app/props
+      - ../../src/main/resources/props:/app/props
     extra_hosts:
       # Connect to local Postgres on the host
       # In your config file:

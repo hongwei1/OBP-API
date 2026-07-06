@@ -17,7 +17,7 @@ This document identifies OBP API endpoints that have issues with role documentat
 
 ```bash
 # Find all hasEntitlement calls
-grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMethods*.scala
+grep -n "hasEntitlement.*callContext)" src/main/scala/code/api/v*/APIMethods*.scala
 
 # For each endpoint with hasEntitlement, check if ResourceDoc has role defined
 # Look for the ResourceDoc definition above the endpoint and check for Some(List(...))
@@ -28,7 +28,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 ### v3.1.0
 
 #### getCustomerByCustomerId
-- **File**: `obp-api/src/main/scala/code/api/v3_1_0/APIMethods310.scala`
+- **File**: `src/main/scala/code/api/v3_1_0/APIMethods310.scala`
 - **Line**: ~1285
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetCustomersAtOneBank))`
@@ -36,7 +36,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Action**: Remove hasEntitlement from for comprehension
 
 #### getCustomerByCustomerNumber
-- **File**: `obp-api/src/main/scala/code/api/v3_1_0/APIMethods310.scala`
+- **File**: `src/main/scala/code/api/v3_1_0/APIMethods310.scala`
 - **Line**: ~1328
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetCustomersAtOneBank))`
@@ -46,7 +46,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 ### v5.1.0
 
 #### getCustomersByLegalName
-- **File**: `obp-api/src/main/scala/code/api/v5_1_0/APIMethods510.scala`
+- **File**: `src/main/scala/code/api/v5_1_0/APIMethods510.scala`
 - **Line**: ~2915
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetCustomersAtOneBank))`
@@ -66,7 +66,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Redundant check removed
 
 #### deleteEntitlement
-- **File**: `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+- **File**: `src/main/scala/code/api/v6_0_0/APIMethods600.scala`
 - **Line**: ~2531
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canDeleteEntitlementAtAnyBank))` (line 2524)
@@ -76,7 +76,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Note**: This endpoint was newly added to v6.0.0 to support modified return values
 
 #### getMetrics
-- **File**: `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+- **File**: `src/main/scala/code/api/v6_0_0/APIMethods600.scala`
 - **Line**: ~1447
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canReadMetrics))` (line 1438)
@@ -88,7 +88,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 ### v2.0.0
 
 #### getKycDocuments
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~487
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetAnyKycDocuments))`
@@ -97,7 +97,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 477)
 
 #### getKycMedia
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~521
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetAnyKycMedia))`
@@ -106,7 +106,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 514)
 
 #### getKycChecks
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~555
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetAnyKycChecks))`
@@ -115,7 +115,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 548)
 
 #### getKycStatuses
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~588
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetAnyKycStatuses))`
@@ -124,7 +124,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 581)
 
 #### getSocialMediaHandles
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~621
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetSocialMediaHandles))`
@@ -133,7 +133,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 614)
 
 #### addKycDocument
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~660
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canAddKycDocument))`
@@ -142,7 +142,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 649)
 
 #### addKycMedia
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~710
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canAddKycMedia))`
@@ -151,7 +151,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 701)
 
 #### addKycCheck
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~760
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canAddKycCheck))`
@@ -160,7 +160,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 751)
 
 #### addKycStatus
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~811
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canAddKycStatus))`
@@ -169,7 +169,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 802)
 
 #### addSocialMediaHandle
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~861
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canAddSocialMediaHandle))`
@@ -178,7 +178,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 852)
 
 #### deleteEntitlement
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~1916
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canDeleteEntitlementAtAnyBank))`
@@ -187,7 +187,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role added to ResourceDoc (line 1910)
 
 #### getAllEntitlements
-- **File**: `obp-api/src/main/scala/code/api/v2_0_0/APIMethods200.scala`
+- **File**: `src/main/scala/code/api/v2_0_0/APIMethods200.scala`
 - **Line**: ~1954
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetEntitlementsForAnyUserAtAnyBank))`
@@ -198,7 +198,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 ### v2.1.0
 
 #### sandboxDataImport
-- **File**: `obp-api/src/main/scala/code/api/v2_1_0/APIMethods210.scala`
+- **File**: `src/main/scala/code/api/v2_1_0/APIMethods210.scala`
 - **Line**: ~140
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canCreateSandbox))`
@@ -207,7 +207,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 - **Status**: ✅ FIXED - Role already in ResourceDoc (line 131)
 
 #### addCardForBank
-- **File**: `obp-api/src/main/scala/code/api/v2_1_0/APIMethods210.scala`
+- **File**: `src/main/scala/code/api/v2_1_0/APIMethods210.scala`
 - **Line**: ~995
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canCreateCardsForBank))`
@@ -218,7 +218,7 @@ grep -n "hasEntitlement.*callContext)" obp-api/src/main/scala/code/api/v*/APIMet
 ### v1.3.0
 
 #### getCardsForBank
-- **File**: `obp-api/src/main/scala/code/api/v1_3_0/APIMethods130.scala`
+- **File**: `src/main/scala/code/api/v1_3_0/APIMethods130.scala`
 - **Line**: ~105
 - **Issue**: Duplicate - has role in ResourceDoc AND hasEntitlement in code
 - **ResourceDoc Role**: `Some(List(canGetCardsForBank))`
@@ -301,6 +301,6 @@ Before removing any hasEntitlement check:
 
 - See `developer_notes_roles.md` for role naming conventions
 - See `release_notes.md` (18/11/2025) for role name changes
-- See test files in `obp-api/src/test/scala/code/api/v6_0_0/CustomerTest.scala` for testing patterns
+- See test files in `src/test/scala/code/api/v6_0_0/CustomerTest.scala` for testing patterns
 
 Last Updated: 2025-01-XX

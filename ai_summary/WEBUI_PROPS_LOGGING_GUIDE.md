@@ -185,7 +185,7 @@ logger.info(s"========== END GET /obp/v6.0.0/management/webui_props ==========")
 ## Code Reference
 
 ### Management Endpoint Logging
-**File:** `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
+**File:** `src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
 **Lines:** 3505, 3534-3540
 
 ```scala
@@ -199,7 +199,7 @@ logger.info(s"========== END GET /obp/v6.0.0/management/webui_props ==========")
 ```
 
 ### Single Prop Endpoint
-**File:** `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
+**File:** `src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
 **Lines:** 3406-3438
 
 **No explicit logging** - relies on standard API framework logging.

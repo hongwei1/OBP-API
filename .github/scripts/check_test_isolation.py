@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 
-TEST_ROOT = Path("obp-api/src/test/scala")
+TEST_ROOT = Path("src/test/scala")
 
 # Files exempted from the check. ServerSetup.scala is the shared base trait;
 # its trait-body `setPropsValues` calls MUST run before `val server = TestServer`
@@ -32,7 +32,7 @@ TEST_ROOT = Path("obp-api/src/test/scala")
 # `migration_scripts.execute_all` in a `private val` at class-load time. Moving
 # those props into `beforeEach` makes migrations skip and breaks the H2 schema.
 ALLOWLIST = {
-    "obp-api/src/test/scala/code/setup/ServerSetup.scala",
+    "src/test/scala/code/setup/ServerSetup.scala",
 }
 
 # The watched call sites. Add more here if you want to extend the check

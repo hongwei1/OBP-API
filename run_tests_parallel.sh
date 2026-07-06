@@ -132,7 +132,7 @@ code.api.gateWayloginTest,code.api.OBPRestHelperTest,code.util,code.connector"
 build_s4() {
   local ASSIGNED="$S1 $(echo "$S2" | tr ',' ' ') $(echo "$S3" | tr ',' ' ') $(echo "$S4_BASE" | tr ',' ' ')"
   local ALL_PKGS
-  ALL_PKGS=$(find obp-api/src/test/scala obp-commons/src/test/scala \
+  ALL_PKGS=$(find src/test/scala obp-commons/src/test/scala \
                -name "*.scala" 2>/dev/null \
              | sed 's|.*/test/scala/||; s|/[^/]*\.scala$||; s|/|.|g' \
              | sort -u)
@@ -265,7 +265,7 @@ if [[ $PRECOMPILE_RC -ne 0 ]]; then
 fi
 # Fresh verdict basis: stale surefire XMLs from earlier runs would poison both the
 # surefire audit below and the speed report (observed: test counts drifting across runs).
-rm -rf obp-api/target/surefire-reports obp-commons/target/surefire-reports
+rm -rf target/surefire-reports obp-commons/target/surefire-reports
 
 echo "Pre-compile done, starting shards..." 
 echo ""
@@ -366,7 +366,7 @@ SF_AUDIT=$(python3 -c '
 import xml.etree.ElementTree as ET, glob, os
 tot = fail = err = skip = broken = 0
 bad = []
-files = glob.glob("obp-api/target/surefire-reports/TEST-*.xml") + \
+files = glob.glob("target/surefire-reports/TEST-*.xml") + \
         glob.glob("obp-commons/target/surefire-reports/TEST-*.xml")
 for f in files:
     try:
@@ -400,7 +400,7 @@ fi
 
 # ── CI parity (report job): http4s vs Lift per-test speed table; best-effort, ──
 #    does not affect the exit code.
-REPORTS_DIR="obp-api/target/surefire-reports"
+REPORTS_DIR="target/surefire-reports"
 if ls "$REPORTS_DIR"/*.xml >/dev/null 2>&1; then
     echo ""
     echo "── Per-test speed (CI report-job equivalent) ───────"

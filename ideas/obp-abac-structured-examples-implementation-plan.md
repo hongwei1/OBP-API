@@ -23,7 +23,7 @@ Convert the ABAC rule schema examples from simple strings to structured objects 
 
 ### Step 1: Update JSON Case Class
 
-**File**: `OBP-API/obp-api/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala`
+**File**: `OBP-API/src/main/scala/code/api/v6_0_0/JSONFactory6.0.0.scala`
 
 **Current code** (around line 413-419):
 ```scala
@@ -56,7 +56,7 @@ case class AbacRuleSchemaJsonV600(
 
 ### Step 2: Update API Endpoint
 
-**File**: `OBP-API/obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
+**File**: `OBP-API/src/main/scala/code/api/v6_0_0/APIMethods600.scala`
 
 **Location**: The `getAbacRuleSchema` endpoint (around line 4891-5070)
 

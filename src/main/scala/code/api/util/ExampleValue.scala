@@ -1526,7 +1526,7 @@ object ExampleValue {
       |
       |Data Sources:
       |1. Explicit WebUiProps (Database): Custom values created/updated via the POST /management/webui_props API endpoint and stored in the database. These take highest precedence.
-      |2. Implicit WebUiProps (Configuration File): Default values defined in the sample.props.template configuration file located at obp-api/src/main/resources/props/sample.props.template.
+      |2. Implicit WebUiProps (Configuration File): Default values defined in the sample.props.template configuration file located at src/main/resources/props/sample.props.template.
       |
       |To set config file defaults, edit sample.props.template and add or modify properties starting with 'webui_'. Both commented (#webui_) and uncommented (webui_) properties are parsed, with the # automatically stripped.
       |

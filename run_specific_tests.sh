@@ -25,7 +25,7 @@
 #   - Do NOT include .scala extension
 #
 # How to find package path:
-#   1. Find test file: obp-api/src/test/scala/code/api/v6_0_0/RateLimitsTest.scala
+#   1. Find test file: src/test/scala/code/api/v6_0_0/RateLimitsTest.scala
 #   2. Package path: code.api.v6_0_0.RateLimitsTest
 #
 # Output:

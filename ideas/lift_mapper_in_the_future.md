@@ -75,7 +75,7 @@ The Mapper case classes themselves (`class Foo extends LongKeyedMapper[Foo]`) st
 
 | Area | State |
 |---|---|
-| Doobie dependency | Present in `obp-api/pom.xml` (`doobie-core`, `doobie-hikari`) |
+| Doobie dependency | Present in `pom.xml` (`doobie-core`, `doobie-hikari`) |
 | Transactor | `code.api.util.DoobieUtil` — shares Lift's HikariCP pool and unifies with Lift's per-request transaction (`Transactor.fromConnection` + `Strategy.void`) |
 | Doobie call sites | ~10 files: `DoobieMetricsQueries`, `DoobieInvestigationQueries`, `DoobieUserQueries`, `DoobieConsentQueries`, `DoobieChatMessageQueries`, `DoobieAccountAccessViewQueries`, `DoobieQueries`, `MetricBatchWriter`, `ConnectorMetricBatchWriter`, `StatusPage` |
 | Mapper entities in `ToSchemify.models` | ~130 |
@@ -140,7 +140,7 @@ Record these in a comment block at the top of the new `DoobieFooQueries.scala` s
 
 ### Step 3 — Write `DoobieFooQueries.scala`
 
-Pattern (see `obp-api/src/main/scala/code/users/DoobieUserQueries.scala`):
+Pattern (see `src/main/scala/code/users/DoobieUserQueries.scala`):
 
 ```scala
 package code.foo
@@ -474,7 +474,7 @@ The root cause is cadence, not code. Sponsoring a maintainer — directly, via a
 
 ## What "done" looks like
 
-- `grep -r "net.liftweb.mapper" obp-api/src/main/scala/code/ | grep -v "/Mapped[A-Z]\|/Mapper[A-Z]\|Schemifier"` returns nothing.
+- `grep -r "net.liftweb.mapper" src/main/scala/code/ | grep -v "/Mapped[A-Z]\|/Mapper[A-Z]\|Schemifier"` returns nothing.
 - All `Mapped*Provider.scala` files deleted.
 - `ToSchemify.models` unchanged. `Schemifier.schemify(...)` in `Boot.scala` unchanged.
 - Mapper case classes (`class Foo extends LongKeyedMapper[Foo]`) remain, but no runtime code calls `Foo.findAll`, `Foo.create`, `foo.save`, etc.

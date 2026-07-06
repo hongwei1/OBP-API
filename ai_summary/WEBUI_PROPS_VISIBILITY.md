@@ -15,7 +15,7 @@ The endpoint **IS implemented** in v6.0.0, but it **requires authentication and 
 
 ### `/obp/v6.0.0/management/webui_props`
 
-**File:** `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
+**File:** `src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
 **Lines:** 3442-3498 (ResourceDoc), 3501-3542 (Implementation)
 
 **Status:** ✅ **Implemented in v6.0.0**
@@ -86,7 +86,7 @@ curl https://your-api.com/obp/v6.0.0/resource-docs/obp | grep -i "webui_props"
 
 ```bash
 cd OBP-API
-grep -r "management/webui_props" obp-api/src/main/scala/code/api/v6_0_0/
+grep -r "management/webui_props" src/main/scala/code/api/v6_0_0/
 ```
 
 **Output:**
@@ -161,7 +161,7 @@ curl https://your-api.com/obp/v6.0.0/webui-props/webui_api_explorer_url?active=t
 ## Code References
 
 ### ResourceDoc Definition
-**File:** `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
+**File:** `src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
 **Lines:** 3442-3498
 
 ```scala
@@ -186,7 +186,7 @@ staticResourceDocs += ResourceDoc(
 ```
 
 ### Implementation
-**File:** `obp-api/src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
+**File:** `src/main/scala/code/api/v6_0_0/APIMethods600.scala`  
 **Lines:** 3501-3542
 
 ```scala
@@ -206,7 +206,7 @@ lazy val getWebUiProps: OBPEndpoint = {
 ```
 
 ### Role Definition
-**File:** `obp-api/src/main/scala/code/api/util/ApiRole.scala`  
+**File:** `src/main/scala/code/api/util/ApiRole.scala`  
 **Lines:** ~1300+
 
 ```scala

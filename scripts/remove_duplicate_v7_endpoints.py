@@ -11,7 +11,7 @@ blank line), asserts no block overlaps, and prints what it removed. Idempotent.
 """
 import re
 
-f = "obp-api/src/main/scala/code/api/v7_0_0/Http4s700.scala"
+f = "src/main/scala/code/api/v7_0_0/Http4s700.scala"
 lines = open(f).read().split("\n")
 
 # All 19 endpoints (16 clean + 3 divergent: getCurrentUser, getUsers,
