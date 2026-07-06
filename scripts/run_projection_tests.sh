@@ -46,11 +46,7 @@ else
   echo "[info] psql not found - skipping Postgres clean; integration test cancels unless db.url is Postgres."
 fi
 
-# 2) Keep obp-commons fresh in ~/.m2 (tests resolve it from there, not target/classes).
-if [ "$SKIP_COMMONS_INSTALL" != "true" ]; then
-  echo "==> Installing obp-commons (skipTests)"
-  mvn install -pl obp-commons -DskipTests -q || { echo "obp-commons install failed"; exit 1; }
-fi
+# 2) No obp-commons install needed anymore, it's a single module.
 
 # 3) Run just the projection suites.
 echo "==> Running projection test suites"

@@ -60,7 +60,7 @@ fi
 # corrupt each other's JARs (torn ZipFile).  We use an atomic mkdir lock to serialise
 # ~/.m2 writes across processes.  The lock is released immediately after the install
 # and cleaned up on exit (including crashes) via the EXIT trap.
-OBC_LOCK="/tmp/obp-commons-m2-install.lock"
+
 trap 'rm -rf "$OBC_LOCK"' EXIT
 
 SHARDS=4
@@ -132,7 +132,7 @@ code.api.gateWayloginTest,code.api.OBPRestHelperTest,code.util,code.connector"
 build_s4() {
   local ASSIGNED="$S1 $(echo "$S2" | tr ',' ' ') $(echo "$S3" | tr ',' ' ') $(echo "$S4_BASE" | tr ',' ' ')"
   local ALL_PKGS
-  ALL_PKGS=$(find src/test/scala obp-commons/src/test/scala \
+  ALL_PKGS=$(find src/test/scala \
                -name "*.scala" 2>/dev/null \
              | sed 's|.*/test/scala/||; s|/[^/]*\.scala$||; s|/|.|g' \
              | sort -u)
@@ -182,7 +182,7 @@ run_shard() {
     # OBP_DYNAMIC_CODE_SANDBOX_PERMISSIONS mirrors CI's dynamic_code_sandbox_permissions
     # props line: without it the dynamic-code sandbox denies reflection/getenv and
     # DynamicResourceDocTest's native-execution scenarios fail locally (CI green, local red).
-    # -pl obp-commons,obp-api mirrors CI: obp-commons' own util suites run on whichever
+    # mirrors CI: obp-commons' own util suites run on whichever
     # shard's filter matches com.openbankproject.* (the shard-4 catch-all); on every other
     # shard the filter matches nothing in obp-commons -> 0 tests there.
     # OBP_TESTS_PORT + OBP_HTTP4S_TEST_PORT carry the two dynamically-allocated free
@@ -196,7 +196,7 @@ run_shard() {
     OBP_MAIL_TEST_MODE="true" \
     OBP_DYNAMIC_CODE_SANDBOX_PERMISSIONS='[new java.net.NetPermission("specifyStreamHandler"), new java.lang.reflect.ReflectPermission("suppressAccessChecks"), new java.lang.RuntimePermission("getenv.*"), new java.util.PropertyPermission("cglib.useCache", "read"), new java.util.PropertyPermission("net.sf.cglib.test.stressHashCodes", "read"), new java.util.PropertyPermission("cglib.debugLocation", "read"), new java.lang.RuntimePermission("accessDeclaredMembers"), new java.lang.RuntimePermission("getClassLoader")]' \
     OBP_API_INSTANCE_ID="shard_${n}" \
-    "$TIMEOUT_BIN" 1200 mvn scalatest:test -pl obp-commons,obp-api -DfailIfNoTests=false \
+    "$TIMEOUT_BIN" 1200 mvn scalatest:test -DfailIfNoTests=false \
         "-DwildcardSuites=${filter}" \
         > "$log" 2>&1
     local rc=$?
@@ -246,18 +246,11 @@ echo ""
 # The obp-commons install holds OBC_LOCK (see top) so concurrent checkouts don't
 # race on the shared ~/.m2 write.  The subsequent test-compile writes only to this
 # checkout's own target/ and is safe to run in parallel across checkouts.
-echo "Pre-compile 1/2: install obp-commons -> ~/.m2 ..."
-until mkdir "$OBC_LOCK" 2>/dev/null; do sleep 2; done
+
+echo "Pre-compile: test-compile -> shared target/ ..."
 MAVEN_OPTS="$MVN_OPTS" \
-  mvn install -DskipTests -pl obp-commons -q > test-results/parallel/precompile.log 2>&1
+  mvn test-compile -q > test-results/parallel/precompile.log 2>&1
 PRECOMPILE_RC=$?
-rm -rf "$OBC_LOCK"
-if [[ $PRECOMPILE_RC -eq 0 ]]; then
-  echo "Pre-compile 2/2: test-compile obp-api -> shared target/ ..."
-  MAVEN_OPTS="$MVN_OPTS" \
-    mvn test-compile -q >> test-results/parallel/precompile.log 2>&1
-  PRECOMPILE_RC=$?
-fi
 if [[ $PRECOMPILE_RC -ne 0 ]]; then
   echo "❌ Pre-compile failed — see test-results/parallel/precompile.log" >&2
   tail -25 test-results/parallel/precompile.log >&2
@@ -265,7 +258,7 @@ if [[ $PRECOMPILE_RC -ne 0 ]]; then
 fi
 # Fresh verdict basis: stale surefire XMLs from earlier runs would poison both the
 # surefire audit below and the speed report (observed: test counts drifting across runs).
-rm -rf target/surefire-reports obp-commons/target/surefire-reports
+rm -rf target/surefire-reports 
 
 echo "Pre-compile done, starting shards..." 
 echo ""
@@ -367,7 +360,7 @@ import xml.etree.ElementTree as ET, glob, os
 tot = fail = err = skip = broken = 0
 bad = []
 files = glob.glob("target/surefire-reports/TEST-*.xml") + \
-        glob.glob("obp-commons/target/surefire-reports/TEST-*.xml")
+        glob.glob("")
 for f in files:
     try:
         r = ET.parse(f).getroot()

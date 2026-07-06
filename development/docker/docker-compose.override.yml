@@ -4,4 +4,3 @@ services:
   obp-api:
     volumes:
       - ../../obp-api:/app/obp-api
-      - ../../obp-commons:/app/obp-commons
