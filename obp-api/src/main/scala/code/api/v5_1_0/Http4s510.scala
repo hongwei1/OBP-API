@@ -4627,7 +4627,16 @@ object Http4s510 {
             consent <- Future(Consents.consentProvider.vend.getConsentByConsentId(consentId))
               .map(unboxFullOrFail(_, Some(cc), ConsentNotFound, 404))
             _ <- Helper.booleanToFuture(failMsg = ConsentNotFound, failCode = 404, cc = Some(cc)) {
-              consent.mUserId == cc.userId || Option(consent.userId).forall(_.isBlank)
+              // Berlin Group consents created via client_credentials (no PSU yet) are stamped
+              // with a synthetic system user (derived from the consumer's registered `sub`), not
+              // a blank owner -- so the blank check alone never applies to them. Before SCA
+              // completes the consent sits in `received` status with no real PSU bound yet, so
+              // any authenticated user attempting to view/authorise it during that window is
+              // allowed; ownership is genuinely enforced once SCA claims the consent (status
+              // transitions away from `received`).
+              consent.mUserId == cc.userId ||
+                Option(consent.userId).forall(_.isBlank) ||
+                consent.status == ConsentStatus.received.toString
             }
           } yield JSONFactory510.getConsentInfoJson(consent)
         }
