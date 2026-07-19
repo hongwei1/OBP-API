@@ -22,6 +22,8 @@ export PGUSER=obp
 export PGPASSWORD=daniel.says
 export PGDATABASE=sandbox
 
+CURL_CODE_FMT="%{http_code}"
+
 echo "== services =="
 service postgresql start
 service redis-server start
@@ -53,9 +55,9 @@ disown
 
 echo "waiting for OBP-API + OBP-OIDC..."
 for i in $(seq 1 40); do
-  A=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/obp/v7.0.0/root 2>/dev/null)
-  O=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:9000/health 2>/dev/null)
-  [ "$A" = "200" ] && [ "$O" = "200" ] && { echo "OBP-API + OBP-OIDC up"; break; }
+  A=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:8080/obp/v7.0.0/root 2>/dev/null)
+  O=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://localhost:9000/health 2>/dev/null)
+  [[ "$A" = "200" && "$O" = "200" ]] && { echo "OBP-API + OBP-OIDC up"; break; }
   sleep 3
 done
 
@@ -81,13 +83,13 @@ disown
 
 echo "waiting for frontends..."
 for i in $(seq 1 30); do
-  E=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null)
-  P=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5174/ 2>/dev/null)
-  M=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:3003/ 2>/dev/null)
-  G=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5200/ 2>/dev/null)
-  C=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:9100/mcp 2>/dev/null)
+  E=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://localhost:5173/ 2>/dev/null)
+  P=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://localhost:5174/ 2>/dev/null)
+  M=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://localhost:3003/ 2>/dev/null)
+  G=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://localhost:5200/ 2>/dev/null)
+  C=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:9100/mcp 2>/dev/null)
   echo "  explorer=$E portal=$P api-manager=$M ogcr=$G mcp=$C"
-  [ "$E" = "200" ] && [ "$P" = "200" ] && [ "$M" = "200" ] && [ "$G" = "200" ] && [ "$C" != "000" ] && { echo "ALL UP"; break; }
+  [[ "$E" = "200" && "$P" = "200" && "$M" = "200" && "$G" = "200" && "$C" != "000" ]] && { echo "ALL UP"; break; }
   sleep 4
 done
 
@@ -110,9 +112,9 @@ deactivate
 
 echo "waiting for local LLM server + shim..."
 for i in $(seq 1 40); do
-  L=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/v1/models 2>/dev/null)
-  S=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8011/v1/models 2>/dev/null)
-  [ "$L" = "200" ] && [ "$S" = "200" ] && { echo "local LLM server + shim up"; break; }
+  L=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:8010/v1/models 2>/dev/null)
+  S=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:8011/v1/models 2>/dev/null)
+  [[ "$L" = "200" && "$S" = "200" ]] && { echo "local LLM server + shim up"; break; }
   sleep 3
 done
 
@@ -122,8 +124,8 @@ disown
 
 echo "waiting for Opey-II..."
 for i in $(seq 1 40); do
-  Y=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:5000/status 2>/dev/null)
-  [ "$Y" = "200" ] && { echo "Opey-II up"; break; }
+  Y=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:5000/status 2>/dev/null)
+  [[ "$Y" = "200" ]] && { echo "Opey-II up"; break; }
   sleep 3
 done
 
