@@ -53,8 +53,8 @@ disown
 
 echo "waiting for OBP-API + OBP-OIDC..."
 for i in $(seq 1 40); do
-  A=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/obp/v7.0.0/root 2>/dev/null || echo 000)
-  O=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:9000/health 2>/dev/null || echo 000)
+  A=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/obp/v7.0.0/root 2>/dev/null)
+  O=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:9000/health 2>/dev/null)
   [ "$A" = "200" ] && [ "$O" = "200" ] && { echo "OBP-API + OBP-OIDC up"; break; }
   sleep 3
 done
@@ -81,14 +81,50 @@ disown
 
 echo "waiting for frontends..."
 for i in $(seq 1 30); do
-  E=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo 000)
-  P=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5174/ 2>/dev/null || echo 000)
-  M=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:3003/ 2>/dev/null || echo 000)
-  G=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5200/ 2>/dev/null || echo 000)
-  C=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:9100/mcp 2>/dev/null || echo 000)
+  E=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null)
+  P=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5174/ 2>/dev/null)
+  M=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:3003/ 2>/dev/null)
+  G=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://localhost:5200/ 2>/dev/null)
+  C=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:9100/mcp 2>/dev/null)
   echo "  explorer=$E portal=$P api-manager=$M ogcr=$G mcp=$C"
-  [ "$E" != "000" ] && [ "$P" != "000" ] && [ "$M" != "000" ] && [ "$G" != "000" ] && [ "$C" != "000" ] && { echo "ALL UP"; break; }
+  [ "$E" = "200" ] && [ "$P" = "200" ] && [ "$M" = "200" ] && [ "$G" = "200" ] && [ "$C" != "000" ] && { echo "ALL UP"; break; }
   sleep 4
+done
+
+echo "== OBP-Opey-II (local LLM stack) :5000, LLM server :8010, tool-call shim :8011 =="
+# CPU-only local model (Qwen2.5-3B-Instruct GGUF via llama.cpp), fronted by a
+# small shim that rewrites its <tool_call> tags into proper OpenAI tool_calls
+# (llama.cpp's own function-calling handler is too unreliable/buggy for this).
+# Expect ~10-130s per agent turn on 4 CPU cores with no GPU.
+source /workspace/llm-server-venv/bin/activate
+cd /workspace/local-llm
+nohup python -m llama_cpp.server \
+  --model /workspace/local-llm/models/qwen2.5-3b-instruct-q4_k_m.gguf \
+  --host 127.0.0.1 --port 8010 --n_ctx 8192 --n_threads 4 \
+  > /tmp/local-llm-server.log 2>&1 &
+disown
+nohup python -m uvicorn tool_call_shim:app --host 127.0.0.1 --port 8011 \
+  > /tmp/tool-call-shim.log 2>&1 &
+disown
+deactivate
+
+echo "waiting for local LLM server + shim..."
+for i in $(seq 1 40); do
+  L=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/v1/models 2>/dev/null)
+  S=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8011/v1/models 2>/dev/null)
+  [ "$L" = "200" ] && [ "$S" = "200" ] && { echo "local LLM server + shim up"; break; }
+  sleep 3
+done
+
+cd /workspace/obp-opey-ii
+nohup poetry run python src/run_service.py > /tmp/opey.log 2>&1 &
+disown
+
+echo "waiting for Opey-II..."
+for i in $(seq 1 40); do
+  Y=$(curl -sS -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:5000/status 2>/dev/null)
+  [ "$Y" = "200" ] && { echo "Opey-II up"; break; }
+  sleep 3
 done
 
 echo "== done =="
