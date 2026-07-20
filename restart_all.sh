@@ -14,7 +14,10 @@
 #   OBP-Opey-II      /workspace/obp-opey-ii  (+ local LLM :8010 / tool-call shim :8011)
 #   OBP-Hola         /workspace/obp-hola
 
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+# JDK version installed varies by container instance (seen both 21 and 25
+# across sessions) — pick whatever's actually there instead of hardcoding one.
+JAVA_HOME=$(ls -d /usr/lib/jvm/java-*-openjdk-amd64 2>/dev/null | sort -V | tail -1)
+export JAVA_HOME
 export PATH="$JAVA_HOME/bin:$PATH"
 
 # Postgres role OBP-API connects as (created in Step 1 of the setup doc)
