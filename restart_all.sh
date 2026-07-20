@@ -11,6 +11,8 @@
 #   OBP-Frontend     /workspace/obp-frontend   (Portal :5174 + API-Manager :3003)
 #   OGCR-App         /workspace/ogcr-app
 #   OBP-MCP          /workspace/obp-mcp
+#   OBP-Opey-II      /workspace/obp-opey-ii  (+ local LLM :8010 / tool-call shim :8011)
+#   OBP-Hola         /workspace/obp-hola
 
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 export PATH="$JAVA_HOME/bin:$PATH"
@@ -126,6 +128,18 @@ echo "waiting for Opey-II..."
 for i in $(seq 1 40); do
   Y=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:5000/status 2>/dev/null)
   [[ "$Y" = "200" ]] && { echo "Opey-II up"; break; }
+  sleep 3
+done
+
+echo "== OBP-Hola :48123 =="
+cd /workspace/obp-hola
+nohup java -jar target/obp-hola-app-0.0.29-SNAPSHOT.jar > /tmp/obp-hola.log 2>&1 &
+disown
+
+echo "waiting for OBP-Hola..."
+for i in $(seq 1 30); do
+  H=$(curl -sS -m 2 -o /dev/null -w "$CURL_CODE_FMT" http://127.0.0.1:48123/index.html 2>/dev/null)
+  [[ "$H" = "200" ]] && { echo "OBP-Hola up"; break; }
   sleep 3
 done
 
