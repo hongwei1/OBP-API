@@ -18,11 +18,13 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
           fetch-depth: 0
 
-      - name: Set up JDK 11
+      # Same JDK as build_pull_request.yml — the build compiles with -release 25,
+      # so the JDK 11 this job used to request could never get past compilation.
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: "11"
-          distribution: "adopt"
+          java-version: "25"
+          distribution: "temurin"
           cache: maven
 
       # On a branch, not detached: the point of this job is that the stamp names
