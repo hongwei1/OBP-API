@@ -1,28 +1,19 @@
 package code.api.berlin.group.v1_3
 
-import code.api.berlin.group.ConstantsBG
 import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3._
 import code.api.berlin.group.v1_3.model.ScaStatusResponse
 import code.api.util.APIUtil.OAuth._
 import code.api.util.{CallContext, Consent}
 import code.api.util.ErrorMessages.{ConsentDoesNotMatchConsumer, ConsentDoesNotMatchUser}
-import code.consent.{ConsentStatus, ConsentTrait, Consents}
+import code.consent.{ConsentStatus, Consents}
 import code.model.TokenType.Access
-import code.model.dataAccess.BankAccountRouting
-import code.setup.DefaultUsers
 import code.token.Tokens
-import com.openbankproject.commons.model.enums.AccountRoutingScheme
 import net.liftweb.common.{Empty, Full}
-import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.randomString
 import net.liftweb.util.TimeHelpers.TimeSpan
 import org.scalatest.Tag
 
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.Date
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 /**
  * Who may drive a Berlin Group consent's authorisation sub-resources.
@@ -39,7 +30,7 @@ import scala.concurrent.duration._
  * completing SCA, and the lodging TPP polling on a client-credentials session, where cc.user is an
  * auto-vivified pseudo-user rather than a person.
  */
-class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with DefaultUsers {
+class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
 
   object BerlinGroupV13ConsentAccess extends Tag("BerlinGroupV13ConsentAccess")
 
@@ -136,49 +127,6 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
     }
   }
 
-  private def getNextMonthDate(): String =
-    LocalDate.now().plusMonths(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
-
-  // An unclaimed (PSU-less) consent lodged under testConsumer -- the shape POST /consents leaves
-  // behind for a client_credentials caller.
-  private def lodgeUnclaimedConsent(): ConsentTrait = {
-    val acountRoutingIban = BankAccountRouting
-      .findAll(By(BankAccountRouting.AccountRoutingScheme, AccountRoutingScheme.IBAN.toString)).head
-    val postJsonBody = PostConsentJson(
-      access = ConsentAccessJson(
-        accounts = Option(List(ConsentAccessAccountsJson(
-          iban = Some(acountRoutingIban.accountRouting.address),
-          bban = None, pan = None, maskedPan = None, msisdn = None, currency = None))),
-        balances = None, transactions = None, availableAccounts = None, allPsd2 = None),
-      recurringIndicator = true,
-      validUntil = getNextMonthDate(),
-      frequencyPerDay = 4,
-      combinedServiceIndicator = Some(false)
-    )
-    val validUntilDate = BgSpecValidation.getDate(postJsonBody.validUntil)
-
-    val createdConsent = Consents.consentProvider.vend.createBerlinGroupConsent(
-      user = None,
-      consumer = Some(testConsumer),
-      recurringIndicator = postJsonBody.recurringIndicator,
-      validUntil = validUntilDate,
-      frequencyPerDay = postJsonBody.frequencyPerDay,
-      combinedServiceIndicator = postJsonBody.combinedServiceIndicator.getOrElse(false),
-      apiStandard = Some(ConstantsBG.berlinGroupVersion1.apiStandard),
-      apiVersion = Some(ConstantsBG.berlinGroupVersion1.apiShortVersion)
-    ).openOrThrowException("test consent creation failed")
-
-    val consentJWT = Await.result(
-      Consent.createBerlinGroupConsentJWT(
-        None, postJsonBody, createdConsent.secret, createdConsent.consentId,
-        Some(testConsumer.consumerId.get), Some(validUntilDate), None),
-      10.seconds
-    ).openOrThrowException("test consent JWT creation failed")
-    Consents.consentProvider.vend.setJsonWebToken(createdConsent.consentId, consentJWT)
-
-    createdConsent
-  }
-
   // resourceUser2 under testConsumer: a genuine second PSU of the *lodging* TPP, which is the only
   // way to reach the PSU half of the rule over HTTP -- user2 in the shared fixtures carries
   // testConsumer2, so it would be refused on the Consumer half first.
@@ -211,7 +159,7 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
 
     scenario("A second TPP cannot start an authorisation on a consent it did not lodge", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
-      val consentId = lodgeUnclaimedConsent().consentId
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
 
       Then("user2 carries testConsumer2, which did not lodge this consent")
       val response = startAuthorisation(consentId, user2)
@@ -227,7 +175,7 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
 
     scenario("A second TPP cannot answer an authorisation the lodging TPP started", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
-      val consentId = lodgeUnclaimedConsent().consentId
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
 
       val started = startAuthorisation(consentId, user1)
       started.code should equal(201)
@@ -246,7 +194,7 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
 
     scenario("A second PSU of the lodging TPP cannot re-bind a consent another PSU authorised", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
-      val consentId = lodgeUnclaimedConsent().consentId
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
 
       Then("resourceUser1 authorises it")
       val started = startAuthorisation(consentId, user1)
@@ -271,7 +219,7 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
 
     scenario("The lodging TPP's PSU completes SCA and the consent is bound to them", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
-      val consentId = lodgeUnclaimedConsent().consentId
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
 
       val started = startAuthorisation(consentId, user1)
       started.code should equal(201)
@@ -294,7 +242,7 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
     // the ASPSP rather than through the TPP.
     scenario("The lodging TPP may still drive a bound consent on a client-credentials session", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
-      val consentId = lodgeUnclaimedConsent().consentId
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
 
       val started = startAuthorisation(consentId, user1)
       started.code should equal(201)
@@ -302,41 +250,8 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
       answerAuthorisation(consentId, authorisationId, user1, "123").code should equal(200)
 
       Then("A client-credentials session of the same Consumer is not mistaken for a foreign PSU")
-      val response = startAuthorisation(consentId, clientCredentialsSessionOfTestConsumer)
+      val response = startAuthorisation(consentId, clientCredentialsSession)
       response.code should equal(201)
     }
   }
-
-  // Same shape the AIS suite builds for POST /consents: a user whose idGivenByProvider IS
-  // testConsumer's client key, with a token issued under testConsumer, so that
-  // cc.user.idGivenByProvider == cc.consumer.key -- what a client_credentials token produces.
-  private lazy val pseudoUserOfTestConsumer: code.model.dataAccess.ResourceUser =
-    code.model.UserX.findByProviderId(provider = defaultProvider, idGivenByProvider = testConsumer.key.get)
-      .map(_.asInstanceOf[code.model.dataAccess.ResourceUser])
-      .getOrElse {
-        code.model.UserX.createResourceUser(
-          provider = defaultProvider,
-          providerId = Some(testConsumer.key.get),
-          createdByConsentId = None,
-          name = Some(testConsumer.key.get),
-          email = Some("pseudo.user.of.test.consumer@example.com"),
-          userId = None,
-          company = Some("Tesobe GmbH")
-        ).openOrThrowException("test pseudo user creation failed")
-      }
-
-  private lazy val pseudoUserToken = Tokens.tokens.vend.createToken(
-    Access,
-    Some(testConsumer.id.get),
-    Some(pseudoUserOfTestConsumer.id.get),
-    Some(randomString(40).toLowerCase),
-    Some(randomString(40).toLowerCase),
-    Some(tokenDuration),
-    Some(TimeSpan(tokenDuration + System.currentTimeMillis())),
-    Some(new Date(System.currentTimeMillis())),
-    None
-  ).openOrThrowException("test pseudo user token creation failed")
-
-  private lazy val clientCredentialsSessionOfTestConsumer =
-    Some(consumer, Token(pseudoUserToken.key.get, pseudoUserToken.secret.get))
 }
