@@ -55,7 +55,8 @@ class CacheSingleFlightRaceTest extends ConcurrentRaceSetup {
 
   feature("Cache protects the underlying computation from concurrent misses") {
 
-    scenario("CS: N concurrent misses on one cold key must compute only once", ConcurrencyRace) {
+    scenario("CS: N concurrent misses on one cold key must compute only once",
+             ConcurrencyRace, KnownOpenHazard) {
 
       Given("a reachable Redis and a key that has never been populated")
       // With Redis down scalacache falls back to computing every time, which would make
