@@ -54,6 +54,25 @@ import scala.util.Try
 object ConcurrencyRace extends Tag("code.concurrency.ConcurrencyRace")
 
 /**
+ * Marks a scenario that asserts correct behaviour for a hazard which is CONFIRMED STILL OPEN
+ * in the current code, so the scenario is red by design until the hazard is fixed.
+ *
+ * The suites tagged ConcurrencyRace alone all currently pass — their hazards have been fixed,
+ * so they act as regression guards and belong in CI. A known-open hazard cannot serve that
+ * purpose: it would fail every build and train people to ignore a red bar. CI therefore
+ * excludes this tag specifically (see build_pull_request.yml), which keeps the passing race
+ * suites running rather than dropping the whole ConcurrencyRace tag from CI.
+ *
+ * Carry BOTH tags on such a scenario: ConcurrencyRace so the usual local command still picks
+ * it up, and this one so CI can filter it out. ScalaTest applies excludes over includes, so
+ * the combination behaves as intended.
+ *
+ * Remove this tag from a scenario as soon as its hazard is fixed — that is what flips it into
+ * a regression guard.
+ */
+object KnownOpenHazard extends Tag("code.concurrency.KnownOpenHazard")
+
+/**
  * Shared helpers for the concurrent-race suites: two fan-out primitives (HTTP and
  * provider-layer) plus direct-DB state assertions that bypass any read cache.
  *

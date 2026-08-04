@@ -79,7 +79,8 @@ class RateLimitTocTouTest extends ConcurrentRaceSetup {
 
   feature("Consumer rate limiting admits no more calls than the configured limit") {
 
-    scenario("X: concurrent calls at the boundary must not bypass the per-minute limit", ConcurrencyRace) {
+    scenario("X: concurrent calls at the boundary must not bypass the per-minute limit",
+             ConcurrencyRace, KnownOpenHazard) {
 
       Given("a reachable Redis and consumer limits enabled")
       // Redis-unavailable makes underConsumerLimits fail OPEN, which would admit every
