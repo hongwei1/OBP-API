@@ -4,7 +4,7 @@ import code.api.berlin.group.ConstantsBG
 import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3._
 import code.api.berlin.group.v1_3.model.ScaStatusResponse
 import code.api.util.APIUtil.OAuth._
-import code.api.util.Consent
+import code.api.util.{CallContext, Consent}
 import code.api.util.ErrorMessages.{ConsentDoesNotMatchConsumer, ConsentDoesNotMatchUser}
 import code.consent.{ConsentStatus, ConsentTrait, Consents}
 import code.model.TokenType.Access
@@ -12,6 +12,7 @@ import code.model.dataAccess.BankAccountRouting
 import code.setup.DefaultUsers
 import code.token.Tokens
 import com.openbankproject.commons.model.enums.AccountRoutingScheme
+import net.liftweb.common.{Empty, Full}
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.randomString
 import net.liftweb.util.TimeHelpers.TimeSpan
@@ -96,6 +97,42 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupServerSetupV1_3 with D
       Consent.checkBerlinGroupConsentAccess(null, null, None, None) should equal(None)
       Consent.checkBerlinGroupConsentAccess("   ", tpp, Some(psu), Some(tpp)) should equal(None)
       Consent.checkBerlinGroupConsentAccess(psu, tpp, Some("  "), Some(tpp)) should equal(None)
+    }
+  }
+
+  // Pinned rather than left to the scaladoc because the Berlin Group authorisation handlers are
+  // being reworked on top of this, and the case that matters there is the one that looks like an
+  // absence: per the standard the caller of these endpoints is the TPP, with the PSU's factors
+  // travelling in the body rather than in the session, so None is the normal answer for a
+  // conforming call -- not a failure to defend against. checkBerlinGroupConsentAccess is written
+  // for that: a caller with no PSU skips the PSU comparison and is judged on its Consumer alone.
+  feature("Consent.genuinePsu") {
+
+    scenario("a session with no user at all has no PSU", BerlinGroupV13ConsentAccess) {
+      Consent.genuinePsu(CallContext(user = Empty, consumer = Full(testConsumer))) should equal(None)
+    }
+
+    scenario("the Consumer's own pseudo-identity is not a PSU", BerlinGroupV13ConsentAccess) {
+      Consent.genuinePsu(
+        CallContext(user = Full(pseudoUserOfTestConsumer), consumer = Full(testConsumer))) should equal(None)
+    }
+
+    scenario("a real person authenticated in the session is a PSU", BerlinGroupV13ConsentAccess) {
+      Consent.genuinePsu(CallContext(user = Full(resourceUser1), consumer = Full(testConsumer)))
+        .map(_.userId) should equal(Some(resourceUser1.userId))
+    }
+
+    // Degenerate, and it fails closed rather than open: with no Consumer identified there is no key
+    // to compare against, so the pseudo-user survives the filter -- but callerConsumerId is None
+    // too, so a bound consent is refused on the PSU half and an unbound one on the Consumer half.
+    scenario("with no Consumer on the call there is no key to filter against", BerlinGroupV13ConsentAccess) {
+      Consent.genuinePsu(CallContext(user = Full(pseudoUserOfTestConsumer), consumer = Empty))
+        .map(_.userId) should equal(Some(pseudoUserOfTestConsumer.userId))
+
+      Consent.checkBerlinGroupConsentAccess(psu, tpp, Some(pseudoUserOfTestConsumer.userId), None) should
+        equal(Some(ConsentDoesNotMatchUser))
+      Consent.checkBerlinGroupConsentAccess("", tpp, Some(pseudoUserOfTestConsumer.userId), None) should
+        equal(Some(ConsentDoesNotMatchConsumer))
     }
   }
 
