@@ -22,6 +22,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
     <maven.test.failure.ignore>true</maven.test.failure.ignore>
+    <!-- ScalaTest tags skipped by default. Override to run them, e.g.
+         -Dscalatest.tagsToExclude=code.external,GetBanksPerf
+         See STABILITY-LOAD-VERIFICATION.md for the concurrency tags. -->
+    <scalatest.tagsToExclude>code.external,GetBanksPerf,code.concurrency.KnownOpenHazard,code.concurrency.LoadScenario</scalatest.tagsToExclude>
     <!-- vscaladoc settings -->
     <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion>
     <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>

@@ -196,14 +196,38 @@ concurrency factor.
 
 | Tag | Contents | CI |
 |---|---|---|
-| `code.concurrency.ConcurrencyRace` | fast deterministic correctness races | excluded from main flow |
-| `code.concurrency.LoadScenario` | saturation scenarios, tens of seconds each | excluded independently |
+| `code.concurrency.ConcurrencyRace` | correctness races; the suites carrying only this tag all pass | **runs** — they are regression guards |
+| `code.concurrency.KnownOpenHazard` | asserts correct behaviour for a hazard confirmed still open, so red by design | excluded |
+| `code.concurrency.LoadScenario` | saturation scenarios, tens of seconds each | excluded |
+
+A known-open hazard cannot act as a regression guard — it would fail every build and train
+people to ignore a red bar. So CI excludes `KnownOpenHazard` specifically rather than dropping
+the whole `ConcurrencyRace` tag, which keeps the seven passing race suites running.
+
+Scenarios for an open hazard carry **both** tags: `ConcurrencyRace` so the usual local command
+still picks them up, and `KnownOpenHazard` so CI can filter them out. ScalaTest applies excludes
+over includes, so the combination behaves as intended. **Remove `KnownOpenHazard` as soon as the
+hazard is fixed** — that is what turns the scenario into a regression guard.
+
+**How the exclusion is wired — this is a trap worth knowing.** `scalatest-maven-plugin` had its
+`<tagsToExclude>` **hardcoded** in `obp-api/pom.xml`, and a hardcoded plugin `<configuration>`
+value silently wins over `-DtagsToExclude` on the command line. Any `-DtagsToExclude=...` you
+type is simply ignored — which is why the command previously printed in `CONCURRENCY_HAZARDS.md`
+never actually excluded anything. The list is now the property `scalatest.tagsToExclude`
+(default in the root `pom.xml`), so it is overridable:
 
 ```sh
-# correctness only
-mvn -pl obp-api scalatest:test -DtagsToInclude=code.concurrency.ConcurrencyRace -DfailIfNoTests=false
-# exclude both from a normal run
-mvn -pl obp-api scalatest:test -DtagsToExclude=code.concurrency.ConcurrencyRace,code.concurrency.LoadScenario
+# default — CI and a plain local run both skip KnownOpenHazard and LoadScenario
+mvn -pl obp-api scalatest:test -DfailIfNoTests=false
+
+# run the known-open hazards too (what you want when verifying a fix)
+mvn -pl obp-api scalatest:test -DfailIfNoTests=false \
+  -Dscalatest.tagsToExclude=code.external,GetBanksPerf
+
+# narrow to one suite as usual
+mvn -pl obp-api scalatest:test -DfailIfNoTests=false \
+  -Dscalatest.tagsToExclude=code.external,GetBanksPerf \
+  -DwildcardSuites="code.concurrency.RateLimitTocTouTest"
 ```
 
 ---

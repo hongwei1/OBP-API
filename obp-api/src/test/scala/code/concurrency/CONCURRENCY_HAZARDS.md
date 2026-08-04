@@ -30,8 +30,11 @@ mvn -pl obp-commons,obp-api scalatest:test \
   -DfailIfNoTests=false
 
 # Exclude from CI main flow
+# NOTE: -DtagsToExclude does NOT work — scalatest-maven-plugin's <tagsToExclude> is set in
+# obp-api/pom.xml, and a hardcoded plugin <configuration> value wins over the command line.
+# The list is the `scalatest.tagsToExclude` property (default in the root pom); override it:
 mvn -pl obp-commons,obp-api scalatest:test \
-  -DtagsToExclude=code.concurrency.ConcurrencyRace
+  -Dscalatest.tagsToExclude=code.external,GetBanksPerf,code.concurrency.ConcurrencyRace
 ```
 
 > **Requirement**: `hikari.maximumPoolSize=20` in test props. Several scenarios hold connections
