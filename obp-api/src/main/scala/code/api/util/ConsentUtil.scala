@@ -1441,6 +1441,43 @@ object Consent extends MdcLoggable {
     }
   }
 
+  /**
+   * Decide whether a caller may read an OBP-native consent through GET /user/current/consents/CONSENT_ID,
+   * returning the reason to refuse or None when it is allowed.
+   *
+   * OBP-native answers to no external standard, so the contract is OBP's own API surface, and that
+   * surface is explicit about the subject: this endpoint is /user/current/..., while its sibling
+   * /consumer/current/consents/CONSENT_ID is the Consumer-scoped read. Two endpoints, two subjects.
+   * So the comparison here is against the human the request is on behalf of -- CallContext.humanUser,
+   * not CallContext.userId, which returns the authenticated principal and under consent
+   * authentication is the per-consent shadow user rather than the PSU. checkUKConsent already
+   * resolves the human this way for the same comparison.
+   *
+   * A consent with no PSU yet stays readable, and that is deliberate rather than an oversight
+   * inherited from the previous guard. This endpoint is where the PSU inspects a consent before
+   * deciding to authorise it, in both the Berlin Group and UK journeys, and the app doing the
+   * inspecting is the PSU's own -- a different Consumer from the TPP that lodged the consent. Adding
+   * the Consumer fallback checkUKConsentAccess uses would therefore break the journey, not tighten
+   * it; that is where OBP-native's rule genuinely parts company with the standards', and why this is
+   * its own function rather than a second caller of theirs.
+   *
+   * What that leaves open, stated plainly: an unbound consent's metadata can be read by any
+   * authenticated caller who knows its consent id. Claiming one is a separate matter and is gated
+   * where the binding happens.
+   *
+   * Refuses with ConsentNotFound rather than a distinct message, preserving the endpoint's existing
+   * 404 so it does not tell a stranger that a consent id exists.
+   */
+  def checkObpConsentUserAccess(consentUserId: String, callerHumanUserId: Option[String]): Option[String] = {
+    def present(s: String): Option[String] = Option(s).map(_.trim).filter(_.nonEmpty)
+
+    present(consentUserId) match {
+      case Some(psu) if !callerHumanUserId.flatMap(present).contains(psu) =>
+        Some(ErrorMessages.ConsentNotFound)
+      case _ => None
+    }
+  }
+
   def createUKConsentJWT(
     user: Option[User],
     bankId: Option[String],
