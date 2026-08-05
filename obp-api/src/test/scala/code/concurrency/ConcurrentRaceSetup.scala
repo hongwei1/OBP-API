@@ -49,7 +49,12 @@ import scala.util.Try
  *
  * Either way these must be isolated from the CI main flow:
  *   run only these:   mvn ... scalatest:test -DtagsToInclude=code.concurrency.ConcurrencyRace -DfailIfNoTests=false
- *   exclude from CI:  mvn ... scalatest:test -DtagsToExclude=code.concurrency.ConcurrencyRace
+ *   exclude:          mvn ... scalatest:test -Dscalatest.tagsToExclude=code.external,GetBanksPerf,code.concurrency.ConcurrencyRace
+ *
+ * NOTE: -DtagsToExclude does NOT work. scalatest-maven-plugin's <tagsToExclude> is set in
+ * obp-api/pom.xml, and a hardcoded plugin <configuration> value silently wins over the
+ * command line, so any -DtagsToExclude=... is a no-op. The list is the property
+ * `scalatest.tagsToExclude` (defaulted in the root pom) — override that instead.
  */
 object ConcurrencyRace extends Tag("code.concurrency.ConcurrencyRace")
 
