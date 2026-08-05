@@ -27,8 +27,7 @@ TESOBE (http://www.tesobe.com/)
 package code.concurrency
 
 import code.api.util.APIUtil
-import code.setup.APIResponse
-import dispatch.Req
+import code.setup.{APIResponse, OBPReq}
 import org.scalatest.Tag
 
 import scala.concurrent.Future
@@ -68,12 +67,12 @@ trait LoadScenarioSetup extends ConcurrentRaceSetup {
   private implicit val loadEc: scala.concurrent.ExecutionContext =
     scala.concurrent.ExecutionContext.Implicits.global
 
-  def v5_1_0_Request: Req = baseRequest / "obp" / "v5.1.0"
+  def v5_1_0_Request: OBPReq = baseRequest / "obp" / "v5.1.0"
 
   /** Anonymous server-side sleep endpoint — pure thread-pool pressure with no DB, no auth,
     * no connector. Ideal for isolating "is the request path itself starved?" from
     * "is the DB pool exhausted?". */
-  def godotRequest(sleepMs: Long): Req =
+  def godotRequest(sleepMs: Long): OBPReq =
     (v5_1_0_Request / "waiting-for-godot").GET <<? Map("sleep" -> sleepMs.toString)
 
   /** Run `mk` n times concurrently, recording per-request wall-clock latency in millis. */

@@ -10,6 +10,12 @@ inferred from reading source.
 > scenarios (S1/S2/S3/S5/S6) have their harness in place (`LoadScenarioSetup`) but the
 > individual scenarios are not written yet. Nothing in this document is a capacity number —
 > see *Measurement limits* before quoting anything.
+>
+> **Base**: the findings below were first measured on `develop`, then re-verified against
+> `develop-obp` (298 commits ahead) before this branch was retargeted at it. All five load-bearing
+> facts still hold there: the rate-limit check-then-increment, the missing cache single-flight,
+> the uncaught `commit()`, the test-props gap that makes scenario A vacuous, and the
+> "19 PASSED" claim in `CONCURRENCY_HAZARDS.md`.
 
 ---
 
