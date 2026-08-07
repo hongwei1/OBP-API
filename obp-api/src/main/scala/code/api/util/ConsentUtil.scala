@@ -22,6 +22,7 @@ import code.model.Consumer
 import code.model.dataAccess.BankAccountRouting
 import code.scheduler.ConsentScheduler.currentDate
 import code.users.Users
+import code.util.Helper
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.nimbusds.jwt.JWTClaimsSet
@@ -1551,6 +1552,126 @@ object Consent extends MdcLoggable {
    */
   def genuinePsu(callContext: CallContext): Option[User] =
     callContext.user.toOption.filterNot(u => callContext.consumer.map(_.key.get).contains(u.idGivenByProvider))
+
+  /**
+   * The PSU a caller is acting as, or None when it is acting only as itself.
+   *
+   * genuinePsu answers this for every credential except one: a request authenticated by the consent
+   * itself. applyUKRules swaps callContext.user to the consent's shadow user and sets aside the real
+   * PSU on consenter, and a shadow user's idGivenByProvider is a random UUID rather than the
+   * consumer key, so genuinePsu waves it through as if it were a person. An ownership check handed
+   * that principal compares the shadow user against the consent's owner and can never match --
+   * checkUKConsent already reads consenter for exactly this reason, and says so at its own PSU
+   * comparison.
+   *
+   * So: the PSU the swap set aside if there is one, otherwise whatever genuine PSU the session
+   * carries. Both absent is the standard's own AISP call -- a client-credentials token with no PSU
+   * anywhere -- and None is the answer that lets checkUKConsentAccess fall through to the Consumer
+   * rule, which is the whole of the authorisation there.
+   */
+  def actingPsu(callContext: CallContext): Option[User] =
+    callContext.consenter.toOption.orElse(genuinePsu(callContext))
+
+  /**
+   * The whole guard the four UK consent-by-id endpoints apply: resolve who the caller is acting as,
+   * put that to checkUKConsentAccess, and refuse with 403 when it says so.
+   *
+   * The rule and the identity it is asked about belong together. Keeping them apart is what let the
+   * four sites settle on callContext.user -- a value that is never absent on a request reaching
+   * them, so the rule's own "caller with no PSU" branch was unreachable from every one of them,
+   * however well that branch was tested in isolation.
+   */
+  def assertUKConsentAccess(
+    consentUserId: String,
+    consentConsumerId: String,
+    callContext: CallContext
+  ): Future[Box[Unit]] = {
+    val refusal = checkUKConsentAccess(
+      consentUserId, consentConsumerId,
+      actingPsu(callContext).map(_.userId), callContext.consumer.map(_.consumerId.get))
+    // booleanToFuture only reads failMsg when the statement is false, so the empty default is never
+    // the message anyone sees.
+    Helper.booleanToFuture(refusal.getOrElse(""), 403, Some(callContext))(refusal.isEmpty)
+  }
+
+  /**
+   * Resolve the PSU a Berlin Group consent authorisation is for, returning that PSU's user id or the
+   * reason to refuse.
+   *
+   * The session cannot answer this, and the reason is not a formality. Berlin Group has the TPP make
+   * these calls, not the PSU: under Redirect the PSU authenticates at the ASPSP, under Embedded it
+   * hands its factors to the TPP, which relays them (Implementation Guidelines V1.3.12, section
+   * 6.1.1.4, p.123: "the TPP is transmitting the authentication data of the customer, e.g. an OTP").
+   * So on an Embedded call the token is the TPP's, and a client-credentials token still resolves to
+   * a user -- the caller's own auto-vivified pseudo-identity, see genuinePsu. Minting the challenge
+   * against that principal names the TPP, and the challenge answer is delivered to whoever the
+   * challenge names: createChallengeInternal sends it to getEmailsByUserId / getPhoneNumbersByUserId
+   * of the minted user. The OTP would go to the TPP and never reach the PSU.
+   *
+   * Where the standard does put the PSU's identity is the PSU-ID header. It is not in the body:
+   * psuData carries password, encryptedPassword, additionalPassword and additionalEncryptedPassword,
+   * and no identifier at all. On the start-authorisation call PSU-ID "shall be transmitted if this
+   * Request is indicated by 'startAuthorisationWithPsuIdentification' or
+   * 'startAuthorisationWithPsuAuthentication' ... and this field has not yet been transmitted
+   * before" (section 7.1, p.195); on the update call it is "contained if not yet contained in a
+   * pre-ceeding request" (section 7.2.1, p.206). Both make it conditional on the ASPSP not already
+   * knowing, which is exactly the order used here:
+   *
+   *  1. the consent's own PSU, once SCA has bound one -- the strongest form of "already transmitted";
+   *  2. a genuine PSU in the session, which is the Redirect approach, where the PSU really is the
+   *     caller;
+   *  3. the PSU-ID header, which is Embedded, the TPP naming the PSU on the PSU's behalf.
+   *
+   * With none of the three there is no one to mint the challenge for and nowhere to send the OTP, so
+   * the call is refused. That is an ordinary outcome rather than an attack being repelled: a
+   * conforming client-credentials call that omitted the header lands here.
+   *
+   * A header that disagrees with 1 or 2 is refused rather than resolved by precedence. The standard
+   * sanctions the check where it defines the header -- "the ASPSP might check whether PSU-ID and
+   * token match, according to ASPSP documentation" (section 6.3.1, p.134) -- and what it closes is
+   * specific: without it the lodging TPP could name a third party on a consent already bound to
+   * someone else, and have that person's OTP mailed to them.
+   *
+   * What this deliberately does not do is verify a first factor. psuData.password is still not
+   * checked anywhere in the Berlin Group path, so PSU-ID is an assertion by the TPP and not proof of
+   * anything. It is the OTP, delivered out of band to the PSU this resolves to, that actually binds
+   * the consent -- which is why resolving it correctly is what makes the unverified assertion safe,
+   * and why getting it wrong was the defect rather than a tidiness problem.
+   */
+  def resolveBerlinGroupPsu(
+    consentUserId: String,
+    sessionPsuId: Option[String],
+    headerPsuId: Option[String]
+  ): Either[String, String] = {
+    def present(s: String): Option[String] = Option(s).map(_.trim).filter(_.nonEmpty)
+
+    val alreadyKnown = present(consentUserId).orElse(sessionPsuId.flatMap(present))
+
+    (alreadyKnown, headerPsuId.flatMap(present)) match {
+      case (Some(known), Some(named)) if known != named => Left(ErrorMessages.ConsentDoesNotMatchUser)
+      case (Some(known), _)                             => Right(known)
+      case (None, Some(named))                          => Right(named)
+      case (None, None)                                 => Left(ErrorMessages.BerlinGroupPsuNotIdentified)
+    }
+  }
+
+  /**
+   * Resolve a Berlin Group PSU-ID header value -- "Client ID of the PSU in the ASPSP client
+   * interface" -- to the user it names.
+   *
+   * Local users first, since that is what the header means at an ASPSP running its own identity
+   * store. A federated PSU carries its issuer as provider rather than the local one, so a username
+   * that is not local is looked up across providers and accepted only when exactly one user answers
+   * to it. Two would make the header ambiguous, and choosing between them is not the ASPSP's to do
+   * on the PSU's behalf.
+   */
+  def findPsuByPsuId(psuId: String): Box[User] =
+    Users.users.vend.getUserByProviderAndUsername(Constant.localIdentityProvider, psuId) or {
+      Users.users.vend.getUsersByUsername(psuId) match {
+        case theOnlyOne :: Nil => Full(theOnlyOne)
+        case _                 => Empty
+      }
+    }
 
   def createUKConsentJWT(
     user: Option[User],
