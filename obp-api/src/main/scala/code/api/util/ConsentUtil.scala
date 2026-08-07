@@ -677,8 +677,24 @@ object Consent extends MdcLoggable {
       }
     }
 
+    /**
+     * Whether this pass through the authentication pipeline is the one that will actually serve the
+     * request, and so the one that should spend a frequencyPerDay access.
+     *
+     * The pipeline runs many times per HTTP request: each API version wraps its own routes in its
+     * own ResourceDocMiddleware, and a middleware whose index holds no matching doc still runs
+     * best-effort authentication before falling through to the next one
+     * (ResourceDocMiddleware.scala, the `case None` branch). Only the middleware that matched a
+     * ResourceDoc attaches it to the CallContext, so its presence is exactly the distinction.
+     *
+     * Without this, one request spent an access per middleware in the chain, which drove the
+     * counter to frequencyPerDay before the request was served: a consent asking for four accesses
+     * a day got none, answering 429 to its very first call.
+     */
+    def isTheServingPass: Boolean = callContext.resourceDocument.isDefined
+
     def checkFrequencyPerDay(storedConsent: consent.ConsentTrait) = {
-      if(BerlinGroupCheck.isTppRequestsWithoutPsuInvolvement(callContext.requestHeaders)) {
+      if(isTheServingPass && BerlinGroupCheck.isTppRequestsWithoutPsuInvolvement(callContext.requestHeaders)) {
         def isSameDay(date1: Date, date2: Date): Boolean = {
           val fmt = new SimpleDateFormat("yyyyMMdd")
           fmt.format(date1).equals(fmt.format(date2))
@@ -727,7 +743,7 @@ object Consent extends MdcLoggable {
                 logger.debug(s"End of com.openbankproject.commons.util.JsonAliases.parse(jsonAsString).extract[ConsentJWT].checkConsent.consentBox: $consent")
                 consentBox match { // Check is it Consent-JWT expired
                   case (Full(true)) => // OK
-                    if(BerlinGroupCheck.isTppRequestsWithoutPsuInvolvement(callContext.requestHeaders)) {
+                    if(isTheServingPass && BerlinGroupCheck.isTppRequestsWithoutPsuInvolvement(callContext.requestHeaders)) {
                       // Update MappedConsent.usesSoFarTodayCounter field
                       val consentUpdatedBox = Consents.consentProvider.vend.updateBerlinGroupConsent(consentId, currentCounterState + 1)
                       logger.debug(s"applyBerlinGroupConsentRulesCommon.consentUpdatedBox: $consentUpdatedBox")
