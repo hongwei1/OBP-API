@@ -528,7 +528,8 @@ object Http4sBGv13AIS extends MdcLoggable {
             // caller could raise a challenge on any consent id and then answer their own.
             _ <- Consent.checkBerlinGroupConsentAccess(
               consent.userId, consent.consumerId,
-              Consent.genuinePsu(cc).map(_.userId), cc.consumer.map(_.consumerId.get)) match {
+              Consent.genuinePsu(cc).map(_.userId), cc.consumer.map(_.consumerId.get),
+              Consent.isBerlinGroupScaFrontEnd(cc.consumer.map(_.consumerId.get))) match {
               case Some(reason) => booleanToFuture(failMsg = reason, failCode = 403, cc = callContext)(false)
               case None => Future.successful(true)
             }
@@ -546,6 +547,12 @@ object Http4sBGv13AIS extends MdcLoggable {
                 val failCode = if (reason == ConsentDoesNotMatchUser) 403 else 401
                 booleanToFuture(failMsg = reason, failCode = failCode, cc = callContext)(false).map(_ => "")
             }
+            // Refuse here rather than at the PUT, even though binding happens there: the next step
+            // sends this person an OTP out of band. A consent naming accounts they do not hold can
+            // never legitimately bind to them, so minting the challenge would only deliver a code to
+            // someone the TPP nominated for an authorisation that must fail.
+            (psuForCheck, callContext) <- NewStyle.function.findByUserId(psuUserId, callContext)
+            _ <- Consent.assertBerlinGroupConsentAccountsHeld(psuForCheck, consent, callContext)
             (challenges, callContext) <- NewStyle.function.createChallengesC2(
               List(psuUserId),
               ChallengeType.BERLIN_GROUP_CONSENT_CHALLENGE,
@@ -594,7 +601,8 @@ object Http4sBGv13AIS extends MdcLoggable {
             // decides who a consent ends up belonging to. See Consent.checkBerlinGroupConsentAccess.
             _ <- Consent.checkBerlinGroupConsentAccess(
               storedConsent.userId, storedConsent.consumerId,
-              Consent.genuinePsu(cc).map(_.userId), cc.consumer.map(_.consumerId.get)) match {
+              Consent.genuinePsu(cc).map(_.userId), cc.consumer.map(_.consumerId.get),
+              Consent.isBerlinGroupScaFrontEnd(cc.consumer.map(_.consumerId.get))) match {
               case Some(reason) => booleanToFuture(failMsg = reason, failCode = 403, cc = callContext)(false)
               case None => Future.successful(true)
             }
@@ -614,6 +622,12 @@ object Http4sBGv13AIS extends MdcLoggable {
             // the OTP was delivered to that person, so the challenge is the record of whose
             // authorisation this is -- the session is the TPP's and cannot say.
             (psu, callContext) <- NewStyle.function.findByUserId(startedChallenge.expectedUserId, callContext)
+            // The binding point, so the holdings check is repeated here rather than trusted from the
+            // POST: the two calls are separate requests and an account can change hands between
+            // them. It runs before validateChallengeAnswerC4 and before the status update, because
+            // none of what follows is transactional -- a refusal after any of it would leave the
+            // consent half-claimed.
+            _ <- Consent.assertBerlinGroupConsentAccountsHeld(psu, storedConsent, callContext)
             // Berlin Group Embedded has the TPP relay the PSU's OTP, so the identity the answer is
             // validated against is the challenge's PSU rather than the principal on the token. The
             // caller's own right to be here was settled by checkBerlinGroupConsentAccess above.

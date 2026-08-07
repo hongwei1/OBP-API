@@ -1863,3 +1863,12 @@ securelogging_mask_email=true
 ############################################
 # messaging.channel.ttl.seconds=3600
 # messaging.channel.max.messages=1000
+
+# Berlin Group: the Consumers that are this ASPSP's own Strong Customer Authentication front end,
+# comma separated consumer ids. Under the Redirect approach the PSU authenticates at the ASPSP, so
+# the authorisation calls on /berlin-group/v1.3/consents/{id}/authorisations arrive from that front
+# end rather than from the TPP that lodged the consent -- and the standard's same-TPP rule
+# (Implementation Guidelines 4.11) would otherwise refuse them. Nothing in the request tells the
+# ASPSP's own front end apart from a second TPP holding a PSU session, so it has to be declared.
+# Leave empty unless you use Redirect SCA: empty keeps the same-TPP rule applying to every caller.
+# berlin_group_sca_front_end_consumer_ids=

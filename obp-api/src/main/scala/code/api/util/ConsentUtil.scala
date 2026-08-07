@@ -1460,14 +1460,46 @@ object Consent extends MdcLoggable {
    * marks these calls Client Credentials, so no PSU is party to them. Berlin Group's rests on the
    * blanket same-TPP rule above plus PSU binding happening at SCA time. Different premises, same
    * conclusion, so they share one implementation rather than one being copied onto the other.
+   *
+   * With one exception, and it is in the wording of the rule itself: it binds "methods submitted by
+   * a TPP". Under the Redirect approach the PSU authenticates at the ASPSP, so these calls arrive
+   * from the ASPSP's own front end -- not a TPP, and never the Consumer that lodged the consent.
+   * Applying the rule there refuses the only caller Redirect has, and the scaRedirect ceremony
+   * cannot complete at all.
+   *
+   * Nothing in the request tells that front end apart from a second TPP holding a PSU session --
+   * both are an authenticated person arriving under a Consumer that did not lodge the consent -- so
+   * the ASPSP declares its own, and callerIsScaFrontEnd is that declaration reaching this rule. See
+   * APIUtil.berlinGroupScaFrontEndConsumerIds. It is not a way past the PSU half: a consent already
+   * bound to someone still only re-binds to them.
+   *
+   * What it is emphatically not is a substitute for checking that the claiming PSU has anything to
+   * do with the accounts the consent names. A Consumer comparison could never have provided that --
+   * the TPP that lodged the consent passes it by definition, and is the party the access accrues to
+   * -- so that check lives on its own in assertBerlinGroupConsentAccountsHeld, which the
+   * authorisation pair applies before anything is written.
    */
   def checkBerlinGroupConsentAccess(
     consentUserId: String,
     consentConsumerId: String,
     callerUserId: Option[String],
-    callerConsumerId: Option[String]
-  ): Option[String] =
-    psuOrLodgingTppRefusal(consentUserId, consentConsumerId, callerUserId, callerConsumerId)
+    callerConsumerId: Option[String],
+    callerIsScaFrontEnd: Boolean
+  ): Option[String] = {
+    def present(s: String): Option[String] = Option(s).map(_.trim).filter(_.nonEmpty)
+
+    (present(consentUserId), callerUserId.flatMap(present)) match {
+      case (Some(psu), Some(caller)) if psu != caller => Some(ErrorMessages.ConsentDoesNotMatchUser)
+      case (Some(_), Some(_)) => None
+      case _ if callerIsScaFrontEnd => None
+      case _ => psuOrLodgingTppRefusal(consentUserId, consentConsumerId, callerUserId, callerConsumerId)
+    }
+  }
+
+  /** Whether the Consumer making this call is one the ASPSP declared as its own SCA front end. */
+  def isBerlinGroupScaFrontEnd(callerConsumerId: Option[String]): Boolean =
+    callerConsumerId.map(_.trim).filter(_.nonEmpty)
+      .exists(APIUtil.berlinGroupScaFrontEndConsumerIds.contains)
 
   /**
    * The rule shared by checkUKConsentAccess and checkBerlinGroupConsentAccess: a consent bound to a
@@ -1552,6 +1584,55 @@ object Consent extends MdcLoggable {
    */
   def genuinePsu(callContext: CallContext): Option[User] =
     callContext.user.toOption.filterNot(u => callContext.consumer.map(_.key.get).contains(u.idGivenByProvider))
+
+  /**
+   * Refuse a Berlin Group consent authorisation unless the PSU claiming it holds every account the
+   * consent names, returning the reason to refuse or None.
+   *
+   * A Berlin Group consent carries its accounts from the moment it is created: the TPP lists IBANs
+   * in the access object and createBerlinGroupConsentJWT resolves each one to a (bank_id,
+   * account_id) view before any PSU is involved. Nothing until now checked that the PSU who
+   * eventually authorises it has anything to do with those accounts, and the consequence was
+   * reachable rather than theoretical -- a consent naming another customer's IBAN, authorised by a
+   * PSU who does not hold it, bound and then served that account's details and balances to the TPP.
+   * It is the same gap UK closed at its own authorise step, and the same error answers it.
+   *
+   * Read off the JWT rather than the access object because the JWT is what the read path will
+   * actually grant: applyConsentRules materialises exactly these views for the consent's shadow
+   * user. Checking anything else would leave the two able to disagree.
+   *
+   * A consent whose JWT names no account yet is not refused here. That is the availableAccounts
+   * ("allAccounts") shape, whose views are materialised later and against the PSU's own holdings,
+   * so there is nothing for this check to compare and nothing it could wrongly let through.
+   */
+  def assertBerlinGroupConsentAccountsHeld(
+    psu: User,
+    storedConsent: consent.ConsentTrait,
+    callContext: Option[CallContext]
+  ): Future[Box[Unit]] = Future {
+    implicit val dateFormats: Formats = CustomJsonFormats.formats
+    val consentAccounts: List[(String, String)] = JwtUtil.getSignedPayloadAsJson(storedConsent.jsonWebToken)
+      .map(com.openbankproject.commons.util.JsonAliases.parse(_).extract[ConsentJWT])
+      .map(_.views.map(v => (v.bank_id, v.account_id)).distinct)
+      .getOrElse(Nil)
+      .filter { case (bankId, accountId) => bankId != null && accountId != null }
+
+    val notHeld: List[String] = consentAccounts
+      .groupBy(_._1)
+      .toList
+      .flatMap { case (bankId, pairs) =>
+        val held = AccountHolders.accountHolders.vend
+          .getAccountsHeld(BankId(bankId), psu)
+          .map(_.accountId.value)
+        pairs.map(_._2).filterNot(held.contains)
+      }
+
+    (notHeld.isEmpty, notHeld): (Boolean, List[String])
+  } flatMap { case (allHeld: Boolean, notHeld: List[String]) =>
+    Helper.booleanToFuture(
+      s"${ErrorMessages.ConsentAccountNotHeldByUser} Account(s): ${notHeld.mkString(", ")}",
+      403, callContext)(allHeld)
+  }
 
   /**
    * The PSU a caller is acting as, or None when it is acting only as itself.

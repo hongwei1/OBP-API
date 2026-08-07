@@ -4744,6 +4744,26 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     APIUtil.getPropsValue("email_domain_to_space_mappings").map(extractor).getOrElse(Nil)
   }
 
+  /**
+   * The Consumers that are this ASPSP's own Strong Customer Authentication front end, rather than
+   * third parties.
+   *
+   * Berlin Group's same-TPP rule -- Implementation Guidelines section 4.11, "all methods submitted
+   * by a TPP ... may only apply to resources which have been created by the same TPP before" --
+   * binds methods submitted by a TPP. Under the Redirect approach the PSU authenticates at the
+   * ASPSP and the authorisation calls arrive from the ASPSP's own front end, which is not a TPP and
+   * will never match the Consumer that lodged the consent. Nothing in the request distinguishes
+   * that front end from a second TPP that happens to hold a PSU session, so the ASPSP has to say
+   * which Consumers are its own.
+   *
+   * Empty by default, which keeps the same-TPP rule applying to everyone: a deployment that does
+   * not use Redirect SCA, or has not declared its front end yet, is unaffected.
+   */
+  val berlinGroupScaFrontEndConsumerIds: List[String] =
+    APIUtil.getPropsValue("berlin_group_sca_front_end_consumer_ids")
+      .map(_.split(",").toList.map(_.trim).filter(_.nonEmpty))
+      .getOrElse(Nil)
+
   val skipConsentScaForConsumerIdPairs: List[ConsumerIdPair] = {
     def extractor(str: String) = try {
       val consumerIdPair =  json.parse(str).extract[List[ConsumerIdPair]]
