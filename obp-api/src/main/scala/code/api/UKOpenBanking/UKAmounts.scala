@@ -1,5 +1,9 @@
 package code.api.UKOpenBanking
 
+import code.api.util.{APIUtil, CallContext}
+import code.model.ModeratedTransaction
+import com.openbankproject.commons.model.{AccountId, BankId, BankIdAccountId, User, ViewId}
+
 /**
  * How UK Open Banking writes a signed amount.
  *
@@ -36,4 +40,46 @@ object UKAmounts {
 
   def creditDebitIndicatorOfString(amount: String): String =
     scala.util.Try(BigDecimal(amount)).map(creditDebitIndicator).getOrElse("Credit")
+
+  /**
+   * Whether a transaction of this amount is inside the directions a consent granted.
+   *
+   * `ReadTransactionsCredits` and `ReadTransactionsDebits` are independently selectable Permissions,
+   * and they restrict which rows come back rather than which fields are visible -- a PSU who grants
+   * only Credits sees the same fields, on credit rows alone. Granting both, or neither, places no
+   * direction restriction: neither is the plain `ReadTransactionsBasic`/`Detail` case, both is the
+   * TPP asking for everything.
+   *
+   * Reads the direction through creditDebitIndicator rather than testing the sign again here, so the
+   * row a response labels `Debit` is exactly the row this admits under Debits.
+   */
+  def admitsDirection(amount: Option[BigDecimal], grantsCredits: Boolean, grantsDebits: Boolean): Boolean =
+    if (grantsCredits == grantsDebits) true
+    else creditDebitIndicator(amount) == (if (grantsCredits) "Credit" else "Debit")
+
+  /**
+   * Whether the caller holds a given direction view on this account.
+   *
+   * A soft check: the answer is a fact about the consent's scope, not a refusal. The endpoints
+   * already resolved a Detail-or-Basic view to read with, so a caller holding neither direction view
+   * is not an error -- it simply has no direction restriction.
+   */
+  def grantsView(
+    viewId: String,
+    bankId: BankId,
+    accountId: AccountId,
+    user: User,
+    callContext: CallContext
+  ): Boolean =
+    APIUtil.checkViewAccessAndReturnView(
+      ViewId(viewId), BankIdAccountId(bankId, accountId), Some(user), Some(callContext)).isDefined
+
+  /** admitsDirection over a transaction list, shared by the v3.1 and v4.0.1 endpoints. */
+  def filterByGrantedDirections(
+    transactions: List[ModeratedTransaction],
+    grantsCredits: Boolean,
+    grantsDebits: Boolean
+  ): List[ModeratedTransaction] =
+    if (grantsCredits == grantsDebits) transactions
+    else transactions.filter(t => admitsDirection(t.amount, grantsCredits, grantsDebits))
 }

@@ -1,5 +1,7 @@
 package code.api.UKOpenBanking.v4_0_1
 
+import code.api.UKOpenBanking.UKAmounts
+
 import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
 import code.api.APIFailureNewStyle
@@ -2285,12 +2287,21 @@ object Http4sUKOBv401AccountInfo extends MdcLoggable {
           (transactions, _) <- BankAccountExtended(account).getModeratedTransactionsFuture(bank, Full(u), view, Some(cc), params) map { x =>
             unboxFull(fullBoxOrException(x ~> APIFailureNewStyle(UnknownError, 400, Some(cc.toLight))))
           }
+          // ReadTransactionsCredits / ReadTransactionsDebits restrict which rows the consent may see,
+          // not which fields, so they are applied here rather than through the view's can_* set. The
+          // views are resolved the same way Detail-or-Basic is just above; holding both, or neither,
+          // places no restriction.
+          directedTransactions = UKAmounts.filterByGrantedDirections(
+            transactions,
+            grantsCredits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_CREDITS_VIEW_ID, account.bankId, accountId, u, cc),
+            grantsDebits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_DEBITS_VIEW_ID, account.bankId, accountId, u, cc)
+          )
           (moderatedAttributes: List[TransactionAttribute], _) <- NewStyle.function.getModeratedAttributesByTransactions(
             account.bankId,
-            transactions.map(_.id),
+            directedTransactions.map(_.id),
             view.viewId,
             Some(cc))
-        } yield JSONFactory_UKOpenBanking_401.createTransactionsJsonNew(account.bankId, accountId.value, transactions, moderatedAttributes, view)
+        } yield JSONFactory_UKOpenBanking_401.createTransactionsJsonNew(account.bankId, accountId.value, directedTransactions, moderatedAttributes, view)
       }
   }
   resourceDocs += ResourceDoc(

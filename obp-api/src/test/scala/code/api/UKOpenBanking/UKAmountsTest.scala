@@ -50,6 +50,36 @@ class UKAmountsTest extends FeatureSpec with Matchers with GivenWhenThen {
       UKAmounts.creditDebitIndicatorOfString("") should be("Credit")
     }
 
+    scenario("granting both directions, or neither, restricts nothing") {
+      // Neither is the plain ReadTransactionsBasic/Detail case; both is a TPP asking for everything.
+      for (amount <- List(BigDecimal("-25"), BigDecimal("25"), BigDecimal(0))) {
+        UKAmounts.admitsDirection(Some(amount), grantsCredits = false, grantsDebits = false) should be(true)
+        UKAmounts.admitsDirection(Some(amount), grantsCredits = true, grantsDebits = true) should be(true)
+      }
+    }
+
+    scenario("granting only Credits admits credits and excludes debits") {
+      UKAmounts.admitsDirection(Some(BigDecimal("25")), grantsCredits = true, grantsDebits = false) should be(true)
+      UKAmounts.admitsDirection(Some(BigDecimal("-25")), grantsCredits = true, grantsDebits = false) should be(false)
+      // Zero is a credit, so a Credits-only consent sees it.
+      UKAmounts.admitsDirection(Some(BigDecimal(0)), grantsCredits = true, grantsDebits = false) should be(true)
+    }
+
+    scenario("granting only Debits admits debits and excludes credits") {
+      UKAmounts.admitsDirection(Some(BigDecimal("-25")), grantsCredits = false, grantsDebits = true) should be(true)
+      UKAmounts.admitsDirection(Some(BigDecimal("25")), grantsCredits = false, grantsDebits = true) should be(false)
+      UKAmounts.admitsDirection(Some(BigDecimal(0)), grantsCredits = false, grantsDebits = true) should be(false)
+    }
+
+    scenario("what a response labels Debit is what a Debits-only consent admits") {
+      // The two must agree, or a row could be labelled one direction and filtered as the other.
+      for (amount <- List(BigDecimal("-0.01"), BigDecimal("0"), BigDecimal("0.01"), BigDecimal("-1000"))) {
+        val labelledDebit = UKAmounts.creditDebitIndicator(amount) == "Debit"
+        UKAmounts.admitsDirection(Some(amount), grantsCredits = false, grantsDebits = true) should be(labelledDebit)
+        UKAmounts.admitsDirection(Some(amount), grantsCredits = true, grantsDebits = false) should be(!labelledDebit)
+      }
+    }
+
     scenario("every produced Amount matches the standard's unsigned pattern") {
       val pattern = "^\\d{1,13}$|^\\d{1,13}\\.\\d{1,5}$".r
       List("-25.00", "25.00", "0", "-0.5", "1209.06", "-1234567890123").foreach { input =>
