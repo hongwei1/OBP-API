@@ -1,5 +1,7 @@
 package code.api.UKOpenBanking.v3_1_0
 
+import code.api.UKOpenBanking.UKAmounts
+
 import org.json4s._
 import java.util.Date
 
@@ -133,7 +135,9 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
     TransactionReference: String,
     StatementReference: List[String] = List("String"),
     Amount: AmountOfMoneyJsonV121,
-    CreditDebitIndicator: String ="Credit",
+    // No default: the direction has to be derived from the amount at every construction site
+    // (see UKAmounts). A default is how "Credit" ended up on every debit.
+    CreditDebitIndicator: String,
     Status: String ="Booked",
     BookingDateTime: Date,
     ValueDateTime: Date,
@@ -313,9 +317,11 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
         accountId,
         transaction.id.value,
         TransactionReference = transaction.description.getOrElse(""),
+        // UK keeps the sign out of Amount and in CreditDebitIndicator; OBP holds one signed number.
         Amount = AmountOfMoneyJsonV121(
           currency = transaction.currency.getOrElse("") ,
-          amount= transaction.amount.getOrElse(BigDecimal(0)).toString()),
+          amount = UKAmounts.unsignedAmount(transaction.amount)),
+        CreditDebitIndicator = UKAmounts.creditDebitIndicator(transaction.amount),
         BookingDateTime = transaction.startDate.get,
         ValueDateTime = transaction.finishDate.get,
         ChargeAmount = AmountOfMoneyJsonV121(transaction.currency.getOrElse(""),"0"),
@@ -334,9 +340,9 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
         Balance =BalanceUKOpenBankingJson(
           Amount = AmountOfMoneyJsonV121(
             currency = transaction.currency.getOrElse(""),
-            amount = transaction.balance
+            amount = UKAmounts.unsignedAmountString(transaction.balance)
           ),
-          CreditDebitIndicator = "Credit",
+          CreditDebitIndicator = UKAmounts.creditDebitIndicatorOfString(transaction.balance),
           Type = "InterimBooked"
         )
       )
@@ -387,7 +393,8 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
         TransactionReference = moderatedTransaction.description.getOrElse(""),
         Amount = AmountOfMoneyJsonV121(
           currency = moderatedTransaction.currency.getOrElse("") ,
-          amount= moderatedTransaction.amount.getOrElse(BigDecimal(0)).toString()),
+          amount = UKAmounts.unsignedAmount(moderatedTransaction.amount)),
+        CreditDebitIndicator = UKAmounts.creditDebitIndicator(moderatedTransaction.amount),
         BookingDateTime = moderatedTransaction.startDate.get,
         ValueDateTime = moderatedTransaction.finishDate.get,
         ChargeAmount = AmountOfMoneyJsonV121(moderatedTransaction.currency.getOrElse(""),"0"),
@@ -406,9 +413,9 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
         Balance =BalanceUKOpenBankingJson(
           Amount = AmountOfMoneyJsonV121(
             currency = moderatedTransaction.currency.getOrElse(""),
-            amount = moderatedTransaction.balance
+            amount = UKAmounts.unsignedAmountString(moderatedTransaction.balance)
           ),
-          CreditDebitIndicator = "Credit",
+          CreditDebitIndicator = UKAmounts.creditDebitIndicatorOfString(moderatedTransaction.balance),
           Type = "InterimBooked"
         ),
         MerchantDetails = getMerchantDetails(moderatedTransaction)
@@ -436,13 +443,13 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
     val dataJson = DataJsonUKV310(
       List(BalanceJsonUKV310(
         AccountId = accountId,
-        Amount = AmountOfMoneyJsonV121(moderatedAccount.currency.getOrElse(""), moderatedAccount.balance.getOrElse("")),
-        CreditDebitIndicator = "Credit",
+        Amount = AmountOfMoneyJsonV121(moderatedAccount.currency.getOrElse(""), UKAmounts.unsignedAmountString(moderatedAccount.balance.getOrElse(""))),
+        CreditDebitIndicator = UKAmounts.creditDebitIndicatorOfString(moderatedAccount.balance.getOrElse("")),
         Type = "ClosingAvailable",
         DateTime = null,
         CreditLine = List(CreditLineJson(
           Included = true,
-          Amount = AmountOfMoneyJsonV121(moderatedAccount.currency.getOrElse(""),moderatedAccount.balance.getOrElse("")),
+          Amount = AmountOfMoneyJsonV121(moderatedAccount.currency.getOrElse(""),UKAmounts.unsignedAmountString(moderatedAccount.balance.getOrElse(""))),
           Type = "Pre-Agreed"
         )))))
     
@@ -467,13 +474,13 @@ object JSONFactory_UKOpenBanking_310 extends CustomJsonFormats {
     val dataJson = DataJsonUKV310(
       accounts.map(account => BalanceJsonUKV310(
         AccountId = account.accountId.value,
-        Amount = AmountOfMoneyJsonV121(account.currency, account.balance.toString()),
-        CreditDebitIndicator = "Credit",
+        Amount = AmountOfMoneyJsonV121(account.currency, UKAmounts.unsignedAmount(account.balance)),
+        CreditDebitIndicator = UKAmounts.creditDebitIndicator(account.balance),
         Type = "ClosingAvailable",
         DateTime = account.lastUpdate,
         CreditLine = List(CreditLineJson(
           Included = true,
-          Amount = AmountOfMoneyJsonV121(account.currency, account.balance.toString()),
+          Amount = AmountOfMoneyJsonV121(account.currency, UKAmounts.unsignedAmount(account.balance)),
           Type = "Available"
         )))))
     

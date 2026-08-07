@@ -1,5 +1,7 @@
 package code.api.UKOpenBanking.v2_0_0
 
+import code.api.UKOpenBanking.UKAmounts
+
 import java.util.Date
 
 import code.api.Constant
@@ -140,11 +142,12 @@ object JSONFactory_UKOpenBanking_200 extends CustomJsonFormats {
         AccountId = accountId,
         TransactionId  = transaction.id.value,
         TransactionReference = transaction.description.getOrElse(""),
+        // UK keeps the sign out of Amount and in CreditDebitIndicator; OBP holds one signed number.
         Amount = AmountOfMoneyJsonV121(
           currency = transaction.currency.getOrElse("") ,
-          amount= transaction.amount.getOrElse(BigDecimal(0)).toString()
+          amount = UKAmounts.unsignedAmount(transaction.amount)
         ),
-        CreditDebitIndicator = "Credit",
+        CreditDebitIndicator = UKAmounts.creditDebitIndicator(transaction.amount),
         Status = "Booked",
         BookingDateTime = transaction.startDate.get,
         ValueDateTime = transaction.finishDate.get,
@@ -154,9 +157,9 @@ object JSONFactory_UKOpenBanking_200 extends CustomJsonFormats {
         Balance = BalanceUKOpenBankingJson(
           Amount = AmountOfMoneyJsonV121(
             currency = transaction.currency.getOrElse(""),
-            amount = transaction.balance
+            amount = UKAmounts.unsignedAmountString(transaction.balance)
           ),
-          CreditDebitIndicator = "Credit",
+          CreditDebitIndicator = UKAmounts.creditDebitIndicatorOfString(transaction.balance),
           Type = "InterimBooked"
         ))
     )
