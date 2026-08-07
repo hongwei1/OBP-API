@@ -1187,10 +1187,18 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         && (bankAccountRoutings.account.scheme.equalsIgnoreCase("OBP") || bankAccountRoutings.account.scheme.equalsIgnoreCase("OBP_ACCOUNT_ID"))){
         for{
           (_, callContext) <- NewStyle.function.getBank(BankId(bankAccountRoutings.bank.address), callContext)
-          (account, callContext) <- NewStyle.function.checkBankAccountExists(
-            BankId(bankAccountRoutings.bank.address),
-            AccountId(bankAccountRoutings.account.address), 
-            callContext)
+          bankId = BankId(bankAccountRoutings.bank.address)
+          // The OBP scheme reads two ways -- the address is normally the account id, but a bank may
+          // also have registered an OBP routing whose address is something else. Ask the resolver
+          // that knows both rather than assuming the first, and fall back to checkBankAccountExists
+          // when neither answers, so a genuinely unknown account still reports itself the same way.
+          (account, callContext) <- getBankAccountByRoutingLegacy(
+            Some(bankId), bankAccountRoutings.account.scheme, bankAccountRoutings.account.address, callContext
+          ) match {
+            case Full((resolved, cc)) => Future.successful((resolved, cc))
+            case _ => NewStyle.function.checkBankAccountExists(
+              bankId, AccountId(bankAccountRoutings.account.address), callContext)
+          }
         } yield {
           (account, callContext)
         }

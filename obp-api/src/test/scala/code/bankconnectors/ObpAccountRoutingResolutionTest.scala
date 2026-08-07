@@ -3,8 +3,10 @@ package code.bankconnectors
 import code.api.Constant
 import code.model.dataAccess.BankAccountRouting
 import code.setup.{DefaultUsers, ServerSetupWithTestData}
-import com.openbankproject.commons.model.{AccountId, BankId}
+import com.openbankproject.commons.model.{AccountId, AccountRoutingJsonV121, BankAccountRoutings, BankId, BankRoutingJson, BranchRoutingJsonV141}
 import net.liftweb.mapper.By
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import org.scalatest.Tag
 
 /**
@@ -68,6 +70,29 @@ class ObpAccountRoutingResolutionTest extends ServerSetupWithTestData with Defau
       ).map(_._1.accountId) should equal(net.liftweb.common.Full(account.accountId))
     }
 
+    scenario("the plural-routings resolver honours a registered OBP routing too", ObpRouting) {
+      // getBankAccountByRoutings has its own copy of the implicit-OBP shortcut, and had the same
+      // blind spot. This is the path the VRP consent-request creation takes.
+      val account = createAccountRelevantResource(Some(resourceUser1), testBankId1, AccountId("testAccountPluralRouting"), "EUR")
+      val registeredAddress = "another-bank-chosen-obp-address"
+
+      BankAccountRouting.create
+        .BankId(account.bankId.value)
+        .AccountId(account.accountId.value)
+        .AccountRoutingScheme(obpScheme)
+        .AccountRoutingAddress(registeredAddress)
+        .saveMe()
+
+      val routings = BankAccountRoutings(
+        bank = BankRoutingJson(obpScheme, account.bankId.value),
+        account = BranchRoutingJsonV141(obpScheme, registeredAddress),
+        branch = AccountRoutingJsonV121("", "")
+      )
+      val resolved = Await.result(
+        Connector.connector.vend.getBankAccountByRoutings(routings, None), 20.seconds)._1
+      resolved.map(_.accountId) should equal(net.liftweb.common.Full(account.accountId))
+    }
+
     scenario("an address that is neither still resolves to nothing", ObpRouting) {
       Connector.connector.vend.getBankAccountByRoutingLegacy(
         Some(BankId(testBankId1.value)), obpScheme, "no-such-address-anywhere", None
@@ -78,6 +103,8 @@ class ObpAccountRoutingResolutionTest extends ServerSetupWithTestData with Defau
   override def afterEach(): Unit = {
     BankAccountRouting.findAll(
       By(BankAccountRouting.AccountRoutingAddress, "some-bank-chosen-obp-address")).foreach(_.delete_!)
+    BankAccountRouting.findAll(
+      By(BankAccountRouting.AccountRoutingAddress, "another-bank-chosen-obp-address")).foreach(_.delete_!)
     super.afterEach()
   }
 }
