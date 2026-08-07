@@ -6,7 +6,7 @@ import code.api.util.ErrorMessages.{ConsentDoesNotMatchConsumer, ConsentDoesNotM
 import code.model.UserX
 import code.model.dataAccess.ResourceUser
 import com.openbankproject.commons.util.ApiVersion
-import net.liftweb.common.{Empty, Full}
+import net.liftweb.common.{Empty, Failure, Full}
 import net.liftweb.util.Helpers.randomString
 import org.scalatest.Tag
 
@@ -191,6 +191,29 @@ class UKOpenBankingV401ConsentAccessTests extends UKOpenBankingV401ServerSetup {
       Consent.checkUKConsentAccess(
         bound, lodger, Consent.actingPsu(viaOtherPsu).map(_.userId), Some(lodger)) should
         equal(Some(ConsentDoesNotMatchUser))
+    }
+  }
+
+  // A consent of another standard reaching a UK endpoint is a refusal, not a server fault.
+  // checkUKConsent used to throw when there was no Authorization header, which is exactly the
+  // shape such a request has: the dispatcher routes the consent into its own standard's branch,
+  // that branch authenticates the request, and ukConsentId is never set. The uncaught throw came
+  // back as OBP-50000 Unknown Error at 500.
+  feature("Consent.checkUKConsent refuses rather than throws when no UK consent is in play") {
+
+    scenario("a request with neither a UK consent nor an Authorization header is refused", UKOpenBankingV401ConsentAccess) {
+      val result = Consent.checkUKConsent(resourceUser1, Some(CallContext()))
+      result match {
+        case Failure(msg, _, _) => msg should include("OBP-35036")
+        case other => fail(s"expected a Failure naming the standard mismatch, got $other")
+      }
+    }
+
+    scenario("a request the consent header already settled is still waved through", UKOpenBankingV401ConsentAccess) {
+      // applyUKRules sets ukConsentId once it has run every gate, and this short-circuit is what
+      // keeps consent-header authentication working -- the refusal above must not reach it.
+      Consent.checkUKConsent(resourceUser1, Some(CallContext(ukConsentId = Some("any-consent-id")))) should
+        equal(Full(true))
     }
   }
 

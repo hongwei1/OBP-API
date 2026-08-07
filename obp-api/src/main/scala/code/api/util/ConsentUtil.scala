@@ -1985,9 +1985,19 @@ object Consent extends MdcLoggable {
     // nothing left to re-derive from a token that does not exist.
     if (calContext.flatMap(_.ukConsentId).isDefined) return Full(true)
 
+    // No Authorization header, and applyUKRules did not run either. The usual way to arrive here
+    // is a consent of another standard: the dispatcher routes it into that standard's branch,
+    // which authenticates the request and leaves ukConsentId unset, and then a UK endpoint asks
+    // this question. That is an ordinary refusal and the mirror of what the Berlin Group side
+    // answers for a UK consent, so it gets the same code. Throwing instead surfaced it as
+    // OBP-50000 Unknown Error at 500 -- a server fault for a request that was merely not
+    // entitled.
     val accessToken = calContext.flatMap(_.authReqHeaderField)
-      .map(_.replaceFirst("Bearer\\s+", ""))
-      .getOrElse(throw new RuntimeException("Not found http request header 'Authorization', it is mandatory."))
+      .map(_.replaceFirst("Bearer\\s+", "")) match {
+      case Some(token) => token
+      case None =>
+        return Failure(s"$ConsentDoesNotMatchStandard Required: $ConsentStandardUK.")
+    }
 
     val boxedConsent: Box[MappedConsent] = JwtUtil.getOptionalClaim("consent_id", accessToken) match {
       case Some(consentId) => Consents.consentProvider.vend.getConsentByConsentId(consentId)
