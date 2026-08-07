@@ -24,6 +24,8 @@ import code.scheduler.ConsentScheduler.currentDate
 import code.users.Users
 import code.util.Helper
 import code.util.Helper.MdcLoggable
+import code.counterpartylimit.CounterpartyLimitProvider
+import code.metadata.counterparties.Counterparties
 import code.views.Views
 import com.nimbusds.jwt.JWTClaimsSet
 import com.openbankproject.commons.ExecutionContext.Implicits.global
@@ -885,8 +887,10 @@ object Consent extends MdcLoggable {
    */
   def revokeConsentAccountAccess(consent: code.consent.ConsentTrait): Unit = {
     implicit val dateFormats = CustomJsonFormats.formats
+    val consentJwtBox = JwtUtil.getSignedPayloadAsJson(consent.jsonWebToken).map(parse(_).extract[ConsentJWT])
+
     val revoked = for {
-      consentJwt <- JwtUtil.getSignedPayloadAsJson(consent.jsonWebToken).map(parse(_).extract[ConsentJWT])
+      consentJwt <- consentJwtBox
       shadowUser <- Users.users.vend.getUserByProviderId(provider = consentJwt.iss, idGivenByProvider = consentJwt.sub)
     } yield {
       Views.views.vend.accessGrantedToUserForConsumer(shadowUser, Constant.ALL_CONSUMERS).map { access =>
@@ -898,7 +902,69 @@ object Consent extends MdcLoggable {
         logger.info(s"revokeConsentAccountAccess: dropped $count account access rows for consent ${consent.consentId}")
       case _ =>
     }
+
+    // Deliberately outside the comprehension above, and after it. Outside, because a VRP consent
+    // that never reached SCA has no shadow user, and its mandate still has to be released -- an
+    // abandoned mandate is exactly the case that used to accumulate. After, because the view can
+    // only be removed once every access row pointing at it is gone, the shadow user's included.
+    consentJwtBox.foreach(releaseVrpMandateArtefacts(consent, _))
   }
+
+  /**
+   * Release the artefacts a VRP mandate created, when the consent that owns them is revoked.
+   *
+   * Converting a VRP consent-request builds a private custom view named `_vrp-<uuid>`, grants it to
+   * the PSU, hangs a counterparty off it and gives that counterparty a limit. Together they are the
+   * mandate: the view carries CAN_ADD_TRANSACTION_REQUEST_TO_BENEFICIARY, and the limit is how much
+   * may be paid under it. Revoking the consent used to drop only the shadow user's access, so the
+   * PSU kept a live standing payment authority for a mandate they had just cancelled -- and one set
+   * of these accumulated on the account for every mandate ever requested, revoked or abandoned.
+   *
+   * Each artefact is named after the view, and the view belongs to exactly one consent, so this can
+   * be undone without guessing. What gets released, and what deliberately does not:
+   *
+   *  - the PSU's grant on the view, which is the authority itself;
+   *  - the counterparty's limit, which is the amount that authority was good for;
+   *  - the view, but only once no access row is left pointing at it -- removeCustomView refuses
+   *    otherwise, so a view some other principal still holds is left alone rather than orphaning it.
+   *
+   * The counterparty row stays. It is a payee record that settled transactions refer to, and
+   * deleting it would take history with it; with the view and the limit gone it grants nothing.
+   */
+  private def releaseVrpMandateArtefacts(consent: code.consent.ConsentTrait, consentJwt: ConsentJWT): Unit = {
+    val vrpViews = consentJwt.views.filter(_.view_id.startsWith(Constant.VRP_VIEW_ID_PREFIX))
+    if (vrpViews.nonEmpty) {
+      Users.users.vend.getUserByUserId(consent.userId) match {
+        case Full(psu) =>
+          vrpViews.foreach { consentView =>
+            val bankId = BankId(consentView.bank_id)
+            val accountId = AccountId(consentView.account_id)
+            val viewId = ViewId(consentView.view_id)
+
+            Views.views.vend.revokeAccessToViewForUserAndConsumer(
+              BankIdAccountIdViewId(bankId, accountId, viewId), psu, Constant.ALL_CONSUMERS)
+
+            Counterparties.counterparties.vend.getCounterparties(bankId, accountId, viewId)
+              .getOrElse(Nil)
+              .foreach { counterparty =>
+                CounterpartyLimitProvider.counterpartyLimit.vend.deleteCounterpartyLimit(
+                  bankId.value, accountId.value, viewId.value, counterparty.counterpartyId)
+              }
+
+            Views.views.vend.removeCustomView(viewId, BankIdAccountId(bankId, accountId)) match {
+              case Full(_) =>
+                logger.info(s"releaseVrpMandateArtefacts: released ${viewId.value} for consent ${consent.consentId}")
+              case other =>
+                // Something still holds the view. Its authority is gone either way; say so and stop.
+                logger.info(s"releaseVrpMandateArtefacts: kept ${viewId.value} for consent ${consent.consentId}: $other")
+            }
+          }
+        case _ =>
+          logger.warn(s"releaseVrpMandateArtefacts: no PSU on consent ${consent.consentId}, mandate views left in place")
+      }
+    }
+  }
+
 
   /**
    * The Bearer-token half of the shadow-user resolution.
