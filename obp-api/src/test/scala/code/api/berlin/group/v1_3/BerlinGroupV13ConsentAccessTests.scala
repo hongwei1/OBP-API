@@ -133,6 +133,22 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
   // travelling in the body rather than in the session, so None is the normal answer for a
   // conforming call -- not a failure to defend against. checkBerlinGroupConsentAccess is written
   // for that: a caller with no PSU skips the PSU comparison and is judged on its Consumer alone.
+  // A refusal tells the TPP which view and which account it was refused, and that is all it
+  // should tell them. Under consent authentication the principal is the consent's own shadow
+  // user, so putting its id in the message hands the TPP an internal identifier it cannot act
+  // on and was never party to.
+  feature("BG v1.3 - a view refusal does not disclose the internal principal") {
+    scenario("the refusal names the view and the account, and no user id", BerlinGroupV13ConsentAccess) {
+      // user2 holds no Berlin Group view on testAccountId1, so this is a real refusal.
+      val response = makeGetRequest((V1_3_BG / "accounts" / testAccountId1.value / "balances").GET <@ (user2))
+      response.code should equal(403)
+      val body = response.body.toString
+      body should include("OBP-20060")
+      body should not include "userId :"
+      body should not include resourceUser2.userId
+    }
+  }
+
   feature("Consent.genuinePsu") {
 
     scenario("a session with no user at all has no PSU", BerlinGroupV13ConsentAccess) {

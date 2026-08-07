@@ -60,7 +60,12 @@ object Http4sBGv13AIS extends MdcLoggable {
     Future {
       Helper.booleanToBox(u.hasViewAccess(BankIdAccountId(account.bankId, account.accountId), viewId, callContext))
     } map {
-      unboxFullOrFail(_, callContext, s"$NoViewReadAccountsBerlinGroup ${viewId.value} userId : ${u.userId}. account : ${account.accountId}", 403)
+      // No user id in the message. Under consent authentication `u` is the consent's own shadow
+      // user -- an internal identifier the TPP has no business learning and cannot act on. What
+      // the refusal is actually about is the view and the account, both of which the caller
+      // already named. The user id stays in the logs for anyone diagnosing it.
+      unboxFullOrFail(_, callContext,
+        s"$NoViewReadAccountsBerlinGroup ${viewId.value}. account : ${account.accountId}", 403)
     }
   }
 
