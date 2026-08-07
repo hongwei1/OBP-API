@@ -11,7 +11,8 @@ import code.api.util.APIUtil.{EmptyBody, ResourceDoc, UserOrApplication, getScaM
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util.CustomJsonFormats
-import code.api.util.{ApiTag, CallContext, NewStyle}
+import code.api.util.APIUtil.OBPReturnType
+import code.api.util.{ApiTag, CallContext, Consent, NewStyle}
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.http4s.{ErrorResponseConverter, RequestScopeConnection}
 import code.fx.fx
@@ -70,6 +71,31 @@ object Http4sBGv13PIS extends MdcLoggable {
   private def checkPaymentServiceType(paymentService: String) = tryo {
     PaymentServiceTypes.withName(paymentService.replaceAll("-", "_"))
   }.isDefined
+
+  /**
+   * Fetch a payment the caller is entitled to address.
+   *
+   * Berlin Group names a payment by its id alone — there is no account in the path — so nothing in
+   * the route ties the payment to whoever is calling. Fetching one must therefore also establish
+   * that the caller is the party that lodged it; otherwise any authenticated TPP holding a paymentId
+   * could read another TPP's payment, list or start authorisations on it, or cancel it. Under
+   * NextGenPSD2 a payment initiation resource belongs to the TPP that created it, and only that TPP
+   * addresses it afterwards.
+   *
+   * A payment records two identities: the principal that lodged it, and, when it was lodged under a
+   * consent, the PSU it was lodged for. A caller presents the same two. Any overlap is enough, so a
+   * payment lodged on a client-credentials token can still be authorised under the PSU's token, and
+   * the other way round. A payment carrying neither identity belongs to nobody and is refused.
+   */
+  private def getOwnPaymentImpl(paymentId: String, callContext: Option[CallContext]): OBPReturnType[TransactionRequest] =
+    for {
+      (transactionRequest, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+      initiators = Set(transactionRequest.user_id, transactionRequest.on_behalf_of_user_id).flatten.filter(_.nonEmpty)
+      callers = callContext.toSet[CallContext].flatMap(cc => cc.user.toOption.map(_.userId) ++ Consent.actingPsu(cc).map(_.userId))
+      _ <- Helper.booleanToFuture(s"$PaymentNotInitiatedByCaller Payment id: $paymentId.", 403, callContext) {
+        initiators.exists(callers)
+      }
+    } yield (transactionRequest, callContext)
 
   /**
    * Shared business logic for all three initiate-payment variants (payments / periodic-payments /
@@ -145,7 +171,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           transactionRequestTypes <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
-          (transactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (transactionRequest, _) <- getOwnPaymentImpl(paymentId, callContext)
           transactionRequestBody <- NewStyle.function.tryons(s"${UnknownError} No data for Payment Body ", 400, callContext) {
             transactionRequest.body.to_sepa_credit_transfers.get
           }
@@ -189,7 +215,7 @@ object Http4sBGv13PIS extends MdcLoggable {
             failMsg = s"$TransactionRequestCannotBeCancelled Payment status: $mappedStatus. Only payments in RCVD, ACCP, PDNG, or CANC status can be cancelled.",
             cc = callContext
           ) { canBeCancelled == true }
-          (updatedTransactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (updatedTransactionRequest, _) <- getOwnPaymentImpl(paymentId, callContext)
         } yield {
           startSca.getOrElse(false) match {
             case true  => Some(createCancellationTransactionRequestJson(updatedTransactionRequest))
@@ -219,7 +245,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
-          (_, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (_, _) <- getOwnPaymentImpl(paymentId, callContext)
           (challenge, _) <- NewStyle.function.getChallenge(cancellationId, callContext)
         } yield {
           JSONFactory_BERLIN_GROUP_1_3.ScaStatusJsonV13(challenge.scaStatus.map(_.toString).getOrElse("None"))
@@ -240,7 +266,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
-          (transactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (transactionRequest, _) <- getOwnPaymentImpl(paymentId, callContext)
           transactionRequestBody <- NewStyle.function.tryons(s"${UnknownError} No data for Payment Body ", 400, callContext) {
             transactionRequest.body.to_sepa_credit_transfers.get
           }
@@ -263,7 +289,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
-          (_, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (_, _) <- getOwnPaymentImpl(paymentId, callContext)
           (challenges, _) <- NewStyle.function.getChallengesByTransactionRequestId(paymentId, callContext)
         } yield {
           JSONFactory_BERLIN_GROUP_1_3.createStartPaymentAuthorisationsJson(challenges)
@@ -284,6 +310,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
+          (_, _) <- getOwnPaymentImpl(paymentId, callContext)
           (challenges, _) <- NewStyle.function.getChallengesByTransactionRequestId(paymentId, callContext)
         } yield {
           JSONFactory_BERLIN_GROUP_1_3.CancellationJsonV13(challenges.map(_.challengeId))
@@ -304,7 +331,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
-          (_, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (_, _) <- getOwnPaymentImpl(paymentId, callContext)
           (challenge, _) <- NewStyle.function.getChallenge(authorisationId, callContext)
         } yield {
           json.parse(s"""{"scaStatus" : "${challenge.scaStatus.getOrElse("None")}"}""")
@@ -326,7 +353,7 @@ object Http4sBGv13PIS extends MdcLoggable {
           _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
             TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
           }
-          (transactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+          (transactionRequest, _) <- getOwnPaymentImpl(paymentId, callContext)
           transactionRequestStatus = mapTransactionStatus(transactionRequest.status)
           transactionRequestAmount <- NewStyle.function.tryons(s"${InvalidNumber} transaction request amount cannot convert to a Decimal", 400, callContext) {
             BigDecimal(transactionRequest.body.to_sepa_credit_transfers.get.instructedAmount.amount)
@@ -403,7 +430,7 @@ object Http4sBGv13PIS extends MdcLoggable {
             _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
               TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
             }
-            (_, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+            (_, _) <- getOwnPaymentImpl(paymentId, callContext)
             (challenges, _) <- NewStyle.function.createChallengesC2(
               List(u.userId),
               ChallengeType.BERLIN_GROUP_PAYMENT_CHALLENGE,
@@ -454,7 +481,7 @@ object Http4sBGv13PIS extends MdcLoggable {
             _ <- NewStyle.function.tryons(checkPaymentProductError(paymentProduct), 404, callContext) {
               TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
             }
-            (transactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+            (transactionRequest, _) <- getOwnPaymentImpl(paymentId, callContext)
             _ <- Helper.booleanToFuture(failMsg = CannotStartTheAuthorisationProcessForTheCancellation, cc = callContext) {
               transactionRequest.status == TransactionRequestStatus.CANCELLATION_PENDING.toString
             }
@@ -513,13 +540,13 @@ object Http4sBGv13PIS extends MdcLoggable {
               TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
             }
             transactionRequestId = TransactionRequestId(paymentId)
-            (existingTransactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(transactionRequestId, callContext)
+            (existingTransactionRequest, _) <- getOwnPaymentImpl(transactionRequestId.value, callContext)
             _ <- Helper.booleanToFuture(failMsg = CannotUpdatePSUDataCancellation, cc = callContext) {
               existingTransactionRequest.status == TransactionRequestStatus.INITIATED.toString ||
               existingTransactionRequest.status == TransactionRequestStatus.CANCELLATION_PENDING.toString ||
               existingTransactionRequest.status == TransactionRequestStatus.COMPLETED.toString
             }
-            (_, _) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
+            (_, _) <- getOwnPaymentImpl(paymentId, callContext)
             (challenge, _) <- NewStyle.function.validateChallengeAnswerC4(
               ChallengeType.BERLIN_GROUP_PAYMENT_CHALLENGE,
               Some(paymentId),
@@ -603,7 +630,7 @@ object Http4sBGv13PIS extends MdcLoggable {
               TransactionRequestTypes.withName(paymentProduct.replaceAll("-", "_").toUpperCase)
             }
             transactionRequestId = TransactionRequestId(paymentId)
-            (existingTransactionRequest, _) <- NewStyle.function.getTransactionRequestImpl(transactionRequestId, callContext)
+            (existingTransactionRequest, _) <- getOwnPaymentImpl(transactionRequestId.value, callContext)
             _ <- Helper.booleanToFuture(failMsg = CannotUpdatePSUData, cc = callContext) {
               existingTransactionRequest.status == TransactionStatus.RCVD.code
             }
