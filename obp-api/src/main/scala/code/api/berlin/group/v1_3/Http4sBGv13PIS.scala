@@ -82,18 +82,27 @@ object Http4sBGv13PIS extends MdcLoggable {
    * NextGenPSD2 a payment initiation resource belongs to the TPP that created it, and only that TPP
    * addresses it afterwards.
    *
-   * A payment records two identities: the principal that lodged it, and, when it was lodged under a
-   * consent, the PSU it was lodged for. A caller presents the same two. Any overlap is enough, so a
-   * payment lodged on a client-credentials token can still be authorised under the PSU's token, and
-   * the other way round. A payment carrying neither identity belongs to nobody and is refused.
+   * Two things have to line up, because Berlin Group binds a payment to the TPP and the ASPSP
+   * separately knows which PSU it is for.
+   *
+   *  - The TPP. The consumer that lodged the payment is recorded on it, and a caller presenting a
+   *    different one is refused even when it is acting for the same PSU: one TPP's mandate over a
+   *    payment is not another's. Payments lodged before the consumer was recorded carry none, and
+   *    fall back to the person check alone rather than becoming unaddressable.
+   *  - The person. A payment records the principal that lodged it and, when it was lodged under a
+   *    consent, the PSU it was lodged for; a caller presents the same two. Any overlap is enough, so
+   *    a payment lodged on a client-credentials token can still be authorised under the PSU's token
+   *    and the other way round. A payment carrying neither identity belongs to nobody.
    */
   private def getOwnPaymentImpl(paymentId: String, callContext: Option[CallContext]): OBPReturnType[TransactionRequest] =
     for {
       (transactionRequest, callContext) <- NewStyle.function.getTransactionRequestImpl(TransactionRequestId(paymentId), callContext)
       initiators = Set(transactionRequest.user_id, transactionRequest.on_behalf_of_user_id).flatten.filter(_.nonEmpty)
       callers = callContext.toSet[CallContext].flatMap(cc => cc.user.toOption.map(_.userId) ++ Consent.actingPsu(cc).map(_.userId))
+      callingConsumer = callContext.flatMap(_.consumer.map(_.consumerId.get))
+      sameTpp = transactionRequest.consumer_id.forall(lodgedBy => callingConsumer.contains(lodgedBy))
       _ <- Helper.booleanToFuture(s"$PaymentNotInitiatedByCaller Payment id: $paymentId.", 403, callContext) {
-        initiators.exists(callers)
+        sameTpp && initiators.exists(callers)
       }
     } yield (transactionRequest, callContext)
 

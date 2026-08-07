@@ -10,7 +10,11 @@ import code.api.util.APIUtil.OAuth._
 import code.api.util.APIUtil.extractErrorMessageCode
 import code.api.util.ErrorMessages._
 import code.model.dataAccess.{BankAccountRouting, MappedBankAccount}
+import code.model.TokenType
 import code.setup.{APIResponse, DefaultUsers}
+import code.token.Tokens
+import net.liftweb.util.Helpers.randomString
+import net.liftweb.util.TimeHelpers.TimeSpan
 import code.views.Views
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.model.enums.{AccountRoutingScheme, PaymentServiceTypes, TransactionRequestTypes}
@@ -828,6 +832,57 @@ class PaymentInitiationServicePISApiTest extends BerlinGroupServerSetupV1_3 with
       val ownerResponse = makeGetRequest((payment / "status").GET <@ (user1))
       ownerResponse.code should equal(200)
     }
+    scenario("a second TPP acting for the same PSU is refused too", BerlinGroupV1_3, PIS, initiatePayment) {
+      val accountsRoutingIban = BankAccountRouting.findAll(By(BankAccountRouting.AccountRoutingScheme, AccountRoutingScheme.IBAN.toString))
+        .filterNot(_.bankId.value == "DEFAULT_BANK_ID_NOT_SET")
+      val ibanFrom = accountsRoutingIban.head
+      val ibanTo = accountsRoutingIban.last
+
+      grantAccountAccess(ibanFrom)
+
+      val initiatePaymentJson =
+        s"""{
+           | "debtorAccount": { "iban": "${ibanFrom.accountRouting.address}" },
+           | "instructedAmount": { "currency": "EUR", "amount": "2001" },
+           | "creditorAccount": { "iban": "${ibanTo.accountRouting.address}" },
+           | "creditorName": "70charname"
+            }""".stripMargin
+
+      When("the PSU lodges a payment through one TPP")
+      val responseInitiate: APIResponse = makePostRequest(
+        (V1_3_BG / PaymentServiceTypes.payments.toString / TransactionRequestTypes.SEPA_CREDIT_TRANSFERS.toString).POST <@ (user1),
+        initiatePaymentJson)
+      responseInitiate.code should equal(201)
+      val paymentId = responseInitiate.body.extract[InitiatePaymentResponseJson].paymentId
+      val payment = V1_3_BG / PaymentServiceTypes.payments.toString / TransactionRequestTypes.SEPA_CREDIT_TRANSFERS.toString / paymentId
+
+      Then("the same PSU acting through a second TPP still cannot address it")
+      // The person matches and only the TPP differs -- the case a person-only check waves through,
+      // and the reason the payment has to record which consumer lodged it.
+      val response = makeGetRequest((payment / "status").GET <@ (samePsuUnderSecondConsumer))
+      response.code should equal(403)
+      response.body.extract[ErrorMessagesBG].tppMessages.head.text should startWith (PaymentNotInitiatedByCaller)
+
+      And("the TPP that lodged it still can")
+      makeGetRequest((payment / "status").GET <@ (user1)).code should equal(200)
+    }
   }
+  // resourceUser1's own token, issued under a second consumer: same person, different TPP.
+  // DefaultUsers has no such pair -- user2 and user3 change the person as well as the consumer.
+  private lazy val samePsuUnderSecondConsumer = {
+    val token = Tokens.tokens.vend.createToken(
+      TokenType.Access,
+      Some(testConsumer2.id.get),
+      Some(resourceUser1.id.get),
+      Some(randomString(40).toLowerCase),
+      Some(randomString(40).toLowerCase),
+      Some(tokenDuration),
+      Some(TimeSpan(tokenDuration + System.currentTimeMillis())),
+      Some(new java.util.Date(System.currentTimeMillis())),
+      None
+    ).openOrThrowException("test token creation failed")
+    Some(consumer2, Token(token.key.get, token.secret.get))
+  }
+
 
 }

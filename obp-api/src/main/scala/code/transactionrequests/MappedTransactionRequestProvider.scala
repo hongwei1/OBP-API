@@ -170,6 +170,7 @@ object MappedTransactionRequestProvider extends TransactionRequestProvider with 
       .mApiStandard(apiStandard.getOrElse(null))
       .mUserId(callContext.flatMap(_.user.map(_.userId)).getOrElse(null))
       .mOnBehalfOfUserId(callContext.flatMap(cc => cc.onBehalfOfUser.or(cc.consenter).map(_.userId)).getOrElse(null))
+      .mConsumerId(callContext.flatMap(_.consumer.map(_.consumerId.get)).getOrElse(null))
 
       // Explicit originator fields (FATF Rec 16, OPEN_CORRIDOR_PROMISE type only — null otherwise).
       .mOriginator_Name(explicitOriginator.map(_.name).getOrElse(null))
@@ -296,6 +297,7 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
 
   object mUserId extends MappedString(this, 100)
   object mOnBehalfOfUserId extends MappedString(this, 100)
+  object mConsumerId extends MappedString(this, 100)
 
   def updateStatus(newStatus: String) = {
     mStatus.set(newStatus)
@@ -493,7 +495,8 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
         is_beneficiary = mIsBeneficiary.get,
         user_id = Option(mUserId.get).filter(_.nonEmpty),
         on_behalf_of_user_id = Option(mOnBehalfOfUserId.get).filter(_.nonEmpty),
-        originator = t_originator
+        originator = t_originator,
+        consumer_id = Option(mConsumerId.get).filter(_.nonEmpty)
       )
     )
   }
