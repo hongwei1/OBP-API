@@ -534,7 +534,7 @@ object Http4sBGv13AIS extends MdcLoggable {
             _ <- Consent.checkBerlinGroupConsentAccess(
               consent.userId, consent.consumerId,
               Consent.genuinePsu(cc).map(_.userId), cc.consumer.map(_.consumerId.get),
-              Consent.isBerlinGroupScaFrontEnd(cc.consumer.map(_.consumerId.get))) match {
+              Consent.isScaFrontEnd(cc.consumer.map(_.consumerId.get))) match {
               case Some(reason) => booleanToFuture(failMsg = reason, failCode = 403, cc = callContext)(false)
               case None => Future.successful(true)
             }
@@ -607,7 +607,7 @@ object Http4sBGv13AIS extends MdcLoggable {
             _ <- Consent.checkBerlinGroupConsentAccess(
               storedConsent.userId, storedConsent.consumerId,
               Consent.genuinePsu(cc).map(_.userId), cc.consumer.map(_.consumerId.get),
-              Consent.isBerlinGroupScaFrontEnd(cc.consumer.map(_.consumerId.get))) match {
+              Consent.isScaFrontEnd(cc.consumer.map(_.consumerId.get))) match {
               case Some(reason) => booleanToFuture(failMsg = reason, failCode = 403, cc = callContext)(false)
               case None => Future.successful(true)
             }

@@ -121,9 +121,9 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
 
     scenario("the declaration is by consumer id and nothing else", BerlinGroupV13ConsentAccess) {
       // Empty config is the default, and it must leave the same-TPP rule applying to everyone.
-      Consent.isBerlinGroupScaFrontEnd(Some(otherTpp)) should equal(false)
-      Consent.isBerlinGroupScaFrontEnd(None) should equal(false)
-      Consent.isBerlinGroupScaFrontEnd(Some("   ")) should equal(false)
+      Consent.isScaFrontEnd(Some(otherTpp)) should equal(false)
+      Consent.isScaFrontEnd(None) should equal(false)
+      Consent.isScaFrontEnd(Some("   ")) should equal(false)
     }
   }
 

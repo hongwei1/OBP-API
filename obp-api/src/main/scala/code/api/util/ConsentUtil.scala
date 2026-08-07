@@ -1507,9 +1507,22 @@ object Consent extends MdcLoggable {
     consentUserId: String,
     consentConsumerId: String,
     callerUserId: Option[String],
-    callerConsumerId: Option[String]
-  ): Option[String] =
-    psuOrLodgingTppRefusal(consentUserId, consentConsumerId, callerUserId, callerConsumerId)
+    callerConsumerId: Option[String],
+    callerIsScaFrontEnd: Boolean
+  ): Option[String] = {
+    val stillUnclaimed = Option(consentUserId).map(_.trim).forall(_.isEmpty)
+    // The ASPSP's own approval screen has to read the consent to show the PSU what they are being
+    // asked to grant, and it arrives under its own Consumer rather than the TPP's -- so the lodging
+    // Consumer comparison refuses precisely the caller whose whole job is to inform the PSU, and the
+    // screen renders with no permissions, no status and no expiry.
+    //
+    // Narrow on purpose. It applies only while the consent is still unclaimed, which is the only
+    // window the approval screen exists for; once a PSU is bound, the PSU half below governs and a
+    // declared front end gets no further than anyone else. And it is inert unless an ASPSP has
+    // declared a front end at all.
+    if (callerIsScaFrontEnd && stillUnclaimed) None
+    else psuOrLodgingTppRefusal(consentUserId, consentConsumerId, callerUserId, callerConsumerId)
+  }
 
   /**
    * Decide whether a caller may drive a Berlin Group consent's authorisation sub-resources --
@@ -1552,7 +1565,7 @@ object Consent extends MdcLoggable {
    * Nothing in the request tells that front end apart from a second TPP holding a PSU session --
    * both are an authenticated person arriving under a Consumer that did not lodge the consent -- so
    * the ASPSP declares its own, and callerIsScaFrontEnd is that declaration reaching this rule. See
-   * APIUtil.berlinGroupScaFrontEndConsumerIds. It is not a way past the PSU half: a consent already
+   * APIUtil.scaFrontEndConsumerIds. It is not a way past the PSU half: a consent already
    * bound to someone still only re-binds to them.
    *
    * What it is emphatically not is a substitute for checking that the claiming PSU has anything to
@@ -1578,10 +1591,16 @@ object Consent extends MdcLoggable {
     }
   }
 
-  /** Whether the Consumer making this call is one the ASPSP declared as its own SCA front end. */
-  def isBerlinGroupScaFrontEnd(callerConsumerId: Option[String]): Boolean =
+  /**
+   * Whether the Consumer making this call is one the ASPSP declared as its own SCA front end.
+   *
+   * Not Berlin-Group-specific: the same front end drives the UK approval screen, and the same
+   * difficulty applies there -- nothing in the request distinguishes the ASPSP's own screen from a
+   * second TPP holding a PSU session, so the ASPSP has to say which Consumer is its own.
+   */
+  def isScaFrontEnd(callerConsumerId: Option[String]): Boolean =
     callerConsumerId.map(_.trim).filter(_.nonEmpty)
-      .exists(APIUtil.berlinGroupScaFrontEndConsumerIds.contains)
+      .exists(APIUtil.scaFrontEndConsumerIds.contains)
 
   /**
    * The rule shared by checkUKConsentAccess and checkBerlinGroupConsentAccess: a consent bound to a
@@ -1751,7 +1770,8 @@ object Consent extends MdcLoggable {
   ): Future[Box[Unit]] = {
     val refusal = checkUKConsentAccess(
       consentUserId, consentConsumerId,
-      actingPsu(callContext).map(_.userId), callContext.consumer.map(_.consumerId.get))
+      actingPsu(callContext).map(_.userId), callContext.consumer.map(_.consumerId.get),
+      isScaFrontEnd(callContext.consumer.map(_.consumerId.get)))
     // booleanToFuture only reads failMsg when the statement is false, so the empty default is never
     // the message anyone sees.
     Helper.booleanToFuture(refusal.getOrElse(""), 403, Some(callContext))(refusal.isEmpty)
