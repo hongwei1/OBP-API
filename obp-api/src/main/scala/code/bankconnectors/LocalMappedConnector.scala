@@ -879,23 +879,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   override def getBankAccountByRoutingLegacy(bankId: Option[BankId], scheme: String, address: String, callContext: Option[CallContext]): Box[(BankAccount, Option[CallContext])] = {
 
-    // OBP-family schemes (OBP / OBP_ACCOUNT_ID) are implicit self-identifiers
-    // — address IS the account_id. Resolve directly against the BankAccount
-    // table without touching BankAccountRouting.
-    if (isImplicitOBPAccountScheme(scheme)) {
-      bankId match {
-        case Some(bankId) =>
-          getBankAccountCommon(bankId, AccountId(address), callContext)
-        case None =>
-          // No bank context — accept only when the account_id is globally unique.
-          MappedBankAccount.findAll(By(MappedBankAccount.theAccountId, address)) match {
-            case account :: Nil => Full((account, callContext))
-            case Nil            => Empty
-            case _              =>
-              Failure(s"$AccountRoutingNotUnique (scheme: $scheme, address: $address)")
-          }
-      }
-    } else {
+    def byRoutingTable: Box[(MappedBankAccount, Option[CallContext])] = {
       def handleRouting(routing: List[BankAccountRouting]): Box[(MappedBankAccount, Option[CallContext])] = {
         if (routing.size > 1) { // Handle more than 1 occurrence
           // Routing MUST be unique
@@ -916,6 +900,43 @@ object LocalMappedConnector extends Connector with MdcLoggable {
             .findAll(By(BankAccountRouting.AccountRoutingScheme, scheme), By(BankAccountRouting.AccountRoutingAddress, address))
           handleRouting(routing)
       }
+    }
+
+    // OBP-family schemes (OBP / OBP_ACCOUNT_ID) are implicit self-identifiers — address IS the
+    // account_id — so they resolve directly against the BankAccount table.
+    //
+    // But that is not the only thing an OBP-scheme address can be. A bank may also *register* an
+    // `OBP` routing whose address is something other than the account id, and BankAccountRouting
+    // stores it like any other. Treating the implicit reading as the only one made those accounts
+    // unreachable through every endpoint that resolves by routing: the account was right there in
+    // the table, and the answer was "Bank Account not found".
+    //
+    // So try the implicit reading first, and fall back to the registered routing when it finds
+    // nothing. The implicit reading still wins where both would match, which is what happened
+    // before, so no address that resolves today resolves differently now.
+    if (isImplicitOBPAccountScheme(scheme)) {
+      val implicitly = bankId match {
+        case Some(bankId) =>
+          getBankAccountCommon(bankId, AccountId(address), callContext)
+        case None =>
+          // No bank context — accept only when the account_id is globally unique.
+          MappedBankAccount.findAll(By(MappedBankAccount.theAccountId, address)) match {
+            case account :: Nil => Full((account, callContext))
+            case Nil            => Empty
+            case _              =>
+              Failure(s"$AccountRoutingNotUnique (scheme: $scheme, address: $address)")
+          }
+      }
+      implicitly match {
+        // Nothing answers to the implicit reading, so try a registered routing.
+        case Empty => byRoutingTable
+        // A hit, or an ambiguity. `or` would have replaced the ambiguity with whatever the routing
+        // table said, which for an ambiguous address is nothing -- turning "this address matches
+        // several accounts" into a bare "not found". Keep what the implicit reading concluded.
+        case decided => decided
+      }
+    } else {
+      byRoutingTable
     }
   }
 
