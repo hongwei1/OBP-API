@@ -16,6 +16,7 @@ import code.api.util.{ApiTag, CallContext, Consent, NewStyle}
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.http4s.{ErrorResponseConverter, RequestScopeConnection}
 import code.fx.fx
+import code.transactionrequests.TransactionRequests
 import code.util.Helper
 import code.util.Helper.{MdcLoggable, booleanToFuture}
 import com.github.dwickern.macros.NameOf.nameOf
@@ -100,7 +101,13 @@ object Http4sBGv13PIS extends MdcLoggable {
       initiators = Set(transactionRequest.user_id, transactionRequest.on_behalf_of_user_id).flatten.filter(_.nonEmpty)
       callers = callContext.toSet[CallContext].flatMap(cc => cc.user.toOption.map(_.userId) ++ Consent.actingPsu(cc).map(_.userId))
       callingConsumer = callContext.flatMap(_.consumer.map(_.consumerId.get))
-      sameTpp = transactionRequest.consumer_id.forall(lodgedBy => callingConsumer.contains(lodgedBy))
+      // Read straight off the stored row rather than through the TransactionRequest model: which
+      // TPP lodged a payment is this guard's business, not something every REST connector needs on
+      // the wire, and that model's shape is a frozen contract.
+      lodgedByConsumer = TransactionRequests.transactionRequestProvider.vend
+        .getMappedTransactionRequest(TransactionRequestId(paymentId))
+        .map(_.mConsumerId.get).toOption.filter(_.nonEmpty)
+      sameTpp = lodgedByConsumer.forall(lodgedBy => callingConsumer.contains(lodgedBy))
       _ <- Helper.booleanToFuture(s"$PaymentNotInitiatedByCaller Payment id: $paymentId.", 403, callContext) {
         sameTpp && initiators.exists(callers)
       }

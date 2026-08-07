@@ -1114,11 +1114,6 @@ case class TransactionRequest (
                                 on_behalf_of_user_id :Option[String] = None,
                                 @optional
                                 originator :Option[TransactionRequestOriginator] = None,
-                                // The TPP that lodged this request. Berlin Group binds a payment
-                                // initiation to the TPP, not to the PSU, so who may address it
-                                // afterwards cannot be answered from the user ids alone.
-                                @optional
-                                consumer_id :Option[String] = None,
                               )
 
 // FATF Recommendation 16 "Travel Rule" originator block (who the payment is from).

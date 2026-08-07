@@ -495,8 +495,7 @@ class MappedTransactionRequest extends LongKeyedMapper[MappedTransactionRequest]
         is_beneficiary = mIsBeneficiary.get,
         user_id = Option(mUserId.get).filter(_.nonEmpty),
         on_behalf_of_user_id = Option(mOnBehalfOfUserId.get).filter(_.nonEmpty),
-        originator = t_originator,
-        consumer_id = Option(mConsumerId.get).filter(_.nonEmpty)
+        originator = t_originator
       )
     )
   }
