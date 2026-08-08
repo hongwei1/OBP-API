@@ -43,6 +43,8 @@ import java.util.Date
 import scala.collection.immutable.{List, Nil}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+// Not scala.util.Failure: net.liftweb.common._ above already binds that name to Box's failure case.
+import scala.util.{Success, Try}
 
 // Design boundary (not enforced by the compiler — keep it that way by convention): consent-layer
 // attributes belong on the consent record, never as a View can_* permission. BG's
@@ -950,15 +952,21 @@ object Consent extends MdcLoggable {
             Counterparties.counterparties.vend.getCounterparties(bankId, accountId, viewId) match {
               case Full(counterparties) =>
                 counterparties.foreach { counterparty =>
-                  // Awaited: this deletion is the point of the release, so its failure has to be
-                  // seen rather than left in an unobserved Future that logs nothing.
-                  val deleted = Await.result(
+                  // Awaited so the deletion's outcome is observed rather than left in an unwatched
+                  // Future -- but caught, because the caller has already committed the revoke. The
+                  // status flip and the shadow user's access are gone by the time this runs, and a
+                  // second attempt is refused with ConsentAlreadyRevoked, so letting a timeout or a
+                  // connector failure escape would turn a completed revoke into a 500 and abandon
+                  // the views still queued behind this one.
+                  Try(Await.result(
                     CounterpartyLimitProvider.counterpartyLimit.vend.deleteCounterpartyLimit(
                       bankId.value, accountId.value, viewId.value, counterparty.counterpartyId),
-                    10.seconds)
-                  if (deleted.isEmpty) logger.warn(
-                    s"releaseVrpMandateArtefacts: could not delete the limit on ${viewId.value} " +
-                    s"for counterparty ${counterparty.counterpartyId}: $deleted")
+                    10.seconds)) match {
+                    case Success(deleted) if deleted.isDefined => // released
+                    case other => logger.warn(
+                      s"releaseVrpMandateArtefacts: could not delete the limit on ${viewId.value} " +
+                      s"for counterparty ${counterparty.counterpartyId}: $other")
+                  }
                 }
               case other =>
                 logger.warn(s"releaseVrpMandateArtefacts: could not list counterparties on " +

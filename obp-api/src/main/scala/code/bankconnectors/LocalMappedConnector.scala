@@ -712,18 +712,27 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       .map(transaction => (transaction, callContext))
   }
 
-  override def getTransactionsLegacy(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]) = {
-
-    // TODO Refactor this. No need for database lookups etc.
+  /**
+   * The OBPQueryParams a transaction read carries, as Mapper query params.
+   *
+   * One copy for both transaction reads below. They had identical translations, and the direction
+   * restriction had to be written into each of them -- a rule that decides what a consent may see
+   * should exist once, not once per caller that remembers to add it.
+   *
+   * The direction restriction is pushed into the query rather than applied to the rows afterwards,
+   * so the database narrows and paginates in the same pass; filtering an already-limited page hands
+   * the caller a short page it cannot distinguish from the end of the data. Zero counts as a credit,
+   * matching UKAmounts.creditDebitIndicator -- `amount` is signed and in the smallest currency unit,
+   * so its sign is all this needs.
+   */
+  private def transactionQueryParams(queryParams: List[OBPQueryParam]): Seq[QueryParam[MappedTransaction]] = {
     val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
     val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
     val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
     val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
-    // Zero is a credit, matching UKAmounts.creditDebitIndicator. `amount` is signed and in the
-    // smallest currency unit, so the sign is all this needs.
     val direction = queryParams.collect {
-      case OBPTransactionDirection(true) => By_>=(MappedTransaction.amount, 0L)
-      case OBPTransactionDirection(false) => By_<(MappedTransaction.amount, 0L)
+      case OBPTransactionDirection(true) => By_>=(MappedTransaction.amount, OBPTransactionDirection.creditFloorInSmallestUnit)
+      case OBPTransactionDirection(false) => By_<(MappedTransaction.amount, OBPTransactionDirection.creditFloorInSmallestUnit)
     }.headOption
     val ordering = queryParams.collect {
       //we don't care about the intended sort field and only sort on finish date for now
@@ -733,8 +742,13 @@ object LocalMappedConnector extends Connector with MdcLoggable {
           case OBPDescending => OrderBy(MappedTransaction.tFinishDate, Descending)
         }
     }
+    Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, direction.toSeq, ordering.toSeq).flatten
+  }
 
-    val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, direction.toSeq, ordering.toSeq).flatten
+  override def getTransactionsLegacy(bankId: BankId, accountId: AccountId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]) = {
+
+    // TODO Refactor this. No need for database lookups etc.
+    val optionalParams: Seq[QueryParam[MappedTransaction]] = transactionQueryParams(queryParams)
     val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
 
     def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams: Seq[QueryParam[MappedTransaction]]): Box[List[Transaction]]
@@ -767,26 +781,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
   override def getTransactionsCore(bankId: BankId, accountId: AccountId, queryParams: List[OBPQueryParam], callContext: Option[CallContext]): OBPReturnType[Box[List[TransactionCore]]] = {
 
     // TODO Refactor this. No need for database lookups etc.
-    val limit = queryParams.collect { case OBPLimit(value) => MaxRows[MappedTransaction](value) }.headOption
-    val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
-    val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
-    val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
-    // Zero is a credit, matching UKAmounts.creditDebitIndicator. `amount` is signed and in the
-    // smallest currency unit, so the sign is all this needs.
-    val direction = queryParams.collect {
-      case OBPTransactionDirection(true) => By_>=(MappedTransaction.amount, 0L)
-      case OBPTransactionDirection(false) => By_<(MappedTransaction.amount, 0L)
-    }.headOption
-    val ordering = queryParams.collect {
-      //we don't care about the intended sort field and only sort on finish date for now
-      case OBPOrdering(_, direction) =>
-        direction match {
-          case OBPAscending => OrderBy(MappedTransaction.tFinishDate, Ascending)
-          case OBPDescending => OrderBy(MappedTransaction.tFinishDate, Descending)
-        }
-    }
-
-    val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, direction.toSeq, ordering.toSeq).flatten
+    val optionalParams: Seq[QueryParam[MappedTransaction]] = transactionQueryParams(queryParams)
     val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
 
     def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams: Seq[QueryParam[MappedTransaction]]): Box[List[TransactionCore]]

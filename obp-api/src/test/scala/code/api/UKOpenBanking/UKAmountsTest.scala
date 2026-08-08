@@ -101,11 +101,16 @@ class UKAmountsTest extends FeatureSpec with Matchers with GivenWhenThen {
     scenario("the query restriction and the post-filter agree on every amount") {
       // They are two enforcements of one rule -- the database narrows, the filter is authoritative.
       // If they disagreed, a row could be selected by one and dropped by the other.
+      //
+      // The boundary comes from OBPTransactionDirection -- the same value LocalMappedConnector
+      // builds its SQL predicate from -- rather than a copy written here. A local copy agrees with
+      // itself no matter what the connector does, so it could not detect the drift it exists to
+      // catch.
       for (amount <- List(BigDecimal("-1000"), BigDecimal("-0.01"), BigDecimal(0), BigDecimal("0.01"))) {
         for ((credits, debits) <- List((true, false), (false, true))) {
+          val smallestUnit = (amount * 100).toLongExact
           val queryWouldKeep = UKAmounts.directionQueryParam(credits, debits) match {
-            case List(OBPTransactionDirection(true)) => amount >= 0
-            case List(OBPTransactionDirection(false)) => amount < 0
+            case List(param) => OBPTransactionDirection.admits(param, smallestUnit)
             case _ => true
           }
           withClue(s"amount $amount credits=$credits debits=$debits: ") {
@@ -113,6 +118,17 @@ class UKAmountsTest extends FeatureSpec with Matchers with GivenWhenThen {
           }
         }
       }
+    }
+
+    scenario("an amount the view withheld is admitted by neither direction") {
+      // None here is "the moderating view did not grant CAN_SEE_TRANSACTION_AMOUNT", not "zero".
+      // creditDebitIndicator still labels it Credit for rendering, but as a permission test that
+      // would hand every debit to a Credits-only consent, so the restriction must refuse instead.
+      UKAmounts.admitsDirection(None, grantsCredits = true, grantsDebits = false) should be(false)
+      UKAmounts.admitsDirection(None, grantsCredits = false, grantsDebits = true) should be(false)
+      // With no restriction in force there is nothing to refuse.
+      UKAmounts.admitsDirection(None, grantsCredits = true, grantsDebits = true) should be(true)
+      UKAmounts.admitsDirection(None, grantsCredits = false, grantsDebits = false) should be(true)
     }
 
     scenario("every produced Amount matches the standard's unsigned pattern") {

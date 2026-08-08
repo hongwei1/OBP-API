@@ -57,10 +57,16 @@ object UKAmounts {
    *
    * Reads the direction through creditDebitIndicator rather than testing the sign again here, so the
    * row a response labels `Debit` is exactly the row this admits under Debits.
+   *
+   * A missing amount admits nothing. The input is already moderated, so None means the view withheld
+   * `CAN_SEE_TRANSACTION_AMOUNT` rather than that the amount is zero -- and creditDebitIndicator maps
+   * None to `Credit` for labelling, which as a permission test would hand every debit to a
+   * Credits-only consent. There is no direction to check without the amount, so refuse instead:
+   * a short response is recoverable, a leaked one is not.
    */
   def admitsDirection(amount: Option[BigDecimal], grantsCredits: Boolean, grantsDebits: Boolean): Boolean =
     if (grantsCredits == grantsDebits) true
-    else creditDebitIndicator(amount) == (if (grantsCredits) "Credit" else "Debit")
+    else amount.exists(a => creditDebitIndicator(a) == (if (grantsCredits) "Credit" else "Debit"))
 
   /**
    * Whether the caller holds a given direction view on this account.

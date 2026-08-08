@@ -1,6 +1,6 @@
 package code.api.UKOpenBanking.v3_1_0
 
-import code.api.UKOpenBanking.UKAmounts
+import code.api.UKOpenBanking.{UKAmounts, UKTransactionsQuery}
 
 import org.json4s._
 import cats.data.{Kleisli, OptionT}
@@ -308,36 +308,11 @@ object Http4sUKOBv310Transactions extends MdcLoggable {
     case req @ GET -> `ukV31Prefix` / "accounts" / accountIdStr / "transactions" =>
       EndpointHelpers.withUser(req) { (u, cc) =>
         val accountId = AccountId(accountIdStr)
-        val detailViewId = ViewId(Constant.SYSTEM_READ_TRANSACTIONS_DETAIL_VIEW_ID)
-        val basicViewId = ViewId(Constant.SYSTEM_READ_TRANSACTIONS_BASIC_VIEW_ID)
-        for {
-          _ <- NewStyle.function.checkUKConsent(u, Some(cc))
-          _ <- passesPsd2Aisp(Some(cc))
-          (account, _) <- NewStyle.function.getBankAccountByAccountId(accountId, Some(cc))
-          (bank, _) <- NewStyle.function.getBank(account.bankId, Some(cc))
-          view <- ViewNewStyle.checkViewsAccessAndReturnView(detailViewId, basicViewId, BankIdAccountId(account.bankId, accountId), Full(u), Some(cc))
-          params <- Future {
-            createQueriesByHttpParams(req.headers.headers.toList.map(h => HTTPParam(h.name.toString, List(h.value))))
-          } map { x =>
-            unboxFull(fullBoxOrException(x ~> APIFailureNewStyle(UnknownError, 400, Some(cc.toLight))))
-          }
-          // Resolved before the query so the direction can shape it: the database has to apply the
-          // restriction and the page limit together, or the page is trimmed after the fact.
-          grantsCredits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_CREDITS_VIEW_ID, account.bankId, accountId, u, cc)
-          grantsDebits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_DEBITS_VIEW_ID, account.bankId, accountId, u, cc)
-          directedParams = params ++ UKAmounts.directionQueryParam(grantsCredits, grantsDebits)
-          (transactions, _) <- BankAccountExtended(account).getModeratedTransactionsFuture(bank, Full(u), view, Some(cc), directedParams) map { x =>
-            unboxFull(fullBoxOrException(x ~> APIFailureNewStyle(UnknownError, 400, Some(cc.toLight))))
-          }
-          // ReadTransactionsCredits / ReadTransactionsDebits restrict which rows the consent may see,
-          // not which fields, so they are applied here rather than through the view's can_* set.
-          directedTransactions = UKAmounts.filterByGrantedDirections(transactions, grantsCredits, grantsDebits)
-          (moderatedAttributes: List[TransactionAttribute], _) <- NewStyle.function.getModeratedAttributesByTransactions(
-            account.bankId,
-            directedTransactions.map(_.id),
-            view.viewId,
-            Some(cc))
-        } yield JSONFactory_UKOpenBanking_310.createTransactionsJsonNew(account.bankId, directedTransactions, moderatedAttributes, view)
+        // The read itself is shared with v4.0.1 -- see UKTransactionsQuery. Only the factory differs.
+        UKTransactionsQuery.read(req, u, cc, accountId) map { result =>
+          JSONFactory_UKOpenBanking_310.createTransactionsJsonNew(
+            result.account.bankId, result.transactions, result.attributes, result.view)
+        }
       }
   }
   resourceDocs += ResourceDoc(
