@@ -1,5 +1,6 @@
 package code.api.UKOpenBanking
 
+import code.api.util.OBPTransactionDirection
 import org.scalatest.{FeatureSpec, GivenWhenThen, Matchers}
 
 /**
@@ -77,6 +78,40 @@ class UKAmountsTest extends FeatureSpec with Matchers with GivenWhenThen {
         val labelledDebit = UKAmounts.creditDebitIndicator(amount) == "Debit"
         UKAmounts.admitsDirection(Some(amount), grantsCredits = false, grantsDebits = true) should be(labelledDebit)
         UKAmounts.admitsDirection(Some(amount), grantsCredits = true, grantsDebits = false) should be(!labelledDebit)
+      }
+    }
+
+    scenario("a scale that would render in scientific notation still comes out plain") {
+      // BigDecimal("1E+3").toString is "1E+3", which the Amount pattern rejects.
+      UKAmounts.unsignedAmount(BigDecimal("1E+3")) should be("1000")
+      UKAmounts.unsignedAmount(BigDecimal("-1E+3")) should be("1000")
+      UKAmounts.unsignedAmountString("1E+3") should be("1000")
+    }
+
+    scenario("the query restriction matches the directions granted") {
+      // Both or neither is no restriction, so no param is added at all.
+      UKAmounts.directionQueryParam(grantsCredits = true, grantsDebits = true) should be(Nil)
+      UKAmounts.directionQueryParam(grantsCredits = false, grantsDebits = false) should be(Nil)
+      UKAmounts.directionQueryParam(grantsCredits = true, grantsDebits = false) should
+        be(List(OBPTransactionDirection(credits = true)))
+      UKAmounts.directionQueryParam(grantsCredits = false, grantsDebits = true) should
+        be(List(OBPTransactionDirection(credits = false)))
+    }
+
+    scenario("the query restriction and the post-filter agree on every amount") {
+      // They are two enforcements of one rule -- the database narrows, the filter is authoritative.
+      // If they disagreed, a row could be selected by one and dropped by the other.
+      for (amount <- List(BigDecimal("-1000"), BigDecimal("-0.01"), BigDecimal(0), BigDecimal("0.01"))) {
+        for ((credits, debits) <- List((true, false), (false, true))) {
+          val queryWouldKeep = UKAmounts.directionQueryParam(credits, debits) match {
+            case List(OBPTransactionDirection(true)) => amount >= 0
+            case List(OBPTransactionDirection(false)) => amount < 0
+            case _ => true
+          }
+          withClue(s"amount $amount credits=$credits debits=$debits: ") {
+            UKAmounts.admitsDirection(Some(amount), credits, debits) should be(queryWouldKeep)
+          }
+        }
       }
     }
 

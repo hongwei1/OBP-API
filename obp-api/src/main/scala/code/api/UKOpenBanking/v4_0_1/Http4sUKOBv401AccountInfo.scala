@@ -2284,18 +2284,19 @@ object Http4sUKOBv401AccountInfo extends MdcLoggable {
           } map { x =>
             unboxFull(fullBoxOrException(x ~> APIFailureNewStyle(UnknownError, 400, Some(cc.toLight))))
           }
-          (transactions, _) <- BankAccountExtended(account).getModeratedTransactionsFuture(bank, Full(u), view, Some(cc), params) map { x =>
+          // Resolved before the query so the direction can shape it: the database has to apply the
+          // restriction and the page limit together, or the page is trimmed after the fact.
+          grantsCredits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_CREDITS_VIEW_ID, account.bankId, accountId, u, cc)
+          grantsDebits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_DEBITS_VIEW_ID, account.bankId, accountId, u, cc)
+          directedParams = params ++ UKAmounts.directionQueryParam(grantsCredits, grantsDebits)
+          (transactions, _) <- BankAccountExtended(account).getModeratedTransactionsFuture(bank, Full(u), view, Some(cc), directedParams) map { x =>
             unboxFull(fullBoxOrException(x ~> APIFailureNewStyle(UnknownError, 400, Some(cc.toLight))))
           }
           // ReadTransactionsCredits / ReadTransactionsDebits restrict which rows the consent may see,
           // not which fields, so they are applied here rather than through the view's can_* set. The
           // views are resolved the same way Detail-or-Basic is just above; holding both, or neither,
           // places no restriction.
-          directedTransactions = UKAmounts.filterByGrantedDirections(
-            transactions,
-            grantsCredits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_CREDITS_VIEW_ID, account.bankId, accountId, u, cc),
-            grantsDebits = UKAmounts.grantsView(Constant.SYSTEM_READ_TRANSACTIONS_DEBITS_VIEW_ID, account.bankId, accountId, u, cc)
-          )
+          directedTransactions = UKAmounts.filterByGrantedDirections(transactions, grantsCredits, grantsDebits)
           (moderatedAttributes: List[TransactionAttribute], _) <- NewStyle.function.getModeratedAttributesByTransactions(
             account.bankId,
             directedTransactions.map(_.id),

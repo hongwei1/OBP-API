@@ -24,6 +24,18 @@ case class OBPOffset(value: Int) extends OBPQueryParam
 case class OBPFromDate(value: Date) extends OBPQueryParam
 case class OBPToDate(value: Date) extends OBPQueryParam
 case class OBPOrdering(field: Option[String], order: OBPOrder) extends OBPQueryParam
+/**
+ * Restrict a transaction query to one direction, so the database applies the restriction and any
+ * page limit together.
+ *
+ * `credits = true` keeps money in, `false` keeps money out. Zero counts as a credit, which is what
+ * UK Open Banking states and what UKAmounts.creditDebitIndicator implements -- the two have to
+ * agree, or a row could be labelled one direction in the response and selected as the other.
+ *
+ * A connector that does not honour this returns more rows than asked for, never fewer, so callers
+ * that use it to enforce a consent's scope must still filter what comes back.
+ */
+case class OBPTransactionDirection(credits: Boolean) extends OBPQueryParam
 case class OBPConsumerId(value: String) extends OBPQueryParam
 case class OBPSortBy(value: String) extends OBPQueryParam
 case class OBPAzp(value: String) extends OBPQueryParam

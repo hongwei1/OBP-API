@@ -1,6 +1,6 @@
 package code.api.UKOpenBanking
 
-import code.api.util.{APIUtil, CallContext}
+import code.api.util.{APIUtil, CallContext, OBPQueryParam, OBPTransactionDirection}
 import code.model.ModeratedTransaction
 import com.openbankproject.commons.model.{AccountId, BankId, BankIdAccountId, User, ViewId}
 
@@ -25,8 +25,13 @@ object UKAmounts {
   def creditDebitIndicator(amount: Option[BigDecimal]): String =
     creditDebitIndicator(amount.getOrElse(BigDecimal(0)))
 
-  /** The magnitude, as the unsigned decimal string the `Amount` field's pattern allows. */
-  def unsignedAmount(amount: BigDecimal): String = amount.abs.toString()
+  /**
+   * The magnitude, as the unsigned decimal string the `Amount` field's pattern allows.
+   *
+   * toPlainString, not toString: BigDecimal renders a negative scale in scientific notation, so
+   * BigDecimal("1E+3").toString is "1E+3" -- which the pattern this exists to satisfy rejects.
+   */
+  def unsignedAmount(amount: BigDecimal): String = amount.abs.bigDecimal.toPlainString
 
   def unsignedAmount(amount: Option[BigDecimal]): String =
     unsignedAmount(amount.getOrElse(BigDecimal(0)))
@@ -74,7 +79,27 @@ object UKAmounts {
     APIUtil.checkViewAccessAndReturnView(
       ViewId(viewId), BankIdAccountId(bankId, accountId), Some(user), Some(callContext)).isDefined
 
-  /** admitsDirection over a transaction list, shared by the v3.1 and v4.0.1 endpoints. */
+  /**
+   * The query restriction matching the directions a consent granted, if any.
+   *
+   * Pushed into the query so the database applies the direction and the page limit together.
+   * Filtering an already-limited page instead would hand the TPP a short page it cannot tell from
+   * the end of the data, and with an offset would make rows unreachable entirely: a Credits-only
+   * consent on an account whose first page is all debits would see nothing at all.
+   *
+   * None when both directions are granted or neither, which is no restriction.
+   */
+  def directionQueryParam(grantsCredits: Boolean, grantsDebits: Boolean): List[OBPQueryParam] =
+    if (grantsCredits == grantsDebits) Nil
+    else List(OBPTransactionDirection(credits = grantsCredits))
+
+  /**
+   * admitsDirection over a transaction list, shared by the v3.1 and v4.0.1 endpoints.
+   *
+   * Still applied after directionQueryParam has narrowed the query, and deliberately so: a
+   * connector other than the mapped one may ignore the query param, and this is what enforces the
+   * consent's scope regardless of what the connector chose to return.
+   */
   def filterByGrantedDirections(
     transactions: List[ModeratedTransaction],
     grantsCredits: Boolean,

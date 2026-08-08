@@ -719,6 +719,12 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
     val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
     val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
+    // Zero is a credit, matching UKAmounts.creditDebitIndicator. `amount` is signed and in the
+    // smallest currency unit, so the sign is all this needs.
+    val direction = queryParams.collect {
+      case OBPTransactionDirection(true) => By_>=(MappedTransaction.amount, 0L)
+      case OBPTransactionDirection(false) => By_<(MappedTransaction.amount, 0L)
+    }.headOption
     val ordering = queryParams.collect {
       //we don't care about the intended sort field and only sort on finish date for now
       case OBPOrdering(_, direction) =>
@@ -728,7 +734,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         }
     }
 
-    val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
+    val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, direction.toSeq, ordering.toSeq).flatten
     val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
 
     def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams: Seq[QueryParam[MappedTransaction]]): Box[List[Transaction]]
@@ -765,6 +771,12 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     val offset = queryParams.collect { case OBPOffset(value) => StartAt[MappedTransaction](value) }.headOption
     val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(MappedTransaction.tFinishDate, date) }.headOption
     val toDate = queryParams.collect { case OBPToDate(date) => By_<=(MappedTransaction.tFinishDate, date) }.headOption
+    // Zero is a credit, matching UKAmounts.creditDebitIndicator. `amount` is signed and in the
+    // smallest currency unit, so the sign is all this needs.
+    val direction = queryParams.collect {
+      case OBPTransactionDirection(true) => By_>=(MappedTransaction.amount, 0L)
+      case OBPTransactionDirection(false) => By_<(MappedTransaction.amount, 0L)
+    }.headOption
     val ordering = queryParams.collect {
       //we don't care about the intended sort field and only sort on finish date for now
       case OBPOrdering(_, direction) =>
@@ -774,7 +786,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
         }
     }
 
-    val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering.toSeq).flatten
+    val optionalParams: Seq[QueryParam[MappedTransaction]] = Seq(limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, direction.toSeq, ordering.toSeq).flatten
     val mapperParams = Seq(By(MappedTransaction.bank, bankId.value), By(MappedTransaction.account, accountId.value)) ++ optionalParams
 
     def getTransactionsCached(bankId: BankId, accountId: AccountId, optionalParams: Seq[QueryParam[MappedTransaction]]): Box[List[TransactionCore]]

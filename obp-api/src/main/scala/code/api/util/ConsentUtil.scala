@@ -41,7 +41,8 @@ import net.liftweb.util.Props
 import java.text.SimpleDateFormat
 import java.util.Date
 import scala.collection.immutable.{List, Nil}
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 // Design boundary (not enforced by the compiler — keep it that way by convention): consent-layer
 // attributes belong on the consent record, never as a View can_* permission. BG's
@@ -944,12 +945,25 @@ object Consent extends MdcLoggable {
             Views.views.vend.revokeAccessToViewForUserAndConsumer(
               BankIdAccountIdViewId(bankId, accountId, viewId), psu, Constant.ALL_CONSUMERS)
 
-            Counterparties.counterparties.vend.getCounterparties(bankId, accountId, viewId)
-              .getOrElse(Nil)
-              .foreach { counterparty =>
-                CounterpartyLimitProvider.counterpartyLimit.vend.deleteCounterpartyLimit(
-                  bankId.value, accountId.value, viewId.value, counterparty.counterpartyId)
-              }
+            // A Failure here is not "this view has no counterparties" -- treating it as such would
+            // skip the deletions and still report success below.
+            Counterparties.counterparties.vend.getCounterparties(bankId, accountId, viewId) match {
+              case Full(counterparties) =>
+                counterparties.foreach { counterparty =>
+                  // Awaited: this deletion is the point of the release, so its failure has to be
+                  // seen rather than left in an unobserved Future that logs nothing.
+                  val deleted = Await.result(
+                    CounterpartyLimitProvider.counterpartyLimit.vend.deleteCounterpartyLimit(
+                      bankId.value, accountId.value, viewId.value, counterparty.counterpartyId),
+                    10.seconds)
+                  if (deleted.isEmpty) logger.warn(
+                    s"releaseVrpMandateArtefacts: could not delete the limit on ${viewId.value} " +
+                    s"for counterparty ${counterparty.counterpartyId}: $deleted")
+                }
+              case other =>
+                logger.warn(s"releaseVrpMandateArtefacts: could not list counterparties on " +
+                  s"${viewId.value} for consent ${consent.consentId}, limits left in place: $other")
+            }
 
             Views.views.vend.removeCustomView(viewId, BankIdAccountId(bankId, accountId)) match {
               case Full(_) =>
@@ -1586,7 +1600,10 @@ object Consent extends MdcLoggable {
     (present(consentUserId), callerUserId.flatMap(present)) match {
       case (Some(psu), Some(caller)) if psu != caller => Some(ErrorMessages.ConsentDoesNotMatchUser)
       case (Some(_), Some(_)) => None
-      case _ if callerIsScaFrontEnd => None
+      // Only while the consent is still unclaimed. A caller with no PSU used to reach this too, so a
+      // declared front end presenting client credentials could drive the authorisation of a consent
+      // already bound to somebody else -- the opposite of what the paragraph above promises.
+      case (None, _) if callerIsScaFrontEnd => None
       case _ => psuOrLodgingTppRefusal(consentUserId, consentConsumerId, callerUserId, callerConsumerId)
     }
   }
