@@ -316,6 +316,17 @@ object Http4sBGv13AIS extends MdcLoggable {
         val callContext = Some(cc)
         for {
           _ <- passesPsd2Aisp(callContext)
+          // The same ownership test its sibling GET /consents/CONSENTID applies twelve lines below.
+          // Without it any PSD2-AISP caller could list the authorisation ids of a consent lodged by
+          // somebody else -- the PUT that answers one is guarded, so this leaked identifiers rather
+          // than access, but the asymmetry between two neighbouring reads of the same consent was an
+          // oversight, not a decision.
+          consent <- Future(Consents.consentProvider.vend.getConsentByConsentId(consentId)) map {
+            unboxFullOrFail(_, callContext, s"$ConsentNotFound ($consentId)")
+          }
+          _ <- booleanToFuture(failMsg = ConsentNotFound, failCode = 403, cc = callContext) {
+            consent.mConsumerId.get == cc.consumer.map(_.consumerId.get).getOrElse("None")
+          }
           (challenges, callContext) <- NewStyle.function.getChallengesByConsentId(consentId, callContext)
         } yield {
           JSONFactory_BERLIN_GROUP_1_3.AuthorisationJsonV13(challenges.map(_.challengeId))
