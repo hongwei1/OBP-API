@@ -533,7 +533,7 @@ object Http4sBGv13AIS extends MdcLoggable {
         val cc = req.callContext
         val callContext = Some(cc)
         val parsedJson = scala.util.Try(json.parse(cc.httpBody.getOrElse(""))).getOrElse(json.JNothing)
-        if (checkTransactionAuthorisation(parsedJson)) {
+        if (startsAuthorisation(parsedJson)) {
           for {
             _ <- passesPsd2Aisp(callContext)
             consent <- Future(Consents.consentProvider.vend.getConsentByConsentId(consentId)) map {
@@ -585,8 +585,12 @@ object Http4sBGv13AIS extends MdcLoggable {
           } yield {
             createStartConsentAuthorisationJson(consent, challenge)
           }
-        } else {
-          // mocked for updatePsuAuthentication and selectPsuAuthenticationMethod variants
+        } else if (checkUpdatePsuAuthentication(parsedJson) || checkSelectPsuAuthenticationMethod(parsedJson)) {
+          // Mocked for the updatePsuAuthentication and selectPsuAuthenticationMethod variants, which
+          // are Embedded-approach steps OBP does not implement. Guarded now: this was the
+          // unconditional final else, so any body the server could not recognise was answered with
+          // this example -- a fabricated authorisationId, returned 201, that matches no challenge.
+          // The TPP only discovers it at the PUT, where the id resolves to nothing.
           Future.successful(com.openbankproject.commons.util.JsonAliases.parse(
             """{
                 "scaStatus": "received",
@@ -597,6 +601,13 @@ object Http4sBGv13AIS extends MdcLoggable {
                     "scaStatus":  {"href":"/v1.3/consents/qwer3456tzui7890/authorisations/123auth456"}
                   }
               }"""))
+        } else {
+          // None of the recognised shapes. A malformed request has to be reported as one; handing
+          // back an id that was never minted only moves the failure somewhere harder to read.
+          Helper.booleanToFuture(
+            failMsg = s"$InvalidJsonFormat The Json body should be empty, or one of " +
+              s"updatePsuAuthentication, selectPsuAuthenticationMethod or transactionAuthorisation.",
+            failCode = 400, cc = callContext)(false).map(_ => json.parse("{}"))
         }
       }
   }
@@ -702,8 +713,11 @@ object Http4sBGv13AIS extends MdcLoggable {
                |    "authoriseTransaction": {"href": "/psd2/v1/payments/1234-wertiq-983/authorisations/123auth456"}
                |  }
                |}""".stripMargin))
-        } else {
-          // authorisationConfirmation variant
+        } else if (checkAuthorisationConfirmation(parsedJson)) {
+          // authorisationConfirmation variant. Guarded by the checker that already existed for it:
+          // this was the unconditional final else, so a body matching none of the four shapes -- an
+          // empty one included -- was answered "scaStatus": "finalised", the terminal success state
+          // of strong customer authentication, for an authorisation nothing had happened to.
           Future.successful(com.openbankproject.commons.util.JsonAliases.parse(
             """{
                |  "scaStatus": "finalised",
@@ -711,6 +725,13 @@ object Http4sBGv13AIS extends MdcLoggable {
                |    "status":  {"href":"/v1/payments/sepa-credit-transfers/qwer3456tzui7890/status"}
                |  }
                |}""".stripMargin))
+        } else {
+          // None of the four Berlin Group shapes. Malformed, and it has to say so: claiming an SCA
+          // outcome for a request the server could not read is worse than any of them.
+          Helper.booleanToFuture(
+            failMsg = s"$InvalidJsonFormat The Json body should be one of updatePsuAuthentication, " +
+              s"selectPsuAuthenticationMethod, transactionAuthorisation or authorisationConfirmation.",
+            failCode = 400, cc = callContext)(false).map(_ => json.parse("{}"))
         }
       }
   }

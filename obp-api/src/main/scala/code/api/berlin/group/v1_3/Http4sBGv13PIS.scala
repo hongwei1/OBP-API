@@ -437,7 +437,7 @@ object Http4sBGv13PIS extends MdcLoggable {
         val callContext = Some(cc)
         val u           = cc.user.openOrThrowException(AuthenticatedUserIsRequired)
         val parsedJson  = scala.util.Try(json.parse(cc.httpBody.getOrElse(""))).getOrElse(json.JNothing)
-        if (checkTransactionAuthorisation(parsedJson)) {
+        if (startsAuthorisation(parsedJson)) {
           for {
             _ <- passesPsd2Pisp(callContext)
             _ <- NewStyle.function.tryons(checkPaymentServerTypeError(paymentService), 404, callContext) {
@@ -463,8 +463,12 @@ object Http4sBGv13PIS extends MdcLoggable {
           } yield {
             JSONFactory_BERLIN_GROUP_1_3.createStartPaymentAuthorisationJson(challenge)
           }
-        } else {
-          // Mocked response for updatePsuAuthentication and selectPsuAuthenticationMethod variants
+        } else if (checkUpdatePsuAuthentication(parsedJson) || checkSelectPsuAuthenticationMethod(parsedJson)) {
+          // Mocked for the updatePsuAuthentication and selectPsuAuthenticationMethod variants, which
+          // are Embedded-approach steps OBP does not implement. Guarded now: this was the
+          // unconditional final else, so any body the server could not recognise was answered with
+          // this example -- a fabricated authorisationId, returned 201, that matches no challenge.
+          // The TPP only discovers it at the PUT, where the id resolves to nothing.
           Future.successful(json.parse(
             """{
               "challengeData": {
@@ -476,6 +480,13 @@ object Http4sBGv13PIS extends MdcLoggable {
                 }
               }
             }"""))
+        } else {
+          // None of the recognised shapes. A malformed request has to be reported as one; handing
+          // back an id that was never minted only moves the failure somewhere harder to read.
+          Helper.booleanToFuture(
+            failMsg = s"$InvalidJsonFormat The Json body should be empty, or one of " +
+              s"updatePsuAuthentication, selectPsuAuthenticationMethod or transactionAuthorisation.",
+            failCode = 400, cc = callContext)(false).map(_ => json.parse("{}"))
         }
       }
   }
@@ -488,7 +499,7 @@ object Http4sBGv13PIS extends MdcLoggable {
         val callContext = Some(cc)
         val u           = cc.user.openOrThrowException(AuthenticatedUserIsRequired)
         val parsedJson  = scala.util.Try(json.parse(cc.httpBody.getOrElse(""))).getOrElse(json.JNothing)
-        if (checkTransactionAuthorisation(parsedJson)) {
+        if (startsAuthorisation(parsedJson)) {
           for {
             _ <- passesPsd2Pisp(callContext)
             _ <- NewStyle.function.tryons(checkPaymentServerTypeError(paymentService), 404, callContext) {
@@ -519,8 +530,12 @@ object Http4sBGv13PIS extends MdcLoggable {
               challenge, paymentService, paymentProduct, paymentId
             )
           }
-        } else {
-          // Mocked for updatePsuAuthentication and selectPsuAuthenticationMethod variants
+        } else if (checkUpdatePsuAuthentication(parsedJson) || checkSelectPsuAuthenticationMethod(parsedJson)) {
+          // Mocked for the updatePsuAuthentication and selectPsuAuthenticationMethod variants, which
+          // are Embedded-approach steps OBP does not implement. Guarded now: this was the
+          // unconditional final else, so any body the server could not recognise was answered with
+          // this example -- a fabricated authorisationId, returned 201, that matches no challenge.
+          // The TPP only discovers it at the PUT, where the id resolves to nothing.
           Future.successful(json.parse(
             """{
               "scaStatus": "received",
@@ -532,6 +547,13 @@ object Http4sBGv13PIS extends MdcLoggable {
                 }
               }
             }"""))
+        } else {
+          // None of the recognised shapes. A malformed request has to be reported as one; handing
+          // back an id that was never minted only moves the failure somewhere harder to read.
+          Helper.booleanToFuture(
+            failMsg = s"$InvalidJsonFormat The Json body should be empty, or one of " +
+              s"updatePsuAuthentication, selectPsuAuthenticationMethod or transactionAuthorisation.",
+            failCode = 400, cc = callContext)(false).map(_ => json.parse("{}"))
         }
       }
   }
@@ -612,8 +634,11 @@ object Http4sBGv13PIS extends MdcLoggable {
                 "authoriseTransaction": {"href": "/psd2/v1.3/payments/1234-wertiq-983/authorisations/123auth456"}
               }
             }"""))
-        } else {
-          // authorisationConfirmation variant
+        } else if (checkAuthorisationConfirmation(parsedJson)) {
+          // authorisationConfirmation variant. Guarded by the checker that already existed for it:
+          // this was the unconditional final else, so a body matching none of the four shapes -- an
+          // empty one included -- was answered "scaStatus": "finalised", the terminal success state
+          // of strong customer authentication, for an authorisation nothing had happened to.
           Future.successful(json.parse(
             """{
               "scaStatus": "finalised",
@@ -621,6 +646,13 @@ object Http4sBGv13PIS extends MdcLoggable {
                 "status":  {"href":"/v1.3/payments/sepa-credit-transfers/qwer3456tzui7890/status"}
               }
             }"""))
+        } else {
+          // None of the four Berlin Group shapes. Malformed, and it has to say so: claiming an SCA
+          // outcome for a request the server could not read is worse than any of them.
+          Helper.booleanToFuture(
+            failMsg = s"$InvalidJsonFormat The Json body should be one of updatePsuAuthentication, " +
+              s"selectPsuAuthenticationMethod, transactionAuthorisation or authorisationConfirmation.",
+            failCode = 400, cc = callContext)(false).map(_ => json.parse("{}"))
         }
       }
   }
@@ -700,8 +732,11 @@ object Http4sBGv13PIS extends MdcLoggable {
                 "authoriseTransaction": {"href": "/psd2/v1.3/payments/1234-wertiq-983/authorisations/123auth456"}
               }
             }"""))
-        } else {
-          // authorisationConfirmation variant
+        } else if (checkAuthorisationConfirmation(parsedJson)) {
+          // authorisationConfirmation variant. Guarded by the checker that already existed for it:
+          // this was the unconditional final else, so a body matching none of the four shapes -- an
+          // empty one included -- was answered "scaStatus": "finalised", the terminal success state
+          // of strong customer authentication, for an authorisation nothing had happened to.
           Future.successful(json.parse(
             """{
               "scaStatus": "finalised",
@@ -709,6 +744,13 @@ object Http4sBGv13PIS extends MdcLoggable {
                 "status":  {"href":"/v1.3/payments/sepa-credit-transfers/qwer3456tzui7890/status"}
               }
             }"""))
+        } else {
+          // None of the four Berlin Group shapes. Malformed, and it has to say so: claiming an SCA
+          // outcome for a request the server could not read is worse than any of them.
+          Helper.booleanToFuture(
+            failMsg = s"$InvalidJsonFormat The Json body should be one of updatePsuAuthentication, " +
+              s"selectPsuAuthenticationMethod, transactionAuthorisation or authorisationConfirmation.",
+            failCode = 400, cc = callContext)(false).map(_ => json.parse("{}"))
         }
       }
   }
