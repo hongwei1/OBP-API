@@ -1117,7 +1117,13 @@ object Consent extends MdcLoggable {
               s"resolved to its shadow user, so this request is NOT scoped to it. Data access is " +
               s"refused by checkUKConsent. Reason: $reason" +
               outcome.failed.map(e => s" (threw ${e.getClass.getSimpleName}: ${e.getMessage})").getOrElse(""))
-            (user, Some(cc.copy(ukConsentUnresolved = Some(reason))))
+            // consentReferenceId as well as the refusal: a refused call must still be attributable
+            // to the consent that caused it from the metrics table, which is where consent traffic
+            // is searchable. Without it the 403s are visible only in the application log.
+            (user, Some(cc.copy(
+              ukConsentUnresolved = Some(reason),
+              consentReferenceId = Some(storedConsent.consentReferenceId)
+            )))
         }
     }
   }
@@ -1797,6 +1803,38 @@ object Consent extends MdcLoggable {
    * Refuses with ConsentNotFound rather than a distinct message, preserving the endpoint's existing
    * 404 so it does not tell a stranger that a consent id exists.
    */
+  /**
+   * The URL segment shared by the UK account-access-consent endpoints, and by nothing else.
+   * Named here rather than repeated at the one place it is matched, so the exemption below and any
+   * future reader of those endpoints see the same string.
+   */
+  val UK_CONSENT_MANAGEMENT_URL_SEGMENT = "account-access-consents"
+
+  /**
+   * Whether a request must be refused because the Bearer token named a UK consent that could not be
+   * resolved to its shadow user. Returns the reason to refuse with 403, or None when it may proceed.
+   *
+   * The principal in that state is still the PSU, whose own AccountAccess rows are wider than any
+   * consent. checkUKConsent refuses it, but only the UK data-read endpoints call checkUKConsent, so
+   * this is what ResourceDocMiddleware applies to every other endpoint family. Without it a consent
+   * we failed to understand outranked one we understood: the successful swap narrows the principal
+   * to the shadow user everywhere, the failed one left the PSU in place everywhere the UK gate does
+   * not run.
+   *
+   * The account-access-consent endpoints are exempt. They are how a TPP inspects and revokes the
+   * very consent this is about, they answer from the consent row rather than from the principal, and
+   * they carry their own guard (assertUKConsentAccess). Refusing them would leave a TPP holding a
+   * consent it can neither use nor clean up.
+   *
+   * Extracted from the middleware for the same reason checkUKConsentAccess is extracted from its
+   * four endpoints: the rule -- and in particular the exemption, which is the part that can go
+   * quietly wrong -- can then be tested without standing up a request. The token path itself cannot
+   * be driven over HTTP from the test suite, since authenticating a Bearer token needs a JWKS the
+   * suite has no key for; that half is covered by the out-of-repo probe matrix.
+   */
+  def unresolvedUKConsentRefusal(ukConsentUnresolved: Option[String], requestUrl: String): Option[String] =
+    ukConsentUnresolved.filterNot(_ => requestUrl.contains(UK_CONSENT_MANAGEMENT_URL_SEGMENT))
+
   def checkObpConsentUserAccess(consentUserId: String, callerHumanUserId: Option[String]): Option[String] = {
     def present(s: String): Option[String] = Option(s).map(_.trim).filter(_.nonEmpty)
 

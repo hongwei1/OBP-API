@@ -2,7 +2,7 @@ package code.api.UKOpenBanking.v4_0_1
 
 import code.api.Constant
 import code.api.util.APIUtil.DateWithDayFormat
-import code.api.util.{CallContext, Consent}
+import code.api.util.{CallContext, Consent, ErrorMessages}
 import code.consent.{ConsentStatus, Consents}
 import code.entitlement.Entitlement
 import code.model.UserExtended
@@ -343,7 +343,44 @@ class UKOpenBankingV401ConsentScopingTests extends UKOpenBankingV401ServerSetup 
       val refusal = intercept[Exception] {
         Consent.checkUKConsent(principal.openOrThrowException("no principal"), Some(cc))
       }
+      // The reason must be the one this scenario is about -- a bare "403" would also be satisfied
+      // by a role, consumer or ownership refusal arriving from somewhere else entirely.
+      refusal.getMessage should include("OBP-20059") // CouldNotAssignAccountAccess
       refusal.getMessage should include("403")
+    }
+
+    /**
+     * The rule ResourceDocMiddleware applies to every endpoint family, including the ones that
+     * never call checkUKConsent.
+     *
+     * Tested here rather than over HTTP because the token path cannot be driven from this suite:
+     * setting ukConsentUnresolved requires an authenticated request whose Authorization header is a
+     * Bearer JWT, and authenticating one needs a JWKS the suite has no signing key for. That is also
+     * why the scenarios above call applyUKConsentPrincipalFromToken directly. The wiring -- that the
+     * middleware consults this rule at all -- is covered by the probe matrix, which drives a real
+     * OBP-native endpoint with a real token against a running instance.
+     */
+    scenario("the refusal rule covers other endpoint families, and exempts consent management", UKConsentScoping) {
+      val reason = Some(ErrorMessages.ConsentNamesNoAccount)
+
+      Given("a request whose token named a UK consent that could not be resolved")
+      Then("an endpoint that does not call checkUKConsent is refused all the same")
+      Consent.unresolvedUKConsentRefusal(reason, "/obp/v5.1.0/my/accounts") should equal(reason)
+      Consent.unresolvedUKConsentRefusal(reason, "/obp/v4.0.0/banks/BANK_ID/accounts") should equal(reason)
+
+      And("so is a UK data endpoint, which checkUKConsent would also have caught")
+      Consent.unresolvedUKConsentRefusal(reason, "/open-banking/v4.0.1/aisp/accounts") should equal(reason)
+
+      And("but the consent-management endpoints stay reachable, or the TPP cannot clear it up")
+      Consent.unresolvedUKConsentRefusal(
+        reason, "/open-banking/v4.0.1/aisp/account-access-consents/CONSENT_ID") should equal(None)
+      Consent.unresolvedUKConsentRefusal(
+        reason, "/open-banking/v3.1/account-access-consents") should equal(None)
+
+      And("a request with no unresolved consent is never refused by this rule")
+      Consent.unresolvedUKConsentRefusal(None, "/obp/v5.1.0/my/accounts") should equal(None)
+      Consent.unresolvedUKConsentRefusal(
+        None, "/open-banking/v4.0.1/aisp/account-access-consents") should equal(None)
     }
 
     scenario("the consent stays inspectable and revocable by the TPP that lodged it", UKConsentScoping) {
