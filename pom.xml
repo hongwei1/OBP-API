@@ -59,7 +59,7 @@
          ${java.version} would make that impossible to express. That is exactly what happened on
          2026-07-03: java.version had just gone to 25 while a build host was still on 21, scalac
          rejected -release 25 with "'25' is not a valid choice for '-release'", and the symptom was
-         read as a Scala-version limit.
+         read as a Scala-version limit. maven-enforcer-plugin now fails fast on that case instead.
 
          Caveat: on Scala 2.12 this only widens the visible API surface, it does not raise the
          class-file version. 2.12 emits Java 8 class files whatever -release says, so a Scala class
@@ -314,6 +314,38 @@
                     <filtering>true</filtering>
                   </resource>
                 </resources>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Fail fast when the build JDK is older than scalac's -release. scalac cannot target a
+             release newer than the JDK running it, so without this check the build dies minutes
+             later inside scala-maven-plugin with "'25' is not a valid choice for '-release'" -
+             which reads as a Scala-version limit rather than a stale build host, and was misread
+             that way on 2026-07-03. The bound is ${scalac.release} itself, not a literal, so the
+             rule can never drift from the actual constraint.
+
+             No custom <message>: the rule's default text is strictly more useful here, naming the
+             detected version, its JAVA_HOME and the required range, e.g.
+               Detected JDK version 17.0.5 (JAVA_HOME=...) is not in the allowed range [25,).
+             A custom message would replace that rather than add to it. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.5.0</version>
+          <executions>
+            <execution>
+              <id>enforce-build-jdk</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <requireJavaVersion>
+                    <version>[${scalac.release},)</version>
+                  </requireJavaVersion>
+                </rules>
               </configuration>
             </execution>
           </executions>
