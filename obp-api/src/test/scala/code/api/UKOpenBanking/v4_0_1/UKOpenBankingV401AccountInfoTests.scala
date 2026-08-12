@@ -35,6 +35,13 @@ import scala.concurrent.duration._
 // token, which let a token with no bound consent reach 500 instead of the 403
 // OBP-35035 every other AISP data endpoint gives it.
 //
+// That 401/not-401 limit is also why the two aggregate endpoints' substance is covered out of
+// repo. What getTransactions does per account -- resolve that account's own bank for moderation,
+// and resolve and apply the consent's granted transaction directions -- only happens once a real
+// consent is in play, which needs a Bearer token this suite cannot mint. uk_direction.py drives it
+// against a running instance with a real consent, on the bulk path as well as the per-account one;
+// it was the bulk path being absent from that probe that let the gap stand.
+//
 // The remaining 80 endpoints are still static spec-faithful stubs; their tests
 // are unchanged (two scenarios: authenticated -> fixed code, unauthenticated -> 401).
 class UKOpenBankingV401AccountInfoTests extends UKOpenBankingV401ServerSetup {
