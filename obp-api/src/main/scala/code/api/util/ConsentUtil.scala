@@ -1756,6 +1756,37 @@ object Consent extends MdcLoggable {
   }
 
   /**
+   * checkBerlinGroupConsentAccess for the five endpoints that read or delete a consent resource,
+   * refusing with the answer those endpoints have always given.
+   *
+   * They answer `ConsentNotFound` at 403 whatever the reason, which is deliberate: a caller who is
+   * not entitled to a consent should not be able to tell "it is not yours" from "there is no such
+   * consent", or the endpoint becomes a way to confirm that an id exists. The rule's own
+   * ConsentDoesNotMatchUser / ConsentDoesNotMatchConsumer say which, so the reason is logged rather
+   * than returned. The authorisation pair does return it -- there the caller is mid-ceremony on a
+   * consent it has already been handed, and needs to know why it was stopped.
+   *
+   * Not a general-purpose wrapper: assertUKConsentAccess next to it passes the reason through, and
+   * that difference is the point rather than an inconsistency to iron out.
+   */
+  def assertBerlinGroupConsentReadAccess(
+    consentUserId: String,
+    consentConsumerId: String,
+    callContext: CallContext
+  ): Future[Box[Unit]] = {
+    val refusal = checkBerlinGroupConsentAccess(
+      consentUserId, consentConsumerId,
+      genuinePsu(callContext).map(_.userId), callContext.consumer.map(_.consumerId.get),
+      isScaFrontEnd(callContext.consumer.map(_.consumerId.get)))
+    refusal.foreach { reason =>
+      logger.info(
+        s"A consent read was refused: $reason. Reported as ${ErrorMessages.ConsentNotFound} so the " +
+        s"caller cannot tell a consent that is not theirs from one that does not exist.")
+    }
+    Helper.booleanToFuture(ErrorMessages.ConsentNotFound, 403, Some(callContext))(refusal.isEmpty)
+  }
+
+  /**
    * Whether the Consumer making this call is one the ASPSP declared as its own SCA front end.
    *
    * Not Berlin-Group-specific: the same front end drives the UK approval screen, and the same
