@@ -2051,9 +2051,18 @@ object Consent extends MdcLoggable {
       consentUserId, consentConsumerId,
       actingPsu(callContext).map(_.userId), callContext.consumer.map(_.consumerId.get),
       isScaFrontEnd(callContext.consumer.map(_.consumerId.get)))
-    // booleanToFuture only reads failMsg when the statement is false, so the empty default is never
-    // the message anyone sees.
-    Helper.booleanToFuture(refusal.getOrElse(""), 403, Some(callContext))(refusal.isEmpty)
+    // ConsentNotFound whatever the reason, and the same answer these endpoints give for a consent id
+    // that matches nothing at all. A caller who is not entitled to a consent must not be able to
+    // tell "there is no such consent" from "that one is not yours", or the endpoint is a way to
+    // confirm which ids exist. The rule's own ConsentDoesNotMatchUser / ConsentDoesNotMatchConsumer
+    // say which, so the reason is logged rather than returned -- same shape as the Berlin Group
+    // read wrapper above, which is the answer this one was brought into line with.
+    refusal.foreach { reason =>
+      logger.info(
+        s"A UK consent read was refused: $reason. Reported as ${ErrorMessages.ConsentNotFound} so " +
+        s"the caller cannot tell a consent that is not theirs from one that does not exist.")
+    }
+    Helper.booleanToFuture(ErrorMessages.ConsentNotFound, 403, Some(callContext))(refusal.isEmpty)
   }
 
   /**
