@@ -87,10 +87,45 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
         equal(Some(ConsentDoesNotMatchUser))
     }
 
+    // Matching the PSU is necessary, not sufficient. It used to be sufficient: the rule returned
+    // None the moment the two PSU ids agreed, without ever looking at the Consumer, so a second TPP
+    // holding a session for the same person could read and revoke the consent a first TPP lodged.
+    // One TPP's mandate over a consent is not another's -- the same principle the payment guard in
+    // Http4sBGv13PIS states, and IG 4.11's "may only apply to resources which have been created by
+    // the same TPP before" admits no PSU exception.
+    scenario("a second TPP holding a session for the consent's own PSU is still refused", BerlinGroupV13ConsentAccess) {
+      Consent.checkBerlinGroupConsentAccess(psu, tpp, Some(psu), Some(otherTpp), callerIsScaFrontEnd = false) should
+        equal(Some(ConsentDoesNotMatchConsumer))
+    }
+
     scenario("blank ids count as absent, not as a value to match", BerlinGroupV13ConsentAccess) {
-      Consent.checkBerlinGroupConsentAccess(null, null, None, None, callerIsScaFrontEnd = false) should equal(None)
       Consent.checkBerlinGroupConsentAccess("   ", tpp, Some(psu), Some(tpp), callerIsScaFrontEnd = false) should equal(None)
       Consent.checkBerlinGroupConsentAccess(psu, tpp, Some("  "), Some(tpp), callerIsScaFrontEnd = false) should equal(None)
+    }
+
+    // This assertion is inverted from what it used to say. It read
+    //   checkBerlinGroupConsentAccess(null, null, None, None, false) should equal(None)
+    // which pinned a consent recording no TPP as addressable by anybody -- "absent" was being read
+    // as "matches everything" rather than as "there is nobody this belongs to". Neither standard
+    // supports that: IG 4.11 scopes a resource to the TPP that created it, and UK scopes GET and
+    // DELETE to "an account-access-consent resource that they have created". A row naming no TPP
+    // satisfies neither, so it belongs to nobody and is refused.
+    //
+    // It is a real population, not a hypothetical: 10 of 566 Berlin Group consents and 4 of 753 UK
+    // consents record no consumer on a long-lived instance. They are already unreachable in Berlin
+    // Group today, by accident -- the hand-rolled `null == "None"` compare in the five reads is
+    // false for everyone -- so refusing them here changes nothing for those callers and only stops
+    // the UK pair, and the reads once they move onto this rule, from opening up.
+    scenario("a consent that records no lodging TPP belongs to nobody", BerlinGroupV13ConsentAccess) {
+      Consent.checkBerlinGroupConsentAccess(null, null, None, None, callerIsScaFrontEnd = false) should
+        equal(Some(ConsentDoesNotMatchConsumer))
+      Consent.checkBerlinGroupConsentAccess(null, "  ", Some(psu), Some(tpp), callerIsScaFrontEnd = false) should
+        equal(Some(ConsentDoesNotMatchConsumer))
+    }
+
+    scenario("an operator can restore the old behaviour for a migration window", BerlinGroupV13ConsentAccess) {
+      setPropsValues("consent_allow_legacy_unrecorded_tpp" -> "true")
+      Consent.checkBerlinGroupConsentAccess(null, null, None, None, callerIsScaFrontEnd = false) should equal(None)
     }
   }
 

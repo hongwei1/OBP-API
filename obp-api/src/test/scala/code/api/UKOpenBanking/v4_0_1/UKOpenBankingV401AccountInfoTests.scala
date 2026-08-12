@@ -54,12 +54,18 @@ class UKOpenBankingV401AccountInfoTests extends UKOpenBankingV401ServerSetup {
       |  "Risk": {}
       |}""".stripMargin
 
+  // consumerId is the consumer these consents are then read with (getAuthed signs as testConsumer),
+  // because that is what the endpoint itself records -- createAccountAccessConsents passes the
+  // calling consumer straight into saveUKConsent. It used to pass None here, which produced a row
+  // no production path creates: one naming no lodging TPP. That was invisible while such a row was
+  // readable by anyone, and became a 403 the moment "records no TPP" stopped meaning "matches every
+  // caller". The fixture was the thing that was wrong.
   private def createRealConsent(): String = {
     val consent = Consents.consentProvider.vend.saveUKConsent(
       user = Some(resourceUser1),
       bankId = None,
       accountIds = None,
-      consumerId = None,
+      consumerId = Some(testConsumer.consumerId.get),
       permissions = consentPermissions,
       expirationDateTime = Some(DateWithDayFormat.parse("2030-01-01")),
       transactionFromDateTime = Some(DateWithDayFormat.parse("2020-01-01")),
