@@ -344,6 +344,38 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
 
   feature("BG v1.3 - the consent reads apply the same ownership rule as the authorisation pair") {
 
+    // A caller not entitled to a consent must not be able to tell "there is no such consent" from
+    // "that one is not yours", or the endpoint confirms which ids are real. Four of these five reads
+    // were unified to a bare ConsentNotFound; getConsentScaStatus kept spelling the id back, because
+    // the replacement matched the default-status-code spelling and this site already passed 403
+    // explicitly. Same status either way, different body -- so the oracle survived at one endpoint.
+    scenario("every read answers a missing consent exactly as it answers a foreign one", BerlinGroupV13ConsentAccess) {
+      val someoneElses = createUnclaimedBerlinGroupConsent().consentId
+      val missing = "no-such-consent-at-all"
+
+      // Status and the tppMessages entry, not the whole body: the Berlin Group error envelope
+      // carries a `path` field holding the request path, so it always contains whichever id the
+      // caller themselves put in the URL. That is not a leak -- they already knew it -- and
+      // comparing it would make this scenario impossible to satisfy for the wrong reason.
+      def answers(consentId: String) = consentReads(consentId, user2).map { case (what, r) =>
+        val message = r.body.extract[ErrorMessagesBG].tppMessages.head
+        what -> (r.code, message.code, message.text)
+      }
+
+      answers(someoneElses).zip(answers(missing)).foreach { case ((what, foreign), (_, absent)) =>
+        withClue(s"'$what' tells a foreign consent from a missing one: ") {
+          foreign should equal(absent)
+        }
+      }
+
+      And("and the message names no consent")
+      answers(missing).foreach { case (what, (_, _, text)) =>
+        withClue(s"'$what' echoed the id: ") {
+          text should not include missing
+        }
+      }
+    }
+
     scenario("the lodging TPP acting for a second PSU cannot read a consent bound to the first", BerlinGroupV13ConsentAccess) {
       val consentId = createUnclaimedBerlinGroupConsent().consentId
       Consents.consentProvider.vend.updateConsentUser(consentId, resourceUser1)
