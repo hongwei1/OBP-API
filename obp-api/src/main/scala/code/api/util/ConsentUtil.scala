@@ -15,6 +15,7 @@ import code.bankconnectors.Connector
 import code.consent
 import code.consent.ConsentStatus.ConsentStatus
 import code.loginattempts.LoginAttempt
+import net.liftweb.util.Helpers.tryo
 import code.consent.{ConsentStatus, Consents, MappedConsent}
 import code.consumer.Consumers
 import code.context.{ConsentAuthContextProvider, UserAuthContextProvider}
@@ -1992,27 +1993,44 @@ object Consent extends MdcLoggable {
     callContext: Option[CallContext]
   ): Future[Box[Unit]] = Future {
     implicit val dateFormats: Formats = CustomJsonFormats.formats
-    val consentAccounts: List[(String, String)] = JwtUtil.getSignedPayloadAsJson(storedConsent.jsonWebToken)
-      .map(com.openbankproject.commons.util.JsonAliases.parse(_).extract[ConsentJWT])
-      .map(_.views.map(v => (v.bank_id, v.account_id)).distinct)
-      .getOrElse(Nil)
-      .filter { case (bankId, accountId) => bankId != null && accountId != null }
+    // The Box is carried rather than flattened to Nil. "This consent names no accounts" is a
+    // legitimate state -- the availableAccounts shape described above -- and "its JWT cannot be
+    // read" is not, and a `getOrElse(Nil)` collapsed the second into the first: the guard then
+    // found nothing to object to and passed on a consent it had learned nothing about.
+    //
+    // tryo around the Box as well, because Box.map does not catch: getSignedPayloadAsJson returns a
+    // Failure only for a structurally invalid JWT, while a well-formed one carrying some other
+    // payload throws out of the extract instead. Both are the same answer here -- we cannot tell
+    // what this consent covers -- and both now reach it as a refusal rather than one as a 500.
+    val consentAccounts: Box[List[(String, String)]] = tryo {
+      JwtUtil.getSignedPayloadAsJson(storedConsent.jsonWebToken)
+        .map(com.openbankproject.commons.util.JsonAliases.parse(_).extract[ConsentJWT])
+    }.flatMap(box => box)
+      .map(_.views.map(v => (v.bank_id, v.account_id)).distinct
+        .filter { case (bankId, accountId) => bankId != null && accountId != null })
 
-    val notHeld: List[String] = consentAccounts
-      .groupBy(_._1)
-      .toList
-      .flatMap { case (bankId, pairs) =>
-        val held = AccountHolders.accountHolders.vend
-          .getAccountsHeld(BankId(bankId), psu)
-          .map(_.accountId.value)
-        pairs.map(_._2).filterNot(held.contains)
-      }
-
-    (notHeld.isEmpty, notHeld): (Boolean, List[String])
-  } flatMap { case (allHeld: Boolean, notHeld: List[String]) =>
-    Helper.booleanToFuture(
-      s"${ErrorMessages.ConsentAccountNotHeldByUser} Account(s): ${notHeld.mkString(", ")}",
-      403, callContext)(allHeld)
+    consentAccounts.map { accounts =>
+      accounts
+        .groupBy(_._1)
+        .toList
+        .flatMap { case (bankId, pairs) =>
+          val held = AccountHolders.accountHolders.vend
+            .getAccountsHeld(BankId(bankId), psu)
+            .map(_.accountId.value)
+          pairs.map(_._2).filterNot(held.contains)
+        }
+    }
+  } flatMap {
+    case Full(notHeld) =>
+      Helper.booleanToFuture(
+        s"${ErrorMessages.ConsentAccountNotHeldByUser} Account(s): ${notHeld.mkString(", ")}",
+        403, callContext)(notHeld.isEmpty)
+    case unreadable =>
+      logger.warn(
+        s"assertBerlinGroupConsentAccountsHeld: consent ${storedConsent.consentId} has no readable " +
+        s"JWT, so which accounts it covers cannot be established and the authorisation is refused: " +
+        s"$unreadable")
+      Helper.booleanToFuture(ErrorMessages.ConsentNotFound, 403, callContext)(false)
   }
 
   /**

@@ -547,6 +547,45 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
       }
     }
 
+    // assertBerlinGroupConsentAccountsHeld had no test of its own. These give it one, and the third
+    // is the point: it read a JWT it could not parse as "this consent names no accounts", which is a
+    // legitimate state (the availableAccounts shape) rather than an error, so the guard passed on a
+    // consent it had learned nothing about.
+    //
+    // Reaching that needs a STRUCTURALLY invalid JWT. A well-formed one carrying the wrong payload
+    // throws inside Box.map instead and already fails closed with a 500. An empty string is the
+    // shape a real instance produces: createConsent writes the consent row before computing and
+    // storing the JWT, so a consent whose JWT generation failed persists with none.
+    scenario("the accounts-held guard refuses a PSU who does not hold the consent's accounts", BerlinGroupV13ConsentAccess) {
+      setPropsValues("suggested_default_sca_method" -> "DUMMY")
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
+
+      Then("the PSU who holds the named account may start the authorisation")
+      startAuthorisation(consentId, clientCredentialsSession, psuIdHeader(resourceUser1Name)).code should equal(201)
+
+      And("a PSU who does not hold it may not")
+      val refused = startAuthorisation(consentId, clientCredentialsSession, psuIdHeader(resourceUser2.name))
+      refused.code should equal(403)
+    }
+
+    scenario("a consent whose JWT cannot be read grants nobody the benefit of the doubt", BerlinGroupV13ConsentAccess) {
+      setPropsValues("suggested_default_sca_method" -> "DUMMY")
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
+      Consents.consentProvider.vend.setJsonWebToken(consentId, "")
+
+      When("a PSU who does not hold the consent's accounts starts an authorisation")
+      val response = startAuthorisation(consentId, clientCredentialsSession, psuIdHeader(resourceUser2.name))
+
+      Then("it is refused, rather than passing because the account list came back empty")
+      response.code should not equal 201
+
+      And("no challenge was minted for them")
+      Challenges.ChallengeProvider.vend.getChallengesByConsentId(consentId) match {
+        case Full(challenges) => challenges shouldBe empty
+        case _                => // no rows at all is the same answer
+      }
+    }
+
     scenario("A client-credentials TPP completes SCA for the PSU it names in PSU-ID", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
       val consentId = createUnclaimedBerlinGroupConsent().consentId
