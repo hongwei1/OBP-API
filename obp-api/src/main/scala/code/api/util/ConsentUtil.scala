@@ -14,6 +14,7 @@ import code.api.{APIFailure, APIFailureNewStyle, Constant, RequestHeader}
 import code.bankconnectors.Connector
 import code.consent
 import code.consent.ConsentStatus.ConsentStatus
+import code.loginattempts.LoginAttempt
 import code.consent.{ConsentStatus, Consents, MappedConsent}
 import code.consumer.Consumers
 import code.context.{ConsentAuthContextProvider, UserAuthContextProvider}
@@ -2133,13 +2134,44 @@ object Consent extends MdcLoggable {
    * that is not local is looked up across providers and accepted only when exactly one user answers
    * to it. Two would make the header ambiguous, and choosing between them is not the ASPSP's to do
    * on the PSU's behalf.
+   *
+   * ==A deleted or locked user does not answer to it==
+   *
+   * This header names somebody the ASPSP then acts for: the PSU it resolves to is checked against
+   * the consent's accounts, an SCA challenge is minted for them and an OTP goes out to them, and the
+   * PUT twin binds the consent to them, after which it grants access to their accounts. None of that
+   * authenticates the PSU -- under Berlin Group the caller is the TPP and the PSU arrives as a header
+   * value -- so AfterApiAuth.checkUserIsDeletedOrLocked, which every authenticated request passes
+   * through, never runs on this path.
+   *
+   * A lock is the ASPSP's decision that this user may not authenticate. Resolving them here anyway
+   * routes around that decision, and nothing downstream catches it: the accounts really are theirs,
+   * so the holdings check passes. Same predicates as the canonical guard rather than a second
+   * opinion about what "usable" means.
+   *
+   * Refused as Empty, not with a reason of its own. resolvePsuIdHeader turns an unresolved header
+   * into UserNotFoundByProviderAndUsername at 401 -- the standard's PSU_CREDENTIALS_INVALID -- and a
+   * locked user has to get that same answer. A distinct "that user is locked" would tell a TPP the
+   * username exists, which is the existence oracle the consent reads were unified to close.
    */
   def findPsuByPsuId(psuId: String): Box[User] =
-    Users.users.vend.getUserByProviderAndUsername(Constant.localIdentityProvider, psuId) or {
+    Users.users.vend.getUserByProviderAndUsername(Constant.localIdentityProvider, psuId).or {
       Users.users.vend.getUsersByUsername(psuId) match {
         case theOnlyOne :: Nil => Full(theOnlyOne)
         case _                 => Empty
       }
+    }.filter { user =>
+      val unusable =
+        if (user.isDeleted.getOrElse(false)) Some(ErrorMessages.UserIsDeleted)
+        else if (LoginAttempt.userIsLocked(user.provider, user.name)) Some(ErrorMessages.UsernameHasBeenLocked)
+        else None
+      unusable.foreach { reason =>
+        logger.info(
+          s"findPsuByPsuId: PSU-ID named a user who may not act ($reason). Reported as " +
+          s"${ErrorMessages.UserNotFoundByProviderAndUsername} so the caller cannot tell that the " +
+          s"username exists.")
+      }
+      unusable.isEmpty
     }
 
   def createUKConsentJWT(

@@ -10,6 +10,7 @@ import code.api.util.ErrorMessages.{BerlinGroupPsuNotIdentified, ConsentDoesNotM
 import code.consent.{ConsentStatus, Consents}
 import code.model.TokenType.Access
 import code.token.Tokens
+import code.userlocks.UserLocksProvider
 import code.transactionChallenge.Challenges
 import net.liftweb.common.{Empty, Full}
 import net.liftweb.util.Helpers.randomString
@@ -181,6 +182,39 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
       body should include("OBP-20060")
       body should not include "userId :"
       body should not include resourceUser2.userId
+    }
+  }
+
+  // The PSU-ID header names a person the ASPSP then acts for: it resolves to a user, that user is
+  // checked against the consent's accounts, an SCA challenge is minted for them and an OTP goes out
+  // to them, and the PUT twin binds the consent to them. None of that authenticates the PSU -- under
+  // Berlin Group the caller is the TPP -- so the guard every authenticated request gets from
+  // AfterApiAuth.checkUserIsDeletedOrLocked never runs on this path. A lock says the ASPSP has
+  // decided this user may not authenticate; resolving them here anyway routes around that decision,
+  // and every later check passes because the accounts really are theirs.
+  feature("Consent.findPsuByPsuId only resolves a user who may still act") {
+
+    scenario("a live user resolves", BerlinGroupV13ConsentAccess) {
+      Consent.findPsuByPsuId(resourceUser1.name).map(_.userId) should equal(Full(resourceUser1.userId))
+    }
+
+    scenario("a locked user does not resolve", BerlinGroupV13ConsentAccess) {
+      UserLocksProvider.lockUser(resourceUser2.provider, resourceUser2.name)
+      try {
+        Consent.findPsuByPsuId(resourceUser2.name) should equal(Empty)
+      } finally {
+        UserLocksProvider.unlockUser(resourceUser2.provider, resourceUser2.name)
+      }
+      And("unlocking puts them back")
+      Consent.findPsuByPsuId(resourceUser2.name).map(_.userId) should equal(Full(resourceUser2.userId))
+    }
+
+    // Empty rather than a distinct "this user is locked": resolvePsuIdHeader turns an unresolved
+    // header into UserNotFoundByProviderAndUsername at 401, and a locked user must get that same
+    // answer. Telling the two apart would hand a TPP a way to confirm that a username exists, which
+    // is the oracle the consent reads were unified to close.
+    scenario("the refusal does not say which of the two it was", BerlinGroupV13ConsentAccess) {
+      Consent.findPsuByPsuId("no-such-user-at-all") should equal(Empty)
     }
   }
 
@@ -457,6 +491,29 @@ class BerlinGroupV13ConsentAccessTests extends BerlinGroupConsentFixtures {
    * all.
    */
   feature("BG v1.3 - an Embedded SCA challenge belongs to the PSU, not to the TPP relaying it") {
+
+    // The refusal has to land before the challenge is minted, not after. Starting an authorisation
+    // sends an OTP to the person PSU-ID names, out of band -- so a locked user being resolvable here
+    // means the ASPSP messages somebody it has already decided may not authenticate, and the TPP is
+    // one answered code away from binding their accounts to a consent.
+    scenario("A locked PSU named in PSU-ID gets no challenge at all", BerlinGroupV13ConsentAccess) {
+      setPropsValues("suggested_default_sca_method" -> "DUMMY")
+      val consentId = createUnclaimedBerlinGroupConsent().consentId
+
+      UserLocksProvider.lockUser(resourceUser1.provider, resourceUser1Name)
+      val refused =
+        try startAuthorisation(consentId, clientCredentialsSession, psuIdHeader(resourceUser1Name))
+        finally UserLocksProvider.unlockUser(resourceUser1.provider, resourceUser1Name)
+
+      Then("it is refused as an unresolvable PSU-ID, saying nothing about the lock")
+      refused.code should equal(401)
+
+      And("no challenge was minted, so nobody was messaged")
+      Challenges.ChallengeProvider.vend.getChallengesByConsentId(consentId) match {
+        case Full(challenges) => challenges shouldBe empty
+        case _                => // no rows at all is the same answer
+      }
+    }
 
     scenario("A client-credentials TPP completes SCA for the PSU it names in PSU-ID", BerlinGroupV13ConsentAccess) {
       setPropsValues("suggested_default_sca_method" -> "DUMMY")
