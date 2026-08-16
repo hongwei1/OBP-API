@@ -963,7 +963,10 @@ object Http4s600 {
               APIUtil.fullPasswordValidation(postedData.password)
             }
             _ <- Helper.booleanToFuture(DuplicateUsername, 409, Some(cc)) {
-              AuthUser.find(net.liftweb.mapper.By(AuthUser.username, postedData.username)).isEmpty
+              import doobie._; import doobie.implicits._
+              code.api.util.DoobieUtil.runQuery(
+                fr"SELECT COUNT(*) FROM authuser WHERE username = ${postedData.username}".query[Long].unique
+              ) == 0L
             }
             userCreated <- Future {
               AuthUser.create
@@ -1034,15 +1037,15 @@ object Http4s600 {
               400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[code.api.v6_0_0.JSONFactory600.PostResetPasswordUrlJsonV600]
             }
-            authUserBox <- Future {
-              AuthUser.find(net.liftweb.mapper.By(AuthUser.username, postedData.username))
+            authRowOpt <- Future {
+              code.model.dataAccess.DoobieAuthUserProvider.findPasswordResetInfoByUsername(postedData.username)
             }
-            authUser <- NewStyle.function.tryons(s"$UnknownError User not found or validation failed", 400, Some(cc)) {
-              authUserBox match {
-                case Full(user) if user.validated.get && user.email.get == postedData.email =>
+            authRow <- NewStyle.function.tryons(s"$UnknownError User not found or validation failed", 400, Some(cc)) {
+              authRowOpt match {
+                case Some(row) if row.validated.getOrElse(false) && row.email.exists(_ == postedData.email) =>
                   Users.users.vend.getUserByUserId(postedData.user_id) match {
                     case Full(resourceUser) if resourceUser.name == postedData.username &&
-                                               resourceUser.emailAddress == postedData.email => user
+                                               resourceUser.emailAddress == postedData.email => row
                     case _ => throw new Exception("User ID does not match username and email")
                   }
                 case _ => throw new Exception("User not found, not validated, or email mismatch")
@@ -1053,12 +1056,11 @@ object Http4s600 {
               case _ => Future.failed(new Exception(s"$IncompleteServerConfiguration public_obp_portal_url (or legacy portal_external_url) is not set"))
             }
             resetLink <- Future {
-              val user: AuthUser = authUser
-              user.uniqueId.set(java.util.UUID.randomUUID().toString.replace("-", ""))
-              user.save
+              val newUniqueId = java.util.UUID.randomUUID().toString.replace("-", "")
+              code.model.dataAccess.DoobieAuthUserProvider.updateUniqueId(authRow.id, newUniqueId)
               val expiryMinutes = APIUtil.getPropsAsIntValue("password_reset_token_expiry_minutes", 120)
               val claimsSet = new com.nimbusds.jwt.JWTClaimsSet.Builder()
-                .subject(user.uniqueId.get)
+                .subject(newUniqueId)
                 .expirationTime(new java.util.Date(System.currentTimeMillis() + expiryMinutes * 60L * 1000L))
                 .issueTime(new java.util.Date()).build()
               val jwtToken = CertificateUtil.jwtWithHmacProtection(claimsSet)
@@ -1069,9 +1071,9 @@ object Http4s600 {
             // cannot be sent, say so instead of reporting "sent".
             _ <- CommonsEmailWrapper.sendHtmlEmailEither(CommonsEmailWrapper.EmailContent(
               from = AuthUser.emailFrom,
-              to = List(authUser.email.get),
+              to = List(authRow.email.getOrElse("")),
               bcc = AuthUser.bccEmail.toList,
-              subject = "Reset your password - " + authUser.username.get,
+              subject = "Reset your password - " + authRow.username.getOrElse(""),
               textContent = Some(s"Please reset your password: $resetLink"),
               htmlContent = Some(s"<p>Please reset your password: <a href='$resetLink'>$resetLink</a></p>")
             )) match {
@@ -1087,7 +1089,7 @@ object Http4s600 {
             // it would let any caller with canCreateResetPasswordUrl complete a reset
             // without controlling the target mailbox, defeating the email-proves-
             // mailbox-ownership property of the flow. The link goes via email only.
-            JSONFactory600.ResetPasswordEmailSentJsonV600(status = "sent", to = authUser.email.get)
+            JSONFactory600.ResetPasswordEmailSentJsonV600(status = "sent", to = authRow.email.getOrElse(""))
           }
         }
     }
@@ -4100,28 +4102,24 @@ object Http4s600 {
                 throw new Exception("Invalid token signature")
               signedJWT.getJWTClaimsSet.getSubject
             }
-            authUser <- Future {
-              code.model.dataAccess.AuthUser.findUserByValidationToken(uniqueId) match {
-                case Full(u) => Full(u)
-                case Empty => Empty
-                case f: net.liftweb.common.Failure => f
+            row <- NewStyle.function.tryons(
+              s"$UserNotFoundByToken Invalid or expired validation token", 404, Some(cc)) {
+              code.model.dataAccess.DoobieAuthUserProvider.findByUniqueId(uniqueId) match {
+                case Some(r) => r
+                case None    => throw new Exception("User not found")
               }
             }
-            user <- NewStyle.function.tryons(
-              s"$UserNotFoundByToken Invalid or expired validation token", 404, Some(cc)) {
-              authUser.openOrThrowException("User not found")
-            }
             _ <- Helper.booleanToFuture(s"$UserAlreadyValidated User email is already validated", cc = Some(cc)) {
-              !user.validated.get
+              !row.validated.getOrElse(true)
             }
-            validatedUser <- Future(code.model.dataAccess.AuthUser.validateAndResetToken(user))
-            _ <- Future(code.model.dataAccess.AuthUser.grantDefaultEntitlementsToAuthUser(validatedUser))
+            _ <- Future(code.model.dataAccess.DoobieAuthUserProvider.validateAndRotateToken(row.id))
+            _ <- Future(APIUtil.grantDefaultEntitlementsToNewUser(row.userId.getOrElse("")))
           } yield JSONFactory600.ValidateUserEmailResponseJsonV600(
-            user_id = validatedUser.user.obj.map(_.userId).getOrElse(""),
-            email = validatedUser.email.get,
-            username = validatedUser.username.get,
-            provider = validatedUser.provider.get,
-            validated = validatedUser.validated.get,
+            user_id = row.userId.getOrElse(""),
+            email = row.email.getOrElse(""),
+            username = row.username.getOrElse(""),
+            provider = row.provider.getOrElse(""),
+            validated = true,
             message = "Email validated successfully")
         }
     }
@@ -4154,15 +4152,15 @@ object Http4s600 {
                 throw new Exception("Token has expired")
               signedJWT.getJWTClaimsSet.getSubject
             }
-            authUserBox <- Future(code.model.dataAccess.AuthUser.findUserByValidationToken(uniqueId))
-            user <- NewStyle.function.tryons(
+            row <- NewStyle.function.tryons(
               s"$UnknownError Invalid or expired reset token", 400, Some(cc)) {
-              authUserBox.openOrThrowException("User not found")
+              code.model.dataAccess.DoobieAuthUserProvider.findByUniqueId(uniqueId) match {
+                case Some(r) => r
+                case None    => throw new Exception("User not found")
+              }
             }
           } yield {
-            user.password.set(postedData.new_password)
-            user.uniqueId.set(java.util.UUID.randomUUID().toString.replace("-", ""))
-            user.save
+            code.model.dataAccess.DoobieAuthUserProvider.updatePassword(row.id, postedData.new_password)
             JSONFactory600.ResetPasswordCompleteResponseJsonV600("Password has been reset successfully.")
           }
         }
@@ -4179,37 +4177,36 @@ object Http4s600 {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[JSONFactory600.PostResetPasswordUrlAnonymousJsonV600]
             }
           } yield {
-            val authUserBox = code.model.dataAccess.AuthUser.find(
-              net.liftweb.mapper.By(code.model.dataAccess.AuthUser.username, postedData.username),
-              net.liftweb.mapper.By(code.model.dataAccess.AuthUser.provider, Constant.localIdentityProvider))
+            val authRowOpt = code.model.dataAccess.DoobieAuthUserProvider.findPasswordResetInfoByUsernameAndProvider(
+              postedData.username, Constant.localIdentityProvider)
             val portalUrlBox = APIUtil.getPortalUrl
             val senderAddress = code.model.dataAccess.AuthUser.emailFrom
             val portalMissing = portalUrlBox.isEmpty
             val senderIsDefault = senderAddress == "noreply@example.com"
-            (authUserBox, portalMissing, senderIsDefault) match {
-              case (Full(u), false, false) if u.validated.get && u.email.get == postedData.email =>
+            (authRowOpt, portalMissing, senderIsDefault) match {
+              case (Some(row), false, false) if row.validated.getOrElse(false) && row.email.exists(_ == postedData.email) =>
                 val portalUrl = portalUrlBox.openOr("")
-                u.uniqueId.set(java.util.UUID.randomUUID().toString.replace("-", ""))
-                u.save
+                val newUniqueId = java.util.UUID.randomUUID().toString.replace("-", "")
+                code.model.dataAccess.DoobieAuthUserProvider.updateUniqueId(row.id, newUniqueId)
                 val expiryMinutes = APIUtil.getPropsAsIntValue("password_reset_token_expiry_minutes", 120)
                 val claimsSet = new com.nimbusds.jwt.JWTClaimsSet.Builder()
-                  .subject(u.uniqueId.get)
+                  .subject(newUniqueId)
                   .expirationTime(new java.util.Date(System.currentTimeMillis() + expiryMinutes * 60L * 1000L))
                   .issueTime(new java.util.Date()).build()
                 val jwtToken = CertificateUtil.jwtWithHmacProtection(claimsSet)
                 val resetLink = portalUrl + "/reset-password/" + java.net.URLEncoder.encode(jwtToken, "UTF-8")
                 val sendOutcome = CommonsEmailWrapper.sendHtmlEmailEither(CommonsEmailWrapper.EmailContent(
                   from = senderAddress,
-                  to = List(u.email.get),
+                  to = List(row.email.getOrElse("")),
                   bcc = code.model.dataAccess.AuthUser.bccEmail.toList,
-                  subject = "Reset your password - " + u.username.get,
+                  subject = "Reset your password - " + row.username.getOrElse(""),
                   textContent = Some(s"Please use the following link to reset your password: $resetLink"),
                   htmlContent = Some(s"<p>Please use the following link to reset your password:</p><p><a href='$resetLink'>$resetLink</a></p>")))
                 sendOutcome match {
                   case Right(msgId) =>
-                    logger.info(s"resetPasswordUrlAnonymous says: reset email sent to '${u.email.get}' messageId=$msgId")
+                    logger.info(s"resetPasswordUrlAnonymous says: reset email sent to '${row.email.getOrElse("")}' messageId=$msgId")
                   case Left(e) =>
-                    logger.warn(s"resetPasswordUrlAnonymous says: SMTP send failed for user '${u.username.get}': ${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("").take(200)}")
+                    logger.warn(s"resetPasswordUrlAnonymous says: SMTP send failed for user '${row.username.getOrElse("")}': ${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("").take(200)}")
                 }
               case (_, true, _) =>
                 logger.warn("resetPasswordUrlAnonymous says: skipped — public_obp_portal_url (or legacy portal_external_url) not set; cannot build reset link. Response returned as if successful (anti-enumeration).")
@@ -4535,20 +4532,22 @@ object Http4s600 {
               if (all.isEmpty) None else Some(all)
             }
             isLocked = code.loginattempts.LoginAttempt.userIsLocked(user.provider, user.name)
-            authUser = code.model.dataAccess.AuthUser.find(
-              By(code.model.dataAccess.AuthUser.user, user.userPrimaryKey.value))
+            userNames = code.model.dataAccess.DoobieAuthUserProvider.getNamesByUserFk(user.userPrimaryKey.value)
             userMetrics <- Future {
-              code.metrics.MappedMetric.findAll(
-                By(code.metrics.MappedMetric.userId, userId),
-                net.liftweb.mapper.OrderBy(code.metrics.MappedMetric.date, net.liftweb.mapper.Descending),
-                net.liftweb.mapper.MaxRows(5))
+              import doobie._; import doobie.implicits._
+              import java.sql.Timestamp
+              case class MetricSummaryRow(dateC: Option[Timestamp], fn: Option[String])
+              code.api.util.DoobieUtil.runQuery(
+                fr"SELECT date_c, implementedbypartialfunction FROM metric WHERE userid = $userId ORDER BY date_c DESC LIMIT 5"
+                  .query[MetricSummaryRow].to[List]
+              )
             }
-            lastActivityDate = userMetrics.headOption.map(_.getDate())
-            recentOperationIds = userMetrics.map(_.getImplementedByPartialFunction()).distinct.take(5)
+            lastActivityDate = userMetrics.headOption.flatMap(_.dateC).map(t => new java.util.Date(t.getTime))
+            recentOperationIds = userMetrics.flatMap(_.fn).distinct.take(5)
           } yield JSONFactory600.createUserInfoJsonV600(
             user,
-            authUser.map(_.firstName.get).getOrElse(""),
-            authUser.map(_.lastName.get).getOrElse(""),
+            userNames.map(_._1).getOrElse(""),
+            userNames.map(_._2).getOrElse(""),
             entitlements, agreements, isLocked, lastActivityDate, recentOperationIds)
         }
     }
@@ -5304,7 +5303,7 @@ object Http4s600 {
             date = new java.util.Date()
             (activeRateLimit, ids) <- RateLimitingUtil.getActiveRateLimitsWithIds(consumer.consumerId.get, date)
           } yield CurrentConsumerJsonV600(
-            consumer.name.get, consumer.appType.get, consumer.description.get, consumer.consumerId.get,
+            consumer.name.get, Option(consumer.appType.get).getOrElse(""), consumer.description.get, consumer.consumerId.get,
             JSONFactory600.createActiveRateLimitsJsonV600FromCallLimit(activeRateLimit, ids, date),
             JSONFactory600.createRedisCallCountersJson(counters))
         }

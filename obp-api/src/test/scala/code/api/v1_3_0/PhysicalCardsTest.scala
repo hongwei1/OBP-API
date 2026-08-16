@@ -83,9 +83,9 @@ class PhysicalCardsTest extends ServerSetup with DefaultUsers with DefaultConnec
     
     //these methods are required in this test, there is no need to extends connector.
     override def getPhysicalCardsForUser(user: User, callContext: Option[CallContext]) = {
-      val cardList = if (user == resourceUser1) {
+      val cardList = if (user.userId == resourceUser1.userId) {
         user1AllCards
-      } else if (user == resourceUser2) {
+      } else if (user.userId == resourceUser2.userId) {
         user2AllCards
       } else {
         List()
@@ -94,9 +94,9 @@ class PhysicalCardsTest extends ServerSetup with DefaultUsers with DefaultConnec
     }
 
     override def getPhysicalCardsForBank(bank: Bank, user: User, queryParams: List[OBPQueryParam], callContext: Option[CallContext]) = Future {
-      val cardList = if (user == resourceUser1) {
+      val cardList = if (user.userId == resourceUser1.userId) {
         user1CardsForOneBank
-      } else if (user == resourceUser2) {
+      } else if (user.userId == resourceUser2.userId) {
         user2CardsForOneBank
       } else {
         List()

@@ -11,7 +11,9 @@ object TaxResidenceX extends SimpleInjector {
 
   val taxResidence = new Inject(buildOne _) {}
 
-  def buildOne: TaxResidenceProvider = MappedTaxResidenceProvider
+  // Phase 4 of the Lift Mapper -> Doobie migration: tax-residence access now goes through Doobie SQL.
+  // MappedTaxResidenceProvider / MappedTaxResidence stay for schema during the coexistence phase.
+  def buildOne: TaxResidenceProvider = DoobieTaxResidenceProvider
   
 }
 

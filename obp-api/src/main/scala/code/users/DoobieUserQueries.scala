@@ -4,7 +4,6 @@ import code.api.util.DoobieUtil
 import code.loginattempts.LoginAttempt
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 
 import java.sql.{Date => SqlDate, Timestamp}
 

@@ -12,7 +12,9 @@ object ProductCollectionX extends SimpleInjector {
 
   val productCollection = new Inject(buildOne _) {}
 
-  def buildOne: ProductCollectionProvider = MappedProductCollectionProvider 
+  // Phase 9 of the Lift Mapper -> Doobie migration: product-collection access now goes through Doobie SQL.
+  // MappedProductCollectionProvider / MappedProductCollection stay for schema during the coexistence phase.
+  def buildOne: ProductCollectionProvider = DoobieProductCollectionProvider
   
 }
 

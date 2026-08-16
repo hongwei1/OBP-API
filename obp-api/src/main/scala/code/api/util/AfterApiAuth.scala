@@ -11,16 +11,16 @@ import code.api.util.RateLimitingJson.CallLimit
 import code.bankconnectors.{Connector, LocalMappedConnectorInternal}
 import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
-import code.model.dataAccess.{AuthUser, MappedBankAccount}
+import code.model.dataAccess.{AuthUser}
+import code.model.dataAccess.DoobieBankAccountProvider
 import code.ratelimiting.{RateLimiting, RateLimitingDI}
 import code.users.{UserInitActionProvider, Users}
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import com.openbankproject.commons.model.{AccountId, Bank, BankAccount, BankId, BankIdAccountId, User, ViewId}
 import net.liftweb.common.{Box, Empty, Failure, Full}
-import com.openbankproject.commons.ExecutionContext.Implicits.global
 import net.liftweb.mapper.By
-
+import com.openbankproject.commons.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
@@ -108,12 +108,9 @@ object AfterApiAuth extends MdcLoggable{
   }
   private def sofitInitAction(user: AuthUser): Boolean = applyAction("sofit.logon_init_action.enabled") {
     def getOrCreateBankAccount(bank: Bank, accountId: String, label: String, accountType: String = ""): Box[BankAccount] = {
-      MappedBankAccount.find(
-        By(MappedBankAccount.bank, bank.bankId.value), 
-        By(MappedBankAccount.theAccountId, accountId)
-      ) match {
+      DoobieBankAccountProvider.getBankAccount(bank.bankId, AccountId(accountId)) match {
         case Full(bankAccount) => Full(bankAccount)
-        case _ => 
+        case _ =>
           val account = LocalMappedConnectorInternal.createSandboxBankAccount(
             bankId = bank.bankId, accountId = AccountId(accountId), accountNumber = label + "-1",
             accountType = accountType, accountLabel =  s"$label",

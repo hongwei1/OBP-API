@@ -115,8 +115,7 @@ trait DefaultUsers {
     userId: Option[String],
     company: String
   ): ResourceUser = {
-    UserX.findByProviderId(provider = provider, idGivenByProvider = providerId)
-      .map(_.asInstanceOf[ResourceUser])
+    ResourceUser.find(net.liftweb.mapper.By(ResourceUser.provider_, provider), net.liftweb.mapper.By(ResourceUser.providerId, providerId))
       .getOrElse {
         try {
           UserX
@@ -132,8 +131,7 @@ trait DefaultUsers {
             .openOrThrowException(attemptedToOpenAnEmptyBox)
         } catch {
           case e: Throwable =>
-            UserX.findByProviderId(provider = provider, idGivenByProvider = providerId)
-              .map(_.asInstanceOf[ResourceUser])
+            ResourceUser.find(net.liftweb.mapper.By(ResourceUser.provider_, provider), net.liftweb.mapper.By(ResourceUser.providerId, providerId))
               .getOrElse(throw e)
         }
       }

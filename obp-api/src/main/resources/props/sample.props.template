@@ -305,6 +305,15 @@ getDistinctProviders.cache.ttl.seconds=3600
 getConnectorMethodNames.cache.ttl.seconds=3600
 
 
+## Flyway schema migrations. Tables for entities migrated off Lift Mapper
+## (Doobie phase 1+: mappedcomment, mappednarrative, mappedtag, mappedwheretag,
+## mappedtransactionimage) are created ONLY by Flyway's baseline migration —
+## Schemifier no longer manages them. A fresh database needs this enabled or
+## those tables will be missing. Pre-existing databases are stamped at the
+## baseline version (baselineOnMigrate), so enabling it on an upgraded instance
+## is safe and changes nothing.
+flyway.enabled=true
+
 ## You can use a no config needed h2 database by setting db.driver=org.h2.Driver and not including db.url
 # See the README for how to use the H2 browser / console.
 db.driver=org.h2.Driver

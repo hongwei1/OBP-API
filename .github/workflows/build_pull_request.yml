@@ -284,6 +284,9 @@ jobs:
           echo consents.allowed=true >> obp-api/src/main/resources/props/test.default.props
           echo hikari.maximumPoolSize=20 >> obp-api/src/main/resources/props/test.default.props
           echo write_metrics=false >> obp-api/src/main/resources/props/test.default.props
+          # Flyway owns the schema for entities migrated off Lift Mapper (Doobie
+          # phase 1+): Schemifier no longer creates those tables.
+          echo flyway.enabled=true >> obp-api/src/main/resources/props/test.default.props
           # Log emails instead of opening a real SMTP socket: without this,
           # LocalMappedConnector.sendCustomerNotification's EMAIL branch calls
           # CommonsEmailWrapper.sendTextEmail which throws ConnectException because
@@ -301,7 +304,24 @@ jobs:
           # and DynamicCodeKillSwitchTest's ON scenarios can still compile/execute dynamic code.
           echo allow_user_generated_scala_code=true >> obp-api/src/main/resources/props/test.default.props
 
+          # Maven's scalatest:test goal reads props from target/classes (the compiled
+          # artifact), not src/main/resources.  Propagate the generated file so the
+          # runtime classpath sees all the settings written above (incl. flyway.enabled
+          # and allow_user_generated_scala_code). Must stay AFTER every props write above.
+          mkdir -p obp-api/target/classes/props
+          cp obp-api/src/main/resources/props/test.default.props \
+             obp-api/target/classes/props/test.default.props
+
       - name: Run tests — shard ${{ matrix.shard }} (${{ matrix.name }})
+        env:
+          # getPropsValue consults OBP_-prefixed environment variables BEFORE the
+          # Lift props file (APIUtil.scala:3276), and the scalatest plugin forks the
+          # test JVM with forkMode=once, which inherits this. Setting it here makes
+          # Flyway run (creating the Doobie-migrated metadata tables) independently of
+          # whether target/classes/props/test.default.props picked up flyway.enabled
+          # from the compiled-output artifact — the file-copy path proved unreliable
+          # across the compile→artifact→test-shard boundary.
+          OBP_FLYWAY_ENABLED: "true"
         run: |
           # wildcardSuites requires comma-separated package prefixes (-w per entry).
           # The YAML >- scalar collapses newlines to spaces, so we convert here.
@@ -370,6 +390,14 @@ jobs:
           # -pl obp-commons,obp-api: obp-commons' own 5 util suites run on whichever
           # shard's filter matches com.openbankproject.* (the catch-all shard); on every
           # other shard the filter matches nothing in obp-commons → 0 tests there.
+          # Diagnostic (prints to the job console, not the redirected maven log):
+          # confirm both the props-file and env-var paths for flyway.enabled.
+          echo "=== flyway.enabled diagnostic ==="
+          echo "OBP_FLYWAY_ENABLED env = ${OBP_FLYWAY_ENABLED:-UNSET}"
+          grep -i flyway obp-api/target/classes/props/test.default.props \
+            || echo "(no flyway line in target/classes/props/test.default.props)"
+          echo "================================="
+
           # timeout 1500: hard-kill after 25 min to prevent Pekko non-daemon threads
           # (ConsentScheduler etc.) from keeping the JVM alive after tests complete.
           # Exit code 124 (timeout) is treated as success — tests are done, JVM just hung.

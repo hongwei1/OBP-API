@@ -10,7 +10,7 @@ object CounterpartyBespokes extends SimpleInjector {
 
   val counterpartyBespokers = new Inject(buildOne _) {}
 
-  def buildOne: CounterpartyBespokes = MapperCounterpartyBespokes
+  def buildOne: CounterpartyBespokes = DoobieCounterpartyBespokesProvider
 
 }
 

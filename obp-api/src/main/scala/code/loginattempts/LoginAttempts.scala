@@ -1,16 +1,53 @@
 package code.loginattempts
 
-import code.api.util.APIUtil
+import code.api.util.{APIUtil, DoobieUtil}
 import code.userlocks.UserLocksProvider
 import code.util.Helper.MdcLoggable
+import doobie._
+import doobie.implicits._
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers._
 
+import java.sql.Timestamp
+import java.util.Date
+
 object LoginAttempt extends MdcLoggable {
 
-  def maxBadLoginAttempts = APIUtil.getPropsValue("max.bad.login.attempts") openOr "5"
-  
+  def maxBadLoginAttempts: String = APIUtil.getPropsValue("max.bad.login.attempts") openOr "5"
+
+  private case class LoginAttemptRow(
+    id: Long,
+    username: String,
+    provider: String,
+    attempts: Int,
+    lastFailure: Option[Timestamp]
+  )
+
+  private case class DoobieBadLoginAttempt(
+    username: String,
+    provider: String,
+    badAttemptsSinceLastSuccessOrReset: Int,
+    lastFailureDate: Date
+  ) extends BadLoginAttempt
+
+  private val selectCols: Fragment =
+    fr"SELECT id, musername, provider, mbadattemptssincelastsuccessorreset, mlastfailuredate FROM mappedbadloginattempt"
+
+  private def findRow(provider: String, username: String): Option[LoginAttemptRow] =
+    DoobieUtil.runQuery(
+      (selectCols ++ fr"WHERE provider = $provider AND musername = $username LIMIT 1")
+        .query[LoginAttemptRow].option
+    )
+
+  private def toTrait(row: LoginAttemptRow): BadLoginAttempt =
+    DoobieBadLoginAttempt(
+      username  = row.username,
+      provider  = row.provider,
+      badAttemptsSinceLastSuccessOrReset = row.attempts,
+      lastFailureDate = row.lastFailure.map(t => new Date(t.getTime)).getOrElse(new Date(0L))
+    )
+
   def incrementBadLoginAttempts(provider: String, username: String): Unit = {
     username.isEmpty() match {
       case true => // Not a valid case. GitLab issue 389
@@ -37,7 +74,7 @@ object LoginAttempt extends MdcLoggable {
         }
     }
   }
-  
+
   def getOrCreateBadLoginStatus(provider: String, username: String): Box[BadLoginAttempt] = {
     MappedBadLoginAttempt.find(
       By(MappedBadLoginAttempt.Provider, provider),
@@ -67,39 +104,30 @@ object LoginAttempt extends MdcLoggable {
     }
   }
 
-  /**
-    * check the bad login attempts, if it exceed the "max.bad.login.attempts"(in default.props), it return false.
-    */
   def userIsLocked(provider: String, username: String): Boolean = {
-
-    val result : Boolean = MappedBadLoginAttempt.find( // Check the table MappedBadLoginAttempt
-      By(MappedBadLoginAttempt.Provider, provider),
-      By(MappedBadLoginAttempt.mUsername, username)
-    ) match {
-      case Full(loginAttempt)  => loginAttempt.badAttemptsSinceLastSuccessOrReset > maxBadLoginAttempts.toInt match {
-        case true => true
-        case false => UserLocksProvider.isLocked(provider, username) // Check the table UserLocks
-      }
-      case _ => UserLocksProvider.isLocked(provider, username) // Check the table UserLocks
+    val result: Boolean = findRow(provider, username) match {
+      case Some(row) =>
+        if (row.attempts > maxBadLoginAttempts.toInt) true
+        else UserLocksProvider.isLocked(provider, username)
+      case _ =>
+        UserLocksProvider.isLocked(provider, username)
     }
-
     logger.debug(s"userIsLocked result for $username is $result")
     result
-
   }
 
   def resetBadLoginAttempts(provider: String, username: String): Unit = {
-
-    MappedBadLoginAttempt.find(
-      By(MappedBadLoginAttempt.Provider, provider),
-      By(MappedBadLoginAttempt.mUsername, username)
-    ) match {
-      case Full(loginAttempt) =>
-        loginAttempt.mLastFailureDate(now).mBadAttemptsSinceLastSuccessOrReset(0).save
-      case _ =>
-        // don't need to create here
-        Empty // MappedBadLoginAttempt.create.mUsername(username).mBadAttemptsSinceLastSuccessOrReset(0).save()
+    findRow(provider, username) match {
+      case Some(row) =>
+        val ts = new Timestamp(now.getTime)
+        DoobieUtil.runQuery(
+          sql"""UPDATE mappedbadloginattempt
+                SET mbadattemptssincelastsuccessorreset = 0, mlastfailuredate = $ts
+                WHERE id = ${row.id}""".update.run
+        )
+      case None =>
+        Empty
     }
   }
 
-} // End of Trait
+}

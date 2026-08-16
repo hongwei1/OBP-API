@@ -10,7 +10,7 @@ import scala.concurrent.Future
 object SystemAccountNotificationWebhookTrait extends SimpleInjector {
   val systemAccountNotificationWebhook = new Inject(buildOne _) {}
 
-  def buildOne: SystemAccountNotificationWebhookProvider = MappedSystemAccountNotificationWebhookProvider
+  def buildOne: SystemAccountNotificationWebhookProvider = DoobieSystemAccountNotificationWebhookProvider
 }
 
 

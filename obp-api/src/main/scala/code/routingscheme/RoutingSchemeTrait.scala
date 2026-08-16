@@ -8,7 +8,7 @@ import scala.concurrent.Future
 object RoutingSchemes extends SimpleInjector {
   val routingScheme = new Inject(buildOne _) {}
 
-  def buildOne: RoutingSchemeProvider = MappedRoutingSchemeProvider
+  def buildOne: RoutingSchemeProvider = DoobieRoutingSchemeProvider
 }
 
 trait RoutingSchemeProvider {

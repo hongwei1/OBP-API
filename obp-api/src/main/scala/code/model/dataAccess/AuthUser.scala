@@ -763,36 +763,36 @@ import net.liftweb.util.Helpers._
       // ========================================================================
       logger.info(s"getResourceUserId says: using local provider authentication for username: $username")
       
-      findAuthUserByUsernameAndProvider(username, Constant.localIdentityProvider) match {
-        case Full(user) if !user.validated_? =>
+      DoobieAuthUserProvider.findByUsernameAndProvider(username, Constant.localIdentityProvider) match {
+        case Some(row) if !row.validated.getOrElse(false) =>
           // User exists but email not validated
           logger.info(s"getResourceUserId says: user not validated, username: $username, provider: $normalizedProvider")
           Full(userEmailNotValidatedStateCode)
-        
-        case Full(user) if LoginAttempt.userIsLocked(Constant.localIdentityProvider, username) =>
+
+        case Some(_) if LoginAttempt.userIsLocked(Constant.localIdentityProvider, username) =>
           // User is locked - do NOT increment attempts (already locked)
           logger.info(s"getResourceUserId says: user is locked, username: $username, provider: $normalizedProvider")
           Full(usernameLockedStateCode)
-        
-        case Full(user) if user.testPassword(Full(password)) =>
+
+        case Some(row) if DoobieAuthUserProvider.matchPassword(password, row.passwordPw.orNull, row.passwordSlt.orNull) =>
           // Password correct - extract user ID safely
           logger.info(s"getResourceUserId says: password correct, username: $username, provider: $normalizedProvider")
           LoginAttempt.resetBadLoginAttempts(Constant.localIdentityProvider, username)
-          user.user.obj match {
-            case Full(resourceUser) =>
-              Full(resourceUser.id.get)
+          row.userC match {
+            case Some(resourceUserId) =>
+              Full(resourceUserId)
             case _ =>
               logger.error(s"getResourceUserId: user.user foreign key not set for username: $username")
               Empty
           }
-        
-        case Full(user) =>
+
+        case Some(_) =>
           // Password incorrect
           logger.info(s"getResourceUserId says: wrong password, username: $username, provider: $normalizedProvider")
           LoginAttempt.incrementBadLoginAttempts(Constant.localIdentityProvider, username)
           Empty
-        
-        case _ =>
+
+        case None =>
           // User not found in local database
           logger.info(s"getResourceUserId says: user not found, username: $username, provider: $normalizedProvider")
           LoginAttempt.incrementBadLoginAttempts(Constant.localIdentityProvider, username)

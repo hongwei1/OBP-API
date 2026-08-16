@@ -10,7 +10,7 @@ import scala.concurrent.Future
 object AccountWebhook extends SimpleInjector {
   val accountWebhook = new Inject(buildOne _) {}
 
-  def buildOne: AccountWebhookProvider = MappedAccountWebhookProvider
+  def buildOne: AccountWebhookProvider = DoobieAccountWebhookProvider
 }
 
 

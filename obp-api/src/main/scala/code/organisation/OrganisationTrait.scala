@@ -8,7 +8,7 @@ import scala.concurrent.Future
 object Organisations extends SimpleInjector {
   val organisation = new Inject(buildOne _) {}
 
-  def buildOne: OrganisationProvider = MappedOrganisationProvider
+  def buildOne: OrganisationProvider = DoobieOrganisationProvider
 }
 
 trait OrganisationProvider {

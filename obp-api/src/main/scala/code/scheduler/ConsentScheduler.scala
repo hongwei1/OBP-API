@@ -1,16 +1,17 @@
 package code.scheduler
 
 import code.api.berlin.group.ConstantsBG
-import code.api.util.{APIUtil, Consent}
+import code.api.util.{APIUtil, Consent, DoobieUtil}
 import code.consent.{ConsentStatus, MappedConsent}
+import net.liftweb.mapper.{By, By_<}
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.util.{ApiStandards, ApiVersion}
-import net.liftweb.common.Full
-import net.liftweb.mapper.{By, By_<}
+import doobie._
+import doobie.implicits._
 
+import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.{Date, Locale}
 import scala.util.{Failure, Success, Try}
 
 
@@ -63,16 +64,30 @@ object ConsentScheduler extends MdcLoggable {
     }
   }
 
+  private case class ConsentRow(id: Long, consentId: String, status: String, note: Option[String])
 
+  private def updateConsent(id: Long, newStatus: String, newNote: String): Unit = {
+    val now = new Timestamp(System.currentTimeMillis())
+    DoobieUtil.runQuery(
+      sql"""UPDATE mappedconsent
+            SET mstatus = $newStatus, mnote = $newNote, mstatusupdatedatetime = $now
+            WHERE id = $id""".update.run
+    )
+  }
 
   private def unfinishedBerlinGroupConsents(seconds: Int): Unit = {
     Try {
       logger.debug("|---> Checking for outdated Berlin Group consents...")
+      val cutoff = new Timestamp(SchedulerUtil.someSecondsAgo(seconds).getTime)
+      val bgStandard = ConstantsBG.berlinGroupVersion1.apiStandard
+      val receivedStatus = ConsentStatus.received.toString
 
-      val outdatedConsents = MappedConsent.findAll(
-        By(MappedConsent.mStatus, ConsentStatus.received.toString),
-        By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard),
-        By_<(MappedConsent.updatedAt, SchedulerUtil.someSecondsAgo(seconds))
+      val outdatedConsents: List[ConsentRow] = DoobieUtil.runQuery(
+        fr"""SELECT id, mconsentid, mstatus, mnote FROM mappedconsent
+             WHERE mstatus = $receivedStatus
+               AND mapistandard = $bgStandard
+               AND updatedat < $cutoff"""
+          .query[ConsentRow].to[List]
       )
 
       logger.debug(s"|---> Found ${outdatedConsents.size} outdated consents")
@@ -80,16 +95,19 @@ object ConsentScheduler extends MdcLoggable {
       outdatedConsents.foreach { consent =>
         Try {
           val message = s"|---> Changed status from ${consent.status} to ${ConsentStatus.rejected} for consent ID: ${consent.id}"
-          val newNote = s"$currentDate\n$message\n" + Option(consent.note).getOrElse("")
+          val newNote = s"$currentDate\n$message\n" + consent.note.getOrElse("")
           val rows = code.bankconnectors.DoobieConsentSchedulerQueries.conditionallyUpdateStatus(
-            consentPrimaryKey = consent.id.get,
+            consentPrimaryKey = consent.id,
             guardStatus  = ConsentStatus.received.toString,
             newStatus    = ConsentStatus.rejected.toString,
             newNote      = newNote
           )
           if (rows > 0) {
             // An expired consent must give its granted access back, exactly as a revoked one does.
-            Consent.revokeConsentAccountAccess(consent)
+            // revokeConsentAccountAccess takes a ConsentTrait; this loop now reads Doobie rows, so
+            // load the entity by consent id. (Lift lookup — converts with the rest of Phase B.)
+            MappedConsent.find(By(MappedConsent.mConsentId, consent.consentId))
+              .foreach(c => Consent.revokeConsentAccountAccess(c))
             logger.warn(message)
           }
           else logger.debug(s"|---> Skipped stale update for consent ${consent.id}: status already changed")
@@ -103,37 +121,37 @@ object ConsentScheduler extends MdcLoggable {
       case Success(_) => logger.debug("|---> Task executed successfully")
     }
   }
+
   private def expiredBerlinGroupConsents(): Unit = {
     Try {
       logger.debug("|---> Checking for expired Berlin Group consents...")
+      val now = new Timestamp(System.currentTimeMillis())
+      val bgStandard = ConstantsBG.berlinGroupVersion1.apiStandard
+      val validStatus      = ConsentStatus.valid.toString
+      val validStatusUpper = ConsentStatus.valid.toString.toUpperCase()
 
-      val expiredConsentsLowerCase: List[MappedConsent] = MappedConsent.findAll(
-        By(MappedConsent.mStatus, ConsentStatus.valid.toString),
-        By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard),
-        By_<(MappedConsent.mValidUntil, new Date())
+      val expiredConsents: List[ConsentRow] = DoobieUtil.runQuery(
+        fr"""SELECT id, mconsentid, mstatus, mnote FROM mappedconsent
+             WHERE mstatus IN ($validStatus, $validStatusUpper)
+               AND mapistandard = $bgStandard
+               AND mvaliduntil < $now"""
+          .query[ConsentRow].to[List]
       )
-
-      val expiredConsentsUpperCase: List[MappedConsent] = MappedConsent.findAll(
-        By(MappedConsent.mStatus, ConsentStatus.valid.toString.toUpperCase()), // Handle uppercase as well; should appear only during the transition period
-        By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard),
-        By_<(MappedConsent.mValidUntil, new Date())
-      )
-
-      val expiredConsents = expiredConsentsLowerCase ::: expiredConsentsUpperCase
 
       logger.debug(s"|---> Found ${expiredConsents.size} expired consents")
 
       expiredConsents.foreach { consent =>
         Try {
           val message = s"|---> Changed status from ${consent.status} to ${ConsentStatus.expired} for consent ID: ${consent.id}"
-          val newNote = s"$currentDate\n$message\n" + Option(consent.note).getOrElse("")
+          val newNote = s"$currentDate\n$message\n" + consent.note.getOrElse("")
           val rows = code.bankconnectors.DoobieConsentSchedulerQueries.conditionallyExpireValidBerlinGroupConsent(
-            consentPrimaryKey = consent.id.get,
+            consentPrimaryKey = consent.id,
             newNote      = newNote
           )
           if (rows > 0) {
             // An expired consent must give its granted access back, exactly as a revoked one does.
-            Consent.revokeConsentAccountAccess(consent)
+            MappedConsent.find(By(MappedConsent.mConsentId, consent.consentId))
+              .foreach(c => Consent.revokeConsentAccountAccess(c))
             logger.warn(message)
           }
           else logger.debug(s"|---> Skipped stale update for consent ${consent.id}: status already changed")
@@ -147,14 +165,20 @@ object ConsentScheduler extends MdcLoggable {
       case Success(_) => logger.debug("|---> Task executed successfully")
     }
   }
+
   private def expiredObpConsents(): Unit = {
     Try {
       logger.debug("|---> Checking for expired OBP consents...")
+      val now = new Timestamp(System.currentTimeMillis())
+      val acceptedStatus = ConsentStatus.ACCEPTED.toString
+      val obpStandard    = ApiStandards.obp.toString
 
-      val expiredConsents = MappedConsent.findAll(
-        By(MappedConsent.mStatus, ConsentStatus.ACCEPTED.toString),
-        By(MappedConsent.mApiStandard, ApiStandards.obp.toString),
-        By_<(MappedConsent.mValidUntil, new Date())
+      val expiredConsents: List[ConsentRow] = DoobieUtil.runQuery(
+        fr"""SELECT id, mconsentid, mstatus, mnote FROM mappedconsent
+             WHERE mstatus = $acceptedStatus
+               AND mapistandard = $obpStandard
+               AND mvaliduntil < $now"""
+          .query[ConsentRow].to[List]
       )
 
       logger.debug(s"|---> Found ${expiredConsents.size} expired consents")
@@ -162,16 +186,17 @@ object ConsentScheduler extends MdcLoggable {
       expiredConsents.foreach { consent =>
         Try {
           val message = s"|---> Changed status from ${consent.status} to ${ConsentStatus.EXPIRED.toString} for consent ID: ${consent.id}"
-          val newNote = s"$currentDate\n$message\n" + Option(consent.note).getOrElse("")
+          val newNote = s"$currentDate\n$message\n" + consent.note.getOrElse("")
           val rows = code.bankconnectors.DoobieConsentSchedulerQueries.conditionallyUpdateStatus(
-            consentPrimaryKey = consent.id.get,
+            consentPrimaryKey = consent.id,
             guardStatus  = ConsentStatus.ACCEPTED.toString,
             newStatus    = ConsentStatus.EXPIRED.toString,
             newNote      = newNote
           )
           if (rows > 0) {
             // An expired consent must give its granted access back, exactly as a revoked one does.
-            Consent.revokeConsentAccountAccess(consent)
+            MappedConsent.find(By(MappedConsent.mConsentId, consent.consentId))
+              .foreach(c => Consent.revokeConsentAccountAccess(c))
             logger.warn(message)
           }
           else logger.debug(s"|---> Skipped stale update for OBP consent ${consent.id}: status already changed")

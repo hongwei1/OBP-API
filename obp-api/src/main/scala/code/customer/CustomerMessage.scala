@@ -9,7 +9,7 @@ object CustomerMessages extends SimpleInjector {
 
   val customerMessageProvider = new Inject(buildOne _) {}
 
-  def buildOne: CustomerMessageProvider = MappedCustomerMessageProvider
+  def buildOne: CustomerMessageProvider = DoobieCustomerMessageProvider
 
 }
 
@@ -25,5 +25,4 @@ trait CustomerMessageProvider {
   def getCustomerMessages(customer : Customer, bankId : BankId) : List[CustomerMessage]
 
 }
-
 

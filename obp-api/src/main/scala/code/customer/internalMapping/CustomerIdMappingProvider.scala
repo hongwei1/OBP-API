@@ -9,7 +9,7 @@ object CustomerIdMappingProvider extends SimpleInjector {
 
   val customerIdMappingProvider = new Inject(buildOne _) {}
 
-  def buildOne: CustomerIdMappingProvider = MappedCustomerIdMappingProvider
+  def buildOne: CustomerIdMappingProvider = DoobieCustomerIdMappingProvider
 
 }
 

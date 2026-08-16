@@ -13,7 +13,7 @@ object EntitlementRequest extends SimpleInjector {
 
   val entitlementRequest = new Inject(buildOne _) {}
 
-  def buildOne: EntitlementRequestProvider = MappedEntitlementRequestsProvider
+  def buildOne: EntitlementRequestProvider = DoobieEntitlementRequestsProvider
 }
 
 trait EntitlementRequestProvider {

@@ -6,7 +6,7 @@ import net.liftweb.util.SimpleInjector
 object BulkPayments extends SimpleInjector {
   val bulkPayment = new Inject(buildOne _) {}
 
-  def buildOne: BulkPaymentProvider = MappedBulkPaymentProvider
+  def buildOne: BulkPaymentProvider = DoobieBulkPaymentProvider
 }
 
 trait BulkPaymentProvider {

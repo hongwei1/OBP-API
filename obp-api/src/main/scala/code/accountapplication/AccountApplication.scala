@@ -12,7 +12,7 @@ object AccountApplicationX extends SimpleInjector {
 
   val accountApplication = new Inject(buildOne _) {}
 
-  def buildOne: AccountApplicationProvider = MappedAccountApplicationProvider
+  def buildOne: AccountApplicationProvider = DoobieAccountApplicationProvider
   
 }
 

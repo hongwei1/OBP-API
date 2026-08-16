@@ -24,7 +24,7 @@ import code.api.v2_1_0.{JSONFactory210, PutEnabledJSON}
 import code.api.v3_0_0.{CreateViewJsonV300, JSONFactory300}
 import code.api.v3_1_0.JSONFactory310._
 import code.bankconnectors.Connector
-import code.consent.{ConsentStatus, Consents, DoobieConsentQueries, MappedConsent}
+import code.consent.{ConsentStatus, Consents, DoobieConsentQueries}
 import code.methodrouting.{MethodRouting, MethodRoutingCommons, MethodRoutingParam}
 import code.model.dataAccess.AuthUser
 import code.consumer.Consumers
@@ -48,7 +48,6 @@ import com.openbankproject.commons.model._
 import com.openbankproject.commons.util.{ApiVersion, ApiVersionStatus, ScannedApiVersion}
 import net.liftweb.common.{Empty, Full}
 import org.json4s.Formats
-import net.liftweb.mapper.By
 import net.liftweb.util.{Helpers, Props}
 import org.apache.commons.lang3.StringUtils
 

@@ -408,12 +408,23 @@
     <dependency>
       <groupId>org.tpolecat</groupId>
       <artifactId>doobie-core_${scala.version}</artifactId>
-      <version>1.0.0-RC4</version>
+      <version>${doobie.version}</version>
     </dependency>
     <dependency>
       <groupId>org.tpolecat</groupId>
       <artifactId>doobie-hikari_${scala.version}</artifactId>
-      <version>1.0.0-RC4</version>
+      <version>${doobie.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.tpolecat</groupId>
+      <artifactId>doobie-postgres_${scala.version}</artifactId>
+      <version>${doobie.version}</version>
+    </dependency>
+    <!-- Schema management replacing Lift Schemifier (9.x line: last with Java 11 support) -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <version>${flyway.version}</version>
     </dependency>
     <dependency>
       <groupId>com.microsoft.sqlserver</groupId>

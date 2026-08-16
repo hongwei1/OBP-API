@@ -18,7 +18,7 @@ object Meetings extends SimpleInjector {
 
   val meetingProvider = new Inject(buildOne _) {}
 
-  def buildOne: MeetingProvider = MappedMeetingProvider
+  def buildOne: MeetingProvider = DoobieMeetingProvider
 
 }
 

@@ -59,16 +59,25 @@ object DoobieUtil extends MdcLoggable {
   /**
    * Fallback transactor that shares the application HikariCP connection pool.
    * Used when no http4s request scope is available (background tasks, schedulers).
-   * Strategy.void: Doobie will not call setAutoCommit/commit/rollback.
+   *
+   * Strategy.default (commit on success, rollback on failure), NOT Strategy.void. The pool hands
+   * out connections with autoCommit=false (CustomDBVendor), so a transactor that never commits
+   * leaves every write on this path uncommitted — HikariCP rolls it back when the connection is
+   * returned, and the write vanishes silently. That is invisible while only reads take this path,
+   * but the Doobie providers call runQuery for INSERT/UPDATE as well as SELECT, which is how
+   * "Consumer not found after insert" / "Consent not found after UK insert" happen.
+   *
+   * Committing after a read is harmless (it just ends the implicit transaction), so making this
+   * strategy match runUpdate's is the safe direction: it cannot lose a write, and it cannot
+   * corrupt a read.
    */
   private lazy val fallbackTransactor: Transactor[IO] = {
     val sharedDataSource = APIUtil.vendor.HikariDatasource.ds
     logger.info("DoobieUtil: Initialized fallback transactor sharing the application HikariCP pool")
-    val xa = Transactor.fromDataSource[IO].apply(
+    Transactor.fromDataSource[IO].apply(
       sharedDataSource,
       BlockingIoExecutionContext.ec
-    )
-    xa.copy(strategy0 = Strategy.void)
+    ) // Strategy.default includes commit/rollback
   }
 
   /**
@@ -140,6 +149,23 @@ object DoobieUtil extends MdcLoggable {
   }
 
   /**
+   * Autocommit transactor: each statement commits on its own, with NO surrounding
+   * transaction. Required for statements that refuse to run inside a transaction
+   * block — e.g. Postgres `CREATE INDEX CONCURRENTLY` (ProjectionDDL). The pool
+   * hands out connections with autoCommit=false (CustomDBVendor), so this strategy
+   * flips autoCommit on before running; HikariCP resets the flag when the
+   * connection returns to the pool.
+   */
+  private lazy val autoCommitTransactor: Transactor[IO] = {
+    val liftDataSource = APIUtil.vendor.HikariDatasource.ds
+    val xa = Transactor.fromDataSource[IO].apply(
+      liftDataSource,
+      ExecutionContext.global
+    )
+    xa.copy(strategy0 = Strategy.void.copy(before = FC.setAutoCommit(true)))
+  }
+
+  /**
    * Run a Doobie query asynchronously, returning a Future.
    * Note: async queries always use the fallback pool transactor because
    * the request connection may not be available on a different thread.
@@ -149,7 +175,7 @@ object DoobieUtil extends MdcLoggable {
    * @return Future containing the query result
    */
   def runQueryAsync[A](query: ConnectionIO[A])(implicit ec: ExecutionContext): Future[A] = {
-    query.transact(fallbackTransactor).unsafeToFuture()
+    query.transact(autoCommitTransactor).unsafeToFuture()
   }
 
   /**
@@ -161,7 +187,7 @@ object DoobieUtil extends MdcLoggable {
    * @return IO containing the query result
    */
   def runQueryIO[A](query: ConnectionIO[A]): IO[A] = {
-    query.transact(fallbackTransactor)
+    query.transact(autoCommitTransactor)
   }
 
   /**

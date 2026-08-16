@@ -15,7 +15,7 @@ object TransactionRequests extends SimpleInjector {
 
   def buildOne: TransactionRequestProvider  =
     APIUtil.getPropsValue("transactionRequests_connector", "mapped") match {
-      case "mapped" =>MappedTransactionRequestProvider
+      case "mapped" => DoobieTransactionRequestProvider
       case tc: String => throw new IllegalArgumentException("No such connector for Transaction Requests: " + tc)
     }
 

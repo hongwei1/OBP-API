@@ -2,7 +2,6 @@ package code.consent
 
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 import code.api.util.DoobieUtil
 
 import java.sql.Timestamp

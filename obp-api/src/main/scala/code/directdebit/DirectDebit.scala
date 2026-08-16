@@ -9,7 +9,9 @@ import com.openbankproject.commons.model.DirectDebitTrait
 
 object DirectDebits extends SimpleInjector {
   val directDebitProvider = new Inject(buildOne _) {}
-  def buildOne: DirectDebitProvider = MappedDirectDebitProvider
+  // Phase 6 of the Lift Mapper -> Doobie migration: direct-debit access now goes through Doobie SQL.
+  // MappedDirectDebitProvider / DirectDebit entity stay for schema during the coexistence phase.
+  def buildOne: DirectDebitProvider = DoobieDirectDebitProvider
 }
 
 trait DirectDebitProvider {

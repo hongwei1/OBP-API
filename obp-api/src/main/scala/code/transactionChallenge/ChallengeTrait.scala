@@ -13,7 +13,7 @@ object Challenges extends SimpleInjector {
 
   val ChallengeProvider = new Inject(buildOne _) {}
 
-  def buildOne: ChallengeProvider = MappedChallengeProvider
+  def buildOne: ChallengeProvider = DoobieChallengeProvider
   
 }
 

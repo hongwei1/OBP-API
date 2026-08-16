@@ -11,14 +11,14 @@ import code.api.dynamic.entity.helper.{DynamicEntityHelper, DynamicEntityInfo}
 import code.api.util.APIUtil._
 import code.api.util.ErrorMessages.{InsufficientAuthorisationToCreateTransactionRequest, _}
 import code.api.{APIFailureNewStyle, Constant, JsonResponseException}
-import code.apicollection.{ApiCollectionTrait, MappedApiCollectionsProvider}
+import code.apicollection.{ApiCollectionTrait, DoobieApiCollectionsProvider}
 import code.apiproduct.{ApiProductTrait, MappedApiProductsProvider}
 import code.apiproductattribute.{ApiProductAttributeTrait, MappedApiProductAttributesProvider}
-import code.apicollectionendpoint.{ApiCollectionEndpointTrait, MappedApiCollectionEndpointsProvider}
-import code.featuredapicollection.{FeaturedApiCollectionTrait, MappedFeaturedApiCollectionsProvider}
-import code.atmattribute.AtmAttribute
+import code.apicollectionendpoint.{ApiCollectionEndpointTrait, DoobieApiCollectionEndpointsProvider}
+import code.featuredapicollection.{FeaturedApiCollectionTrait, DoobieFeaturedApiCollectionsProvider}
+import com.openbankproject.commons.model.AtmAttributeTrait
 import code.authtypevalidation.{AuthenticationTypeValidationProvider, JsonAuthTypeValidation}
-import code.bankattribute.BankAttribute
+import com.openbankproject.commons.model.BankAttributeTrait
 import code.bankconnectors.Connector
 import code.branches.Branches.{Branch, DriveUpString, LobbyString}
 import code.connectormethod.{ConnectorMethodProvider, JsonConnectorMethod}
@@ -1786,7 +1786,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isActive: Option[Boolean],
       callContext: Option[CallContext]
-    ): OBPReturnType[BankAttribute] = {
+    ): OBPReturnType[BankAttributeTrait] = {
       Connector.connector.vend.createOrUpdateBankAttribute(
         bankId: BankId,
         bankAttributeId: Option[String],
@@ -1809,7 +1809,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isActive: Option[Boolean],
       callContext: Option[CallContext]
-    ): OBPReturnType[AtmAttribute] = {
+    ): OBPReturnType[AtmAttributeTrait] = {
       Connector.connector.vend.createOrUpdateAtmAttribute(
         bankId: BankId,
         atmId: AtmId,
@@ -1832,7 +1832,7 @@ object NewStyle extends MdcLoggable{
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
-    def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[List[AtmAttribute]] = {
+    def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[List[AtmAttributeTrait]] = {
       Connector.connector.vend.getAtmAttributesByAtm(
         bank: BankId,
         atm: AtmId,
@@ -1870,7 +1870,7 @@ object NewStyle extends MdcLoggable{
     def getBankAttributeById(
       bankAttributeId: String,
       callContext: Option[CallContext]
-    ): OBPReturnType[BankAttribute] = {
+    ): OBPReturnType[BankAttributeTrait] = {
       Connector.connector.vend.getBankAttributeById(
         bankAttributeId: String,
         callContext: Option[CallContext]
@@ -1882,7 +1882,7 @@ object NewStyle extends MdcLoggable{
     def getAtmAttributeById(
       atmAttributeId: String,
       callContext: Option[CallContext]
-    ): OBPReturnType[AtmAttribute] = {
+    ): OBPReturnType[AtmAttributeTrait] = {
       Connector.connector.vend.getAtmAttributeById(
         atmAttributeId: String,
         callContext: Option[CallContext]
@@ -2019,7 +2019,7 @@ object NewStyle extends MdcLoggable{
       }
     }
     
-    def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getUserAttributes(
         userId: String, callContext: Option[CallContext]
       ) map {
@@ -2027,7 +2027,7 @@ object NewStyle extends MdcLoggable{
       }
     } 
     
-    def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getPersonalUserAttributes(
         userId: String, callContext: Option[CallContext]
       ) map {
@@ -2036,7 +2036,7 @@ object NewStyle extends MdcLoggable{
     } 
     
     
-    def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getNonPersonalUserAttributes(
         userId: String, callContext: Option[CallContext]
       ) map {
@@ -2044,7 +2044,7 @@ object NewStyle extends MdcLoggable{
       }
     } 
     
-    def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[List[UserAttribute]] = {
+    def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[List[UserAttributeTrait]] = {
       Connector.connector.vend.getUserAttributesByUsers(
         userIds, callContext: Option[CallContext]
       ) map {
@@ -2059,7 +2059,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isPersonal: Boolean,
       callContext: Option[CallContext]
-    ): OBPReturnType[UserAttribute] = {
+    ): OBPReturnType[UserAttributeTrait] = {
       Connector.connector.vend.createOrUpdateUserAttribute(
         userId: String,
         userAttributeId: Option[String],
@@ -3893,33 +3893,33 @@ object NewStyle extends MdcLoggable{
 
 
     def getApiCollectionById(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.getApiCollectionById(apiCollectionId)) map {
+      Future(DoobieApiCollectionsProvider.getApiCollectionById(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionNotFound Please specify a valid value for API_COLLECTION_ID. Current API_COLLECTION_ID($apiCollectionId) "), callContext)
       }
     }
 
     def getApiCollectionByUserIdAndCollectionName(userId : String, apiCollectionName : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.getApiCollectionByUserIdAndCollectionName(userId, apiCollectionName)) map {
+      Future(DoobieApiCollectionsProvider.getApiCollectionByUserIdAndCollectionName(userId, apiCollectionName)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionNotFound Please specify a valid value for API_COLLECTION_NAME. Current API_COLLECTION_NAME($apiCollectionName) "), callContext)
       }
     }
 
     def getApiCollectionsByUserId(userId : String, callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
-      Future(MappedApiCollectionsProvider.getApiCollectionsByUserId(userId), callContext) 
+      Future(DoobieApiCollectionsProvider.getApiCollectionsByUserId(userId), callContext) 
     }
 
     def getAllApiCollections(callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
-      Future(MappedApiCollectionsProvider.getAllApiCollections(), callContext) 
+      Future(DoobieApiCollectionsProvider.getAllApiCollections(), callContext) 
     }
 
     def getFeaturedApiCollections(callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
       // First get featured collections from database, sorted by sortOrder
-      val dbFeaturedApiCollections = MappedFeaturedApiCollectionsProvider.getAllFeaturedApiCollections()
+      val dbFeaturedApiCollections = DoobieFeaturedApiCollectionsProvider.getAllFeaturedApiCollections()
       val dbApiCollectionIds = dbFeaturedApiCollections.map(_.apiCollectionId).toSet
 
       // Get actual ApiCollections for database featured entries
       val dbApiCollections = dbFeaturedApiCollections
-        .map(f => MappedApiCollectionsProvider.getApiCollectionById(f.apiCollectionId))
+        .map(f => DoobieApiCollectionsProvider.getApiCollectionById(f.apiCollectionId))
         .filter(_.isDefined)
         .filter(_.head.isSharable)
         .map(_.head)
@@ -3934,7 +3934,7 @@ object NewStyle extends MdcLoggable{
 
       // Get actual ApiCollections for props entries and sort them by name
       val propsApiCollections = propsApiCollectionIds
-        .map(MappedApiCollectionsProvider.getApiCollectionById)
+        .map(DoobieApiCollectionsProvider.getApiCollectionById)
         .filter(_.isDefined)
         .filter(_.head.isSharable)
         .map(_.head)
@@ -3951,7 +3951,7 @@ object NewStyle extends MdcLoggable{
       description: String,
       callContext: Option[CallContext]
     ) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.createApiCollection(
+      Future(DoobieApiCollectionsProvider.createApiCollection(
         userId: String,
         apiCollectionName: String,
         isSharable: Boolean,
@@ -3967,7 +3967,7 @@ object NewStyle extends MdcLoggable{
                             description: String, 
                             callContext: Option[CallContext]
     ) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.updateApiCollectionById(
+      Future(DoobieApiCollectionsProvider.updateApiCollectionById(
         apiCollectionId: String,
         apiCollectionName: String,
         description: String,
@@ -3994,7 +3994,7 @@ object NewStyle extends MdcLoggable{
     }
 
     def deleteApiCollectionById(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[Boolean] = {
-      Future(MappedApiCollectionsProvider.deleteApiCollectionById(apiCollectionId)) map {
+      Future(DoobieApiCollectionsProvider.deleteApiCollectionById(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteApiCollectionError Current API_COLLECTION_ID($apiCollectionId) "), callContext)
       }
     }
@@ -4098,7 +4098,7 @@ object NewStyle extends MdcLoggable{
       operationId: String,
       callContext: Option[CallContext]
     ) : OBPReturnType[ApiCollectionEndpointTrait] = {
-      Future(MappedApiCollectionEndpointsProvider.createApiCollectionEndpoint(
+      Future(DoobieApiCollectionEndpointsProvider.createApiCollectionEndpoint(
         apiCollectionId: String,
         operationId: String
       )) map {
@@ -4107,24 +4107,24 @@ object NewStyle extends MdcLoggable{
     }
 
     def getApiCollectionEndpointById(apiCollectionEndpointId : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionEndpointTrait] = {
-      Future(MappedApiCollectionEndpointsProvider.getApiCollectionEndpointById(apiCollectionEndpointId)) map {
+      Future(DoobieApiCollectionEndpointsProvider.getApiCollectionEndpointById(apiCollectionEndpointId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionEndpointNotFound Please specify a valid value for API_COLLECTION_ENDPOINT_ID. " +
           s"Current API_COLLECTION_ENDPOINT_ID($apiCollectionEndpointId) "), callContext)
       }
     }
 
     def getApiCollectionEndpointByApiCollectionIdAndOperationId(apiCollectionId:String, operationId : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionEndpointTrait] = {
-      Future(MappedApiCollectionEndpointsProvider.getApiCollectionEndpointByApiCollectionIdAndOperationId(apiCollectionId, operationId)) map {
+      Future(DoobieApiCollectionEndpointsProvider.getApiCollectionEndpointByApiCollectionIdAndOperationId(apiCollectionId, operationId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionEndpointNotFound Current API_COLLECTION_ID($apiCollectionId) and OPERATION_ID($operationId) "), callContext)
       }
     }
 
     def getApiCollectionEndpoints(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionEndpointTrait]] = {
-      Future(MappedApiCollectionEndpointsProvider.getApiCollectionEndpoints(apiCollectionId), callContext)
+      Future(DoobieApiCollectionEndpointsProvider.getApiCollectionEndpoints(apiCollectionId), callContext)
     }
 
     def deleteApiCollectionEndpointById(apiCollectionEndpointById : String, callContext: Option[CallContext]) : OBPReturnType[Boolean] = {
-      Future(MappedApiCollectionEndpointsProvider.deleteApiCollectionEndpointById(apiCollectionEndpointById)) map {
+      Future(DoobieApiCollectionEndpointsProvider.deleteApiCollectionEndpointById(apiCollectionEndpointById)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteApiCollectionEndpointError Current API_COLLECTION_ENDPOINT_ID($apiCollectionEndpointById) "), callContext)
       }
     }
@@ -4135,7 +4135,7 @@ object NewStyle extends MdcLoggable{
       sortOrder: Int,
       callContext: Option[CallContext]
     ): OBPReturnType[FeaturedApiCollectionTrait] = {
-      Future(MappedFeaturedApiCollectionsProvider.createFeaturedApiCollection(apiCollectionId, sortOrder)) map {
+      Future(DoobieFeaturedApiCollectionsProvider.createFeaturedApiCollection(apiCollectionId, sortOrder)) map {
         i => (unboxFullOrFail(i, callContext, CreateFeaturedApiCollectionError), callContext)
       }
     }
@@ -4144,13 +4144,13 @@ object NewStyle extends MdcLoggable{
       apiCollectionId: String,
       callContext: Option[CallContext]
     ): OBPReturnType[FeaturedApiCollectionTrait] = {
-      Future(MappedFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
+      Future(DoobieFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$FeaturedApiCollectionNotFound Current API_COLLECTION_ID($apiCollectionId)"), callContext)
       }
     }
 
     def getAllFeaturedApiCollectionsAdmin(callContext: Option[CallContext]): OBPReturnType[List[FeaturedApiCollectionTrait]] = {
-      Future(MappedFeaturedApiCollectionsProvider.getAllFeaturedApiCollections(), callContext)
+      Future(DoobieFeaturedApiCollectionsProvider.getAllFeaturedApiCollections(), callContext)
     }
 
     def updateFeaturedApiCollection(
@@ -4159,9 +4159,9 @@ object NewStyle extends MdcLoggable{
       callContext: Option[CallContext]
     ): OBPReturnType[FeaturedApiCollectionTrait] = {
       Future {
-        val featured = MappedFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
+        val featured = DoobieFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
         featured.flatMap { f =>
-          MappedFeaturedApiCollectionsProvider.updateFeaturedApiCollection(f.featuredApiCollectionId, sortOrder)
+          DoobieFeaturedApiCollectionsProvider.updateFeaturedApiCollection(f.featuredApiCollectionId, sortOrder)
         }
       } map {
         i => (unboxFullOrFail(i, callContext, s"$UpdateFeaturedApiCollectionError Current API_COLLECTION_ID($apiCollectionId)"), callContext)
@@ -4172,7 +4172,7 @@ object NewStyle extends MdcLoggable{
       apiCollectionId: String,
       callContext: Option[CallContext]
     ): OBPReturnType[Boolean] = {
-      Future(MappedFeaturedApiCollectionsProvider.deleteFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
+      Future(DoobieFeaturedApiCollectionsProvider.deleteFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteFeaturedApiCollectionError Current API_COLLECTION_ID($apiCollectionId)"), callContext)
       }
     }
@@ -4182,7 +4182,7 @@ object NewStyle extends MdcLoggable{
       callContext: Option[CallContext]
     ): OBPReturnType[Boolean] = {
       Future {
-        val existing = MappedFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
+        val existing = DoobieFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
         existing match {
           case net.liftweb.common.Full(_) =>
             throw new RuntimeException(FeaturedApiCollectionAlreadyExists)

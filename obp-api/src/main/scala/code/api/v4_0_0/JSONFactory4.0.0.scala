@@ -46,14 +46,15 @@ import code.api.v3_1_0._
 import code.apicollection.ApiCollectionTrait
 import code.apicollectionendpoint.ApiCollectionEndpointTrait
 import code.atms.Atms.Atm
-import code.consent.MappedConsent
+import code.consent.ConsentTrait
 import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
 import code.model.dataAccess.ResourceUser
 import code.model.{Consumer, ModeratedBankAccount, ModeratedBankAccountCore}
 import code.ratelimiting.RateLimiting
 import code.userlocks.UserLocks
-import code.users.{UserAgreement, UserAttribute, UserInvitation}
+import code.users.{UserAgreement, UserInvitation}
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.views.system.AccountAccess
 import code.webhook.{BankAccountNotificationWebhookTrait, SystemAccountNotificationWebhookTrait}
 import com.openbankproject.commons.model._
@@ -1493,7 +1494,7 @@ object JSONFactory400 {
     )
   }
   
-  def createUserAttributeJson(userAttribute: UserAttribute) : UserAttributeResponseJsonV400 = {
+  def createUserAttributeJson(userAttribute: UserAttributeTrait) : UserAttributeResponseJsonV400 = {
     UserAttributeResponseJsonV400(
       user_attribute_id = userAttribute.userAttributeId,
       name = userAttribute.name,
@@ -1503,10 +1504,10 @@ object JSONFactory400 {
     )
   }
 
-  def createUserAttributesJson(userAttribute: List[UserAttribute]) : UserAttributesResponseJson = {
+  def createUserAttributesJson(userAttribute: List[UserAttributeTrait]) : UserAttributesResponseJson = {
     UserAttributesResponseJson(userAttribute.map(createUserAttributeJson))
   }
-  def createUserWithAttributesJson(user: User, userAttribute: List[UserAttribute]) : UserWithAttributesResponseJson = {
+  def createUserWithAttributesJson(user: User, userAttribute: List[UserAttributeTrait]) : UserWithAttributesResponseJson = {
     UserWithAttributesResponseJson(
       user_id = user.userId,
       email = user.emailAddress,
@@ -1518,7 +1519,7 @@ object JSONFactory400 {
   }
   def createCustomerAdUsersWithAttributesJson(customer: Customer,
                                               users: List[User],
-                                              userAttribute: List[UserAttribute]) : CustomerAndUsersWithAttributesResponseJson = {
+                                              userAttribute: List[UserAttributeTrait]) : CustomerAndUsersWithAttributesResponseJson = {
     CustomerAndUsersWithAttributesResponseJson(
       JSONFactory310.createCustomerJson(customer), 
       users.map(i => createUserWithAttributesJson(i, userAttribute.filter(_.userId==i.userId)))
@@ -1710,10 +1711,10 @@ object JSONFactory400 {
      )
   }
 
-  def createConsentsJsonV400(consents: List[MappedConsent]): ConsentsJsonV400= {
+  def createConsentsJsonV400(consents: List[ConsentTrait]): ConsentsJsonV400= {
     ConsentsJsonV400(consents.map(c => ConsentJsonV400(c.consentId, c.jsonWebToken, c.status, c.apiStandard, c.apiVersion)))
   }
-  def createConsentInfosJsonV400(consents: List[MappedConsent]): ConsentInfosJsonV400= {
+  def createConsentInfosJsonV400(consents: List[ConsentTrait]): ConsentInfosJsonV400= {
     ConsentInfosJsonV400(consents.map(c => 
       ConsentInfoJsonV400(
         c.consentId,

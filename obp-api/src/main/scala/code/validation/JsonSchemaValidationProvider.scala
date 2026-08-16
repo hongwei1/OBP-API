@@ -14,7 +14,7 @@ object JsonSchemaValidationProvider extends SimpleInjector {
 
   val validationProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedJsonSchemaValidationProvider.type = MappedJsonSchemaValidationProvider
+  def buildOne: JsonSchemaValidationProvider = DoobieJsonSchemaValidationProvider
 }
 
 case class JsonValidation(operationId: String, jsonSchema: String) extends JsonAble {

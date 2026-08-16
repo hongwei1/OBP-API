@@ -7,7 +7,9 @@ import scala.concurrent.Future
 
 object CounterpartyLimitProvider extends SimpleInjector {
   val counterpartyLimit = new Inject(buildOne _) {}
-  def buildOne: CounterpartyLimitProviderTrait =  MappedCounterpartyLimitProvider
+  // Phase 8 of the Lift Mapper -> Doobie migration: counterparty-limit access now goes through Doobie SQL.
+  // MappedCounterpartyLimitProvider / CounterpartyLimit entity stay for schema during the coexistence phase.
+  def buildOne: CounterpartyLimitProviderTrait = DoobieCounterpartyLimitProvider
 }
 
 trait CounterpartyLimitProviderTrait {

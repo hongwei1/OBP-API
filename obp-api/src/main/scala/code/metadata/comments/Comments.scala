@@ -12,7 +12,7 @@ object Comments extends SimpleInjector {
 
   val comments = new Inject(buildOne _) {}
 
-  def buildOne: Comments = MappedComments
+  def buildOne: Comments = DoobieComments
   
 }
 

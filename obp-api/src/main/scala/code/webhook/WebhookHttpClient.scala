@@ -2,23 +2,26 @@ package code.webhook
 
 import org.json4s._
 import code.api.util.ApiTrigger.{OnBalanceChange, OnCreateTransaction, OnCreditTransaction, OnDebitTransaction}
-import code.api.util.{ApiTrigger, CustomJsonFormats}
+import code.api.util.{ApiTrigger, CustomJsonFormats, DoobieUtil}
 import code.util.Helper.MdcLoggable
 import code.webhook.WebhookActor.{AccountNotificationWebhookRequest, WebhookRequest, WebhookRequestTrait}
 import org.json4s.Extraction
-import net.liftweb.mapper.By
+import doobie._
+import doobie.implicits._
 import okhttp3.{MediaType, Request, RequestBody}
 import code.webhook.OkHttpWebhookClient._
 
 
 object WebhookHttpClient extends MdcLoggable {
 
+  private case class WebhookEndpoint(url: String, httpMethod: String, httpProtocol: String)
+
   /**
     * This function starts the webhook event for instance ApiTrigger.onBalanceChange.
     * For the whole list of supported webhook events please take a look at a file code.api.util.ApiTrigger
     *
     * @param request is a message which provide all necessary data of the event
-    * @return we do not return anything because we use fire and forget scenario 
+    * @return we do not return anything because we use fire and forget scenario
     *         but we will still send a result to the Actor in the end.
     *         I.e. we trigger some webhook's event with:
     *         1. actor ! WebhookActor.WebhookRequest(
@@ -35,54 +38,59 @@ object WebhookHttpClient extends MdcLoggable {
   def startEvent(request: WebhookRequestTrait): List[Unit] = {
     logger.debug(s"Query table MappedAccountWebhook by mIsActive, mBankId, mAccountId, mTriggerName: true, ${request.bankId}, ${request.accountId}, ${request.trigger.toString()}" )
     logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait).request.eventId: " + request.eventId)
-    MappedAccountWebhook.findAll(
-      By(MappedAccountWebhook.mIsActive, true), 
-      By(MappedAccountWebhook.mBankId, request.bankId), 
-      By(MappedAccountWebhook.mAccountId, request.accountId),
-      By(MappedAccountWebhook.mTriggerName, request.trigger.toString())
-    ) map {
-      i =>
-        logEvent(request)
-        logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) i.url: " + i.url)
-        logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) i.httpMethod: " + i.httpMethod)
-        logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) i.httpProtocol: " + i.httpProtocol)
-        val payload = getEventPayload(request)
-        logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) payload: " + payload.toString)
-        makeAsynchronousRequest(composeRequest(i.url, i.httpMethod, i.httpProtocol, payload), request)
+    val triggerName = request.trigger.toString()
+    val webhooks: List[WebhookEndpoint] = DoobieUtil.runQuery(
+      fr"""SELECT murl, mhttpmethod, mhttpprotocol FROM mappedaccountwebhook
+           WHERE misactive = true
+             AND mbankid = ${request.bankId}
+             AND maccountid = ${request.accountId}
+             AND mtriggername = $triggerName"""
+        .query[WebhookEndpoint].to[List]
+    )
+    webhooks map { i =>
+      logEvent(request)
+      logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) i.url: " + i.url)
+      logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) i.httpMethod: " + i.httpMethod)
+      logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) i.httpProtocol: " + i.httpProtocol)
+      val payload = getEventPayload(request)
+      logger.debug("WebhookHttpClient.startEvent(WebhookRequestTrait) payload: " + payload.toString)
+      makeAsynchronousRequest(composeRequest(i.url, i.httpMethod, i.httpProtocol, payload), request)
     }
   }
 
   def startEvent(request: AccountNotificationWebhookRequest): List[Unit] = {
+    val triggerName = request.trigger.toString()
 
-    val accountWebhooks = {
-      logger.debug("Finding BankAccountNotificationWebhook with Triggername = " + request.trigger.toString())
-      val bankLevelWebhooks = BankAccountNotificationWebhook.findAll(
-        By(BankAccountNotificationWebhook.BankId, request.bankId),
-        By(BankAccountNotificationWebhook.TriggerName, request.trigger.toString())
+    val accountWebhooks: List[WebhookEndpoint] = {
+      logger.debug("Finding BankAccountNotificationWebhook with Triggername = " + triggerName)
+      val bankLevelWebhooks = DoobieUtil.runQuery(
+        fr"""SELECT url, httpmethod, httpprotocol FROM bankaccountnotificationwebhook
+             WHERE bankid = ${request.bankId} AND triggername = $triggerName"""
+          .query[WebhookEndpoint].to[List]
       )
-      logger.debug(s"Found ${bankLevelWebhooks.size} BankAccountNotificationWebhook with Triggername = " + request.trigger.toString())
-      
-      logger.debug("Finding SystemAccountNotificationWebhook with Triggername = " + request.trigger.toString())
-      val systemLevelWebhooks = SystemAccountNotificationWebhook.findAll(
-        By(SystemAccountNotificationWebhook.TriggerName, request.trigger.toString())
+      logger.debug(s"Found ${bankLevelWebhooks.size} BankAccountNotificationWebhook with Triggername = " + triggerName)
+
+      logger.debug("Finding SystemAccountNotificationWebhook with Triggername = " + triggerName)
+      val systemLevelWebhooks = DoobieUtil.runQuery(
+        fr"""SELECT url, httpmethod, httpprotocol FROM systemaccountnotificationwebhook
+             WHERE triggername = $triggerName"""
+          .query[WebhookEndpoint].to[List]
       )
-      logger.debug(s"Found ${systemLevelWebhooks.size} SystemAccountNotificationWebhook with Triggername = " + request.trigger.toString())
-      
+      logger.debug(s"Found ${systemLevelWebhooks.size} SystemAccountNotificationWebhook with Triggername = " + triggerName)
+
       bankLevelWebhooks ++ systemLevelWebhooks
     }
-    
+
     logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest).request.eventId: " + request.eventId)
     logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest).accountWebhooks: " + accountWebhooks)
-    accountWebhooks map {
-      i =>{
-        logEvent(request)
-        logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) i.url: " + i.url)
-        logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) i.httpMethod: " + i.httpMethod)
-        logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) i.httpProtocol: " + i.httpProtocol)
-        val payload = getEventPayload(request)
-        logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) payload: " + payload.toString)
-        makeAsynchronousRequest(composeRequest(i.url, i.httpMethod, i.httpProtocol, payload), request)
-      }
+    accountWebhooks map { i =>
+      logEvent(request)
+      logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) i.url: " + i.url)
+      logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) i.httpMethod: " + i.httpMethod)
+      logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) i.httpProtocol: " + i.httpProtocol)
+      val payload = getEventPayload(request)
+      logger.debug("WebhookHttpClient.startEvent(AccountNotificationWebhookRequest) payload: " + payload.toString)
+      makeAsynchronousRequest(composeRequest(i.url, i.httpMethod, i.httpProtocol, payload), request)
     }
   }
 
@@ -90,13 +98,13 @@ object WebhookHttpClient extends MdcLoggable {
     * This function makes payload for POST/PUT/DELETE HTTP calls. For instance:
     * {
     *   "event_name":"OnCreditTransaction",
-    *   "event_id":"fc7e4a71-5ff1-4006-95bb-7fd9e4adaef9", 
-    *   "bank_id":"gh.29.uk.x", 
-    *   "account_id":"marko_privite_01", 
-    *   "amount":"50.00 EUR", 
+    *   "event_id":"fc7e4a71-5ff1-4006-95bb-7fd9e4adaef9",
+    *   "bank_id":"gh.29.uk.x",
+    *   "account_id":"marko_privite_01",
+    *   "amount":"50.00 EUR",
     *   "balance":"739.00 EUR"
     * }
-    * 
+    *
     */
   def getEventPayload(request: WebhookRequestTrait): Option[String] = {
     request.trigger match {
@@ -117,10 +125,10 @@ object WebhookHttpClient extends MdcLoggable {
    * @param json For instance:
    *                {
    *                  "event_name":"OnCreditTransaction",
-   *                  "event_id":"fc7e4a71-5ff1-4006-95bb-7fd9e4adaef9", 
-   *                  "bank_id":"gh.29.uk.x", 
-   *                  "account_id":"private_01", 
-   *                  "amount":"50.00 EUR", 
+   *                  "event_id":"fc7e4a71-5ff1-4006-95bb-7fd9e4adaef9",
+   *                  "bank_id":"gh.29.uk.x",
+   *                  "account_id":"private_01",
+   *                  "amount":"50.00 EUR",
    *                  "balance":"739.00 EUR"
    *                 }
    * Please note it's empty in case of GET
@@ -142,8 +150,8 @@ object WebhookHttpClient extends MdcLoggable {
         new Request.Builder().url(uri).build
     }
   }
-  
-  
+
+
   private def logEvent(request: WebhookRequestTrait): Unit = {
     logger.debug("TRIGGER: " + request.trigger)
     logger.debug("EVENT_ID: " + request.eventId)
@@ -158,20 +166,20 @@ object WebhookHttpClient extends MdcLoggable {
     }else{
     }
   }
-  
+
 
   def main(args: Array[String]): Unit = {
     val uri = "https://publicobject.com/helloworld.txt"
     val request = WebhookRequest(
-      trigger=ApiTrigger.onBalanceChange , 
-      eventId="418044f2-f74e-412f-a4e1-a78cdacdef9c", 
-      bankId="gh.29.uk.x", 
-      accountId="518044f2-f74e-412f-a4e1-a78cdacdef9c", 
-      amount="10000", 
+      trigger=ApiTrigger.onBalanceChange ,
+      eventId="418044f2-f74e-412f-a4e1-a78cdacdef9c",
+      bankId="gh.29.uk.x",
+      accountId="518044f2-f74e-412f-a4e1-a78cdacdef9c",
+      amount="10000",
       balance="21000"
     )
     makeAsynchronousRequest(
-      composeRequest(uri, "GET", "HTTP/1.1", None), 
+      composeRequest(uri, "GET", "HTTP/1.1", None),
       request
     )
 
@@ -180,15 +188,15 @@ object WebhookHttpClient extends MdcLoggable {
     val user = User("morpheus", "leader")
     val json = com.openbankproject.commons.util.JsonAliases.compactRender(Extraction.decompose(user))
     makeAsynchronousRequest(
-      composeRequest("https://reqres.in/api/users", "POST", "HTTP/1.1", Some(json)), 
+      composeRequest("https://reqres.in/api/users", "POST", "HTTP/1.1", Some(json)),
       request)
-    
+
     val user2 = User("morpheus", "zion resident")
     val json2 = com.openbankproject.commons.util.JsonAliases.compactRender(Extraction.decompose(user2))
     makeAsynchronousRequest(
-      composeRequest("https://reqres.in/api/users/2", "PUT", "HTTP/1.1", Some(json2)), 
+      composeRequest("https://reqres.in/api/users/2", "PUT", "HTTP/1.1", Some(json2)),
       request
     )
   }
-  
+
 }

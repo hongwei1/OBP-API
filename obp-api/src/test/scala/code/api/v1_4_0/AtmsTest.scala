@@ -177,6 +177,27 @@ class AtmsTest extends V140ServerSetup with DefaultUsers {
       Atms.atmsProvider.vend.deleteAtm(atm)
     }
 
+    override def getAllAtms(queryParams: List[OBPQueryParam]): List[AtmT] =
+      Atms.atmsProvider.vend.getAllAtms(queryParams)
+
+    override def updateAtmSupportedLanguages(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+      Atms.atmsProvider.vend.updateAtmSupportedLanguages(bankId, atmId, v)
+
+    override def updateAtmSupportedCurrencies(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+      Atms.atmsProvider.vend.updateAtmSupportedCurrencies(bankId, atmId, v)
+
+    override def updateAtmAccessibilityFeatures(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+      Atms.atmsProvider.vend.updateAtmAccessibilityFeatures(bankId, atmId, v)
+
+    override def updateAtmServices(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+      Atms.atmsProvider.vend.updateAtmServices(bankId, atmId, v)
+
+    override def updateAtmNotes(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+      Atms.atmsProvider.vend.updateAtmNotes(bankId, atmId, v)
+
+    override def updateAtmLocationCategories(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT] =
+      Atms.atmsProvider.vend.updateAtmLocationCategories(bankId, atmId, v)
+
   }
 
   // TODO Extend to more fields

@@ -1,9 +1,34 @@
 package code.metrics
 
+import java.sql.Timestamp
 import java.util.Date
 
 import code.api.util._
+import code.api.util.DoobieUtil
+import doobie._
+import doobie.implicits._
 import net.liftweb.mapper._
+
+/**
+ * Result row read from the `connector_trace` table via Doobie.
+ *
+ * Column order matches the SELECT in [[ConnectorTraceProvider.getAllConnectorTraces]].
+ */
+case class ConnectorTraceRow(
+  id: Long,
+  correlationId: String,
+  connectorName: String,
+  functionName: String,
+  bankId: String,
+  outboundMessage: String,
+  inboundMessage: String,
+  date: Timestamp,
+  duration: Long,
+  isSuccessful: Boolean,
+  userId: String,
+  httpVerb: String,
+  url: String
+)
 
 class ConnectorTrace extends LongKeyedMapper[ConnectorTrace] with IdPK {
   override def getSingleton = ConnectorTrace
@@ -44,45 +69,52 @@ object ConnectorTraceProvider {
     httpVerb: String,
     url: String
   ): Unit = {
-    ConnectorTrace.create
-      .correlationId(correlationId)
-      .connectorName(connectorName)
-      .functionName(functionName)
-      .bankId(bankId)
-      .outboundMessage(outboundMessage)
-      .inboundMessage(inboundMessage)
-      .date(date)
-      .duration(duration)
-      .isSuccessful(isSuccessful)
-      .userId(userId)
-      .httpVerb(httpVerb)
-      .url(url)
-      .save
+    val dateTs = new Timestamp(date.getTime)
+    DoobieUtil.runQuery(
+      sql"""INSERT INTO connector_trace
+              (correlationid, connectorname, functionname, bankid, outboundmessage, inboundmessage,
+               date_c, duration, issuccessful, userid, httpverb, url)
+            VALUES
+              ($correlationId, $connectorName, $functionName, $bankId, $outboundMessage, $inboundMessage,
+               $dateTs, $duration, $isSuccessful, $userId, $httpVerb, $url)"""
+        .update.run
+    )
   }
 
-  def getAllConnectorTraces(queryParams: List[OBPQueryParam]): List[ConnectorTrace] = {
-    val limit = queryParams.collect { case OBPLimit(value) => MaxRows[ConnectorTrace](value) }.headOption
-    val offset = queryParams.collect { case OBPOffset(value) => StartAt[ConnectorTrace](value) }.headOption
-    val fromDate = queryParams.collect { case OBPFromDate(date) => By_>=(ConnectorTrace.date, date) }.headOption
-    val toDate = queryParams.collect { case OBPToDate(date) => By_<=(ConnectorTrace.date, date) }.headOption
-    val correlationId = queryParams.collect { case OBPCorrelationId(value) => By(ConnectorTrace.correlationId, value) }.headOption
-    val functionName = queryParams.collect { case OBPFunctionName(value) => By(ConnectorTrace.functionName, value) }.headOption
-    val connectorName = queryParams.collect { case OBPConnectorName(value) => By(ConnectorTrace.connectorName, value) }.headOption
-    val userId = queryParams.collect { case OBPUserId(value) => By(ConnectorTrace.userId, value) }.headOption
-    val bankId = queryParams.collect { case OBPBankId(value) => By(ConnectorTrace.bankId, value) }.headOption
-    val ordering = queryParams.collect {
-      case OBPOrdering(_, direction) =>
-        direction match {
-          case OBPAscending => OrderBy(ConnectorTrace.date, Ascending)
-          case OBPDescending => OrderBy(ConnectorTrace.date, Descending)
-        }
-    }
-    val optionalParams: Seq[QueryParam[ConnectorTrace]] = Seq(
-      limit.toSeq, offset.toSeq, fromDate.toSeq, toDate.toSeq, ordering,
-      correlationId.toSeq, functionName.toSeq, connectorName.toSeq,
-      userId.toSeq, bankId.toSeq
-    ).flatten
+  def getAllConnectorTraces(queryParams: List[OBPQueryParam]): List[ConnectorTraceRow] = {
+    val limit         = queryParams.collectFirst { case OBPLimit(v)        => v }
+    val offset        = queryParams.collectFirst { case OBPOffset(v)       => v }
+    val fromDate      = queryParams.collectFirst { case OBPFromDate(v)     => new Timestamp(v.getTime) }
+    val toDate        = queryParams.collectFirst { case OBPToDate(v)       => new Timestamp(v.getTime) }
+    val correlationId = queryParams.collectFirst { case OBPCorrelationId(v) => v }
+    val functionName  = queryParams.collectFirst { case OBPFunctionName(v) => v }
+    val connectorName = queryParams.collectFirst { case OBPConnectorName(v) => v }
+    val userId        = queryParams.collectFirst { case OBPUserId(v)       => v }
+    val bankId        = queryParams.collectFirst { case OBPBankId(v)       => v }
+    val orderDir      = queryParams.collectFirst { case OBPOrdering(_, dir) => dir }
 
-    ConnectorTrace.findAll(optionalParams: _*)
+    val conditions = List(
+      fromDate     .map(d => fr"date_c >= $d"),
+      toDate       .map(d => fr"date_c <= $d"),
+      correlationId.map(v => fr"correlationid = $v"),
+      functionName .map(v => fr"functionname = $v"),
+      connectorName.map(v => fr"connectorname = $v"),
+      userId       .map(v => fr"userid = $v"),
+      bankId       .map(v => fr"bankid = $v")
+    ).flatten
+    val whereQ = if (conditions.isEmpty) fr"" else fr"WHERE" ++ conditions.reduce(_ ++ fr" AND " ++ _)
+    val orderQ = orderDir.map {
+      case OBPAscending  => fr"ORDER BY date_c ASC"
+      case OBPDescending => fr"ORDER BY date_c DESC"
+    }.getOrElse(fr"")
+    val limitQ  = limit .map(l => fr"LIMIT $l") .getOrElse(fr"")
+    val offsetQ = offset.map(o => fr"OFFSET $o").getOrElse(fr"")
+
+    DoobieUtil.runQuery(
+      (fr"""SELECT id, correlationid, connectorname, functionname, bankid, outboundmessage, inboundmessage,
+                   date_c, duration, issuccessful, userid, httpverb, url
+            FROM connector_trace""" ++ whereQ ++ orderQ ++ limitQ ++ offsetQ)
+        .query[ConnectorTraceRow].to[List]
+    )
   }
 }

@@ -4,7 +4,9 @@ import bootstrap.liftweb.ToSchemify
 import code.accountholders.AccountHolders
 import code.api.Constant._
 import code.api.util.APIUtil.isValidCustomViewName
+import code.api.util.DoobieUtil
 import code.api.util.ErrorMessages._
+import doobie.implicits._
 import code.model._
 import code.model.dataAccess._
 import code.views.MapperViews.getExistingCustomView
@@ -157,5 +159,7 @@ trait TestConnectorSetupWithStandardPermissions extends TestConnectorSetup {
 
     //empty the relational db tables after each test
     ToSchemify.models.filterNot(exclusion).foreach(_.bulkDelete_!!())
+    // mappedatm is Doobie-managed (no longer in ToSchemify), so reset it explicitly.
+    tryo { DoobieUtil.runQuery(sql"DELETE FROM mappedatm".update.run) }
   }
 }

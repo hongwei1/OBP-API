@@ -4,10 +4,11 @@ import code.api.util.Consent.logger
 
 import java.util.Date
 import code.api.util._
-import code.entitlement.{Entitlement, MappedEntitlement}
+import code.entitlement.{DoobieEntitlementsProvider, Entitlement, MappedEntitlement}
 import code.loginattempts.LoginAttempt.maxBadLoginAttempts
-import code.loginattempts.MappedBadLoginAttempt
-import code.model.dataAccess.{AuthUser, ResourceUser}
+import code.model.dataAccess.{DoobieAuthUserProvider, ResourceUser}
+import doobie._
+import doobie.implicits._
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.model.{User, UserPrimaryKey}
@@ -23,7 +24,7 @@ object LiftUsers extends Users with MdcLoggable{
 
   //UserId here is the resourceuser.id field
   def getUserByResourceUserId(id : Long) : Box[User] = {
-    ResourceUser.find(id) ?~ { s"user $id not found"}
+    Box(DoobieResourceUserProvider.findByResourceUserId(id)) ?~ { s"user $id not found"}
   }
 
   //UserId here is the resourceuser.id field
@@ -32,7 +33,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   def getResourceUserByResourceUserIdF(id : Long) : Box[User] = {
-    ResourceUser.find(id) ?~ { s"user $id not found"}
+    Box(DoobieResourceUserProvider.findByResourceUserId(id)) ?~ { s"user $id not found"}
   }
 
   def getResourceUserByResourceUserIdFuture(id : Long) : Future[Box[User]] = {
@@ -41,7 +42,7 @@ object LiftUsers extends Users with MdcLoggable{
 
   def getUserByProviderId(provider : String, idGivenByProvider : String) : Box[User] = {
     // Note: providerId is generally human readable like a username. it is not a uuid like user_id.
-    ResourceUser.find(By(ResourceUser.provider_, provider), By(ResourceUser.providerId, idGivenByProvider))
+    Box(DoobieResourceUserProvider.findByProviderId(provider, idGivenByProvider))
   }
   def getUserByProviderIdFuture(provider : String, idGivenByProvider : String) : Future[Box[User]] = {
     Future {
@@ -81,7 +82,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   def getUserByUserId(userId : String) : Box[User] = {
-    ResourceUser.find(By(ResourceUser.userId_, userId))
+    Box(DoobieResourceUserProvider.findByUserId(userId))
   }
 
    def getUserByUserIdFuture(userId : String) : Future[Box[User]] = {
@@ -91,7 +92,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   def getUsersByUserIds(userIds : List[String]) : List[User] = {
-    ResourceUser.findAll(ByList(ResourceUser.userId_, userIds))
+    DoobieResourceUserProvider.findAllByUserIds(userIds)
   }
 
   def getUsersByUserIdsFuture(userIds : List[String]) : Future[List[User]] = {
@@ -99,10 +100,7 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   override def getUserByProviderAndUsername(provider : String, userName: String): Box[User] = {
-    ResourceUser.find(
-      By(ResourceUser.provider_, provider),
-      By(ResourceUser.name_, userName)
-    )
+    Box(DoobieResourceUserProvider.findByProviderAndUsername(provider, userName))
   }
 
   override def getUserByProviderAndUsernameFuture(provider: String, username: String): Future[Box[User]] = {
@@ -202,18 +200,18 @@ object LiftUsers extends Users with MdcLoggable{
 
     val showUsers: List[ResourceUser] = locked.map(_.toLowerCase()) match {
       case Some("active") =>
-        val lockedUsers: immutable.Seq[MappedBadLoginAttempt] =
-          MappedBadLoginAttempt.findAll(
-            By_>(MappedBadLoginAttempt.mBadAttemptsSinceLastSuccessOrReset, maxBadLoginAttempts.toInt)
-          )
-        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsers.map(_.username)))
+        val lockedUsernames: List[String] = DoobieUtil.runQuery(
+          fr"SELECT musername FROM mappedbadloginattempt WHERE mbadattemptssincelastsuccessorreset > ${maxBadLoginAttempts.toInt}"
+            .query[String].to[List]
+        )
+        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsernames))
         getAllResourceUsers() diff exclude
       case Some("locked") =>
-        val lockedUsers: immutable.Seq[MappedBadLoginAttempt] =
-          MappedBadLoginAttempt.findAll(
-            By_>(MappedBadLoginAttempt.mBadAttemptsSinceLastSuccessOrReset, maxBadLoginAttempts.toInt)
-          )
-        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsers.map(_.username)))
+        val lockedUsernames: List[String] = DoobieUtil.runQuery(
+          fr"SELECT musername FROM mappedbadloginattempt WHERE mbadattemptssincelastsuccessorreset > ${maxBadLoginAttempts.toInt}"
+            .query[String].to[List]
+        )
+        val exclude: immutable.Seq[ResourceUser] = ResourceUser.findAll(ByList(ResourceUser.name_, lockedUsernames))
         getAllResourceUsers() intersect exclude.toList
       case _ =>
         getAllResourceUsers()
@@ -279,22 +277,13 @@ object LiftUsers extends Users with MdcLoggable{
     else {
       val userIds = rows.map(_.userId)
 
-      // Batch-fetch entitlements for all returned users (single IN query).
+      // Batch-fetch entitlements for all returned users (single Doobie IN query).
       val entitlementsByUserId: Map[String, List[Entitlement]] =
-        MappedEntitlement.findAll(ByList(MappedEntitlement.mUserId, userIds))
-          .groupBy(_.userId)
-          .map { case (uid, ents) => uid -> ents.sortBy(_.roleName).toList }
+        DoobieEntitlementsProvider.findAllByUserIds(userIds)
 
       // Batch-fetch agreements, then reduce to most-recent per (userId, agreementType).
       val agreementsByUserId: Map[String, List[UserAgreement]] =
-        UserAgreement.findAll(ByList(UserAgreement.UserId, userIds))
-          .groupBy(_.userId)
-          .map { case (uid, all) =>
-            uid -> all.groupBy(_.agreementType)
-              .values
-              .flatMap(_.sortBy(_.Date.get)(Ordering[Date].reverse).headOption)
-              .toList
-          }
+        DoobieUserAgreementProvider.findAllByUserIds(userIds)
 
       val totalEntitlements = entitlementsByUserId.values.map(_.size).sum
       val totalAgreements = agreementsByUserId.values.map(_.size).sum
@@ -394,22 +383,20 @@ object LiftUsers extends Users with MdcLoggable{
   }
 
   override def bulkDeleteAllResourceUsers(): Box[Boolean] = {
-    Full( ResourceUser.bulkDelete_!!() )
+    DoobieUtil.runQuery(sql"DELETE FROM resourceuser".update.run)
+    Full(true)
   }
 
   override def deleteResourceUser(userId: Long): Box[Boolean] = {
-    for {
-      u <- ResourceUser.find(By(ResourceUser.id, userId))
-    } yield {
-      u.delete_!
-    }
+    val deleted = DoobieUtil.runQuery(sql"DELETE FROM resourceuser WHERE id = $userId".update.run)
+    if (deleted > 0) Full(true) else Empty
   }
   override def scrambleDataOfResourceUser(userPrimaryKey: UserPrimaryKey): Box[Boolean] = {
     for {
       u <- ResourceUser.find(By(ResourceUser.id, userPrimaryKey.value))
     } yield {
-      AuthUser.find(By(AuthUser.user, userPrimaryKey.value)) match {
-        case Empty =>
+      DoobieAuthUserProvider.findMetaByUserFk(userPrimaryKey.value) match {
+        case None =>
           u
             .Company(Helpers.randomString(16))
             .IsDeleted(true)
@@ -417,7 +404,7 @@ object LiftUsers extends Users with MdcLoggable{
             .email(Helpers.randomString(10) + "@example.com")
             .providerId(Helpers.randomString(16))
             .save
-        case _ =>
+        case Some(_) =>
           u
             .Company(Helpers.randomString(16))
             .IsDeleted(true)

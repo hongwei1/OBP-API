@@ -11,7 +11,7 @@ import code.util.Helper.MdcLoggable
 object Thing extends SimpleInjector {
 
     val thingProvider = new Inject(buildOne _) {}
-    def buildOne: ThingProvider = MappedThingProvider
+    def buildOne: ThingProvider = DoobieThingProvider
 
   //If you set props `provider.thing`, you can set to different providers
 //  // This determines the provider we use

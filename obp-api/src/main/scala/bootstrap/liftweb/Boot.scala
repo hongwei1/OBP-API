@@ -56,7 +56,6 @@ import code.apicollectionendpoint.ApiCollectionEndpoint
 import code.apiproduct.ApiProduct
 import code.apiproductattribute.ApiProductAttribute
 import code.atmattribute.AtmAttribute
-import code.atms.MappedAtm
 import code.authtypevalidation.AuthenticationTypeValidation
 import code.bankaccountbalance.BankAccountBalance
 import code.bankattribute.BankAttribute
@@ -99,14 +98,9 @@ import code.kycmedias.MappedKycMedia
 import code.kycstatuses.MappedKycStatus
 import code.loginattempts.{LoginAttempt, MappedBadLoginAttempt}
 import code.meetings.{MappedMeeting, MappedMeetingInvitee}
-import code.metadata.comments.MappedComment
 import code.metadata.counterparties.{MappedCounterparty, MappedCounterpartyBespoke, MappedCounterpartyMetadata, MappedCounterpartyWhereTag}
-import code.metadata.narrative.MappedNarrative
-import code.metadata.tags.MappedTag
-import code.metadata.transactionimages.MappedTransactionImage
-import code.metadata.wheretags.MappedWhereTag
 import code.methodrouting.MethodRouting
-import code.metrics.{ConnectorTrace, MappedConnectorMetric, MappedMetric, MetricArchive, MetricsArchiveRun}
+import code.metrics.{ConnectorTrace, MappedMetric, MetricArchive, MetricsArchiveRun}
 import code.migration.MigrationScriptLog
 import code.model._
 import code.model.dataAccess._
@@ -264,6 +258,12 @@ class Boot extends MdcLoggable {
      * In case of PostgreSQL it works
      */
     MapperRules.createForeignKeys_? = (_) => APIUtil.getPropsAsBoolValue("mapper_rules.create_foreign_keys", false)
+
+    // Flyway runs BEFORE Schemifier so it owns the schema once Schemifier is retired.
+    // Gated by flyway.enabled (default false) during the Mapper -> Doobie migration.
+    // It runs before the dedup below so that any table Flyway owns already exists when the
+    // dedup inspects it.
+    code.api.util.flyway.FlywaySchemaSetup.runIfEnabled()
 
     // Pre-Schemifier dedup: drop natural-key duplicate rows in mapperaccountholder /
     // mappedentitlement BEFORE schemifyAll() issues their CREATE UNIQUE INDEX (declared in
@@ -945,7 +945,6 @@ object ToSchemify extends MdcLoggable {
     DoubleEntryBookTransaction,
     MappedCustomerMessage,
     MappedBranch,
-    MappedAtm,
     MappedProduct,
     MappedCrmEvent,
     MappedKycDocument,
@@ -1008,11 +1007,6 @@ object ToSchemify extends MdcLoggable {
     UserInvitation,
     UserAgreement,
     UserAttribute,
-    MappedComment,
-    MappedTag,
-    MappedWhereTag,
-    MappedTransactionImage,
-    MappedNarrative,
     MappedCustomer,
     MappedUserCustomerLink,
     CustomerLink,
@@ -1020,6 +1014,10 @@ object ToSchemify extends MdcLoggable {
     Token,
     OpenIDConnectToken,
     Nonce,
+    // Counterparty data access migrated to Doobie (Phase 2): the vend now uses DoobieCounterparties.
+    // The entities stay registered here so Schemifier owns their schema (Flyway skips already-created
+    // tables) and so the test-isolation reset (ServerSetup.resetDatabaseForTestClass iterates
+    // ToSchemify.models) still clears them. The Mapper classes are removed at the final teardown.
     MappedCounterparty,
     MappedCounterpartyBespoke,
     MappedCounterpartyMetadata,
@@ -1034,7 +1032,6 @@ object ToSchemify extends MdcLoggable {
     MetricsArchiveRun,
     MapperAccountHolders,
     MappedEntitlement,
-    MappedConnectorMetric,
     ConnectorTrace,
     MappedExpectedChallengeAnswer,
     MappedEntitlementRequest,

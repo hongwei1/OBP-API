@@ -7,7 +7,7 @@ import code.api.util.ErrorMessages.MandatoryPropertyIsNotSet
 import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, PostSimpleCounterpartyJson400}
 import code.bankconnectors.Connector
 import code.customer.CustomerX
-import code.metrics.{MappedMetric, MetricArchive, MetricsArchiveRun, MetricsProps}
+import code.metrics.{MetricsArchiveRun, MetricsArchiveRunRow, MetricsProps}
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import code.api.v3_1_0.{AccountAttributeResponseJson, JSONFactory310}
@@ -15,7 +15,6 @@ import com.openbankproject.commons.model.{AccountAttribute, AccountId, AccountRo
 import com.openbankproject.commons.util.ApiVersion
 import java.util.Date
 import net.liftweb.common.Full
-import net.liftweb.mapper.{Ascending, By, By_<=, Descending, MaxRows, OrderBy}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -1498,17 +1497,17 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     everything_as_expected: Boolean
   )
 
-  private def metricsArchiveRunToJson(r: MetricsArchiveRun): MetricsArchiveRunJsonV700 =
+  private def metricsArchiveRunToJson(r: MetricsArchiveRunRow): MetricsArchiveRunJsonV700 =
     MetricsArchiveRunJsonV700(
-      run_id                    = r.RunId.get,
-      api_instance_id           = r.ApiInstanceId.get,
-      started_at                = r.StartedAt.get,
-      ended_at                  = r.EndedAt.get,
-      duration_ms               = r.DurationMs.get,
-      rows_moved_to_archive     = r.RowsMovedToArchive.get,
-      rows_deleted_from_archive = r.RowsDeletedFromArchive.get,
-      success                   = r.Success.get,
-      remark                    = r.Remark.get
+      run_id                    = r.runId,
+      api_instance_id           = r.apiInstanceId,
+      started_at                = r.startedAt,
+      ended_at                  = r.endedAt,
+      duration_ms               = r.durationMs,
+      rows_moved_to_archive     = r.rowsMovedToArchive,
+      rows_deleted_from_archive = r.rowsDeletedFromArchive,
+      success                   = r.success,
+      remark                    = r.remark
     )
 
   // The in-progress archive job whose lock blocked a new run. Surfaced so an
@@ -1537,10 +1536,10 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     outcome match {
       case code.scheduler.RunCompleted(r) =>
         val msg =
-          if (r.Success.get)
-            s"Archive run completed: moved ${r.RowsMovedToArchive.get} rows to the archive, deleted ${r.RowsDeletedFromArchive.get} outdated archive rows."
+          if (r.success)
+            s"Archive run completed: moved ${r.rowsMovedToArchive} rows to the archive, deleted ${r.rowsDeletedFromArchive} outdated archive rows."
           else
-            s"Archive run completed with errors: ${r.Remark.get}"
+            s"Archive run completed with errors: ${r.remark}"
         TriggerMetricsArchiveRunResponseJsonV700("completed", msg, Some(metricsArchiveRunToJson(r)))
       case code.scheduler.RunSkippedAlreadyInProgress(jobId, apiInstanceId, startedAt) =>
         val ageSeconds = (System.currentTimeMillis - startedAt.getTime) / 1000L
@@ -1573,6 +1572,8 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
   // job holds the scheduler lock (deleted when the job finishes), so a row here is
   // a currently-running job or a stale lock left by a dead JVM — `age_seconds`
   // tells them apart.
+  case class SchedulerJobRow(jobId: String, name: String, apiInstanceId: String, createdAt: Date)
+
   case class SchedulerJobJsonV700(
     job_id: String,
     name: String,
@@ -1586,16 +1587,15 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     count: Int
   )
 
-  def createSchedulerJobsJsonV700(rows: List[code.scheduler.JobScheduler]): SchedulerJobsJsonV700 = {
+  def createSchedulerJobsJsonV700(rows: List[SchedulerJobRow]): SchedulerJobsJsonV700 = {
     val now = System.currentTimeMillis
     val jobs = rows.map { r =>
-      val startedAt = r.createdAt.get
       SchedulerJobJsonV700(
-        job_id          = r.JobId.get,
-        name            = r.Name.get,
-        api_instance_id = r.ApiInstanceId.get,
-        started_at      = startedAt,
-        age_seconds     = (now - startedAt.getTime) / 1000L
+        job_id          = r.jobId,
+        name            = r.name,
+        api_instance_id = r.apiInstanceId,
+        started_at      = r.createdAt,
+        age_seconds     = (now - r.createdAt.getTime) / 1000L
       )
     }
     SchedulerJobsJsonV700(jobs, jobs.size)
@@ -1655,13 +1655,17 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
         newest_record_age_days = newest.map(metricsAgeInDays(_, now))
       )
 
-    val metricOldest = MappedMetric.findAll(OrderBy(MappedMetric.date, Ascending), MaxRows(1)).headOption.map(_.getDate())
-    val metricNewest = MappedMetric.findAll(OrderBy(MappedMetric.date, Descending), MaxRows(1)).headOption.map(_.getDate())
-    val metricStats  = statsFor("metric", MappedMetric.count, metricOldest, metricNewest)
+    import doobie._; import doobie.implicits._
+    import java.sql.Timestamp
+    val metricOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date_c) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val metricNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date_c) FROM metric".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val metricCount  = code.api.util.DoobieUtil.runQuery(fr"SELECT COUNT(*) FROM metric".query[Long].unique)
+    val metricStats  = statsFor("metric", metricCount, metricOldest, metricNewest)
 
-    val archiveOldest = MetricArchive.findAll(OrderBy(MetricArchive.date, Ascending), MaxRows(1)).headOption.map(_.getDate())
-    val archiveNewest = MetricArchive.findAll(OrderBy(MetricArchive.date, Descending), MaxRows(1)).headOption.map(_.getDate())
-    val archiveStats  = statsFor("metricarchive", MetricArchive.count, archiveOldest, archiveNewest)
+    val archiveOldest = code.api.util.DoobieUtil.runQuery(fr"SELECT MIN(date_c) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val archiveNewest = code.api.util.DoobieUtil.runQuery(fr"SELECT MAX(date_c) FROM metricarchive".query[Option[Timestamp]].unique).map(t => new Date(t.getTime))
+    val archiveCount  = code.api.util.DoobieUtil.runQuery(fr"SELECT COUNT(*) FROM metricarchive".query[Long].unique)
+    val archiveStats  = statsFor("metricarchive", archiveCount, archiveOldest, archiveNewest)
 
     val graceDays = 7L
     val checks = scala.collection.mutable.ListBuffer[MetricsIntegrityCheckJsonV700]()
@@ -1737,17 +1741,17 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     val lastRun = MetricsArchiveRun.lastRun
     val lastSuccessfulRun = MetricsArchiveRun.lastSuccessfulRun
     lastRun match {
-      case Some(r) if r.Success.get =>
-        val ageDays = metricsAgeInDays(r.StartedAt.get, now)
+      case Some(r) if r.success =>
+        val ageDays = metricsAgeInDays(r.startedAt, now)
         checks += MetricsIntegrityCheckJsonV700("check_last_archive_run_succeeded", "OK",
-          s"Last archive run succeeded $ageDays days ago (moved ${r.RowsMovedToArchive.get} rows, deleted ${r.RowsDeletedFromArchive.get} outdated archive rows).")
+          s"Last archive run succeeded $ageDays days ago (moved ${r.rowsMovedToArchive} rows, deleted ${r.rowsDeletedFromArchive} outdated archive rows).")
       case Some(r) =>
-        val ageDays = metricsAgeInDays(r.StartedAt.get, now)
+        val ageDays = metricsAgeInDays(r.startedAt, now)
         val lastOkNote = lastSuccessfulRun
-          .map(s => s" Last successful run was ${metricsAgeInDays(s.StartedAt.get, now)} days ago.")
+          .map(s => s" Last successful run was ${metricsAgeInDays(s.startedAt, now)} days ago.")
           .getOrElse(" No successful run has ever been recorded.")
         checks += MetricsIntegrityCheckJsonV700("check_last_archive_run_succeeded", "ERROR",
-          s"The most recent archive run ($ageDays days ago) failed: ${r.Remark.get}.$lastOkNote")
+          s"The most recent archive run ($ageDays days ago) failed: ${r.remark}.$lastOkNote")
       case None if schedulerEnabled =>
         checks += MetricsIntegrityCheckJsonV700("check_last_archive_run_succeeded", "WARNING",
           "No archive run has been recorded yet. The scheduler is enabled but may not have completed its first run since this table was introduced.")

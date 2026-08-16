@@ -17,10 +17,10 @@ import code.api.v3_0_0.{CustomerAttributeResponseJsonV300, TransactionJsonV300, 
 import code.api.v3_1_0._
 import code.consumer.Consumers
 import code.entitlement.Entitlement
-import code.metadata.comments.MappedComment
-import code.metadata.narrative.MappedNarrative
-import code.metadata.transactionimages.MappedTransactionImage
-import code.metadata.wheretags.MappedWhereTag
+import code.metadata.comments.DoobieComments
+import code.metadata.narrative.DoobieNarratives
+import code.metadata.transactionimages.DoobieTransactionImages
+import code.metadata.wheretags.DoobieWhereTags
 import code.setup.{APIResponse, DefaultUsers, ServerSetupWithTestData}
 import code.transactionattribute.MappedTransactionAttribute
 import com.openbankproject.commons.model.{AccountId, AccountRoutingJsonV121, AmountOfMoneyJsonV121, BankId, CreateViewJson, UpdateViewJSON}
@@ -334,26 +334,10 @@ trait V400ServerSetup extends ServerSetupWithTestData with DefaultUsers {
       By(MappedTransactionAttribute.mBankId, bankId),
       By(MappedTransactionAttribute.mTransactionId, transactionId)
     ).size == 0
-    val comments = MappedComment.findAll(
-      By(MappedComment.bank, bankId),
-      By(MappedComment.account, accountId),
-      By(MappedComment.transaction, transactionId)
-    ).size == 0
-    val narrative = MappedNarrative.findAll(
-      By(MappedNarrative.bank, bankId),
-      By(MappedNarrative.account, accountId),
-      By(MappedNarrative.transaction, transactionId)
-    ).size == 0
-    val images = MappedTransactionImage.findAll(
-      By(MappedTransactionImage.bank, bankId),
-      By(MappedTransactionImage.account, accountId),
-      By(MappedTransactionImage.transaction, transactionId)
-    ).size == 0
-    val whereTag = MappedWhereTag.find(
-      By(MappedWhereTag.bank, bankId),
-      By(MappedWhereTag.account, accountId),
-      By(MappedWhereTag.transaction, transactionId)
-    ).size == 0
+    val comments = DoobieComments.countByBankAccountTransaction(bankId, accountId, transactionId) == 0
+    val narrative = DoobieNarratives.countByBankAccountTransaction(bankId, accountId, transactionId) == 0
+    val images    = DoobieTransactionImages.countByBankAccountTransaction(bankId, accountId, transactionId) == 0
+    val whereTag  = DoobieWhereTags.countByBankAccountTransaction(bankId, accountId, transactionId) == 0
     List(attributes, comments, narrative, images, whereTag).forall(_ == true)
   }
   

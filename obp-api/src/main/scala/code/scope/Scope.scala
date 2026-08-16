@@ -9,7 +9,7 @@ object Scope extends SimpleInjector {
 
   val scope = new Inject(buildOne _) {}
 
-  def buildOne: ScopeProvider = MappedScopesProvider 
+  def buildOne: ScopeProvider = DoobieScopesProvider
   
 }
 

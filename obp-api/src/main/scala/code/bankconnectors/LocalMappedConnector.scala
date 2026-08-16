@@ -17,10 +17,10 @@ import code.api.util._
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_1_0._
 import code.api.v4_0_0.{AgentCashWithdrawalJson, PostSimpleCounterpartyJson400, TransactionRequestBodyAgentJsonV400, TransactionRequestBodySimpleJsonV400}
-import code.atmattribute.{AtmAttribute, AtmAttributeX}
-import code.atms.{Atms, MappedAtm}
+import code.atmattribute.AtmAttributeX
+import code.atms.Atms
 import code.bankaccountbalance.BankAccountBalanceX
-import code.bankattribute.{BankAttribute, BankAttributeX}
+import code.bankattribute.BankAttributeX
 import code.branches.MappedBranch
 import code.cardattribute.CardAttributeX
 import code.cards.MappedPhysicalCard
@@ -58,6 +58,7 @@ import code.transactionRequestAttribute.TransactionRequestAttributeX
 import code.transactionattribute.TransactionAttributeX
 import code.transactionrequests._
 import code.users.{UserAttribute, UserAttributeProvider, Users}
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.util.Helper
 import code.util.Helper._
 import code.views.Views
@@ -543,7 +544,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       challengeSuccess = challenges.count(_.successful == true) match {
         case number if number >= quorum => true
         case _ =>
-          MappedTransactionRequestProvider.saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.NEXT_CHALLENGE_PENDING.toString)
+          TransactionRequests.transactionRequestProvider.vend.saveTransactionRequestStatusImpl(transReqId, TransactionRequestStatus.NEXT_CHALLENGE_PENDING.toString)
           false
       }
     } yield {
@@ -601,14 +602,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   //gets a particular bank handled by this connector
   override def getBankLegacy(bankId: BankId, callContext: Option[CallContext]): Box[(Bank, Option[CallContext])] = {
-    MappedBank
-      .find(By(MappedBank.permalink, bankId.value))
-      .map(
-        bank =>
-          bank
-            .mBankRoutingScheme(APIUtil.ValueOrOBP(bank.bankRoutingScheme))
-            .mBankRoutingAddress(APIUtil.ValueOrOBPId(bank.bankRoutingAddress, bank.bankId.value))
-      ).map(bank => (bank, callContext))
+    DoobieBankProvider.getBankByBankId(bankId).map(bank => (bank, callContext))
   }
 
   override def getBank(bankId: BankId, callContext: Option[CallContext]): Future[Box[(Bank, Option[CallContext])]] = Future {
@@ -617,16 +611,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
 
   override def getBanksLegacy(callContext: Option[CallContext]): Box[(List[Bank], Option[CallContext])] = {
-    Full(MappedBank
-      .findAll()
-      .map(
-        bank =>
-          bank
-            .mBankRoutingScheme(APIUtil.ValueOrOBP(bank.bankRoutingScheme))
-            .mBankRoutingAddress(APIUtil.ValueOrOBPId(bank.bankRoutingAddress, bank.bankId.value))
-      ),
-      callContext
-    )
+    Full((DoobieBankProvider.getAllBanks, callContext))
   }
 
   override def getBanks(callContext: Option[CallContext]): Future[Box[(List[Bank], Option[CallContext])]] = Future {
@@ -861,16 +846,16 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
     for {
       (bank, _) <- getBankLegacy(bankId, None)
-      account <- getBankAccountLegacy(bankId, accountId, None).map(_._1).map(_.asInstanceOf[MappedBankAccount])
+      account <- getBankAccountLegacy(bankId, accountId, None).map(_._1)
     } {
       Future {
         val useMessageQueue = APIUtil.getPropsAsBoolValue("messageQueue.updateBankAccountsTransaction", false)
-        val outDatedTransactions = Box !! account.accountLastUpdate.get match {
+        val outDatedTransactions = Box !! account.lastUpdate match {
           case Full(l) => now after time(l.getTime + hours(APIUtil.getPropsAsIntValue("messageQueue.updateTransactionsInterval", 1)))
           case _ => true
         }
         if (outDatedTransactions && useMessageQueue) {
-          UpdatesRequestSender.sendMsg(UpdateBankAccount(account.accountNumber.get, bank.nationalIdentifier))
+          UpdatesRequestSender.sendMsg(UpdateBankAccount(account.number, bank.nationalIdentifier))
         }
       }
     }
@@ -886,8 +871,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   override def getBankAccountByRoutingLegacy(bankId: Option[BankId], scheme: String, address: String, callContext: Option[CallContext]): Box[(BankAccount, Option[CallContext])] = {
 
-    def byRoutingTable: Box[(MappedBankAccount, Option[CallContext])] = {
-      def handleRouting(routing: List[BankAccountRouting]): Box[(MappedBankAccount, Option[CallContext])] = {
+    // BankAccount, not MappedBankAccount: getBankAccountCommon now answers with the commons type
+    // (the account read path went to Doobie), and the enclosing method returns BankAccount anyway.
+    def byRoutingTable: Box[(BankAccount, Option[CallContext])] = {
+      def handleRouting(routing: List[BankAccountRouting]): Box[(BankAccount, Option[CallContext])] = {
         if (routing.size > 1) { // Handle more than 1 occurrence
           // Routing MUST be unique
           val errorMessage = s"$AccountRoutingNotUnique (scheme: $scheme, address: $address)"
@@ -983,31 +970,8 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
   }
 
-  def getBankAccountCommon(bankId: BankId, accountId: AccountId, callContext: Option[CallContext]): Box[(MappedBankAccount, Option[CallContext])] = {
-
-    def getByBankAndAccount(): Box[(MappedBankAccount, Option[CallContext])] = {
-      MappedBankAccount
-        .find(By(MappedBankAccount.bank, bankId.value), By(MappedBankAccount.theAccountId, accountId.value))
-        .map(bankAccount => (bankAccount, callContext))
-    }
-
-    if(APIUtil.checkIfStringIsUUID(accountId.value)) {
-      // Find bank accounts by accountId first
-      val bankAccounts = MappedBankAccount.findAll(By(MappedBankAccount.theAccountId, accountId.value))
-
-      // If exactly one account is found, return it, else filter by bankId
-      bankAccounts match {
-        case account :: Nil =>
-          // If exactly one account is found, return it
-          Some(account, callContext)
-        case _ =>
-          // If multiple or no accounts are found, filter by bankId
-          getByBankAndAccount()
-      }
-    } else {
-      getByBankAndAccount()
-    }
-
+  def getBankAccountCommon(bankId: BankId, accountId: AccountId, callContext: Option[CallContext]): Box[(BankAccount, Option[CallContext])] = {
+    DoobieBankAccountProvider.getBankAccount(bankId, accountId).map(account => (account, callContext))
   }
 
   override def getBankAccounts(bankIdAccountIds: List[BankIdAccountId], callContext: Option[CallContext]): OBPReturnType[Box[List[BankAccount]]] = {
@@ -1585,15 +1549,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     *
     */
   def createOrUpdateMappedBankAccount(bankId: BankId, accountId: AccountId, currency: String): Box[BankAccount] = {
-
-    val mappedBankAccount = getBankAccountLegacy(bankId, accountId, None).map(_._1).map(_.asInstanceOf[MappedBankAccount]) match {
-      case Full(f) =>
-        f.bank(bankId.value).theAccountId(accountId.value).accountCurrency(currency.toUpperCase).saveMe()
-      case _ =>
-        MappedBankAccount.create.bank(bankId.value).theAccountId(accountId.value).accountCurrency(currency.toUpperCase).saveMe()
-    }
-
-    Full(mappedBankAccount)
+    Full(DoobieBankAccountProvider.createOrUpdateAccountCurrency(bankId, accountId, currency))
   }
   
   override def getCounterpartyTrait(bankId: BankId, accountId: AccountId, counterpartyId: String, callContext: Option[CallContext]): OBPReturnType[Box[CounterpartyTrait]] = {
@@ -2579,15 +2535,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     oldAccountRoutings.filterNot(accountRouting => accountRoutings.exists(_.scheme == accountRouting.accountRouting.scheme))
       .foreach(_.delete_!)
 
-    (for {
-      (account, _) <- LocalMappedConnector.getBankAccountCommon(bankId, accountId, callContext)
-    } yield {
-      account
-        .kind(accountType)
-        .accountLabel(accountLabel)
-        .mBranchId(branchId)
-        .saveMe
-    }, callContext)
+    (DoobieBankAccountProvider.updateAccountTypeLabelBranch(bankId, accountId, accountType, accountLabel, branchId), callContext)
   }
   
   override def createBankAccount(
@@ -2620,10 +2568,10 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (
         for {
           _ <- getBankLegacy(bankId, None)
-          acc<- getBankAccountLegacy(bankId, accountId, None).map(_._1).map(_.asInstanceOf[MappedBankAccount])
+          acc<- getBankAccountLegacy(bankId, accountId, None).map(_._1)
         } yield {
-          acc.accountLabel(label).save
-        }, 
+          DoobieBankAccountProvider.updateAccountLabel(acc.bankId, acc.accountId, label)
+        },
         callContext
       )
     }
@@ -3231,77 +3179,49 @@ object LocalMappedConnector extends Connector with MdcLoggable {
 
   override def getAtm(bankId: BankId, atmId: AtmId, callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value))
-        .map(atm => (atm, callContext))
+      Box(Atms.atmsProvider.vend.getAtm(bankId, atmId).map(atm => (atm, callContext)))
     }
 
   override def updateAtmSupportedLanguages(bankId: BankId, atmId: AtmId, supportedLanguages: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      val supportedLanguagesString = supportedLanguages.mkString(",")
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value)).map(_.mSupportedLanguages(supportedLanguagesString).saveMe()).map(atm => (atm, callContext))
+      Atms.atmsProvider.vend.updateAtmSupportedLanguages(bankId, atmId, supportedLanguages).map(atm => (atm, callContext))
     }
 
   override def updateAtmSupportedCurrencies(bankId: BankId, atmId: AtmId, supportedCurrencies: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      val supportedCurrenciesString = supportedCurrencies.mkString(",")
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value)).map(_.mSupportedCurrencies(supportedCurrenciesString).saveMe()).map(atm => (atm, callContext))
+      Atms.atmsProvider.vend.updateAtmSupportedCurrencies(bankId, atmId, supportedCurrencies).map(atm => (atm, callContext))
     }
 
 
   override def updateAtmAccessibilityFeatures(bankId: BankId, atmId: AtmId, accessibilityFeatures: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      val accessibilityFeaturesString = accessibilityFeatures.mkString(",")
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value)).map(_.mAccessibilityFeatures(accessibilityFeaturesString).saveMe()).map(atm => (atm, callContext))
+      Atms.atmsProvider.vend.updateAtmAccessibilityFeatures(bankId, atmId, accessibilityFeatures).map(atm => (atm, callContext))
     }
 
   override def updateAtmServices(bankId: BankId, atmId: AtmId, services: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      val servicesString = services.mkString(",")
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value)).map(_.mServices(servicesString).saveMe()).map(atm => (atm, callContext))
+      Atms.atmsProvider.vend.updateAtmServices(bankId, atmId, services).map(atm => (atm, callContext))
     }
 
   override def updateAtmNotes(bankId: BankId, atmId: AtmId, notes: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      val notesString = notes.mkString(",")
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value)).map(_.mNotes(notesString).saveMe()).map(atm => (atm, callContext))
+      Atms.atmsProvider.vend.updateAtmNotes(bankId, atmId, notes).map(atm => (atm, callContext))
     }
 
   override def updateAtmLocationCategories(bankId: BankId, atmId: AtmId, locationCategories: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] =
     Future {
-      val locationCategoriesString = locationCategories.mkString(",")
-      MappedAtm
-        .find(
-          By(MappedAtm.mBankId, bankId.value),
-          By(MappedAtm.mAtmId, atmId.value)).map(_.mLocationCategories(locationCategoriesString).saveMe()).map(atm => (atm, callContext))
+      Atms.atmsProvider.vend.updateAtmLocationCategories(bankId, atmId, locationCategories).map(atm => (atm, callContext))
     }
 
   override def getAtms(bankId: BankId, callContext: Option[CallContext], queryParams: List[OBPQueryParam]): Future[Box[(List[AtmT], Option[CallContext])]] = {
     Future {
-      Full(MappedAtm.findAll(By(MappedAtm.mBankId, bankId.value)), callContext)
+      Full((Atms.atmsProvider.vend.getAtms(bankId, queryParams).getOrElse(Nil), callContext))
     }
   }
 
   override def getAllAtms(callContext: Option[CallContext], queryParams: List[OBPQueryParam]): Future[Box[(List[AtmT], Option[CallContext])]] = {
     Future {
-      Full(MappedAtm.findAll(), callContext)
+      Full((Atms.atmsProvider.vend.getAllAtms(queryParams), callContext))
     }
   }
 
@@ -3926,7 +3846,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                            value: String,
                                            isActive: Option[Boolean],
                                            callContext: Option[CallContext]
-                                          ): OBPReturnType[Box[BankAttribute]] =
+                                          ): OBPReturnType[Box[BankAttributeTrait]] =
     BankAttributeX.bankAttributeProvider.vend.createOrUpdateBankAttribute(
       bankId: BankId,
       bankAttributeId: Option[String],
@@ -3944,7 +3864,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                           value: String,
                                           isActive: Option[Boolean],
                                           callContext: Option[CallContext]
-                                          ): OBPReturnType[Box[AtmAttribute]] =
+                                          ): OBPReturnType[Box[AtmAttributeTrait]] =
     AtmAttributeX.atmAttributeProvider.vend.createOrUpdateAtmAttribute(
       bankId: BankId,
       atmId: AtmId,
@@ -3961,7 +3881,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (_, callContext)
     }
   
-  override def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[List[AtmAttribute]]] =
+  override def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[List[AtmAttributeTrait]]] =
     AtmAttributeX.atmAttributeProvider.vend.getAtmAttributesFromProvider(bank: BankId, atm: AtmId) map {
       (_, callContext)
     }
@@ -3975,12 +3895,12 @@ object LocalMappedConnector extends Connector with MdcLoggable {
       (_, callContext)
     }
 
-  override def getBankAttributeById(bankAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[BankAttribute]] =
+  override def getBankAttributeById(bankAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[BankAttributeTrait]] =
     BankAttributeX.bankAttributeProvider.vend.getBankAttributeById(bankAttributeId: String) map {
       (_, callContext)
     }
   
-  override def getAtmAttributeById(atmAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[AtmAttribute]] =
+  override def getAtmAttributeById(atmAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[AtmAttributeTrait]] =
     AtmAttributeX.atmAttributeProvider.vend.getAtmAttributeById(atmAttributeId: String) map {
       (_, callContext)
     }
@@ -4135,17 +4055,17 @@ object LocalMappedConnector extends Connector with MdcLoggable {
     }
   }
 
-  override def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getUserAttributesByUser(userId: String) map {(_, callContext)}
   }
   
-  override def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getNonPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getNonPersonalUserAttributes(userId: String) map {(_, callContext)}
   }
-  override def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getPersonalUserAttributes(userId: String, callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getPersonalUserAttributes(userId: String) map {(_, callContext)}
   }
-  override def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttribute]]] = {
+  override def getUserAttributesByUsers(userIds: List[String], callContext: Option[CallContext]): OBPReturnType[Box[List[UserAttributeTrait]]] = {
     UserAttributeProvider.userAttributeProvider.vend.getUserAttributesByUsers(userIds) map {(_, callContext)}
   }
   override def deleteUserAttribute(userAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
@@ -4159,7 +4079,7 @@ object LocalMappedConnector extends Connector with MdcLoggable {
                                             value: String,
                                             isPersonal: Boolean,
                                             callContext: Option[CallContext]
-                                          ): OBPReturnType[Box[UserAttribute]] = {
+                                          ): OBPReturnType[Box[UserAttributeTrait]] = {
     UserAttributeProvider.userAttributeProvider.vend.createOrUpdateUserAttribute(
       userId: String,
       userAttributeId: Option[String],

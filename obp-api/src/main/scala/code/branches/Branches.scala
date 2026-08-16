@@ -193,7 +193,7 @@ object Branches extends SimpleInjector {
 
   val branchesProvider = new Inject(buildOne _) {}
 
-  def buildOne: BranchesProvider = MappedBranchesProvider
+  def buildOne: BranchesProvider = DoobieBranchesProvider
 
 
   // Helper to get the count out of an option

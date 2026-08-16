@@ -153,6 +153,10 @@ hikari.maximumPoolSize=20
 # DynamicCodeKillSwitchTest's ON scenarios can compile/execute dynamic code locally.
 allow_user_generated_scala_code=true
 
+# Flyway owns the schema for entities migrated off Lift Mapper (Doobie phase 1+).
+# Required in test envs: Schemifier no longer creates those tables.
+flyway.enabled=true
+
 # Permissions granted to runtime-compiled dynamic-endpoint code inside the security sandbox.
 # Mirrors default.props / production.default.props. Required so dynamic resource-doc bodies can do
 # JSON extraction (reflection) and read OBP props (getenv); without it the sandbox denies these and

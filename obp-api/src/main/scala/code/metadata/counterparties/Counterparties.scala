@@ -14,7 +14,10 @@ object Counterparties extends SimpleInjector {
 
   val counterparties = new Inject(buildOne _) {}
 
-  def buildOne: Counterparties = MapperCounterparties
+  // Phase 2 of the Lift Mapper -> Doobie migration: data access now goes through Doobie SQL.
+  // MapperCounterparties is retained only as a dependency of the historical
+  // MigrationOfMappedCounterpartyDescriptionLength script and is otherwise dead code.
+  def buildOne: Counterparties = DoobieCounterparties
 
 }
 

@@ -13,7 +13,7 @@ object UserAuthContextProvider extends SimpleInjector {
 
   val userAuthContextProvider = new Inject(buildOne _) {}
 
-  def buildOne: UserAuthContextProvider = MappedUserAuthContextProvider
+  def buildOne: UserAuthContextProvider = DoobieUserAuthContextProvider
   
 }
 

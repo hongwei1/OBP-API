@@ -11,7 +11,7 @@ object UserAgreementProvider extends SimpleInjector {
 
   val userAgreementProvider = new Inject(buildOne _) {}
 
-  def buildOne: UserAgreementProvider = MappedUserAgreementProvider
+  def buildOne: UserAgreementProvider = DoobieUserAgreementProvider
 
 }
 

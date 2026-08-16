@@ -15,7 +15,7 @@ package code.api.v6_0_0
 
 import code.api.Constant
 import code.api.util.APIUtil.stringOrNull
-import code.metrics.ConnectorTrace
+import code.metrics.ConnectorTraceRow
 import code.api.util.RateLimitingPeriod.LimitCallPeriod
 import code.api.util._
 import code.api.v1_2_1.{AccountHolderJSON, BankRoutingJsonV121, OtherAccountMetadataJSON, TransactionDetailsJSON, TransactionMetadataJSON, UserJSONV121}
@@ -38,9 +38,7 @@ import code.apiproductattribute.ApiProductAttributeTrait
 import code.featuredapicollection.FeaturedApiCollectionTrait
 import code.loginattempts.LoginAttempt
 import code.model.ModeratedBankAccountCore
-import code.model.dataAccess.{AuthUser, ResourceUser}
 import code.users.UserAgreement
-import net.liftweb.mapper.By
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.{
   AmountOfMoneyJsonV121,
@@ -1495,7 +1493,7 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
       lastActivityDate: Option[Date],
       recentOperationIds: List[String]
   ): UserInfoDetailJsonV600 = {
-    val authUser = AuthUser.find(By(AuthUser.user, user.userPrimaryKey.value))
+    val authUser = code.model.dataAccess.DoobieAuthUserProvider.findMetaByUserFk(user.userPrimaryKey.value)
     UserInfoDetailJsonV600(
       user_id = user.userId,
       email = user.emailAddress,
@@ -1515,9 +1513,9 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
       last_marketing_agreement_signed_date =
         user.lastMarketingAgreementSignedDate,
       is_locked = isLocked,
-      created_date = authUser.map(_.createdAt.get),
-      updated_date = authUser.map(_.updatedAt.get),
-      email_validated = authUser.map(_.validated.get),
+      created_date = authUser.flatMap(_.createdAt).map(t => new java.util.Date(t.getTime)),
+      updated_date = authUser.flatMap(_.updatedAt).map(t => new java.util.Date(t.getTime)),
+      email_validated = authUser.flatMap(_.validated),
       last_used_locale = user.lastUsedLocale,
       last_activity_date = lastActivityDate,
       recent_operation_ids = recentOperationIds
@@ -2867,25 +2865,25 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
     ProductTagsJsonV600(tags = tags)
   }
 
-  def createConnectorTraceJsonV600(trace: ConnectorTrace): ConnectorTraceJsonV600 = {
+  def createConnectorTraceJsonV600(trace: ConnectorTraceRow): ConnectorTraceJsonV600 = {
     ConnectorTraceJsonV600(
-      connector_trace_id = trace.id.get,
-      correlation_id = trace.correlationId.get,
-      connector_name = trace.connectorName.get,
-      function_name = trace.functionName.get,
-      bank_id = trace.bankId.get,
-      outbound_message = trace.outboundMessage.get,
-      inbound_message = trace.inboundMessage.get,
-      date = trace.date.get,
-      duration = trace.duration.get,
-      is_successful = trace.isSuccessful.get,
-      user_id = trace.userId.get,
-      http_verb = trace.httpVerb.get,
-      url = trace.url.get
+      connector_trace_id = trace.id,
+      correlation_id     = trace.correlationId,
+      connector_name     = trace.connectorName,
+      function_name      = trace.functionName,
+      bank_id            = trace.bankId,
+      outbound_message   = trace.outboundMessage,
+      inbound_message    = trace.inboundMessage,
+      date               = trace.date,
+      duration           = trace.duration,
+      is_successful      = trace.isSuccessful,
+      user_id            = trace.userId,
+      http_verb          = trace.httpVerb,
+      url                = trace.url
     )
   }
 
-  def createConnectorTracesJsonV600(traces: List[ConnectorTrace]): ConnectorTracesJsonV600 = {
+  def createConnectorTracesJsonV600(traces: List[ConnectorTraceRow]): ConnectorTracesJsonV600 = {
     ConnectorTracesJsonV600(traces.map(createConnectorTraceJsonV600))
   }
 
@@ -3184,9 +3182,12 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
 
   def createParticipantJson(p: code.chat.ParticipantTrait): ParticipantJsonV600 = {
     val user = code.users.Users.users.vend.getUserByUserId(p.userId)
-    val consumerName = if (p.consumerId.nonEmpty)
-      code.model.Consumer.find(By(code.model.Consumer.consumerId, p.consumerId)).map(_.name.get).getOrElse("")
-    else ""
+    val consumerName = if (p.consumerId.nonEmpty) {
+      import doobie._; import doobie.implicits._
+      code.api.util.DoobieUtil.runQuery(
+        fr"SELECT name FROM consumer WHERE consumerid = ${p.consumerId} LIMIT 1".query[Option[String]].option
+      ).flatten.getOrElse("")
+    } else ""
     ParticipantJsonV600(
       participant_id = p.participantId,
       chat_room_id = p.chatRoomId,
@@ -3211,9 +3212,12 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
       ReactionSummaryJsonV600(emoji = emoji, count = rs.size, user_ids = rs.map(_.userId))
     }.toList
     val user = code.users.Users.users.vend.getUserByUserId(msg.senderUserId)
-    val consumerAppName = if (msg.senderConsumerId.nonEmpty)
-      code.model.Consumer.find(By(code.model.Consumer.consumerId, msg.senderConsumerId)).map(_.name.get).getOrElse("")
-    else ""
+    val consumerAppName = if (msg.senderConsumerId.nonEmpty) {
+      import doobie._; import doobie.implicits._
+      code.api.util.DoobieUtil.runQuery(
+        fr"SELECT name FROM consumer WHERE consumerid = ${msg.senderConsumerId} LIMIT 1".query[Option[String]].option
+      ).flatten.getOrElse("")
+    } else ""
     ChatMessageJsonV600(
       chat_message_id = msg.chatMessageId,
       chat_room_id = msg.chatRoomId,

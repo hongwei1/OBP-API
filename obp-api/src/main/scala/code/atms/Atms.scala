@@ -68,7 +68,7 @@ object Atms extends SimpleInjector {
 
   val atmsProvider = new Inject(buildOne _) {}
 
-  def buildOne: AtmsProvider = MappedAtmsProvider
+  def buildOne: AtmsProvider = DoobieAtmsProvider
 
   // Helper to get the count out of an option
   def countOfAtms (listOpt: Option[List[AtmT]]) : Int = {
@@ -104,5 +104,16 @@ trait AtmsProvider extends MdcLoggable {
   protected def getAtmsFromProvider(bank : BankId, queryParams: List[OBPQueryParam]) : Option[List[AtmT]]
   def createOrUpdateAtm(atm: AtmT): Box[AtmT]
   def deleteAtm(atm: AtmT): Box[Boolean]
+
+  // Return atms across all banks (mirrors the connector's getAllAtms).
+  def getAllAtms(queryParams: List[OBPQueryParam]): List[AtmT]
+
+  // Partial single-field updates used by the v4.0.0 ATM sub-resource endpoints.
+  def updateAtmSupportedLanguages(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT]
+  def updateAtmSupportedCurrencies(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT]
+  def updateAtmAccessibilityFeatures(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT]
+  def updateAtmServices(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT]
+  def updateAtmNotes(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT]
+  def updateAtmLocationCategories(bankId: BankId, atmId: AtmId, v: List[String]): Box[AtmT]
 // End of Trait
 }

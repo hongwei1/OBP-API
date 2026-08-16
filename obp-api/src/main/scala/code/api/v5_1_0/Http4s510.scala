@@ -1,5 +1,8 @@
 package code.api.v5_1_0
 
+import code.api.util.DoobieUtil
+import doobie._
+import doobie.implicits._
 import org.json4s._
 import cats.data.{Kleisli, OptionT}
 import cats.effect._
@@ -36,14 +39,14 @@ import code.api.v4_0_0.JSONFactory400
 import code.api.v4_0_0.JSONFactory400.{createAccountBalancesJson, createBalancesJson, createNewCoreBankAccountJson}
 import code.api.v5_0_0.{Http4s500, JSONFactory500}
 import code.api.v5_1_0.JSONFactory510.{createCallLimitJson, createConsentsInfoJsonV510, createConsentsJsonV510, createRegulatedEntitiesJson, createRegulatedEntityJson}
-import code.atmattribute.AtmAttribute
 import code.bankconnectors.Connector
 import code.consent.{ConsentRequests, ConsentStatus, Consents, MappedConsent}
+import net.liftweb.mapper.By
 import code.consumer.Consumers
 import code.entitlement.Entitlement
 import code.loginattempts.LoginAttempt
 import code.metrics.APIMetrics
-import code.model.dataAccess.AuthUser
+import code.model.dataAccess.{AuthUser, DoobieAuthUserProvider}
 import code.model.{AppType, Consumer}
 import code.ratelimiting.{RateLimiting, RateLimitingDI}
 import code.regulatedentities.MappedRegulatedEntityProvider
@@ -52,7 +55,7 @@ import code.users.Users
 import code.util.Helper
 import code.util.Helper.SILENCE_IS_GOLDEN
 import code.views.Views
-import code.views.system.{AccountAccess, ViewDefinition, ViewPermission}
+import code.views.system.{ViewDefinition, ViewPermission}
 import code.webuiprops.{MappedWebUiPropsProvider, WebUiPropsCommons}
 import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.ExecutionContext.Implicits.global
@@ -69,7 +72,6 @@ import com.openbankproject.commons.util.json
 import com.openbankproject.commons.util.JsonAliases.prettyRender
 import org.json4s.{Extraction, Formats}
 import com.openbankproject.commons.util.JsonAliases.compactRender
-import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.tryo
 import net.liftweb.util.{Helpers, Props, StringHelpers}
 import code.api.util.http4s.{ErrorResponseConverter, RequestScopeConnection}
@@ -472,20 +474,24 @@ object Http4s510 {
         if (consumerId == "None" && userId == "None") "anonymous"
         else s"consumerId${consumerId}::userId${userId}"
       val cacheKey = s"$compositeKey::$hashedRequestPayload"
-      code.etag.MappedETag.find(By(code.etag.MappedETag.ETagResource, cacheKey)) match {
-        case Full(row) if row.lastUpdatedMSSinceEpoch < headerEpoch =>
+      case class ETagRow(id: Long, eTagValue: String, lastUpdatedMSSinceEpoch: Long)
+      DoobieUtil.runQuery(
+        fr"SELECT id, etagvalue, lastupdatedmssinceepoch FROM etag WHERE etagresource = $cacheKey LIMIT 1"
+          .query[ETagRow].option
+      ) match {
+        case Some(row) if row.lastUpdatedMSSinceEpoch < headerEpoch =>
           val modified = row.eTagValue != currentETag
           if (modified) {
-            // Async update — match Lift's behaviour
-            scala.concurrent.Future(row.LastUpdatedMSSinceEpoch(System.currentTimeMillis).ETagValue(currentETag).save)
+            scala.concurrent.Future(DoobieUtil.runQuery(
+              sql"UPDATE etag SET etagvalue = $currentETag, lastupdatedmssinceepoch = ${System.currentTimeMillis()} WHERE id = ${row.id}".update.run
+            ))
             false
           } else true
-        case Empty =>
-          // Async create
-          scala.concurrent.Future(tryo(
-            code.etag.MappedETag.create
-              .ETagResource(cacheKey).ETagValue(currentETag)
-              .LastUpdatedMSSinceEpoch(System.currentTimeMillis).save))
+        case None =>
+          scala.concurrent.Future(DoobieUtil.runQuery(
+            sql"""INSERT INTO etag (etagresource, etagvalue, lastupdatedmssinceepoch)
+                  VALUES ($cacheKey, $currentETag, ${System.currentTimeMillis()})""".update.run
+          ))
           false
         case _ => false
       }
@@ -2249,11 +2255,11 @@ object Http4s510 {
               .map(x => unboxFullOrFail(x, Some(cc), UserNotFoundByProviderAndUsername, 404))
             entitlements <- NewStyle.function.getEntitlementsByUserId(user.userId, Some(cc))
             isLocked = LoginAttempt.userIsLocked(user.provider, user.name)
-            authUser = AuthUser.find(By(AuthUser.user, user.userPrimaryKey.value))
+            namesOpt = DoobieAuthUserProvider.getNamesByUserFk(user.userPrimaryKey.value)
           } yield JSONFactory510.createUserWithNamesJSON(
             user,
-            authUser.map(_.firstName.get).getOrElse(""),
-            authUser.map(_.lastName.get).getOrElse(""),
+            namesOpt.map(_._1).getOrElse(""),
+            namesOpt.map(_._2).getOrElse(""),
             entitlements, None, isLocked
           )
         }
@@ -2679,12 +2685,15 @@ object Http4s510 {
       case req @ GET -> `prefixPath` / "management" / "system" / "integrity" / "account-access-unique-index-1-check" =>
         EndpointHelpers.executeFuture(req) {
           for {
-            groupedRows: Map[String, List[AccountAccess]] <- Future {
-              AccountAccess.findAll().groupBy { a =>
-                s"${a.bank_id.get}-${a.account_id.get}-${a.view_id.get}-${a.user_fk.get}-${a.consumer_id.get}"
-              }.filter(_._2.size > 1)
+            duplicateKeys: Map[String, Int] <- Future {
+              case class AARow(bankId: String, accountId: String, viewId: String, userFk: Long, consumerId: String)
+              DoobieUtil.runQuery(
+                fr"SELECT bank_id, account_id, view_id, user_fk, consumer_id FROM accountaccess".query[AARow].to[List]
+              ).groupBy(a => s"${a.bankId}-${a.accountId}-${a.viewId}-${a.userFk}-${a.consumerId}")
+               .filter(_._2.size > 1)
+               .mapValues(_.size)
             }
-          } yield JSONFactory510.getAccountAccessUniqueIndexCheck(groupedRows)
+          } yield JSONFactory510.getAccountAccessUniqueIndexCheck(duplicateKeys)
         }
     }
     resourceDocs += ResourceDoc(
@@ -2712,7 +2721,9 @@ object Http4s510 {
           val bankId = BankId(bankIdStr)
           for {
             currencies: List[String] <- Future {
-              code.model.dataAccess.MappedBankAccount.findAll().map(_.accountCurrency.get).distinct
+              DoobieUtil.runQuery(
+                fr"SELECT DISTINCT accountcurrency FROM mappedbankaccount".query[Option[String]].to[List]
+              ).flatten
             }
             (bankCurrencies, _) <- NewStyle.function.getCurrentCurrencies(bankId, Some(cc))
           } yield JSONFactory510.getSensibleCurrenciesCheck(bankCurrencies, currencies)
@@ -2742,10 +2753,14 @@ object Http4s510 {
           val bankId = BankId(bankIdStr)
           for {
             accountAccesses: List[String] <- Future {
-              AccountAccess.findAll(By(AccountAccess.bank_id, bankId.value)).map(_.account_id.get)
+              DoobieUtil.runQuery(
+                (fr"SELECT account_id FROM accountaccess WHERE bank_id = ${bankId.value}").query[String].to[List]
+              )
             }
             bankAccounts <- Future {
-              code.model.dataAccess.MappedBankAccount.findAll(By(code.model.dataAccess.MappedBankAccount.bank, bankId.value)).map(_.accountId.value)
+              DoobieUtil.runQuery(
+                (fr"SELECT theaccountid FROM mappedbankaccount WHERE bank = ${bankId.value}").query[Option[String]].to[List]
+              ).flatten
             }
           } yield {
             val orphaned = accountAccesses.filterNot(bankAccounts.contains)

@@ -8,7 +8,7 @@ object DynamicEndpointProvider extends SimpleInjector {
 
   val connectorMethodProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedDynamicEndpointProvider.type = MappedDynamicEndpointProvider
+  def buildOne: DynamicEndpointProvider = DoobieDynamicEndpointProvider
 }
 
 trait DynamicEndpointT {

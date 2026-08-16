@@ -10,7 +10,7 @@ object Entitlement extends SimpleInjector {
 
   val entitlement = new Inject(buildOne _) {}
 
-  def buildOne: EntitlementProvider = MappedEntitlementsProvider
+  def buildOne: EntitlementProvider = DoobieEntitlementsProvider
 
 }
 

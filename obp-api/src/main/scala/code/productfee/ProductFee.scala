@@ -15,7 +15,7 @@ object ProductFeeX extends SimpleInjector {
 
   val productFeeProvider = new Inject(buildOne _) {}
 
-  def buildOne: ProductFeeProvider = MappedProductFeeProvider
+  def buildOne: ProductFeeProvider = DoobieProductFeeProvider
 
   // Helper to get the count out of an option
   def countOfProductFee(listOpt: Option[List[ProductFeeTrait]]): Int = {

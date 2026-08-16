@@ -8,7 +8,7 @@ import code.util.Helper.MdcLoggable
 
 object RegulatedEntityX extends SimpleInjector {
   val regulatedEntityProvider = new Inject(buildOne _) {}
-  def buildOne: RegulatedEntityProvider = MappedRegulatedEntityProvider
+  def buildOne: RegulatedEntityProvider = DoobieRegulatedEntityProvider
 }
 /* For ProductFee */
 trait RegulatedEntityProvider extends MdcLoggable {

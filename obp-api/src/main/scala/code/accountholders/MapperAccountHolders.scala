@@ -95,22 +95,22 @@ object MapperAccountHolders extends MapperAccountHolders with AccountHolders wit
   def getAccountsHeld(bankId: BankId, user: User): Set[BankIdAccountId] = {
     val accountHolders = MapperAccountHolders.findAll(
       By(MapperAccountHolders.accountBankPermalink, bankId.value),
-      By(MapperAccountHolders.user, user.asInstanceOf[ResourceUser])
+      By(MapperAccountHolders.user, user.userPrimaryKey.value)
     )
     transformHolderToAccount(accountHolders)
   }
 
   def getAccountsHeldByUser(user: User, source: Option[String] = None): Set[BankIdAccountId] = {
       val accountHolders = if(source.isEmpty){
-        MapperAccountHolders.findAll(By(MapperAccountHolders.user, user.asInstanceOf[ResourceUser]))
+        MapperAccountHolders.findAll(By(MapperAccountHolders.user, user.userPrimaryKey.value))
       }else if (source.equals(Some("")) || source.equals(Some(null))){
         MapperAccountHolders.findAll(
-          By(MapperAccountHolders.user, user.asInstanceOf[ResourceUser]),
+          By(MapperAccountHolders.user, user.userPrimaryKey.value),
           NullRef(MapperAccountHolders.source)
         )
       }else{
         MapperAccountHolders.findAll(
-          By(MapperAccountHolders.user, user.asInstanceOf[ResourceUser]),
+          By(MapperAccountHolders.user, user.userPrimaryKey.value),
           By(MapperAccountHolders.source, source.get)
         )
       }

@@ -45,7 +45,6 @@ import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.util.{ApiVersion, ApiVersionStatus, ScannedApiVersion}
 import code.loginattempts.LoginAttempt
-import code.metrics.MappedMetric
 import code.users.UserAgreementProvider
 import net.liftweb.common.Full
 import com.openbankproject.commons.util.JsonAliases.prettyRender
@@ -60,6 +59,10 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
 import scala.language.{higherKinds, implicitConversions}
 import code.util.{BankNameGenerator, Helper}
+import code.api.util.DoobieUtil
+import doobie._
+import doobie.implicits._
+import java.sql.Timestamp
 
 object Http4s700 {
 
@@ -774,22 +777,22 @@ object Http4s700 {
               if (agreementList.isEmpty) None else Some(agreementList)
             }
             isLocked = LoginAttempt.userIsLocked(user.provider, user.name)
-            authUser = code.model.dataAccess.AuthUser.find(
-              By(code.model.dataAccess.AuthUser.user, user.userPrimaryKey.value)
-            )
+            userNames = code.model.dataAccess.DoobieAuthUserProvider.getNamesByUserFk(user.userPrimaryKey.value)
             userMetrics <- Future {
-              MappedMetric.findAll(
-                By(MappedMetric.userId, userId),
-                OrderBy(MappedMetric.date, Descending),
-                MaxRows(5)
+              import doobie._; import doobie.implicits._;
+              import java.sql.Timestamp
+              case class MetricSummaryRow(dateC: Option[Timestamp], fn: Option[String])
+              code.api.util.DoobieUtil.runQuery(
+                fr"SELECT date_c, implementedbypartialfunction FROM metric WHERE userid = $userId ORDER BY date_c DESC LIMIT 5"
+                  .query[MetricSummaryRow].to[List]
               )
             }
-            lastActivityDate = userMetrics.headOption.map(_.getDate())
-            recentOperationIds = userMetrics.map(_.getImplementedByPartialFunction()).distinct.take(5)
+            lastActivityDate = userMetrics.headOption.flatMap(_.dateC).map(t => new java.util.Date(t.getTime))
+            recentOperationIds = userMetrics.flatMap(_.fn).distinct.take(5)
           } yield JSONFactory600.createUserInfoJsonV600(
             user,
-            authUser.map(_.firstName.get).getOrElse(""),
-            authUser.map(_.lastName.get).getOrElse(""),
+            userNames.map(_._1).getOrElse(""),
+            userNames.map(_._2).getOrElse(""),
             entitlements,
             agreements,
             isLocked,
@@ -2061,13 +2064,11 @@ object Http4s700 {
               if (!allowed) {
                 logger.info(s"createValidationEmail says: skipped (rate limit exceeded, count=$count, max=$ResendValidationRateLimit per ${ResendValidationRateLimitWindowSeconds}s)")
               } else {
-                AuthUser.find(
-                  By(AuthUser.username, username),
-                  By(AuthUser.provider, Constant.localIdentityProvider)
+                code.model.dataAccess.DoobieAuthUserProvider.findValidationInfoByUsernameAndProvider(
+                  username, Constant.localIdentityProvider
                 ) match {
-                  case Full(user) if user.email.get != null
-                                  && user.email.get.toLowerCase == emailLower
-                                  && !user.validated.get =>
+                  case Some(row) if row.email.exists(e => e != null && e.toLowerCase == emailLower)
+                                  && !row.validated.getOrElse(true) =>
                     val portalUrlBox = APIUtil.getPropsValue("portal_external_url")
                     val senderAddress = AuthUser.emailFrom
                     val portalMissing = portalUrlBox.isEmpty || portalUrlBox.exists(_.trim.isEmpty)
@@ -2080,7 +2081,7 @@ object Http4s700 {
                       val portalUrl = portalUrlBox.openOr("")
                       val expiryMinutes = APIUtil.getPropsAsIntValue("email_validation_token_expiry_minutes", 1440)
                         val claimsSet = new com.nimbusds.jwt.JWTClaimsSet.Builder()
-                          .subject(user.uniqueId.get)
+                          .subject(row.uniqueId.getOrElse(""))
                           .expirationTime(new java.util.Date(System.currentTimeMillis() + expiryMinutes * 60L * 1000L))
                           .issueTime(new java.util.Date())
                           .build()
@@ -2088,7 +2089,7 @@ object Http4s700 {
                       val emailLink = portalUrl + "/user-validation?token=" + java.net.URLEncoder.encode(jwtToken, "UTF-8")
                       val outcome = CommonsEmailWrapper.sendHtmlEmailEither(CommonsEmailWrapper.EmailContent(
                         from = senderAddress,
-                        to = List(user.email.get),
+                        to = List(row.email.getOrElse("")),
                         bcc = AuthUser.bccEmail.toList,
                         subject = "Sign up confirmation",
                         textContent = Some(s"Welcome! Please validate your account: $emailLink"),
@@ -2102,9 +2103,9 @@ object Http4s700 {
                           logger.warn(s"createValidationEmail says: SMTP send failed: $errMsg")
                       }
                     }
-                  case Full(_) =>
+                  case Some(_) =>
                     logger.info("createValidationEmail says: skipped (user already validated or email mismatch)")
-                  case _ =>
+                  case None =>
                     logger.info("createValidationEmail says: skipped (no local-provider user with that username)")
                 }
               }
@@ -4498,7 +4499,14 @@ object Http4s700 {
       case req @ GET -> `prefixPath` / "management" / "system" / "scheduler" / "job-locks" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future {
-            JSONFactory700.createSchedulerJobsJsonV700(code.scheduler.JobScheduler.mostRecent(100))
+            val dbRows = DoobieUtil.runQuery(
+              fr"SELECT jobid, name, apiinstanceid, createdat FROM jobscheduler ORDER BY createdat DESC LIMIT 100"
+                .query[(String, String, String, Timestamp)].to[List]
+            )
+            val schedulerRows = dbRows.map { case (jobId, name, apiInstanceId, ts) =>
+              JSONFactory700.SchedulerJobRow(jobId, name, apiInstanceId, new java.util.Date(ts.getTime))
+            }
+            JSONFactory700.createSchedulerJobsJsonV700(schedulerRows)
           }
         }
     }
@@ -4542,7 +4550,7 @@ object Http4s700 {
     val deleteSchedulerJob: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ DELETE -> `prefixPath` / "management" / "system" / "scheduler" / "job-locks" / jobId =>
         EndpointHelpers.withUserDelete(req) { (_, _) =>
-          Future { code.scheduler.JobScheduler.deleteByJobId(jobId); () }
+          Future { DoobieUtil.runQuery(sql"DELETE FROM jobscheduler WHERE jobid = $jobId".update.run); () }
         }
     }
 

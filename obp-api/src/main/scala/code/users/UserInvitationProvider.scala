@@ -9,7 +9,7 @@ object UserInvitationProvider extends SimpleInjector {
 
   val userInvitationProvider = new Inject(buildOne _) {}
 
-  def buildOne: UserInvitationProvider = MappedUserInvitationProvider
+  def buildOne: UserInvitationProvider = DoobieUserInvitationProvider
 
 }
 

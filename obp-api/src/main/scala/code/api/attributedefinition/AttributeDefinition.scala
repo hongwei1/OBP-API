@@ -11,7 +11,7 @@ import scala.concurrent.Future
 
 object AttributeDefinitionDI extends SimpleInjector {
   val attributeDefinition = new Inject(buildOne _) {}
-  def buildOne: AttributeDefinitionProviderTrait = MappedAttributeDefinitionProvider 
+  def buildOne: AttributeDefinitionProviderTrait = DoobieAttributeDefinitionProvider
 }
 
 trait AttributeDefinitionProviderTrait {

@@ -45,18 +45,17 @@ import code.api.v3_0_0.ViewsJSON300
 import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, UserAgreementJson}
 import code.api.v5_0_0.PostConsentRequestJsonV500
 import code.entitlement.Entitlement
-import code.model.dataAccess.AuthUser
 import code.users.UserAgreement
-import net.liftweb.mapper.By
-import code.atmattribute.AtmAttribute
+import com.openbankproject.commons.model.AtmAttributeTrait
 import code.atms.Atms.Atm
-import code.consent.MappedConsent
+import code.consent.ConsentTrait
 import code.metrics.APIMetric
 import code.model.Consumer
 import code.ratelimiting.RateLimiting
-import code.users.{UserAttribute, Users}
+import code.users.Users
+import com.openbankproject.commons.model.UserAttributeTrait
 import code.util.Helper.MdcLoggable
-import code.views.system.{AccountAccess, ViewDefinition, ViewPermission}
+import code.views.system.{ViewDefinition, ViewPermission}
 import com.openbankproject.commons.model._
 import com.openbankproject.commons.util.ApiVersion
 import net.liftweb.common.{Box, Full}
@@ -789,14 +788,14 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
 
   def waitingForGodot(sleep: Long): WaitingForGodotJsonV510 = WaitingForGodotJsonV510(sleep)
 
-  def createAtmsJsonV510(atmAndAttributesTupleList: List[(AtmT, List[AtmAttribute])] ): AtmsJsonV510 = {
+  def createAtmsJsonV510(atmAndAttributesTupleList: List[(AtmT, List[AtmAttributeTrait])] ): AtmsJsonV510 = {
     AtmsJsonV510(atmAndAttributesTupleList.map(
       atmAndAttributesTuple =>
         createAtmJsonV510(atmAndAttributesTuple._1,atmAndAttributesTuple._2)
     ))
   }
 
-  def createAtmJsonV510(atm: AtmT, atmAttributes:List[AtmAttribute]): AtmJsonV510 = {
+  def createAtmJsonV510(atm: AtmT, atmAttributes:List[AtmAttributeTrait]): AtmJsonV510 = {
     AtmJsonV510(
       id = Some(atm.atmId.value),
       bank_id = atm.bankId.value,
@@ -967,9 +966,9 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
       debug_info = debugInfo
     )
   }
-  def getAccountAccessUniqueIndexCheck(groupedRows: Map[String, List[AccountAccess]]): CheckSystemIntegrityJsonV510 = {
-    val success = groupedRows.size == 0
-    val debugInfo = if(success) None else Some(s"Incorrect system views: ${groupedRows.map(_._1).mkString(",")}")
+  def getAccountAccessUniqueIndexCheck(duplicateKeys: Map[String, Int]): CheckSystemIntegrityJsonV510 = {
+    val success = duplicateKeys.isEmpty
+    val debugInfo = if(success) None else Some(s"Incorrect system views: ${duplicateKeys.keys.mkString(",")}")
     CheckSystemIntegrityJsonV510(
       success = success,
       debug_info = debugInfo
@@ -993,7 +992,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def getConsentInfoJson(consent: MappedConsent): ConsentJsonV510 = {
+  def getConsentInfoJson(consent: ConsentTrait): ConsentJsonV510 = {
     val jsonWebTokenAsJValue: Box[ConsentJWT] = JwtUtil.getSignedPayloadAsJson(consent.jsonWebToken).map(parse(_).extract[ConsentJWT])
     ConsentJsonV510(
       consent.consentId,
@@ -1005,7 +1004,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def createConsentsInfoJsonV510(consents: List[MappedConsent]): ConsentsInfoJsonV510 = {
+  def createConsentsInfoJsonV510(consents: List[ConsentTrait]): ConsentsInfoJsonV510 = {
 
     ConsentsInfoJsonV510(
       consents.map { c =>
@@ -1029,7 +1028,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def createConsentsJsonV510(consents: List[MappedConsent], totalPages: Long): ConsentsJsonV510 = {
+  def createConsentsJsonV510(consents: List[ConsentTrait], totalPages: Long): ConsentsJsonV510 = {
     // Temporary cache (cleared after function ends)
     val cache = scala.collection.mutable.HashMap.empty[String, Box[User]]
 
@@ -1103,7 +1102,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     )
   }
 
-  def createAtmAttributeJson(atmAttribute: AtmAttribute): AtmAttributeResponseJsonV510 =
+  def createAtmAttributeJson(atmAttribute: AtmAttributeTrait): AtmAttributeResponseJsonV510 =
     AtmAttributeResponseJsonV510(
       bank_id = atmAttribute.bankId.value,
       atm_id = atmAttribute.atmId.value,
@@ -1114,10 +1113,10 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
       is_active = atmAttribute.isActive
     )
 
-  def createAtmAttributesJson(atmAttributes: List[AtmAttribute]): AtmAttributesResponseJsonV510 =
+  def createAtmAttributesJson(atmAttributes: List[AtmAttributeTrait]): AtmAttributesResponseJsonV510 =
     AtmAttributesResponseJsonV510(atmAttributes.map(createAtmAttributeJson))
 
-  def createUserAttributeJson(userAttribute: UserAttribute): UserAttributeResponseJsonV510 = {
+  def createUserAttributeJson(userAttribute: UserAttributeTrait): UserAttributeResponseJsonV510 = {
     UserAttributeResponseJsonV510(
       user_attribute_id = userAttribute.userAttributeId,
       name = userAttribute.name,
@@ -1132,7 +1131,7 @@ object JSONFactory510 extends CustomJsonFormats with MdcLoggable {
     SyncExternalUserJson(user.userId)
   }
 
-  def createUserAttributesJson(userAttribute: List[UserAttribute]): UserAttributesResponseJsonV510 = {
+  def createUserAttributesJson(userAttribute: List[UserAttributeTrait]): UserAttributesResponseJsonV510 = {
     UserAttributesResponseJsonV510(userAttribute.map(createUserAttributeJson))
   }
 

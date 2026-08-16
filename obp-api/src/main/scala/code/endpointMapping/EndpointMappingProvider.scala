@@ -15,7 +15,7 @@ object EndpointMappingProvider extends SimpleInjector {
 
   val endpointMappingProvider = new Inject(buildOne _) {}
 
-  def buildOne: MappedEndpointMappingProvider.type = MappedEndpointMappingProvider
+  def buildOne: EndpointMappingProvider = DoobieEndpointMappingProvider
 }
 
 trait EndpointMappingT {

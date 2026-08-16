@@ -16,7 +16,7 @@ object CustomerX extends SimpleInjector {
 
   val customerProvider = new Inject(buildOne _) {}
 
-  def buildOne: CustomerProvider = MappedCustomerProvider
+  def buildOne: CustomerProvider = DoobieCustomerProvider
 
 }
 
