@@ -17,7 +17,7 @@ import net.liftweb.util.Helpers.tryo
   */
 class MapperAccountHolders extends LongKeyedMapper[MapperAccountHolders] with IdPK {
 
-  def getSingleton: code.accountholders.MapperAccountHolders.type = MapperAccountHolders
+  def getSingleton: KeyedMetaMapper[Long, MapperAccountHolders] = MapperAccountHolders
 
   object user extends MappedLongForeignKey(this, ResourceUser)
 

@@ -82,7 +82,7 @@ object MappedGroupProvider extends GroupProvider {
 
 class Group extends GroupTrait with LongKeyedMapper[Group] with IdPK with CreatedUpdated {
   
-  def getSingleton: code.group.Group.type = Group
+  def getSingleton: KeyedMetaMapper[Long, Group] = Group
   
   object GroupId extends MappedUUID(this)
   object BankId extends MappedString(this, 255) // Empty string for system-level groups

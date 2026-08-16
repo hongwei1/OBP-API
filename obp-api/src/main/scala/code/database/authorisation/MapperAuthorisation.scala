@@ -10,7 +10,7 @@
 //
 //
 //class Authorisation extends LongKeyedMapper[Authorisation] with IdPK with CreatedUpdated {
-//  def getSingleton = Authorisation
+//  def getSingleton: KeyedMetaMapper[Long, Authorisation] = Authorisation
 //  // Enum: received, psuIdentified, psuAuthenticated, scaMethodSelected, started, finalised, failed, exempted
 //  object ScaStatus extends MappedString(this, 20)
 //  object AuthorisationId extends MappedUUID(this)

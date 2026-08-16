@@ -6,7 +6,7 @@ import code.util.MappedUUID
 import net.liftweb.mapper._
 
 class UserLocks extends UserLocksTrait with LongKeyedMapper[UserLocks] with IdPK {
-  def getSingleton: code.userlocks.UserLocks.type = UserLocks
+  def getSingleton: KeyedMetaMapper[Long, UserLocks] = UserLocks
 
   object UserId extends MappedUUID(this)
   object TypeOfLock extends MappedString(this, 100)

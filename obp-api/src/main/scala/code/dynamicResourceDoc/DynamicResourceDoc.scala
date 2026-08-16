@@ -10,7 +10,7 @@ import scala.collection.immutable.List
 
 class DynamicResourceDoc extends LongKeyedMapper[DynamicResourceDoc] with IdPK {
 
-  override def getSingleton: code.dynamicResourceDoc.DynamicResourceDoc.type = DynamicResourceDoc
+  override def getSingleton: KeyedMetaMapper[Long, DynamicResourceDoc] = DynamicResourceDoc
 
   object BankId extends MappedString(this, 255)
   object DynamicResourceDocId extends UUIDString(this)

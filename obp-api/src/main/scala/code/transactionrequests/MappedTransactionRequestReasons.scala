@@ -8,7 +8,7 @@ import net.liftweb.mapper._
 class TransactionRequestReasons extends TransactionRequestReasonsTrait with LongKeyedMapper[TransactionRequestReasons] with IdPK with CreatedUpdated{
   // Not package-qualified: this class inherits a `code` member (String), which
   // shadows the `code` root package inside the class body.
-  def getSingleton: TransactionRequestReasons.type = TransactionRequestReasons
+  def getSingleton: KeyedMetaMapper[Long, TransactionRequestReasons] = TransactionRequestReasons
 
   object TransactionRequestReasonId extends UUIDString(this) {
     override def defaultValue = APIUtil.generateUUID()

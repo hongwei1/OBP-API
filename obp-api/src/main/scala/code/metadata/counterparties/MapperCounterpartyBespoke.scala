@@ -7,7 +7,7 @@ import net.liftweb.mapper.{MappedString, _}
 import scala.collection.immutable.List
 
 class MappedCounterpartyBespoke extends LongKeyedMapper[MappedCounterpartyBespoke] with IdPK {
-  def getSingleton: code.metadata.counterparties.MappedCounterpartyBespoke.type = MappedCounterpartyBespoke
+  def getSingleton: KeyedMetaMapper[Long, MappedCounterpartyBespoke] = MappedCounterpartyBespoke
   
   object mCounterparty extends MappedLongForeignKey(this, MappedCounterparty)
   object mKey extends MappedString(this, 255)

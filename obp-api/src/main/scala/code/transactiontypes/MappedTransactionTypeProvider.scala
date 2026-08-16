@@ -64,7 +64,7 @@ object MappedTransactionTypeProvider extends TransactionTypeProvider {
 }
 class MappedTransactionType extends LongKeyedMapper[MappedTransactionType] with IdPK with CreatedUpdated with MdcLoggable {
 
-  override def getSingleton: code.transaction_types.MappedTransactionType.type = MappedTransactionType
+  override def getSingleton: KeyedMetaMapper[Long, MappedTransactionType] = MappedTransactionType
 
   object mTransactionTypeId extends UUIDString(this)
   object mBankId extends UUIDString(this)

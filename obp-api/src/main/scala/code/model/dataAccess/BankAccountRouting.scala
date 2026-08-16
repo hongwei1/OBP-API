@@ -5,7 +5,7 @@ import com.openbankproject.commons.model.{AccountId => ModelAccountId, BankId =>
 import net.liftweb.mapper._
 
 class BankAccountRouting extends BankAccountRoutingTrait with LongKeyedMapper[BankAccountRouting] with IdPK with CreatedUpdated {
-  def getSingleton: BankAccountRouting.type = BankAccountRouting
+  def getSingleton: KeyedMetaMapper[Long, BankAccountRouting] = BankAccountRouting
 
   override def bankId: ModelBankId = ModelBankId(BankId.get)
 

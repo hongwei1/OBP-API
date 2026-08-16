@@ -10,7 +10,7 @@ object MappedPemUsageProvider extends PemUsageProviderTrait with MdcLoggable {
 }
 
 class PemUsage extends PemUsageTrait with LongKeyedMapper[PemUsage] with IdPK with CreatedUpdated {
-  override def getSingleton: code.api.pemusage.PemUsage.type = PemUsage
+  override def getSingleton: KeyedMetaMapper[Long, PemUsage] = PemUsage
   object PemHash extends MappedString(this, 50)
   object ConsumerId extends MappedString(this, 50)
   object LastUserId extends MappedString(this, 50)

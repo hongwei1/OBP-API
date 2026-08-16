@@ -6,7 +6,7 @@ import net.liftweb.mapper._
 
 class MappedUserAuthContext extends UserAuthContext with LongKeyedMapper[MappedUserAuthContext] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.context.MappedUserAuthContext.type = MappedUserAuthContext
+  def getSingleton: KeyedMetaMapper[Long, MappedUserAuthContext] = MappedUserAuthContext
 
   object mUserAuthContextId extends MappedUUID(this)
   object mUserId extends UUIDString(this)

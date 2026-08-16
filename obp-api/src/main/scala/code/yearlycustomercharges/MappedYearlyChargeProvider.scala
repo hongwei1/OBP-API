@@ -19,7 +19,7 @@
 //
 //class MappedYearlyCharge extends YearlyCharge with LongKeyedMapper[MappedYearlyCharge] with IdPK {
 //
-//  override def getSingleton = MappedYearlyCharge
+//  override def getSingleton: KeyedMetaMapper[Long, MappedYearlyCharge] = MappedYearlyCharge
 //
 //  object bankId_ extends UUIDString(this)
 //  object customerId_ extends UUIDString(this)
@@ -32,7 +32,7 @@
 //  override def year: Int = year_.get
 //
 //
-//  //  override def getSingleton = MappedYearlyCustomerCharge
+//  //  override def getSingleton: KeyedMetaMapper[Long, MappedYearlyCustomerCharge] = MappedYearlyCustomerCharge
 //  //
 // // WIP
 //  //  object mCustomerNumber extends MappedString(this,123)

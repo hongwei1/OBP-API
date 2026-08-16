@@ -471,7 +471,7 @@ object MappedConsentProvider extends ConsentProvider with code.util.Helper.MdcLo
 
 class MappedConsent extends ConsentTrait with LongKeyedMapper[MappedConsent] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.consent.MappedConsent.type = MappedConsent
+  def getSingleton: KeyedMetaMapper[Long, MappedConsent] = MappedConsent
 
   //the following are the obp consent.
   object mConsentId extends MappedUUID(this)

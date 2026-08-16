@@ -204,7 +204,7 @@ class MappedEntitlement
     with IdPK
     with CreatedUpdated {
 
-  def getSingleton: code.entitlement.MappedEntitlement.type = MappedEntitlement
+  def getSingleton: KeyedMetaMapper[Long, MappedEntitlement] = MappedEntitlement
 
   object mEntitlementId extends MappedUUID(this)
   object mBankId extends UUIDString(this)

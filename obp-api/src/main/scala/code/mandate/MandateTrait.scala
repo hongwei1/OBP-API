@@ -52,7 +52,7 @@ trait SignatoryPanelTrait {
 // ==================== Mapped Models ====================
 
 class Mandate extends MandateTrait with LongKeyedMapper[Mandate] with IdPK with CreatedUpdated {
-  def getSingleton: code.mandate.Mandate.type = Mandate
+  def getSingleton: KeyedMetaMapper[Long, Mandate] = Mandate
 
   object MandateId extends MappedString(this, 255) {
     override def defaultValue = APIUtil.generateUUID()
@@ -97,7 +97,7 @@ object Mandate extends Mandate with LongKeyedMetaMapper[Mandate] {
 }
 
 class MandateProvision extends MandateProvisionTrait with LongKeyedMapper[MandateProvision] with IdPK with CreatedUpdated {
-  def getSingleton: code.mandate.MandateProvision.type = MandateProvision
+  def getSingleton: KeyedMetaMapper[Long, MandateProvision] = MandateProvision
 
   object ProvisionId extends MappedString(this, 255) {
     override def defaultValue = APIUtil.generateUUID()
@@ -142,7 +142,7 @@ object MandateProvision extends MandateProvision with LongKeyedMetaMapper[Mandat
 }
 
 class SignatoryPanel extends SignatoryPanelTrait with LongKeyedMapper[SignatoryPanel] with IdPK with CreatedUpdated {
-  def getSingleton: code.mandate.SignatoryPanel.type = SignatoryPanel
+  def getSingleton: KeyedMetaMapper[Long, SignatoryPanel] = SignatoryPanel
 
   object PanelId extends MappedString(this, 255) {
     override def defaultValue = APIUtil.generateUUID()

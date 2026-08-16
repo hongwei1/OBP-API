@@ -65,7 +65,7 @@ object MappedUserInvitationProvider extends UserInvitationProvider {
 }
 class UserInvitation extends UserInvitationTrait with LongKeyedMapper[UserInvitation] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.users.UserInvitation.type = UserInvitation
+  def getSingleton: KeyedMetaMapper[Long, UserInvitation] = UserInvitation
   
   object UserInvitationId extends UUIDString(this) {
     override def defaultValue = randomUUID().toString

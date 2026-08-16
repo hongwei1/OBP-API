@@ -103,7 +103,7 @@ object MappedAccountAccessRequestProvider extends AccountAccessRequestProvider {
 
 class AccountAccessRequest extends AccountAccessRequestTrait with LongKeyedMapper[AccountAccessRequest] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.accountaccessrequest.AccountAccessRequest.type = AccountAccessRequest
+  def getSingleton: KeyedMetaMapper[Long, AccountAccessRequest] = AccountAccessRequest
 
   object AccountAccessRequestId extends MappedUUID(this)
   object BankId extends UUIDString(this)

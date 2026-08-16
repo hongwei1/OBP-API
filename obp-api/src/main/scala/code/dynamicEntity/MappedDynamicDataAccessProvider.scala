@@ -101,7 +101,7 @@ object MappedDynamicDataAccessProvider extends DynamicDataAccessProvider {
 
 class DynamicDataAccess extends DynamicDataAccessT with LongKeyedMapper[DynamicDataAccess] with IdPK {
 
-  override def getSingleton: code.DynamicData.DynamicDataAccess.type = DynamicDataAccess
+  override def getSingleton: KeyedMetaMapper[Long, DynamicDataAccess] = DynamicDataAccess
 
   object DynamicDataId extends MappedString(this, 255)
   object UserId extends MappedString(this, 255)

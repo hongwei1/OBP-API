@@ -104,7 +104,7 @@ object MappedCustomerAddressProvider extends CustomerAddressProvider {
 
 class MappedCustomerAddress extends CustomerAddress with LongKeyedMapper[MappedCustomerAddress] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.customeraddress.MappedCustomerAddress.type = MappedCustomerAddress
+  def getSingleton: KeyedMetaMapper[Long, MappedCustomerAddress] = MappedCustomerAddress
 
   object mCustomerId extends MappedLongForeignKey(this, MappedCustomer)
   object mCustomerAddressId extends MappedUUID(this)

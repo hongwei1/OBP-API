@@ -30,7 +30,11 @@
     </dependency>
     <dependency>
       <groupId>com.github.OpenBankProject.lift-persistence</groupId>
-      <artifactId>lift-persistence_${scala.version}</artifactId>
+      <!-- Pinned to _2.13, not ${scala.version}: there is no Scala 3 build of this fork, and
+           there does not need to be - it is macro-free (all 95 files scanned), so Scala 3
+           consumes it as a 2.13 library. The one constraint this carries is that obp-api must
+           not define new MappedField subclasses, whose manifest needs a Scala 2 TypeTag. -->
+      <artifactId>lift-persistence_2.13</artifactId>
     </dependency>
     <dependency>
       <groupId>org.json4s</groupId>
@@ -173,7 +177,10 @@
          unchanged. -->
     <dependency>
       <groupId>nl.gn0s1s</groupId>
-      <artifactId>elastic4s-client-esjava_${scala.version}</artifactId>
+      <!-- Pinned to _2.13: the _3 line stops at 8.18.0, below the 8.19.1 in use here, and
+           downgrading the Elasticsearch client to satisfy a suffix would be the wrong trade.
+           Macro-free (all four elastic4s modules scanned), so Scala 3 consumes it as 2.13. -->
+      <artifactId>elastic4s-client-esjava_2.13</artifactId>
       <version>8.19.1</version>
     </dependency>
     <!-- Pin elasticsearch-rest-client to the version elastic4s 8.19.1 expects.
@@ -184,16 +191,22 @@
       <artifactId>elasticsearch-rest-client</artifactId>
       <version>8.19.12</version>
     </dependency>
-    <!-- for LiftConsole -->
+    <!-- The Scala 3 compiler, on the runtime classpath because obp-api compiles Scala source
+         at run time (DynamicScalaCompiler). On 2.13 this was org.scala-lang:scala-compiler,
+         which is unsuffixed; the Scala 3 equivalent carries the _3 suffix. -->
     <dependency>
       <groupId>org.scala-lang</groupId>
-      <artifactId>scala-compiler</artifactId>
+      <artifactId>scala3-compiler_${scala.version}</artifactId>
       <version>${scala.compiler}</version>
       <scope>compile</scope>
     </dependency>
+    <!-- The Scala 3 standard library. scala3-library_3 depends on the 2.13 scala-library,
+         which is what makes consuming _2.13 artifacts (lift-persistence, chill, elastic4s,
+         obp-commons) work at all - both are on the classpath by design, and the single-suffix
+         audit knows that pair is sanctioned. -->
     <dependency>
       <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
+      <artifactId>scala3-library_${scala.version}</artifactId>
       <version>${scala.compiler}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.pekko/pekko-http-core -->
@@ -219,12 +232,17 @@
     </dependency>
     <dependency>
       <groupId>com.twitter</groupId>
-      <artifactId>chill_${scala.version}</artifactId>
+      <!-- Pinned to _2.13: chill publishes no _3 artifact at any version. Verified macro-free
+           by scanning every class file in chill, chill-bijection and bijection-core for
+           scala/reflect/macros references, so Scala 3 can consume it as a 2.13 library. This is
+           the Redis cache's value codec, so it has to keep working byte-for-byte across the
+           flip - CacheKeyFormatTest and RedisDeserializeMissTest cover that. -->
+      <artifactId>chill_2.13</artifactId>
       <version>0.9.5</version>
     </dependency>
     <dependency>
       <groupId>com.twitter</groupId>
-      <artifactId>chill-bijection_${scala.version}</artifactId>
+      <artifactId>chill-bijection_2.13</artifactId>
       <version>0.9.5</version>
     </dependency>
     <!-- scalacache (redis + guava) was removed: dead upstream (no Scala 3 release since a
@@ -415,14 +433,6 @@
       <groupId>com.microsoft.sqlserver</groupId>
       <artifactId>mssql-jdbc</artifactId>
       <version>13.4.0.jre${mssql.jre.version}</version>
-    </dependency>
-    <!-- scala-collection-compat provides scala.jdk.CollectionConverters on Scala 2.12
-         (used by code.util.ClassScanUtils). Previously supplied transitively by the
-         JDBC library that was removed during the Doobie migration; declared explicitly now. -->
-    <dependency>
-      <groupId>org.scala-lang.modules</groupId>
-      <artifactId>scala-collection-compat_${scala.version}</artifactId>
-      <version>2.1.2</version>
     </dependency>
 
     <dependency>
@@ -699,15 +709,20 @@
               <arg>-feature</arg>
               <!-- This module declares its own <args>, which replaces rather than extends the
                    parent pom's list - so anything the parent sets and this module needs has to
-                   be repeated here. That is why -Ymacro-annotations is below rather than
-                   inherited. -->
-              <!-- Replaces the paradise compiler plugin; enables macro annotations on 2.13. -->
-              <arg>-Ymacro-annotations</arg>
-              <!-- Scala 3 outpost, same technique the root pom used with -Xsource:2.13 before
-                   the 2.13 flip: report constructs whose meaning changes (or that disappear)
-                   under Scala 3 while still compiling on 2.13. Only this module gets the flag;
-                   obp-commons stays on 2.13 permanently and must not accrue Scala 3 churn. -->
-              <arg>-Xsource:3</arg>
+                   be repeated here.
+
+                   Gone at the Scala 3 flip:
+                     -Ymacro-annotations  a 2.13 flag for Scala 2 macro annotations. The only
+                                          annotation that needed it (CacheKeyFromArguments) was
+                                          replaced by explicit cache keys before the flip.
+                     -Xsource:3           a 2.13 flag whose whole purpose was to report Scala 3
+                                          semantics ahead of time. On a Scala 3 compiler it is
+                                          not a future version, it is the current one.
+
+                   -source:3.0-migration is deliberately NOT set: it would let Scala 2 idioms
+                   through with warnings instead of errors, which hides exactly the drift this
+                   migration needs to see. It belongs on the dynamic-code compiler, where stored
+                   customer method_body snippets really are Scala 2 text, not here. -->
             </args>
           </configuration>
         </plugin>

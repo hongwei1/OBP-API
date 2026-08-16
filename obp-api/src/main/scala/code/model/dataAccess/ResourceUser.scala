@@ -60,8 +60,8 @@ import scala.concurrent.duration._
   *
  */
 class ResourceUser extends LongKeyedMapper[ResourceUser] with User with ManyToMany with OneToMany[Long, ResourceUser]{
-  def getSingleton: code.model.dataAccess.ResourceUser.type = ResourceUser
-  def primaryKeyField: ResourceUser.this.id.type = id
+  def getSingleton: KeyedMetaMapper[Long, ResourceUser] = ResourceUser
+  def primaryKeyField = id
 
   object id extends MappedLongIndex(this)
   

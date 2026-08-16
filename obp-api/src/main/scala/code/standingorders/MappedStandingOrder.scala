@@ -59,7 +59,7 @@ object MappedStandingOrderProvider extends StandingOrderProvider {
 
 class StandingOrder extends StandingOrderTrait with LongKeyedMapper[StandingOrder] with IdPK with CreatedUpdated {
 
-  def getSingleton: StandingOrder.type = StandingOrder
+  def getSingleton: KeyedMetaMapper[Long, StandingOrder] = StandingOrder
 
   object StandingOrderId extends UUIDString(this) {
     override def defaultValue = APIUtil.generateUUID()

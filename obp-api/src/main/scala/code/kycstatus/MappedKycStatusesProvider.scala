@@ -41,7 +41,7 @@ object MappedKycStatusesProvider extends KycStatusProvider {
 class MappedKycStatus extends KycStatus
 with LongKeyedMapper[MappedKycStatus] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.kycstatuses.MappedKycStatus.type = MappedKycStatus
+  def getSingleton: KeyedMetaMapper[Long, MappedKycStatus] = MappedKycStatus
 
   object user extends MappedLongForeignKey(this, ResourceUser)
   object mBankId extends UUIDString(this)

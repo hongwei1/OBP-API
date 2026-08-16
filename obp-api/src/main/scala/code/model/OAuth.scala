@@ -539,8 +539,8 @@ object MappedConsumersProvider extends ConsumersProvider with MdcLoggable {
 }
 
 class Consumer extends LongKeyedMapper[Consumer] with CreatedUpdated{
-  def getSingleton: code.model.Consumer.type = Consumer
-  def primaryKeyField: Consumer.this.id.type = id
+  def getSingleton: KeyedMetaMapper[Long, Consumer] = Consumer
+  def primaryKeyField = id
   
   // Note: There are two IDs on Consumer.
   // `id` is the Long primary key (MappedLongIndex).
@@ -734,8 +734,8 @@ object MappedNonceProvider extends NoncesProvider {
 }
 class Nonce extends LongKeyedMapper[Nonce] {
 
-  def getSingleton: code.model.Nonce.type = Nonce
-  def primaryKeyField: Nonce.this.id.type = id
+  def getSingleton: KeyedMetaMapper[Long, Nonce] = Nonce
+  def primaryKeyField = id
   object id extends MappedLongIndex(this)
   object consumerkey extends MappedString(this, 250) //we store the consumer Key and we don't need to keep a reference to the token consumer as foreign key
   object tokenKey extends MappedString(this, 250){ //we store the token Key and we don't need to keep a reference to the token object as foreign key
@@ -846,8 +846,8 @@ object MappedTokenProvider extends TokensProvider {
 
 
 class Token extends LongKeyedMapper[Token]{
-  def getSingleton: code.model.Token.type = Token
-  def primaryKeyField: Token.this.id.type = id
+  def getSingleton: KeyedMetaMapper[Long, Token] = Token
+  def primaryKeyField = id
   object id extends MappedLongIndex(this)
   object tokenType extends MappedString(this,10)
   object consumerId extends MappedLongForeignKey(this, Consumer)

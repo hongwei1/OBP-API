@@ -115,7 +115,7 @@ object MappedChatMessageProvider extends ChatMessageProvider {
 
 class ChatMessage extends ChatMessageTrait with LongKeyedMapper[ChatMessage] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.chat.ChatMessage.type = ChatMessage
+  def getSingleton: KeyedMetaMapper[Long, ChatMessage] = ChatMessage
 
   object ChatMessageId extends MappedUUID(this)
   object ChatRoomId extends MappedString(this, 36)

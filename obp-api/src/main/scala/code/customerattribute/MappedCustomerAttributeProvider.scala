@@ -137,7 +137,7 @@ object MappedCustomerAttributeProvider extends CustomerAttributeProvider {
 
 class MappedCustomerAttribute extends CustomerAttribute with LongKeyedMapper[MappedCustomerAttribute] with IdPK {
 
-  override def getSingleton: code.customerattribute.MappedCustomerAttribute.type = MappedCustomerAttribute
+  override def getSingleton: KeyedMetaMapper[Long, MappedCustomerAttribute] = MappedCustomerAttribute
   // the column name is typo that left over from history, ordinal object name is mBankId
   object mBankId extends UUIDString(this) { // combination of this
     override def dbColumnName: String = "mbankidid"

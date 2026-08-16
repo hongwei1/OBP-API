@@ -9,7 +9,7 @@ import scala.util.Random
 
 class MappedUserAuthContextUpdate extends UserAuthContextUpdate with LongKeyedMapper[MappedUserAuthContextUpdate] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.context.MappedUserAuthContextUpdate.type = MappedUserAuthContextUpdate
+  def getSingleton: KeyedMetaMapper[Long, MappedUserAuthContextUpdate] = MappedUserAuthContextUpdate
 
   object mUserAuthContextUpdateId extends MappedUUID(this)
   object mUserId extends UUIDString(this)

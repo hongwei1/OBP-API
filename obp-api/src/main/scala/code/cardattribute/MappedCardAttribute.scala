@@ -7,7 +7,7 @@ import net.liftweb.mapper._
 
 class MappedCardAttribute extends CardAttribute with LongKeyedMapper[MappedCardAttribute] with IdPK {
 
-  override def getSingleton: code.cardattribute.MappedCardAttribute.type = MappedCardAttribute
+  override def getSingleton: KeyedMetaMapper[Long, MappedCardAttribute] = MappedCardAttribute
 
   object mBankId extends UUIDString(this) // combination of this
   object mCardId extends UUIDString(this) // combination of this

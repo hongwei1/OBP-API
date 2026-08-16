@@ -24,7 +24,7 @@ object MappedConsentRequestProvider extends ConsentRequestProvider {
 
 class ConsentRequest extends ConsentRequestTrait with LongKeyedMapper[ConsentRequest] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.consent.ConsentRequest.type = ConsentRequest
+  def getSingleton: KeyedMetaMapper[Long, ConsentRequest] = ConsentRequest
 
   //the following are the obp consent.
   object ConsentRequestId extends MappedUUID(this)

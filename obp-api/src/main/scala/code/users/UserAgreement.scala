@@ -29,7 +29,7 @@ object MappedUserAgreementProvider extends UserAgreementProvider {
 }
 class UserAgreement extends UserAgreementTrait with LongKeyedMapper[UserAgreement] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.users.UserAgreement.type = UserAgreement
+  def getSingleton: KeyedMetaMapper[Long, UserAgreement] = UserAgreement
   
   object UserAgreementId extends UUIDString(this) {
     override def defaultValue = randomUUID().toString

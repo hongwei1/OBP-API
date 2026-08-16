@@ -20,7 +20,7 @@ trait AbacRuleTrait {
 }
 
 class AbacRule extends AbacRuleTrait with LongKeyedMapper[AbacRule] with IdPK with CreatedUpdated {
-  def getSingleton: code.abacrule.AbacRule.type = AbacRule
+  def getSingleton: KeyedMetaMapper[Long, AbacRule] = AbacRule
 
   object AbacRuleId extends MappedString(this, 255) {
     override def defaultValue = APIUtil.generateUUID()

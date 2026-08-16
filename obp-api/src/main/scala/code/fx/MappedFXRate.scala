@@ -7,7 +7,7 @@ import com.openbankproject.commons.model.{BankId, FXRate}
 import net.liftweb.mapper.{MappedStringForeignKey, _}
 
 class MappedFXRate extends FXRate with LongKeyedMapper[MappedFXRate] with IdPK {
-  def getSingleton: code.fx.MappedFXRate.type = MappedFXRate
+  def getSingleton: KeyedMetaMapper[Long, MappedFXRate] = MappedFXRate
 
   object mBankId extends UUIDString(this)
 

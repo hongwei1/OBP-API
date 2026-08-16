@@ -80,7 +80,7 @@ object MappedScopesProvider extends ScopeProvider {
 class MappedScope extends Scope 
   with LongKeyedMapper[MappedScope] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.scope.MappedScope.type = MappedScope
+  def getSingleton: KeyedMetaMapper[Long, MappedScope] = MappedScope
 
   object mScopeId extends MappedUUID(this)
   object mBankId extends UUIDString(this)

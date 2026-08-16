@@ -5,7 +5,7 @@ import net.liftweb.mapper._
 
 class MigrationScriptLog extends MigrationScriptLogTrait with LongKeyedMapper[MigrationScriptLog] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.migration.MigrationScriptLog.type = MigrationScriptLog
+  def getSingleton: KeyedMetaMapper[Long, MigrationScriptLog] = MigrationScriptLog
 
   object MigrationScriptLogId extends MappedUUID(this)
   object Name extends MappedString(this, 100)

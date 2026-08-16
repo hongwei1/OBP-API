@@ -6,7 +6,7 @@ import code.api.util._
 import net.liftweb.mapper._
 
 class ConnectorTrace extends LongKeyedMapper[ConnectorTrace] with IdPK {
-  override def getSingleton: code.metrics.ConnectorTrace.type = ConnectorTrace
+  override def getSingleton: KeyedMetaMapper[Long, ConnectorTrace] = ConnectorTrace
 
   object correlationId extends MappedString(this, 256)
   object connectorName extends MappedString(this, 64)

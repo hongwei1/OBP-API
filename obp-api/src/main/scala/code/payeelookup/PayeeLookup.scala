@@ -50,7 +50,7 @@ object MappedPayeeLookupProvider extends PayeeLookupProvider {
 }
 
 class PayeeLookup extends PayeeLookupTrait with LongKeyedMapper[PayeeLookup] with IdPK {
-  def getSingleton: code.payeelookup.PayeeLookup.type = PayeeLookup
+  def getSingleton: KeyedMetaMapper[Long, PayeeLookup] = PayeeLookup
 
   object LookupId extends MappedString(this, 64)
   object IdentifierType extends MappedString(this, 64)

@@ -28,7 +28,7 @@ object MappedSocialMediasProvider extends SocialMediaHandleProvider {
 class MappedSocialMedia extends SocialMedia
 with LongKeyedMapper[MappedSocialMedia] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.socialmedia.MappedSocialMedia.type = MappedSocialMedia
+  def getSingleton: KeyedMetaMapper[Long, MappedSocialMedia] = MappedSocialMedia
 
   object user extends MappedLongForeignKey(this, ResourceUser)
   object bank extends UUIDString(this)

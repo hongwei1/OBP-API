@@ -65,7 +65,7 @@ object MappedWebUiPropsProvider extends WebUiPropsProvider {
 
 class WebUiProps extends WebUiPropsT with LongKeyedMapper[WebUiProps] with IdPK {
 
-  override def getSingleton: code.webuiprops.WebUiProps.type = WebUiProps
+  override def getSingleton: KeyedMetaMapper[Long, WebUiProps] = WebUiProps
 
   object WebUiPropsId extends MappedUUID(this)
   object Name extends MappedString(this, 255)

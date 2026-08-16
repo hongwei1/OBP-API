@@ -81,7 +81,7 @@ import scala.xml.{Elem, NodeSeq, Text}
   *
  */
 class AuthUser extends MegaProtoUser[AuthUser] with CreatedUpdated with MdcLoggable {
-  def getSingleton: code.model.dataAccess.AuthUser.type = AuthUser // what's the "meta" server
+  def getSingleton: KeyedMetaMapper[Long, AuthUser] = AuthUser // what's the "meta" server
 
   object user extends MappedLongForeignKey(this, ResourceUser)
   
@@ -1274,7 +1274,7 @@ def restoreSomeSessions(): Unit = {
             resetLink
           case _ => ""
         }
-        case _ => ""
+      case _ => ""
     }
   }
 

@@ -41,7 +41,7 @@ object MappedProductCollectionProvider extends ProductCollectionProvider {
 
 class MappedProductCollection extends ProductCollection with LongKeyedMapper[MappedProductCollection] with IdPK with CreatedUpdated {
   
-  def getSingleton: code.productcollection.MappedProductCollection.type = MappedProductCollection
+  def getSingleton: KeyedMetaMapper[Long, MappedProductCollection] = MappedProductCollection
 
   object mCollectionCode extends MappedString(this, 50)
   object mProductCode extends MappedString(this, 50)

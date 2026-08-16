@@ -13,6 +13,29 @@
     <packaging>jar</packaging>
     <name>Open Bank Project Commons</name>
 
+    <!--
+      obp-commons stays on Scala 2.13 permanently while obp-api moves to Scala 3, and these two
+      properties are what hold that line: they override the parent's (which now name Scala 3), so
+      this module compiles with the 2.13 compiler and its _${scala.version} dependencies keep
+      resolving to _2.13 artifacts.
+
+      Why it stays: this module is the reflection core. ReflectUtils (~800 lines), OBPEnumeration
+      and the knownDirectSubclasses sites all read ScalaSig through scala-reflect, which only
+      exists for Scala 2 classes - a Scala 3 class carries TASTy and reflects as having no
+      members, silently. Keeping the module on 2.13 keeps every one of those call sites working
+      untouched; obp-api consumes it the way Scala 3 consumes any 2.13 library, which is
+      supported (Scala 3 reads 2.13 Pickles) as long as no Scala 2 macro has to expand on the
+      Scala 3 side. See docs/scala3-reflection-triage.md.
+
+      Constraint that comes with it: nothing here may require a macro expansion at an obp-api
+      call site, and obp-api must not define new MappedField subclasses (lift-persistence's
+      MappedField.manifest needs a TypeTag).
+    -->
+    <properties>
+        <scala.version>2.13</scala.version>
+        <scala.compiler>2.13.18</scala.compiler>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.OpenBankProject.lift-persistence</groupId>

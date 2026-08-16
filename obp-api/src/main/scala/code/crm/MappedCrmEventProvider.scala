@@ -45,7 +45,7 @@ object MappedCrmEventProvider extends CrmEventProvider {
 
 class MappedCrmEvent extends CrmEvent with LongKeyedMapper[MappedCrmEvent] with IdPK with CreatedUpdated {
 
-  override def getSingleton: code.crm.MappedCrmEvent.type = MappedCrmEvent
+  override def getSingleton: KeyedMetaMapper[Long, MappedCrmEvent] = MappedCrmEvent
 
   object mBankId extends UUIDString(this) // Maybe should be a foreign key (unless we expect different databases one day)
   object mUserId extends MappedLongForeignKey(this, ResourceUser) // The customer

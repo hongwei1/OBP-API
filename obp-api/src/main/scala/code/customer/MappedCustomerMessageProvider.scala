@@ -49,7 +49,7 @@ object MappedCustomerMessageProvider extends CustomerMessageProvider {
 class MappedCustomerMessage extends CustomerMessage
   with LongKeyedMapper[MappedCustomerMessage] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.customer.MappedCustomerMessage.type = MappedCustomerMessage
+  def getSingleton: KeyedMetaMapper[Long, MappedCustomerMessage] = MappedCustomerMessage
 
   @deprecated("We need user customer not user as the foreign key","15-03-2022")
   object user extends MappedLongForeignKey(this, ResourceUser)

@@ -619,7 +619,7 @@ object MappedMetrics extends APIMetrics with MdcLoggable{
 
 class MappedMetric extends APIMetric with LongKeyedMapper[MappedMetric] with IdPK {
 
-  override def getSingleton: code.metrics.MappedMetric.type = MappedMetric
+  override def getSingleton: KeyedMetaMapper[Long, MappedMetric] = MappedMetric
 
   object userId extends UUIDString(this)
   object url extends MappedString(this, 2000) // TODO Introduce / use class for Mapped URLs
@@ -709,7 +709,7 @@ object MappedMetric extends MappedMetric with LongKeyedMetaMapper[MappedMetric] 
 
 
 class MetricArchive extends APIMetric with LongKeyedMapper[MetricArchive] with IdPK {
-  override def getSingleton: code.metrics.MetricArchive.type = MetricArchive
+  override def getSingleton: KeyedMetaMapper[Long, MetricArchive] = MetricArchive
 
   object metricId extends MappedLong(this)
   object userId extends UUIDString(this)

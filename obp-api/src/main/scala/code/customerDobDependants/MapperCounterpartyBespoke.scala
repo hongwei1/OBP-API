@@ -7,7 +7,7 @@ import net.liftweb.mapper.{MappedDateTime, _}
 import scala.collection.immutable.List
 
 class MappedCustomerDependant extends LongKeyedMapper[MappedCustomerDependant] with IdPK {
-  def getSingleton: code.CustomerDependants.MappedCustomerDependant.type = MappedCustomerDependant
+  def getSingleton: KeyedMetaMapper[Long, MappedCustomerDependant] = MappedCustomerDependant
   
   object mCustomer extends MappedLongForeignKey(this, MappedCustomer)
   object mDateOfBirth extends MappedDateTime(this)

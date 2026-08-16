@@ -10,9 +10,9 @@ import net.liftweb.common.Box.tryo
 import net.liftweb.mapper._
 
 class ViewDefinition extends View with LongKeyedMapper[ViewDefinition] with ManyToMany with CreatedUpdated{
-  def getSingleton: code.views.system.ViewDefinition.type = ViewDefinition
+  def getSingleton: KeyedMetaMapper[Long, ViewDefinition] = ViewDefinition
 
-  def primaryKeyField: ViewDefinition.this.id_.type = id_
+  def primaryKeyField = id_
 
   object id_ extends MappedLongIndex(this)
   object name_ extends MappedString(this, 125)

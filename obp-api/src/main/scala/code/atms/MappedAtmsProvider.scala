@@ -166,7 +166,7 @@ object MappedAtmsProvider extends AtmsProvider {
 
 class MappedAtm extends AtmT with LongKeyedMapper[MappedAtm] with IdPK with CreatedUpdated {
 
-  override def getSingleton: code.atms.MappedAtm.type = MappedAtm
+  override def getSingleton: KeyedMetaMapper[Long, MappedAtm] = MappedAtm
 
   object mBankId extends UUIDString(this)
   object mName extends MappedString(this, 255)

@@ -182,7 +182,7 @@ object MappedChatRoomProvider extends ChatRoomProvider {
 
 class ChatRoom extends ChatRoomTrait with LongKeyedMapper[ChatRoom] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.chat.ChatRoom.type = ChatRoom
+  def getSingleton: KeyedMetaMapper[Long, ChatRoom] = ChatRoom
 
   object ChatRoomId extends MappedUUID(this)
   object BankId extends MappedString(this, 255)

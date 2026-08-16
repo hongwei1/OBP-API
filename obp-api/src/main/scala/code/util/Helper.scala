@@ -231,9 +231,9 @@ object Helper extends Loggable {
     val random = new Random(System.currentTimeMillis())
 
     def findRandomPort() = {
-			val portRange = PORT_RANGE_MAX - PORT_RANGE_MIN
-			PORT_RANGE_MIN + random.nextInt(portRange + 1)
-		}
+      val portRange = PORT_RANGE_MAX - PORT_RANGE_MIN
+      PORT_RANGE_MIN + random.nextInt(portRange + 1)
+    }
 
     def isPortAvailable(port: Int): Boolean = {
       var result = true
@@ -353,7 +353,7 @@ object Helper extends Loggable {
     protected def initiate(): Unit = ()
 
     initiate()
-    MDC.put("host" -> getHostname)
+    MDC.put("host" -> getHostname())
   }
 
 

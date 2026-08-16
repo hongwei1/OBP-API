@@ -31,7 +31,7 @@ object MappedOpenIDConnectTokensProvider extends OpenIDConnectTokensProvider {
 
 class OpenIDConnectToken extends OpenIDConnectTokenTrait with LongKeyedMapper[OpenIDConnectToken] with IdPK with CreatedUpdated {
 
-  def getSingleton: OpenIDConnectToken.type = OpenIDConnectToken
+  def getSingleton: KeyedMetaMapper[Long, OpenIDConnectToken] = OpenIDConnectToken
   object AccessToken extends MappedText(this)
   object IDToken extends MappedText(this)
   object RefreshToken extends MappedText(this)

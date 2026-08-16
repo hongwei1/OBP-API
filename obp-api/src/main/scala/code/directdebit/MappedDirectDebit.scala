@@ -50,7 +50,7 @@ object MappedDirectDebitProvider extends DirectDebitProvider {
 
 class DirectDebit extends DirectDebitTrait with LongKeyedMapper[DirectDebit] with IdPK with CreatedUpdated {
 
-  def getSingleton: DirectDebit.type = DirectDebit
+  def getSingleton: KeyedMetaMapper[Long, DirectDebit] = DirectDebit
 
   object DirectDebitId extends UUIDString(this) {
     override def defaultValue = APIUtil.generateUUID()

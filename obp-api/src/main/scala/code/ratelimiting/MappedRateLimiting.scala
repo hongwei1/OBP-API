@@ -312,7 +312,7 @@ object MappedRateLimitingProvider extends RateLimitingProviderTrait with Logger 
 }
 
 class RateLimiting extends RateLimitingTrait with LongKeyedMapper[RateLimiting] with IdPK with CreatedUpdated {
-  override def getSingleton: code.ratelimiting.RateLimiting.type = RateLimiting
+  override def getSingleton: KeyedMetaMapper[Long, RateLimiting] = RateLimiting
   object RateLimitingId extends MappedUUID(this)
   object ApiVersion extends MappedString(this, 250)
   object ApiName extends MappedString(this, 250)

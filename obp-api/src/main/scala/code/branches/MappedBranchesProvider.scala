@@ -32,7 +32,7 @@ object MappedBranchesProvider extends BranchesProvider with MdcLoggable {
 
 class MappedBranch extends BranchT with LongKeyedMapper[MappedBranch] with IdPK {
 
-  override def getSingleton: code.branches.MappedBranch.type = MappedBranch
+  override def getSingleton: KeyedMetaMapper[Long, MappedBranch] = MappedBranch
 
 
   object mBankId extends UUIDString(this)
@@ -271,7 +271,7 @@ Else could store a link to this with each open data record - or via config for e
 
 
 //class MappedLicense extends License with LongKeyedMapper[MappedLicense] with IdPK {
-//  override def getSingleton = MappedLicense
+//  override def getSingleton: KeyedMetaMapper[Long, MappedLicense] = MappedLicense
 //
 //  object mBankId extends UUIDString(this)
 //  object mName extends MappedString(this, 123)

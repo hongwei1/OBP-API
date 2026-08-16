@@ -294,7 +294,7 @@ object MappedPhysicalCardProvider extends PhysicalCardProvider {
 }
 
 class MappedPhysicalCard extends PhysicalCardTrait with LongKeyedMapper[MappedPhysicalCard] with IdPK with OneToMany[Long, MappedPhysicalCard] {
-  def getSingleton: code.cards.MappedPhysicalCard.type = MappedPhysicalCard
+  def getSingleton: KeyedMetaMapper[Long, MappedPhysicalCard] = MappedPhysicalCard
 
   object mCardId extends MappedString(this, 255) {
     override def defaultValue = APIUtil.generateUUID()
@@ -377,7 +377,7 @@ object MappedPhysicalCard extends MappedPhysicalCard with LongKeyedMetaMapper[Ma
 
 
 class PinReset extends LongKeyedMapper[PinReset] with IdPK {
-  def getSingleton: code.cards.PinReset.type = PinReset
+  def getSingleton: KeyedMetaMapper[Long, PinReset] = PinReset
 
   object card extends MappedLongForeignKey(this, MappedPhysicalCard)
   object mReplacementDate extends MappedDateTime(this)
@@ -387,7 +387,7 @@ object PinReset extends PinReset with LongKeyedMetaMapper[PinReset]{}
 
 
 class CardAction extends LongKeyedMapper[CardAction] with IdPK {
-  def getSingleton: code.cards.CardAction.type = CardAction
+  def getSingleton: KeyedMetaMapper[Long, CardAction] = CardAction
 
   object post extends MappedLongForeignKey(this, MappedPhysicalCard)
   object cardAction extends MappedString(this, 140)

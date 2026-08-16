@@ -76,7 +76,7 @@ object RegulatedEntityAttributeProvider extends RegulatedEntityAttributeProvider
 
 class RegulatedEntityAttribute extends RegulatedEntityAttributeTrait with LongKeyedMapper[RegulatedEntityAttribute] with IdPK {
 
-  override def getSingleton: code.regulatedentities.attribute.RegulatedEntityAttribute.type = RegulatedEntityAttribute
+  override def getSingleton: KeyedMetaMapper[Long, RegulatedEntityAttribute] = RegulatedEntityAttribute
 
   object RegulatedEntityId_ extends UUIDString(this) {
     override def dbColumnName = "RegulatedEntityId"

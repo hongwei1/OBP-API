@@ -4,7 +4,7 @@ import code.util.MappedUUID
 import net.liftweb.mapper._
 
 class UserInitAction extends UserInitActionTrait with LongKeyedMapper[UserInitAction] with IdPK with CreatedUpdated {
-  def getSingleton: code.users.UserInitAction.type = UserInitAction
+  def getSingleton: KeyedMetaMapper[Long, UserInitAction] = UserInitAction
 
   object UserId extends MappedUUID(this)
   object ActionName extends MappedString(this, 100)

@@ -44,7 +44,7 @@ object MappedUserScopeProvider extends UserScopeProvider {
 
 class MappedUserScope extends UserScope with LongKeyedMapper[MappedUserScope] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.scope.MappedUserScope.type = MappedUserScope
+  def getSingleton: KeyedMetaMapper[Long, MappedUserScope] = MappedUserScope
 
   object mScopeId extends UUIDString(this)
   object mUserId extends UUIDString(this)

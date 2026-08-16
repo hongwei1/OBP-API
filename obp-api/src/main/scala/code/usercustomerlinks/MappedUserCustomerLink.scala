@@ -83,7 +83,7 @@ object MappedUserCustomerLinkProvider extends UserCustomerLinkProvider {
 
 class MappedUserCustomerLink extends UserCustomerLink with LongKeyedMapper[MappedUserCustomerLink] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.usercustomerlinks.MappedUserCustomerLink.type = MappedUserCustomerLink
+  def getSingleton: KeyedMetaMapper[Long, MappedUserCustomerLink] = MappedUserCustomerLink
 
   // Name the objects m* so that we can give the overridden methods nice names.
   // Assume we'll have to override all fields so name them all m*

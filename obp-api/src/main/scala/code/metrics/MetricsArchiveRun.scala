@@ -24,7 +24,7 @@ import net.liftweb.mapper._
  */
 class MetricsArchiveRun extends LongKeyedMapper[MetricsArchiveRun] with IdPK {
 
-  def getSingleton: code.metrics.MetricsArchiveRun.type = MetricsArchiveRun
+  def getSingleton: KeyedMetaMapper[Long, MetricsArchiveRun] = MetricsArchiveRun
 
   object RunId extends MappedUUID(this)
   object ApiInstanceId extends MappedString(this, 100)

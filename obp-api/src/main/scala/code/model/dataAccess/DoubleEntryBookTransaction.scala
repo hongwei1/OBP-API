@@ -5,7 +5,7 @@ import com.openbankproject.commons.model.{TransactionRequestId => ModelTransacti
 import net.liftweb.mapper._
 
 class DoubleEntryBookTransaction extends DoubleEntryBookTransactionTrait with LongKeyedMapper[DoubleEntryBookTransaction] with IdPK with CreatedUpdated {
-  def getSingleton: DoubleEntryBookTransaction.type = DoubleEntryBookTransaction
+  def getSingleton: KeyedMetaMapper[Long, DoubleEntryBookTransaction] = DoubleEntryBookTransaction
 
   override def transactionRequestBankId: Option[BankId] = {
     val transactionRequestBankIdString = TransactionRequestBankId.get

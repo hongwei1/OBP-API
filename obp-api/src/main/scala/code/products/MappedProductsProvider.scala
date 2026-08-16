@@ -26,7 +26,7 @@ class MappedProduct extends Product with LongKeyedMapper[MappedProduct] with IdP
 
   // Not package-qualified: this class inherits a `code` member (ProductCode), which
   // shadows the `code` root package inside the class body.
-  override def getSingleton: MappedProduct.type = MappedProduct
+  override def getSingleton: KeyedMetaMapper[Long, MappedProduct] = MappedProduct
 
   object mBankId extends UUIDString(this) // combination of this
   object mCode extends MappedString(this, 50)   // and this is unique

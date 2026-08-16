@@ -18,7 +18,7 @@ import net.liftweb.mapper._
 
 class MappedTransaction extends LongKeyedMapper[MappedTransaction] with IdPK with CreatedUpdated with TransactionUUID with MdcLoggable {
 
-  def getSingleton: code.transaction.MappedTransaction.type = MappedTransaction
+  def getSingleton: KeyedMetaMapper[Long, MappedTransaction] = MappedTransaction
 
   object bank extends MappedString(this, 255)
   object account extends AccountIdString(this)

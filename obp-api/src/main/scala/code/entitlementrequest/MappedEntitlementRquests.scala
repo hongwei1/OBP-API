@@ -108,7 +108,7 @@ object MappedEntitlementRequestsProvider extends EntitlementRequestProvider {
 class MappedEntitlementRequest extends EntitlementRequest
   with LongKeyedMapper[MappedEntitlementRequest] with IdPK with CreatedUpdated {
 
-  def getSingleton: code.entitlementrequest.MappedEntitlementRequest.type = MappedEntitlementRequest
+  def getSingleton: KeyedMetaMapper[Long, MappedEntitlementRequest] = MappedEntitlementRequest
 
   object mEntitlementRequestId extends MappedUUID(this)
 

@@ -72,7 +72,7 @@ object MappedProductAttributeProvider extends ProductAttributeProvider {
 
 class MappedProductAttribute extends ProductAttribute with LongKeyedMapper[MappedProductAttribute] with IdPK {
 
-  override def getSingleton: code.productAttributeattribute.MappedProductAttribute.type = MappedProductAttribute
+  override def getSingleton: KeyedMetaMapper[Long, MappedProductAttribute] = MappedProductAttribute
 
   object mBankId extends UUIDString(this) // combination of this
 

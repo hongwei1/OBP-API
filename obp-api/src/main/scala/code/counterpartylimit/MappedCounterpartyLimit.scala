@@ -94,7 +94,7 @@ object MappedCounterpartyLimitProvider extends CounterpartyLimitProviderTrait {
 }
 
 class CounterpartyLimit extends CounterpartyLimitTrait with LongKeyedMapper[CounterpartyLimit] with IdPK with CreatedUpdated {
-  override def getSingleton: code.counterpartylimit.CounterpartyLimit.type = CounterpartyLimit
+  override def getSingleton: KeyedMetaMapper[Long, CounterpartyLimit] = CounterpartyLimit
   
   object CounterpartyLimitId extends MappedUUID(this)
   

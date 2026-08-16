@@ -11,8 +11,19 @@
   <name>Open Bank Project API Parent</name>
   <inceptionYear>2011</inceptionYear>
   <properties>
-    <scala.version>2.13</scala.version>
-    <scala.compiler>2.13.18</scala.compiler>
+    <!-- The Scala binary suffix used for _${scala.version} dependency coordinates, and the
+         compiler that builds this reactor's modules. These are the Scala 3 values; obp-commons
+         overrides both back to 2.13 in its own pom (see the comment there) so the two modules
+         build with different compilers in one reactor - which scala-maven-plugin supports
+         because scalaVersion is a per-execution setting.
+
+         3.3.8 rather than the newest 3.7.x: 3.3 is the LTS line, and a library published from a
+         3.4+ compiler carries TASTy that an older compiler cannot read, while everything built
+         for 3.3.x is readable by every later 3.x. Choosing LTS therefore maximises the set of
+         _3 artifacts that will load. 3.3.7 specifically cannot be used - it rejects
+         -java-output-version 25 (scala/scala3#24908), and this build targets JDK 25. -->
+    <scala.version>3</scala.version>
+    <scala.compiler>3.3.8</scala.compiler>
     <pekko.version>1.1.5</pekko.version>
     <pekko-http.version>1.1.0</pekko-http.version>
     <!-- v1.0.5 is the first tag published for both Scala versions. Up to v1.0.4 JitPack ran its
@@ -189,7 +200,11 @@
       </dependency>
       <dependency>
         <groupId>com.github.OpenBankProject.lift-persistence</groupId>
-        <artifactId>lift-persistence_${scala.version}</artifactId>
+        <!-- _2.13 literal, not ${scala.version}: this fork has no Scala 3 build and does not
+             need one (macro-free, so Scala 3 consumes it as a 2.13 library). obp-commons, which
+             is itself 2.13, and obp-api, which is Scala 3, therefore both name the same
+             artifact. -->
+        <artifactId>lift-persistence_2.13</artifactId>
         <version>${lift.version}</version>
       </dependency>
       <dependency>

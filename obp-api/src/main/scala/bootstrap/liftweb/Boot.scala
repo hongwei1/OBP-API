@@ -403,11 +403,9 @@ class Boot extends MdcLoggable {
     if (APIUtil.getPropsAsBoolValue("logging.database.queries.enable", false)) {
       DB.addLogFunc
      {
-       case (log, duration) =>
-       {
+       case (log, duration) => {
          logger.debug("Total query time : %d ms".format(duration))
-         log.allEntries.foreach
-         {
+         log.allEntries.foreach {
            case DBLogEntry(stmt, duration) =>
              logger.debug("The query :  %s in %d ms".format(stmt, duration))
          }

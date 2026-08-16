@@ -4,7 +4,7 @@ import com.openbankproject.commons.model.{Bank, BankId}
 import net.liftweb.mapper._
 
 class MappedBank extends Bank with LongKeyedMapper[MappedBank] with IdPK with CreatedUpdated {
-  def getSingleton: code.model.dataAccess.MappedBank.type = MappedBank
+  def getSingleton: KeyedMetaMapper[Long, MappedBank] = MappedBank
 
   object permalink extends MappedString(this, 255)
   object fullBankName extends MappedString(this, 255)

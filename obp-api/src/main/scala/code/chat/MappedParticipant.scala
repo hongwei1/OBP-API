@@ -121,7 +121,7 @@ object MappedParticipantProvider extends ParticipantProvider {
 
 class Participant extends ParticipantTrait with LongKeyedMapper[Participant] with IdPK {
 
-  def getSingleton: code.chat.Participant.type = Participant
+  def getSingleton: KeyedMetaMapper[Long, Participant] = Participant
 
   object ParticipantId extends MappedUUID(this)
   object ChatRoomId extends MappedString(this, 36)
