@@ -205,7 +205,7 @@ class MappedTransactionAttribute extends TransactionAttribute with LongKeyedMapp
 
 object MappedTransactionAttribute extends MappedTransactionAttribute with LongKeyedMetaMapper[MappedTransactionAttribute]
   with AttributeQueryTrait {
-  override def dbIndexes: List[BaseIndex[MappedTransactionAttribute]] = Index(mTransactionId) :: Index(mTransactionAttributeId) :: super.dbIndexes
+  override def dbIndexes = Index(mTransactionId) :: Index(mTransactionAttributeId) :: super.dbIndexes
   override val mParentId: BaseMappedField = mTransactionId
 }
 

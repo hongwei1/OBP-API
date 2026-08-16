@@ -114,6 +114,6 @@ class UserAttribute extends UserAttributeTrait with LongKeyedMapper[UserAttribut
 }
 
 object UserAttribute extends UserAttribute with LongKeyedMetaMapper[UserAttribute] {
-  override def dbIndexes: List[BaseIndex[UserAttribute]] = Index(UserAttributeId) :: super.dbIndexes
+  override def dbIndexes = Index(UserAttributeId) :: super.dbIndexes
 }
 

@@ -45,7 +45,7 @@ class DoubleEntryBookTransaction extends DoubleEntryBookTransactionTrait with Lo
 
 object DoubleEntryBookTransaction extends DoubleEntryBookTransaction with LongKeyedMetaMapper[DoubleEntryBookTransaction] {
 
-  override def dbIndexes: List[BaseIndex[DoubleEntryBookTransaction]] =
+  override def dbIndexes =
     UniqueIndex(DebitTransactionBankId, DebitTransactionAccountId, DebitTransactionId) ::
     UniqueIndex(CreditTransactionBankId, CreditTransactionAccountId, CreditTransactionId) ::
     super.dbIndexes

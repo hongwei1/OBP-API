@@ -97,5 +97,5 @@ class StandingOrder extends StandingOrderTrait with LongKeyedMapper[StandingOrde
 }
 
 object StandingOrder extends StandingOrder with LongKeyedMetaMapper[StandingOrder] {
-  override def dbIndexes: List[BaseIndex[StandingOrder]] = super.dbIndexes
+  override def dbIndexes = super.dbIndexes
 }

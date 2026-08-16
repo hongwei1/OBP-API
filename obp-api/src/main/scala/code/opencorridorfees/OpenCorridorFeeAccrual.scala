@@ -64,7 +64,7 @@ object OpenCorridorFeeAccrual
 
   override def dbTableName = "open_corridor_fee_accrual"
 
-  override def dbIndexes: List[BaseIndex[OpenCorridorFeeAccrual]] =
+  override def dbIndexes =
     UniqueIndex(TransactionRequestId) :: Index(DebtorBankId) ::
       Index(FeeSettlementId) :: super.dbIndexes
 

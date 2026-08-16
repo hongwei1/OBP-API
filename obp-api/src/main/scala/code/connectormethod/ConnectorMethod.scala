@@ -17,6 +17,6 @@ class ConnectorMethod extends LongKeyedMapper[ConnectorMethod] with IdPK {
 
 
 object ConnectorMethod extends ConnectorMethod with LongKeyedMetaMapper[ConnectorMethod] {
-  override def dbIndexes: List[BaseIndex[ConnectorMethod]] = UniqueIndex(ConnectorMethodId) :: UniqueIndex(MethodName) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(ConnectorMethodId) :: UniqueIndex(MethodName) :: super.dbIndexes
 }
 

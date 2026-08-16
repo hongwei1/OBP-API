@@ -378,7 +378,7 @@ import net.liftweb.util.Helpers._
   val connector = code.api.Constant.CONNECTOR.openOrThrowException(s"$MandatoryPropertyIsNotSet. The missing prop is `connector` ")
   val starConnectorSupportedTypes = APIUtil.getPropsValue("starConnector_supported_types","")
 
-  override def dbIndexes: List[BaseIndex[AuthUser]] = UniqueIndex(username, provider) ::super.dbIndexes
+  override def dbIndexes = UniqueIndex(username, provider) ::super.dbIndexes
   
   override def emailFrom = Constant.mailUsersUserinfoSenderAddress
 

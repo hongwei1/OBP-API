@@ -222,7 +222,7 @@ class MappedAccountAttribute extends AccountAttribute with LongKeyedMapper[Mappe
 
 //
 object MappedAccountAttribute extends MappedAccountAttribute with LongKeyedMetaMapper[MappedAccountAttribute] with AttributeQueryTrait {
-  override def dbIndexes: List[BaseIndex[MappedAccountAttribute]] = Index(mAccountId) :: Index(mAccountAttributeId) :: super.dbIndexes
+  override def dbIndexes = Index(mAccountId) :: Index(mAccountAttributeId) :: super.dbIndexes
 
   override val mParentId: BaseMappedField = mAccountId
   override val mBankId: BaseMappedField = mBankIdId

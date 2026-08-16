@@ -22,5 +22,5 @@ class PemUsage extends PemUsageTrait with LongKeyedMapper[PemUsage] with IdPK wi
 }
 
 object PemUsage extends PemUsage with LongKeyedMetaMapper[PemUsage] {
-  override def dbIndexes: List[BaseIndex[PemUsage]] = UniqueIndex(PemHash) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(PemHash) :: super.dbIndexes
 }

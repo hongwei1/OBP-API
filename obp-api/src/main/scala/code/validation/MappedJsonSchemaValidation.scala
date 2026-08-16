@@ -16,6 +16,6 @@ class JsonSchemaValidation extends LongKeyedMapper[JsonSchemaValidation] with Id
 
 
 object JsonSchemaValidation extends JsonSchemaValidation with LongKeyedMetaMapper[JsonSchemaValidation] {
-  override def dbIndexes: List[BaseIndex[JsonSchemaValidation]] = UniqueIndex(OperationId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(OperationId) :: super.dbIndexes
 }
 

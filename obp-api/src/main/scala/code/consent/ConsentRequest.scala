@@ -41,5 +41,5 @@ class ConsentRequest extends ConsentRequestTrait with LongKeyedMapper[ConsentReq
 }
 
 object ConsentRequest extends ConsentRequest with LongKeyedMetaMapper[ConsentRequest] {
-  override def dbIndexes: List[BaseIndex[ConsentRequest]] = UniqueIndex(ConsentRequestId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(ConsentRequestId) :: super.dbIndexes
 }

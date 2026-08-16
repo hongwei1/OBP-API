@@ -108,5 +108,5 @@ class AttributeDefinition extends AttributeDefinitionTrait with LongKeyedMapper[
 }
 
 object AttributeDefinition extends AttributeDefinition with LongKeyedMetaMapper[AttributeDefinition] {
-  override def dbIndexes: List[BaseIndex[AttributeDefinition]] = UniqueIndex(BankId, Name, Category) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(BankId, Name, Category) :: super.dbIndexes
 }

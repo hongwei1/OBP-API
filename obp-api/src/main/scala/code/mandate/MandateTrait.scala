@@ -88,7 +88,7 @@ class Mandate extends MandateTrait with LongKeyedMapper[Mandate] with IdPK with 
 }
 
 object Mandate extends Mandate with LongKeyedMetaMapper[Mandate] {
-  override def dbIndexes: List[BaseIndex[Mandate]] =
+  override def dbIndexes =
     UniqueIndex(MandateId) ::
     Index(BankId, AccountId) ::
     Index(CustomerId) ::
@@ -135,7 +135,7 @@ class MandateProvision extends MandateProvisionTrait with LongKeyedMapper[Mandat
 }
 
 object MandateProvision extends MandateProvision with LongKeyedMetaMapper[MandateProvision] {
-  override def dbIndexes: List[BaseIndex[MandateProvision]] =
+  override def dbIndexes =
     UniqueIndex(ProvisionId) ::
     Index(MandateId) ::
     super.dbIndexes
@@ -160,7 +160,7 @@ class SignatoryPanel extends SignatoryPanelTrait with LongKeyedMapper[SignatoryP
 }
 
 object SignatoryPanel extends SignatoryPanel with LongKeyedMetaMapper[SignatoryPanel] {
-  override def dbIndexes: List[BaseIndex[SignatoryPanel]] =
+  override def dbIndexes =
     UniqueIndex(PanelId) ::
     Index(MandateId) ::
     super.dbIndexes

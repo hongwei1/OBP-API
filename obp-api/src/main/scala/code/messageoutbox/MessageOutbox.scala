@@ -118,7 +118,7 @@ object MessageOutbox extends MessageOutbox with LongKeyedMetaMapper[MessageOutbo
 
   override def dbTableName = "message_outbox"
 
-  override def dbIndexes: List[BaseIndex[MessageOutbox]] =
+  override def dbIndexes =
     Index(Status) :: Index(SubjectId) :: Index(OutboxType) :: super.dbIndexes
 
   def enqueue(

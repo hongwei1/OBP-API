@@ -47,6 +47,6 @@ object TransactionRequestAttribute extends TransactionRequestAttribute with Long
   with NewAttributeQueryTrait {
   override val ParentId: BaseMappedField = TransactionRequestId
 
-  override def dbIndexes: List[BaseIndex[TransactionRequestAttribute]] = Index(TransactionRequestId) :: Index(TransactionRequestAttributeId) :: super.dbIndexes
+  override def dbIndexes = Index(TransactionRequestId) :: Index(TransactionRequestAttributeId) :: super.dbIndexes
 }
 

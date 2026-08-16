@@ -19,7 +19,7 @@ class JobScheduler extends JobSchedulerTrait with LongKeyedMapper[JobScheduler] 
 }
 
 object JobScheduler extends JobScheduler with LongKeyedMetaMapper[JobScheduler] {
-  override def dbIndexes: List[BaseIndex[JobScheduler]] = UniqueIndex(JobId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(JobId) :: super.dbIndexes
 
   /**
    * The most recent scheduler-lock rows, newest first, capped at `limit`.

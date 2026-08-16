@@ -99,5 +99,5 @@ class CounterpartyAttribute extends CounterpartyAttributeTrait with LongKeyedMap
 }
 
 object CounterpartyAttribute extends CounterpartyAttribute with LongKeyedMetaMapper[CounterpartyAttribute] {
-  override def dbIndexes: List[BaseIndex[CounterpartyAttribute]] = Index(CounterpartyId_) :: super.dbIndexes
+  override def dbIndexes = Index(CounterpartyId_) :: super.dbIndexes
 }

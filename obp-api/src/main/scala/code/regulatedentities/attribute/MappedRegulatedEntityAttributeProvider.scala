@@ -99,6 +99,6 @@ class RegulatedEntityAttribute extends RegulatedEntityAttributeTrait with LongKe
 }
 
 object RegulatedEntityAttribute extends RegulatedEntityAttribute with LongKeyedMetaMapper[RegulatedEntityAttribute] {
-  override def dbIndexes: List[BaseIndex[RegulatedEntityAttribute]] = Index(RegulatedEntityId_) :: super.dbIndexes
+  override def dbIndexes = Index(RegulatedEntityId_) :: super.dbIndexes
 }
 

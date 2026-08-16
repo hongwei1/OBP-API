@@ -51,5 +51,5 @@ class OpenIDConnectToken extends OpenIDConnectTokenTrait with LongKeyedMapper[Op
 }
 
 object OpenIDConnectToken extends OpenIDConnectToken with LongKeyedMetaMapper[OpenIDConnectToken] {
-  override def dbIndexes: List[BaseIndex[OpenIDConnectToken]] = super.dbIndexes
+  override def dbIndexes = super.dbIndexes
 }

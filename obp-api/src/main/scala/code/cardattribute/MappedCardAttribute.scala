@@ -38,6 +38,6 @@ class MappedCardAttribute extends CardAttribute with LongKeyedMapper[MappedCardA
 
 
 object MappedCardAttribute extends MappedCardAttribute with LongKeyedMetaMapper[MappedCardAttribute] {
-  override def dbIndexes: List[BaseIndex[MappedCardAttribute]] = Index(mCardId) :: Index(mCardAttributeId) :: super.dbIndexes
+  override def dbIndexes = Index(mCardId) :: Index(mCardAttributeId) :: super.dbIndexes
 }
 

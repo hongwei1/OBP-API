@@ -28,7 +28,7 @@ class DynamicMessageDoc extends LongKeyedMapper[DynamicMessageDoc] with IdPK {
 
 
 object DynamicMessageDoc extends DynamicMessageDoc with LongKeyedMetaMapper[DynamicMessageDoc] {
-  override def dbIndexes: List[BaseIndex[DynamicMessageDoc]] = UniqueIndex(DynamicMessageDocId) :: UniqueIndex(Process) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(DynamicMessageDocId) :: UniqueIndex(Process) :: super.dbIndexes
   def getJsonDynamicMessageDoc(dynamicMessageDoc: DynamicMessageDoc) = JsonDynamicMessageDoc(
     bankId = Some(dynamicMessageDoc.BankId.get),
     dynamicMessageDocId = Some(dynamicMessageDoc.DynamicMessageDocId.get),

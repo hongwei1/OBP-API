@@ -32,7 +32,7 @@ object MapperAccountHolders extends MapperAccountHolders with AccountHolders wit
 
   // NOTE: !!! Uses a DIFFERENT TABLE NAME PREFIX TO ALL OTHERS i.e. MAPPER not MAPPED !!!!!
 
-  override def dbIndexes: List[net.liftweb.mapper.UniqueIndex[code.accountholders.MapperAccountHolders]] = UniqueIndex(user, accountBankPermalink, accountPermalink) :: Nil
+  override def dbIndexes = UniqueIndex(user, accountBankPermalink, accountPermalink) :: Nil
 
   //Note, this method, will not check the existing of bankAccount, any value of BankIdAccountId
   //Can create the MapperAccountHolders.

@@ -16,6 +16,6 @@ class AuthenticationTypeValidation extends LongKeyedMapper[AuthenticationTypeVal
 
 
 object AuthenticationTypeValidation extends AuthenticationTypeValidation with LongKeyedMetaMapper[AuthenticationTypeValidation] {
-  override def dbIndexes: List[BaseIndex[AuthenticationTypeValidation]] = UniqueIndex(OperationId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(OperationId) :: super.dbIndexes
 }
 

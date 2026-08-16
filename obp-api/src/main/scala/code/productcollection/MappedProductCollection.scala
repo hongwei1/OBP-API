@@ -53,5 +53,5 @@ class MappedProductCollection extends ProductCollection with LongKeyedMapper[Map
 
 
 object MappedProductCollection extends MappedProductCollection with LongKeyedMetaMapper[MappedProductCollection] {
-  override def dbIndexes: List[BaseIndex[MappedProductCollection]] = UniqueIndex(mCollectionCode, mProductCode) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(mCollectionCode, mProductCode) :: super.dbIndexes
 }

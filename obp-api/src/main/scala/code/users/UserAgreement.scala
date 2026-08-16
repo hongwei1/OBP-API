@@ -51,7 +51,7 @@ class UserAgreement extends UserAgreementTrait with LongKeyedMapper[UserAgreemen
 }
 
 object UserAgreement extends UserAgreement with LongKeyedMetaMapper[UserAgreement] {
-  override def dbIndexes: List[BaseIndex[UserAgreement]] = UniqueIndex(UserAgreementId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(UserAgreementId) :: super.dbIndexes
   override def beforeSave = List(
     agreement =>
       tryo {

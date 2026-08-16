@@ -18,7 +18,7 @@ class UserLocks extends UserLocksTrait with LongKeyedMapper[UserLocks] with IdPK
 }
 
 object UserLocks extends UserLocks with LongKeyedMetaMapper[UserLocks] {
-  override def dbIndexes: List[BaseIndex[UserLocks]] = UniqueIndex(UserId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(UserId) :: super.dbIndexes
 }
 
 trait UserLocksTrait {

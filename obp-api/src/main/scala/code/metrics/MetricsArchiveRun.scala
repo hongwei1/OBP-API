@@ -39,7 +39,7 @@ class MetricsArchiveRun extends LongKeyedMapper[MetricsArchiveRun] with IdPK {
 
 object MetricsArchiveRun extends MetricsArchiveRun with LongKeyedMetaMapper[MetricsArchiveRun] {
 
-  override def dbIndexes: List[BaseIndex[MetricsArchiveRun]] =
+  override def dbIndexes =
     UniqueIndex(RunId) :: Index(StartedAt) :: super.dbIndexes
 
   /** Keep only the most recent N runs; older rows are pruned on every write. */

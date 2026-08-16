@@ -31,7 +31,7 @@
 //}
 //
 //object Authorisation extends Authorisation with LongKeyedMetaMapper[Authorisation] {
-//  override def dbIndexes: List[BaseIndex[Authorisation]] = UniqueIndex(AuthorisationId) :: super.dbIndexes
+//  override def dbIndexes = UniqueIndex(AuthorisationId) :: super.dbIndexes
 //}
 //
 //object MappedAuthorisationProvider extends AuthorisationProvider {

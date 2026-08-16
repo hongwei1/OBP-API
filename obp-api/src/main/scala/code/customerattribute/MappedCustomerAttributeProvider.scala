@@ -173,7 +173,7 @@ class MappedCustomerAttribute extends CustomerAttribute with LongKeyedMapper[Map
 object MappedCustomerAttribute extends MappedCustomerAttribute
   with LongKeyedMetaMapper[MappedCustomerAttribute]
   with AttributeQueryTrait {
-  override def dbIndexes: List[BaseIndex[MappedCustomerAttribute]] = Index(mCustomerId) :: Index(mCustomerAttributeId) :: super.dbIndexes
+  override def dbIndexes = Index(mCustomerId) :: Index(mCustomerAttributeId) :: super.dbIndexes
 
   override val mParentId: BaseMappedField = mCustomerId
 

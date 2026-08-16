@@ -72,7 +72,7 @@ class AmqpBankBroker extends LongKeyedMapper[AmqpBankBroker] with IdPK {
 object AmqpBankBroker extends AmqpBankBroker with LongKeyedMetaMapper[AmqpBankBroker] {
   override def dbTableName = "amqp_bank_broker"
 
-  override def dbIndexes: List[BaseIndex[AmqpBankBroker]] = UniqueIndex(BankId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(BankId) :: super.dbIndexes
 
   def findByBankId(bankId: String): Box[AmqpBankBroker] =
     AmqpBankBroker.find(By(AmqpBankBroker.BankId, bankId))

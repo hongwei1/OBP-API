@@ -27,7 +27,7 @@ class MigrationScriptLog extends MigrationScriptLogTrait with LongKeyedMapper[Mi
 }
 
 object MigrationScriptLog extends MigrationScriptLog with LongKeyedMetaMapper[MigrationScriptLog] {
-  override def dbIndexes: List[BaseIndex[MigrationScriptLog]] = UniqueIndex(Name, IsSuccessful) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(Name, IsSuccessful) :: super.dbIndexes
 }
 
 

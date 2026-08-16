@@ -18,7 +18,7 @@ class UserInitAction extends UserInitActionTrait with LongKeyedMapper[UserInitAc
 }
 
 object UserInitAction extends UserInitAction with LongKeyedMetaMapper[UserInitAction] {
-  override def dbIndexes: List[BaseIndex[UserInitAction]] = UniqueIndex(UserId, ActionName, ActionValue) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(UserId, ActionName, ActionValue) :: super.dbIndexes
 }
 
 trait UserInitActionTrait {

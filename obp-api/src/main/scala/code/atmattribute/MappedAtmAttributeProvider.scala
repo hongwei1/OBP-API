@@ -106,6 +106,6 @@ class AtmAttribute extends AtmAttributeTrait with LongKeyedMapper[AtmAttribute] 
 }
 
 object AtmAttribute extends AtmAttribute with LongKeyedMetaMapper[AtmAttribute] {
-  override def dbIndexes: List[BaseIndex[AtmAttribute]] = Index(BankId_, AtmId_) :: super.dbIndexes
+  override def dbIndexes = Index(BankId_, AtmId_) :: super.dbIndexes
 }
 

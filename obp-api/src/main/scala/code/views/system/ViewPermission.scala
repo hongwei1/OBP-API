@@ -20,7 +20,7 @@ class ViewPermission extends LongKeyedMapper[ViewPermission] with IdPK with Crea
   object extraData extends MappedString(this, 1024) 
 }
 object ViewPermission extends ViewPermission with LongKeyedMetaMapper[ViewPermission] {
-  override def dbIndexes: List[BaseIndex[ViewPermission]] = UniqueIndex(bank_id, account_id, view_id, permission) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(bank_id, account_id, view_id, permission) :: super.dbIndexes
   
   def findCustomViewPermissions(bankId: BankId, accountId: AccountId, viewId: ViewId): List[ViewPermission] =
     ViewPermission.findAll(

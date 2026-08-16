@@ -95,6 +95,6 @@ class UserInvitation extends UserInvitationTrait with LongKeyedMapper[UserInvita
 }
 
 object UserInvitation extends UserInvitation with LongKeyedMetaMapper[UserInvitation] {
-  override def dbIndexes: List[BaseIndex[UserInvitation]] = UniqueIndex(UserInvitationId) :: super.dbIndexes
+  override def dbIndexes = UniqueIndex(UserInvitationId) :: super.dbIndexes
 }
 

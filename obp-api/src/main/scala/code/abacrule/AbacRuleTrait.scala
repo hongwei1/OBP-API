@@ -46,7 +46,7 @@ class AbacRule extends AbacRuleTrait with LongKeyedMapper[AbacRule] with IdPK wi
 }
 
 object AbacRule extends AbacRule with LongKeyedMetaMapper[AbacRule] {
-  override def dbIndexes: List[BaseIndex[AbacRule]] = Index(AbacRuleId) :: Index(RuleName) :: Index(CreatedByUserId) :: super.dbIndexes
+  override def dbIndexes = Index(AbacRuleId) :: Index(RuleName) :: Index(CreatedByUserId) :: super.dbIndexes
 }
 
 trait AbacRuleProvider {
