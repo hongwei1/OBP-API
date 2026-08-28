@@ -3050,6 +3050,9 @@ object Http4s510 {
               com.openbankproject.commons.util.JsonAliases.parse(cc.httpBody.getOrElse("")).extract[ConsumerJwtPostJsonV510]
             }
             pem = APIUtil.`getPSD2-CERT`(cc.requestHeaders)
+            _ <- Helper.booleanToFuture(X509GeneralError, 400, Some(cc)) {
+              pem.exists(_.trim.nonEmpty)
+            }
             _ <- Helper.booleanToFuture(PostJsonIsNotSigned, 400, Some(cc)) {
               JwtUtil.verifyJwt(postedJwt.jwt, pem.getOrElse(""))
             }

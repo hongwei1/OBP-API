@@ -94,7 +94,11 @@ class SuccessSweepTest extends ServerSetupWithTestData with DefaultUsers {
     "OBPv4.0.0-getMyApiCollectionByName"    -> "400 OBP-30079: no ApiCollection named API_COLLECTION_NAME",
     "OBPv4.0.0-getMyApiCollectionEndpoints" -> "400 OBP-30079: no ApiCollection named API_COLLECTION_NAME",
     "OBPv6.0.0-getWebUiProp"                -> "400 OBP-08003: no WebUi prop named WEBUI_PROP_NAME",
-    "OBPv7.0.0-getRoutingScheme"            -> "404 OBP-30514: no routing scheme named SCHEME"
+    "OBPv7.0.0-getRoutingScheme"            -> "404 OBP-30514: no routing scheme named SCHEME",
+    // CHANNEL_NAME is a placeholder to EndpointCatalog (isPlaceholder matches the _NAME suffix)
+    // but not to hasNoPathVariable's narrower regex below, so this endpoint lands in the
+    // no-setup-required bucket even though its path names an entity nothing creates.
+    "OBPv6.0.0-getSignalChannelInfo"        -> "404 OBP-10058: no Signal Channel named CHANNEL_NAME"
   )
 
   private def realBankId: Option[String] =

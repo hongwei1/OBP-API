@@ -3057,8 +3057,7 @@ object Http4s400 {
               // View object — so a soft fallback is fine here.
               Views.views.vend.systemView(ViewId(viewIdStr))
                 .or(Views.views.vend.customView(ViewId(viewIdStr), BankIdAccountId(account.bankId, account.accountId)))
-                .openOrThrowException(s"$ViewNotFound Current view_id($viewIdStr)")
-            }
+            } map (unboxFullOrFail(_, Some(cc), s"$ViewNotFound Current view_id($viewIdStr)", 400))
             // SS.init populates Lift thread-globals (used by `SS.user` inside the
             // connector). The connector's first line `SS.user` resolves synchronously
             // inside this block, capturing the user; subsequent flatMap stages run on
@@ -6392,6 +6391,9 @@ object Http4s400 {
       case req @ GET -> `prefixPath` / "banks" / _ / "user-invitations" / secretLink =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           for {
+            _ <- code.util.Helper.booleanToFuture(InvalidNumber, cc = Some(cc)) {
+              scala.util.Try(secretLink.toLong).isSuccess
+            }
             (invitation, _) <- NewStyle.function.getUserInvitation(bank.bankId, secretLink.toLong, Some(cc))
           } yield JSONFactory400.createUserInvitationJson(invitation)
         }
@@ -7095,7 +7097,7 @@ object Http4s400 {
         "Get My Api Collection Endpoint",
         s"""Get Api Collection Endpoint By API_COLLECTION_NAME and OPERATION_ID.
         |
-        |${userAuthenticationMessage(false)}
+        |${userAuthenticationMessage(true)}
         |""".stripMargin,
         EmptyBody,
         apiCollectionEndpointJson400,
@@ -7113,7 +7115,7 @@ object Http4s400 {
         "Get Api Collection Endpoints",
         s"""Get Api Collection Endpoints By API_COLLECTION_ID.
         |
-        |${userAuthenticationMessage(false)}
+        |${userAuthenticationMessage(true)}
         |""".stripMargin,
         EmptyBody,
         apiCollectionEndpointsJson400,

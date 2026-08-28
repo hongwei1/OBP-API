@@ -148,6 +148,7 @@ object ErrorMessages {
   val InvalidSignalChannelName = "OBP-10057: Invalid Signal Channel name. " +
     "Signal Channel names must use only alphanumeric characters, dots, hyphens, and underscores, " +
     "and be between 1 and 128 characters long."
+  val SignalChannelNotFound = "OBP-10058: Signal Channel not found. "
 
 
 

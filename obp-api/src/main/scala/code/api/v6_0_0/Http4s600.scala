@@ -2621,10 +2621,10 @@ object Http4s600 {
               code.api.cache.RedisMessaging.validateChannelName(channelName)
             }
             info <- Future(code.api.cache.RedisMessaging.channelInfo(channelName))
-            (count, ttl) <- info match {
-              case Some((c, t)) => Future.successful((c, t))
-              case None => Future.failed(new RuntimeException(s"Channel '$channelName' not found"))
+            _ <- Helper.booleanToFuture(s"$SignalChannelNotFound Channel '$channelName' not found", 404, cc = Some(cc)) {
+              info.isDefined
             }
+            (count, ttl) = info.get
           } yield SignalChannelInfoJsonV600(channelName, count, ttl)
         }
     }
@@ -8779,6 +8779,7 @@ object Http4s600 {
         EmptyBody,
         connectorTracesJsonV600,
         List(
+          $AuthenticatedUserIsRequired,
           InvalidDateFormat,
           UnknownError
         ),
@@ -9868,10 +9869,14 @@ object Http4s600 {
         |
         |Optional query parameter `tag` — filter to products that have the given tag (e.g. `?tag=featured`). Tag matching is case-insensitive.
         |
-        |${userAuthenticationMessage(!getApiProductsIsPublic)}""".stripMargin,
+        |${userAuthenticationMessage(true)}""".stripMargin,
         EmptyBody,
         apiProductsJsonV600,
-        List(UnknownError),
+        // Intentional drift from Lift's APIMethods600.scala source-of-truth: Lift gated this on
+        // the getApiProductsIsPublic prop (public by default); the http4s handler always calls
+        // withUser, same simplification already documented for the rest of the api-products
+        // bucket above. AuthenticatedUserIsRequired reflects what the handler actually enforces.
+        List($AuthenticatedUserIsRequired, UnknownError),
         apiTagApi :: apiTagApiProduct :: Nil,
         None,
         http4sPartialFunction = Some(getAllApiProductsV600)
@@ -9886,10 +9891,13 @@ object Http4s600 {
         |
         |Optional query parameter `tag` — filter to products that carry the given tag (e.g. `?tag=featured`). Tag matching is case-insensitive. Repeat `tag=` to require multiple tags.
         |
-        |${userAuthenticationMessage(!getProductsIsPublic)}""".stripMargin,
+        |${userAuthenticationMessage(true)}""".stripMargin,
         EmptyBody,
         productsJsonV600,
-        List(UnknownError),
+        // Intentional drift from Lift's APIMethods600.scala source-of-truth: Lift gated this on
+        // the getProductsIsPublic prop (public by default); the http4s handler always calls
+        // withUser. AuthenticatedUserIsRequired reflects what the handler actually enforces.
+        List($AuthenticatedUserIsRequired, UnknownError),
         apiTagProduct :: Nil,
         None,
         http4sPartialFunction = Some(getAllProductsV600)
@@ -13347,6 +13355,7 @@ object Http4s600 {
         EmptyBody,
         configPropsJsonV600,
         List(
+          $AuthenticatedUserIsRequired,
           UnknownError
         ),
         apiTagApi :: Nil,

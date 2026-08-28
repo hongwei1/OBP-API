@@ -12,6 +12,7 @@ import code.methodrouting.{MethodRouting, MethodRoutingT}
 import code.metrics.{ConnectorTraceProvider, ConnectorMetricsProvider, ConnectorCountsRedis}
 import code.util.Helper
 import code.util.Helper.MdcLoggable
+import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.model.{AccountId, BankId}
 import com.openbankproject.commons.util.ReflectUtils.{findMethodByArgs, getConstructorArgs}
 import com.openbankproject.commons.ExecutionContext.Implicits.global
@@ -48,7 +49,13 @@ package object bankconnectors extends MdcLoggable {
 
     val intercept: InvocationHandler = new InvocationHandler {
       override def invoke(proxy: AnyRef, method: Method, args: Array[AnyRef]): AnyRef = {
-        if (method.getReturnType.getName == "scala.concurrent.Future" && !canOpenFuture(method.getName)) {
+        if (method.getName == nameOf(StubConnector.callableMethods)) {
+          // callableMethods is declared directly on Connector with a real default body, so
+          // isInheritedMember (declaring class == Connector) does not catch it and it would
+          // otherwise be routed as a connector call - NPE on the way, since args is null for
+          // this no-arg method. Answer it from the empty stub, same as InternalConnector does.
+          StubConnector.callableMethods
+        } else if (method.getReturnType.getName == "scala.concurrent.Future" && !canOpenFuture(method.getName)) {
           throw new RuntimeException(ServiceIsTooBusy + s"Current Service(${method.getName})")
         } else {
           if (method.getName.contains("$default$") || ConnectorProxy.isInheritedMember(method)) {
