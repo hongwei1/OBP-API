@@ -3057,8 +3057,7 @@ object Http4s400 {
               // View object — so a soft fallback is fine here.
               Views.views.vend.systemView(ViewId(viewIdStr))
                 .or(Views.views.vend.customView(ViewId(viewIdStr), BankIdAccountId(account.bankId, account.accountId)))
-                .openOrThrowException(s"$ViewNotFound Current view_id($viewIdStr)")
-            }
+            } map (unboxFullOrFail(_, Some(cc), s"$ViewNotFound Current view_id($viewIdStr)", 400))
             // SS.init populates Lift thread-globals (used by `SS.user` inside the
             // connector). The connector's first line `SS.user` resolves synchronously
             // inside this block, capturing the user; subsequent flatMap stages run on
