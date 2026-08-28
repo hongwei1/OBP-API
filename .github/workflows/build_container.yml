@@ -483,6 +483,9 @@ jobs:
   docker:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: vars.ENABLE_CONTAINER_BUILDING == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -492,36 +495,85 @@ jobs:
         with:
           name: compiled-output
 
-      - name: Build the Docker image
+      - name: Log in to GitHub Container Registry (ghcr.io)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub (if secrets provided)
+        if: env.DOCKER_HUB_ORGANIZATION != '' && env.DOCKER_HUB_TOKEN != ''
+        env:
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
           echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin docker.io
-          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-            docker build . --file .github/Dockerfile_PreBuild \
-              --tag docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:$GITHUB_SHA \
-              --tag docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:latest \
-              --tag docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:${GITHUB_REF##*/}
-          else
-            docker build . --file .github/Dockerfile_PreBuild \
-              --tag docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:$GITHUB_SHA \
-              --tag docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:${GITHUB_REF##*/}
+
+      - name: Build and Push Docker image (GitHub Packages ghcr.io & Docker Hub)
+        run: |
+          # Lowercase repo owner for standard ghcr.io image naming
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          GHCR_IMAGE="ghcr.io/${OWNER_LC}/obp-api"
+          REF_TAG="${GITHUB_REF##*/}"
+
+          TAG_ARGS=(
+            "--tag" "${GHCR_IMAGE}:${GITHUB_SHA}"
+            "--tag" "${GHCR_IMAGE}:${REF_TAG}"
+          )
+          if [ "${{ github.ref }}" == "refs/heads/develop" ] || [ "${{ github.ref }}" == "refs/heads/develop-obp" ]; then
+            TAG_ARGS+=("--tag" "${GHCR_IMAGE}:latest")
           fi
-          docker push docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }} --all-tags
+
+          if [ -n "${{ env.DOCKER_HUB_ORGANIZATION }}" ]; then
+            DH_IMAGE="docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}"
+            TAG_ARGS+=(
+              "--tag" "${DH_IMAGE}:${GITHUB_SHA}"
+              "--tag" "${DH_IMAGE}:${REF_TAG}"
+            )
+            if [ "${{ github.ref }}" == "refs/heads/develop" ] || [ "${{ github.ref }}" == "refs/heads/develop-obp" ]; then
+              TAG_ARGS+=("--tag" "${DH_IMAGE}:latest")
+            fi
+          fi
+
+          docker build . --file .github/Dockerfile_PreBuild "${TAG_ARGS[@]}"
+
+          # Push to GitHub Packages (ghcr.io)
+          echo "Pushing to GitHub Container Registry ($GHCR_IMAGE)..."
+          docker push "${GHCR_IMAGE}" --all-tags
+
+          # Push to Docker Hub if configured
+          if [ -n "${{ env.DOCKER_HUB_ORGANIZATION }}" ] && [ -n "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+            echo "Pushing to Docker Hub ($DH_IMAGE)..."
+            docker push "${DH_IMAGE}" --all-tags || echo "Docker Hub push skipped or failed"
+          fi
           echo docker done
 
       - uses: sigstore/cosign-installer@4d14d7f17e7112af04ea6108fbb4bfc714c00390
 
       - name: Write signing key to disk (only needed for `cosign sign --key`)
+        if: env.COSIGN_PRIVATE_KEY != ''
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
         run: echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
 
       - name: Sign container image
+        if: env.COSIGN_PRIVATE_KEY != ''
         run: |
-          cosign sign -y --key cosign.key \
-            docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:${GITHUB_REF##*/}
-          cosign sign -y --key cosign.key \
-            docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:$GITHUB_SHA
-          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-            cosign sign -y --key cosign.key \
-              docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:latest
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          GHCR_IMAGE="ghcr.io/${OWNER_LC}/obp-api"
+          cosign sign -y --key cosign.key "${GHCR_IMAGE}:${GITHUB_REF##*/}"
+          cosign sign -y --key cosign.key "${GHCR_IMAGE}:${GITHUB_SHA}"
+          if [ "${{ github.ref }}" == "refs/heads/develop" ] || [ "${{ github.ref }}" == "refs/heads/develop-obp" ]; then
+            cosign sign -y --key cosign.key "${GHCR_IMAGE}:latest"
+          fi
+          if [ -n "${{ env.DOCKER_HUB_ORGANIZATION }}" ] && [ -n "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+            DH_IMAGE="docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}"
+            cosign sign -y --key cosign.key "${DH_IMAGE}:${GITHUB_REF##*/}"
+            cosign sign -y --key cosign.key "${DH_IMAGE}:${GITHUB_SHA}"
+            if [ "${{ github.ref }}" == "refs/heads/develop" ] || [ "${{ github.ref }}" == "refs/heads/develop-obp" ]; then
+              cosign sign -y --key cosign.key "${DH_IMAGE}:latest"
+            fi
           fi
         env:
-          COSIGN_PASSWORD: "${{secrets.COSIGN_PASSWORD}}"
+          COSIGN_PRIVATE_KEY: "${{ secrets.COSIGN_PRIVATE_KEY }}"
+          COSIGN_PASSWORD: "${{ secrets.COSIGN_PASSWORD }}"
