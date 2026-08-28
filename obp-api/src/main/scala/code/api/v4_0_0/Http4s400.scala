@@ -6391,6 +6391,9 @@ object Http4s400 {
       case req @ GET -> `prefixPath` / "banks" / _ / "user-invitations" / secretLink =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           for {
+            _ <- code.util.Helper.booleanToFuture(InvalidNumber, cc = Some(cc)) {
+              scala.util.Try(secretLink.toLong).isSuccess
+            }
             (invitation, _) <- NewStyle.function.getUserInvitation(bank.bankId, secretLink.toLong, Some(cc))
           } yield JSONFactory400.createUserInvitationJson(invitation)
         }
