@@ -2621,10 +2621,10 @@ object Http4s600 {
               code.api.cache.RedisMessaging.validateChannelName(channelName)
             }
             info <- Future(code.api.cache.RedisMessaging.channelInfo(channelName))
-            (count, ttl) <- info match {
-              case Some((c, t)) => Future.successful((c, t))
-              case None => Future.failed(new RuntimeException(s"Channel '$channelName' not found"))
+            _ <- Helper.booleanToFuture(s"$SignalChannelNotFound Channel '$channelName' not found", 404, cc = Some(cc)) {
+              info.isDefined
             }
+            (count, ttl) = info.get
           } yield SignalChannelInfoJsonV600(channelName, count, ttl)
         }
     }
