@@ -32,7 +32,7 @@ import com.openbankproject.commons.model._
 import com.openbankproject.commons.model.enums.ChallengeType.OBP_TRANSACTION_REQUEST_CHALLENGE
 import com.openbankproject.commons.model.enums.TransactionRequestTypes._
 import com.openbankproject.commons.model.enums.{TransactionRequestStatus, _}
-import com.tesobe.CacheKeyFromArguments
+import com.tesobe.{CacheKeyFromArguments, CacheKeyOmit}
 import net.liftweb.common._
 import org.json4s.JsonAST.JValue
 import org.json4s.native.Serialization.write
@@ -478,7 +478,14 @@ object LocalMappedConnectorInternal extends MdcLoggable {
     Full(cardList)
   }
 
-  def getCurrentFxRateCached(bankId: BankId, fromCurrencyCode: String, toCurrencyCode: String, callContext: Option[CallContext]): Box[FXRate] = {
+  // @CacheKeyOmit on callContext: the rate depends on the bank and the currency pair only, but
+  // CacheKeyFromArguments renders every un-annotated parameter into the key, and CallContext
+  // carries per-request state (startTime, correlationId, url, verb, ipAddress, user). Keying on
+  // it made the key unique per request: the cache could never hit, and every call wrote a fresh
+  // Redis entry that lived out code.fx.exchangeRate.cache.ttl.seconds. The generated connectors
+  // have always annotated their callContext (see ConnectorBuilderUtil); this hand-written site
+  // simply never did.
+  def getCurrentFxRateCached(bankId: BankId, fromCurrencyCode: String, toCurrencyCode: String, @CacheKeyOmit callContext: Option[CallContext]): Box[FXRate] = {
     /**
      * Please note that "var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)"
      * is just a temporary value field with UUID values in order to prevent any ambiguity.
@@ -1526,7 +1533,13 @@ object LocalMappedConnectorInternal extends MdcLoggable {
               accountRoutings = Nil,
               callContext = callContext
             )
-            _ <- code.model.dataAccess.BankAccountCreation.setAccountHolderAndRefreshUserAccountAccess(bankId, newAccountId, cc.get.user.head, callContext)
+            // Holder is the HUMAN: under a Consent cc.user is the per-consent shadow, and a
+            // holding account held by it would strand when the consent dies. For non-consent
+            // callers accountableUserId is the caller, so this is a no-op for them.
+            holdingAccountHolder = cc.flatMap(c =>
+              code.users.Users.users.vend.getUserByUserId(c.accountableUserId).toOption
+            ).getOrElse(cc.get.user.head)
+            _ <- code.model.dataAccess.BankAccountCreation.setAccountHolderAndRefreshUserAccountAccess(bankId, newAccountId, holdingAccountHolder, callContext)
             // create attribute on holding account to link to releaser account
             _ <- NewStyle.function.createOrUpdateAccountAttribute(
               bankId = bankId,

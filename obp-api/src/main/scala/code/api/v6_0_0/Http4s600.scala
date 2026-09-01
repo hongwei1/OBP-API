@@ -32,7 +32,7 @@ import code.api.util.{APIUtil, CallContext, CustomJsonFormats, NewStyle}
 import code.api.util.ApiRole._
 import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
-import code.api.util.http4s.{ErrorResponseConverter, RequestScopeConnection, ResourceDocMiddleware, ResourceDocMatcher}
+import code.api.util.http4s.{ErrorResponseConverter, IdempotencyMiddleware, RequestScopeConnection, ResourceDocMatcher, ResourceDocMiddleware}
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.newstyle.ViewNewStyle
 import code.api.v2_0_0.JSONFactory200
@@ -199,7 +199,6 @@ object Http4s600 {
                   else "oidc_operator_user_ids"
                 def entitlementRequestId: Option[String] = None
                 def groupId: Option[String]              = None
-                def process: Option[String]              = None
                 def grantedByUserId: Option[String]      = None
               }
             }
@@ -491,8 +490,10 @@ object Http4s600 {
         else Nil
       )
     } yield {
+      // Creator grants target the HUMAN (see createBank): a per-consent shadow principal
+      // must not end up owning the entity's admin roles.
       crudRoles.foreach(role =>
-        Entitlement.entitlement.vend.addEntitlement(dynamicEntity.bankId.getOrElse(""), cc.userId, role.toString(),
+        Entitlement.entitlement.vend.addEntitlement(dynamicEntity.bankId.getOrElse(""), cc.accountableUserId, role.toString(),
           grantedByUserId = Some(cc.userId)))
       JSONFactory600.createMyDynamicEntitiesJson(List(result: DynamicEntityCommons)).dynamic_entities.head
     }
@@ -869,10 +870,15 @@ object Http4s600 {
               postJson.bank_routings.getOrElse(Nil).filterNot(_.scheme == "BIC").headOption.map(_.address).getOrElse(""),
               Some(cc)
             )
-            entitlements <- NewStyle.function.getEntitlementsByUserId(cc.userId, Some(cc))
+            // Creator grant goes to the HUMAN, not the authenticated principal: under a
+            // Consent the principal is a per-consent shadow user, and a role granted to it
+            // is stranded when the consent dies (and invisible to the human's next consent).
+            // grantedByUserId stays the principal — the audit trail records who acted.
+            humanUserId = cc.accountableUserId
+            entitlements <- NewStyle.function.getEntitlementsByUserId(humanUserId, Some(cc))
             entitlementsByBank = entitlements.filter(_.bankId == postJson.bank_id)
             _ = if (!entitlementsByBank.exists(_.roleName == CanCreateEntitlementAtOneBank.toString))
-              Entitlement.entitlement.vend.addEntitlement(postJson.bank_id, cc.userId, CanCreateEntitlementAtOneBank.toString,
+              Entitlement.entitlement.vend.addEntitlement(postJson.bank_id, humanUserId, CanCreateEntitlementAtOneBank.toString,
                 grantedByUserId = Some(cc.userId))
           } yield JSONFactory600.createBankJSON600(success)
         }
@@ -1035,6 +1041,32 @@ object Http4s600 {
     }
 
 
+    // Resolves the portal URL used to build the reset-password link. Unit-testable without
+    // touching Props: `portalUrlBox` is production's real `APIUtil.getPortalUrl` call in the
+    // route below, and a fixed Box in the test.
+    //
+    // 503, not 400. A missing public_obp_portal_url/portal_external_url is an operator's
+    // configuration mistake, not this caller's -- the exact condition Http4s700's createTestEmail
+    // reports as 503 ("the server is not broken -- it is not configured to do this, and [a wrong
+    // code] tells a caller with retry logic that the fault is transient"). A bare
+    // Future.failed(new Exception(s"$IncompleteServerConfiguration ...")) resolves to 400: the
+    // message starts with "OBP-10056: ", which ErrorResponseConverter's OBP-prefix path promotes
+    // only to {401,403,408,429} and defaults everything else to 400 -- so the admin resetting a
+    // password is told their request was bad. tryons with an explicit failCode bypasses that
+    // default entirely.
+    private[v6_0_0] def resolveResetPasswordPortalUrl(
+      portalUrlBox: net.liftweb.common.Box[String]
+    )(implicit cc: CallContext): Future[String] =
+      portalUrlBox match {
+        case Full(url) => Future.successful(url)
+        case _ =>
+          NewStyle.function.tryons(
+            s"$IncompleteServerConfiguration public_obp_portal_url (or legacy portal_external_url) is not set",
+            503, Some(cc)) {
+            throw new NoSuchElementException("public_obp_portal_url")
+          }
+      }
+
     // Route: POST /obp/v6.0.0/management/user/reset-password-url (201)
     lazy val resetPasswordUrl: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ POST -> `prefixPath` / "management" / "user" / "reset-password-url" =>
@@ -1061,10 +1093,7 @@ object Http4s600 {
                 case _ => throw new Exception("User not found, not validated, or email mismatch")
               }
             }
-            portalUrl <- APIUtil.getPortalUrl match {
-              case Full(url) => Future.successful(url)
-              case _ => Future.failed(new Exception(s"$IncompleteServerConfiguration public_obp_portal_url (or legacy portal_external_url) is not set"))
-            }
+            portalUrl <- resolveResetPasswordPortalUrl(APIUtil.getPortalUrl)
             resetLink <- Future {
               val user: AuthUser = authUser
               user.uniqueId.set(java.util.UUID.randomUUID().toString.replace("-", ""))
@@ -1943,7 +1972,14 @@ object Http4s600 {
             postJson <- NewStyle.function.tryons(s"$InvalidJsonFormat The Json body should be the PostGroupMembershipJsonV600", 400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[JSONFactory600.PostGroupMembershipJsonV600]
             }
-            _ <- NewStyle.function.findByUserId(userIdStr, Some(cc))
+            (targetUser, _) <- NewStyle.function.findByUserId(userIdStr, Some(cc))
+            // Group membership is for humans. A consent user (an agent identity minted by a
+            // Consent) cannot hold durable roles — addEntitlement would redirect the grant to
+            // its granting human anyway, and removal via the consent user's id would then find
+            // nothing. Reject explicitly so the caller targets the human on purpose.
+            _ <- Helper.booleanToFuture(
+              s"$InvalidUserId USER_ID names a consent user (an agent identity minted by a Consent). Group membership targets humans - use the granting user's USER_ID.",
+              400, Some(cc))(!targetUser.isConsentUser)
             group <- Future(code.group.GroupTrait.group.vend.getGroup(postJson.group_id))
               .map(unboxFullOrFail(_, Some(cc), s"$UnknownError Group not found", 404))
             _ <- groupRoleCheck(group.bankId, user.userId, canAddUserToGroupAtOneBank, canAddUserToGroupAtAllBanks, cc)
@@ -1955,9 +1991,12 @@ object Http4s600 {
                   ent.roleName == roleName && ent.bankId == group.bankId.getOrElse("")
                 })
                 if (!alreadyHas) {
+                  // createdByProcess carries the provenance (was left at "manual", making
+                  // group-born rows read as hand-granted before the duplicate `process`
+                  // column was retired).
                   Entitlement.entitlement.vend.addEntitlement(
-                    group.bankId.getOrElse(""), userIdStr, roleName, "manual",
-                    Some(user.userId), Some(postJson.group_id), Some("GROUP_MEMBERSHIP"))
+                    group.bankId.getOrElse(""), userIdStr, roleName, Constant.group_membership,
+                    Some(user.userId), Some(postJson.group_id))
                   (roleName, true)
                 } else (roleName, false)
               }
@@ -1983,8 +2022,10 @@ object Http4s600 {
               .map(unboxFullOrFail(_, Some(cc), s"$UnknownError Group not found", 404))
             _ <- groupRoleCheck(group.bankId, user.userId, canRemoveUserFromGroupAtOneBank, canRemoveUserFromGroupAtAllBanks, cc)
             entitlements <- Future(Entitlement.entitlement.vend.getEntitlementsByUserId(userIdStr))
+            // group_id alone identifies group-born rows (only group grants set it) and holds
+            // for legacy rows too; the old `process == GROUP_MEMBERSHIP` conjunct was redundant.
             groupEntitlements = entitlements.toOption.getOrElse(List.empty).filter(e =>
-              e.groupId == Some(groupId) && e.process == Some("GROUP_MEMBERSHIP"))
+              e.groupId == Some(groupId))
             _ <- Future.sequence(groupEntitlements.map(e =>
               Future(Entitlement.entitlement.vend.deleteEntitlement(Full(e)))))
           } yield ""
@@ -2485,7 +2526,13 @@ object Http4s600 {
             _ <- Helper.booleanToFuture(BusinessJustificationRequired, cc = Some(cc)) {
               postJson.business_justification.trim.nonEmpty
             }
-            (_, _) <- NewStyle.function.findByUserId(postJson.target_user_id, Some(cc))
+            (targetUser, _) <- NewStyle.function.findByUserId(postJson.target_user_id, Some(cc))
+            // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+            // Reject at request creation so no approver ever sees a request that the grant
+            // step would refuse anyway.
+            _ <- Helper.booleanToFuture(
+              s"$InvalidUserId target_user_id names a consent user (an agent identity minted by a Consent). Account access targets humans - a consent user's access comes only from its Consent.",
+              failCode = 400, cc = Some(cc))(!targetUser.isConsentUser)
             _ <- Helper.booleanToFuture(AccountAccessRequestAlreadyExists, 409, Some(cc)) {
               code.accountaccessrequest.AccountAccessRequestTrait.accountAccessRequest.vend
                 .getByUserAccountView(postJson.target_user_id, bankIdStr, accountIdStr, postJson.view_id)
@@ -2535,6 +2582,11 @@ object Http4s600 {
               u.userId != request.requestorUserId
             }
             (targetUser, _) <- NewStyle.function.findByUserId(request.targetUserId, Some(cc))
+            // Belt and braces with the creation-side guard: a request stored before that guard
+            // existed (or written another way) must still not be granted to a consent user.
+            _ <- Helper.booleanToFuture(
+              s"$InvalidUserId The request's target user is a consent user (an agent identity minted by a Consent). Account access targets humans - a consent user's access comes only from its Consent.",
+              failCode = 400, cc = Some(cc))(!targetUser.isConsentUser)
             // Win the INITIATED -> APPROVED transition BEFORE granting view access. The provider's
             // conditional UPDATE makes this request the single actioner; the loser of a concurrent
             // approve/reject race gets a 400 here with NO side effect. Granting first would leave
@@ -2634,9 +2686,15 @@ object Http4s600 {
               code.api.cache.RedisMessaging.validateChannelName(channelName)
             }
             info <- Future(code.api.cache.RedisMessaging.channelInfo(channelName))
+            // A plain RuntimeException here surfaced as OBP-50000 / HTTP 500. "The thing you asked
+            // for does not exist" is the textbook 404; a 500 says the server broke, and a client
+            // cannot tell from it that retrying is pointless.
             (count, ttl) <- info match {
               case Some((c, t)) => Future.successful((c, t))
-              case None => Future.failed(new RuntimeException(s"Channel '$channelName' not found"))
+              case None =>
+                NewStyle.function.tryons(s"$SignalChannelNotFound Channel '$channelName' not found.", 404, Some(cc)) {
+                  throw new NoSuchElementException(channelName)
+                }
             }
           } yield SignalChannelInfoJsonV600(channelName, count, ttl)
         }
@@ -4369,12 +4427,23 @@ object Http4s600 {
                 case _ => true
               }
             }
+            // Mirrors Http4s400's validateDynamicResourceDocBody: fail fast on an unsupported
+            // programming_lang here too, rather than reporting `valid = true` for a language
+            // create would actually reject with 400 DynamicCodeLangNotSupport (CompiledObjects
+            // silently falls through to the Scala compile path for any value it doesn't
+            // recognise as Java, so an unsupported/misspelled language would otherwise still
+            // "validate" successfully as Scala).
+            _ <- Helper.booleanToFuture(
+              s"""$DynamicCodeLangNotSupport programming_lang ${body.programmingLang}, currently supported languages: Scala, Java""",
+              cc = Some(cc)) {
+              Set("", "scala", "Scala", "java", "Java").contains(body.programmingLang)
+            }
           } yield try {
             code.api.dynamic.endpoint.helper.CompiledObjects(
-              body.exampleRequestBody, body.successResponseBody, body.methodBody).validateDependency()
+              body.exampleRequestBody, body.successResponseBody, body.methodBody, body.programmingLang).validateDependency()
             ValidateDynamicResourceDocSuccessJsonV600(
               valid = true,
-              message = "Dynamic Resource Doc method body is valid Scala and uses allowed dependencies.")
+              message = s"Dynamic Resource Doc method body is valid ${body.programmingLang} and uses allowed dependencies.")
           } catch {
             case e: code.api.JsonResponseException =>
               val errorText = e.jsonResponse match {
@@ -4453,7 +4522,8 @@ object Http4s600 {
           for {
             (_, _) <- NewStyle.function.findByUserId(userId, Some(cc))
             entitlements <- Future(code.entitlement.Entitlement.entitlement.vend.getEntitlementsByUserId(userId))
-            groupEntitlements = entitlements.toOption.getOrElse(List.empty).filter(_.process == Some("GROUP_MEMBERSHIP"))
+            // group_id alone identifies group-born rows (see removeUserFromGroup).
+            groupEntitlements = entitlements.toOption.getOrElse(List.empty).filter(_.groupId.isDefined)
             groupIds = groupEntitlements.flatMap(_.groupId).distinct
             _ <- Future.sequence {
               groupIds.flatMap { gid =>
@@ -5607,7 +5677,7 @@ object Http4s600 {
                   entitlement_id = ent.entitlementId, role_name = ent.roleName,
                   bank_id = ent.bankId, user_id = ent.userId,
                   username = userBox.map(_.name).getOrElse(""),
-                  group_id = ent.groupId, process = ent.process)
+                  group_id = ent.groupId, created_by_process = ent.createdByProcess)
               }
             })
           } yield GroupEntitlementsJsonV600(withUsernames)
@@ -6321,7 +6391,7 @@ object Http4s600 {
     // Deferring index construction to first request (post object-init) lets every
     // registration land before the snapshot is taken.
     lazy val allRoutesWithMiddleware: HttpRoutes[IO] =
-      ResourceDocMiddleware.apply(resourceDocs)(allRoutes)
+      ResourceDocMiddleware.apply(resourceDocs)(IdempotencyMiddleware(allRoutes))
 
     // ─── path-rewriting bridge: /obp/v6.0.0/… → /obp/v5.1.0/… ─────────────
     // Targets v5.1.0; Http4s510 has its own working cascade down to v5.0.0 → v4.0.0 → …
@@ -8795,7 +8865,7 @@ object Http4s600 {
         |
         |9 user_id (if null ignore)
         |
-        |Authentication is Required.
+        |${userAuthenticationMessage(true)}
         |
         |""".stripMargin,
         EmptyBody,
@@ -9358,7 +9428,6 @@ object Http4s600 {
         |
         |Only removes entitlements with:
         |- group_id matching GROUP_ID
-        |- process = "GROUP_MEMBERSHIP"
         |
         |Requires either:
         |- CanRemoveUserFromGroupAtAllBanks (for any group)
@@ -9890,7 +9959,7 @@ object Http4s600 {
         |
         |Optional query parameter `tag` — filter to products that have the given tag (e.g. `?tag=featured`). Tag matching is case-insensitive.
         |
-        |${userAuthenticationMessage(!getApiProductsIsPublic)}""".stripMargin,
+        |${userAuthenticationMessage(true)}""".stripMargin,
         EmptyBody,
         apiProductsJsonV600,
         List(UnknownError),
@@ -9908,7 +9977,7 @@ object Http4s600 {
         |
         |Optional query parameter `tag` — filter to products that carry the given tag (e.g. `?tag=featured`). Tag matching is case-insensitive. Repeat `tag=` to require multiple tags.
         |
-        |${userAuthenticationMessage(!getProductsIsPublic)}""".stripMargin,
+        |${userAuthenticationMessage(true)}""".stripMargin,
         EmptyBody,
         productsJsonV600,
         List(UnknownError),
@@ -12527,7 +12596,7 @@ object Http4s600 {
           "Get User's Group Memberships",
           s"""Get all groups a user is a member of.
           |
-          |Returns groups where the user has entitlements with process = "GROUP_MEMBERSHIP".
+          |Returns groups where the user has entitlements carrying a group_id.
           |
           |The response includes:
           |- list_of_entitlements: entitlements the user currently has from this group membership
@@ -13363,7 +13432,7 @@ object Http4s600 {
         |Properties with sensitive keys or values (containing ${APIUtil.sensitiveKeywords.mkString(", ")})
         |are excluded from the response entirely.
         |
-        |Authentication is Required.
+        |${userAuthenticationMessage(true)}
         |
         |""".stripMargin,
         EmptyBody,
@@ -13838,7 +13907,7 @@ object Http4s600 {
               user_id = "user-id-123",
               username = "susan.uk.29@example.com",
               group_id = Some("group-id-123"),
-              process = Some("GROUP_MEMBERSHIP")
+              created_by_process = "GROUP_MEMBERSHIP"
             )
           )
         ),

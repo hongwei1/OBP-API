@@ -16,6 +16,21 @@ object Constant extends MdcLoggable {
 
   final val directLoginHeaderName = "DirectLogin"
 
+  // createdByProcess of entitlement rows the consent engine copies onto a consent user —
+  // the per-consent principal a Consent-JWT authenticates as (its ResourceUser row carries
+  // CreatedByConsentId). Only rows tagged with this value may target a consent user:
+  // addEntitlement redirects any other grant to the consent's granting human, so durable
+  // roles (e.g. bank-creator grants) can never strand on a principal that dies with its
+  // consent. Also the marker for cleaning these rows up when the consent is revoked.
+  final val consent_user = "consent_user"
+
+  // createdByProcess of entitlement rows granted through group membership (the Groups
+  // feature). The value predates this constant: the Groups feature originally wrote it to
+  // its own `process` column, a duplicate of createdByProcess since retired — provenance
+  // now lives in createdByProcess like every other granting mechanism, and group rows are
+  // identified by their group_id.
+  final val group_membership = "GROUP_MEMBERSHIP"
+
   object Pagination {
     final val offset = 0
     final val limit = 50
@@ -305,7 +320,12 @@ object Constant extends MdcLoggable {
   final val CREATE_LOCALISED_RESOURCE_DOC_JSON_TTL: Int = APIUtil.getPropsValue(s"createLocalisedResourceDocJson.cache.ttl.seconds", "3600").toInt
   final val GET_DYNAMIC_RESOURCE_DOCS_TTL: Int = APIUtil.getPropsValue(s"dynamicResourceDocsObp.cache.ttl.seconds", "3600").toInt
   final val GET_STATIC_RESOURCE_DOCS_TTL: Int = APIUtil.getPropsValue(s"staticResourceDocsObp.cache.ttl.seconds", "3600").toInt
-  final val SHOW_USED_CONNECTOR_METHODS: Boolean = APIUtil.getPropsAsBoolValue(s"show_used_connector_methods", false)
+  // def, not final val: DynamicUtil.Validation.validateDependency (dynamic-code dependency
+  // checking) needs this to react to a props change without a restart -- e.g. test-time
+  // setPropsValues overrides. A final val here would freeze at whatever value was true the
+  // moment this object was first touched (typically during server boot, well before any test
+  // scenario runs), and no later prop override could ever reach it.
+  def SHOW_USED_CONNECTOR_METHODS: Boolean = APIUtil.getPropsAsBoolValue(s"show_used_connector_methods", false)
 
   // Rate Limiting Cache Prefixes (with global namespace and versioning)
   // Both call_counter and rl_active are versioned for consistent cache invalidation
