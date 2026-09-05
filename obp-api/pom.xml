@@ -29,7 +29,7 @@
       <version>1.5.18</version>
     </dependency>
     <dependency>
-      <groupId>net.liftweb</groupId>
+      <groupId>com.github.hongwei1.lift-persistence</groupId>
       <artifactId>lift-persistence_${scala.version}</artifactId>
     </dependency>
     <dependency>
