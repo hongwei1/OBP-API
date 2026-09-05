@@ -35,20 +35,53 @@ import com.openbankproject.commons.model.BankId
 import com.openbankproject.commons.util.{JsonUtils, ReflectUtils}
 import net.liftweb.common.{Box}
 import com.openbankproject.commons.util.json
-import org.scalatest.{FeatureSpec, FlatSpec, GivenWhenThen, Matchers, Tag}
+import org.scalatest.{GivenWhenThen, Tag}
 
 import java.io.File
 import java.security.{AccessControlException}
 import scala.collection.immutable.List
 import scala.io.Source
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class DynamicUtilTest extends FlatSpec with Matchers {
+class DynamicUtilTest extends AnyFlatSpec with Matchers {
   object DynamicUtilsTag extends Tag("DynamicUtil")
 
   private val securityManagerUnavailable =
     "SecurityManager enforcement is not available on JDK 17+ (JEP 411); skip on JDK 21"
 
-  implicit val formats = code.api.util.CustomJsonFormats.formats
+  implicit val formats: org.json4s.Formats = code.api.util.CustomJsonFormats.formats
+
+  /**
+   * Skip the sandbox checks when no SecurityManager can enforce them -- but let CI refuse the skip.
+   *
+   * `assume` cancels, and a cancelled check is indistinguishable from a passing one in every
+   * report anybody reads: this suite has shown "canceled 0" while three of its scenarios never
+   * ran, because ScalaTest counts a cancellation separately from a failure and the summary line
+   * people look at is the failure count. Since JDK 17 removed SecurityManager enforcement
+   * (JEP 411, completed by JEP 486), DynamicUtil.Sandbox is a no-op on any modern JDK and these
+   * three have been skipping on every run, everywhere, for as long as the build has been on 21+.
+   *
+   * That is a real gap, not a formality: the sandbox is what stops runtime-compiled endpoint code
+   * from reading the filesystem or opening sockets, and nothing else covers it.
+   *
+   * OBP_TEST_SANDBOX_REQUIRED=true turns the cancellation into a failure, the same lever
+   * RedisTestTarget gives the Redis-dependent checks. Set it wherever a JDK that can still
+   * enforce is available; leave it unset and the skip stands, but now it is a decision somebody
+   * made rather than a silence.
+   */
+  private def requireSecurityManager(): Unit =
+    if (System.getSecurityManager == null) {
+      val required = sys.env.get("OBP_TEST_SANDBOX_REQUIRED").exists(_.trim.equalsIgnoreCase("true"))
+      if (required)
+        fail("OBP_TEST_SANDBOX_REQUIRED=true but no SecurityManager is installed, so the sandbox " +
+             "checks cannot run. They are the only cover for what runtime-compiled endpoint code " +
+             "is allowed to touch -- run them on a JDK that still enforces, or unset the variable " +
+             "to go back to skipping.")
+      else cancel(securityManagerUnavailable)
+    }
+
 
 
   "DynamicUtil.compileScalaCode method" should "return correct function" taggedAs DynamicUtilsTag in {
@@ -115,14 +148,18 @@ class DynamicUtilTest extends FlatSpec with Matchers {
 
     val dependenciesString = """[NewStyle.function.getClass.getTypeName -> "*",CompiledObjects.getClass.getTypeName -> "sandbox",HttpCode.getClass.getTypeName -> "200",DynamicCompileEndpoint.getClass.getTypeName -> "getPathParams, scalaFutureToBoxedJsonResponse",APIUtil.getClass.getTypeName -> "errorJsonResponse, errorJsonResponse$default$1, errorJsonResponse$default$2, errorJsonResponse$default$3, errorJsonResponse$default$4, scalaFutureToLaFuture, futureToBoxedResponse",ErrorMessages.getClass.getTypeName -> "*",ExecutionContext.Implicits.getClass.getTypeName -> "global",JSONFactory400.getClass.getTypeName -> "createBanksJson",classOf[Sandbox].getTypeName -> "runInSandbox",classOf[CallContext].getTypeName -> "*",classOf[ResourceDoc].getTypeName -> "getPathParams","scala.reflect.runtime.package$" -> "universe",PractiseEndpoint.getClass.getTypeName + "*" -> "*"]""".stripMargin
     
-    val scalaCode2 = s"${DynamicUtil.importStatements}"+dependenciesString.replaceFirst("\\[","Map[String, String](").dropRight(1) +").mapValues(v => StringUtils.split(v, ',').map(_.trim).toSet).toMap"
+    // DynamicUtil.Validation.dependenciesScalaCode, not a copy of it. This line used to be a
+    // character-for-character duplicate of the production expression, which meant an edit to
+    // either one left the test green while the two disagreed -- and this is the only compile that
+    // happens reflectively at boot, so nothing at compile time would have noticed either.
+    val scalaCode2 = DynamicUtil.Validation.dependenciesScalaCode(dependenciesString)
     val dependenciesBox2: Box[Map[String, Set[String]]] = DynamicUtil.compileScalaCode(scalaCode2)
     val dependencies2 = dependenciesBox2.openOrThrowException("Can not compile the string to Map")
     dependencies2.toString contains ("code.api.util.NewStyle") shouldBe (true)
   }
 
   "Sandbox.createSandbox method" should "should throw exception" taggedAs DynamicUtilsTag in {
-    assume(System.getSecurityManager != null, securityManagerUnavailable)
+    requireSecurityManager()
     val permissionList = List(
 //      new java.net.SocketPermission("ir.dcs.gla.ac.uk:80","connect,resolve"),
     )
@@ -147,7 +184,7 @@ class DynamicUtilTest extends FlatSpec with Matchers {
   }
   
   "Sandbox.sandbox method test bankId" should "should throw exception" taggedAs DynamicUtilsTag in {
-    assume(System.getSecurityManager != null, securityManagerUnavailable)
+    requireSecurityManager()
     intercept[AccessControlException] {
       Sandbox.sandbox(bankId= "abc").runInSandbox {
         BankId("123" )
@@ -162,7 +199,7 @@ class DynamicUtilTest extends FlatSpec with Matchers {
   }
 
   "Sandbox.sandbox method test default permission" should "should throw exception" taggedAs DynamicUtilsTag in {
-    assume(System.getSecurityManager != null, securityManagerUnavailable)
+    requireSecurityManager()
     intercept[AccessControlException] {
       Sandbox.sandbox(bankId= "abc").runInSandbox {
         scala.io.Source.fromURL("https://apisandbox.openbankproject.com/")

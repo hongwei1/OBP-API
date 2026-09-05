@@ -1,25 +1,83 @@
 package code.api.v7_0_0
 
 import code.api.Constant
-import code.api.util.{APIUtil, CallContext}
+import code.api.util.{APIUtil, CallContext, ExampleValue}
 import code.api.util.ErrorMessages
 import code.api.util.ErrorMessages.MandatoryPropertyIsNotSet
-import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, PostSimpleCounterpartyJson400}
+import code.api.v2_0_0.EntitlementJSONs
+import code.api.v3_0_0.{UserJsonV300, ViewsJSON300}
+import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, PostSimpleCounterpartyJson400, UserAgreementJson}
+import code.api.v6_0_0.{EntitlementsJsonV600, JSONFactory600, UserInfoDetailJsonV600, UserV600}
 import code.bankconnectors.Connector
 import code.customer.CustomerX
-import code.metrics.{MappedMetric, MetricArchive, MetricsArchiveRun, MetricsProps}
+import code.metrics.{MappedMetric, MetricArchive, MetricsArchiveRun, MetricsArchiveRunTrait, MetricsProps}
 import code.util.Helper.MdcLoggable
 import code.views.Views
 import code.api.v3_1_0.{AccountAttributeResponseJson, JSONFactory310}
+import code.dynamicResourceDoc.{DynamicResourceDoc, JsonDynamicResourceDoc}
+import code.connectormethod.{ConnectorMethodWithProvenance, JsonConnectorMethod}
+import code.dynamicMessageDoc.{DynamicMessageDoc, JsonDynamicMessageDoc}
+import org.apache.commons.lang3.StringUtils
 import com.openbankproject.commons.model.{AccountAttribute, AccountId, AccountRoutingJsonV121, AmountOfMoneyJsonV121, BankAccount, BankId, BankIdAccountId, CoreAccount, TransactionRequest, TransactionRequestCommonBodyJSON, User}
 import com.openbankproject.commons.util.ApiVersion
 import java.util.Date
 import net.liftweb.common.Full
-import net.liftweb.mapper.{Ascending, By, By_<=, Descending, MaxRows, OrderBy}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
+
+  // ─── Provenance for runtime-compiled dynamic code (v7.0.0 read-only exposure) ───
+  // The v4.0.0 create/update endpoints capture who created / last updated a piece of runtime
+  // code and a SHA-256 of its (decoded) method body into DB columns, but the v4 response shape
+  // is frozen (STABLE) and does not carry them. These v7 GET endpoints expose that provenance,
+  // wrapping the unchanged v4 resource JSON alongside a `provenance` object.
+  case class ProvenanceJsonV700(
+    created_by_user_id: Option[String],
+    updated_by_user_id: Option[String],
+    method_body_hash: Option[String],
+    created_at: Option[String],
+    updated_at: Option[String]
+  )
+  case class DynamicResourceDocProvenanceJsonV700(dynamic_resource_doc: JsonDynamicResourceDoc, provenance: ProvenanceJsonV700)
+  case class DynamicResourceDocsProvenanceJsonV700(dynamic_resource_docs: List[DynamicResourceDocProvenanceJsonV700])
+  case class ConnectorMethodProvenanceJsonV700(connector_method: JsonConnectorMethod, provenance: ProvenanceJsonV700)
+  case class ConnectorMethodsProvenanceJsonV700(connector_methods: List[ConnectorMethodProvenanceJsonV700])
+  case class DynamicMessageDocProvenanceJsonV700(dynamic_message_doc: JsonDynamicMessageDoc, provenance: ProvenanceJsonV700)
+  case class DynamicMessageDocsProvenanceJsonV700(dynamic_message_docs: List[DynamicMessageDocProvenanceJsonV700])
+
+  private def blankToNone(s: String): Option[String] = Option(s).filter(StringUtils.isNotBlank)
+  private def formatDateOpt(d: Date): Option[String] = Option(d).map(APIUtil.formatDate)
+
+  def createDynamicResourceDocProvenanceJsonV700(entity: DynamicResourceDoc): DynamicResourceDocProvenanceJsonV700 =
+    DynamicResourceDocProvenanceJsonV700(
+      DynamicResourceDoc.getJsonDynamicResourceDoc(entity),
+      ProvenanceJsonV700(
+        entity.createdByUserId.filter(StringUtils.isNotBlank),
+        entity.updatedByUserId.filter(StringUtils.isNotBlank),
+        entity.methodBodyHash.filter(StringUtils.isNotBlank),
+        entity.createdAt.map(APIUtil.formatDate), entity.updatedAt.map(APIUtil.formatDate))
+    )
+
+  def createConnectorMethodProvenanceJsonV700(entity: ConnectorMethodWithProvenance): ConnectorMethodProvenanceJsonV700 =
+    ConnectorMethodProvenanceJsonV700(
+      entity.connectorMethod,
+      ProvenanceJsonV700(
+        entity.createdByUserId.filter(StringUtils.isNotBlank),
+        entity.updatedByUserId.filter(StringUtils.isNotBlank),
+        entity.methodBodyHash.filter(StringUtils.isNotBlank),
+        entity.createdAt.map(APIUtil.formatDate), entity.updatedAt.map(APIUtil.formatDate))
+    )
+
+  def createDynamicMessageDocProvenanceJsonV700(entity: DynamicMessageDoc): DynamicMessageDocProvenanceJsonV700 =
+    DynamicMessageDocProvenanceJsonV700(
+      DynamicMessageDoc.getJsonDynamicMessageDoc(entity),
+      ProvenanceJsonV700(
+        entity.createdByUserId.filter(StringUtils.isNotBlank),
+        entity.updatedByUserId.filter(StringUtils.isNotBlank),
+        entity.methodBodyHash.filter(StringUtils.isNotBlank),
+        entity.createdAt.map(APIUtil.formatDate), entity.updatedAt.map(APIUtil.formatDate))
+    )
 
   case class ErrorMessageEntryJsonV700(code: String, name: String, message: String)
 
@@ -300,6 +358,21 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     user_id: String,              // Audit field
     consent_id: Option[String],   // Audit field
     created_at: String            // ISO 8601
+  )
+
+  // Declared here rather than inside Http4s700.Implementations7_0_0, where it used to live.
+  // SwaggerJSONFactory reflects on every example body, and reflecting a class nested in that object
+  // has to resolve its owner chain - which references IO, whose companion walks into cats-effect's
+  // `Par` trait and its abstract type member `ParallelF`, a Scala 3 shape scala-reflect's classfile
+  // fallback cannot load: `AssertionError: no symbol could be loaded from class
+  // cats.effect.kernel.Par$ParallelF$`. Whether that surfaced depended on symbol-table caching, so
+  // it broke the v7.0.0 swagger document only on some initialisation orders. The definition's
+  // published name is the class's own simple name, so moving it changes nothing in the document.
+  case class TestEmailResponseJsonV700(
+    to: String,
+    from: String,
+    subject: String,
+    message_id: String
   )
 
   case class WithdrawalJson(
@@ -1216,7 +1289,7 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     row: code.messageoutbox.MessageOutbox
   ): MessageOutboxRowJsonV700 =
     MessageOutboxRowJsonV700(
-      outbox_id = row.id.get,
+      outbox_id = row.id,
       outbox_type = row.outboxType,
       subject_id = row.subjectId,
       subject_id_type = row.subjectIdType,
@@ -1224,9 +1297,9 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
       target_id = row.targetId,
       status = row.status,
       attempts = row.attempts,
-      last_error = row.LastError.get,
-      created_at = APIUtil.DateWithMsFormat.format(row.CreatedAt.get),
-      updated_at = APIUtil.DateWithMsFormat.format(row.UpdatedAt.get)
+      last_error = row.lastError,
+      created_at = APIUtil.DateWithMsFormat.format(row.createdAt),
+      updated_at = APIUtil.DateWithMsFormat.format(row.updatedAt)
     )
 
   // ─── OPEN_CORRIDOR settlements ─────────────────────────────────────────────
@@ -1427,6 +1500,278 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     sca_enabled = true
   )
 
+  // ─── User JSON — v7 adds the user's own OBP-verified mobile phone fields ───────
+  // Distinct from Customer.mobile_phone_number (bank-scoped KYC data): this is the
+  // authenticated person's number, global across banks, stored on ResourceUser.
+  // The validated flag is separate from the validated date so it can be reset
+  // (re-verification policy, suspected SIM swap) without losing the audit trail;
+  // the date is set only on successful validation, so it always means "last time
+  // this number passed verification".
+
+  case class UserJsonV700(
+    user_id: String,
+    email: String,
+    provider_id: String,
+    provider: String,
+    username: String,
+    mobile_phone_number: Option[String],
+    mobile_phone_number_is_validated: Option[Boolean],
+    mobile_phone_number_validated_date: Option[Date],
+    entitlements: EntitlementsJsonV600,
+    views: Option[ViewsJSON300],
+    on_behalf_of: Option[UserJsonV300]
+  )
+
+  case class UserInfoDetailJsonV700(
+    user_id: String,
+    email: String,
+    provider_id: String,
+    provider: String,
+    username: String,
+    first_name: String,
+    last_name: String,
+    mobile_phone_number: Option[String],
+    mobile_phone_number_is_validated: Option[Boolean],
+    mobile_phone_number_validated_date: Option[Date],
+    entitlements: EntitlementJSONs,
+    views: Option[ViewsJSON300],
+    agreements: Option[List[UserAgreementJson]],
+    is_deleted: Boolean,
+    last_marketing_agreement_signed_date: Option[Date],
+    is_locked: Boolean,
+    created_date: Option[Date],
+    updated_date: Option[Date],
+    email_validated: Option[Boolean],
+    last_used_locale: Option[String],
+    last_activity_date: Option[Date],
+    recent_operation_ids: List[String]
+  )
+
+  def createUserJsonV700(currentUser: UserV600, onBehalfOfUser: Option[UserV600]): UserJsonV700 = {
+    val v600 = JSONFactory600.createUserInfoJSON(currentUser, onBehalfOfUser)
+    UserJsonV700(
+      user_id = v600.user_id,
+      email = v600.email,
+      provider_id = v600.provider_id,
+      provider = v600.provider,
+      username = v600.username,
+      mobile_phone_number = currentUser.user.mobilePhoneNumber,
+      mobile_phone_number_is_validated = currentUser.user.mobilePhoneNumberIsValidated,
+      mobile_phone_number_validated_date = currentUser.user.mobilePhoneNumberValidatedDate,
+      entitlements = v600.entitlements,
+      views = v600.views,
+      on_behalf_of = v600.on_behalf_of
+    )
+  }
+
+  private def toUserInfoDetailJsonV700(
+      v600: UserInfoDetailJsonV600,
+      mobilePhoneNumber: Option[String],
+      mobilePhoneNumberIsValidated: Option[Boolean],
+      mobilePhoneNumberValidatedDate: Option[Date]
+  ): UserInfoDetailJsonV700 =
+    UserInfoDetailJsonV700(
+      user_id = v600.user_id,
+      email = v600.email,
+      provider_id = v600.provider_id,
+      provider = v600.provider,
+      username = v600.username,
+      first_name = v600.first_name,
+      last_name = v600.last_name,
+      mobile_phone_number = mobilePhoneNumber,
+      mobile_phone_number_is_validated = mobilePhoneNumberIsValidated,
+      mobile_phone_number_validated_date = mobilePhoneNumberValidatedDate,
+      entitlements = v600.entitlements,
+      views = v600.views,
+      agreements = v600.agreements,
+      is_deleted = v600.is_deleted,
+      last_marketing_agreement_signed_date = v600.last_marketing_agreement_signed_date,
+      is_locked = v600.is_locked,
+      created_date = v600.created_date,
+      updated_date = v600.updated_date,
+      email_validated = v600.email_validated,
+      last_used_locale = v600.last_used_locale,
+      last_activity_date = v600.last_activity_date,
+      recent_operation_ids = v600.recent_operation_ids
+    )
+
+  def createUserInfoDetailJsonV700(user: User, v600: UserInfoDetailJsonV600): UserInfoDetailJsonV700 =
+    toUserInfoDetailJsonV700(
+      v600,
+      user.mobilePhoneNumber,
+      user.mobilePhoneNumberIsValidated,
+      user.mobilePhoneNumberValidatedDate
+    )
+
+  lazy val userJsonV700Example = UserJsonV700(
+    user_id = ExampleValue.userIdExample.value,
+    email = ExampleValue.emailExample.value,
+    provider_id = ExampleValue.providerIdValueExample.value,
+    provider = ExampleValue.providerValueExample.value,
+    username = ExampleValue.usernameExample.value,
+    mobile_phone_number = Some(ExampleValue.mobileNumberExample.value),
+    mobile_phone_number_is_validated = Some(true),
+    mobile_phone_number_validated_date = Some(APIUtil.DateWithSecondsExampleObject),
+    entitlements = EntitlementsJsonV600(Nil),
+    views = None,
+    on_behalf_of = None
+  )
+
+  lazy val userInfoDetailJsonV700Example = toUserInfoDetailJsonV700(
+    code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.userInfoDetailJsonV600,
+    Some(ExampleValue.mobileNumberExample.value),
+    Some(true),
+    Some(APIUtil.DateWithSecondsExampleObject)
+  )
+
+  case class PutMyMobilePhoneNumberJsonV700(mobile_phone_number: String)
+
+  case class MyMobilePhoneNumberJsonV700(
+    mobile_phone_number: Option[String],
+    mobile_phone_number_is_validated: Option[Boolean],
+    mobile_phone_number_validated_date: Option[Date]
+  )
+
+  lazy val putMyMobilePhoneNumberJsonV700Example =
+    PutMyMobilePhoneNumberJsonV700(ExampleValue.mobileNumberExample.value)
+
+  // a freshly set number is unverified: flag false, no validated date yet
+  lazy val myMobilePhoneNumberJsonV700Example = MyMobilePhoneNumberJsonV700(
+    mobile_phone_number = Some(ExampleValue.mobileNumberExample.value),
+    mobile_phone_number_is_validated = Some(false),
+    mobile_phone_number_validated_date = None
+  )
+
+  // ─── Create User (self-registration) — v7 adds the optional mobile phone number ──
+  // The number belongs to the person registering (global across banks, stored on
+  // ResourceUser) and is stored UNVERIFIED: is_validated=false, no validated date.
+  // Verification is a separate flow. Absent or blank means "no number".
+  case class CreateUserJsonV700(
+    email: String,
+    username: String,
+    password: String,
+    first_name: String,
+    last_name: String,
+    mobile_phone_number: Option[String]
+  )
+
+  case class CreatedUserJsonV700(
+    user_id: String,
+    email: String,
+    provider_id: String,
+    provider: String,
+    username: String,
+    mobile_phone_number: Option[String],
+    mobile_phone_number_is_validated: Option[Boolean],
+    mobile_phone_number_validated_date: Option[Date],
+    entitlements: EntitlementJSONs
+  )
+
+  def createCreatedUserJsonV700(v200: code.api.v2_0_0.JSONFactory200.UserJsonV200, resourceUser: User): CreatedUserJsonV700 =
+    CreatedUserJsonV700(
+      user_id = v200.user_id,
+      email = v200.email,
+      provider_id = v200.provider_id,
+      provider = v200.provider,
+      username = v200.username,
+      mobile_phone_number = resourceUser.mobilePhoneNumber,
+      mobile_phone_number_is_validated = resourceUser.mobilePhoneNumberIsValidated,
+      mobile_phone_number_validated_date = resourceUser.mobilePhoneNumberValidatedDate,
+      entitlements = v200.entitlements
+    )
+
+  lazy val createUserJsonV700Example = CreateUserJsonV700(
+    email = ExampleValue.emailExample.value,
+    username = ExampleValue.usernameExample.value,
+    password = "String",
+    first_name = "Simon",
+    last_name = "Redfern",
+    mobile_phone_number = Some(ExampleValue.mobileNumberExample.value)
+  )
+
+  lazy val createdUserJsonV700Example = CreatedUserJsonV700(
+    user_id = ExampleValue.userIdExample.value,
+    email = ExampleValue.emailExample.value,
+    provider_id = ExampleValue.providerIdValueExample.value,
+    provider = ExampleValue.providerValueExample.value,
+    username = ExampleValue.usernameExample.value,
+    mobile_phone_number = Some(ExampleValue.mobileNumberExample.value),
+    mobile_phone_number_is_validated = Some(false),
+    mobile_phone_number_validated_date = None,
+    entitlements = EntitlementJSONs(Nil)
+  )
+
+  // ─── Password policy — published so clients can validate locally before user creation /
+  // password reset. The structured fields are the normative contract; `regex` is a convenience
+  // written in the portable subset that behaves identically in Java, JavaScript and Python.
+  // A password is valid if it satisfies AT LEAST ONE of the policies.
+
+  case class RequiredCharacterClassJsonV700(
+    name: String,
+    regex: String
+  )
+
+  case class PasswordPolicyJsonV700(
+    description: String,
+    min_length: Int,
+    max_length: Int,
+    required_character_classes: List[RequiredCharacterClassJsonV700],
+    allowed_characters: String,
+    regex: String
+  )
+
+  case class PasswordPoliciesJsonV700(
+    description: String,
+    policies: List[PasswordPolicyJsonV700]
+  )
+
+  // printable ASCII without space — the character set both policy branches accept
+  private val passwordAllowedCharacters = (0x21 to 0x7e).map(_.toChar).mkString
+
+  lazy val passwordPoliciesJsonV700 = PasswordPoliciesJsonV700(
+    description = "A password must satisfy at least one of the policies: " +
+      "10 to 16 characters including at least one digit, one lower case letter, one upper case letter " +
+      "and one special character - or a passphrase of 17 to 512 characters.",
+    policies = List(
+      PasswordPolicyJsonV700(
+        description = "10 to 16 characters (printable ASCII, no space) including at least one digit, " +
+          "one lower case letter, one upper case letter and one special character.",
+        min_length = 10,
+        max_length = 16,
+        required_character_classes = List(
+          RequiredCharacterClassJsonV700("digit", "[0-9]"),
+          RequiredCharacterClassJsonV700("lowercase letter", "[a-z]"),
+          RequiredCharacterClassJsonV700("uppercase letter", "[A-Z]"),
+          RequiredCharacterClassJsonV700("special character", """[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]""")
+        ),
+        allowed_characters = passwordAllowedCharacters,
+        regex = APIUtil.passwordCompositionPolicyRegex
+      ),
+      PasswordPolicyJsonV700(
+        description = "A passphrase of 17 to 512 characters (printable ASCII, no space), no composition rules.",
+        min_length = 17,
+        max_length = 512,
+        required_character_classes = Nil,
+        allowed_characters = passwordAllowedCharacters,
+        regex = APIUtil.passwordPassphrasePolicyRegex
+      )
+    )
+  )
+
+  // ─── Chat config — published so chat clients can apply the same link-host
+  // policy at render time that the server enforces on message input
+  // (code.chat.ChatLinkPolicy). ───────────────────────────────────────────────
+
+  case class ChatConfigJsonV700(
+    allowed_link_hosts: List[String],
+    max_message_length: Int
+  )
+
+  lazy val chatConfigJsonV700Example = ChatConfigJsonV700(
+    allowed_link_hosts = List("apisandbox.openbankproject.com", "openbankproject.com", "tesobe.com"),
+    max_message_length = 10000
+  )
+
   // ─── Validation email (anonymous resend) ────────────────────────────────────
   // The request identifies the target by (username, email). The response is the
   // same generic acknowledgement regardless of whether the user exists, is
@@ -1498,17 +1843,17 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     everything_as_expected: Boolean
   )
 
-  private def metricsArchiveRunToJson(r: MetricsArchiveRun): MetricsArchiveRunJsonV700 =
+  private def metricsArchiveRunToJson(r: MetricsArchiveRunTrait): MetricsArchiveRunJsonV700 =
     MetricsArchiveRunJsonV700(
-      run_id                    = r.RunId.get,
-      api_instance_id           = r.ApiInstanceId.get,
-      started_at                = r.StartedAt.get,
-      ended_at                  = r.EndedAt.get,
-      duration_ms               = r.DurationMs.get,
-      rows_moved_to_archive     = r.RowsMovedToArchive.get,
-      rows_deleted_from_archive = r.RowsDeletedFromArchive.get,
-      success                   = r.Success.get,
-      remark                    = r.Remark.get
+      run_id                    = r.runId,
+      api_instance_id           = r.apiInstanceId,
+      started_at                = r.startedAt,
+      ended_at                  = r.endedAt,
+      duration_ms               = r.durationMs,
+      rows_moved_to_archive     = r.rowsMovedToArchive,
+      rows_deleted_from_archive = r.rowsDeletedFromArchive,
+      success                   = r.success,
+      remark                    = r.remark
     )
 
   // The in-progress archive job whose lock blocked a new run. Surfaced so an
@@ -1526,6 +1871,43 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
   // "completed" (a run executed — inspect `run.success`) or
   // "skipped_already_in_progress" (a run was already running, so none was started;
   // `in_progress` then describes the lock that blocked it).
+  // ─── Top Consumers (v7.0.0) ───
+  // Grouped by the consumer id stored on the metric row (NOT by app name like v3.1.0), so
+  // for a given window the number of rows matches aggregate-metrics' distinct_consumer_count.
+  // app_name / developer_email are empty when the consumer row no longer exists.
+  case class TopConsumerJsonV700(
+      count: Int,
+      consumer_id: String,
+      app_name: String,
+      developer_email: String
+  )
+
+  case class TopConsumersJsonV700(top_consumers: List[TopConsumerJsonV700])
+
+  def createTopConsumersJsonV700(topConsumers: List[code.metrics.TopConsumer]): TopConsumersJsonV700 =
+    TopConsumersJsonV700(
+      topConsumers.map(topConsumer =>
+        TopConsumerJsonV700(topConsumer.count, topConsumer.consumerId, topConsumer.appName, topConsumer.developerEmail)
+      )
+    )
+
+  // ─── Top Users (v7.0.0) ───
+  // One distinct user and their call count. On-behalf-of aware: consent-borne calls are
+  // attributed to the granting human (resolved via the consent table), so for a given
+  // window the number of rows matches aggregate-metrics' distinct_user_count.
+  case class TopUserJsonV700(
+      count: Int,
+      user_id: String,
+      username: String
+  )
+
+  case class TopUsersJsonV700(top_users: List[TopUserJsonV700])
+
+  def createTopUsersJsonV700(topUsers: List[code.metrics.TopUser]): TopUsersJsonV700 =
+    TopUsersJsonV700(
+      topUsers.map(topUser => TopUserJsonV700(topUser.count, topUser.userId, topUser.userName))
+    )
+
   case class TriggerMetricsArchiveRunResponseJsonV700(
     status: String,
     message: String,
@@ -1537,10 +1919,10 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     outcome match {
       case code.scheduler.RunCompleted(r) =>
         val msg =
-          if (r.Success.get)
-            s"Archive run completed: moved ${r.RowsMovedToArchive.get} rows to the archive, deleted ${r.RowsDeletedFromArchive.get} outdated archive rows."
+          if (r.success)
+            s"Archive run completed: moved ${r.rowsMovedToArchive} rows to the archive, deleted ${r.rowsDeletedFromArchive} outdated archive rows."
           else
-            s"Archive run completed with errors: ${r.Remark.get}"
+            s"Archive run completed with errors: ${r.remark}"
         TriggerMetricsArchiveRunResponseJsonV700("completed", msg, Some(metricsArchiveRunToJson(r)))
       case code.scheduler.RunSkippedAlreadyInProgress(jobId, apiInstanceId, startedAt) =>
         val ageSeconds = (System.currentTimeMillis - startedAt.getTime) / 1000L
@@ -1589,11 +1971,11 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
   def createSchedulerJobsJsonV700(rows: List[code.scheduler.JobScheduler]): SchedulerJobsJsonV700 = {
     val now = System.currentTimeMillis
     val jobs = rows.map { r =>
-      val startedAt = r.createdAt.get
+      val startedAt = r.createdAt
       SchedulerJobJsonV700(
-        job_id          = r.JobId.get,
-        name            = r.Name.get,
-        api_instance_id = r.ApiInstanceId.get,
+        job_id          = r.jobId,
+        name            = r.name,
+        api_instance_id = r.apiInstanceId,
         started_at      = startedAt,
         age_seconds     = (now - startedAt.getTime) / 1000L
       )
@@ -1655,13 +2037,13 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
         newest_record_age_days = newest.map(metricsAgeInDays(_, now))
       )
 
-    val metricOldest = MappedMetric.findAll(OrderBy(MappedMetric.date, Ascending), MaxRows(1)).headOption.map(_.getDate())
-    val metricNewest = MappedMetric.findAll(OrderBy(MappedMetric.date, Descending), MaxRows(1)).headOption.map(_.getDate())
-    val metricStats  = statsFor("metric", MappedMetric.count, metricOldest, metricNewest)
+    val metricOldest = MappedMetric.oldestDate()
+    val metricNewest = MappedMetric.newestDate()
+    val metricStats  = statsFor("metric", MappedMetric.count(), metricOldest, metricNewest)
 
-    val archiveOldest = MetricArchive.findAll(OrderBy(MetricArchive.date, Ascending), MaxRows(1)).headOption.map(_.getDate())
-    val archiveNewest = MetricArchive.findAll(OrderBy(MetricArchive.date, Descending), MaxRows(1)).headOption.map(_.getDate())
-    val archiveStats  = statsFor("metricarchive", MetricArchive.count, archiveOldest, archiveNewest)
+    val archiveOldest = MetricArchive.oldestDate()
+    val archiveNewest = MetricArchive.newestDate()
+    val archiveStats  = statsFor("metricarchive", MetricArchive.count(), archiveOldest, archiveNewest)
 
     val graceDays = 7L
     val checks = scala.collection.mutable.ListBuffer[MetricsIntegrityCheckJsonV700]()
@@ -1737,17 +2119,17 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
     val lastRun = MetricsArchiveRun.lastRun
     val lastSuccessfulRun = MetricsArchiveRun.lastSuccessfulRun
     lastRun match {
-      case Some(r) if r.Success.get =>
-        val ageDays = metricsAgeInDays(r.StartedAt.get, now)
+      case Some(r) if r.success =>
+        val ageDays = metricsAgeInDays(r.startedAt, now)
         checks += MetricsIntegrityCheckJsonV700("check_last_archive_run_succeeded", "OK",
-          s"Last archive run succeeded $ageDays days ago (moved ${r.RowsMovedToArchive.get} rows, deleted ${r.RowsDeletedFromArchive.get} outdated archive rows).")
+          s"Last archive run succeeded $ageDays days ago (moved ${r.rowsMovedToArchive} rows, deleted ${r.rowsDeletedFromArchive} outdated archive rows).")
       case Some(r) =>
-        val ageDays = metricsAgeInDays(r.StartedAt.get, now)
+        val ageDays = metricsAgeInDays(r.startedAt, now)
         val lastOkNote = lastSuccessfulRun
-          .map(s => s" Last successful run was ${metricsAgeInDays(s.StartedAt.get, now)} days ago.")
+          .map(s => s" Last successful run was ${metricsAgeInDays(s.startedAt, now)} days ago.")
           .getOrElse(" No successful run has ever been recorded.")
         checks += MetricsIntegrityCheckJsonV700("check_last_archive_run_succeeded", "ERROR",
-          s"The most recent archive run ($ageDays days ago) failed: ${r.Remark.get}.$lastOkNote")
+          s"The most recent archive run ($ageDays days ago) failed: ${r.remark}.$lastOkNote")
       case None if schedulerEnabled =>
         checks += MetricsIntegrityCheckJsonV700("check_last_archive_run_succeeded", "WARNING",
           "No archive run has been recorded yet. The scheduler is enabled but may not have completed its first run since this table was introduced.")

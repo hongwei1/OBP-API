@@ -14,8 +14,9 @@ import code.api.util.ErrorMessages
 import code.api.util.ErrorMessages._
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.http4s.ResourceDocMiddleware
+import code.api.util.http4s.IdempotencyMiddleware
 import code.api.util.newstyle.ViewNewStyle
-import code.api.util.{APIUtil, ConsentJWT, ConsentView, Consent, CustomJsonFormats, JwtUtil, NewStyle, OBPBankId, SecureRandomUtil}
+import code.api.util.{APIUtil, CallContext, ConsentJWT, ConsentView, Consent, CustomJsonFormats, JwtUtil, NewStyle, OBPBankId, SecureRandomUtil}
 import code.api.v2_1_0.JSONFactory210
 import code.api.v3_0_0.JSONFactory300
 import code.api.v3_1_0.{JSONFactory310, PostConsentBodyCommonJson, PostConsentViewJsonV310, PostUserAuthContextJson, PostUserAuthContextUpdateJsonV310}
@@ -52,7 +53,6 @@ import com.openbankproject.commons.util.json
 import com.openbankproject.commons.util.JsonAliases.prettyRender
 import org.json4s.{Extraction, Formats}
 import com.openbankproject.commons.util.JsonAliases.compactRender
-import net.liftweb.mapper.By
 import net.liftweb.util.{Helpers, Props, StringHelpers}
 import org.http4s.{HttpRoutes, MediaType, Method, Request, Response, Status, Uri}
 import org.http4s.dsl.io._
@@ -281,7 +281,7 @@ object Http4s500 {
     val createSystemView: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ POST -> `prefixPath` / "system-views" =>
         EndpointHelpers.executeFutureCreated(req) {
-          implicit val cc = req.callContext
+          implicit val cc: CallContext = req.callContext
           val bodyString = cc.httpBody.getOrElse("")
           for {
             createViewJson <- NewStyle.function.tryons(
@@ -331,7 +331,7 @@ object Http4s500 {
     val getSystemView: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ GET -> `prefixPath` / "system-views" / viewId =>
         EndpointHelpers.executeFuture(req) {
-          implicit val cc = req.callContext
+          implicit val cc: CallContext = req.callContext
           for {
             view <- ViewNewStyle.systemView(ViewId(viewId), Some(cc))
           } yield JSONFactory500.createViewJsonV500(view)
@@ -367,7 +367,7 @@ object Http4s500 {
     val updateSystemView: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ PUT -> `prefixPath` / "system-views" / viewId =>
         EndpointHelpers.executeFuture(req) {
-          implicit val cc = req.callContext
+          implicit val cc: CallContext = req.callContext
           val bodyString = cc.httpBody.getOrElse("")
           for {
             updateJson <- NewStyle.function.tryons(
@@ -410,7 +410,7 @@ object Http4s500 {
     val deleteSystemView: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ DELETE -> `prefixPath` / "system-views" / viewId =>
         EndpointHelpers.executeFuture(req) {
-          implicit val cc = req.callContext
+          implicit val cc: CallContext = req.callContext
           for {
             _ <- ViewNewStyle.systemView(ViewId(viewId), Some(cc))
             result <- ViewNewStyle.deleteSystemView(ViewId(viewId), Some(cc))
@@ -463,18 +463,21 @@ object Http4s500 {
               postJson.bank_routings.getOrElse(Nil).filterNot(_.scheme == "BIC").headOption.map(_.address).getOrElse(""),
               Some(cc)
             )
-            entitlements <- NewStyle.function.getEntitlementsByUserId(cc.userId, Some(cc))
+            // Creator grants target the HUMAN (see v6.0.0 createBank): under a Consent the
+            // authenticated user is a per-consent shadow, and roles granted to it are stranded.
+            humanUserId = cc.accountableUserId
+            entitlements <- NewStyle.function.getEntitlementsByUserId(humanUserId, Some(cc))
             entitlementsByBank = entitlements.filter(_.bankId == postJson.id.getOrElse(""))
             _ <- entitlementsByBank.exists(_.roleName == CanCreateEntitlementAtOneBank.toString()) match {
               case true  => Future.successful(())
               case false => Future(Entitlement.entitlement.vend.addEntitlement(
-                postJson.id.getOrElse(""), cc.userId, CanCreateEntitlementAtOneBank.toString(),
+                postJson.id.getOrElse(""), humanUserId, CanCreateEntitlementAtOneBank.toString(),
                 grantedByUserId = Some(cc.userId)))
             }
             _ <- entitlementsByBank.exists(_.roleName == CanReadDynamicResourceDocsAtOneBank.toString()) match {
               case true  => Future.successful(())
               case false => Future(Entitlement.entitlement.vend.addEntitlement(
-                postJson.id.getOrElse(""), cc.userId, CanReadDynamicResourceDocsAtOneBank.toString(),
+                postJson.id.getOrElse(""), humanUserId, CanReadDynamicResourceDocsAtOneBank.toString(),
                 grantedByUserId = Some(cc.userId)))
             }
           } yield JSONFactory500.createBankJSON500(success)
@@ -584,10 +587,16 @@ object Http4s500 {
               com.openbankproject.commons.util.JsonAliases.parse(cc.httpBody.getOrElse("")).extract[CreateAccountRequestJsonV500]
             }
             loggedInUserId = user.userId
-            userIdAccountOwner = createAccountJson.user_id.getOrElse(loggedInUserId)
+            // Implicit owner resolves to the HUMAN: under a Consent the caller is the
+            // per-consent shadow, and an account held by it strands when the consent dies.
+            userIdAccountOwner = createAccountJson.user_id.getOrElse(cc.accountableUserId)
             _ <- Helper.booleanToFuture(InvalidAccountIdFormat, cc = Some(cc)) { isValidID(accountId.value) }
             _ <- Helper.booleanToFuture(InvalidBankIdFormat, cc = Some(cc)) { isValidID(accountId.value) }
             (postedOrLoggedInUser, _) <- NewStyle.function.findByUserId(userIdAccountOwner, Some(cc))
+            // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+            _ <- Helper.booleanToFuture(
+              s"$InvalidUserId user_id names a consent user (an agent identity minted by a Consent). Accounts are held by humans - use the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!postedOrLoggedInUser.isConsentUser)
             _ <- if (userIdAccountOwner == loggedInUserId) Future.successful(Full(()))
                  else Helper.booleanToFuture(
                    s"${UserHasMissingRoles} $canCreateAccount", failCode = 403, cc = Some(cc)) {
@@ -955,7 +964,7 @@ object Http4s500 {
             consent <- Future { Consents.consentProvider.vend.getConsentByConsentRequestId(consentRequestId) }
               .map(unboxFullOrFail(_, callContextOpt, ConsentRequestNotFound))
             _ <- Helper.booleanToFuture(failMsg = ConsentNotFound, failCode = 404, cc = Some(cc)) {
-              consent.mConsumerId.get == cc.consumer.map(_.consumerId.get).getOrElse("None")
+              consent.consumerId == cc.consumer.map(_.consumerId).getOrElse("None")
             }
             tuple <- NewStyle.function.tryons(
               failMsg = Oauth2BadJWTException, 400, callContextOpt) {
@@ -1137,7 +1146,7 @@ object Http4s500 {
                 }
                 (vrpView, _) <- ViewNewStyle.createCustomView(fromBankIdAccountId, targetCreateCustomViewJson.toCreateViewJson, callContextOpt)
                 _ <- ViewNewStyle.grantAccessToCustomView(vrpView, user, callContextOpt)
-                _ <- Helper.booleanToFuture(s"$InvalidValueLength. The maximum length of `description` field is ${MappedCounterparty.mDescription.maxLen}", cc = callContextOpt) {
+                _ <- Helper.booleanToFuture(s"$InvalidValueLength. The maximum length of `description` field is ${MappedCounterparty.descriptionMaxLength}", cc = callContextOpt) {
                   postJson.description.length <= 36
                 }
                 (existingCounterparty, _) <- Connector.connector.vend.checkCounterpartyExists(
@@ -1234,14 +1243,14 @@ object Http4s500 {
                    _ <- Helper.booleanToFuture(ViewsAllowedInConsent, cc = callContextOpt) {
                      postConsentViewJsons.forall(rv =>
                        assignedViews.exists(e =>
-                         e.view_id == rv.view_id && e.bank_id == rv.bank_id && e.account_id == rv.account_id))
+                         e.viewId == rv.view_id && e.bankId == rv.bank_id && e.accountId == rv.account_id))
                    }
                  } yield ()
             calculatedConsumerId = consentRequestJson.consumer_id.orElse(Some(createdConsentRequest.consumerId))
             (consumerIdOpt, applicationText) <- calculatedConsumerId match {
               case Some(id) =>
                 NewStyle.function.checkConsumerByConsumerId(id, callContextOpt).map { c =>
-                  (Some(c.consumerId.get), c.description)
+                  (Some(c.consumerId), c.description)
                 }
               case None => Future.successful((None, "Any application"))
             }
@@ -1285,7 +1294,7 @@ object Http4s500 {
             validUntil = Helper.calculateValidTo(postConsentBodyCommonJson.valid_from, postConsentBodyCommonJson.time_to_live.getOrElse(3600))
             _ <- Future(Consents.consentProvider.vend.setValidUntil(createdConsent.consentId, validUntil))
               .map(i => connectorEmptyResponse(i, callContextOpt))
-            grantorConsumerId = callContextOpt.flatMap(_.consumer.toOption.map(_.consumerId.get)).getOrElse("Unknown")
+            grantorConsumerId = callContextOpt.flatMap(_.consumer.toOption.map(_.consumerId)).getOrElse("Unknown")
             granteeConsumerId = postConsentBodyCommonJson.consumer_id.getOrElse("Unknown")
             shouldSkipConsentScaForConsumerIdPair = APIUtil.skipConsentScaForConsumerIdPairs.contains(
               APIUtil.ConsumerIdPair(grantorConsumerId, granteeConsumerId))
@@ -1296,7 +1305,7 @@ object Http4s500 {
                 // instead of the skip-SCA write blindly resurrecting it to ACCEPTED.
                 code.bankconnectors.DoobieConsentStatusQueries.conditionalStatusTransitionByConsentId(
                   createdConsent.consentId, ConsentStatus.INITIATED.toString, ConsentStatus.ACCEPTED.toString)
-                MappedConsent.find(By(MappedConsent.mConsentId, createdConsent.consentId))
+                MappedConsent.findByConsentId(createdConsent.consentId)
                   .openOrThrowException(s"Consent ${createdConsent.consentId} not found immediately after creation")
               }
             } else {
@@ -2309,7 +2318,7 @@ object Http4s500 {
     )
 
     val allRoutes: HttpRoutes[IO] =
-      Kleisli[HttpF, Request[IO], Response[IO]] { req: Request[IO] =>
+      Kleisli[HttpF, Request[IO], Response[IO]] { (req: Request[IO]) =>
         root(req)
           .orElse(getBanks(req))
           .orElse(getBank(req))
@@ -2353,7 +2362,7 @@ object Http4s500 {
       }
 
     val allRoutesWithMiddleware: HttpRoutes[IO] =
-      ResourceDocMiddleware.apply(resourceDocs)(allRoutes)
+      ResourceDocMiddleware.apply(resourceDocs)(IdempotencyMiddleware(allRoutes))
 
     // ─── path-rewriting bridge: /obp/v5.0.0/… → /obp/v4.0.0/… ─────────────
     // Cascades inherited (v1.2.1–v4.0.0) endpoints through the http4s versions
@@ -2381,7 +2390,7 @@ object Http4s500 {
   val wrappedRoutesV500ServicesWithJsonNotFound: HttpRoutes[IO] = {
     import code.api.util.APIUtil
     import code.api.util.ErrorMessages
-    Kleisli[HttpF, Request[IO], Response[IO]] { req: Request[IO] =>
+    Kleisli[HttpF, Request[IO], Response[IO]] { (req: Request[IO]) =>
       wrappedRoutesV500Services(req).orElse {
         OptionT.liftF(IO.pure {
           val contentType = req.headers.get(CIString("Content-Type")).map(_.head.value).getOrElse("")

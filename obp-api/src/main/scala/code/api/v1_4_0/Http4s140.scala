@@ -10,6 +10,7 @@ import code.api.util.ApiTag._
 import code.api.util.ErrorMessages._
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.http4s.ResourceDocMiddleware
+import code.api.util.http4s.IdempotencyMiddleware
 import code.api.util.{APIUtil, NewStyle}
 import code.api.v1_2_1.{JSONFactory, SuccessMessage}
 import code.atms.Atms
@@ -79,7 +80,7 @@ object Http4s140 {
           for {
             ucls <- Future { UserCustomerLink.userCustomerLink.vend.getUserCustomerLinksByUserId(user.userId) }
             matchingUcl <- Future {
-              ucls.find(x => CustomerX.customerProvider.vend.getBankIdByCustomerId(x.customerId) == bank.bankId.value)
+              ucls.find(x => CustomerX.customerProvider.vend.getBankIdByCustomerId(x.customerId).exists(_ == bank.bankId.value))
                 .getOrElse(throw new RuntimeException(UserCustomerLinksNotFoundForUser))
             }
             (customer, _) <- NewStyle.function.getCustomerByCustomerId(matchingUcl.customerId, Some(cc))
@@ -327,7 +328,7 @@ object Http4s140 {
               s"$ViewDoesNotPermitAccess You need the `$CAN_SEE_TRANSACTION_REQUEST_TYPES` permission on the View(${view.viewId.value})",
               cc = Some(cc)
             ) {
-              ViewPermission.findViewPermissions(view).exists(_.permission.get == CAN_SEE_TRANSACTION_REQUEST_TYPES)
+              ViewPermission.findViewPermissions(view).exists(_.permission == CAN_SEE_TRANSACTION_REQUEST_TYPES)
             }
             (transactionRequestTypes, cc2) <- Future {
               connectorEmptyResponse(
@@ -475,7 +476,7 @@ object Http4s140 {
         .orElse(addCustomer.run(req))
     }
 
-    val allRoutesWithMiddleware: HttpRoutes[IO] = ResourceDocMiddleware.apply(resourceDocs)(allOwnRoutes)
+    val allRoutesWithMiddleware: HttpRoutes[IO] = ResourceDocMiddleware.apply(resourceDocs)(IdempotencyMiddleware(allOwnRoutes))
 
     // ─── path-rewriting bridge: /obp/v1.4.0/… → /obp/v1.3.0/… ──────────────
     // Delegates to Http4s130 so all inherited v1.3.0 and v1.2.1 endpoints are

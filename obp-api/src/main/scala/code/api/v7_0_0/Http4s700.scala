@@ -8,7 +8,7 @@ import code.api.Constant._
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.util.APIUtil.{EmptyBody, _}
 import code.api.util.{APIUtil, ApiRole, CallContext, CustomJsonFormats, Glossary, NewStyle}
-import code.api.util.ApiRole.{canAttachOpenCorridorPromise, canConfigureAmqpBankBroker, canGetMessageOutbox, canRetryMessageOutbox, canSettleOpenCorridor, canCreateAccount, canCreateEntitlementAtAnyBank, canCreateEntitlementAtOneBank, canCreateMetricsArchiveRun, canCreateOrganisation, canCreateRoutingScheme, canCreateTestEmail, canCreateUtilityVendResult, canDeleteEntitlementAtAnyBank, canDeleteOrganisation, canDeleteRoutingScheme, canDeleteSchedulerJobLock, canGetAccountAccessTrace, canGetAnyOrganisation, canGetAnyUser, canGetCacheConfig, canGetCacheInfo, canGetCacheNamespaces, canGetConnectorHealth, canGetCustomersAtOneBank, canGetDatabasePoolInfo, canGetMetricsDiagnostics, canGetMigrations, canGetSchedulerJobLocks, canUpdateBankSupportedRoutingScheme, canUpdateOrganisation, canUpdateRoutingScheme, canUpdateSystemView}
+import code.api.util.ApiRole.{canAttachOpenCorridorPromise, canConfigureAmqpBankBroker, canGetMessageOutbox, canRetryMessageOutbox, canSettleOpenCorridor, canCreateAccount, canCreateEntitlementAtAnyBank, canCreateEntitlementAtOneBank, canCreateMetricsArchiveRun, canCreateOrganisation, canCreateRoutingScheme, canCreateTestEmail, canCreateUtilityVendResult, canDeleteEntitlementAtAnyBank, canDeleteOrganisation, canDeleteRoutingScheme, canDeleteSchedulerJobLock, canGetAccountAccessTrace, canGetAnyOrganisation, canGetAnyUser, canGetCacheConfig, canGetCacheInfo, canGetCacheNamespaces, canGetConnectorHealth, canGetCustomersAtOneBank, canGetDatabasePoolInfo, canGetMetricsDiagnostics, canGetMigrations, canGetSchedulerJobLocks, canReadMetrics, canUpdateBankSupportedRoutingScheme, canUpdateOrganisation, canUpdateRoutingScheme, canUpdateSystemView}
 import code.api.util.CommonsEmailWrapper
 import code.model.dataAccess.{AuthUser, BankAccountCreation, MappedBank, ResourceUser}
 import code.consent.Consents
@@ -45,12 +45,11 @@ import com.github.dwickern.macros.NameOf.nameOf
 import com.openbankproject.commons.ExecutionContext.Implicits.global
 import com.openbankproject.commons.util.{ApiVersion, ApiVersionStatus, ScannedApiVersion}
 import code.loginattempts.LoginAttempt
-import code.metrics.MappedMetric
+import code.metrics.{APIMetrics, MappedMetric}
 import code.users.UserAgreementProvider
 import net.liftweb.common.Full
 import com.openbankproject.commons.util.JsonAliases.prettyRender
 import org.json4s.{Extraction, Formats}
-import net.liftweb.mapper.{By, ByList, Descending, MaxRows, OrderBy}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.typelevel.ci.CIString
@@ -287,19 +286,19 @@ object Http4s700 {
     // Response shapes reuse the v6 bank JSON (BankJson600 / BanksJsonV600).
 
     // ─── Delegation fan-down for /my/banks ───────────────────────────────────
-    // Resolving UP (agent caller → the granting human) is cc.effectiveHumanUserId.
+    // Resolving UP (agent caller → the granting human) is cc.accountableUserId.
     // This is the fan DOWN: the human plus every agent user minted from any Consent the
     // human granted — i.e. all user ids whose creations belong to that human. Match the
     // result against CreatedByUserId. Reads only server-written columns
     // (MappedConsent.mUserId, ResourceUser.CreatedByConsentId); the input must be an
-    // already-resolved human id (cc.effectiveHumanUserId), never a raw caller value.
+    // already-resolved human id (cc.accountableUserId), never a raw caller value.
 
     private def humanAndAgentUserIds(humanUserId: String): List[String] = {
       val consentIds = Consents.consentProvider.vend.getConsentsByUser(humanUserId)
         .map(_.consentId).filter(_.nonEmpty)
       val agentUserIds =
         if (consentIds.isEmpty) Nil
-        else ResourceUser.findAll(ByList(ResourceUser.CreatedByConsentId, consentIds)).map(_.userId)
+        else ResourceUser.findAllByCreatedByConsentIds(consentIds).map(_.userId)
       (humanUserId :: agentUserIds).filter(_.nonEmpty).distinct
     }
 
@@ -336,8 +335,8 @@ object Http4s700 {
               // Quota binds to the human: banks created by the human directly or by any
               // of their consent-agents count toward the same limit — otherwise every
               // new consent would arrive with a fresh quota.
-              val creatorUserIds = humanAndAgentUserIds(cc.effectiveHumanUserId)
-              MappedBank.count(ByList(MappedBank.CreatedByUserId, creatorUserIds))
+              val creatorUserIds = humanAndAgentUserIds(cc.accountableUserId)
+              MappedBank.findAllByCreatedByUserIds(creatorUserIds).size.toLong
             }
             _ <- Helper.booleanToFuture(SelfServiceBankLimitReached, failCode = 403, cc = Some(cc)) {
               banksCreatedByUser < selfServiceBankLimit
@@ -356,8 +355,11 @@ object Http4s700 {
               "", "", "", "", "", "",
               Some(cc)
             )
+            // Creator grant targets the HUMAN (see v6.0.0 createBank): under a Consent the
+            // authenticated user is a per-consent shadow, and roles granted to it are stranded.
             _ <- Future(Entitlement.entitlement.vend.addEntitlement(
-              generatedName.bankId, cc.userId, canCreateEntitlementAtOneBank.toString()))
+              generatedName.bankId, cc.accountableUserId, canCreateEntitlementAtOneBank.toString(),
+              grantedByUserId = Some(cc.userId)))
           } yield JSONFactory600.createBankJSON600(bank)
         }
     }
@@ -414,8 +416,8 @@ object Http4s700 {
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
             banksCreatedByUser <- Future {
-              val creatorUserIds = humanAndAgentUserIds(cc.effectiveHumanUserId)
-              MappedBank.findAll(ByList(MappedBank.CreatedByUserId, creatorUserIds))
+              val creatorUserIds = humanAndAgentUserIds(cc.accountableUserId)
+              MappedBank.findAllByCreatedByUserIds(creatorUserIds)
             }
           } yield JSONFactory600.createBanksJsonV600(banksCreatedByUser)
         }
@@ -484,7 +486,13 @@ object Http4s700 {
       case req @ POST -> `prefixPath` / "users" / userId / "entitlements" =>
         EndpointHelpers.withUserAndBodyCreated[CreateEntitlementJSON, AnyRef](req) { (user, body, cc) =>
           for {
-            (_, _)   <- NewStyle.function.findByUserId(userId, Some(cc))
+            (targetUser, _) <- NewStyle.function.findByUserId(userId, Some(cc))
+            // Explicit target: fail loud rather than redirect. A consent user (an agent
+            // identity minted by a Consent) cannot hold durable roles — grant to the
+            // granting human instead.
+            _ <- Helper.booleanToFuture(
+              s"$InvalidUserId USER_ID names a consent user (an agent identity minted by a Consent). Entitlements target humans - use the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!targetUser.isConsentUser)
             role     <- NewStyle.function.tryons(
               s"$InvalidJsonFormat Unknown role: ${body.role_name}. Possible roles: ${ApiRole.availableRoles.sorted.mkString(", ")}",
               400, Some(cc)) { ApiRole.valueOf(body.role_name) }
@@ -685,10 +693,11 @@ object Http4s700 {
 
     // ── Phase 1 — Simple GETs ───────────────────────────────────────────────
 
-    // Route: GET /obp/v7.0.0/consents/config
-    // Anonymous: operator-published policy that TPPs/agents need to know before issuing a consent.
+    // Route: GET /obp/v7.0.0/public/consent-config
+    // Anonymous: operator-published policy that TPPs/agents need to know before issuing
+    // a consent. The /public prefix marks client-facing config that needs no authentication.
     val getConsentsConfig: HttpRoutes[IO] = HttpRoutes.of[IO] {
-      case req @ GET -> `prefixPath` / "consents" / "config" =>
+      case req @ GET -> `prefixPath` / "public" / "consent-config" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future.successful(JSONFactory700.ConsentsConfigJsonV700(
             consents_allowed            = APIUtil.getPropsAsBoolValue("consents.allowed", false),
@@ -702,7 +711,7 @@ object Http4s700 {
       implementedInApiVersion,
       nameOf(getConsentsConfig),
       "GET",
-      "/consents/config",
+      "/public/consent-config",
       "Get Consents Configuration",
       """Returns the operator-configured consent policy for this OBP instance:
         |
@@ -716,6 +725,90 @@ object Http4s700 {
       List(UnknownError),
       apiTagConsent :: apiTagApi :: Nil,
       http4sPartialFunction = Some(getConsentsConfig)
+    )
+
+    // Route: GET /obp/v7.0.0/public/password-config
+    // Anonymous: clients need the policy before they hold credentials, to validate
+    // a proposed password locally during signup or password reset. The /public
+    // prefix marks client-facing config that needs no authentication.
+    val getPasswordPolicy: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "public" / "password-config" =>
+        EndpointHelpers.executeAndRespond(req) { _ =>
+          Future.successful(JSONFactory700.passwordPoliciesJsonV700)
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getPasswordPolicy),
+      "GET",
+      "/public/password-config",
+      "Get Password Policy",
+      """Returns the password policy this instance enforces when a password is set (user creation and password reset).
+        |
+        |A password is valid if it satisfies AT LEAST ONE of the `policies`. For each policy:
+        |
+        |* `min_length` / `max_length` — inclusive length bounds.
+        |* `required_character_classes` — the password must contain at least one character matching each class `regex`.
+        |* `allowed_characters` — every character of the password must be one of these.
+        |* `regex` — a single pattern equivalent to the three rules above, written in a portable
+        |regex subset that behaves identically in Java, JavaScript and Python, so it can be used verbatim.
+        |
+        |The structured fields are the normative contract; `regex` is a convenience.
+        |Clients can use either to give immediate feedback while a user types a new password.
+        |The server remains the final enforcer: a password failing the policy is rejected
+        |with `OBP-30207` (InvalidStrongPasswordFormat).
+        |
+        |The policy applies only when a password is set; already-stored passwords are never re-checked against it (we don't store the password in plain text).
+        |
+        |No Authentication is Required.""".stripMargin,
+      EmptyBody,
+      JSONFactory700.passwordPoliciesJsonV700,
+      List(UnknownError),
+      apiTagApi :: apiTagUser :: Nil,
+      http4sPartialFunction = Some(getPasswordPolicy)
+    )
+
+    // Route: GET /obp/v7.0.0/public/chat-config
+    // Anonymous: chat clients need the link-host whitelist to render messages
+    // (links to non-whitelisted hosts stay inert text) before and regardless
+    // of authentication. The /public prefix marks client-facing config that
+    // needs no authentication.
+    val getChatConfig: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "public" / "chat-config" =>
+        EndpointHelpers.executeAndRespond(req) { _ =>
+          Future(JSONFactory700.ChatConfigJsonV700(
+            code.chat.ChatLinkPolicy.allowedHosts.toList.sorted,
+            code.chat.ChatContentPolicy.maxContentLength))
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getChatConfig),
+      "GET",
+      "/public/chat-config",
+      "Get Chat Config",
+      """Returns the chat configuration this instance enforces.
+        |
+        |* `allowed_link_hosts` — chat message content is rejected with `OBP-39015` when it
+        |contains an http(s) link to a host not in this list (exact match or subdomain). The
+        |list is derived from this instance's own host, the hosts of the apps in its App
+        |Directory (`public_*_url` props), and the `chat.allowed_link_hosts` prop (defaulting
+        |to tesobe.com and openbankproject.com when that prop is not defined).
+        |* `max_message_length` — content longer than this is rejected with `OBP-39016`
+        |(prop `chat.max_message_length`, default 10000 characters).
+        |
+        |Chat clients should apply the same policy at render time and in composers: show links
+        |to hosts outside the list as plain text rather than making them clickable, and cap
+        |input at the maximum length.
+        |
+        |No Authentication is Required.""".stripMargin,
+      EmptyBody,
+      JSONFactory700.chatConfigJsonV700Example,
+      List(UnknownError),
+      apiTagApi :: Nil,
+      http4sPartialFunction = Some(getChatConfig)
     )
 
     // Route: GET /obp/v7.0.0/api/error-messages
@@ -774,27 +867,25 @@ object Http4s700 {
               if (agreementList.isEmpty) None else Some(agreementList)
             }
             isLocked = LoginAttempt.userIsLocked(user.provider, user.name)
-            authUser = code.model.dataAccess.AuthUser.find(
-              By(code.model.dataAccess.AuthUser.user, user.userPrimaryKey.value)
-            )
+            authUser = code.model.dataAccess.AuthUser.findByResourceUserPrimaryKey(
+              user.userPrimaryKey.value)
             userMetrics <- Future {
-              MappedMetric.findAll(
-                By(MappedMetric.userId, userId),
-                OrderBy(MappedMetric.date, Descending),
-                MaxRows(5)
-              )
+              MappedMetric.findNewestByUserId(userId, 5)
             }
             lastActivityDate = userMetrics.headOption.map(_.getDate())
             recentOperationIds = userMetrics.map(_.getImplementedByPartialFunction()).distinct.take(5)
-          } yield JSONFactory600.createUserInfoJsonV600(
+          } yield JSONFactory700.createUserInfoDetailJsonV700(
             user,
-            authUser.map(_.firstName.get).getOrElse(""),
-            authUser.map(_.lastName.get).getOrElse(""),
-            entitlements,
-            agreements,
-            isLocked,
-            lastActivityDate,
-            recentOperationIds
+            JSONFactory600.createUserInfoJsonV600(
+              user,
+              authUser.map(_.firstName).getOrElse(""),
+              authUser.map(_.lastName).getOrElse(""),
+              entitlements,
+              agreements,
+              isLocked,
+              lastActivityDate,
+              recentOperationIds
+            )
           )
         }
     }
@@ -811,11 +902,506 @@ object Http4s700 {
         |
         |CanGetAnyUser entitlement is required.""",
       EmptyBody,
-      userInfoJsonV600,
+      JSONFactory700.userInfoDetailJsonV700Example,
       List($AuthenticatedUserIsRequired, UserHasMissingRoles, UserNotFoundByUserId, UnknownError),
       apiTagUser :: Nil,
       Some(List(canGetAnyUser)),
       http4sPartialFunction = Some(getUserByUserId)
+    )
+
+    // Route: GET /obp/v7.0.0/users/current
+    // v7 signature change over v6: the response carries the user's own mobile phone
+    // fields (number, is_validated flag, validated date) stored on ResourceUser —
+    // distinct from the bank-scoped mobile_phone_number on Customer (KYC data).
+    val getCurrentUser: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "users" / "current" =>
+        EndpointHelpers.withUser(req) { (user, cc) =>
+          for {
+            entitlements <- NewStyle.function.getEntitlementsByUserId(user.userId, Some(cc))
+          } yield {
+            val permissions = Views.views.vend.getPermissionForUser(user).toOption
+            val virtualRoleNames =
+              if (APIUtil.isSuperAdmin(user.userId)) JSONFactory200.superAdminVirtualRoles
+              else if (APIUtil.isOidcOperator(user.userId)) JSONFactory200.oidcOperatorVirtualRoles
+              else List.empty
+            val existingRoleNames = entitlements.map(_.roleName).toSet
+            val virtualEntitlements = virtualRoleNames.filterNot(existingRoleNames.contains).map { role =>
+              new Entitlement {
+                def entitlementId    = ""
+                def bankId           = ""
+                def userId           = user.userId
+                def roleName         = role
+                def createdByProcess =
+                  if (APIUtil.isSuperAdmin(user.userId)) "super_admin_user_ids"
+                  else "oidc_operator_user_ids"
+                def entitlementRequestId: Option[String] = None
+                def groupId: Option[String]              = None
+                def grantedByUserId: Option[String]      = None
+              }
+            }
+            val currentUser = UserV600(user, entitlements ::: virtualEntitlements, permissions)
+            val onBehalfOfUser =
+              if (cc.onBehalfOfUser.isDefined) {
+                val u = cc.onBehalfOfUser.toOption.get
+                val ents = Entitlement.entitlement.vend.getEntitlementsByUserId(u.userId)
+                  .headOption.toList.flatten
+                val perms = Views.views.vend.getPermissionForUser(u).toOption
+                Some(UserV600(u, ents, perms))
+              } else None
+            JSONFactory700.createUserJsonV700(currentUser, onBehalfOfUser)
+          }
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getCurrentUser),
+      "GET",
+      "/users/current",
+      "Get User (Current)",
+      """Get the logged in user.
+        |
+        |In v7.0.0 the response includes the user's own mobile phone fields:
+        |`mobile_phone_number`, `mobile_phone_number_is_validated` and
+        |`mobile_phone_number_validated_date`. These belong to the authenticated
+        |user (global across banks) and are distinct from the bank-scoped
+        |`mobile_phone_number` on Customer, which is KYC data of a legal entity.
+        |
+        |Authentication is required.""".stripMargin,
+      EmptyBody,
+      JSONFactory700.userJsonV700Example,
+      List($AuthenticatedUserIsRequired, UnknownError),
+      apiTagUser :: Nil,
+      None,
+      http4sPartialFunction = Some(getCurrentUser)
+    )
+
+    // Accepted shape of a user's own mobile phone number (POST /users and
+    // PUT /my/user/mobile-phone-number): optional leading "+", then 5-50 of
+    // digits, spaces, dashes, dots and parentheses.
+    private val mobilePhoneNumberRegex = """\+?[0-9\-\s().]{5,50}"""
+
+    // The shape alone is not enough: the character class is a UNION, so "     " (five spaces),
+    // "((.))" and "-.-.-" all satisfy it and a digit-free string would be stored as somebody's
+    // mobile number, leaving the later validation/SMS flow with nothing to send to. Require at
+    // least five actual digits as well.
+    private val MinMobilePhoneNumberDigits = 5
+
+    private def isValidMobilePhoneNumber(value: String): Boolean =
+      value.matches(mobilePhoneNumberRegex) && value.count(_.isDigit) >= MinMobilePhoneNumberDigits
+
+    // Route: PUT /obp/v7.0.0/my/user/mobile-phone-number
+    val updateMyMobilePhoneNumber: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ PUT -> `prefixPath` / "my" / "user" / "mobile-phone-number" =>
+        EndpointHelpers.withUserAndBody[JSONFactory700.PutMyMobilePhoneNumberJsonV700, JSONFactory700.MyMobilePhoneNumberJsonV700](req) { (user, body, cc) =>
+          val mobilePhoneNumber = body.mobile_phone_number.trim
+          for {
+            // Refused for a consent user rather than redirected to cc.accountableUserId, unlike
+            // the other "my" writes in this file. The mobile number is an authentication channel
+            // (validation codes, SMS OTP), so letting an agent identity minted by a Consent
+            // repoint the granting human's second factor would be an escalation, not a
+            // convenience; and writing it to the agent's own shadow row instead would silently
+            // do nothing the caller could observe. The human must set their own number.
+            _ <- Helper.booleanToFuture(
+              s"$InvalidUserId The caller is a consent user (an agent identity minted by a Consent). " +
+              "A mobile phone number is an authentication channel and can only be set by the user themselves.",
+              failCode = 400, cc = Some(cc))(!user.isConsentUser)
+            _ <- Helper.booleanToFuture(InvalidPhoneNumber, cc = Some(cc)) {
+              isValidMobilePhoneNumber(mobilePhoneNumber)
+            }
+            resourceUser <- Future {
+              UserVend.users.vend.getResourceUserByResourceUserId(user.userPrimaryKey.value)
+            } map { x => unboxFullOrFail(x, Some(cc), UserNotFoundByUserId, 404) }
+            updated <- Future {
+              val numberChanged = !resourceUser.mobilePhoneNumber.contains(mobilePhoneNumber)
+              // a changed number is unverified: reset the flag, but keep
+              // mobilePhoneNumberValidatedDate as the audit trail of the last successful
+              // validation. ResourceUser is a case class here, so this is a copy rather than
+              // the chained setters develop's Mapper entity used.
+              code.model.dataAccess.ResourceUser.update(resourceUser.copy(
+                mobilePhoneNumber = Some(mobilePhoneNumber),
+                mobilePhoneNumberIsValidated =
+                  if (numberChanged) Some(false) else resourceUser.mobilePhoneNumberIsValidated))
+            }
+          } yield JSONFactory700.MyMobilePhoneNumberJsonV700(
+            mobile_phone_number = updated.mobilePhoneNumber,
+            mobile_phone_number_is_validated = updated.mobilePhoneNumberIsValidated,
+            mobile_phone_number_validated_date = updated.mobilePhoneNumberValidatedDate
+          )
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(updateMyMobilePhoneNumber),
+      "PUT",
+      "/my/user/mobile-phone-number",
+      "Update My Mobile Phone Number",
+      """Set or update the mobile phone number of the currently authenticated user.
+        |
+        |This number belongs to the authenticated user (global across banks) and is
+        |distinct from the bank-scoped `mobile_phone_number` on Customer, which is
+        |KYC data of a legal entity.
+        |
+        |Setting a different number resets `mobile_phone_number_is_validated` to
+        |`false`. `mobile_phone_number_validated_date` is left untouched: it is the
+        |audit trail of the last successful validation and is only written by the
+        |validation flow.
+        |
+        |Authentication is required.""".stripMargin,
+      JSONFactory700.putMyMobilePhoneNumberJsonV700Example,
+      JSONFactory700.myMobilePhoneNumberJsonV700Example,
+      List($AuthenticatedUserIsRequired, InvalidJsonFormat, InvalidPhoneNumber, UnknownError),
+      apiTagUser :: Nil,
+      None,
+      http4sPartialFunction = Some(updateMyMobilePhoneNumber)
+    )
+
+    // Route: POST /obp/v7.0.0/users (201)
+    // v7 signature change over v6: the body accepts an optional mobile_phone_number,
+    // stored on the ResourceUser as unverified (is_validated=false, no validated
+    // date) — verification is a separate flow. Password policy, duplicate-username
+    // check, validation email and default entitlements are shared with v6.
+    val createUser: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ POST -> `prefixPath` / "users" =>
+        EndpointHelpers.executeFutureCreated(req) {
+          implicit val cc: CallContext = req.callContext
+          val rawBody = cc.httpBody.getOrElse("")
+          for {
+            postedData <- NewStyle.function.tryons(
+              s"$InvalidJsonFormat The Json body should be the ${classOf[JSONFactory700.CreateUserJsonV700]}",
+              400, Some(cc)) {
+              com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[JSONFactory700.CreateUserJsonV700]
+            }
+            mobilePhoneNumber = postedData.mobile_phone_number.map(_.trim).filter(_.nonEmpty)
+            _ <- Helper.booleanToFuture(InvalidPhoneNumber, 400, Some(cc)) {
+              mobilePhoneNumber.forall(isValidMobilePhoneNumber)
+            }
+            savedUser <- code.api.v6_0_0.Http4s600.Implementations6_0_0.createAndSaveAuthUser(
+              postedData.email, postedData.username, postedData.password, postedData.first_name, postedData.last_name
+            )
+            resourceUser <- Future {
+              UserVend.users.vend.getResourceUserByResourceUserId(savedUser.user)
+            } map { x => unboxFullOrFail(x, Some(cc), UserNotFoundByUserId, 404) }
+            storedResourceUser <- Future {
+              mobilePhoneNumber match {
+                case Some(number) =>
+                  // A number supplied at creation starts unvalidated.
+                  code.model.dataAccess.ResourceUser.update(resourceUser.copy(
+                    mobilePhoneNumber = Some(number),
+                    mobilePhoneNumberIsValidated = Some(false)))
+                case None => resourceUser
+              }
+            }
+          } yield {
+            code.api.v6_0_0.Http4s600.Implementations6_0_0.sendSignupValidationEmailIfRequired(savedUser)
+            AuthUser.grantDefaultEntitlementsToAuthUser(savedUser)
+            JSONFactory700.createCreatedUserJsonV700(
+              JSONFactory200.createUserJSONfromAuthUser(savedUser),
+              storedResourceUser
+            )
+          }
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(createUser),
+      "POST",
+      "/users",
+      "Create User (self-registration)",
+      s"""Creates an OBP user (self-registration). No authorisation required.
+        |
+        |Requires email, username, password, first_name and last_name.
+        |
+        |v7.0.0 adds the optional `mobile_phone_number`: the registering person's own
+        |number (global across banks, distinct from the bank-scoped `mobile_phone_number`
+        |on Customer, which is KYC data of a legal entity). It is stored unverified —
+        |`mobile_phone_number_is_validated` is `false` and
+        |`mobile_phone_number_validated_date` is empty until a separate validation flow
+        |succeeds. Omit the field, or send null / blank, to register without a number.
+        |
+        |Validation checks performed:
+        |- Password must meet strong password requirements ($InvalidStrongPasswordFormat)
+        |- Username must be unique (409, $DuplicateUsername)
+        |- `mobile_phone_number`, when present, must be an optional leading `+` followed by
+        |  5 to 50 digits, spaces, dashes, dots or parentheses ($InvalidPhoneNumber)
+        |
+        |Email validation behavior:
+        |- Controlled by property `authUser.skipEmailValidation` (default: false)
+        |- When false: the user is created with validated=false and a validation email is sent.
+        |  The link uses `public_obp_portal_url` (or legacy `portal_external_url`); if that is
+        |  not set, or sending fails, the user can retry via POST /obp/v7.0.0/users/validation-emails.
+        |- When true: the user is created with validated=true and no email is sent.
+        |- Default entitlements are granted immediately regardless of validation status.
+        |
+        |""".stripMargin,
+      JSONFactory700.createUserJsonV700Example,
+      JSONFactory700.createdUserJsonV700Example,
+      List(InvalidJsonFormat, InvalidStrongPasswordFormat, DuplicateUsername, InvalidPhoneNumber, "Error occurred during user creation.", UnknownError),
+      List(apiTagUser, apiTagOnboarding),
+      None,
+      http4sPartialFunction = Some(createUser)
+    )
+
+    // Route: GET /obp/v7.0.0/my/metrics
+    // Same fetch path as GET /management/metrics (APIMetrics.getMetricsFromHttpParams)
+    // with the user filter locked to the logged-in user.
+    val getMyMetrics: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "my" / "metrics" =>
+        EndpointHelpers.withUser(req) { (user, cc) =>
+          for {
+            httpParams <- NewStyle.function.extractHttpParamsFromUrl(req.uri.renderString)
+            // The caller may only ever see their own calls: identity filters are
+            // rejected outright rather than silently ignored.
+            identityParams = httpParams.map(_.name)
+              .filter(Set("user_id", "username", "email", "provider_provider_id", "anon").contains)
+            _ <- Helper.booleanToFuture(
+              s"$UserFilterParametersNotSupported Parameters found: [${identityParams.mkString(", ")}]",
+              cc = Some(cc)) {
+              identityParams.isEmpty
+            }
+            // "My" spans the delegation family: the human plus every agent user minted
+            // from a Consent they granted (metric rows record the authenticated principal,
+            // so an agent's calls sit under the agent's own user id). Resolve up to the
+            // human, then fan down — both via server-written columns only.
+            (metrics, _) <- APIMetrics.getMetricsFromHttpParams(
+              httpParams, cc.callContext,
+              lockedUserIds = Some(humanAndAgentUserIds(cc.accountableUserId)))
+          } yield JSONFactory600.createMetricsJsonV600(metrics)
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getMyMetrics),
+      "GET",
+      "/my/metrics",
+      "Get Metrics (My)",
+      s"""Get the API metrics rows of the currently authenticated user — a record of each REST API call this user has made.
+        |
+        |No role is required: this endpoint only ever returns calls belonging to the logged in user —
+        |their own calls, plus calls made by agent users minted from Consents this user granted
+        |(e.g. an AI agent calling on their behalf). Called under such a Consent, it returns the
+        |same family of calls, resolved through the granting user.
+        |The identity filter parameters accepted by `GET /management/metrics` (`user_id`, `username`, `email`,
+        |`provider_provider_id`, `anon`) are NOT supported here and are rejected with an error —
+        |the user filter is always the current user's delegation family.
+        |
+        |**NOTE: Automatic from_date Default**
+        |
+        |If you do not provide a `from_date` parameter it is automatically set to a few minutes ago
+        |(now - ${(APIUtil.getPropsValue("MappedMetrics.stable.boundary.seconds", "600").toInt - 1) / 60} minutes).
+        |For historical queries, always explicitly specify your desired `from_date` — this also enables
+        |long-term caching of the result.
+        |
+        |The other filter and pagination parameters work as on `GET /management/metrics`:
+        |
+        |eg: /my/metrics?from_date=$DateWithMsExampleString&to_date=$DateWithMsExampleString&limit=50&offset=2
+        |
+        |1 from_date e.g.:from_date=$DateWithMsExampleString
+        |
+        |2 to_date e.g.:to_date=$DateWithMsExampleString Defaults to a far future date i.e. ${APIUtil.ToDateInFuture}
+        |
+        |3 limit (for pagination: defaults to 50) eg:limit=200
+        |
+        |4 offset (for pagination: zero index, defaults to 0) eg: offset=10
+        |
+        |5 sort_by (defaults to date field) eg: sort_by=date
+        |
+        |6 direction (defaults to date desc) eg: direction=desc
+        |
+        |7 consumer_id (if null ignore)
+        |
+        |8 app_name (if null ignore)
+        |
+        |9 url (if null ignore)
+        |
+        |10 implemented_by_partial_function (if null ignore)
+        |
+        |11 implemented_in_version (if null ignore)
+        |
+        |12 verb (if null ignore)
+        |
+        |13 correlation_id (if null ignore)
+        |
+        |14 duration (if null ignore) - Returns calls where duration > specified value (in milliseconds). eg: duration=5000
+        |
+        |Authentication is required.""".stripMargin,
+      EmptyBody,
+      metricsJsonV600,
+      List($AuthenticatedUserIsRequired, UserFilterParametersNotSupported, UnknownError),
+      apiTagMetric :: apiTagUser :: Nil,
+      None,
+      http4sPartialFunction = Some(getMyMetrics)
+    )
+
+    // ─── getTopUsers ──────────────────────────────────────────────────────────────
+
+    val getTopUsers: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "metrics" / "top-users" =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          for {
+            httpParams <- NewStyle.function.extractHttpParamsFromUrl(req.uri.renderString)
+            // applyMetricsFromDateDefault, not the raw params: without a from_date,
+            // APIUtil.getFromDate substitutes the epoch, which makes
+            // MappedMetrics.determineMetricsCacheTTL classify the query as "only stable data"
+            // and cache it for 24 HOURS -- so the default, no-parameter call to this endpoint
+            // would freeze for a day while traffic kept arriving. The same default also turns
+            // the query into a full scan of `metric` since 1970. Every other metrics-reading
+            // endpoint goes through this helper for exactly these two reasons.
+            (obpQueryParams, callContext) <- APIUtil.createQueriesByHttpParamsFuture(
+              APIMetrics.applyMetricsFromDateDefault(httpParams), cc.callContext)
+            topUsers <- APIMetrics.apiMetrics.vend.getTopUsersFuture(obpQueryParams) map {
+              APIUtil.unboxFullOrFail(_, callContext, GetTopUsersError)
+            }
+          } yield JSONFactory700.createTopUsersJsonV700(topUsers)
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getTopUsers),
+      "GET",
+      "/management/metrics/top-users",
+      "Get Top Users",
+      s"""Get the users behind the API traffic: one row per distinct user with their call count,
+        |sorted by count descending.
+        |
+        |**On-behalf-of aware**: calls made under a Consent (e.g. by an agent or a TPP) are
+        |attributed to the granting (on-behalf-of) user, resolved via the consent table — not to
+        |the consent's technical shadow user. Anonymous calls are excluded. For a given window and
+        |filters the number of distinct users listed here therefore matches the
+        |`distinct_user_count` field of GET /management/aggregate-metrics.
+        |
+        |require CanReadMetrics role
+        |
+        |Should be able to filter on the following fields
+        |
+        |eg: /management/metrics/top-users?from_date=$DateWithMsExampleString&to_date=$DateWithMsExampleString&limit=50
+        |
+        |1 from_date (defaults to just inside the metrics stable boundary, i.e. a few minutes ago) eg:from_date=$DateWithMsExampleString
+        |
+        |2 to_date (defaults to a far-future date, i.e. no upper bound) eg:to_date=$DateWithMsExampleString
+        |
+        |3 consumer_id  (if null ignore)
+        |
+        |4 user_id (if null ignore)
+        |
+        |5 anon (if null ignore) only support two value : true (return where user_id is null) or false (return where user_id is not null)
+        |
+        |6 url (if null ignore), note: can not contain '&'.
+        |
+        |7 app_name (if null ignore)
+        |
+        |8 implemented_by_partial_function (if null ignore)
+        |
+        |9 implemented_in_version (if null ignore)
+        |
+        |10 verb (if null ignore)
+        |
+        |11 correlation_id (if null ignore)
+        |
+        |12 limit (defaults to 50) eg: limit=200
+        |
+      """.stripMargin,
+      EmptyBody,
+      JSONFactory700.TopUsersJsonV700(List(
+        JSONFactory700.TopUserJsonV700(1000, "9ca9a7e4-6d02-40e3-a129-0b2bf89de9b1", "felixsmith"),
+        JSONFactory700.TopUserJsonV700(250, "8ca8a7e4-6d02-48e3-a029-0b2bf89de9f0", "susan.uk.29@example.com")
+      )),
+      List(
+        $AuthenticatedUserIsRequired,
+        UserHasMissingRoles,
+        InvalidFilterParameterFormat,
+        GetTopUsersError,
+        UnknownError
+      ),
+      apiTagMetric :: apiTagUser :: Nil,
+      Some(canReadMetrics :: Nil),
+      http4sPartialFunction = Some(getTopUsers)
+    )
+
+    // ─── getTopConsumers ──────────────────────────────────────────────────────────
+
+    val getTopConsumers: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "metrics" / "top-consumers" =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          for {
+            httpParams <- NewStyle.function.extractHttpParamsFromUrl(req.uri.renderString)
+            // See getTopUsers above for why the default from_date must be applied here.
+            (obpQueryParams, callContext) <- APIUtil.createQueriesByHttpParamsFuture(
+              APIMetrics.applyMetricsFromDateDefault(httpParams), cc.callContext)
+            topConsumers <- APIMetrics.apiMetrics.vend.getTopConsumersByConsumerIdFuture(obpQueryParams) map {
+              APIUtil.unboxFullOrFail(_, callContext, GetTopConsumersError)
+            }
+          } yield JSONFactory700.createTopConsumersJsonV700(topConsumers)
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getTopConsumers),
+      "GET",
+      "/management/metrics/top-consumers",
+      "Get Top Consumers",
+      s"""Get the Consumers (apps) behind the API traffic: one row per distinct consumer with its
+        |call count, sorted by count descending.
+        |
+        |Unlike the v3.1.0 version — which joins metric rows to consumers by APP NAME, dropping
+        |calls whose app name no longer matches a consumer and double-counting duplicate names —
+        |this groups by the consumer id stored on each metric row. For a given window and filters
+        |the number of distinct consumers listed here therefore matches the
+        |`distinct_consumer_count` field of GET /management/aggregate-metrics. Calls that carried
+        |no consumer are excluded. `app_name` and `developer_email` are empty when the consumer
+        |row no longer exists.
+        |
+        |require CanReadMetrics role
+        |
+        |Should be able to filter on the following fields
+        |
+        |eg: /management/metrics/top-consumers?from_date=$DateWithMsExampleString&to_date=$DateWithMsExampleString&limit=50
+        |
+        |1 from_date (defaults to just inside the metrics stable boundary, i.e. a few minutes ago) eg:from_date=$DateWithMsExampleString
+        |
+        |2 to_date (defaults to a far-future date, i.e. no upper bound) eg:to_date=$DateWithMsExampleString
+        |
+        |3 consumer_id  (if null ignore)
+        |
+        |4 user_id (if null ignore)
+        |
+        |5 anon (if null ignore) only support two value : true (return where user_id is null) or false (return where user_id is not null)
+        |
+        |6 url (if null ignore), note: can not contain '&'.
+        |
+        |7 app_name (if null ignore)
+        |
+        |8 implemented_by_partial_function (if null ignore)
+        |
+        |9 implemented_in_version (if null ignore)
+        |
+        |10 verb (if null ignore)
+        |
+        |11 correlation_id (if null ignore)
+        |
+        |12 limit (defaults to 50) eg: limit=200
+        |
+      """.stripMargin,
+      EmptyBody,
+      JSONFactory700.TopConsumersJsonV700(List(
+        JSONFactory700.TopConsumerJsonV700(1000, "7uy8a7e4-6d02-40e3-a129-0b2bf89de8uh", "API-EXPLORER", "developer@example.com"),
+        JSONFactory700.TopConsumerJsonV700(250, "8uy8a7e4-6d02-40e3-a129-0b2bf89de8uh", "API-Manager", "manager@example.com")
+      )),
+      List(
+        $AuthenticatedUserIsRequired,
+        UserHasMissingRoles,
+        InvalidFilterParameterFormat,
+        GetTopConsumersError,
+        UnknownError
+      ),
+      apiTagMetric :: apiTagApi :: Nil,
+      Some(canReadMetrics :: Nil),
+      http4sPartialFunction = Some(getTopConsumers)
     )
 
     // ── Trading Endpoints ──────────────────────────────────────────────────
@@ -1559,10 +2145,13 @@ object Http4s700 {
         address = "0xdestination",
         status = "pending",
         tx_hash = None,
-        confirmations = None,
+        // An Option[<value type>] left at None publishes as a $ref to a definition that does not
+        // exist - see refineErasedTypeArgument in SwaggerJSONFactory. The example value is what the
+        // field's documented type is derived from, so it has to be present.
+        confirmations = Some(3),
         required_confirmations = 12,
-        nonce = None,
-        gas_used = None,
+        nonce = Some(42L),
+        gas_used = Some(21000L),
         error_message = None,
         user_id = "user-abc-123",
         consent_id = None,
@@ -1836,13 +2425,6 @@ object Http4s700 {
     // the DoS surface to "spam yourself", and the role gate (canCreateTestEmail)
     // restricts it further to trusted operators.
 
-    case class TestEmailResponseJsonV700(
-      to: String,
-      from: String,
-      subject: String,
-      message_id: String
-    )
-
     val createTestEmail: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ POST -> `prefixPath` / "management" / "self-test-emails" =>
         EndpointHelpers.executeFutureCreated(req) {
@@ -1868,14 +2450,17 @@ object Http4s700 {
             _ <- Helper.booleanToFuture(UserEmailAddressMissing, 400, Some(cc)) {
               toAddress.nonEmpty
             }
+            // 503, not 500. The server is not broken -- it is not configured to do this, and a
+            // 500 tells a caller with retry logic that the fault is transient. Neither of these
+            // resolves without an operator editing props.
             _ <- Helper.booleanToFuture(
               s"$IncompleteServerConfiguration portal_external_url is not set — signup-validation and password-reset emails will not be delivered.",
-              500, Some(cc)) {
+              503, Some(cc)) {
               portalUrlBox.isDefined
             }
             _ <- Helper.booleanToFuture(
               s"$IncompleteServerConfiguration mail.users.userinfo.sender.address is still the default 'noreply@example.com' — most SMTP servers will reject this From address.",
-              500, Some(cc)) {
+              503, Some(cc)) {
               fromAddress != "noreply@example.com"
             }
             sendOutcome <- Future {
@@ -1894,7 +2479,7 @@ object Http4s700 {
                 val (errMsg, status) = classifySmtpException(e)
                 Helper.booleanToFuture(errMsg, status, Some(cc)) { false }.map(_ => "")
             }
-          } yield TestEmailResponseJsonV700(
+          } yield JSONFactory700.TestEmailResponseJsonV700(
             to = toAddress,
             from = fromAddress,
             subject = subject,
@@ -1966,7 +2551,7 @@ object Http4s700 {
         |appended after `Detail:` so the operator can diagnose without server logs.
         |""".stripMargin,
       EmptyBody,
-      TestEmailResponseJsonV700(
+      JSONFactory700.TestEmailResponseJsonV700(
         to = "alice@example.com",
         from = "noreply@openbankproject.com",
         subject = "OBP test email from openbankproject.com",
@@ -2061,13 +2646,10 @@ object Http4s700 {
               if (!allowed) {
                 logger.info(s"createValidationEmail says: skipped (rate limit exceeded, count=$count, max=$ResendValidationRateLimit per ${ResendValidationRateLimitWindowSeconds}s)")
               } else {
-                AuthUser.find(
-                  By(AuthUser.username, username),
-                  By(AuthUser.provider, Constant.localIdentityProvider)
-                ) match {
-                  case Full(user) if user.email.get != null
-                                  && user.email.get.toLowerCase == emailLower
-                                  && !user.validated.get =>
+                AuthUser.findByUsernameAndProvider(username, Constant.localIdentityProvider) match {
+                  case Full(user) if user.email != null
+                                  && user.email.toLowerCase == emailLower
+                                  && !user.validated =>
                     val portalUrlBox = APIUtil.getPropsValue("portal_external_url")
                     val senderAddress = AuthUser.emailFrom
                     val portalMissing = portalUrlBox.isEmpty || portalUrlBox.exists(_.trim.isEmpty)
@@ -2080,7 +2662,7 @@ object Http4s700 {
                       val portalUrl = portalUrlBox.openOr("")
                       val expiryMinutes = APIUtil.getPropsAsIntValue("email_validation_token_expiry_minutes", 1440)
                         val claimsSet = new com.nimbusds.jwt.JWTClaimsSet.Builder()
-                          .subject(user.uniqueId.get)
+                          .subject(user.uniqueId)
                           .expirationTime(new java.util.Date(System.currentTimeMillis() + expiryMinutes * 60L * 1000L))
                           .issueTime(new java.util.Date())
                           .build()
@@ -2088,7 +2670,7 @@ object Http4s700 {
                       val emailLink = portalUrl + "/user-validation?token=" + java.net.URLEncoder.encode(jwtToken, "UTF-8")
                       val outcome = CommonsEmailWrapper.sendHtmlEmailEither(CommonsEmailWrapper.EmailContent(
                         from = senderAddress,
-                        to = List(user.email.get),
+                        to = List(user.email),
                         bcc = AuthUser.bccEmail.toList,
                         subject = "Sign up confirmation",
                         textContent = Some(s"Welcome! Please validate your account: $emailLink"),
@@ -3527,12 +4109,10 @@ object Http4s700 {
             val params = req.uri.query.params
             val limit = params.get("limit").flatMap(l => scala.util.Try(l.toInt).toOption)
               .filter(l => l > 0 && l <= 500).getOrElse(100)
-            val filters: List[net.liftweb.mapper.QueryParam[MessageOutbox]] = List(
-              params.get("status").map(_.trim.toUpperCase).filter(_.nonEmpty).map(s => By(MessageOutbox.Status, s)),
-              params.get("outbox_type").map(_.trim.toUpperCase).filter(_.nonEmpty).map(t => By(MessageOutbox.OutboxType, t))
-            ).flatten
-            val rows = MessageOutbox.findAll(
-              (filters ::: List(OrderBy(MessageOutbox.id, Descending), MaxRows[MessageOutbox](limit))): _*)
+            val rows = MessageOutbox.findAllFiltered(
+              params.get("status").map(_.trim.toUpperCase).filter(_.nonEmpty),
+              params.get("outbox_type").map(_.trim.toUpperCase).filter(_.nonEmpty),
+              limit)
             JSONFactory700.MessageOutboxJsonV700(rows.map(JSONFactory700.createMessageOutboxRowJson))
           }
         }
@@ -3543,7 +4123,7 @@ object Http4s700 {
         EndpointHelpers.withUser(req) { (_, cc) =>
           import code.messageoutbox.MessageOutbox
           val rowOpt: Option[MessageOutbox] = scala.util.Try(outboxIdStr.toLong).toOption
-            .flatMap(id => MessageOutbox.find(By(MessageOutbox.id, id)).toOption)
+            .flatMap(id => MessageOutbox.findById(id).toOption)
           for {
             _ <- Helper.booleanToFuture(s"$MessageOutboxRowNotFound OUTBOX_ID: $outboxIdStr", failCode = 404, cc = Some(cc)) {
               rowOpt.isDefined
@@ -3553,7 +4133,8 @@ object Http4s700 {
               row.status == MessageOutbox.STATUS_STICKY
             }
             updated <- scala.concurrent.Future {
-              row.Status(MessageOutbox.STATUS_PENDING).Attempts(0).LastError("").saveMe()
+              MessageOutbox.resetForRetry(row.id)
+                .openOrThrowException("the row just checked must still be readable")
             }
           } yield JSONFactory700.createMessageOutboxRowJson(updated)
         }
@@ -3648,8 +4229,14 @@ object Http4s700 {
           case None => Future.successful(AccountId(APIUtil.generateUUID()))
         }
         // CanCreateAccount is enforced by ResourceDocMiddleware from the doc.
-        ownerId = body.user_id.filter(_.trim.nonEmpty).getOrElse(user.userId)
+        // The implicit owner is the HUMAN: under a Consent the caller (user.userId) is the
+        // per-consent shadow, and an account held by it strands when the consent dies.
+        ownerId = body.user_id.filter(_.trim.nonEmpty).getOrElse(cc.accountableUserId)
         (owner, _) <- NewStyle.function.findByUserId(ownerId, Some(cc))
+        // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+        _ <- Helper.booleanToFuture(
+          s"$InvalidUserId user_id names a consent user (an agent identity minted by a Consent). Accounts are held by humans - use the granting user's USER_ID.",
+          failCode = 400, cc = Some(cc))(!owner.isConsentUser)
         initialBalance <- NewStyle.function.tryons(InvalidAccountInitialBalance, 400, Some(cc)) {
           BigDecimal(body.balance.amount)
         }
@@ -4605,6 +5192,187 @@ object Http4s700 {
         http4sPartialFunction = Some(testRollbackEndpoint)
       )
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Dynamic-code provenance (v7.0.0, read-only)
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET-only endpoints that expose the provenance captured on the v4.0.0 create/update
+    // endpoints (created_by_user_id, updated_by_user_id, method_body_hash, created_at,
+    // updated_at) for the three runtime-compiled-code types. The v4 create/update/get shapes are
+    // frozen (STABLE); these v7 reads wrap the unchanged v4 resource JSON with a `provenance`
+    // object. Create/update/delete stay on v4. Roles mirror the v4 GET roles.
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    val getDynamicResourceDocsProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "dynamic-resource-docs" =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          Future(code.dynamicResourceDoc.DynamicResourceDoc.findAll(None))
+            .map(rows => JSONFactory700.DynamicResourceDocsProvenanceJsonV700(
+              rows.map(JSONFactory700.createDynamicResourceDocProvenanceJsonV700)))
+        }
+    }
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getDynamicResourceDocsProvenance),
+      "GET",
+      "/management/dynamic-resource-docs",
+      "Get Dynamic Resource Docs (with provenance)",
+      s"""Returns all Dynamic Resource Docs, each wrapped with a `provenance` object recording who created / last updated the runtime-compiled code and a SHA-256 of its method body.
+        |
+        |This is the v7.0.0 read view of the v4.0.0 Dynamic Resource Docs; create / update / delete remain on v4.0.0.
+        |
+        |${userAuthenticationMessage(true)}""".stripMargin,
+      EmptyBody,
+      JSONFactory700.DynamicResourceDocsProvenanceJsonV700(Nil),
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, UnknownError),
+      apiTagDynamicResourceDoc :: Nil,
+      Some(List(ApiRole.canGetAllDynamicResourceDocs)),
+      http4sPartialFunction = Some(getDynamicResourceDocsProvenance)
+    )
+
+    val getDynamicResourceDocProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "dynamic-resource-docs" / dynamicResourceDocId =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          Future(code.dynamicResourceDoc.DynamicResourceDoc.findById(None, dynamicResourceDocId))
+            .map(box => unboxFullOrFail(box, Some(cc), s"$DynamicResourceDocNotFound Current DYNAMIC_RESOURCE_DOC_ID($dynamicResourceDocId)", 404))
+            .map(JSONFactory700.createDynamicResourceDocProvenanceJsonV700)
+        }
+    }
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getDynamicResourceDocProvenance),
+      "GET",
+      "/management/dynamic-resource-docs/DYNAMIC_RESOURCE_DOC_ID",
+      "Get Dynamic Resource Doc (with provenance)",
+      s"""Returns the Dynamic Resource Doc specified by DYNAMIC_RESOURCE_DOC_ID, wrapped with a `provenance` object (created_by_user_id, updated_by_user_id, method_body_hash, created_at, updated_at).
+        |
+        |This is the v7.0.0 read view of the v4.0.0 Dynamic Resource Doc; create / update / delete remain on v4.0.0.
+        |
+        |${userAuthenticationMessage(true)}""".stripMargin,
+      EmptyBody,
+      JSONFactory700.DynamicResourceDocProvenanceJsonV700(
+        jsonDynamicResourceDoc,
+        JSONFactory700.ProvenanceJsonV700(Some(code.api.util.ExampleValue.userIdExample.value), None, Some("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"), Some(APIUtil.DateWithMsExampleString), Some(APIUtil.DateWithMsExampleString))
+      ),
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, DynamicResourceDocNotFound, UnknownError),
+      apiTagDynamicResourceDoc :: Nil,
+      Some(List(ApiRole.canGetDynamicResourceDoc)),
+      http4sPartialFunction = Some(getDynamicResourceDocProvenance)
+    )
+
+    val getConnectorMethodsProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "connector-methods" =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          Future(code.connectormethod.DoobieConnectorMethodProvider.getAllWithProvenance())
+            .map(rows => JSONFactory700.ConnectorMethodsProvenanceJsonV700(
+              rows.map(JSONFactory700.createConnectorMethodProvenanceJsonV700)))
+        }
+    }
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getConnectorMethodsProvenance),
+      "GET",
+      "/management/connector-methods",
+      "Get Connector Methods (with provenance)",
+      s"""Returns all Connector Methods, each wrapped with a `provenance` object recording who created / last updated the runtime-compiled code and a SHA-256 of its method body.
+        |
+        |This is the v7.0.0 read view of the v4.0.0 Connector Methods; create / update remain on v4.0.0.
+        |
+        |${userAuthenticationMessage(true)}""".stripMargin,
+      EmptyBody,
+      JSONFactory700.ConnectorMethodsProvenanceJsonV700(Nil),
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, UnknownError),
+      apiTagConnectorMethod :: Nil,
+      Some(List(ApiRole.canGetAllConnectorMethods)),
+      http4sPartialFunction = Some(getConnectorMethodsProvenance)
+    )
+
+    val getConnectorMethodProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "connector-methods" / connectorMethodId =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          Future(code.connectormethod.DoobieConnectorMethodProvider.getByIdWithProvenance(connectorMethodId))
+            .map(box => unboxFullOrFail(box, Some(cc), s"$ConnectorMethodNotFound Current CONNECTOR_METHOD_ID($connectorMethodId)", 404))
+            .map(JSONFactory700.createConnectorMethodProvenanceJsonV700)
+        }
+    }
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getConnectorMethodProvenance),
+      "GET",
+      "/management/connector-methods/CONNECTOR_METHOD_ID",
+      "Get Connector Method (with provenance)",
+      s"""Returns the Connector Method specified by CONNECTOR_METHOD_ID, wrapped with a `provenance` object (created_by_user_id, updated_by_user_id, method_body_hash, created_at, updated_at).
+        |
+        |This is the v7.0.0 read view of the v4.0.0 Connector Method; create / update remain on v4.0.0.
+        |
+        |${userAuthenticationMessage(true)}""".stripMargin,
+      EmptyBody,
+      JSONFactory700.ConnectorMethodProvenanceJsonV700(
+        jsonScalaConnectorMethod,
+        JSONFactory700.ProvenanceJsonV700(Some(code.api.util.ExampleValue.userIdExample.value), None, Some("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"), Some(APIUtil.DateWithMsExampleString), Some(APIUtil.DateWithMsExampleString))
+      ),
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, ConnectorMethodNotFound, UnknownError),
+      apiTagConnectorMethod :: Nil,
+      Some(List(ApiRole.canGetConnectorMethod)),
+      http4sPartialFunction = Some(getConnectorMethodProvenance)
+    )
+
+    val getDynamicMessageDocsProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "dynamic-message-docs" =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          Future(code.dynamicMessageDoc.DynamicMessageDoc.findAll(None))
+            .map(rows => JSONFactory700.DynamicMessageDocsProvenanceJsonV700(
+              rows.map(JSONFactory700.createDynamicMessageDocProvenanceJsonV700)))
+        }
+    }
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getDynamicMessageDocsProvenance),
+      "GET",
+      "/management/dynamic-message-docs",
+      "Get Dynamic Message Docs (with provenance)",
+      s"""Returns all Dynamic Message Docs, each wrapped with a `provenance` object recording who created / last updated the runtime-compiled code and a SHA-256 of its method body.
+        |
+        |This is the v7.0.0 read view of the v4.0.0 Dynamic Message Docs; create / update / delete remain on v4.0.0.
+        |
+        |${userAuthenticationMessage(true)}""".stripMargin,
+      EmptyBody,
+      JSONFactory700.DynamicMessageDocsProvenanceJsonV700(Nil),
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, UnknownError),
+      apiTagDynamicMessageDoc :: Nil,
+      Some(List(ApiRole.canGetAllDynamicMessageDocs)),
+      http4sPartialFunction = Some(getDynamicMessageDocsProvenance)
+    )
+
+    val getDynamicMessageDocProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      case req @ GET -> `prefixPath` / "management" / "dynamic-message-docs" / dynamicMessageDocId =>
+        EndpointHelpers.withUser(req) { (_, cc) =>
+          Future(code.dynamicMessageDoc.DynamicMessageDoc.findById(None, dynamicMessageDocId))
+            .map(box => unboxFullOrFail(box, Some(cc), s"$DynamicMessageDocNotFound Current DYNAMIC_MESSAGE_DOC_ID($dynamicMessageDocId)", 404))
+            .map(JSONFactory700.createDynamicMessageDocProvenanceJsonV700)
+        }
+    }
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(getDynamicMessageDocProvenance),
+      "GET",
+      "/management/dynamic-message-docs/DYNAMIC_MESSAGE_DOC_ID",
+      "Get Dynamic Message Doc (with provenance)",
+      s"""Returns the Dynamic Message Doc specified by DYNAMIC_MESSAGE_DOC_ID, wrapped with a `provenance` object (created_by_user_id, updated_by_user_id, method_body_hash, created_at, updated_at).
+        |
+        |This is the v7.0.0 read view of the v4.0.0 Dynamic Message Doc; create / update / delete remain on v4.0.0.
+        |
+        |${userAuthenticationMessage(true)}""".stripMargin,
+      EmptyBody,
+      JSONFactory700.DynamicMessageDocProvenanceJsonV700(
+        jsonDynamicMessageDoc,
+        JSONFactory700.ProvenanceJsonV700(Some(code.api.util.ExampleValue.userIdExample.value), None, Some("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"), Some(APIUtil.DateWithMsExampleString), Some(APIUtil.DateWithMsExampleString))
+      ),
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, DynamicMessageDocNotFound, UnknownError),
+      apiTagDynamicMessageDoc :: Nil,
+      Some(List(ApiRole.canGetDynamicMessageDoc)),
+      http4sPartialFunction = Some(getDynamicMessageDocProvenance)
+    )
 
     // All routes combined (without middleware - for direct use).
     //

@@ -11,14 +11,12 @@ import code.api.dynamic.entity.helper.{DynamicEntityHelper, DynamicEntityInfo}
 import code.api.util.APIUtil._
 import code.api.util.ErrorMessages.{InsufficientAuthorisationToCreateTransactionRequest, _}
 import code.api.{APIFailureNewStyle, Constant, JsonResponseException}
-import code.apicollection.{ApiCollectionTrait, MappedApiCollectionsProvider}
+import code.apicollection.{ApiCollectionTrait, DoobieApiCollectionsProvider}
 import code.apiproduct.{ApiProductTrait, MappedApiProductsProvider}
-import code.apiproductattribute.{ApiProductAttributeTrait, MappedApiProductAttributesProvider}
-import code.apicollectionendpoint.{ApiCollectionEndpointTrait, MappedApiCollectionEndpointsProvider}
-import code.featuredapicollection.{FeaturedApiCollectionTrait, MappedFeaturedApiCollectionsProvider}
-import code.atmattribute.AtmAttribute
+import code.apiproductattribute.{ApiProductAttributeTrait, DoobieApiProductAttributesProvider}
+import code.apicollectionendpoint.{ApiCollectionEndpointTrait, DoobieApiCollectionEndpointsProvider}
+import code.featuredapicollection.{FeaturedApiCollectionTrait, DoobieFeaturedApiCollectionsProvider}
 import code.authtypevalidation.{AuthenticationTypeValidationProvider, JsonAuthTypeValidation}
-import code.bankattribute.BankAttribute
 import code.bankconnectors.Connector
 import code.branches.Branches.{Branch, DriveUpString, LobbyString}
 import code.connectormethod.{ConnectorMethodProvider, JsonConnectorMethod}
@@ -31,11 +29,11 @@ import code.dynamicResourceDoc.{DynamicResourceDocProvider, JsonDynamicResourceD
 import code.endpointMapping.{EndpointMappingProvider, EndpointMappingT}
 import code.entitlement.Entitlement
 import code.entitlementrequest.EntitlementRequest
-import code.fx.{MappedFXRate, fx}
+import code.fx.{DoobieFXRateQueries, fx}
 import code.metadata.counterparties.Counterparties
 import code.methodrouting.{MethodRoutingCommons, MethodRoutingProvider, MethodRoutingT}
 import code.model._
-import code.model.dataAccess.{AuthUser, BankAccountRouting}
+import code.model.dataAccess.AuthUser
 import code.usercustomerlinks.UserCustomerLink
 import code.users._
 import code.util.Helper
@@ -53,7 +51,6 @@ import com.openbankproject.commons.model.enums.StrongCustomerAuthentication.SCA
 import com.openbankproject.commons.model.enums.StrongCustomerAuthenticationStatus.SCAStatus
 import com.openbankproject.commons.model.enums.{SuppliedAnswerType, _}
 import com.openbankproject.commons.util.JsonUtils
-import com.tesobe.CacheKeyFromArguments
 import net.liftweb.common._
 import code.api.JsonResponse
 import org.json4s.JsonDSL._
@@ -65,7 +62,6 @@ import org.apache.commons.lang3.StringUtils
 
 import java.security.AccessControlException
 import java.util.Date
-import java.util.UUID.randomUUID
 import scala.concurrent.Future
 import scala.reflect.runtime.universe.MethodSymbol
 
@@ -389,7 +385,7 @@ object NewStyle extends MdcLoggable{
       }
     }
 
-    def getAccountRouting(bankId: Option[BankId], scheme: String, address: String, callContext: Option[CallContext]) : OBPReturnType[BankAccountRouting] = {
+    def getAccountRouting(bankId: Option[BankId], scheme: String, address: String, callContext: Option[CallContext]) : OBPReturnType[BankAccountRoutingTrait] = {
       Future(Connector.connector.vend.getAccountRouting(bankId: Option[BankId], scheme: String, address : String, callContext: Option[CallContext])) map { i =>
         unboxFullOrFail(i, callContext,s"$AccountRoutingNotFound Current scheme is $scheme, current address is $address, current bankId is $bankId", 404 )
       }
@@ -419,7 +415,7 @@ object NewStyle extends MdcLoggable{
       }
     }
 
-    def getAccountRoutingsByScheme(bankId: Option[BankId], scheme: String, callContext: Option[CallContext]) : OBPReturnType[List[BankAccountRouting]] = {
+    def getAccountRoutingsByScheme(bankId: Option[BankId], scheme: String, callContext: Option[CallContext]) : OBPReturnType[List[BankAccountRoutingTrait]] = {
       Connector.connector.vend.getAccountRoutingsByScheme(bankId: Option[BankId], scheme: String, callContext: Option[CallContext]) map { i =>
         (unboxFullOrFail(i._1, callContext,s"$AccountRoutingNotFound Current scheme is $scheme, current bankId is $bankId", 404 ), i._2)
       }
@@ -549,7 +545,7 @@ object NewStyle extends MdcLoggable{
         unboxFullOrFail(_, callContext, s"$InsufficientAuthorisationToCreateTransactionRequest " +
           s"Current ViewId(${viewId.value})," +
           s"current UserId(${user.userId})"+
-          s"current ConsumerId(${callContext.map(_.consumer.map(_.consumerId.get).getOrElse("")).getOrElse("")})"
+          s"current ConsumerId(${callContext.map(_.consumer.map(_.consumerId).getOrElse("")).getOrElse("")})"
         )
       }
     }
@@ -630,7 +626,7 @@ object NewStyle extends MdcLoggable{
       Consumers.consumers.vend.getConsumerByConsumerIdFuture(consumerId) map {
         unboxFullOrFail(_, callContext, s"$ConsumerNotFoundByConsumerId Current ConsumerId is $consumerId", 404)
       } map {
-        c => c.isActive.get match {
+        c => c.isActive match {
           case true => c
           case false => unboxFullOrFail(Empty, callContext, s"$ConsumerIsDisabled ConsumerId: $consumerId")
         }
@@ -1786,7 +1782,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isActive: Option[Boolean],
       callContext: Option[CallContext]
-    ): OBPReturnType[BankAttribute] = {
+    ): OBPReturnType[BankAttributeTrait] = {
       Connector.connector.vend.createOrUpdateBankAttribute(
         bankId: BankId,
         bankAttributeId: Option[String],
@@ -1809,7 +1805,7 @@ object NewStyle extends MdcLoggable{
       value: String,
       isActive: Option[Boolean],
       callContext: Option[CallContext]
-    ): OBPReturnType[AtmAttribute] = {
+    ): OBPReturnType[AtmAttributeTrait] = {
       Connector.connector.vend.createOrUpdateAtmAttribute(
         bankId: BankId,
         atmId: AtmId,
@@ -1832,7 +1828,7 @@ object NewStyle extends MdcLoggable{
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
-    def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[List[AtmAttribute]] = {
+    def getAtmAttributesByAtm(bank: BankId, atm: AtmId, callContext: Option[CallContext]): OBPReturnType[List[AtmAttributeTrait]] = {
       Connector.connector.vend.getAtmAttributesByAtm(
         bank: BankId,
         atm: AtmId,
@@ -1870,7 +1866,7 @@ object NewStyle extends MdcLoggable{
     def getBankAttributeById(
       bankAttributeId: String,
       callContext: Option[CallContext]
-    ): OBPReturnType[BankAttribute] = {
+    ): OBPReturnType[BankAttributeTrait] = {
       Connector.connector.vend.getBankAttributeById(
         bankAttributeId: String,
         callContext: Option[CallContext]
@@ -1882,7 +1878,7 @@ object NewStyle extends MdcLoggable{
     def getAtmAttributeById(
       atmAttributeId: String,
       callContext: Option[CallContext]
-    ): OBPReturnType[AtmAttribute] = {
+    ): OBPReturnType[AtmAttributeTrait] = {
       Connector.connector.vend.getAtmAttributeById(
         atmAttributeId: String,
         callContext: Option[CallContext]
@@ -2439,14 +2435,10 @@ object NewStyle extends MdcLoggable{
               val inverseRate = fx.exchangeRate(toCurrencyCode, fromCurrencyCode, None, callContext)
               (rate, inverseRate) match {
                 case (Some(r), Some(ir)) =>
+                  // Not persisted - matches the Mapper version, which built this as an unsaved
+                  // instance purely to satisfy the FXRate return type.
                   Full(
-                    MappedFXRate.create
-                      .mBankId(bankId.value)
-                      .mFromCurrencyCode(fromCurrencyCode)
-                      .mToCurrencyCode(toCurrencyCode)
-                      .mConversionValue(r)
-                      .mInverseConversionValue(ir)
-                      .mEffectiveDate(new Date())
+                    code.fx.FXRateRow(bankId, fromCurrencyCode, toCurrencyCode, r, ir, new Date())
                   )
                 case _ => fallbackFxRate
               }
@@ -2775,8 +2767,7 @@ object NewStyle extends MdcLoggable{
         legalName: String,
         mobileNumber: String,
         email: String,
-        faceImage:
-          CustomerFaceImageTrait,
+        faceImage: CustomerFaceImageTrait,
         dateOfBirth: Date,
         relationshipStatus: String,
         dependents: Int,
@@ -2824,8 +2815,7 @@ object NewStyle extends MdcLoggable{
         customerNumber: String,
         mobileNumber: String,
         email: String,
-        faceImage:
-          CustomerFaceImageTrait,
+        faceImage: CustomerFaceImageTrait,
         dateOfBirth: Date,
         relationshipStatus: String,
         dependents: Int,
@@ -3100,14 +3090,14 @@ object NewStyle extends MdcLoggable{
     }
     def checkMethodRoutingAlreadyExists(methodRouting: MethodRoutingT, callContext:Option[CallContext]): OBPReturnType[Boolean] = Future {
       val methodRoutingCommons: MethodRoutingCommons = {
-        val commons: MethodRoutingCommons = methodRouting
+        val commons: MethodRoutingCommons = MethodRoutingCommons.toCommons(methodRouting)
         commons.copy(methodRoutingId = None, parameters = commons.parameters.sortBy(_.key))
       }
 
       val exists: Boolean =
         this.getMethodRoutings(Some(methodRouting.methodName), Option(methodRouting.isBankIdExactMatch), methodRouting.bankIdPattern)
           .exists {v =>
-              val commons: MethodRoutingCommons = v
+              val commons: MethodRoutingCommons = MethodRoutingCommons.toCommons(v)
               methodRoutingCommons == commons.copy(methodRoutingId = None, parameters = commons.parameters.sortBy(_.key))
           }
 
@@ -3330,18 +3320,18 @@ object NewStyle extends MdcLoggable{
     def getMethodRoutings(methodName: Option[String], isBankIdExactMatch: Option[Boolean] = None, bankIdPattern: Option[String] = None): List[MethodRoutingT] = {
       import scala.concurrent.duration._
 
-      var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-      CacheKeyFromArguments.buildCacheKey {
-        Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(methodRoutingTTL.second) {
-          MethodRoutingProvider.connectorMethodProvider.vend.getMethodRoutings(methodName, isBankIdExactMatch, bankIdPattern)
-        }
+      val cacheKey = ("code.api.util.NewStyle.function", "getMethodRoutings", List(methodName, isBankIdExactMatch, bankIdPattern).mkString("_"))
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(methodRoutingTTL.second) {
+        MethodRoutingProvider.connectorMethodProvider.vend.getMethodRoutings(methodName, isBankIdExactMatch, bankIdPattern)
       }
     }
 
     def createOrUpdateEndpointMapping(bankId: Option[String], endpointMapping: EndpointMappingT, callContext: Option[CallContext]) = {
       validateBankId(bankId, callContext)
       Future {
-        (EndpointMappingProvider.endpointMappingProvider.vend.createOrUpdate(bankId, endpointMapping), callContext)
+        val result = EndpointMappingProvider.endpointMappingProvider.vend.createOrUpdate(bankId, endpointMapping)
+        invalidateEndpointMappingCache()
+        (result, callContext)
       } map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
@@ -3350,11 +3340,47 @@ object NewStyle extends MdcLoggable{
     def deleteEndpointMapping(bankId: Option[String], endpointMappingId: String, callContext: Option[CallContext]) = {
       validateBankId(bankId, callContext)
       Future {
-        (EndpointMappingProvider.endpointMappingProvider.vend.delete(bankId, endpointMappingId), callContext)
+        val result = EndpointMappingProvider.endpointMappingProvider.vend.delete(bankId, endpointMappingId)
+        invalidateEndpointMappingCache()
+        (result, callContext)
       } map {
         i => (connectorEmptyResponse(i._1, callContext), i._2)
       }
     }
+
+    /**
+     * Drop every memoized `getEndpointMappings(...)` entry after a mapping is created,
+     * updated, or deleted, so the change takes effect on the next request instead of waiting
+     * out `endpointMapping.cache.ttl.seconds`. Mirrors invalidateMethodRoutingCache: the
+     * memoize key embeds the literal method name, so one pattern delete clears every bankId
+     * variant. The pattern is a prefix of the actual name the macro renders
+     * (`getEndpointMappingsCached`), which is what makes one wildcard cover it. No-op / logged
+     * when Redis is unavailable (deleteKeysByPattern swallows and returns 0).
+     *
+     * This became necessary with the cache key fix below. While callContext was part of the
+     * key nothing could ever hit, so a stale entry was unreachable by construction; now that
+     * the cache works, writes have to publish themselves.
+     *
+     * A single delete here is not quite enough: a reader that fetched the pre-write value from
+     * the provider a moment earlier can still complete its own cache write AFTER this delete
+     * finishes, silently reintroducing the stale entry for the rest of the TTL -- nothing else
+     * would clear it until the next write. Scheduling a second delete closes that window the
+     * conventional way: any straggler write that lands in the gap gets cleared shortly after,
+     * long before an operator or caller would reasonably treat it as current.
+     */
+    private[util] def invalidateEndpointMappingCache(): Unit = {
+      Redis.deleteKeysByPattern("*getEndpointMappings*")
+      code.actorsystem.ObpActorSystem.localActorSystem.scheduler.scheduleOnce(
+        endpointMappingCacheInvalidationDelay
+      )(Redis.deleteKeysByPattern("*getEndpointMappings*"))(
+        code.actorsystem.ObpActorSystem.localActorSystem.dispatcher
+      )
+      ()
+    }
+
+    private[util] val endpointMappingCacheInvalidationDelay: scala.concurrent.duration.FiniteDuration =
+      scala.concurrent.duration.FiniteDuration(
+        APIUtil.getPropsAsIntValue("endpointMapping.cache.invalidation.delay.ms", 500), "ms")
 
     def getEndpointMappingById(bankId: Option[String], endpointMappingId : String, callContext: Option[CallContext]): OBPReturnType[EndpointMappingT] = {
       validateBankId(bankId, callContext)
@@ -3378,19 +3404,31 @@ object NewStyle extends MdcLoggable{
 
     private[this] val endpointMappingTTL = APIUtil.getPropsValue(s"endpointMapping.cache.ttl.seconds", "0").toInt
 
+    // The cache key and the cached value both cover the bankId only - callContext is
+    // deliberately excluded from each, which diverges from the macro-era key format at this
+    // site. CallContext carries per-request state (startTime, correlationId, url, verb,
+    // ipAddress, user), so keying on it made the key unique per request and the cache could
+    // never hit.
+    //
+    // Unlike getCurrentFxRateCached, this site was not also leaking Redis keys: the cached
+    // VALUE was the (mappings, callContext) tuple, and chill/Kryo cannot serialize the lambda
+    // reachable through CallContext.resourceDocument (an HttpRoutes[IO]). Every write failed
+    // and cachePut swallowed it as "result served uncached", so setting
+    // endpointMapping.cache.ttl.seconds bought nothing but a WARN per call. Caching only the
+    // mappings fixes that, and it is also what keeps a hit from handing the caller some
+    // earlier request's CallContext.
     def getEndpointMappings(bankId: Option[String], callContext: Option[CallContext]): OBPReturnType[List[EndpointMappingT]] = Future{
       import scala.concurrent.duration._
 
       validateBankId(bankId, callContext)
 
-      var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-      CacheKeyFromArguments.buildCacheKey {
-        Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(endpointMappingTTL.second) {
-          {(EndpointMappingProvider.endpointMappingProvider.vend.getAllEndpointMappings(bankId), callContext)}
-        }
+      val cacheKey = ("code.api.util.NewStyle.function", "getEndpointMappings", List(bankId).mkString("_"))
+      val endpointMappings = Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(endpointMappingTTL.second) {
+        EndpointMappingProvider.endpointMappingProvider.vend.getAllEndpointMappings(bankId)
       }
+      (endpointMappings, callContext)
     }
-    
+
     /**
      * Invalidate the Redis-backed resource-doc caches whose contents include
      * dynamic-entity documentation (the `dynamic` and `all` views). Bumping the
@@ -3523,22 +3561,18 @@ object NewStyle extends MdcLoggable{
 
       validateBankId(bankId, None)
 
-      var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-      CacheKeyFromArguments.buildCacheKey {
-        Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(dynamicEntityTTL.second) {
-          DynamicEntityProvider.connectorMethodProvider.vend.getDynamicEntities(bankId, returnBothBankAndSystemLevel)
-        }
+      val cacheKey = ("code.api.util.NewStyle.function", "getDynamicEntities", List(bankId, returnBothBankAndSystemLevel).mkString("_"))
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(dynamicEntityTTL.second) {
+        DynamicEntityProvider.connectorMethodProvider.vend.getDynamicEntities(bankId, returnBothBankAndSystemLevel)
       }
     }
     
     def getDynamicEntitiesByUserId(userId: String): List[DynamicEntityT] = {
       import scala.concurrent.duration._
 
-      var cacheKey = (randomUUID().toString, randomUUID().toString, randomUUID().toString)
-      CacheKeyFromArguments.buildCacheKey {
-        Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(dynamicEntityTTL.second) {
-          DynamicEntityProvider.connectorMethodProvider.vend.getDynamicEntitiesByUserId(userId: String)
-        }
+      val cacheKey = ("code.api.util.NewStyle.function", "getDynamicEntitiesByUserId", List(userId).mkString("_"))
+      Caching.memoizeSyncWithProvider(Some(cacheKey.toString()))(dynamicEntityTTL.second) {
+        DynamicEntityProvider.connectorMethodProvider.vend.getDynamicEntitiesByUserId(userId: String)
       }
     }
     
@@ -3893,33 +3927,33 @@ object NewStyle extends MdcLoggable{
 
 
     def getApiCollectionById(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.getApiCollectionById(apiCollectionId)) map {
+      Future(DoobieApiCollectionsProvider.getApiCollectionById(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionNotFound Please specify a valid value for API_COLLECTION_ID. Current API_COLLECTION_ID($apiCollectionId) "), callContext)
       }
     }
 
     def getApiCollectionByUserIdAndCollectionName(userId : String, apiCollectionName : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.getApiCollectionByUserIdAndCollectionName(userId, apiCollectionName)) map {
+      Future(DoobieApiCollectionsProvider.getApiCollectionByUserIdAndCollectionName(userId, apiCollectionName)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionNotFound Please specify a valid value for API_COLLECTION_NAME. Current API_COLLECTION_NAME($apiCollectionName) "), callContext)
       }
     }
 
     def getApiCollectionsByUserId(userId : String, callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
-      Future(MappedApiCollectionsProvider.getApiCollectionsByUserId(userId), callContext) 
+      Future(DoobieApiCollectionsProvider.getApiCollectionsByUserId(userId), callContext) 
     }
 
     def getAllApiCollections(callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
-      Future(MappedApiCollectionsProvider.getAllApiCollections(), callContext) 
+      Future(DoobieApiCollectionsProvider.getAllApiCollections(), callContext) 
     }
 
     def getFeaturedApiCollections(callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionTrait]] = {
       // First get featured collections from database, sorted by sortOrder
-      val dbFeaturedApiCollections = MappedFeaturedApiCollectionsProvider.getAllFeaturedApiCollections()
+      val dbFeaturedApiCollections = DoobieFeaturedApiCollectionsProvider.getAllFeaturedApiCollections()
       val dbApiCollectionIds = dbFeaturedApiCollections.map(_.apiCollectionId).toSet
 
       // Get actual ApiCollections for database featured entries
       val dbApiCollections = dbFeaturedApiCollections
-        .map(f => MappedApiCollectionsProvider.getApiCollectionById(f.apiCollectionId))
+        .map(f => DoobieApiCollectionsProvider.getApiCollectionById(f.apiCollectionId))
         .filter(_.isDefined)
         .filter(_.head.isSharable)
         .map(_.head)
@@ -3934,7 +3968,7 @@ object NewStyle extends MdcLoggable{
 
       // Get actual ApiCollections for props entries and sort them by name
       val propsApiCollections = propsApiCollectionIds
-        .map(MappedApiCollectionsProvider.getApiCollectionById)
+        .map(DoobieApiCollectionsProvider.getApiCollectionById)
         .filter(_.isDefined)
         .filter(_.head.isSharable)
         .map(_.head)
@@ -3951,7 +3985,7 @@ object NewStyle extends MdcLoggable{
       description: String,
       callContext: Option[CallContext]
     ) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.createApiCollection(
+      Future(DoobieApiCollectionsProvider.createApiCollection(
         userId: String,
         apiCollectionName: String,
         isSharable: Boolean,
@@ -3967,7 +4001,7 @@ object NewStyle extends MdcLoggable{
                             description: String, 
                             callContext: Option[CallContext]
     ) : OBPReturnType[ApiCollectionTrait] = {
-      Future(MappedApiCollectionsProvider.updateApiCollectionById(
+      Future(DoobieApiCollectionsProvider.updateApiCollectionById(
         apiCollectionId: String,
         apiCollectionName: String,
         description: String,
@@ -3994,7 +4028,7 @@ object NewStyle extends MdcLoggable{
     }
 
     def deleteApiCollectionById(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[Boolean] = {
-      Future(MappedApiCollectionsProvider.deleteApiCollectionById(apiCollectionId)) map {
+      Future(DoobieApiCollectionsProvider.deleteApiCollectionById(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteApiCollectionError Current API_COLLECTION_ID($apiCollectionId) "), callContext)
       }
     }
@@ -4053,13 +4087,13 @@ object NewStyle extends MdcLoggable{
     }
 
     def getApiProductAttributeById(apiProductAttributeId: String, callContext: Option[CallContext]): OBPReturnType[ApiProductAttributeTrait] = {
-      Future(MappedApiProductAttributesProvider.getApiProductAttributeById(apiProductAttributeId)) map {
+      Future(DoobieApiProductAttributesProvider.getApiProductAttributeById(apiProductAttributeId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiProductAttributeNotFound Current API_PRODUCT_ATTRIBUTE_ID($apiProductAttributeId)"), callContext)
       }
     }
 
     def getApiProductAttributesByBankIdAndCode(bankId: String, apiProductCode: String, callContext: Option[CallContext]): OBPReturnType[List[ApiProductAttributeTrait]] = {
-      Future(MappedApiProductAttributesProvider.getApiProductAttributesByBankIdAndCode(bankId, apiProductCode)) map {
+      Future(DoobieApiProductAttributesProvider.getApiProductAttributesByBankIdAndCode(bankId, apiProductCode)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiProductAttributeNotFound Current BANK_ID($bankId) API_PRODUCT_CODE($apiProductCode)"), callContext)
       }
     }
@@ -4074,7 +4108,7 @@ object NewStyle extends MdcLoggable{
       isActive: Option[Boolean],
       callContext: Option[CallContext]
     ): OBPReturnType[ApiProductAttributeTrait] = {
-      Future(MappedApiProductAttributesProvider.createOrUpdateApiProductAttribute(
+      Future(DoobieApiProductAttributesProvider.createOrUpdateApiProductAttribute(
         bankId, apiProductCode, apiProductAttributeId, name, attributeType, value, isActive
       )) map {
         i => (unboxFullOrFail(i, callContext, CreateApiProductAttributeError), callContext)
@@ -4082,13 +4116,13 @@ object NewStyle extends MdcLoggable{
     }
 
     def deleteApiProductAttribute(apiProductAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Boolean] = {
-      Future(MappedApiProductAttributesProvider.deleteApiProductAttribute(apiProductAttributeId)) map {
+      Future(DoobieApiProductAttributesProvider.deleteApiProductAttribute(apiProductAttributeId)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteApiProductAttributeError Current API_PRODUCT_ATTRIBUTE_ID($apiProductAttributeId)"), callContext)
       }
     }
 
     def deleteApiProductAttributesByBankIdAndCode(bankId: String, apiProductCode: String, callContext: Option[CallContext]): OBPReturnType[Boolean] = {
-      Future(MappedApiProductAttributesProvider.deleteApiProductAttributesByBankIdAndCode(bankId, apiProductCode)) map {
+      Future(DoobieApiProductAttributesProvider.deleteApiProductAttributesByBankIdAndCode(bankId, apiProductCode)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteApiProductAttributeError Current BANK_ID($bankId) API_PRODUCT_CODE($apiProductCode)"), callContext)
       }
     }
@@ -4098,7 +4132,7 @@ object NewStyle extends MdcLoggable{
       operationId: String,
       callContext: Option[CallContext]
     ) : OBPReturnType[ApiCollectionEndpointTrait] = {
-      Future(MappedApiCollectionEndpointsProvider.createApiCollectionEndpoint(
+      Future(DoobieApiCollectionEndpointsProvider.createApiCollectionEndpoint(
         apiCollectionId: String,
         operationId: String
       )) map {
@@ -4107,24 +4141,24 @@ object NewStyle extends MdcLoggable{
     }
 
     def getApiCollectionEndpointById(apiCollectionEndpointId : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionEndpointTrait] = {
-      Future(MappedApiCollectionEndpointsProvider.getApiCollectionEndpointById(apiCollectionEndpointId)) map {
+      Future(DoobieApiCollectionEndpointsProvider.getApiCollectionEndpointById(apiCollectionEndpointId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionEndpointNotFound Please specify a valid value for API_COLLECTION_ENDPOINT_ID. " +
           s"Current API_COLLECTION_ENDPOINT_ID($apiCollectionEndpointId) "), callContext)
       }
     }
 
     def getApiCollectionEndpointByApiCollectionIdAndOperationId(apiCollectionId:String, operationId : String, callContext: Option[CallContext]) : OBPReturnType[ApiCollectionEndpointTrait] = {
-      Future(MappedApiCollectionEndpointsProvider.getApiCollectionEndpointByApiCollectionIdAndOperationId(apiCollectionId, operationId)) map {
+      Future(DoobieApiCollectionEndpointsProvider.getApiCollectionEndpointByApiCollectionIdAndOperationId(apiCollectionId, operationId)) map {
         i => (unboxFullOrFail(i, callContext, s"$ApiCollectionEndpointNotFound Current API_COLLECTION_ID($apiCollectionId) and OPERATION_ID($operationId) "), callContext)
       }
     }
 
     def getApiCollectionEndpoints(apiCollectionId : String, callContext: Option[CallContext]) : OBPReturnType[List[ApiCollectionEndpointTrait]] = {
-      Future(MappedApiCollectionEndpointsProvider.getApiCollectionEndpoints(apiCollectionId), callContext)
+      Future(DoobieApiCollectionEndpointsProvider.getApiCollectionEndpoints(apiCollectionId), callContext)
     }
 
     def deleteApiCollectionEndpointById(apiCollectionEndpointById : String, callContext: Option[CallContext]) : OBPReturnType[Boolean] = {
-      Future(MappedApiCollectionEndpointsProvider.deleteApiCollectionEndpointById(apiCollectionEndpointById)) map {
+      Future(DoobieApiCollectionEndpointsProvider.deleteApiCollectionEndpointById(apiCollectionEndpointById)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteApiCollectionEndpointError Current API_COLLECTION_ENDPOINT_ID($apiCollectionEndpointById) "), callContext)
       }
     }
@@ -4135,7 +4169,7 @@ object NewStyle extends MdcLoggable{
       sortOrder: Int,
       callContext: Option[CallContext]
     ): OBPReturnType[FeaturedApiCollectionTrait] = {
-      Future(MappedFeaturedApiCollectionsProvider.createFeaturedApiCollection(apiCollectionId, sortOrder)) map {
+      Future(DoobieFeaturedApiCollectionsProvider.createFeaturedApiCollection(apiCollectionId, sortOrder)) map {
         i => (unboxFullOrFail(i, callContext, CreateFeaturedApiCollectionError), callContext)
       }
     }
@@ -4144,13 +4178,13 @@ object NewStyle extends MdcLoggable{
       apiCollectionId: String,
       callContext: Option[CallContext]
     ): OBPReturnType[FeaturedApiCollectionTrait] = {
-      Future(MappedFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
+      Future(DoobieFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$FeaturedApiCollectionNotFound Current API_COLLECTION_ID($apiCollectionId)"), callContext)
       }
     }
 
     def getAllFeaturedApiCollectionsAdmin(callContext: Option[CallContext]): OBPReturnType[List[FeaturedApiCollectionTrait]] = {
-      Future(MappedFeaturedApiCollectionsProvider.getAllFeaturedApiCollections(), callContext)
+      Future(DoobieFeaturedApiCollectionsProvider.getAllFeaturedApiCollections(), callContext)
     }
 
     def updateFeaturedApiCollection(
@@ -4159,9 +4193,9 @@ object NewStyle extends MdcLoggable{
       callContext: Option[CallContext]
     ): OBPReturnType[FeaturedApiCollectionTrait] = {
       Future {
-        val featured = MappedFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
+        val featured = DoobieFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
         featured.flatMap { f =>
-          MappedFeaturedApiCollectionsProvider.updateFeaturedApiCollection(f.featuredApiCollectionId, sortOrder)
+          DoobieFeaturedApiCollectionsProvider.updateFeaturedApiCollection(f.featuredApiCollectionId, sortOrder)
         }
       } map {
         i => (unboxFullOrFail(i, callContext, s"$UpdateFeaturedApiCollectionError Current API_COLLECTION_ID($apiCollectionId)"), callContext)
@@ -4172,7 +4206,7 @@ object NewStyle extends MdcLoggable{
       apiCollectionId: String,
       callContext: Option[CallContext]
     ): OBPReturnType[Boolean] = {
-      Future(MappedFeaturedApiCollectionsProvider.deleteFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
+      Future(DoobieFeaturedApiCollectionsProvider.deleteFeaturedApiCollectionByApiCollectionId(apiCollectionId)) map {
         i => (unboxFullOrFail(i, callContext, s"$DeleteFeaturedApiCollectionError Current API_COLLECTION_ID($apiCollectionId)"), callContext)
       }
     }
@@ -4182,7 +4216,7 @@ object NewStyle extends MdcLoggable{
       callContext: Option[CallContext]
     ): OBPReturnType[Boolean] = {
       Future {
-        val existing = MappedFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
+        val existing = DoobieFeaturedApiCollectionsProvider.getFeaturedApiCollectionByApiCollectionId(apiCollectionId)
         existing match {
           case net.liftweb.common.Full(_) =>
             throw new RuntimeException(FeaturedApiCollectionAlreadyExists)
@@ -4272,14 +4306,17 @@ object NewStyle extends MdcLoggable{
 
     def createJsonConnectorMethod(connectorMethod: JsonConnectorMethod, callContext: Option[CallContext]): OBPReturnType[JsonConnectorMethod] =
       Future {
-        val newInternalConnector = ConnectorMethodProvider.provider.vend.create(connectorMethod)
+        // provenance is taken from the authenticated CallContext user, never from the request body
+        val createdByUserId = callContext.flatMap(_.user).map(_.userId)
+        val newInternalConnector = ConnectorMethodProvider.provider.vend.create(connectorMethod, createdByUserId)
         val errorMsg = s"$UnknownError Can not create Connector Method in the backend. "
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonConnectorMethod(connectorMethodId: String, connectorMethodBody: String, programmingLang: String, callContext: Option[CallContext]): OBPReturnType[JsonConnectorMethod] =
       Future {
-        val updatedConnectorMethod = ConnectorMethodProvider.provider.vend.update(connectorMethodId, connectorMethodBody, programmingLang)
+        val updatedByUserId = callContext.flatMap(_.user).map(_.userId)
+        val updatedConnectorMethod = ConnectorMethodProvider.provider.vend.update(connectorMethodId, connectorMethodBody, programmingLang, updatedByUserId)
         val errorMsg = s"$UnknownError Can not update Connector Method in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }
@@ -4316,14 +4353,17 @@ object NewStyle extends MdcLoggable{
 
     def createJsonDynamicResourceDoc(bankId: Option[String], dynamicResourceDoc: JsonDynamicResourceDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicResourceDoc] =
       Future {
-        val newInternalConnector = DynamicResourceDocProvider.provider.vend.create(bankId, dynamicResourceDoc)
+        // provenance is taken from the authenticated CallContext user, never from the request body
+        val createdByUserId = callContext.flatMap(_.user).map(_.userId)
+        val newInternalConnector = DynamicResourceDocProvider.provider.vend.create(bankId, dynamicResourceDoc, createdByUserId)
         val errorMsg = s"$UnknownError Can not create Dynamic Resource Doc in the backend. "
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonDynamicResourceDoc(bankId: Option[String], entity: JsonDynamicResourceDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicResourceDoc] =
       Future {
-        val updatedConnectorMethod = DynamicResourceDocProvider.provider.vend.update(bankId, entity: JsonDynamicResourceDoc)
+        val updatedByUserId = callContext.flatMap(_.user).map(_.userId)
+        val updatedConnectorMethod = DynamicResourceDocProvider.provider.vend.update(bankId, entity, updatedByUserId)
         val errorMsg = s"$UnknownError Can not update Dynamic Resource Doc in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }
@@ -4354,14 +4394,17 @@ object NewStyle extends MdcLoggable{
 
     def createJsonDynamicMessageDoc(bankId: Option[String], dynamicMessageDoc: JsonDynamicMessageDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicMessageDoc] =
       Future {
-        val newInternalConnector = DynamicMessageDocProvider.provider.vend.create(bankId, dynamicMessageDoc)
+        // provenance is taken from the authenticated CallContext user, never from the request body
+        val createdByUserId = callContext.flatMap(_.user).map(_.userId)
+        val newInternalConnector = DynamicMessageDocProvider.provider.vend.create(bankId, dynamicMessageDoc, createdByUserId)
         val errorMsg = s"$UnknownError Can not create Dynamic Message Doc in the backend. "
         (unboxFullOrFail(newInternalConnector, callContext, errorMsg, 400), callContext)
       }
 
     def updateJsonDynamicMessageDoc(bankId: Option[String], entity: JsonDynamicMessageDoc, callContext: Option[CallContext]): OBPReturnType[JsonDynamicMessageDoc] =
       Future {
-        val updatedConnectorMethod = DynamicMessageDocProvider.provider.vend.update(bankId: Option[String], entity: JsonDynamicMessageDoc)
+        val updatedByUserId = callContext.flatMap(_.user).map(_.userId)
+        val updatedConnectorMethod = DynamicMessageDocProvider.provider.vend.update(bankId, entity, updatedByUserId)
         val errorMsg = s"$UnknownError Can not update Dynamic Message Doc  in the backend. "
         (unboxFullOrFail(updatedConnectorMethod, callContext, errorMsg, 400), callContext)
       }

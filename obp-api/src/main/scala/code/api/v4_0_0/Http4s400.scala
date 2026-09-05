@@ -35,6 +35,7 @@ import code.api.v1_4_0.JSONFactory1_4_0
 import code.DynamicEndpoint.DynamicEndpointSwagger
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.http4s.ResourceDocMiddleware
+import code.api.util.http4s.IdempotencyMiddleware
 import code.api.util.{APIUtil, CallContext, CustomJsonFormats, NewStyle}
 import code.api.v4_0_0.JSONFactory400._
 import code.DynamicData.DynamicData
@@ -1393,7 +1394,7 @@ object Http4s400 {
                   .getAccountIdsByParams(bank.bankId, params.map { case (k, v) => k -> List(v) })
                   .map { boxedAccountIds =>
                     val accountIds = boxedAccountIds.getOrElse(Nil)
-                    privateAccountAccess.filter(aa => accountIds.contains(aa.account_id.get))
+                    privateAccountAccess.filter(aa => accountIds.contains(aa.accountId))
                   }
             (availablePrivateAccounts, _) <- code.model.BankExtended(bank).privateAccountsFuture(
               privateAccountAccess2, Some(cc))
@@ -1493,7 +1494,11 @@ object Http4s400 {
             _ <- NewStyle.function.hasEntitlement("", user.userId, canGetSystemLevelDynamicEntities, Some(cc))
             dynamicEntities <- Future(NewStyle.function.getDynamicEntities(None, false))
           } yield {
-            val listCommons: List[DynamicEntityCommons] = dynamicEntities
+            // dynamicEntities is List[DynamicEntityT] - the provider trait, not necessarily
+            // DynamicEntityCommons - so this can't be a blind asInstanceOf cast; it goes through
+            // DynamicEntityCommons's own ConverterWithType conversion (same reflection machinery
+            // as ReflectUtils.toOther, fixed for Scala 3 case-class-val sources this session).
+            val listCommons: List[DynamicEntityCommons] = DynamicEntityCommons.toCommonsList(dynamicEntities)
             ListResult("dynamic_entities", listCommons.map(_.jValue))
           }
         }
@@ -1535,7 +1540,11 @@ object Http4s400 {
               List(canGetBankLevelDynamicEntities, canGetAnyBankLevelDynamicEntities), Some(cc))
             dynamicEntities <- Future(NewStyle.function.getDynamicEntities(Some(bank.bankId.value), false))
           } yield {
-            val listCommons: List[DynamicEntityCommons] = dynamicEntities
+            // dynamicEntities is List[DynamicEntityT] - the provider trait, not necessarily
+            // DynamicEntityCommons - so this can't be a blind asInstanceOf cast; it goes through
+            // DynamicEntityCommons's own ConverterWithType conversion (same reflection machinery
+            // as ReflectUtils.toOther, fixed for Scala 3 case-class-val sources this session).
+            val listCommons: List[DynamicEntityCommons] = DynamicEntityCommons.toCommonsList(dynamicEntities)
             ListResult("dynamic_entities", listCommons.map(_.jValue))
           }
         }
@@ -1576,7 +1585,11 @@ object Http4s400 {
           for {
             dynamicEntities <- Future(NewStyle.function.getDynamicEntitiesByUserId(user.userId))
           } yield {
-            val listCommons: List[DynamicEntityCommons] = dynamicEntities
+            // dynamicEntities is List[DynamicEntityT] - the provider trait, not necessarily
+            // DynamicEntityCommons - so this can't be a blind asInstanceOf cast; it goes through
+            // DynamicEntityCommons's own ConverterWithType conversion (same reflection machinery
+            // as ReflectUtils.toOther, fixed for Scala 3 case-class-val sources this session).
+            val listCommons: List[DynamicEntityCommons] = DynamicEntityCommons.toCommonsList(dynamicEntities)
             ListResult("dynamic_entities", listCommons.map(_.jValue))
           }
         }
@@ -1631,7 +1644,7 @@ object Http4s400 {
       if (box.isInstanceOf[Failure]) {
         val failure = box.asInstanceOf[Failure]
         val msg = failure.msg.replace(
-          DynamicData.DynamicDataId.dbColumnName,
+          DynamicData.idColumnName,
           StringUtils.uncapitalize(entityName) + "Id")
         val changedMsgFailure = failure.copy(msg = s"${code.api.util.ErrorMessages.InternalServerError} $msg")
         APIUtil.fullBoxOrException[T](changedMsgFailure)
@@ -2533,12 +2546,12 @@ object Http4s400 {
             }
             _ <- Future {
               NewStyle.function.hasEntitlementAndScope(
-                "", user.userId, callingConsumer.id.get.toString,
+                "", user.userId, callingConsumer.id.toString,
                 canGetEntitlementsForAnyUserAtAnyBank, Some(cc))
             } flatMap { unboxFullAndWrapIntoFuture(_) }
             targetConsumer <- NewStyle.function.getConsumerByConsumerId(uuidOfConsumer, Some(cc))
             scopes <- Future {
-              code.scope.Scope.scope.vend.getScopesByConsumerId(targetConsumer.id.get.toString)
+              code.scope.Scope.scope.vend.getScopesByConsumerId(targetConsumer.id.toString)
             } map { unboxFull(_) }
           } yield code.api.v3_0_0.JSONFactory300.createScopeJSONs(scopes)
         }
@@ -2592,7 +2605,7 @@ object Http4s400 {
             }
             addedEntitlement <- Future {
               code.scope.Scope.scope.vend.addScope(
-                postedData.bank_id, consumer.id.get.toString, postedData.role_name)
+                postedData.bank_id, consumer.id.toString, postedData.role_name)
             } map { unboxFull(_) }
           } yield code.api.v3_0_0.JSONFactory300.createScopeJson(addedEntitlement)
         }
@@ -2826,7 +2839,7 @@ object Http4s400 {
                 s"COUNTERPARTY_NAME(${postJson.name}) for the BANK_ID(${account.bankId.value}) and ACCOUNT_ID(${account.accountId.value}) and VIEW_ID(${view.viewId.value})"),
               cc = Some(cc)) { existingCp.isEmpty }
             _ <- code.util.Helper.booleanToFuture(
-              s"$InvalidValueLength. The maximum length of `description` field is ${code.metadata.counterparties.MappedCounterparty.mDescription.maxLen}",
+              s"$InvalidValueLength. The maximum length of `description` field is ${code.metadata.counterparties.MappedCounterparty.descriptionMaxLength}",
               cc = Some(cc)) { postJson.description.length <= 36 }
             _ <- code.util.Helper.booleanToFuture(
               s"$InvalidISOCurrencyCode Current input is: '${postJson.currency}'",
@@ -3018,6 +3031,33 @@ object Http4s400 {
     // first synchronous read of `SS.user` captures the cc.user, then the Future chain
     // runs normally on any thread.
 
+    // Resolves the view createTransactionRequest needs, unit-testable without a live Mapper
+    // connection: `lookup` is production's real `Views.views.vend.systemView(...).or(...)` call
+    // in the route below, and a stub in the test.
+    //
+    // `lookup()` runs OUTSIDE tryons's blanket exception catch, not inside it. tryons/tryo catch
+    // any Exception the wrapped block raises and report it via the given failCode regardless of
+    // cause -- wrapping the DB call itself made a connection-pool exhaustion, a transient SQL
+    // error, or a Mapper bug indistinguishable from a genuine "no such view" and reported ALL of
+    // them as 404. `Future(lookup())` still catches an exception from `lookup()` (standard
+    // Future-block semantics), but as an ordinary failed Future carrying the ORIGINAL exception,
+    // untouched -- so it falls through to ErrorResponseConverter's catch-all (500), the same as
+    // any other unexpected server-side failure. Only a lookup that SUCCEEDS and returns an empty
+    // Box is a genuine client-side "not found", and only that case is explicitly mapped to 404
+    // via tryons below (whose wrapped block cannot itself throw for any other reason -- it only
+    // ever raises the NoSuchElementException it constructs).
+    private[v4_0_0] def resolveCreateTransactionRequestView(
+      viewIdStr: String,
+      lookup: () => Box[View]
+    )(implicit cc: CallContext): Future[View] =
+      Future(lookup()).flatMap {
+        case Full(v) => Future.successful(v)
+        case _ =>
+          NewStyle.function.tryons(s"$ViewNotFound Current view_id($viewIdStr)", 404, Some(cc)) {
+            throw new NoSuchElementException(s"view_id($viewIdStr)")
+          }
+      }
+
     lazy val createTransactionRequest: HttpRoutes[IO] = HttpRoutes.of[IO] {
       // GRANT_VIEW_ID in the ResourceDoc URL → middleware skips view validation.
       // Lift's v4 endpoint does no view-access check upfront; it lets
@@ -3041,24 +3081,29 @@ object Http4s400 {
         EndpointHelpers.executeFutureCreated(req) {
           val bodyStr = cc.httpBody.getOrElse("")
           for {
-            user    <- Future { cc.user.openOrThrowException(AuthenticatedUserIsRequired) }
-            bank    <- Future { cc.bank.getOrElse(throw new RuntimeException(BankNotFound)) }
-            account <- Future { cc.bankAccount.getOrElse(throw new RuntimeException(BankAccountNotFound)) }
+            // These four used to throw raw exceptions, which the converter can only render as
+            // OBP-50000 / HTTP 500. Every one of them is a client-side condition -- not
+            // authenticated, no such bank, no such account, no such view -- and a 500 tells a
+            // caller with retry logic to keep sending a request that cannot succeed. This is a
+            // payment path, so that retry loop is the expensive kind.
+            user    <- NewStyle.function.tryons(AuthenticatedUserIsRequired, 401, Some(cc)) {
+              cc.user.openOrThrowException(AuthenticatedUserIsRequired)
+            }
+            bank    <- NewStyle.function.tryons(BankNotFound, 404, Some(cc)) {
+              cc.bank.getOrElse(throw new NoSuchElementException(bankIdStr))
+            }
+            account <- NewStyle.function.tryons(BankAccountNotFound, 404, Some(cc)) {
+              cc.bankAccount.getOrElse(throw new NoSuchElementException(accountIdStr))
+            }
             json <- NewStyle.function.tryons(
               s"$InvalidJsonFormat Empty or invalid request body.", 400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(bodyStr)
             }
             transactionRequestType = TransactionRequestType(transactionRequestTypeStr)
-            view <- Future {
-              // System views (owner, accountant, etc.) and custom views (e.g. VRP
-              // `_vrp-…` views) are stored separately. Try system first; fall back
-              // to the account-scoped custom view. SS.init only needs *some* View
-              // instance — the connector reads viewId from the parameter, not the
-              // View object — so a soft fallback is fine here.
+            view <- resolveCreateTransactionRequestView(viewIdStr, () =>
               Views.views.vend.systemView(ViewId(viewIdStr))
                 .or(Views.views.vend.customView(ViewId(viewIdStr), BankIdAccountId(account.bankId, account.accountId)))
-                .openOrThrowException(s"$ViewNotFound Current view_id($viewIdStr)")
-            }
+            )
             // SS.init populates Lift thread-globals (used by `SS.user` inside the
             // connector). The connector's first line `SS.user` resolves synchronously
             // inside this block, capturing the user; subsequent flatMap stages run on
@@ -3754,7 +3799,10 @@ object Http4s400 {
       for {
         (endpointMappings, _) <- NewStyle.function.getEndpointMappings(bankId, Some(cc))
       } yield {
-        val listCommons: List[EndpointMappingCommons] = endpointMappings
+        // endpointMappings is List[EndpointMappingT] - the provider's own row type, not
+        // necessarily EndpointMappingCommons - so the elements are converted, not cast; a blind
+        // asInstanceOf threw ClassCastException whenever the concrete row type differed.
+        val listCommons: List[EndpointMappingCommons] = EndpointMappingCommons.toCommonsList(endpointMappings)
         com.openbankproject.commons.model.ListResult("endpoint-mappings", listCommons.map(_.toJson))
       }
 
@@ -5013,7 +5061,7 @@ object Http4s400 {
             }
             _ <- code.util.Helper.booleanToFuture(CannotFindUserInvitation, 404, Some(cc)) {
               val validUntil = java.util.Calendar.getInstance
-              validUntil.setTime(invitation.createdAt.get)
+              validUntil.setTime(invitation.createdAt)
               validUntil.add(java.util.Calendar.HOUR, 24)
               validUntil.getTime.after(new java.util.Date())
             }
@@ -5098,7 +5146,7 @@ object Http4s400 {
         EndpointHelpers.withUserAndBodyCreated[PostApiCollectionJson400, Any](req) { (user, postJson, cc) =>
           for {
             apiCollection <- Future {
-              code.apicollection.MappedApiCollectionsProvider
+              code.apicollection.DoobieApiCollectionsProvider
                 .getApiCollectionByUserIdAndCollectionName(user.userId, postJson.api_collection_name)
             }
             _ <- code.util.Helper.booleanToFuture(
@@ -5125,7 +5173,7 @@ object Http4s400 {
             (apiCollection, _) <- NewStyle.function.getApiCollectionByUserIdAndCollectionName(
               user.userId, apiCollectionName, Some(cc))
             existing <- Future {
-              code.apicollectionendpoint.MappedApiCollectionEndpointsProvider
+              code.apicollectionendpoint.DoobieApiCollectionEndpointsProvider
                 .getApiCollectionEndpointByApiCollectionIdAndOperationId(
                   apiCollection.apiCollectionId, postJson.operation_id)
             }
@@ -5151,7 +5199,7 @@ object Http4s400 {
             }
             (apiCollection, _) <- NewStyle.function.getApiCollectionById(apiCollectionIdStr, Some(cc))
             existing <- Future {
-              code.apicollectionendpoint.MappedApiCollectionEndpointsProvider
+              code.apicollectionendpoint.DoobieApiCollectionEndpointsProvider
                 .getApiCollectionEndpointByApiCollectionIdAndOperationId(
                   apiCollection.apiCollectionId, postJson.operation_id)
             }
@@ -6392,7 +6440,14 @@ object Http4s400 {
       case req @ GET -> `prefixPath` / "banks" / _ / "user-invitations" / secretLink =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           for {
-            (invitation, _) <- NewStyle.function.getUserInvitation(bank.bankId, secretLink.toLong, Some(cc))
+            // `secretLink.toLong` used to run unguarded, so any non-numeric path segment left a
+            // NumberFormatException to escape as OBP-50000 / HTTP 500 -- a malformed identifier
+            // reported to the caller as a server fault, which tells a client with retry logic to
+            // keep sending a request that can never succeed.
+            secret <- NewStyle.function.tryons(s"$InvalidNumber Invalid SECRET_LINK: it must be a number.", 400, Some(cc)) {
+              secretLink.toLong
+            }
+            (invitation, _) <- NewStyle.function.getUserInvitation(bank.bankId, secret, Some(cc))
           } yield JSONFactory400.createUserInvitationJson(invitation)
         }
     }
@@ -7095,7 +7150,7 @@ object Http4s400 {
         "Get My Api Collection Endpoint",
         s"""Get Api Collection Endpoint By API_COLLECTION_NAME and OPERATION_ID.
         |
-        |${userAuthenticationMessage(false)}
+        |${userAuthenticationMessage(true)}
         |""".stripMargin,
         EmptyBody,
         apiCollectionEndpointJson400,
@@ -7113,7 +7168,7 @@ object Http4s400 {
         "Get Api Collection Endpoints",
         s"""Get Api Collection Endpoints By API_COLLECTION_ID.
         |
-        |${userAuthenticationMessage(false)}
+        |${userAuthenticationMessage(true)}
         |""".stripMargin,
         EmptyBody,
         apiCollectionEndpointsJson400,
@@ -7599,6 +7654,9 @@ object Http4s400 {
         http4sPartialFunction = Some(deleteTransactionRequestAttributeDefinition)
       )
 
+      // Intentional drift from the Lift baseline: description expanded to document the
+      // scramble (soft delete) behaviour, and UserNotFoundById added to the error list
+      // (the handler returns 404 via NewStyle.function.findByUserId).
       staticResourceDocs += ResourceDoc(
         implementedInApiVersion,
         nameOf(deleteUser),
@@ -7607,13 +7665,25 @@ object Http4s400 {
         "Delete a User",
         s"""Delete a User.
         |
+        |This is a soft delete: the database row is kept, but the User's personal data is scrambled i.e. overwritten with random values:
+        |
+        |* The username is replaced with DELETED-<random-string>
+        |* The first name, last name and email are replaced with random values
+        |* The password is replaced with a random value and the user is invalidated, so the User can no longer log in
+        |* Any User Invitation that created the User is scrambled in the same way
+        |
+        |The User is marked as deleted; any subsequent authentication as this User (including via existing tokens or consents) is rejected.
+        |
+        |The USER_ID is retained, so records that reference it (e.g. metrics and transaction history) keep their audit value but can no longer be linked to a person.
+        |
+        |This action cannot be undone.
         |
         |${userAuthenticationMessage(true)}
         |
         |""",
         EmptyBody,
         EmptyBody,
-        List($AuthenticatedUserIsRequired, UserHasMissingRoles, UnknownError),
+        List($AuthenticatedUserIsRequired, UserNotFoundById, UserHasMissingRoles, UnknownError),
         List(apiTagUser),
         Some(List(canDeleteUser)),
         http4sPartialFunction = Some(deleteUser)
@@ -10122,10 +10192,16 @@ object Http4s400 {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[code.api.v3_1_0.CreateAccountRequestJsonV310]
             }
             loggedInUserId = cc.userId
+            // Implicit owner resolves to the HUMAN: under a Consent the caller is the
+            // per-consent shadow, and an account held by it strands when the consent dies.
             userIdAccountOwner =
               if (createAccountJson.user_id.nonEmpty) createAccountJson.user_id
-              else loggedInUserId
+              else cc.accountableUserId
             (postedOrLoggedInUser, callContext) <- NewStyle.function.findByUserId(userIdAccountOwner, Some(cc))
+            // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+            _ <- code.util.Helper.booleanToFuture(
+              s"$InvalidUserId user_id names a consent user (an agent identity minted by a Consent). Accounts are held by humans - use the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!postedOrLoggedInUser.isConsentUser)
             _ <- if (userIdAccountOwner == loggedInUserId) Future.successful(Full(()))
                  else NewStyle.function.hasEntitlement(
                    bankId.value, loggedInUserId, canCreateAccount, callContext,
@@ -10192,10 +10268,16 @@ object Http4s400 {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[SettlementAccountRequestJson]
             }
             loggedInUserId = cc.userId
+            // Implicit owner resolves to the HUMAN: under a Consent the caller is the
+            // per-consent shadow, and an account held by it strands when the consent dies.
             userIdAccountOwner =
               if (createAccountJson.user_id.nonEmpty) createAccountJson.user_id
-              else loggedInUserId
+              else cc.accountableUserId
             (postedOrLoggedInUser, callContext) <- NewStyle.function.findByUserId(userIdAccountOwner, Some(cc))
+            // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+            _ <- code.util.Helper.booleanToFuture(
+              s"$InvalidUserId user_id names a consent user (an agent identity minted by a Consent). Accounts are held by humans - use the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!postedOrLoggedInUser.isConsentUser)
             _ <- if (userIdAccountOwner == loggedInUserId) Future.successful(Full(()))
                  else NewStyle.function.hasEntitlement(bankId.value, loggedInUserId, canCreateSettlementAccountAtOneBank, callContext)
             initialBalanceAsString = createAccountJson.balance.amount
@@ -10298,7 +10380,7 @@ object Http4s400 {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[PostCounterpartyJson400]
             }
             _ <- code.util.Helper.booleanToFuture(
-              s"$InvalidValueLength. The maximum length of `description` field is ${MappedCounterparty.mDescription.maxLen}",
+              s"$InvalidValueLength. The maximum length of `description` field is ${MappedCounterparty.descriptionMaxLength}",
               cc = Some(cc)) { postJson.description.length <= 36 }
             (counterparty, callContext) <- Connector.connector.vend.checkCounterpartyExists(
               postJson.name, bankId.value, accountId.value, viewIdStr, Some(cc))
@@ -11082,7 +11164,7 @@ object Http4s400 {
         .orElse(createUserInvitation.run(req))
     }
 
-    lazy val allRoutesWithMiddleware: HttpRoutes[IO] = ResourceDocMiddleware.apply(resourceDocs)(allOwnRoutes)
+    lazy val allRoutesWithMiddleware: HttpRoutes[IO] = ResourceDocMiddleware.apply(resourceDocs)(IdempotencyMiddleware(allOwnRoutes))
 
     // ─── nameOf-compatibility aliases ────────────────────────────────────────
     // These vals have no Lift counterpart in Http4s400 but are referenced by

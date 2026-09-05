@@ -148,6 +148,8 @@ object ErrorMessages {
   val InvalidSignalChannelName = "OBP-10057: Invalid Signal Channel name. " +
     "Signal Channel names must use only alphanumeric characters, dots, hyphens, and underscores, " +
     "and be between 1 and 128 characters long."
+  val UserFilterParametersNotSupported = "OBP-10058: User identity filter parameters (user_id, username, email, provider_provider_id, anon) " +
+    "are not supported on this endpoint. It only ever returns the logged in user's own records. "
 
 
 
@@ -324,6 +326,10 @@ object ErrorMessages {
   val DuplicateUsername = "OBP-20258: Duplicate Username. Cannot create Username because it already exists. "
   val ExternalUserCheckFailed = "OBP-20259: Could not check username uniqueness against the external provider. The Connector or Adapter may not be running. "
 
+  val Oauth2TokenBindingCertificateMissing = "OBP-20260: The access token is certificate-bound (cnf.x5t#S256) but no client certificate was presented with the request. "
+  val Oauth2TokenBindingCertificateMismatch = "OBP-20261: The presented client certificate does not match the certificate binding (cnf.x5t#S256) of the access token. "
+  val Oauth2TokenBindingRequired = "OBP-20262: This instance requires certificate-bound access tokens (oauth2.token_binding.mode=REQUIRED) but the token carries no cnf.x5t#S256 claim. "
+
 
   // X.509
   val X509GeneralError = "OBP-20300: PEM Encoded Certificate issue."
@@ -411,6 +417,8 @@ object ErrorMessages {
 
   val CheckbookOrderNotFound = "OBP-30041: CheckbookOrder not found for Account. "
   val GetTopApisError = "OBP-30042: Could not get the top apis from database.  "
+  val GetTopUsersError = "OBP-30551: Could not get the top users from database.  "
+  val GetTopConsumersError = "OBP-30552: Could not get the top consumers from database.  "
   val GetMetricsTopConsumersError = "OBP-30045: Could not get the top consumers from database.  "
   val GetAggregateMetricsError = "OBP-30043: Could not get the aggregate metrics from database.  "
 
@@ -822,6 +830,13 @@ object ErrorMessages {
   val ReactionAlreadyExists = "OBP-39012: You have already added this reaction to this message."
   val ReactionNotFound = "OBP-39013: Reaction not found."
   val MustSpecifyUserIdOrConsumerId = "OBP-39014: Must specify either user_id or consumer_id, but not both."
+  val ChatMessageLinkHostNotAllowed = "OBP-39015: Chat message contains a link to a host that is not allowed on this instance."
+  val ChatMessageTooLong = "OBP-39016: Chat message content exceeds the maximum allowed length."
+  val ChatMentionedUserNotParticipant = "OBP-39017: One or more mentioned users are not participants of this Chat Room."
+  val ChatMessageTypeNotAllowed = "OBP-39018: Invalid message_type. Allowed values: text, system."
+  val SignalMessageTooLong = "OBP-39019: Signal message exceeds the maximum allowed length."
+  val SignalMessageContainsDangerousCharacters = "OBP-39020: Signal message contains control or bidirectional-override characters, which are not allowed."
+  val SignalChannelNotFound = "OBP-39021: Signal Channel not found."
 
   // Transaction Request related messages (OBP-40XXX)
   val InvalidTransactionRequestType = "OBP-40001: Invalid value for TRANSACTION_REQUEST_TYPE"
@@ -924,6 +939,7 @@ object ErrorMessages {
   val UnderConstructionError = "OBP-50018: Under Construction Error."
   val DatabaseConnectionClosedError = "OBP-50019: Cannot connect to the OBP database."
   val DynamicCodeExecutionDisabled = "OBP-50020: User-generated dynamic code execution is disabled on this API instance. Set allow_user_generated_scala_code=true to enable."
+  val DynamicCodeExecutionUnsandboxed = "OBP-50021: User-generated dynamic code execution is enabled, but this JVM cannot enforce the sandbox (SecurityManager was removed in JDK 24, JEP 486), so dynamic code runs with unrestricted file, network and reflection access. Set allow_user_generated_scala_code_without_sandbox=true to accept that risk explicitly, or run on a JVM where the sandbox can be installed."
 
 
   // Connector Data Exceptions (OBP-502XX)
@@ -1154,9 +1170,13 @@ object ErrorMessages {
     import scala.meta._
     val source: Source = new java.io.File("src/main/scala/code/api/util/ErrorMessages.scala").parse[Source].get
 
-    val listOfMessaegeNumbers = source.collect {
+    // scalameta 4.13.6 (_3) moved Tree#collect from a plain method to the standalone
+    // scala.meta.contrib.TreeOps.collect function - the extension available via
+    // scala.meta.contrib._ only provides collectFirst/descendants/ancestors, not collect.
+    import scala.meta.contrib.TreeOps
+    val listOfMessaegeNumbers = TreeOps.collect(source) {
       case obj: Defn.Object if obj.name.value == "ErrorMessages" =>
-        obj.collect {
+        TreeOps.collect(obj) {
           case v: Defn.Val if v.rhs.syntax.startsWith(""""OBP-""") =>
             val messageNumber = v.rhs.syntax.split(":")
             messageNumber(0)

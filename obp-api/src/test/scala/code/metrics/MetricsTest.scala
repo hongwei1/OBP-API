@@ -60,12 +60,12 @@ class MetricsTest extends ServerSetup with WipeMetrics {
     date1.compareTo(date2) should equal(0)
   }
 
-  feature("API Metrics") {
+  Feature("API Metrics") {
 
-    scenario("We save a new API metric") {
+    Scenario("We save a new API metric") {
       metrics.saveMetric(testUserId,testUrl1, day1, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       MetricBatchWriter.flush()
 
       val byUrl = metrics.getAllMetrics(List(OBPLimit(limit))).groupBy(_.getUrl())
@@ -76,23 +76,23 @@ class MetricsTest extends ServerSetup with WipeMetrics {
       metricsForUrl.size should equal(1)
 
       val metric = metricsForUrl(0)
-      shouldBeEqual(metric.getDate, day1)
+      shouldBeEqual(metric.getDate(), day1)
       metric.getUrl() should equal(testUrl1)
     }
 
-    scenario("Group all metrics by url") {
+    Scenario("Group all metrics by url") {
       metrics.saveMetric(testUserId, testUrl1, day1, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       metrics.saveMetric(testUserId, testUrl1, day1, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       metrics.saveMetric(testUserId, testUrl1, day2, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       metrics.saveMetric(testUserId, testUrl2, day2, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       MetricBatchWriter.flush()
 
       val byUrl = metrics.getAllMetrics(List(OBPLimit(limit1))).groupBy(_.getUrl())
@@ -110,19 +110,19 @@ class MetricsTest extends ServerSetup with WipeMetrics {
       url2Metrics.count(m => dateEqual(m.getDate(), day2)) should equal(1)
     }
 
-    scenario("Group all metrics by day") {
+    Scenario("Group all metrics by day") {
       metrics.saveMetric(testUserId, testUrl1, day1, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       metrics.saveMetric(testUserId, testUrl1, day1, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       metrics.saveMetric(testUserId, testUrl1, day2, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       metrics.saveMetric(testUserId, testUrl2, day2, -1L, testUserName, testAppName,
                          testDeveloperEmail, testConsumerId, testImplementedByPartialFunction,
-                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null)
+                         testVersion, testVerb, None, getCorrelationId(), testResponseBody, testSourceIp , testTargetIp, testApiInstanceId, null, null, null, null)
       MetricBatchWriter.flush()
 
       val byDay = metrics.getAllMetrics(List(OBPLimit(limit2))).groupBy(APIMetrics.getMetricDay)

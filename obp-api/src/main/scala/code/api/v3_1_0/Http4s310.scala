@@ -17,6 +17,7 @@ import code.api.util.CertificateUtil
 import code.api.util.{ApiTrigger, Consent, Glossary, SecureRandomUtil}
 import code.api.util.http4s.Http4sRequestAttributes.{EndpointHelpers, RequestOps}
 import code.api.util.http4s.ResourceDocMiddleware
+import code.api.util.http4s.IdempotencyMiddleware
 import code.api.util.newstyle.{BalanceNewStyle, ViewNewStyle}
 import code.api.util.{APIUtil, CallContext, CustomJsonFormats, NewStyle, OBPBankId, RateLimitingUtil}
 import code.api.v1_2_1.{JSONFactory, RateLimiting}
@@ -48,7 +49,6 @@ import com.openbankproject.commons.model._
 import com.openbankproject.commons.util.{ApiVersion, ApiVersionStatus, ScannedApiVersion}
 import net.liftweb.common.{Empty, Full}
 import org.json4s.Formats
-import net.liftweb.mapper.By
 import net.liftweb.util.{Helpers, Props}
 import org.apache.commons.lang3.StringUtils
 
@@ -521,7 +521,7 @@ object Http4s310 {
           for {
             _ <- NewStyle.function.hasEntitlement("", user.userId, canReadCallLimits, Some(cc))
             consumer <- NewStyle.function.getConsumerByConsumerId(consumerIdStr, Some(cc))
-            rateLimit <- Future(RateLimitingUtil.consumerRateLimitState(consumer.consumerId.get).toList)
+            rateLimit <- Future(RateLimitingUtil.consumerRateLimitState(consumer.consumerId).toList)
           } yield createCallLimitJson(consumer, rateLimit)
         }
     }
@@ -554,7 +554,7 @@ object Http4s310 {
           for {
             _ <- NewStyle.function.hasEntitlement("", user.userId, ApiRole.canGetConsumers, Some(cc))
             consumer <- NewStyle.function.getConsumerByConsumerId(consumerIdStr, Some(cc))
-            consumerUser <- Users.users.vend.getUserByUserIdFuture(consumer.createdByUserId.get)
+            consumerUser <- Users.users.vend.getUserByUserIdFuture(consumer.createdByUserId)
           } yield createConsumerJSON(consumer, consumerUser)
         }
     }
@@ -616,7 +616,7 @@ object Http4s310 {
               req.uri.query.multiParams.toList.flatMap { case (k, vs) => vs.map(v => HTTPParam(k, v)) }
             (obpQueryParams, _) <- createQueriesByHttpParamsFuture(httpParams, Some(cc))
             consumers <- Consumers.consumers.vend.getConsumersFuture(obpQueryParams, Some(cc))
-            users <- Users.users.vend.getUsersByUserIdsFuture(consumers.map(_.createdByUserId.get))
+            users <- Users.users.vend.getUsersByUserIdsFuture(consumers.map(_.createdByUserId))
           } yield createConsumersJson(consumers, users)
         }
     }
@@ -1201,7 +1201,13 @@ object Http4s310 {
             _ <- NewStyle.function.hasEntitlement("", user.userId, ApiRole.canGetMethodRoutings, Some(cc))
             methodRoutings <- NewStyle.function.getMethodRoutingsByMethodName(methodNameParam)
           } yield {
-            val definedMethodRoutings = methodRoutings.sortWith(_.methodName < _.methodName)
+            // getMethodRoutingsByMethodName returns List[MethodRoutingT] - the provider's own row
+            // type (MappedMethodRoutingProvider.MethodRouting, post-Doobie-migration), not
+            // MethodRoutingCommons - so the elements have to be converted, not cast; a blind
+            // asInstanceOf threw ClassCastException at runtime.
+            val definedMethodRoutings: List[code.methodrouting.MethodRoutingCommons] =
+              code.methodrouting.MethodRoutingCommons.toCommonsList(methodRoutings)
+                .sortWith(_.methodName < _.methodName)
             val listCommons: List[code.methodrouting.MethodRoutingCommons] = activeParam match {
               case Some("true") => (definedMethodRoutings ++ getDefaultMethodRoutings).sortWith(_.methodName < _.methodName)
               case _ => definedMethodRoutings
@@ -1348,7 +1354,10 @@ object Http4s310 {
           } yield {
             val views: List[View] = Views.views.vend.assignedViewsForAccount(
               BankIdAccountId(card.account.bankId, card.account.accountId))
-            val commonsData: List[CardAttributeCommons] = cardAttributes
+            // cardAttributes is List[CardAttribute] - could be DoobieCardAttributeProvider's own
+            // row type, not necessarily CardAttributeCommons - so it is converted, not cast; a
+            // blind asInstanceOf threw ClassCastException whenever the concrete row type differed.
+            val commonsData: List[CardAttributeCommons] = CardAttributeCommons.toCommonsList(cardAttributes)
             createPhysicalCardWithAttributesJson(card, commonsData, user, views)
           }
         }
@@ -1838,7 +1847,11 @@ object Http4s310 {
               } else implicitWebUiProps.distinct
             } else List.empty[WebUiPropsCommons]
           } yield {
-            val listCommons: List[WebUiPropsCommons] = explicitWebUiProps ++ implicitWebUiPropsRemovedDuplicated
+            // explicitWebUiProps is List[WebUiPropsT] - the provider's own row type, not
+            // necessarily WebUiPropsCommons - so it is converted, not cast; a blind asInstanceOf
+            // threw ClassCastException whenever the concrete row type differed.
+            val listCommons: List[WebUiPropsCommons] =
+              WebUiPropsCommons.toCommonsList(explicitWebUiProps) ++ implicitWebUiPropsRemovedDuplicated
             ListResult("webui_props", listCommons)
           }
         }
@@ -2232,7 +2245,7 @@ object Http4s310 {
               unboxFullOrFail(_, Some(cc), ConsentNotFound)
             }
             _ <- code.util.Helper.booleanToFuture(failMsg = ConsentNotFound, cc = Some(cc)) {
-              consent.mUserId == user.userId
+              consent.userId == user.userId
             }
             revoked <- Future(Consents.consentProvider.vend.revoke(consentIdStr)) map {
               i => connectorEmptyResponse(i, Some(cc))
@@ -2674,10 +2687,10 @@ object Http4s310 {
             consumer <- NewStyle.function.getConsumerByConsumerId(consumerIdStr, Some(cc))
             updatedConsumer <- Future {
               Consumers.consumers.vend.updateConsumer(
-                consumer.id.get, None, None, Some(putData.enabled),
+                consumer.id, None, None, Some(putData.enabled),
                 None, None, None, None, None, None, None, None) ?~! "Cannot update Consumer"
             }
-          } yield PutEnabledJSON(updatedConsumer.map(_.isActive.get).getOrElse(false))
+          } yield PutEnabledJSON(updatedConsumer.map(_.isActive).getOrElse(false))
         }
     }
 
@@ -3063,8 +3076,9 @@ object Http4s310 {
     )
 
     // ─── updateAccountApplicationStatus (PUT) ────────────────────────────────
-    // Side effect: when status == "ACCEPTED", a new bank account is created for the
-    // logged-in user. Preserved verbatim from the Lift implementation.
+    // Side effect: when status == "ACCEPTED", a new bank account is created and the
+    // APPLICANT (the application's user) becomes its holder. The Lift implementation
+    // (and its verbatim port) made the logged-in approver the holder — fixed 2026-09.
 
     val updateAccountApplicationStatus: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ PUT -> `prefixPath` / "banks" / _ / "account-applications" / accountApplicationIdStr =>
@@ -3074,24 +3088,36 @@ object Http4s310 {
             _ <- NewStyle.function.tryons(s"$InvalidJsonFormat status should not be blank.", 400, Some(cc)) {
               org.apache.commons.lang3.Validate.notBlank(putJson.status)
             }
-            (_, _) <- NewStyle.function.getAccountApplicationById(accountApplicationIdStr, Some(cc))
-            (accountApplication, _) <- NewStyle.function.updateAccountApplicationStatus(accountApplicationIdStr, putJson.status, Some(cc))
-            userIdOpt = Option(accountApplication.userId)
-            customerIdOpt = Option(accountApplication.customerId)
+            (applicationBefore, _) <- NewStyle.function.getAccountApplicationById(accountApplicationIdStr, Some(cc))
+            userIdOpt = Option(applicationBefore.userId)
+            customerIdOpt = Option(applicationBefore.customerId)
             appUser <- unboxOptionOBPReturnType(userIdOpt.map(NewStyle.function.findByUserId(_, Some(cc))))
             customer <- unboxOptionOBPReturnType(customerIdOpt.map(NewStyle.function.getCustomerByCustomerId(_, Some(cc))))
+            // Guard BEFORE the status transition commits: failing after it would strand the
+            // application as ACCEPTED with no account. A consent-user applicant can only come
+            // from a row that predates the creation-side guard (or was written another way).
+            _ <- code.util.Helper.booleanToFuture(
+              s"$InvalidUserId The application's user is a consent user (an agent identity minted by a Consent). Accounts are held by humans - re-apply with the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!appUser.exists(_.isConsentUser))
+            (accountApplication, _) <- NewStyle.function.updateAccountApplicationStatus(accountApplicationIdStr, putJson.status, Some(cc))
             _ <- putJson.status match {
               case "ACCEPTED" =>
+                // The APPLICANT becomes the holder. The Lift-era code (ported verbatim) made the
+                // approving admin the holder and left appUser unused — every accepted application
+                // handed the account to whoever clicked approve. Customer-only applications
+                // (userId empty) keep the legacy approver-as-holder behaviour: there is no user
+                // to hold, and refusing here would strand the just-committed ACCEPTED status.
                 for {
                   accountId <- Future(AccountId(java.util.UUID.randomUUID().toString))
+                  holder = appUser.getOrElse(user)
                   (_, _) <- NewStyle.function.createBankAccount(
                     bank.bankId, accountId,
                     accountApplication.productCode.value,
                     "", "EUR", BigDecimal("0"),
-                    user.name, "",
+                    holder.name, "",
                     List.empty, Some(cc))
                   success <- code.model.dataAccess.BankAccountCreation.setAccountHolderAndRefreshUserAccountAccess(
-                    bank.bankId, accountId, user, Some(cc))
+                    bank.bankId, accountId, holder, Some(cc))
                 } yield success
               case _ => Future("")
             }
@@ -3227,6 +3253,12 @@ object Http4s310 {
               org.apache.commons.lang3.Validate.isTrue(postedData.user_id.isDefined || postedData.customer_id.isDefined)
             }
             appUser <- unboxOptionOBPReturnType(postedData.user_id.map(NewStyle.function.findByUserId(_, Some(cc))))
+            // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+            // On ACCEPTED the application's user becomes the account holder, so a consent
+            // user must be rejected here, before the application is stored.
+            _ <- code.util.Helper.booleanToFuture(
+              s"$InvalidUserId user_id names a consent user (an agent identity minted by a Consent). Accounts are held by humans - use the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!appUser.exists(_.isConsentUser))
             customer <- unboxOptionOBPReturnType(postedData.customer_id.map(NewStyle.function.getCustomerByCustomerId(_, Some(cc))))
             (accountApplication, _) <- NewStyle.function.createAccountApplication(
               productCode = ProductCode(postedData.product_code),
@@ -4301,10 +4333,16 @@ object Http4s310 {
             (accountBox, _) <- Connector.connector.vend.checkBankAccountExists(bank.bankId, AccountId(accountIdStr), Some(cc))
             _ <- code.util.Helper.booleanToFuture(AccountIdAlreadyExists, cc = Some(cc)) { accountBox.isEmpty }
             loggedInUserId = user.userId
-            userIdAccountOwner = if (body.user_id.nonEmpty) body.user_id else loggedInUserId
+            // Implicit owner resolves to the HUMAN: under a Consent the caller is the
+            // per-consent shadow, and an account held by it strands when the consent dies.
+            userIdAccountOwner = if (body.user_id.nonEmpty) body.user_id else cc.accountableUserId
             _ <- code.util.Helper.booleanToFuture(InvalidAccountIdFormat, cc = Some(cc)) { isValidID(accountIdStr) }
             _ <- code.util.Helper.booleanToFuture(InvalidBankIdFormat, cc = Some(cc)) { isValidID(bankIdStr) }
             (accountOwner, _) <- NewStyle.function.findByUserId(userIdAccountOwner, Some(cc))
+            // Explicit target: fail loud rather than redirect (see the entitlement endpoints).
+            _ <- code.util.Helper.booleanToFuture(
+              s"$InvalidUserId user_id names a consent user (an agent identity minted by a Consent). Accounts are held by humans - use the granting user's USER_ID.",
+              failCode = 400, cc = Some(cc))(!accountOwner.isConsentUser)
             _ <- if (userIdAccountOwner == loggedInUserId) Future.successful(Full(()))
                  else code.util.Helper.booleanToFuture(
                    s"$UserHasMissingRoles $canCreateAccount or create account for self",
@@ -4402,11 +4440,11 @@ object Http4s310 {
             (_, assignedViews) <- Future(Views.views.vend.privateViewsUserCanAccess(user))
             _ <- code.util.Helper.booleanToFuture(ViewsAllowedInConsent, cc = Some(cc)) {
               consentJson.views.forall(rv => assignedViews.exists(e =>
-                e.view_id == rv.view_id && e.bank_id == rv.bank_id && e.account_id == rv.account_id))
+                e.viewId == rv.view_id && e.bankId == rv.bank_id && e.accountId == rv.account_id))
             }
             consumerTuple <- consentJson.consumer_id match {
               case Some(id) => NewStyle.function.checkConsumerByConsumerId(id, Some(cc)) map {
-                c => (Some(c.consumerId.get), c.description, Some(c))
+                c => (Some(c.consumerId), c.description, Some(c))
               }
               case None => Future((None, "Any application", None))
             }
@@ -4428,7 +4466,7 @@ object Http4s310 {
             _ <- Future(Consents.consentProvider.vend.setValidUntil(createdConsent.consentId, validUntil)) map {
               i => connectorEmptyResponse(i, Some(cc))
             }
-            grantorConsumerId = cc.consumer.toOption.map(_.consumerId.get).getOrElse("Unknown")
+            grantorConsumerId = cc.consumer.toOption.map(_.consumerId).getOrElse("Unknown")
             granteeConsumerId = consentJson.consumer_id.getOrElse("Unknown")
             shouldSkipConsentSca = APIUtil.skipConsentScaForConsumerIdPairs.contains(
               APIUtil.ConsumerIdPair(grantorConsumerId, granteeConsumerId))
@@ -5118,7 +5156,7 @@ object Http4s310 {
         .orElse(getObpConnectorLoopback.run(req))
     }
 
-    val allRoutesWithMiddleware: HttpRoutes[IO] = ResourceDocMiddleware.apply(resourceDocs)(allOwnRoutes)
+    val allRoutesWithMiddleware: HttpRoutes[IO] = ResourceDocMiddleware.apply(resourceDocs)(IdempotencyMiddleware(allOwnRoutes))
 
     // ─── path-rewriting bridge: /obp/v3.1.0/… → /obp/v3.0.0/… ──────────────
 
