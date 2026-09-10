@@ -4,8 +4,9 @@ import code.api.Constant
 import code.api.Constant._
 import code.api.ResourceDocs1_4_0.OpenAPI31JSONFactory
 import code.api.util.APIUtil.{getObpApiRoot, getServerUrl}
-import code.api.util.ExampleValue.{accountIdExample, bankIdExample, customerIdExample, userIdExample}
+import code.api.util.ExampleValue.{accountIdExample, bankIdExample, customerIdExample, transactionIdExample, userIdExample, viewIdExample}
 import code.util.Helper.MdcLoggable
+import net.liftweb.common.Full
 import code.webuiprops.MappedWebUiPropsProvider.getWebUiPropsValue
 
 import java.io.File
@@ -14,61 +15,160 @@ import scala.collection.mutable.ArrayBuffer
 
 object Glossary extends MdcLoggable  {
 
-	def getGlossaryItem(title: String): String = {
+	// ── Embedding Glossary text in Resource Doc descriptions ──────────────────
+	// These three helpers are called while the Resource Docs are being built, which happens at
+	// class initialisation, long before the database is available. So rather than resolving the
+	// Glossary Item there and then, they emit a placeholder that is expanded when the docs are
+	// served — against the union of static and Dynamic Glossary Items, so a Dynamic Item overrides
+	// the shipped text in endpoint descriptions just as it does in GET /api/glossary.
+	//
+	// Expansion happens on the markdown, before it is converted to html. See
+	// expandGlossaryPlaceholders and its three call sites: JSONFactory1_4_0 (the Resource Docs
+	// API), SwaggerJSONFactory and OpenAPI31JSONFactory.
 
-		//logger.debug(s"getGlossaryItem says Hello. title to find is: $title")
+	// An html comment, deliberately. The placeholder is normally expanded long before anyone sees
+	// it, but if one ever does leak into a response it must be inert: `{{...}}` would have been
+	// read as an interpolation expression by a Vue or Angular client and thrown at render time.
+	// A comment renders as nothing instead.
+	private val GlossaryPlaceholderPrefix = "<!--OBP-GLOSSARY:"
+	private val GlossaryPlaceholder = """<!--OBP-GLOSSARY:(FULL|SIMPLE|LINK):(.*?)-->""".r
 
-		val something = glossaryItems.find(_.title.toLowerCase == title.toLowerCase) match {
-			case Some(foundItem) =>
-				/**
-				 * Two important rules:
-				 * 1. Make sure you have an **empty line** after the closing `</summary>` tag, otherwise the markdown/code blocks won't show correctly.
-				 * 2. Make sure you have an **empty line** after the closing `</details>` tag if you have multiple collapsible sections.
-				 */
-				s"""
-				 |<details>
-				 |  <summary style="display:list-item;cursor:s-resize;">${foundItem.title}</summary>
-				 |
-				 |  ${foundItem.htmlDescription}
-				 |</details>
-				 |
-				 |<br></br>
-				 |""".stripMargin
-				case None => "glossary-item-not-found"
+	// A FULL or SIMPLE expansion embeds another Item's html, which may itself hold placeholders,
+	// and replaceAllIn does not rescan what it substitutes. So expansion repeats — bounded, so a
+	// cycle of Items referencing each other terminates and leaves an inert comment at worst.
+	private val GlossaryPlaceholderMaxPasses = 3
+
+	private def glossaryPlaceholder(mode: String, title: String): String = s"$GlossaryPlaceholderPrefix$mode:$title-->"
+
+	/** Embeds the Glossary Item as a collapsible block. */
+	def getGlossaryItem(title: String): String = glossaryPlaceholder("FULL", title)
+
+	/**
+	 * Embeds just the text of the Glossary Item, with no title and no collapsible element.
+	 * Use this if getGlossaryItem is problematic with a certain glossary item (e.g. JSON Schema
+	 * Validation Glossary Item) or you just want a simple inclusion of text.
+	 */
+	def getGlossaryItemSimple(title: String): String = glossaryPlaceholder("SIMPLE", title)
+
+	/**
+	 * Embeds a link to the Glossary Item rather than its text.
+	 * Can reduce bandwidth and maybe make things semantically clearer.
+	 */
+	def getGlossaryItemLink(title: String): String = glossaryPlaceholder("LINK", title)
+
+	/**
+	 * Two important rules for the FULL rendering:
+	 * 1. Make sure you have an **empty line** after the closing `</summary>` tag, otherwise the markdown/code blocks won't show correctly.
+	 * 2. Make sure you have an **empty line** after the closing `</details>` tag if you have multiple collapsible sections.
+	 */
+	private def renderGlossaryItemFull(item: GlossaryItem): String =
+		s"""
+		 |<details>
+		 |  <summary style="display:list-item;cursor:s-resize;">${item.title}</summary>
+		 |
+		 |  ${item.htmlDescription}
+		 |</details>
+		 |
+		 |<br></br>
+		 |""".stripMargin
+
+	private def renderGlossaryItemSimple(item: GlossaryItem): String =
+		s"""
+		 |  ${item.htmlDescription}
+		 |""".stripMargin
+
+	// We use the requested title rather than the found item's, because anchors are case sensitive.
+	private def renderGlossaryItemLink(title: String): String = s"""[here](/glossary#${title})"""
+
+	/**
+	 * Expands any Glossary placeholders in the given markdown. Text with no placeholder is returned
+	 * untouched, so this is cheap to call on every description.
+	 */
+	def expandGlossaryPlaceholders(text: String): String =
+		expandGlossaryPlaceholders(text, GlossaryPlaceholderMaxPasses)
+
+	private def expandGlossaryPlaceholders(text: String, passesLeft: Int): String = {
+		if (text == null || passesLeft <= 0 || !text.contains(GlossaryPlaceholderPrefix)) text
+		else {
+			val expanded = expandOnce(text)
+			if (expanded == text) text else expandGlossaryPlaceholders(expanded, passesLeft - 1)
 		}
-		//logger.debug(s"getGlossaryItem says the text to return is $something")
-		something
 	}
 
-	def getGlossaryItemSimple(title: String): String = {
-    // This function just returns a string without Title and collapsable element.
-		// Can use this if getGlossaryItem is problematic with a certain glossary item (e.g. JSON Schema Validation Glossary Item) or just want a simple inclusion of text.
-
-		//logger.debug(s"getGlossaryItemSimple says Hello. title to find is: $title")
-
-		val something = glossaryItems.find(_.title.toLowerCase == title.toLowerCase) match {
-			case Some(foundItem) =>
-				s"""
-				 |  ${foundItem.htmlDescription}
-				 |""".stripMargin
-			case None => "glossary-item-simple-not-found"
+	private def expandOnce(text: String): String = {
+		{
+			val byTitle = glossaryItemsByTitle
+			GlossaryPlaceholder.replaceAllIn(text, matched => {
+				val mode = matched.group(1)
+				val title = matched.group(2)
+				val rendered = byTitle.get(title.toLowerCase) match {
+					case Some(item) => mode match {
+						case "FULL"   => renderGlossaryItemFull(item)
+						case "SIMPLE" => renderGlossaryItemSimple(item)
+						case _        => renderGlossaryItemLink(title)
+					}
+					case None =>
+						logger.debug(s"expandGlossaryPlaceholders could not find Glossary Item: $title")
+						mode match {
+							case "FULL"   => "glossary-item-not-found"
+							case "SIMPLE" => "glossary-item-simple-not-found"
+							case _        => "glossary-item-link-not-found"
+						}
+				}
+				// The rendered text is arbitrary markdown, so $ and \ in it must not be read as
+				// replacement group references.
+				java.util.regex.Matcher.quoteReplacement(rendered)
+			})
 		}
-		//logger.debug(s"getGlossaryItemSimple says the text to return is $something")
-		something
 	}
 
-	def getGlossaryItemLink(title: String): String = {
-		// This function just returns a link to the Glossary Item in question.
-		// Can reduce bandwith and maybe make things semantically clearer if we use links instead of includes.
+	// Expansion runs once per Resource Doc per Resource Doc cache TTL, and a cold cache expands
+	// hundreds of docs in one burst, so they share a lookup map rather than each reading the
+	// database. The map is keyed on the Dynamic Glossary Item watermark, and the watermark itself
+	// is re-read at most once a second.
+	private val GlossaryCacheRecheckMillis = 1000L
+	private val cachedItemsByTitle =
+		new java.util.concurrent.atomic.AtomicReference[(Long, String, Map[String, GlossaryItem])]((0L, "", Map.empty))
 
-		val something = glossaryItems.find(_.title.toLowerCase == title.toLowerCase) match {
-			case Some(foundItem) =>
-				// We use the title because anchors are case sensitive, but we find it so we can log / display not found.
-				s"""[here](/glossary#${title})"""
-			case None => "glossary-item-link-not-found"
+	/**
+	 * Drops the placeholder lookup cache so a write made on this node is reflected at once, rather
+	 * than on the next watermark re-read. Other nodes still pick the write up via the watermark.
+	 */
+	def invalidateGlossaryItemCache(): Unit = cachedItemsByTitle.set((0L, "", Map.empty))
+
+	private def glossaryState: (String, Map[String, GlossaryItem]) = {
+		val now = System.currentTimeMillis
+		val (checkedAt, version, byTitle) = cachedItemsByTitle.get()
+		if (checkedAt != 0L && now - checkedAt < GlossaryCacheRecheckMillis) (version, byTitle)
+		else {
+			val currentVersion = dynamicGlossaryItemsVersion
+			if (checkedAt != 0L && currentVersion == version) {
+				cachedItemsByTitle.set((now, version, byTitle))
+				(version, byTitle)
+			} else {
+				// allGlossaryItems yields one Item per exact title, but titles differing only in case
+				// survive and collapse together in this case-insensitive map. Reversing makes the first
+				// of those spellings win, as find() used to.
+				val items = allGlossaryItems
+				val rebuilt = items.reverse.map(item => item.title.toLowerCase -> item).toMap
+				cachedItemsByTitle.set((now, currentVersion, rebuilt))
+				// Only on a real change, so this reports each edit once rather than on every read.
+				logStaticOverrides(items.filter(_.shadowsStaticItem))
+				(currentVersion, rebuilt)
+			}
 		}
-		something
 	}
+
+	private def glossaryItemsByTitle: Map[String, GlossaryItem] = glossaryState._2
+
+	/**
+	 * A token for Resource Doc cache keys. It changes whenever a Dynamic Glossary Item is added,
+	 * changed or removed, so a cached endpoint description that embeds Glossary text is rebuilt
+	 * instead of being served stale for the rest of the Resource Doc cache TTL (an hour by
+	 * default). Glossary writes are rare, so paying for a Resource Doc re-render on each one is
+	 * the right way round.
+	 */
+	def glossaryVersionForCacheKey: String = glossaryState._1
 
 
 	// reason of description is function: because we want make description is dynamic, so description can read
@@ -77,7 +177,13 @@ object Glossary extends MdcLoggable  {
 															 title: String,
 															 description: () => String,
 															 htmlDescription: String,
-															 textDescription: String
+															 textDescription: String,
+															 // Provenance. Static items are compiled in; dynamic ones come from the
+															 // DynamicGlossaryItem table. shadowsStaticItem is computed when the two
+															 // sets are merged: true when this dynamic item displaced a static one.
+															 isDynamic: Boolean = false,
+															 overridesStaticItem: Boolean = false,
+															 shadowsStaticItem: Boolean = false
                             )
 
 		def makeGlossaryItem (title: String, connectorField: ConnectorField) : GlossaryItem = {
@@ -117,6 +223,10 @@ object Glossary extends MdcLoggable  {
 			)
 		}
 
+		/** A Glossary Item backed by a row in the DynamicGlossaryItem table. */
+		def dynamic(title: String, description: => String, overridesStaticItem: Boolean): GlossaryItem =
+			apply(title, description).copy(isDynamic = true, overridesStaticItem = overridesStaticItem)
+
 	}
 
 
@@ -125,6 +235,121 @@ object Glossary extends MdcLoggable  {
     val glossaryItems = ArrayBuffer[GlossaryItem]()
 
 	// NOTE! Some glossary items are defined in ExampleValue.scala
+
+
+	// ── Dynamic Glossary Items ────────────────────────────────────────────────
+	// Glossary Items above are static: they are compiled in and only change when the API is
+	// redeployed. Dynamic Glossary Items live in the DynamicGlossaryItem table and are maintained
+	// at runtime over the /glossary-items endpoints. GET /api/glossary returns the union of the
+	// two, a Dynamic Item replacing a static one of the same title (compared case insensitively).
+	//
+	// Note the getGlossaryItem / getGlossaryItemSimple / getGlossaryItemLink helpers above stay
+	// static only on purpose. They are called while the Resource Docs are being built, which
+	// happens at class initialisation before the database is necessarily available, and their
+	// output is baked into the docs. Only the Glossary listing itself is dynamic.
+
+	/** Every Dynamic Glossary Item, rendered into the same GlossaryItem shape as the static ones. */
+	def dynamicGlossaryItems: List[GlossaryItem] = {
+		code.glossaryitem.DynamicGlossaryItems.dynamicGlossaryItem.vend.getAllDynamicGlossaryItems match {
+			case Full(rows) => rows.map(row => GlossaryItem.dynamic(row.title, row.description, row.overridesStaticItem))
+			case failure =>
+				// The Glossary must still be served if the table is unreachable, so fall back to static only.
+				logger.warn(s"Glossary.dynamicGlossaryItems could not read Dynamic Glossary Items: $failure")
+				Nil
+		}
+	}
+
+	/** True when the static Glossary defines an item with this title. Case insensitive. */
+	def staticGlossaryItemExists(title: String): Boolean =
+		glossaryItems.exists(_.title.toLowerCase == title.toLowerCase)
+
+	/**
+	 * Static Glossary Items plus Dynamic ones, a Dynamic Item winning on a title clash.
+	 *
+	 * Creating a Dynamic Item whose title collides with a static one is refused unless the operator
+	 * declared the override, so a clash here is normally deliberate. It can still arise without
+	 * that declaration if a static item is added later with a title a Dynamic Item already uses —
+	 * the Dynamic Item still wins, to keep one entry per title, and logStaticOverrides reports it.
+	 */
+	def allGlossaryItems: List[GlossaryItem] = {
+		val dynamic = dynamicGlossaryItems
+		val staticTitles = glossaryItems.map(_.title.toLowerCase).toSet
+		val dynamicWithShadowFlag =
+			dynamic.map(item => item.copy(shadowsStaticItem = staticTitles.contains(item.title.toLowerCase)))
+		val shadowedTitles = dynamic.map(_.title.toLowerCase).toSet
+		dedupeByTitle(
+			glossaryItems.toList.filterNot(item => shadowedTitles.contains(item.title.toLowerCase)) ::: dynamicWithShadowFlag)
+	}
+
+	/**
+	 * Keeps the first Item of each exact title.
+	 *
+	 * Two Items with the identical title is a mistake in the Glossary source: only one can own the
+	 * /glossary#Title anchor, and every lookup already resolves to the first, so the second was
+	 * unreachable anyway. Emitting both also breaks any client that keys a list by title. The
+	 * listing drops it and says so, since the source is what wants fixing.
+	 *
+	 * Titles that differ only in case are left alone. Anchors are case sensitive, so those are
+	 * distinct entries to a client and dropping one would lose documentation that reads fine today
+	 * — but they are ambiguous to the case-insensitive lookups, so they are still worth reporting.
+	 */
+	private def dedupeByTitle(items: List[GlossaryItem]): List[GlossaryItem] = {
+		val duplicated = items.groupBy(_.title).collect { case (title, sharing) if sharing.size > 1 => title }
+		if (duplicated.nonEmpty) {
+			logger.warn(
+				s"Glossary: ${duplicated.size} title(s) are defined more than once and only the first of each is served: " +
+				duplicated.toList.sorted.mkString(", ") +
+				". Two Glossary Items cannot share a title — one of them needs renaming in Glossary.scala, ExampleValue.scala or docs/glossary.")
+		}
+		val caseOnlyCollisions = items.map(_.title).distinct
+			.groupBy(_.toLowerCase).collect { case (_, spellings) if spellings.size > 1 => spellings.sorted.mkString(" / ") }
+		if (caseOnlyCollisions.nonEmpty) {
+			logger.info(
+				s"Glossary: ${caseOnlyCollisions.size} title(s) differ only in case: " +
+				caseOnlyCollisions.toList.sorted.mkString(", ") +
+				". All are served, but Glossary lookups are case insensitive and resolve to the first of each.")
+		}
+		items.distinctBy(_.title)
+	}
+
+	/** Dynamic Glossary Items that are currently displacing a static Item of the same title. */
+	def shadowingGlossaryItems: List[GlossaryItem] = allGlossaryItems.filter(_.shadowsStaticItem)
+
+	/**
+	 * Reports, in the log, which static Glossary Items are currently being overridden. This is the
+	 * one place the shadowing reaches a developer editing Glossary.scala, who otherwise has no way
+	 * of knowing the database is displacing the text they just wrote. Called at boot and again
+	 * whenever the Dynamic Glossary Item set changes.
+	 */
+	def logStaticOverrides(shadowing: List[GlossaryItem]): Unit = {
+		val (declared, undeclared) = shadowing.partition(_.overridesStaticItem)
+		if (declared.nonEmpty) {
+			logger.info(
+				s"Glossary: ${declared.size} static Glossary Item(s) are deliberately overridden by Dynamic Glossary Items: " +
+				declared.map(_.title).sorted.mkString(", ") +
+				". Editing their text in Glossary.scala will have no visible effect until the Dynamic Item is removed.")
+		}
+		if (undeclared.nonEmpty) {
+			// No override was declared, so the static item was almost certainly added after the
+			// Dynamic one. Worth a warning: neither the author of the static text nor the operator
+			// asked for this.
+			logger.warn(
+				s"Glossary: ${undeclared.size} static Glossary Item(s) are shadowed by Dynamic Glossary Items that did NOT declare an override: " +
+				undeclared.map(_.title).sorted.mkString(", ") +
+				". A static Item was probably added later with a title already in use. Rename one, delete the Dynamic Item, " +
+				"or set overrides_static_item on it to confirm the override is intended.")
+		}
+	}
+
+	/** Boot-time entry point for the report above. */
+	def logStaticOverrides(): Unit = logStaticOverrides(shadowingGlossaryItems)
+
+	/**
+	 * A watermark that changes whenever any Dynamic Glossary Item is added, changed or removed,
+	 * so callers can cache the rendered Glossary and rebuild it only when it has actually moved.
+	 */
+	def dynamicGlossaryItemsVersion: String =
+		code.glossaryitem.DynamicGlossaryItems.dynamicGlossaryItem.vend.getDynamicGlossaryItemsVersion.getOrElse("unavailable")
 
 
 	val latestConnector : String = "rest_vMar2019"
@@ -221,9 +446,10 @@ object Glossary extends MdcLoggable  {
 				 |│  │                                                                   │ │
 				 |│  │  Logic:                                                           │ │
 				 |│  │  1. Query RateLimiting table for active records                  │ │
-				 |│  │  2. If found:                                                     │ │
-				 |│  │     • Sum positive values (> 0) for each period                  │ │
-				 |│  │     • Return -1 if no positive values (unlimited)                │ │
+				 |│  │  2. If found, per period:                                         │ │
+				 |│  │     • Ignore -1 values (unlimited rows add nothing)               │ │
+				 |│  │     • Sum the rest; a sum of 0 -> blocked (429 on every call)     │ │
+				 |│  │     • Nothing to sum (all -1) -> -1 (unlimited)                   │ │
 				 |│  │     • Extract rate_limiting_ids                                  │ │
 				 |│  │  3. If not found:                                                 │ │
 				 |│  │     • Return system defaults from props                          │ │
@@ -243,7 +469,7 @@ object Glossary extends MdcLoggable  {
 				 |               │                               │
 				 |    ┌──────────▼──────────┐         ┌──────────▼──────────┐
 				 |    │                     │         │                     │
-				 |    │  AfterApiAuth.scala │         │ APIMethods600.scala │
+				 |    │  AfterApiAuth.scala │         │ Http4s600.scala     │
 				 |    │                     │         │                     │
 				 |    │  checkRateLimiting()│         │ getActiveCallLimits │
 				 |    │                     │         │ AtDate              │
@@ -270,8 +496,9 @@ object Glossary extends MdcLoggable  {
 				 |
 				 |1. **Rate Limit Records**: Stored in the `RateLimiting` table with date ranges (from_date, to_date)
 				 |2. **Multiple Records**: A consumer can have multiple active rate limit records that overlap
-				 |3. **Aggregation**: When multiple records are active, their limits are summed together (positive values only)
+				 |3. **Aggregation**: When multiple records are active, per period: `-1` values are ignored and the rest (`0` or positive) are summed; a sum of `0` blocks the period; nothing to sum (all `-1`) means unlimited
 				 |4. **Enforcement**: On every API request, the system checks Redis counters against the aggregated limits
+				 |5. **Counting**: Every served request is counted in the Redis counter of every period, whether or not that period has a limit, so the call-counter endpoints show a Consumer's activity even when nothing limits it. A blocked period (sum `0`) serves nothing, so nothing is counted under it.
 				 |
 				 |### Time Periods
 				 |
@@ -283,7 +510,12 @@ object Glossary extends MdcLoggable  {
 				 |- **per_week_rate_limit**: Maximum requests per week
 				 |- **per_month_rate_limit**: Maximum requests per month
 				 |
-				 |A value of `-1` means unlimited for that period.
+				 |Each value means:
+				 |- `0`: this record grants no calls for that period. Records are summed, so a `0` only blocks the Consumer when the sum over all of its records is 0 (for example when it is the Consumer's only record). A blocked period refuses every call with 429. This is how a suspended API Product Subscription stops a Consumer whose access came from that subscription alone.
+				 |- `-1`: unlimited for that period. Once a record exists, `-1` is literal: the system default for that period does not apply. `-1` records add nothing to the sum.
+				 |- a positive number: the maximum number of calls in that period. Overlapping records are summed.
+				 |
+				 |A Consumer with no records at all gets the system defaults (see below).
 				 |
 				 |### HTTP Headers
 				 |
@@ -291,6 +523,8 @@ object Glossary extends MdcLoggable  {
 				 |- `X-Rate-Limit-Limit`: Maximum allowed requests for the period
 				 |- `X-Rate-Limit-Remaining`: Remaining requests in current period
 				 |- `X-Rate-Limit-Reset`: Seconds until the limit resets
+				 |
+				 |The three headers describe the shortest period that has a positive limit (per second before per minute, and so on). When no period is limited they read `-1`.
 				 |
 				 |### HTTP Status Codes
 				 |
@@ -320,7 +554,7 @@ object Glossary extends MdcLoggable  {
 				 |- `rate_limiting_per_week`
 				 |- `rate_limiting_per_month`
 				 |
-				 |Default value: `-1` (unlimited)
+				 |Default value: `-1` (unlimited). These defaults apply only to Consumers with no active records; a default of `0` would block every such Consumer.
 				 |
 				 |### Example
 				 |
@@ -329,6 +563,14 @@ object Glossary extends MdcLoggable  {
 				 |- Record 2: 5 requests/second, 50 requests/minute
 				 |
 				 |**Aggregated limits**: 15 requests/second, 150 requests/minute
+				 |
+				 |The same consumer with a third record of 0 requests/second (for example a suspended API Product Subscription) is unchanged, because the 0 adds nothing to the sum:
+				 |
+				 |**Aggregated limits**: 15 requests/second, 150 requests/minute
+				 |
+				 |A consumer whose only record is 0 requests/second:
+				 |
+				 |**Aggregated limits**: 0 requests/second (blocked, 429 on every call)
 				 |
 				 |### Configuration
 				 |
@@ -341,7 +583,7 @@ object Glossary extends MdcLoggable  {
 				 |```
 				 |user_consumer_limit_anonymous_access=1000
 				 |```
-				 |(Default: 1000 requests per hour)
+				 |(Default: 1000 requests per hour. `0` blocks all anonymous access, `-1` removes the limit.)
 				 |
 				 |### Related Concepts
 				 |
@@ -481,6 +723,39 @@ object Glossary extends MdcLoggable  {
 |
 |This glossary item is Work In Progress.
 |
+				 |
+				 |### Three rate limiters
+				 |
+				 |OBP runs three independent rate limiters. They are checked in this order, and each answers **429** with its own error code so a client can tell which counter it hit:
+				 |
+				 |1. **Self-service limiter** (`self_service.rate_limit.*`) runs first, before routing and before any authentication, keyed by the client IP address. It covers the endpoints anyone can call before the bank has granted them anything. Trip code: `OBP-10060`.
+				 |2. **Authentication limiter** (`auth.rate_limit.*`) runs inside the credential check of Direct Login, DAuth, Gateway Login and SIWE, before the password or token is verified, keyed by IP address and by account. It defends against brute force, credential stuffing and lockout attacks. Trip code: `OBP-10061`.
+				 |3. **Consumer quota** (the limits described above) runs after authentication, keyed by Consumer, or by IP address with a single hourly ceiling for anonymous calls. It is the commercial and fair-use quota. Trip code: `OBP-10018`.
+				 |
+				 |A login attempt is counted by the authentication limiter only; it is not a self-service scope, so no attempt is counted twice. Every limiter counts in Redis and fails open: a Redis outage never blocks a call.
+				 |
+				 |### Self-service rate limiting (per IP address, before any credential)
+				 |
+				 |The limits above are keyed by Consumer, so they cannot protect the calls a client makes before it has one. Those endpoints are covered by the self-service limiter, keyed by the client IP address, grouped in scopes:
+				 |
+				 |- **signup** — Create User (self-registration), Validate User Email, Get User Invitation Information
+				 |- **password_reset** — Request Password Reset Email, Complete Password Reset
+				 |- **consent_request** — Create Consent Request, Create Consent Request VRP
+				 |- **consumer_registration** — Create a Consumer (Dynamic Registration)
+				 |- **lookup** — Validate and check IBAN
+				 |- **signal_channel_create** — Publish Signal Message, counted only when it creates a new channel, over REST and gRPC alike (gRPC uses the socket peer address; if none is available it falls back to the Consumer)
+				 |
+				 |Each scope has per-minute, per-hour and per-day limits per IP, with built-in defaults chosen so that a person or a well-behaved agent never reaches them, plus an optional global per-hour cap across all addresses that acts as a circuit breaker. Every request is counted, whether or not it succeeds. Counters live in Redis and fail open.
+				 |
+				 |**Shadow mode (the default).** The limiter is on out of the box but does not block. A request over a limit is logged once per window (`event=self_service_rate_limit_shadow_trip`) and the response carries:
+				 |
+				 |    X-Rate-Limit-Warning: OBP-10059: Could conflict with a Future Rate Limit: This request might exceed the rate limit for signup (5 per hour) in the future.
+				 |
+				 |No enforcement date is claimed unless the operator sets `self_service.rate_limit.enforce_announced_from`, in which case ", from <date>" is appended. Every self-service response also carries `X-Rate-Limit-Limit`, `X-Rate-Limit-Remaining` and `X-Rate-Limit-Reset` for the window the caller is closest to exhausting, so a client can back off before enforcement starts.
+				 |
+				 |**Enforce mode.** Set `self_service.rate_limit.mode = enforce` and a trip answers **429** with `OBP-10060`, a `Retry-After` header and the same `X-Rate-Limit-*` headers, without running the endpoint.
+				 |
+				 |Limits are set with `self_service.rate_limit.<scope>.per_ip.per_minute|per_hour|per_day`, `self_service.rate_limit.<scope>.global.per_hour`, or the generic `self_service.rate_limit.per_ip.*`; -1 switches a window off and 0 blocks it. See the props template for the built-in numbers. Behind a proxy, configure `trust.proxy.enabled` and `trust.proxy.header` so the client address is the real one; otherwise every caller shares the proxy's counters.
 """)
 
 	glossaryItems += GlossaryItem(
@@ -505,6 +780,26 @@ object Glossary extends MdcLoggable  {
 		title = "Roles of Open Bank Project",
 		description =
 			s"""<ol>${ApiRole.availableRoles.sorted.map(i => "<li>" + i + "</li>").mkString}</ol>""".stripMargin
+	)
+
+	glossaryItems += GlossaryItem(
+		title = "Virtual Entitlements",
+		description =
+			s"""A virtual Entitlement is a Role a User holds because their USER_ID is listed in an instance props entry, not because an Entitlement row exists.
+				 |
+				 |Two props entries grant them:
+				 |
+				 |* `super_admin_user_ids`: ${APIUtil.superAdminVirtualRoles.mkString(", ")}
+				 |* `oidc_operator_user_ids`: ${APIUtil.oidcOperatorVirtualRoles.mkString(", ")}
+				 |
+				 |Where they appear: `GET /my/entitlements` and `GET /users/current` list them next to stored Entitlements with an empty `entitlement_id` and an empty `bank_id`; in v6.0.0 and later `created_by_process` names the props entry.
+				 |
+				 |What they do: a virtual Entitlement satisfies the Role check of a direct call exactly as a stored one would. Super admins additionally bypass the granting-Role check of Add Entitlement, so they can grant any Role to any User (including themselves) at any Bank.
+				 |
+				 |What they do not do: they are not rows, so they cannot be deleted or listed per Bank, and they cannot be delegated. A Consent may only carry stored Entitlements of the User creating it, so a super admin who wants an agent (a consent user) to hold a Role must first grant that Role to their own USER_ID with Add Entitlement, then create the Consent that carries it. The "just in time" grant (`create_just_in_time_entitlements`) likewise honours only stored granting Roles.
+				 |
+				 |See also [Roles of Open Bank Project](/glossary#Roles-of-Open-Bank-Project) and [Consent](/glossary#Consent).
+			""".stripMargin
 	)
 
 
@@ -907,6 +1202,7 @@ object Glossary extends MdcLoggable  {
 				 |This speeds up the process of granting of roles. Certain roles are excluded from this automation:
 				 |  - CanCreateEntitlementAtOneBank
 				 |  - CanCreateEntitlementAtAnyBank
+				 |Consent users (the principal a Consent-JWT authenticates as) never receive Just in Time Entitlements: their Roles come only from the Consent, even if the Consent carries CanCreateEntitlementAtOneBank.
 				 |If create_just_in_time_entitlements is again set to false after it was true for a while, any auto granted Entitlements to roles are kept in place.
 				 |Note: In the entitlements model we set createdbyprocess=create_just_in_time_entitlements. For manual operations we set createdbyprocess=manual
 				 |
@@ -938,6 +1234,28 @@ object Glossary extends MdcLoggable  {
 		description =
 			"""The user Age"""
 	)
+
+	  glossaryItems += GlossaryItem(
+		title = "View.view_id",
+		description =
+		s"""
+		  |Identifies a View on a bank account.
+		  |
+		  |A View controls which fields of the account and its transactions a User can see, and which actions they can take on that account. Granting a User access to an account means granting them access through a particular View.
+		  |
+		  |Examples: `owner`, `accountant`, `auditor`.
+		  |
+		  |Example value: ${viewIdExample.value}
+		 """)
+
+	  glossaryItems += GlossaryItem(
+		title = "Transaction.transaction_id",
+		description =
+		s"""
+		  |Uniquely identifies a Transaction on an account at a bank.
+		  |
+		  |Example value: ${transactionIdExample.value}
+		 """)
 
 	  glossaryItems += GlossaryItem(
 		title = "Account.account_id",
@@ -1358,9 +1676,19 @@ object Glossary extends MdcLoggable  {
 |
 |This increases the security of the claims contained in the consent.
 |
+|**What an OBP Consent carries**
+|
+|| key | nature | check when the Consent is created |
+||---|---|---|
+|| `views` | the User's own account access (owned) | the User has the view |
+|| `entitlements` | Roles at a Bank or the system (granted) | the User holds the stored Entitlement; virtual Entitlements do not count |
+|| `my_resources` | the User's own personal resources (owned), one typed list per kind, e.g. `personal_dynamic_entities` | the kind and instance exist; no Role, the User owns these rows |
+|
+|`my_resources` is accepted by the Create Consent endpoint from v6.0.0 (older create-consent bodies are frozen). Example: `{"personal_dynamic_entities": [{"bank_id": "", "entity_name": "FooBar", "actions": ["read", "write"]}]}`. An entry names what the consent user may act on for the granting User; rows it writes belong to that User. Absent or empty means none, and `everything: true` does not include it. See ${getGlossaryItemLink("Dynamic-Entity-Access-Model")}.
 |
 |
-				|See ${getGlossaryItemLink("Consent_OBP_Flow_Example")} for an example flow.
+|
+				|See ${getGlossaryItemLink("Authentication: Consent OBP Flow Example")} for an example flow.
 				|See ${getGlossaryItemLink("Consent_Account_Onboarding")} for more information about onboarding.
 |
 				|<img width="468" alt="OBP Access Control Image" src="$getServerUrl/media/images/glossary/OBP_Consent_Request__3_.png"></img>
@@ -3089,6 +3417,26 @@ object Glossary extends MdcLoggable  {
  """)
 
 	glossaryItems += GlossaryItem(
+		title = "API Product Subscription",
+		description = s"""An API Product Subscription records that one Consumer (the subscriber) holds one API Product for a period, with a status.
+|
+|The API Product describes the plan: which endpoints (its API Collection), how many calls (six rate limits), the monthly price, and any attributes. The Subscription is the record of who holds it. Its status is what makes the product enforceable:
+|
+|- `requested`: created, nothing granted yet.
+|- `active`: OBP-API has given the Consumer a rate limit record with the product's six limits, and a Scope for each Role required by the endpoints in the product's Collection.
+|- `past_due`: payment is overdue. A grace period; nothing changes for the Consumer.
+|- `suspended`: the subscription's rate limit record is set to `0` in every period, which blocks the Consumer's calls. Scopes are kept so reinstatement is cheap.
+|- `cancelled`: the rate limit record and the derived Scopes are removed. Terminal; a new subscription is a new record.
+|
+|Only the rate limit record and the Scopes created by the subscription are touched. Limits and Scopes granted by hand are never removed. Overlapping rate limit records are summed, so a Consumer holding two products gets both allowances.
+|
+|A developer never needs a Role to subscribe their own Consumer, read their own subscriptions or cancel them. Roles exist for bank staff (enrol a partner's Consumer, approve, suspend, reinstate) and for billing systems (move the status on payment events). Two attributes on the API Product decide the flow: `SELF_SUBSCRIBE` (may developers subscribe their own Consumers; default `true`) and `BILLING_SYSTEM` (`none` activates at once; `manual` waits for a bank admin; `stripe` or `invoice_ninja` waits for that billing system).
+|
+|OBP-API core carries no billing vocabulary: payments, invoices and refunds live in the billing system, which only ever changes the subscription status.
+|
+ """)
+
+	glossaryItems += GlossaryItem(
 		title = "Space",
 		description =
 			s"""In OBP, if you have access to a "Space", you have access to a set of Dynamic Endpoints and Dynamic Entities that belong to that Space.
@@ -3199,7 +3547,7 @@ object Glossary extends MdcLoggable  {
 |
 |**IMPORTANT - JSON Structure:**
 |
-|The entity name (e.g., "CustomerPreferences") MUST be a direct top-level key in the JSON. The root object can contain at most TWO fields: your entity name and optionally "hasPersonalEntity".
+|The entity name (e.g., "CustomerPreferences") MUST be a direct top-level key in the JSON. Besides the entity name, the root object may only contain the access flags: "hasPersonalEntity", "personalRequiresRole", "hasPublicAccess", "hasCommunityAccess", "useRowLevelAccess" and "authMode" (see ${getGlossaryItemLink("Dynamic-Entity-Access-Model")}).
 |
 |**Common mistake - DO NOT do this:**
 |```json
@@ -3403,6 +3751,58 @@ object Glossary extends MdcLoggable  {
 |```
 |
 """.stripMargin)
+
+	glossaryItems += GlossaryItem(
+		title = "Dynamic-Entity-Access-Model",
+		description =
+			s"""
+|A Dynamic Entity definition carries six access flags. Together they decide who may create, read, edit and delete rows, and through which route. This page is the reference; the flags are set in the definition JSON next to the entity name (see ${getGlossaryItemLink("Dynamic-Entities")}).
+|
+|**The five routes on one entity**
+|
+|| Route | Exists when | Who may read | Who may write | Which rows |
+||---|---|---|---|---|
+|| System: `/obp/dynamic-entity/ENTITY` or `/obp/dynamic-entity/banks/BANK_ID/ENTITY` | always | holders of the entity Get role | holders of the Create, Update and Delete roles | the shared pool: rows created here; never personal rows |
+|| Personal: `/obp/dynamic-entity/my/ENTITY` | `hasPersonalEntity` | any authenticated User; a role only if `personalRequiresRole`; a consent user in addition only if its Consent lists the entity in `my_resources` | same rule | the caller's own rows only, keyed by the on-behalf-of user |
+|| Community: `/obp/dynamic-entity/community/ENTITY` | `hasCommunityAccess` | authenticated holders of the Get role | nobody (read only) | every row, personal rows included |
+|| Public: `/obp/dynamic-entity/public/ENTITY` | `hasPublicAccess` | anyone, no login | nobody (read only) | the shared pool only |
+|| Row level: the System routes with `useRowLevelAccess` | `useRowLevelAccess` | per row, whoever the access list marks readable; lists are filtered | per row, access list Update and Delete; the creator is granted read, update, delete and grant on their own row | whatever the access list says |
+|
+|The entity roles are named after the entity: `CanCreateDynamicEntity_SystemENTITY`, `CanGetDynamicEntity_SystemENTITY`, `CanUpdateDynamicEntity_SystemENTITY`, `CanDeleteDynamicEntity_SystemENTITY` (without `System` for bank level entities, held at the bank).
+|
+|Two settings apply on top of the routes:
+|
+|* `authMode` says which credential satisfies the role checks on the System route: `UserOnly` (Entitlements), `ApplicationOnly` (Consumer Scopes), `UserOrApplication`, `UserAndApplication`. The Personal and Row level routes always need a User; `ApplicationOnly` is refused on an entity with `hasPersonalEntity`.
+|* Field roles: a field with a `read_role` is omitted from every response unless the caller holds that role; a field with a `write_role` is only changed by PATCH from a holder (POST ignores it, PUT preserves its value).
+|
+|**Authorship and editing by actor**
+|
+|| Actor | Shared pool | Own rows via `my` | Other Users' personal rows |
+||---|---|---|---|
+|| Anonymous | read, if `hasPublicAccess` | none | none |
+|| Authenticated User, no role | none | create, edit, delete (unless `personalRequiresRole`) | none |
+|| Get role holder | read | as above | read them all via `community`, if `hasCommunityAccess` |
+|| Create, Update, Delete role holders | write | as above | none: personal rows are invisible to the System route |
+|| Row access list grantee | per row | as above | per row, if granted |
+|| Consent user (a User minted by a Consent) | as the roles its Consent carries | only if the Consent lists the entity in `my_resources.personal_dynamic_entities` with the needed action (plus the role when `personalRequiresRole`); rows it writes belong to the User who granted the Consent | none |
+|
+|**Patterns**
+|
+|| Pattern | Flags | Behaviour |
+||---|---|---|
+|| Curated reference data | personal off, public on | role holders maintain it, everyone reads it |
+|| Restricted registry | personal off, public off, community off | role holders only |
+|| Team space | personal on, `personalRequiresRole` on, community on | members write their own rows, the whole team reads everything; the entity roles define the team |
+|| User owned records | personal on, `personalRequiresRole` off, community off, public off | each User has their own rows; an agent reaches them only through a Consent whose `my_resources` lists the entity |
+|| Shared records with per row sharing | `useRowLevelAccess` on | the creator owns the row and grants others read, update, delete or grant |
+|
+|One combination deserves care: personal on, `personalRequiresRole` off, community on. It shows every User's personal rows to any holder of the Get role, which is rarely intended.
+|
+|`personalRequiresRole` gates the `my` route with the entity's own roles, the same roles that open the shared pool. It therefore suits the team space pattern, where the users of `my` are the role holders anyway. It is not a way to restrict ordinary Users' personal use: giving a User the Get role so they may use `my` also lets them read the shared pool.
+|
+|See also ${getGlossaryItemLink("My-Dynamic-Entities")}, ${getGlossaryItemLink("Consent")} and ${getGlossaryItemLink("Virtual Entitlements")}.
+|"""
+	)
 
 	glossaryItems += GlossaryItem(
 		title = "My-Dynamic-Entities",
@@ -3611,7 +4011,26 @@ object Glossary extends MdcLoggable  {
 |
 |A helper endpoint (`POST /management/dynamic-resource-docs/endpoint-code`) can generate a method-body template from example request / response bodies.
 |
-|See ${getGlossaryItemLink("Dynamic Code Paths")} for how Dynamic Resource Docs relate to the other runtime-defined building blocks.
+|**The method body**
+|
+|The body is inlined, unchanged, into a native http4s handler. Do not wrap it in a method or class. In scope:
+|
+|* `callContext: CallContext` - the authenticated User, Consumer, `resourceDocument`, `httpBody` (the raw request body as a String) and `callContext.callContext` (the same as an `Option`).
+|* `request: org.http4s.Request[IO]` - the raw request, for headers or the URI.
+|* `pathParams: Map[String, String]` - one entry per UPPER_CASE segment of the request URL, for example `pathParams("BANK_ID")`.
+|* `RequestRootJsonClass` / `ResponseRootJsonClass` - case classes generated from the example request body and success response body. Parse the request with `JsonAliases.parse(rawBody).extract[RequestRootJsonClass]`.
+|* `errorResponse(message, code = 400)` - returns the standard OBP error JSON with that status.
+|* Imports: `Future` and the OBP execution context, `HttpCode`, `OBPReturnType`, `ErrorMessages.{InvalidJsonFormat, InvalidRequestPayload}`, `MappingException`, `cats.effect.IO`, `net.liftweb.common.{Box, Empty, Failure, Full}` (for matching on Connector results), and an implicit `formats`.
+|
+|The last expression is the response. Return `Future.successful((value, HttpCode.`200`(callContext)))` - any case class, Map or List that serialises to JSON, paired with the call context whose status was set by `HttpCode` - or `errorResponse(...)`. An implicit converts that `Future[(T, Option[CallContext])]` into the http4s response. The Lift-era shapes `Full(successJsonResponse(...))` and `Box[JsonResponse]` are not accepted; a body that returns them fails to compile (`OBP-40045`).
+|
+|The smallest valid body:
+|
+|    Future.successful((Map("hello" -> "world"), HttpCode.`200`(callContext)))
+|
+|To check a body before creating anything, `POST /obp/v7.0.0/management/dynamic-resource-docs/compile` compiles it the same way and returns the compiler's errors with line numbers relative to the body. The API Manager's Create page uses it for its Compile button and for the loop in which Opey rewrites the body until it compiles.
+|
+|See ${getGlossaryItemLink("Dynamic Code Paths")} for how Dynamic Resource Docs relate to the other runtime-defined building blocks, and ${getGlossaryItemLink("Dynamic Change Request")} for how an operator can require a second person to approve each definition before it is compiled and served.
 |
 """.stripMargin)
 
@@ -3671,6 +4090,60 @@ object Glossary extends MdcLoggable  {
 |**Guards**
 |
 |Runtime-compiled code (Dynamic Resource Docs, Connector Methods, Dynamic Message Docs) is disabled unless the `allow_user_generated_scala_code` prop is set to true, and every creation endpoint requires its corresponding Role. Dynamic Endpoints (swagger, no code) are not affected by that prop; each generated endpoint is protected by its own auto-generated Role.
+|
+""".stripMargin)
+
+	glossaryItems += GlossaryItem(
+		title = "Dynamic Change Request",
+		description =
+			s"""
+|A Dynamic Change Request is a proposed create, update or delete of a runtime-defined artefact that carries code or configuration - a ${getGlossaryItemLink("Dynamic Resource Doc")}, a ${getGlossaryItemLink("Dynamic Message Doc")}, a ${getGlossaryItemLink("Connector Method")} or an ABAC Rule - held for approval by a second person. It is how OBP implements *maker/checker* for dynamic code.
+|
+|**Why**
+|
+|A Dynamic Resource Doc method body, a Connector Method or a Dynamic Message Doc is user-supplied code compiled and run inside the OBP-API JVM, with the connector credentials and reach of the whole instance. The sandbox is not a meaningful second line of defence, so the primary control is that the person who writes the code (the *maker*) can never make it live alone: a different User holding the Role `CanApproveDynamicChangeRequest` (the *checker*) reviews the exact definition and approves it.
+|
+|**How it works when approval is on**
+|
+|1) The maker calls the usual v4.0.0 / v6.0.0 create, update or delete endpoint. OBP checks the maker's Role, validates the JSON and compiles the code exactly as before, but instead of applying the change it stores a Dynamic Change Request and answers `202 Accepted` with the request instead of the artefact. Nothing is served yet.
+|
+|2) The checker reads the request (`GET /obp/v7.0.0/management/dynamic-change-requests/CHANGE_REQUEST_ID`, which returns the proposed and the current payload side by side) and approves it by quoting its `payload_hash`, the SHA-256 of the exact body, on `POST .../approval`. Only then is the change applied. OBP refuses an approval from the User who made the request (`OBP-30279`).
+|
+|3) Content is approved, not records. Any later edit produces a new hash and needs a new approval. The runtime compiles and serves only rows whose body hash equals the hash a checker approved, so a row edited directly in the database does not run.
+|
+|4) Deactivating an artefact is a direct action by a single checker (`POST .../deactivation`), with no request: four eyes to enable, one pair to disable. Enabling it again goes through a request.
+|
+|Approval is system level. Dynamic code runs in the shared JVM, so a bank-level artefact is approved by the same system-level checker; there are no bank-level change request endpoints.
+|
+|**Statuses**
+|
+|* `INITIATED` - waiting for a checker. Approve, reject and withdraw apply only in this status.
+|* `APPROVED` - applied; the artefact is compiled and served.
+|* `REJECTED` - declined by a checker with a comment. Nothing was applied.
+|* `WITHDRAWN` - taken back by the maker.
+|* `EXPIRED` - no checker acted within the request time-to-live.
+|* `FAILED` - approved, but applying the change threw. The error is recorded on the request and nothing half-applied is served.
+|
+|**Endpoints (v7.0.0, tag Dynamic-Change-Request)**
+|
+|* `GET /management/dynamic-code-approval-config` - whether approval is on, for which target types, and the request time-to-live. Any authenticated User; what a client reads to warn a maker before they submit.
+|* `GET /my/dynamic-change-requests` - the caller's own requests. No Role.
+|* `GET /management/dynamic-change-requests` and `GET .../CHANGE_REQUEST_ID` - all requests, filterable by `status`, `target_type`, `target_id` and `requestor_user_id`. Role `CanGetDynamicChangeRequests`.
+|* `POST /management/dynamic-change-requests` - submit a request explicitly with a `business_justification`, for tooling; the maker's usual create call does this implicitly.
+|* `POST .../CHANGE_REQUEST_ID/approval`, `.../rejection` (comment required), `.../withdrawal` (maker only).
+|* `POST /management/dynamic-resource-docs/ID/deactivation` and the equivalents for dynamic message docs, connector methods and ABAC rules.
+|
+|**Operator settings (props)**
+|
+|* `allow_user_generated_scala_code` - the kill switch for all runtime-compiled code. Default false: every create or update of dynamic code fails with `OBP-50020` and nothing dynamic runs, whatever the settings below say. Read once at startup, so changing it needs a restart.
+|* `dynamic_code_requires_approval` - the approval switch. Default false: writes go live immediately, today's behaviour.
+|* `dynamic_code_approval_target_types` - which target types are gated. Default `DYNAMIC_RESOURCE_DOC,DYNAMIC_MESSAGE_DOC,CONNECTOR_METHOD,ABAC_RULE`.
+|* `dynamic_code_delete_requires_approval` - whether deletes are queued too. Default true; deleting does not expand capability but does break consumers.
+|* `dynamic_code_approval_request_ttl_hours` - `INITIATED` requests older than this become `EXPIRED` when next read. 0 disables expiry. Default 168.
+|
+|The first start with `dynamic_code_requires_approval=true` seeds the approved hash of every pre-existing row from its current body, once per database, so nothing that is live today stops working. After that the only way a row becomes executable is a checker's approval.
+|
+|See ${getGlossaryItemLink("Dynamic Code Paths")} for how the gated artefacts relate to each other.
 |
 """.stripMargin)
 
@@ -5680,7 +6153,7 @@ object Glossary extends MdcLoggable  {
 				 |- `Connector.scala` — `checkExternalUserCredentials()` abstract method
 				 |- `AkkaConnector_vDec2018.scala` — Akka connector implementation
 				 |- `StoredProcedureConnector_vDec2019.scala` — Stored procedure connector implementation
-				 |- `APIMethods600.scala` — `verifyUserCredentials` endpoint definition
+				 |- `Http4s600.scala` — `verifyUserCredentials` endpoint definition
 				 |
 """)
 
@@ -5924,9 +6397,10 @@ object Glossary extends MdcLoggable  {
 				 |Not to be confused with [Chat](/glossary#Chat), which is the persistent, human-facing messaging surface (rooms, threads, reactions, read markers).
 				 |
 				 |## Lifecycle
-				 |- Channels are auto-created on first publish; no registration step.
+				 |- Channels are auto-created on first publish; no registration step. Creating channels is rate limited per caller (scope `signal_channel_create`, see [Rate Limiting](/glossary#Rate-Limiting)); publishing to an existing channel is not.
 				 |- On this instance a channel expires ${code.api.cache.RedisMessaging.channelTtlSeconds} seconds after its last publish, and holds at most ${code.api.cache.RedisMessaging.channelMaxMessages} messages (oldest are trimmed).
 				 |- Channel names are 1 to 128 characters from letters, digits, dot, underscore and hyphen.
+				 |- Every message carries a per-channel monotonic **sequence** (Redis server time in microseconds, forced strictly increasing) stamped atomically when it is stored. Poll with `after_sequence=<last seen>` and continue from the response's `next_after_sequence`. Do not poll by offset: trimming moves list positions, so an offset-tracking poller silently skips messages once the channel is full. Sequences are time-based rather than a counter so a cursor stays valid across a channel expiring and being recreated.
 				 |
 				 |## Constraints on published messages
 				 |All publishing requires authentication. Beyond that, three server-side checks protect the platform — the envelope, not the meaning, of what agents say:
@@ -5948,8 +6422,71 @@ object Glossary extends MdcLoggable  {
 				 |## Payloads are data, not instructions
 				 |Signal channels are readable and writable by any authenticated consumer on the instance. If your agent feeds received payloads to an LLM, treat them as **untrusted data, never as instructions** — the character checks above stop display-layer trickery, but no server-side check can stop a payload from *saying* something misleading. Prompt-injection defence belongs in the consuming agent.
 				 |
+				 |## Conventions for agents that have never met
+				 |Signal channels impose no protocol, and two agents written by different people will only find each other if they follow the same small habits. These are recommendations, not server rules.
+				 |
+				 |**Where to look first.** Announce yourself on the channel named `discovery` as soon as you have a token, then read `discovery` before anything else. Use `discovery` for presence and for finding a peer; move the actual conversation to a topic channel and name it in your announcement (`reply_channel`). An agent that only ever reads one fixed channel of its own choosing will miss peers who chose a different name; if `discovery` is empty, list the channels and read them all.
+				 |
+				 |**Message types.** Put the intent in `message_type` and keep the payload for content:
+				 |
+				 |- `announce` — "I exist": `agent_name`, `capabilities`, and the `reply_channel` you will read.
+				 |- `hello` — a greeting addressed to whoever is listening, asking for a `reply`.
+				 |- `reply` — an answer to a `hello` or any other message.
+				 |- `ack` — "received", when the sender asked for confirmation; carries nothing new.
+				 |- `proposal` — a list of `items` (each with `id`, `title`, `detail`, `proposed_owner`) for the other side to accept or change.
+				 |- `counter` — the same list, edited; say in `text` what changed.
+				 |- `agree` — the final list copied back verbatim, so both sides hold the same text.
+				 |- `status` — progress on an agreed item: `items`, `state` (for example `approved`, `declined`, `done`), and who is acting.
+				 |
+				 |**Payload fields.** Always include `agent_name` (a human-readable name) and `from_user_id` (your OBP user id, so a peer can reply privately with `to_user_id`). When answering, include `in_reply_to` with the `message_id` or the `sequence` of the message you answer, and `reply_channel` when you want the answer somewhere else. Keep `text` for prose a human can read; put anything a program must parse in its own field.
+				 |
+				 |**Waiting and repeating.** Poll with `after_sequence`, not offset. If nothing arrives, do not repeat the same message; one `hello` is enough, and a peer that appears later reads the channel back. Messages expire with the channel, so a conversation that must survive an hour of silence belongs in Chat, not here.
+				 |
+				 |**Approval stays with people.** A `proposal` and an `agree` between agents settle what could be done and by whom; each agent still asks its own user before doing anything. Say so in the proposal, and post a `status` once the user has decided.
+				 |
+				 |## Getting credentials as an agent (no account needed)
+				 |An agent does not need a pre-existing OBP user, consumer key or password. Where the instance runs OBP-OIDC with dynamic client registration enabled, three unauthenticated calls are enough:
+				 |
+				 |1. **Discover the identity provider.** `GET /obp/v6.0.0/well-known` lists the OpenID discovery documents this instance trusts. Fetch the `obp-oidc` one; its `registration_endpoint` and `token_endpoint` are the two URLs used below.
+				 |2. **Register a client** (RFC 7591 dynamic client registration; no initial access token is required):
+				 |
+				 |    curl -X POST REGISTRATION_ENDPOINT -H "Content-Type: application/json" -d '{"client_name":"my-agent","grant_types":["client_credentials"],"token_endpoint_auth_method":"client_secret_post","redirect_uris":["http://localhost/unused"]}'
+				 |
+				 |   The response carries `client_id` and `client_secret`. Store them; the secret is shown once. Behind the scenes OBP-OIDC also creates the matching OBP Consumer, so `client_id` is the consumer key.
+				 |3. **Get a token** with the client credentials grant (no user, no browser):
+				 |
+				 |    curl -X POST TOKEN_ENDPOINT -d "grant_type=client_credentials&client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&scope=openid"
+				 |
+				 |4. **Call OBP** with `Authorization: Bearer YOUR_ACCESS_TOKEN`, on REST or gRPC.
+				 |
+				 |What OBP does with such a token: it recognises the OBP-OIDC issuer, resolves the Consumer from the token's `azp` claim, and creates (once) a User whose provider id is the client id. `GET /obp/v6.0.0/users/current` and `GET /obp/v7.0.0/consumers/current/identity` show the resulting identity. That User starts with **no entitlements**, so it can list channels, read channel info, fetch and publish messages, and receive private messages addressed to its user id — but it cannot call Get Signal Channel Stats or Delete Signal Channel, and it has no access to any bank data. Every message it publishes carries its consumer id and user id, so an agent registered this way is attributable and its Consumer can be disabled by an operator.
+				 |
+				 |Do **not** use `POST /obp/v6.0.0/dynamic-registration/consumers` for this. Despite the similar name it is the PSD2 path: it needs a QWAC certificate matching a pre-registered Regulated Entity and is meant for regulated third-party providers, not agents.
+				 |
+				 |Operators: because registration is unauthenticated, expose it only with rate limiting on registrations per IP and in total, or require an initial access token in production. See the OBP-OIDC README.
+				 |
 				 |## Endpoints
-				 |See the API Explorer tags **Signal** / **AI-Agent**: list channels, channel info, channel stats, publish message, get messages (offset/limit polling), delete channel — under `/obp/v6.0.0/signal/channels/...`. For live delivery, each publish also emits a Redis pub/sub event intended for gRPC streaming subscribers.
+				 |See the API Explorer tags **Signal-Channel** / **AI-Agent**: list channels, channel info, channel stats, publish message, get messages (offset/limit polling), delete channel — under `/obp/v6.0.0/signal-channels/...`.
+				 |
+				 |Note on counts in Get Signal Messages: `total_count` counts every message in the channel, including private messages hidden from the caller, so it can exceed the number of messages returned; `visible_count` counts only the messages the caller may see and is the one to compare with what you have received. To detect newer messages, poll with `after_sequence` and `next_after_sequence` rather than comparing counts.
+				 |
+				 |## gRPC
+				 |The same operations are served over gRPC by `SignalChannelsService` (package `code.obp.grpc.signal.g1`, contract in `signal.proto`) when the gRPC server is enabled (`grpc.server.enabled`): **Publish**, **Fetch** and **ListChannels** are 1:1 with the REST endpoints and share their storage, and **Subscribe** is a server-side stream of new messages on one channel. Subscribe is live only — no catch-up, no replay — and applies the same privacy filter as Fetch. Each publish, REST or gRPC, is pushed to subscribers through Redis pub/sub.
+				 |
+				 |**Authentication.** Send the same value the REST `Authorization` header takes (`Bearer YOUR_ACCESS_TOKEN` or `DirectLogin token=YOUR_TOKEN`) as gRPC metadata under the key `authorization`. A call without it fails with status UNAUTHENTICATED and the message "Missing authorization header".
+				 |
+				 |**Discovery.** The server exposes gRPC reflection, so generic clients can list and describe the service without the proto file. With grpcurl (plaintext shown; use TLS as your deployment requires):
+				 |
+				 |    grpcurl -plaintext HOST:PORT list
+				 |    grpcurl -plaintext HOST:PORT describe code.obp.grpc.signal.g1.SignalChannelsService
+				 |    grpcurl -plaintext -H "authorization: Bearer YOUR_ACCESS_TOKEN" HOST:PORT code.obp.grpc.signal.g1.SignalChannelsService/ListChannels
+				 |    grpcurl -plaintext -H "authorization: Bearer YOUR_ACCESS_TOKEN" -d '{"channel_name":"discovery","after_sequence":0,"limit":50}' HOST:PORT code.obp.grpc.signal.g1.SignalChannelsService/Fetch
+				 |    grpcurl -plaintext -H "authorization: Bearer YOUR_ACCESS_TOKEN" -d @ HOST:PORT code.obp.grpc.signal.g1.SignalChannelsService/Publish < publish.json
+				 |    grpcurl -plaintext -H "authorization: Bearer YOUR_ACCESS_TOKEN" -d '{"channel_name":"discovery"}' HOST:PORT code.obp.grpc.signal.g1.SignalChannelsService/Subscribe
+				 |
+				 |where publish.json holds the request with the payload as an escaped JSON string, for example `{"channel_name":"discovery","message_type":"announce","payload_json":"{ ... your JSON, with its inner quotes escaped ... }"}`. HOST:PORT is the gRPC listener, port `grpc.server.port` (default 50051), separate from the HTTP port.
+				 |
+				 |Over gRPC the payload travels as `payload_json`, a string holding the JSON-encoded payload verbatim (protobuf has no native JSON value type). Int64 fields such as `sequence` and `message_count` arrive as strings in JSON-transcoded output; that is standard protobuf JSON mapping, not a change of type.
 				 |
 """)
 

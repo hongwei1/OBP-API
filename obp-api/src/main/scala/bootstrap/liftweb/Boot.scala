@@ -55,6 +55,8 @@ import code.apicollection.ApiCollection
 import code.apicollectionendpoint.ApiCollectionEndpoint
 import code.apiproduct.ApiProduct
 import code.apiproductattribute.ApiProductAttribute
+import code.apiproductsubscription.{ApiProductSubscription, ApiProductSubscriptionScope}
+import code.apiproductsubscriptionattribute.ApiProductSubscriptionAttribute
 import code.atmattribute.AtmAttribute
 import code.atms.MappedAtm
 import code.authtypevalidation.AuthenticationTypeValidation
@@ -300,9 +302,17 @@ class Boot extends MdcLoggable {
     // Please note that migration scripts are executed after Lift Mapper Schemifier
     Migration.database.executeScripts(startedBeforeSchemifier = false)
 
+    // Maker/checker for dynamic code: when first enabled, pre-existing code rows get their current
+    // body hash recorded as approved so enabling the feature does not silently disable them.
+    code.dynamicchangerequest.MakerChecker.seedApprovedHashesIfEnabled()
+
     // Idempotent seed of country-qualified routing schemes (TZ.MSISDN, bill, utility, etc.).
     // Toggle off via routing_schemes.seed_defaults_at_boot=false in environments that don't want defaults.
     code.routingscheme.RoutingSchemeSeed.runIfEnabled()
+
+    // Report which static Glossary Items the database is currently displacing. A developer editing
+    // Glossary.scala has no other way to find out that their text is being overridden.
+    code.api.util.Glossary.logStaticOverrides()
 
     if (APIUtil.getPropsAsBoolValue("create_system_views_at_boot", true)) {
       // Create system views
@@ -996,6 +1006,9 @@ object ToSchemify extends MdcLoggable {
     ApiCollectionEndpoint,
     ApiProduct,
     ApiProductAttribute,
+    ApiProductSubscription,
+    ApiProductSubscriptionScope,
+    ApiProductSubscriptionAttribute,
     FeaturedApiCollection,
     JsonSchemaValidation,
     AuthenticationTypeValidation,
@@ -1071,11 +1084,13 @@ object ToSchemify extends MdcLoggable {
     Organisation,
     RoutingScheme,
     BankSupportedRoutingScheme,
+    code.glossaryitem.DynamicGlossaryItem,
     PayeeLookup,
     UtilityPaymentCallback,
     BulkPayment,
     BulkBatchReference,
     AccountAccessRequest,
+    code.dynamicchangerequest.DynamicChangeRequest,
     code.chat.ChatRoom,
     code.chat.Participant,
     code.chat.ChatMessage,

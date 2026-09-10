@@ -4,8 +4,8 @@ import org.json4s._
 import code.api.Constant.localIdentityProvider
 import code.api.util.ErrorMessages
 import code.api.util.ErrorMessages._
-import code.api.v2_0_0.OBPAPI2_0_0.Implementations2_0_0
-import code.api.v3_0_0.OBPAPI3_0_0.Implementations3_0_0
+import code.api.v2_0_0.Http4s200.Implementations2_0_0
+import code.api.v3_0_0.Http4s300.Implementations3_0_0
 import code.api.v3_0_0.UserJsonV300
 import code.consumer.Consumers
 import code.loginattempts.LoginAttempt
@@ -50,15 +50,22 @@ class DirectLoginTest extends ServerSetup with BeforeAndAfter {
   val PASSWORD_DISABLED = randomString(20)
 
   before {
-    if (AuthUser.find(By(AuthUser.username, USERNAME)).isEmpty)
-      AuthUser.create.
-        email(EMAIL).
-        username(USERNAME).
-        password(VALID_PW).
-        validated(true).
-        firstName(randomString(10)).
-        lastName(randomString(10)).
-        saveMe
+    // TestPasswordConfig.VALID_PASSWORD is generated per JVM unless pinned in props, and
+    // ServerSetup preserves AuthUser rows across suites and runs. So an existing row created by
+    // an earlier JVM carries a password this run does not know: reset it instead of skipping.
+    AuthUser.find(By(AuthUser.username, USERNAME)) match {
+      case net.liftweb.common.Full(existing) =>
+        existing.password(VALID_PW).validated(true).save()
+      case _ =>
+        AuthUser.create.
+          email(EMAIL).
+          username(USERNAME).
+          password(VALID_PW).
+          validated(true).
+          firstName(randomString(10)).
+          lastName(randomString(10)).
+          saveMe
+    }
 
     if (Consumers.consumers.vend.getConsumerByConsumerKey(KEY).isEmpty)
       Consumers.consumers.vend.createConsumer(
