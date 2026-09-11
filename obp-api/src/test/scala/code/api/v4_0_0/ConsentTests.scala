@@ -11,11 +11,11 @@ import org.scalatest.Tag
 
 class ConsentTests extends V400ServerSetup with DefaultUsers {
 
-   override def beforeAll(): Unit = {
+   override def beforeAll() {
      super.beforeAll()
    }
 
-   override def afterAll(): Unit = {
+   override def afterAll() {
      super.afterAll()
    }
 

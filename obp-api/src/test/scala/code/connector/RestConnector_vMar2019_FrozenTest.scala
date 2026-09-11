@@ -61,7 +61,7 @@ class RestConnector_vMar2019_FrozenTest extends FlatSpec with Matchers with Befo
   "RestConnector_vMar2019 method frozen types structure" should "not be changed" taggedAs RestConnector_vMar2019Tag in {
     // current related types those also exist in persisted metadata.
     val typesToDoCompare: List[(String, Map[String, String])] = typeNameToFieldsInfo
-      .filter { case (typeName, _) => typeNameToFieldsInfoPersisted.contains(typeName) }
+      .filterKeys(typeNameToFieldsInfoPersisted.contains(_))
       .toList
 
       // Normalize type names so that reflection aliases produce equal strings:
@@ -135,7 +135,7 @@ object RestConnector_vMar2019_FrozenUtil {
       .map(it => ReflectUtils.getDeepGenericType(it).head)
       .toSet
       .filter(ReflectUtils.isObpType)
-      .filterNot(tp == _)  // avoid infinite recursive
+      .filterNot(tp ==)  // avoid infinite recursive
     match {
       case set if(set.size > 0) => set.flatMap(getNestedOBPType) + tp
       case _ =>  Set(tp)

@@ -9,7 +9,7 @@ import net.liftweb.util.SimpleInjector
 
 object UserAgreementProvider extends SimpleInjector {
 
-  val userAgreementProvider = new Inject(() => buildOne) {}
+  val userAgreementProvider = new Inject(buildOne _) {}
 
   def buildOne: UserAgreementProvider = MappedUserAgreementProvider
 

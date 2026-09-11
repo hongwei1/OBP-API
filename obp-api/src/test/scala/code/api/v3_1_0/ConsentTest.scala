@@ -46,11 +46,11 @@ import java.util.Date
 
 class ConsentTest extends V310ServerSetup {
 
-  override def beforeAll(): Unit = {
+  override def beforeAll() {
     super.beforeAll()
   }
 
-  override def afterAll(): Unit = {
+  override def afterAll() {
     super.afterAll()
   }
 

@@ -8,7 +8,7 @@ import net.liftweb.util.SimpleInjector
 
 object AccountHolders extends SimpleInjector {
 
-  val accountHolders = new Inject(() => buildOne) {}
+  val accountHolders = new Inject(buildOne _) {}
 
   def buildOne: AccountHolders = MapperAccountHolders
 

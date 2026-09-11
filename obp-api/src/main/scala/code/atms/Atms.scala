@@ -66,7 +66,7 @@ object Atms extends SimpleInjector {
 
   ) extends AtmT
 
-  val atmsProvider = new Inject(() => buildOne) {}
+  val atmsProvider = new Inject(buildOne _) {}
 
   def buildOne: AtmsProvider = MappedAtmsProvider
 

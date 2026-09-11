@@ -10,8 +10,9 @@ import net.liftweb.common.Full
 import com.openbankproject.commons.util.json
 import org.json4s.JsonDSL._
 import org.json4s.{Formats, JObject, JValue}
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 import org.apache.commons.lang3.StringUtils
-import java.lang.reflect.{InvocationHandler, Method}
+import java.lang.reflect.Method
 import scala.concurrent.Future
 import scala.reflect.ManifestFactory
 import scala.reflect.runtime.universe
@@ -21,20 +22,23 @@ object ConnectorUtils {
   lazy val proxyConnector: Connector = {
     val excludeProxyMethods = Set("getDynamicEndpoints", "dynamicEntityProcess", "setAccountHolder", "updateUserAccountViewsOld")
 
-    val intercept: InvocationHandler = new InvocationHandler {
-      override def invoke(proxy: AnyRef, method: Method, args: Array[AnyRef]): AnyRef = {
-        val originResult: AnyRef = method.invoke(LocalMappedConnector, args: _*)
+    val intercept:MethodInterceptor = (_: Any, method: Method, args: Array[AnyRef], _: MethodProxy) => {
+      val originResult: AnyRef = method.invoke(LocalMappedConnector, args:_*)
 
-        val methodName = method.getName
-        val inBoundType: Option[Class[_]] = ReflectUtils.forClassOption(s"com.openbankproject.commons.dto.InBound${methodName.capitalize}")
-        if (!methodName.contains("$default$") && inBoundType.isDefined && !excludeProxyMethods.contains(methodName)) {
-          deleteIgnoreFieldValue(originResult, inBoundType.orNull).asInstanceOf[AnyRef]
-        } else {
-          originResult
-        }
+
+      val methodName = method.getName
+      val inBoundType: Option[Class[_]] = ReflectUtils.forClassOption(s"com.openbankproject.commons.dto.InBound${methodName.capitalize}")
+      if (!methodName.contains("$default$") && inBoundType.isDefined && !excludeProxyMethods.contains(methodName)) {
+        deleteIgnoreFieldValue(originResult, inBoundType.orNull).asInstanceOf[AnyRef]
+      } else {
+        originResult
       }
+
     }
-    ConnectorProxy.create(intercept)
+    val enhancer: Enhancer = new Enhancer()
+    enhancer.setSuperclass(classOf[Connector])
+    enhancer.setCallback(intercept)
+    enhancer.create().asInstanceOf[Connector]
   }
 
   private def deleteIgnoreFieldValue(obj: Any, inBoundClass: Class[_]): Any = obj match {

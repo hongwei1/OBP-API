@@ -11,7 +11,7 @@ import net.liftweb.util.{Props, SimpleInjector}
 
 object Challenges extends SimpleInjector {
 
-  val ChallengeProvider = new Inject(() => buildOne) {}
+  val ChallengeProvider = new Inject(buildOne _) {}
 
   def buildOne: ChallengeProvider = MappedChallengeProvider
   

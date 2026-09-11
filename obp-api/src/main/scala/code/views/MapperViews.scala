@@ -371,7 +371,7 @@ object MapperViews extends Views with MdcLoggable {
 
   //returns Full if deletable, Failure if not
   def canRevokeOwnerAccessAsBox(bankId: BankId, accountId: AccountId, viewDefinition : ViewDefinition, user : User) : Box[Unit] = {
-    if(canRevokeOwnerAccess(bankId: BankId, accountId: AccountId, viewDefinition, user)) Full(())
+    if(canRevokeOwnerAccess(bankId: BankId, accountId: AccountId, viewDefinition, user)) Full(Unit)
     else Failure("access cannot be revoked")
   }
 

@@ -5,7 +5,7 @@ import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
 object ChatMessageTrait extends SimpleInjector {
-  val chatMessageProvider = new Inject(() => buildOne) {}
+  val chatMessageProvider = new Inject(buildOne _) {}
   def buildOne: ChatMessageProvider = MappedChatMessageProvider
 }
 

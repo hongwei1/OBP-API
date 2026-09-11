@@ -5,7 +5,7 @@ import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
 object ReactionTrait extends SimpleInjector {
-  val reactionProvider = new Inject(() => buildOne) {}
+  val reactionProvider = new Inject(buildOne _) {}
   def buildOne: ReactionProvider = MappedReactionProvider
 }
 

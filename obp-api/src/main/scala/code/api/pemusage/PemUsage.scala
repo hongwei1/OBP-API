@@ -4,7 +4,7 @@ import code.api.util.APIUtil
 import net.liftweb.util.SimpleInjector
 
 object PemUsageDI extends SimpleInjector {
-  val pemUsage = new Inject(() => buildOne) {}
+  val pemUsage = new Inject(buildOne _) {}
   def buildOne: PemUsageProviderTrait = MappedPemUsageProvider
   
 }

@@ -17,7 +17,7 @@ trait PrivateUser2AccountsAndSetUpWithTestData {
    *
    * Also adds some private accounts for user1 that are not public
    */
-  def accountTestsSpecificDBSetup(): Unit = {
+  def accountTestsSpecificDBSetup() {
 
     val banks =  Connector.connector.vend.getBanksLegacy(None).map(_._1).openOrThrowException(attemptedToOpenAnEmptyBox)
 

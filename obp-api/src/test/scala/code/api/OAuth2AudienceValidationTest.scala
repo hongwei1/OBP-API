@@ -9,7 +9,7 @@ import net.liftweb.common.{Failure, Full}
 import org.scalatest.{FeatureSpec, GivenWhenThen, Matchers}
 
 import java.net.URI
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class OAuth2AudienceValidationTest extends FeatureSpec with Matchers with GivenWhenThen with PropsReset {
 

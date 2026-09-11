@@ -12,6 +12,9 @@ import Functions.Implicits._
 import org.json4s.{Formats, JValue}
 import org.json4s.JsonDSL._
 
+import scala.collection.GenTraversableOnce
+import scala.collection.mutable.ArrayBuffer
+
 /**
  * Mark given type's field or constructor variable is required for some apiVersion
  *
@@ -150,7 +153,7 @@ case class RequiredInfo(requiredArgs: Seq[RequiredArgs]) extends RequiredFields 
 
       val scannedPathValue: Any = prePathValue match {
           case null => null
-          case arr: Array[_] => arr.filterNot(null == _)
+          case arr: Array[_] => arr.filterNot(null ==)
             .map(ele => ReflectUtils.getField(ele.asInstanceOf[AnyRef], currentPath))
           case any: AnyRef => ReflectUtils.getField(any, currentPath)
         }
@@ -161,7 +164,7 @@ case class RequiredInfo(requiredArgs: Seq[RequiredArgs]) extends RequiredFields 
       if(scannedPath == fieldPath) {
         if(prePathValue != JNull) {
           (prePathValue, scannedPathValue) match {
-            case (_: Array[_], arr: Array[_]) if arr.exists(null == _) => noValuePath += fieldPath
+            case (_: Array[_], arr: Array[_]) if arr.exists(null ==) => noValuePath += fieldPath
             case (_: AnyRef, null) => noValuePath += fieldPath
             case _ =>  () // do nothing
           }
@@ -184,10 +187,8 @@ case class RequiredInfo(requiredArgs: Seq[RequiredArgs]) extends RequiredFields 
    */
   private def flatten(any: Any): Any = any match {
     case a:Array[_] => Functions.deepFlatten(a)
-    // Iterable in place of GenTraversableOnce, which 2.13 removes; every collection reached here
-    // is one. It also absorbed the ArrayBuffer arm that used to sit above: ArrayBuffer is an
-    // Iterable, and the two arms had the same body, so only this one could ever run.
-    case coll: Iterable[_] => Functions.deepFlatten(coll.toArray[Any])
+    case ab: ArrayBuffer[_] => Functions.deepFlatten(ab.toArray[Any])
+    case coll: GenTraversableOnce[_] => Functions.deepFlatten(coll.toArray[Any])
     case _ => any
   }
 
@@ -209,7 +210,7 @@ case class RequiredArgs(fieldPath:String, include: Array[ApiVersion],
   {
     val includeAll = include.contains(allVersion)
     val excludeAll = exclude.contains(allVersion)
-    val excludeSome = exclude.filterNot(allVersion == _).nonEmpty
+    val excludeSome = exclude.filterNot(allVersion ==).nonEmpty
 
     def assertNot(assertion: Boolean, message: => Any) = assert(!assertion, message)
 

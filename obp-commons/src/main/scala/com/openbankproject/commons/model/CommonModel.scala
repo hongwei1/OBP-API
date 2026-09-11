@@ -40,9 +40,7 @@ import java.util.Date
 import scala.reflect.runtime.universe._
 
 
-// `D <% T` was view-bound syntax; it desugars to exactly the implicit constructor parameter
-// written out here, so subclasses need the same implicit D => T they already needed.
-abstract class Converter[T, D: TypeTag](implicit ev: D => T){
+abstract class Converter[T, D <% T: TypeTag]{
   //this method declared as common method to avoid conflict with Predf#$confirms
   implicit def toCommons(t: T): D = ReflectUtils.toSibling[T, D].apply(t)
 

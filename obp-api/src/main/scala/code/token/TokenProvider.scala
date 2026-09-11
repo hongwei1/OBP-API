@@ -11,7 +11,7 @@ import scala.concurrent.Future
 
 object Tokens extends SimpleInjector {
 
-  val tokens = new Inject(() => buildOne) {}
+  val tokens = new Inject(buildOne _) {}
 
   def buildOne: TokensProvider = MappedTokenProvider
 

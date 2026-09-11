@@ -11,7 +11,7 @@ object TransactionRequests extends SimpleInjector {
 
   def updatestatus(newStatus: String) = {}
 
-  val transactionRequestProvider = new Inject(() => buildOne) {}
+  val transactionRequestProvider = new Inject(buildOne _) {}
 
   def buildOne: TransactionRequestProvider  =
     APIUtil.getPropsValue("transactionRequests_connector", "mapped") match {

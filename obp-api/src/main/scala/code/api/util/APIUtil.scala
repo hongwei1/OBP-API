@@ -1533,7 +1533,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
         case BigIntBody(v) => JInt(v)
         case FloatBody(v) => JDouble(v)
         case DoubleBody(v) => JDouble(v)
-        case BigDecimalBody(v) => JDouble(v.doubleValue)
+        case BigDecimalBody(v) => JDouble(v.doubleValue())
         case JArrayBody(v) => v
         case _ => throw new RuntimeException(s"$value is not supported, please add a case for it.")
       }
@@ -1598,18 +1598,8 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
                           requestUrl: String, // The URL. THIS GETS MODIFIED TO include the implemented in prefix e.g. /obp/vX.X). Starts with / No trailing slash.
                           summary: String, // A summary of the call (originally taken from code comment) SHOULD be under 120 chars to be inline with Swagger
                           var description: String, // Longer description (originally taken from github wiki)
-                          // Any rather than scala.Product: 2.12's List was a Product and 2.13's is
-                          // not, and a list is a legitimate body here - getAllFields has always had
-                          // a branch for one. The bound did do something, which is why widening it
-                          // is not free: getAllFields reads these values as products, and the bound
-                          // rejected a non-Product body at compile time across every ResourceDoc.
-                          // Nothing replaces that check. Making getAllFields throw on a body it
-                          // cannot describe was tried and reverted - it recurses into scalars, so
-                          // the throw fired on legitimate input and took out five suites. A body of
-                          // the wrong type now yields an empty field table, silently, and the place
-                          // to catch it is a check here rather than in the field walker.
-                          exampleRequestBody: Any, // An example of the request body, any type of: case class, List, JObject, EmptyBody or sub type of PrimaryDataBody, PrimaryDataBody is for primary type
-                          successResponseBody: Any, // A successful response body, any type of: case class, List, JObject, EmptyBody or sub type of PrimaryDataBody, PrimaryDataBody is for primary type
+                          exampleRequestBody: scala.Product, // An example of the request body, any type of: case class, JObject, EmptyBody or sub type of PrimaryDataBody, PrimaryDataBody is for primary type
+                          successResponseBody: scala.Product, // A successful response body, any type of: case class, JObject, EmptyBody or sub type of PrimaryDataBody, PrimaryDataBody is for primary type
                           var errorResponseBodies: List[String], // Possible error responses
                           tags: List[ResourceDocTag],
                           var roles: Option[List[ApiRole]] = None,
@@ -1838,7 +1828,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
           val errorMessage = if (rolesForCheck.filter(_.requiresBankId).isEmpty) UserHasMissingRoles + rolesForCheck.mkString(" or ")
                              else UserHasMissingRoles + rolesForCheck.mkString(" or ") + s" for BankId($bankIdStr)."
           Helper.booleanToFuture(errorMessage, cc = callContext) { APIUtil.handleAccessControlWithAuthMode(bankIdStr, userIdStr, consumerId, rolesForCheck, authMode) }
-        } else Future.successful(Full(()))
+        } else Future.successful(Full(Unit))
       def checkAccount(bankId: Option[BankId], accountId: Option[AccountId], callContext: Option[CallContext]): Future[(BankAccount, Option[CallContext])] =
         if (isNeedCheckAccount && bankId.isDefined && accountId.isDefined) checkAccountFun(bankId.get)(accountId.get, callContext) else Future.successful(null.asInstanceOf[BankAccount] -> callContext)
       def checkView(viewId: Option[ViewId], bankId: Option[BankId], accountId: Option[AccountId], boxUser: Box[User], callContext: Option[CallContext]): Future[View] =
@@ -3262,6 +3252,18 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     def base64EncodedSha256(in: String) = base64EncodeURLSafe(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8"))).stripSuffix("=")
 
     base64EncodedSha256(in)
+  }
+
+  /**
+   * Lower-case hex SHA-256 of the given string (UTF-8). Used to fingerprint the source of
+   * runtime-compiled dynamic code (e.g. a Dynamic Resource Doc's method body) so that a stored
+   * record carries an integrity hash: it lets an operator answer "has this code changed since it
+   * was created?" without diffing the raw body, and is the value a future code-signing / approval
+   * step signs over.
+   */
+  def sha256Hex(in: String): String = {
+    val digest = java.security.MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8"))
+    digest.map(b => f"$b%02x").mkString
   }
 
   /**

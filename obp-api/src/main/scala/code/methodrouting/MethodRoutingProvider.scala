@@ -14,7 +14,7 @@ import net.liftweb.util.SimpleInjector
 
 object MethodRoutingProvider extends SimpleInjector {
 
-  val connectorMethodProvider = new Inject(() => buildOne) {}
+  val connectorMethodProvider = new Inject(buildOne _) {}
 
   def buildOne: MappedMethodRoutingProvider.type = MappedMethodRoutingProvider
 }

@@ -8,7 +8,7 @@ import scala.collection.immutable.List
 
 object TransactionRequestAttributeX extends SimpleInjector {
 
-  val transactionRequestAttributeProvider = new Inject(() => buildOne) {}
+  val transactionRequestAttributeProvider = new Inject(buildOne _) {}
 
   def buildOne: TransactionRequestAttributeProvider = MappedTransactionRequestAttributeProvider
 

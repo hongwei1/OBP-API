@@ -10,7 +10,7 @@ import net.liftweb.util.{Props, SimpleInjector}
 
 object TransactionImages  extends SimpleInjector {
 
-  val transactionImages = new Inject(() => buildOne) {}
+  val transactionImages = new Inject(buildOne _) {}
 
   def buildOne: TransactionImages = MapperTransactionImages
   

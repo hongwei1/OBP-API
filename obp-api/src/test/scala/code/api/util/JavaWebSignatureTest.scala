@@ -24,11 +24,11 @@ class JavaWebSignatureTest extends V400ServerSetup {
   object Function1 extends Tag("signRequest")
   object Function2 extends Tag("verifyJws")
   object ApiEndpoint1 extends Tag(nameOf(Implementations4_0_0.verifyRequestSignResponse))
-  override def beforeAll(): Unit = {
+  override def beforeAll() {
     super.beforeAll()
   }
 
-  override def afterAll(): Unit = {
+  override def afterAll() {
     super.afterAll()
   }
 

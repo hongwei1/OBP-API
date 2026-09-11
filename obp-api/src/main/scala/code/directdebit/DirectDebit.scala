@@ -8,7 +8,7 @@ import com.openbankproject.commons.model.DirectDebitTrait
 
 
 object DirectDebits extends SimpleInjector {
-  val directDebitProvider = new Inject(() => buildOne) {}
+  val directDebitProvider = new Inject(buildOne _) {}
   def buildOne: DirectDebitProvider = MappedDirectDebitProvider
 }
 

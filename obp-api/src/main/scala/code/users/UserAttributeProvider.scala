@@ -13,7 +13,7 @@ import scala.concurrent.Future
 
 object UserAttributeProvider extends SimpleInjector {
 
-  val userAttributeProvider = new Inject(() => buildOne) {}
+  val userAttributeProvider = new Inject(buildOne _) {}
 
   def buildOne: UserAttributeProvider = MappedUserAttributeProvider
 

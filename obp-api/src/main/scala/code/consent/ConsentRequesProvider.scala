@@ -6,7 +6,7 @@ import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
 object ConsentRequests extends SimpleInjector {
-  val consentRequestProvider = new Inject(() => buildOne) {}
+  val consentRequestProvider = new Inject(buildOne _) {}
   def buildOne: ConsentRequestProvider = MappedConsentRequestProvider
 }
 

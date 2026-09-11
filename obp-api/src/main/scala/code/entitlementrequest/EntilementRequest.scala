@@ -11,7 +11,7 @@ import scala.concurrent.Future
 
 object EntitlementRequest extends SimpleInjector {
 
-  val entitlementRequest = new Inject(() => buildOne) {}
+  val entitlementRequest = new Inject(buildOne _) {}
 
   def buildOne: EntitlementRequestProvider = MappedEntitlementRequestsProvider
 }

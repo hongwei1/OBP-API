@@ -5,7 +5,7 @@ import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
 object ParticipantTrait extends SimpleInjector {
-  val participantProvider = new Inject(() => buildOne) {}
+  val participantProvider = new Inject(buildOne _) {}
   def buildOne: ParticipantProvider = MappedParticipantProvider
 }
 

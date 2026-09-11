@@ -14,11 +14,11 @@ import org.json4s.native.Serialization.write
 
 class EntitlementTests extends V200ServerSetup with DefaultUsers {
 
-   override def beforeAll(): Unit = {
+   override def beforeAll() {
      super.beforeAll()
    }
 
-   override def afterAll(): Unit = {
+   override def afterAll() {
      super.afterAll()
    }
 

@@ -7,7 +7,7 @@ import net.liftweb.util.SimpleInjector
 import code.util.Helper.MdcLoggable
 
 object RegulatedEntityX extends SimpleInjector {
-  val regulatedEntityProvider = new Inject(() => buildOne) {}
+  val regulatedEntityProvider = new Inject(buildOne _) {}
   def buildOne: RegulatedEntityProvider = MappedRegulatedEntityProvider
 }
 /* For ProductFee */

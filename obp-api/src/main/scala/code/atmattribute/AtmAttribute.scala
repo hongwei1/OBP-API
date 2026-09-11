@@ -12,7 +12,7 @@ import scala.concurrent.Future
 
 object AtmAttributeX extends SimpleInjector {
 
-  val atmAttributeProvider = new Inject(() => buildOne) {}
+  val atmAttributeProvider = new Inject(buildOne _) {}
 
   def buildOne: AtmAttributeProviderTrait = AtmAttributeProvider
 

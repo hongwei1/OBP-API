@@ -1504,7 +1504,7 @@ object ApiRole extends MdcLoggable{
   }
 
   def availableRoles: List[String] = {
-    import scala.jdk.CollectionConverters._
+    import scala.collection.JavaConverters._
     val dynamicRoles = dynamicApiRoles.keys().asScala.toList
     dynamicRoles ::: roles.map(_.toString)
   }

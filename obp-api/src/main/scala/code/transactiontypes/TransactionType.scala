@@ -42,7 +42,7 @@ object TransactionType extends SimpleInjector {
   )
 
 
-  val TransactionTypeProvider = new Inject(() => buildOne) {}
+  val TransactionTypeProvider = new Inject(buildOne _) {}
 
   def buildOne: TransactionTypeProvider  =
     APIUtil.getPropsValue("TransactionTypes_connector", "mapped") match {

@@ -14,7 +14,7 @@ import scala.concurrent.Future
 
 object Users  extends SimpleInjector {
 
-  val users = new Inject(() => buildOne) {}
+  val users = new Inject(buildOne _) {}
 
   def buildOne: Users = LiftUsers 
   

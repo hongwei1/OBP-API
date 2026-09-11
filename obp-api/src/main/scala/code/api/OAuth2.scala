@@ -46,7 +46,7 @@ import org.apache.commons.lang3.StringUtils
 
 import java.net.URI
 import scala.concurrent.Future
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 /**
 * This object provides the API calls necessary to third party applications

@@ -84,7 +84,7 @@ object Connector extends SimpleInjector {
     }
   }
 
-  val connector = new Inject(() => buildOne) {}
+  val connector = new Inject(buildOne _) {}
 
   def buildOne: Connector = {
     val connectorProps = code.api.Constant.CONNECTOR.openOrThrowException(s"$MandatoryPropertyIsNotSet The missing props is 'connector'")

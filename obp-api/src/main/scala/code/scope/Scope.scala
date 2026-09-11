@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 object Scope extends SimpleInjector {
 
-  val scope = new Inject(() => buildOne) {}
+  val scope = new Inject(buildOne _) {}
 
   def buildOne: ScopeProvider = MappedScopesProvider 
   

@@ -185,7 +185,7 @@ case class CompiledObjects(exampleRequestBody: Option[JValue], successResponseBo
   }
 
   private def toCaseObject(jValue: Option[JValue]): Product = {
-     if (jValue.isEmpty || jValue.exists(JNothing == _)) {
+     if (jValue.isEmpty || jValue.exists(JNothing ==)) {
       EmptyBody
      } else {
        jValue.orNull match {

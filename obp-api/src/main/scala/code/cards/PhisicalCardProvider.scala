@@ -12,7 +12,7 @@ import scala.collection.immutable.List
 
 object PhysicalCard extends SimpleInjector {
 
-  val physicalCardProvider = new Inject(() => buildOne) {}
+  val physicalCardProvider = new Inject(buildOne _) {}
 
   def buildOne: PhysicalCardProvider = MappedPhysicalCardProvider
 

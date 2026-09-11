@@ -8,7 +8,7 @@ import scala.collection.immutable.List
 import scala.concurrent.Future
 
 object SystemAccountNotificationWebhookTrait extends SimpleInjector {
-  val systemAccountNotificationWebhook = new Inject(() => buildOne) {}
+  val systemAccountNotificationWebhook = new Inject(buildOne _) {}
 
   def buildOne: SystemAccountNotificationWebhookProvider = MappedSystemAccountNotificationWebhookProvider
 }

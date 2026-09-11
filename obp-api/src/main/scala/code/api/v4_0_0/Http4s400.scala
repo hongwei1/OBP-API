@@ -73,7 +73,7 @@ import java.text.SimpleDateFormat
 import java.util
 import com.networknt.schema.ValidationMessage
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 import code.model._   // implicit BankAccountExtended → moderatedBankAccount
 import code.model.dataAccess.AuthUser
 import code.ratelimiting.RateLimitingDI
@@ -2031,7 +2031,7 @@ object Http4s400 {
       for {
         (dynamicEndpoints, _) <- NewStyle.function.getDynamicEndpoints(bankId, Some(cc))
       } yield {
-        val resultList = dynamicEndpoints.map[JObject] { dynamicEndpoint =>
+        val resultList = dynamicEndpoints.map[JObject, List[JObject]] { dynamicEndpoint =>
           val swaggerJson = parse(dynamicEndpoint.swaggerString)
           ("user_id", cc.userId) ~ ("dynamic_endpoint_id", dynamicEndpoint.dynamicEndpointId) ~
             ("swagger_string", swaggerJson)
@@ -2425,7 +2425,7 @@ object Http4s400 {
           for {
             (dynamicEndpoints, _) <- NewStyle.function.getDynamicEndpointsByUserId(user.userId, Some(cc))
           } yield {
-            val resultList = dynamicEndpoints.map[JObject] { dynamicEndpoint =>
+            val resultList = dynamicEndpoints.map[JObject, List[JObject]] { dynamicEndpoint =>
               val swaggerJson = parse(dynamicEndpoint.swaggerString)
               ("user_id", user.userId) ~ ("dynamic_endpoint_id", dynamicEndpoint.dynamicEndpointId) ~
                 ("swagger_string", swaggerJson)
@@ -7599,6 +7599,9 @@ object Http4s400 {
         http4sPartialFunction = Some(deleteTransactionRequestAttributeDefinition)
       )
 
+      // Intentional drift from the Lift baseline: description expanded to document the
+      // scramble (soft delete) behaviour, and UserNotFoundById added to the error list
+      // (the handler returns 404 via NewStyle.function.findByUserId).
       staticResourceDocs += ResourceDoc(
         implementedInApiVersion,
         nameOf(deleteUser),
@@ -7607,13 +7610,25 @@ object Http4s400 {
         "Delete a User",
         s"""Delete a User.
         |
+        |This is a soft delete: the database row is kept, but the User's personal data is scrambled i.e. overwritten with random values:
+        |
+        |* The username is replaced with DELETED-<random-string>
+        |* The first name, last name and email are replaced with random values
+        |* The password is replaced with a random value and the user is invalidated, so the User can no longer log in
+        |* Any User Invitation that created the User is scrambled in the same way
+        |
+        |The User is marked as deleted; any subsequent authentication as this User (including via existing tokens or consents) is rejected.
+        |
+        |The USER_ID is retained, so records that reference it (e.g. metrics and transaction history) keep their audit value but can no longer be linked to a person.
+        |
+        |This action cannot be undone.
         |
         |${userAuthenticationMessage(true)}
         |
         |""",
         EmptyBody,
         EmptyBody,
-        List($AuthenticatedUserIsRequired, UserHasMissingRoles, UnknownError),
+        List($AuthenticatedUserIsRequired, UserNotFoundById, UserHasMissingRoles, UnknownError),
         List(apiTagUser),
         Some(List(canDeleteUser)),
         http4sPartialFunction = Some(deleteUser)

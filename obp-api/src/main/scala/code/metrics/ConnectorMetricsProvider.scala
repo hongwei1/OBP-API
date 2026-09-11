@@ -7,7 +7,7 @@ import net.liftweb.util.SimpleInjector
 
 object ConnectorMetricsProvider extends SimpleInjector {
 
-  val metrics = new Inject(() => buildOne) {}
+  val metrics = new Inject(buildOne _) {}
 
   def buildOne: ConnectorMetricsProvider = ConnectorMetrics 
 

@@ -13,7 +13,7 @@ import scala.concurrent.Future
 
 object BankAttributeX extends SimpleInjector {
 
-  val bankAttributeProvider = new Inject(() => buildOne) {}
+  val bankAttributeProvider = new Inject(buildOne _) {}
 
   def buildOne: BankAttributeProviderTrait = BankAttributeProvider
 

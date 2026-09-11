@@ -8,7 +8,7 @@ import net.liftweb.util.SimpleInjector
 
 object DynamicDataProvider extends SimpleInjector {
 
-  val connectorMethodProvider = new Inject(() => buildOne) {}
+  val connectorMethodProvider = new Inject(buildOne _) {}
 
   def buildOne: MappedDynamicDataProvider.type = MappedDynamicDataProvider
 }

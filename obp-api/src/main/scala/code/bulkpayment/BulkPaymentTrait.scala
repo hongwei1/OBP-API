@@ -4,7 +4,7 @@ import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
 object BulkPayments extends SimpleInjector {
-  val bulkPayment = new Inject(() => buildOne) {}
+  val bulkPayment = new Inject(buildOne _) {}
 
   def buildOne: BulkPaymentProvider = MappedBulkPaymentProvider
 }

@@ -8,7 +8,7 @@ import redis.clients.jedis.{Jedis, JedisPubSub, Pipeline}
 
 import java.util.concurrent.{ArrayBlockingQueue, ConcurrentHashMap, CopyOnWriteArrayList, TimeUnit}
 import java.util.concurrent.atomic.AtomicLong
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 /**
  * Redis pub/sub event bus for log cache streaming.
@@ -121,9 +121,6 @@ object LogCacheEventBus extends MdcLoggable {
 
     logger.info("LogCacheEventBus says: Started")
   }
-
-  /** Whether this bus is already subscribed, so a caller can tell whether it started it. */
-  def isRunning: Boolean = running
 
   def stop(): Unit = {
     running = false

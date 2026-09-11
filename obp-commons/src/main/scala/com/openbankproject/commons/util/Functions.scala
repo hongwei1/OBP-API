@@ -1,7 +1,8 @@
 package com.openbankproject.commons.util
 import java.util.regex.Pattern
 
-import scala.collection.{Factory, immutable}
+import scala.collection.{GenSetLike, GenTraversableOnce, SeqLike, TraversableLike, immutable}
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.runtime.universe.Type
 
 /**
@@ -46,23 +47,20 @@ object Functions {
       ()=> value
   }
 
-      // Iterable in place of Traversable and GenTraversableOnce: 2.13 removes both. Every value
-      // these two actually meet - arrays and ordinary collections - is an Iterable, so the runtime
-      // type tests keep selecting the same things.
       def deepFlatten(arr: Array[_]): Array[Any] = {
         arr.collect {
           case a:Array[_] => a
-          case coll: Iterable[_] => coll.toArray[Any]
+          case coll: GenTraversableOnce[_] => coll.toArray[Any]
         }.flatMap(deepFlatten(_)) ++
-          arr.filterNot(it => it.isInstanceOf[Array[_]] || it.isInstanceOf[Iterable[_]])
+          arr.filterNot(it => it.isInstanceOf[Array[_]] || it.isInstanceOf[GenTraversableOnce[_]])
       }
 
-      def deepFlatten[A](coll: Iterable[A]): Iterable[Any] = {
+      def deepFlatten[A](coll: Traversable[A]): Traversable[Any] = {
         coll.collect {
-          case a:Array[_] => a.toIndexedSeq
-          case coll: Iterable[_] => coll
+          case a:Array[_] => a.toTraversable
+          case coll: Traversable[_] => coll
         }.flatMap(deepFlatten(_)) ++
-          coll.filterNot(it => it.isInstanceOf[Array[_]] || it.isInstanceOf[Iterable[_]])
+          coll.filterNot(it => it.isInstanceOf[Array[_]] || it.isInstanceOf[GenTraversableOnce[_]])
       }
 
   /**
@@ -97,21 +95,9 @@ object Functions {
           def ?:[B >: A](b: B): B = if(b == null) a else b
         }
 
-        /**
-         * 2.13 removes TraversableLike, SeqLike, GenSetLike and CanBuildFrom outright, so this had
-         * to be rebuilt rather than renamed. It is now written against the collection type itself
-         * plus scala.collection.Factory, which 2.13 has natively and scala-collection-compat
-         * back-ports to 2.12, so one source compiles on both.
-         *
-         * The result type also narrows: CanBuildFrom[Repr, A, That] allowed the result to be a
-         * different kind of collection from the source, and none of the call sites ever used that -
-         * distinctBy returns the List it was given, classify splits a Seq into two Seqs, ?+ returns
-         * the List it was given. Fixing the result at C[A] keeps every existing call compiling and
-         * removes a degree of freedom that only made the rewrite harder.
-         */
-        implicit class RichCollection[A, C[X] <: Iterable[X]](iterable: C[A]){
-          def distinctBy[B](f: A => B)(implicit factory: Factory[A, C[A]]): C[A] = {
-            val builder = factory.newBuilder
+        implicit class RichCollection[A, Repr](iterable: TraversableLike[A, Repr]){
+          def distinctBy[B, That](f: A => B)(implicit canBuildFrom: CanBuildFrom[Repr, A, That]): That = {
+            val builder = canBuildFrom(iterable.repr)
             val set = scala.collection.mutable.Set[B]()
             iterable.foreach(it => {
               val calculatedElement = f(it)
@@ -119,7 +105,7 @@ object Functions {
                 builder += it
               }
             })
-            builder.result()
+            builder.result
           }
           def toMap[K, V](keyFn: A => K, valueFn: A => V): Map[K, V] = {
             val b = immutable.Map.newBuilder[K, V]
@@ -137,11 +123,12 @@ object Functions {
            * split collection to tuple of two collections, left is predicate check is true, right is predicate check is false
            * @param predicate check element function
            * @param canBuildFrom
+           * @tparam That to collection's type
            * @return tuple
            */
-          def classify(predicate: A => Boolean)(implicit factory: Factory[A, C[A]]): (C[A], C[A]) = {
-            val builderLeft = factory.newBuilder
-            val builderRight = factory.newBuilder
+          def classify[That](predicate: A => Boolean)(implicit canBuildFrom: CanBuildFrom[Repr, A, That]): (That, That) = {
+            val builderLeft = canBuildFrom(iterable.repr)
+            val builderRight = canBuildFrom(iterable.repr)
             for (x <- iterable) {
               if(predicate(x)) builderLeft += x else builderRight += x
             }
@@ -152,13 +139,14 @@ object Functions {
            * add one element if coll not exists that element
            * @param ele
            * @param canBuildFrom
+           * @tparam That
            * @return new coll contains given ele
            */
-          def ?+ (ele: A)(implicit factory: Factory[A, C[A]]): C[A] = {
+          def ?+ [That](ele: A)(implicit canBuildFrom: CanBuildFrom[Repr, A, That]): That = {
             if(existsElement(ele)) {
-              iterable
+              iterable.asInstanceOf[That]
             } else {
-              val builder = factory.newBuilder
+              val builder = canBuildFrom(iterable.repr)
               builder ++= iterable
               builder += ele
               builder.result()
@@ -169,27 +157,25 @@ object Functions {
            * remove element if coll exists that element, may remove multiple if exists more than one.
            * @param ele
            * @param canBuildFrom
+           * @tparam That
            * @return a new coll not contains given ele
            */
-          def ?- (ele: A)(implicit factory: Factory[A, C[A]]): C[A] = {
+          def ?- [That](ele: A)(implicit canBuildFrom: CanBuildFrom[Repr, A, That]): That = {
             if(!existsElement(ele)) {
-              iterable
+              iterable.asInstanceOf[That]
             } else {
-              val builder = factory.newBuilder
+              val builder = canBuildFrom(iterable.repr)
               for(e <- iterable if e != ele)
                 builder += e
               builder.result()
             }
           }
 
-          // Seq and Set stand in for SeqLike and GenSetLike. Both are matched at their
-          // scala.collection root so a mutable receiver is still recognised - on 2.13 the
-          // unqualified names mean the immutable ones only.
-          private def existsElement(ele: A): Boolean = {
+          private def existsElement[That](ele: A) = {
             iterable match {
-              case seq: scala.collection.Seq[A @unchecked] => seq.contains(ele)
-              case set: scala.collection.Set[A @unchecked] => set.contains(ele)
-              case _ => iterable.exists(ele == _)
+              case seq: SeqLike[A, Repr] => seq.contains(ele)
+              case set: GenSetLike[A, Repr] => set.contains(ele)
+              case _ => iterable.exists(ele ==)
             }
           }
 

@@ -252,13 +252,13 @@ class BranchesTest extends V140ServerSetup with DefaultUsers {
   /*
   So we can test the API layer, rather than the connector, use a mock connector.
    */
-  override def beforeAll(): Unit = {
+  override def beforeAll() {
     super.beforeAll()
     //use the mock connector
     Branches.branchesProvider.default.set(mockConnector)
   }
 
-  override def afterAll(): Unit = {
+  override def afterAll() {
     super.afterAll()
     //reset the default connector
     Branches.branchesProvider.default.set(Branches.buildOne)

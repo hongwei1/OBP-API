@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{Duration, ZoneOffset, ZonedDateTime}
 import java.util
 import scala.collection.immutable.{HashMap, List}
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 
 object JwsUtil extends MdcLoggable {

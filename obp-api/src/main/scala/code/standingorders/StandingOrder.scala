@@ -9,7 +9,7 @@ import scala.math.BigDecimal
 
 
 object StandingOrders extends SimpleInjector {
-  val provider = new Inject(() => buildOne) {}
+  val provider = new Inject(buildOne _) {}
   def buildOne: StandingOrderProvider = MappedStandingOrderProvider
 }
 

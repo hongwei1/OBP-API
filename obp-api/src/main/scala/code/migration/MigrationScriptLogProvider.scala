@@ -5,7 +5,7 @@ import net.liftweb.util.SimpleInjector
 
 object MigrationScriptLogProvider extends SimpleInjector {
 
-  val migrationScriptLogProvider = new Inject(() => buildOne) {}
+  val migrationScriptLogProvider = new Inject(buildOne _) {}
 
   def buildOne: MigrationScriptLogProvider = MappedMigrationScriptLogProvider
 }

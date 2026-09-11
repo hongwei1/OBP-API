@@ -7,7 +7,7 @@
 //
 //object YearlyCharge extends SimpleInjector {
 //
-//    val yearlyChargeProvider = new Inject(() => buildOne) {}
+//    val yearlyChargeProvider = new Inject(buildOne _) {}
 //
 //
 //  // This determines the provider we use
