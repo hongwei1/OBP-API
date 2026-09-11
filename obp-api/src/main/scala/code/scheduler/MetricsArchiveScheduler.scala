@@ -52,25 +52,12 @@ object MetricsArchiveScheduler extends MdcLoggable {
     logger.info("Hello from MetricsArchiveScheduler.start")
 
     logger.info(s"--------- Clean up Jobs ---------")
-    logger.info(s"Delete all Jobs created by api_instance_id=$apiInstanceId")
-    // On boot this instance cannot have a genuinely-running job, so clear any of its
-    // own leftover lock rows (e.g. orphaned by a kill -9 / OOM / container eviction
-    // that bypassed the finally in runOnce). Match on ApiInstanceId, NOT Name — lock
-    // rows store Name=jobName and ApiInstanceId=apiInstanceId, so the old
-    // `By(Name, apiInstanceId)` never matched and a redeploy could not self-heal
-    // (only the 5-day sweep below would, leaving archiving stalled up to 5 days).
-    // Keyed on this instance's own id, so another node's running job is untouched.
-    JobScheduler.findAll(By(JobScheduler.ApiInstanceId, apiInstanceId)).map { i =>
-      logger.info(s"Deleting leftover Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: $apiInstanceId")
-      i
-    }.map(_.delete_!)
-    logger.info(s"Delete all Jobs older than 5 days")
     val fiveDaysAgo: Date = new Date(new Date().getTime - (oneDayInMillis * 5))
-    JobScheduler.findAll(By_<=(JobScheduler.createdAt, fiveDaysAgo)).map { i =>
-      println(s"Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: ${apiInstanceId}")
-      i
-    }.map(_.delete_!)
-    
+    val (ownLeftovers, agedOut) = JobScheduler.clearStaleLocksAtStartup(apiInstanceId, fiveDaysAgo)
+    logger.info(s"$jobName.start cleared $ownLeftovers leftover lock row(s) of api_instance_id=$apiInstanceId " +
+      s"and $agedOut lock row(s) older than 5 days")
+
+
     scheduler.schedule(
       initialDelay = Duration(intervalInSeconds, TimeUnit.SECONDS),
       interval = Duration(intervalInSeconds, TimeUnit.SECONDS),

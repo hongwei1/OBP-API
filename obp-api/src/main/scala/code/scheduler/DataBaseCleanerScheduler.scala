@@ -7,7 +7,7 @@ import code.api.util.APIUtil
 import code.nonce.Nonces
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.Full
-import net.liftweb.mapper.{By, By_<=}
+import net.liftweb.mapper.By
 
 import java.util.concurrent.TimeUnit
 import java.util.Date
@@ -29,18 +29,11 @@ object DataBaseCleanerScheduler extends MdcLoggable {
     logger.info(s"Hello from $jobName.start")
 
     logger.info(s"--------- Clean up Jobs ---------")
-    logger.info(s"Delete all Jobs created by api_instance_id=$apiInstanceId")
-    JobScheduler.findAll(By(JobScheduler.Name, apiInstanceId)).map { i =>
-      logger.info(s"Job name: ${i.name}, Date: ${i.createdAt}")
-      i
-    }.map(_.delete_!)
-    logger.info(s"Delete all Jobs older than 5 days")
     val fiveDaysAgo: Date = new Date(new Date().getTime - (oneDayInMillis * 5))
-    JobScheduler.findAll(By_<=(JobScheduler.createdAt, fiveDaysAgo)).map { i =>
-      logger.info(s"Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: ${apiInstanceId}")
-      i
-    }.map(_.delete_!)
-    
+    val (ownLeftovers, agedOut) = JobScheduler.clearStaleLocksAtStartup(apiInstanceId, fiveDaysAgo)
+    logger.info(s"$jobName.start cleared $ownLeftovers leftover lock row(s) of api_instance_id=$apiInstanceId " +
+      s"and $agedOut lock row(s) older than 5 days")
+
     scheduler.schedule(
       initialDelay = Duration(intervalInSeconds, TimeUnit.SECONDS),
       interval = Duration(intervalInSeconds, TimeUnit.SECONDS),

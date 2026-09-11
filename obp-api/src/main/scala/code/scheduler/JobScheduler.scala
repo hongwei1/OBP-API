@@ -5,6 +5,8 @@ import net.liftweb.common.Box
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers.tryo
 
+import java.util.Date
+
 class JobScheduler extends JobSchedulerTrait with LongKeyedMapper[JobScheduler] with IdPK with CreatedUpdated {
 
   def getSingleton = JobScheduler
@@ -63,6 +65,33 @@ object JobScheduler extends JobScheduler with LongKeyedMetaMapper[JobScheduler] 
         .ApiInstanceId(apiInstanceId)
         .saveMe()
     }
+
+  /**
+   * Startup self-heal: drop the lock rows this instance cannot possibly still be holding.
+   *
+   * On boot this JVM has no running job, so a row carrying its OWN `api_instance_id` is a
+   * leftover orphaned by a kill -9 / OOM / container eviction that bypassed the `finally`
+   * which normally deletes it. Rows belonging to other instances are left alone — they may
+   * be live locks on another node — except that anything created before `olderThan` is
+   * swept regardless, as a backstop for an instance id that is never coming back.
+   *
+   * Matching is on ApiInstanceId, NOT Name. Lock rows store `Name` = the job name and
+   * `ApiInstanceId` = the instance id, so `By(Name, apiInstanceId)` matches nothing and the
+   * self-heal silently does nothing at all — a redeploy could then not recover, leaving the
+   * job stalled until the 5-day sweep. That bug was fixed once in `MetricsArchiveScheduler`
+   * and left in place in `DataBaseCleanerScheduler`; both now call this single implementation
+   * so the two cannot drift apart again.
+   *
+   * @return (leftovers of this instance removed, aged-out rows removed)
+   */
+  def clearStaleLocksAtStartup(apiInstanceId: String, olderThan: Date): (Int, Int) = {
+    val ownLeftovers = findAll(By(JobScheduler.ApiInstanceId, apiInstanceId))
+    ownLeftovers.foreach(delete_!)
+    // Queried after the deletes above, so the two sets never overlap.
+    val agedOut = findAll(By_<=(JobScheduler.createdAt, olderThan))
+    agedOut.foreach(delete_!)
+    (ownLeftovers.size, agedOut.size)
+  }
 
   /**
    * The most recent scheduler-lock rows, newest first, capped at `limit`.

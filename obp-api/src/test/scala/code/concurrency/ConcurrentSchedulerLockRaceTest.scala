@@ -29,7 +29,7 @@ package code.concurrency
 import code.scheduler.JobScheduler
 import net.liftweb.mapper.By
 
-import java.util.UUID
+import java.util.{Date, UUID}
 import scala.util.Success
 
 /**
@@ -46,6 +46,9 @@ import scala.util.Success
  *  K2. Under a barrier fan-out exactly one of N simultaneous acquirers wins, and the losers
  *      come back with a verdict rather than an escaped exception — the constraint violation
  *      has to read as "someone else got there first", not as a crashed scheduler tick.
+ *  K3. The boot-time self-heal removes this instance's own orphaned locks and leaves other
+ *      instances' locks alone. `DataBaseCleanerScheduler` used to match `Name` against the
+ *      api_instance_id, which can never match, so its self-heal did nothing at all.
  */
 class ConcurrentSchedulerLockRaceTest extends ConcurrentRaceSetup {
 
@@ -112,5 +115,40 @@ class ConcurrentSchedulerLockRaceTest extends ConcurrentRaceSetup {
       winners.foreach(w => JobScheduler.delete_!(w.openOrThrowException("winner must have produced a row")))
     }
 
+    scenario("K3: startup self-heal clears this instance's orphaned locks and nobody else's", ConcurrencyRace) {
+      val ourInstanceId = s"instance-self-${UUID.randomUUID()}"
+      val otherInstanceId = s"instance-other-${UUID.randomUUID()}"
+      val ourJobA = freshJobName("SelfHealOursA")
+      val ourJobB = freshJobName("SelfHealOursB")
+      val theirJob = freshJobName("SelfHealTheirs")
+
+      Given("two locks orphaned by this instance's previous life, and one held by another node")
+      JobScheduler.tryAcquire(ourJobA, ourInstanceId, UUID.randomUUID().toString).isDefined should equal(true)
+      JobScheduler.tryAcquire(ourJobB, ourInstanceId, UUID.randomUUID().toString).isDefined should equal(true)
+      JobScheduler.tryAcquire(theirJob, otherInstanceId, UUID.randomUUID().toString).isDefined should equal(true)
+
+      When("this instance boots and runs the self-heal")
+      // An age cutoff in the distant past isolates the api_instance_id matching: the age sweep
+      // must remove nothing, so anything that disappears did so because of its instance id.
+      val (ownRemoved, agedRemoved) = JobScheduler.clearStaleLocksAtStartup(ourInstanceId, new Date(0L))
+
+      Then("its own two orphans are gone")
+      withClue(
+        "clearStaleLocksAtStartup removed no rows for this instance. DataBaseCleanerScheduler used " +
+        "to look these up with By(JobScheduler.Name, apiInstanceId) — Name holds the job name, not " +
+        "the instance id, so the query could never match and a redeploy could not recover a lock " +
+        "orphaned by a kill -9 — "
+      ) {
+        ownRemoved should equal(2)
+      }
+      agedRemoved should equal(0)
+      lockRowCount(ourJobA) should equal(0L)
+      lockRowCount(ourJobB) should equal(0L)
+
+      And("the other node's live lock is untouched")
+      lockRowCount(theirJob) should equal(1L)
+
+      JobScheduler.findAll(By(JobScheduler.Name, theirJob)).foreach(JobScheduler.delete_!)
+    }
   }
 }
