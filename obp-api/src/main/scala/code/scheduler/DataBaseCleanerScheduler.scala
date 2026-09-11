@@ -49,19 +49,26 @@ object DataBaseCleanerScheduler extends MdcLoggable {
           JobScheduler.find(By(JobScheduler.Name, jobName)) match {
             case Full(job) => // There is an ongoing/hanging job
               logger.info(s"Cannot start $jobName.start.run due to ongoing job. Job ID: ${job.JobId}")
-            case _ => // Start a new job
+            case _ => // No lock visible a moment ago — try to take it.
+              // The read above and this acquire are two statements, so another instance can
+              // take the lock in between and both would then run the cleanup concurrently.
+              // JobScheduler.tryAcquire closes that window: UniqueIndex(Name) lets exactly
+              // one INSERT through, and a rejection means we lost the race.
               val uniqueId = generateUUID()
-              val job = JobScheduler.create
-                .JobId(uniqueId)
-                .Name(jobName)
-                .ApiInstanceId(apiInstanceId)
-                .saveMe()
-              logger.info(s"Starting $jobName.Job ID: $uniqueId")
-              deleteExpiredTokensAndNonces()
-              JobScheduler.delete_!(job) // Allow future jobs
-              logger.info(s"End of $jobName.Job ID: $uniqueId")
+              JobScheduler.tryAcquire(jobName, apiInstanceId, uniqueId) match {
+                case Full(job) =>
+                  logger.info(s"Starting $jobName.Job ID: $uniqueId")
+                  try {
+                    deleteExpiredTokensAndNonces()
+                  } finally {
+                    JobScheduler.delete_!(job) // Allow future jobs
+                    logger.info(s"End of $jobName.Job ID: $uniqueId")
+                  }
+                case _ =>
+                  logger.info(s"Cannot start $jobName.start.run: another instance took the $jobName lock concurrently")
+              }
           }
-        } 
+        }
       }
     )
     logger.info(s"Bye from $jobName.start")
