@@ -1843,6 +1843,22 @@ user_account_validated_redirect_url =
 # In case is not defined default value is false
 user_account_is_validated = false
 
+# Identifies this OBP instance. Used as the Redis cache namespace, stamped on every
+# metric row, and recorded as the owner of the rows in the `jobscheduler` lock table.
+#
+# What is actually stored is this value with a fresh UUID appended, so each JVM gets a
+# distinct id — UNLESS the value ends with the literal string "final", in which case it
+# is used verbatim (see code.api.Constant.ApiInstanceId). Leave it unset and a bare UUID
+# is generated.
+#
+# ⚠️ Do NOT end this value with "final" when running more than one instance. A shared id
+# is not just cosmetic: on boot each instance deletes every `jobscheduler` lock row
+# carrying its own id, to clear locks orphaned by a JVM that died mid-run. With a unique
+# id that only ever touches its own leftovers; with a shared id a rolling restart deletes
+# the lock another pod is holding at that moment, and the job it was protecting then runs
+# in two places at once. A shared id also merges every replica's Redis cache namespace.
+# api_instance_id = my-obp
+
 # Metrics archiving — all defaults below live in code.metrics.MetricsProps; the
 # values shown here MUST match the constants there.
 # Disable/Enable Metric Scheduler

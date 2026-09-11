@@ -48,6 +48,23 @@ object Constant extends MdcLoggable {
 
   final val bgRemoveSignOfAmounts = APIUtil.getPropsAsBoolValue("BG_remove_sign_of_amounts", false)
 
+  /**
+   * This JVM's instance id: `api_instance_id` from props with a fresh UUID appended, unless
+   * that prop ends with the literal string `final`, in which case it is taken verbatim.
+   *
+   * ⚠️ The `final` suffix makes the id SHARED BY EVERY REPLICA, which is not safe with more
+   * than one of them. `MetricsArchiveScheduler.start` and `DataBaseCleanerScheduler.start`
+   * both call `JobScheduler.clearStaleLocksAtStartup(ApiInstanceId, …)` on boot, which
+   * deletes every `jobscheduler` lock row carrying this id — correct when the id is unique
+   * per JVM (only that JVM's own orphans match), but with a shared id a rolling restart
+   * wipes out the lock another pod is holding right now, and that pod's job then runs
+   * alongside whoever takes the freed lock. The same id also becomes the Redis cache
+   * namespace (`getGlobalCacheNamespacePrefix`) and is stamped on every metric row.
+   *
+   * So: use the `final` suffix only for a single-instance deployment, or where a stable id
+   * genuinely matters more than lock safety. The behaviour is left as is because existing
+   * deployments depend on it; this note exists so the trap is visible before it is chosen.
+   */
   final val ApiInstanceId = {
     val apiInstanceIdFromProps = APIUtil.getPropsValue("api_instance_id")
     if(apiInstanceIdFromProps.isDefined){
