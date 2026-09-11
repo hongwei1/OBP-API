@@ -142,6 +142,31 @@ object MessageOutbox extends MessageOutbox with LongKeyedMetaMapper[MessageOutbo
   def pending(): List[MessageOutbox] =
     MessageOutbox.findAll(By(MessageOutbox.Status, STATUS_PENDING))
 
+  /**
+   * Take ownership of `row` for one relay pass. True means this caller — and only this
+   * caller — may publish it now.
+   *
+   * `pending()` above hands the same rows to every relay that asks, so the claim is what
+   * stops two of them publishing the same message. See
+   * [[code.bankconnectors.DoobieMessageOutboxQueries.claimRowForRelay]] for why it is a
+   * guarded UPDATE and not a row lock.
+   *
+   * On success the in-memory copy is advanced to the `attempts` value just written, so the
+   * terminal save the caller makes after publishing (DELIVERED / STICKY / retry) carries the
+   * claimed count instead of the stale one it was loaded with.
+   */
+  def claimForRelay(row: MessageOutbox): Boolean = {
+    val seenAttempts = row.attempts
+    val claimed = code.bankconnectors.DoobieMessageOutboxQueries.claimRowForRelay(
+      rowId = row.id.get,
+      seenAttempts = seenAttempts,
+      status = STATUS_PENDING,
+      now = new java.sql.Timestamp(System.currentTimeMillis())
+    ) == 1
+    if (claimed) row.Attempts(seenAttempts + 1)
+    claimed
+  }
+
   def bySubjectId(subjectId: String): List[MessageOutbox] =
     MessageOutbox.findAll(By(MessageOutbox.SubjectId, subjectId))
 }
