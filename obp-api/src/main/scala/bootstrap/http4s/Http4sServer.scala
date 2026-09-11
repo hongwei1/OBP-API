@@ -13,6 +13,21 @@ object Http4sServer extends IOApp with MdcLoggable {
   // new bootstrap.http4s.Http4sBoot().boot
   new bootstrap.liftweb.Boot().boot
 
+  // A `migrator` instance has done its entire job in Boot above — schema, migrations, seed data —
+  // and must not serve traffic. Exit here, BEFORE Http4sApp.httpApp below, so a one-shot Job does
+  // not pay for building the whole ResourceDoc registry it will never serve. The shutdown hook
+  // registered during boot still runs on System.exit, so the connection pool and Redis close
+  // cleanly and the Job ends successfully rather than being reaped.
+  //
+  // Only `migrator` exits: a `scheduler` instance keeps running (its schedulers live in the
+  // actor system started by Boot) and still binds a port, so it has an endpoint for probes even
+  // though no Service routes traffic to it.
+  if (code.api.Constant.InstanceRole.exitsAfterBoot) {
+    logger.info(s"instance.role=${code.api.Constant.InstanceRole.value}: boot complete, " +
+      s"exiting without binding an HTTP port.")
+    System.exit(0)
+  }
+
   // Get bind address: use bind_address prop if set, otherwise parse from hostname
   // Note: hostname prop must remain unchanged as it may be used for local_provider_name fallback
   val host =  Http4sConfigUtil.parseHostname(APIUtil.getPropsValue("bind_address",code.api.Constant.HostName))

@@ -139,7 +139,27 @@ long_endpoint_timeout = 55000
 ## Transaction status scheduler delay in seconds.
 ## Retrieves transactionRequest status from south-side connector.
 ## Scheduler will be disabled if delay is not set.
-#transaction_status_scheduler_delay=300
+## NOTE: the name below used to read transaction_status_scheduler_delay, which Boot never reads —
+## the prop it actually looks up is transaction_request_status_scheduler_delay. Anyone who copied
+## the old spelling out of this template had the scheduler silently disabled.
+#transaction_request_status_scheduler_delay=300
+
+## Which slice of boot this instance performs. Same image, same jar, up to three workloads.
+##   all       (default) everything, i.e. the historical single-instance behaviour
+##   migrator  schema + migrations + seed data, then exit. Run it as a one-shot Job BEFORE the
+##             rest of the deployment; it never binds a port.
+##   scheduler the background schedulers only. Exactly ONE replica, and use Recreate, not
+##             RollingUpdate — the jobscheduler lock tolerates an overlap but there is no reason
+##             to create one. Keep it out of the Service.
+##   web       serves HTTP only: no DDL, no migrations, no schedulers. This is the one to scale
+##             and roll.
+## Leaving this unset keeps an existing deployment working exactly as before.
+## An unrecognised value aborts boot rather than silently doing nothing.
+##
+## Two things every role keeps, whatever this is set to: the per-JVM metric batch writers (each
+## request enqueues to an in-process queue drained by their own daemon thread — a web instance
+## without them loses 100% of its metrics), and the ordered shutdown hook.
+#instance.role=all
 
 
 ## Enable user authentication via the connector
