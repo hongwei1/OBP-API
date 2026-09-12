@@ -6,6 +6,7 @@ import cats.effect._
 import code.api.Constant._
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
+import code.api.v3_0_0.JSONFactory300
 import code.api.v3_1_0.ConsentChallengeJsonV310
 import code.consent.ConsentStatus
 import com.openbankproject.commons.model.enums.{AttributeCategory, AttributeType, UserInvitationPurpose}
@@ -4646,7 +4647,7 @@ object Http4s400 {
             (attr, _) <- NewStyle.function.createOrUpdateTransactionAttribute(
               bank.bankId, TransactionId(transactionIdStr), None, postedData.name,
               attrType, postedData.value, Some(cc))
-          } yield JSONFactory400.createTransactionAttributeJson(attr)
+          } yield JSONFactory300.createTransactionAttributeJson(attr)
         }
     }
 
@@ -4666,7 +4667,7 @@ object Http4s400 {
             (attr, _) <- NewStyle.function.createOrUpdateTransactionAttribute(
               bank.bankId, TransactionId(transactionIdStr), Some(transactionAttributeId),
               postedData.name, attrType, postedData.value, Some(cc))
-          } yield JSONFactory400.createTransactionAttributeJson(attr)
+          } yield JSONFactory300.createTransactionAttributeJson(attr)
         }
     }
 
@@ -6310,7 +6311,7 @@ object Http4s400 {
             (_, _) <- NewStyle.function.getTransaction(
               account.bankId, account.accountId, TransactionId(transactionIdStr), Some(cc))
             (attr, _) <- NewStyle.function.getTransactionAttributeById(transactionAttributeId, Some(cc))
-          } yield JSONFactory400.createTransactionAttributeJson(attr)
+          } yield JSONFactory300.createTransactionAttributeJson(attr)
         }
     }
 

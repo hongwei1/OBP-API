@@ -42,7 +42,8 @@ import code.api.v2_1_0.JSONFactory210.createLicenseJson
 import code.api.v2_1_0.{CounterpartyIdJson, CustomerCreditRatingJSON, ResourceUserJSON}
 import code.api.v2_2_0._
 import code.api.v3_0_0.{AccountRuleJsonV300, CustomerAttributeResponseJsonV300, JSONFactory300, ViewBasicV300, ViewJsonV300}
-import code.api.v3_0_0.JSONFactory300.{createAccountRoutingsJSON, createAccountRulesJSON}
+import code.api.v3_0_0.AccountAttributeResponseJson
+import code.api.v3_0_0.JSONFactory300.{createAccountAttributeJson, createAccountRoutingsJSON, createAccountRulesJSON}
 import code.consent.MappedConsent
 import code.entitlement.Entitlement
 import code.loginattempts.BadLoginAttempt
@@ -418,14 +419,6 @@ case class CardAttributeJson(
   value: String,
 )
 
-case class AccountAttributeResponseJson(
-  product_code: String,
-  account_attribute_id: String,
-  name: String,
-  `type`: String,
-  value: String,
-  product_instance_code: Option[String],
-)
 case class AccountAttributesResponseJson(list: List[AccountAttributeResponseJson])
 
 case class AccountApplicationUpdateStatusJson(status: String)
@@ -1251,16 +1244,6 @@ object JSONFactory310{
     )
   }
 
-  def createAccountAttributeJson(accountAttribute: AccountAttribute) : AccountAttributeResponseJson = {
-    AccountAttributeResponseJson(
-      product_code = accountAttribute.productCode.value,
-      account_attribute_id = accountAttribute.accountAttributeId,
-      name = accountAttribute.name,
-      `type` = accountAttribute.attributeType.toString,
-      value = accountAttribute.value,
-      product_instance_code = accountAttribute.productInstanceCode
-    )
-  }
   def createAccountAttributesJson(productsList: List[AccountAttribute]) : AccountAttributesResponseJson = {
     AccountAttributesResponseJson(productsList.map(createAccountAttributeJson))
   }

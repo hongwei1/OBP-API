@@ -29,9 +29,11 @@ import code.api.v3_0_0.{
   ViewJSON300,
   ViewsJSON300
 }
-import code.api.v3_1_0.{AccountAttributeResponseJson, ProductAttributeResponseWithoutBankIdJson, RateLimit, RedisCallLimitJson}
+import code.api.v3_1_0.{ProductAttributeResponseWithoutBankIdJson, RateLimit, RedisCallLimitJson}
+import code.api.v3_0_0.AccountAttributeResponseJson
 import code.api.v3_1_0.JSONFactory310.createProductAttributesJson
-import code.api.v4_0_0.{AccountTagJSON, BankAttributeBankResponseJsonV400, ProductFeeJsonV400, ProductFeeValueJsonV400, TransactionAttributeResponseJson, UserAgreementJson}
+import code.api.v4_0_0.{AccountTagJSON, BankAttributeBankResponseJsonV400, ProductFeeJsonV400, ProductFeeValueJsonV400, UserAgreementJson}
+import code.api.v3_0_0.TransactionAttributeResponseJson
 import code.entitlement.Entitlement
 import code.apiproduct.ApiProductTrait
 import code.apiproductattribute.ApiProductAttributeTrait
@@ -2799,7 +2801,7 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
   import code.api.util.APIUtil.stringOptionOrNull
   import code.api.v1_2_1.JSONFactory.{createAmountOfMoneyJSON, createTransactionCommentJSON, createTransactionTagJSON, createTransactionImageJSON, createLocationJSON, createAccountHolderJSON}
   import code.api.v3_0_0.JSONFactory300.createOtherAccountMetaDataJSON
-  import code.api.v4_0_0.JSONFactory400.createTransactionAttributeJson
+  import code.api.v3_0_0.JSONFactory300.createTransactionAttributeJson
   import code.model.{ModeratedBankAccount, ModeratedOtherBankAccount, ModeratedTransaction, ModeratedTransactionMetadata}
 
   def createTransactionsJsonV600(moderatedTransactionsWithAttributes: List[ModeratedTransactionWithAttributes]): TransactionsJsonV600 = {
@@ -3104,7 +3106,7 @@ object JSONFactory600 extends CustomJsonFormats with MdcLoggable {
   ): ModeratedAccountJSON600 = {
     import code.api.v1_2_1.JSONFactory.{createAmountOfMoneyJSON, createOwnersJSON}
     import code.api.v3_0_0.JSONFactory300.createAccountRoutingsJSON
-    import code.api.v3_1_0.JSONFactory310.createAccountAttributeJson
+    import code.api.v3_0_0.JSONFactory300.createAccountAttributeJson
     import code.api.v4_0_0.JSONFactory400.createAccountTagJSON
     ModeratedAccountJSON600(
       id = account.accountId.value,

@@ -9,6 +9,7 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.createViewJsonV300
 import code.api.util.APIUtil.OAuth.{Consumer, Token, _}
 import code.api.util.ApiRole.{CanCreateAccountAttributeAtOneBank, CanCreateCustomer, CanCreateProduct, _}
 import code.api.util.{APIUtil, ApiRole}
+import code.api.v3_0_0.{AccountAttributeResponseJson, TransactionAttributeResponseJson}
 import code.api.v1_2_1._
 import code.api.v1_4_0.JSONFactory1_4_0.TransactionRequestAccountJsonV140
 import code.api.v2_0_0.{BasicAccountsJSON, TransactionRequestBodyJsonV200, UserCustomerLinkJson}

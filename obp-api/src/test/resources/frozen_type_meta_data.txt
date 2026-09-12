@@ -1511,6 +1511,12 @@ field	code.api.v2_2_0.ViewJSONV220	short_name	String
 field	code.api.v2_2_0.ViewsJSONV220	views	List[code.api.v2_2_0.ViewJSONV220]
 field	code.api.v2_2_0.WarehouseJSON	property	String
 field	code.api.v2_2_0.WarehouseJSON	value	String
+field	code.api.v3_0_0.AccountAttributeResponseJson	account_attribute_id	String
+field	code.api.v3_0_0.AccountAttributeResponseJson	name	String
+field	code.api.v3_0_0.AccountAttributeResponseJson	product_code	String
+field	code.api.v3_0_0.AccountAttributeResponseJson	product_instance_code	Option[String]
+field	code.api.v3_0_0.AccountAttributeResponseJson	type	String
+field	code.api.v3_0_0.AccountAttributeResponseJson	value	String
 field	code.api.v3_0_0.AccountHeldJson	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v3_0_0.AccountHeldJson	bank_id	String
 field	code.api.v3_0_0.AccountHeldJson	id	String
@@ -1584,7 +1590,7 @@ field	code.api.v3_0_0.CoreTransactionJsonV300	details	code.api.v2_0_0.JSONFactor
 field	code.api.v3_0_0.CoreTransactionJsonV300	id	String
 field	code.api.v3_0_0.CoreTransactionJsonV300	other_account	code.api.v3_0_0.CoreCounterpartyJsonV300
 field	code.api.v3_0_0.CoreTransactionJsonV300	this_account	code.api.v3_0_0.ThisAccountJsonV300
-field	code.api.v3_0_0.CoreTransactionJsonV300	transaction_attributes	List[code.api.v4_0_0.TransactionAttributeResponseJson]
+field	code.api.v3_0_0.CoreTransactionJsonV300	transaction_attributes	List[code.api.v3_0_0.TransactionAttributeResponseJson]
 field	code.api.v3_0_0.CoreTransactionsJsonV300	transactions	List[code.api.v3_0_0.CoreTransactionJsonV300]
 field	code.api.v3_0_0.CreateScopeJson	bank_id	String
 field	code.api.v3_0_0.CreateScopeJson	role_name	String
@@ -1670,7 +1676,7 @@ field	code.api.v3_0_0.LobbyJsonV330	sunday	List[code.api.v3_0_0.OpeningTimesV300
 field	code.api.v3_0_0.LobbyJsonV330	thursday	List[code.api.v3_0_0.OpeningTimesV300]
 field	code.api.v3_0_0.LobbyJsonV330	tuesday	List[code.api.v3_0_0.OpeningTimesV300]
 field	code.api.v3_0_0.LobbyJsonV330	wednesday	List[code.api.v3_0_0.OpeningTimesV300]
-field	code.api.v3_0_0.ModeratedCoreAccountJsonV300	account_attributes	Option[List[code.api.v3_1_0.AccountAttributeResponseJson]]
+field	code.api.v3_0_0.ModeratedCoreAccountJsonV300	account_attributes	Option[List[code.api.v3_0_0.AccountAttributeResponseJson]]
 field	code.api.v3_0_0.ModeratedCoreAccountJsonV300	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v3_0_0.ModeratedCoreAccountJsonV300	account_rules	List[code.api.v3_0_0.AccountRuleJsonV300]
 field	code.api.v3_0_0.ModeratedCoreAccountJsonV300	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
@@ -1719,12 +1725,16 @@ field	code.api.v3_0_0.ThisAccountJsonV300	account_routings	List[com.openbankproj
 field	code.api.v3_0_0.ThisAccountJsonV300	bank_routing	code.api.v1_2_1.BankRoutingJsonV121
 field	code.api.v3_0_0.ThisAccountJsonV300	holders	List[code.api.v1_2_1.AccountHolderJSON]
 field	code.api.v3_0_0.ThisAccountJsonV300	id	String
+field	code.api.v3_0_0.TransactionAttributeResponseJson	name	String
+field	code.api.v3_0_0.TransactionAttributeResponseJson	transaction_attribute_id	String
+field	code.api.v3_0_0.TransactionAttributeResponseJson	type	String
+field	code.api.v3_0_0.TransactionAttributeResponseJson	value	String
 field	code.api.v3_0_0.TransactionJsonV300	details	code.api.v1_2_1.TransactionDetailsJSON
 field	code.api.v3_0_0.TransactionJsonV300	id	String
 field	code.api.v3_0_0.TransactionJsonV300	metadata	code.api.v1_2_1.TransactionMetadataJSON
 field	code.api.v3_0_0.TransactionJsonV300	other_account	code.api.v3_0_0.OtherAccountJsonV300
 field	code.api.v3_0_0.TransactionJsonV300	this_account	code.api.v3_0_0.ThisAccountJsonV300
-field	code.api.v3_0_0.TransactionJsonV300	transaction_attributes	List[code.api.v4_0_0.TransactionAttributeResponseJson]
+field	code.api.v3_0_0.TransactionJsonV300	transaction_attributes	List[code.api.v3_0_0.TransactionAttributeResponseJson]
 field	code.api.v3_0_0.TransactionsJsonV300	transactions	List[code.api.v3_0_0.TransactionJsonV300]
 field	code.api.v3_0_0.UpdateViewJsonV300	allowed_actions	List[String]
 field	code.api.v3_0_0.UpdateViewJsonV300	description	String
@@ -1847,12 +1857,6 @@ field	code.api.v3_1_0.AccountAttributeJson	name	String
 field	code.api.v3_1_0.AccountAttributeJson	product_instance_code	Option[String]
 field	code.api.v3_1_0.AccountAttributeJson	type	String
 field	code.api.v3_1_0.AccountAttributeJson	value	String
-field	code.api.v3_1_0.AccountAttributeResponseJson	account_attribute_id	String
-field	code.api.v3_1_0.AccountAttributeResponseJson	name	String
-field	code.api.v3_1_0.AccountAttributeResponseJson	product_code	String
-field	code.api.v3_1_0.AccountAttributeResponseJson	product_instance_code	Option[String]
-field	code.api.v3_1_0.AccountAttributeResponseJson	type	String
-field	code.api.v3_1_0.AccountAttributeResponseJson	value	String
 field	code.api.v3_1_0.AccountBalanceV310	account_routings	List[com.openbankproject.commons.model.AccountRouting]
 field	code.api.v3_1_0.AccountBalanceV310	balance	com.openbankproject.commons.model.AmountOfMoney
 field	code.api.v3_1_0.AccountBalanceV310	bank_id	String
@@ -1933,7 +1937,7 @@ field	code.api.v3_1_0.CreateAccountRequestJsonV310	branch_id	String
 field	code.api.v3_1_0.CreateAccountRequestJsonV310	label	String
 field	code.api.v3_1_0.CreateAccountRequestJsonV310	product_code	String
 field	code.api.v3_1_0.CreateAccountRequestJsonV310	user_id	String
-field	code.api.v3_1_0.CreateAccountResponseJsonV310	account_attributes	List[code.api.v3_1_0.AccountAttributeResponseJson]
+field	code.api.v3_1_0.CreateAccountResponseJsonV310	account_attributes	List[code.api.v3_0_0.AccountAttributeResponseJson]
 field	code.api.v3_1_0.CreateAccountResponseJsonV310	account_id	String
 field	code.api.v3_1_0.CreateAccountResponseJsonV310	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v3_1_0.CreateAccountResponseJsonV310	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
@@ -2040,7 +2044,7 @@ field	code.api.v3_1_0.MeetingJsonV310	provider_id	String
 field	code.api.v3_1_0.MeetingJsonV310	purpose_id	String
 field	code.api.v3_1_0.MeetingJsonV310	when	java.util.Date
 field	code.api.v3_1_0.MeetingsJsonV310	meetings	List[code.api.v3_1_0.MeetingJsonV310]
-field	code.api.v3_1_0.ModeratedAccountJSON310	account_attributes	List[code.api.v3_1_0.AccountAttributeResponseJson]
+field	code.api.v3_1_0.ModeratedAccountJSON310	account_attributes	List[code.api.v3_0_0.AccountAttributeResponseJson]
 field	code.api.v3_1_0.ModeratedAccountJSON310	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v3_1_0.ModeratedAccountJSON310	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
 field	code.api.v3_1_0.ModeratedAccountJSON310	bank_id	String
@@ -2622,7 +2626,7 @@ field	code.api.v4_0_0.JsonSchemaV400	type	String
 field	code.api.v4_0_0.JsonValidationV400	json_schema	code.api.v4_0_0.JsonSchemaV400
 field	code.api.v4_0_0.JsonValidationV400	operation_id	String
 field	code.api.v4_0_0.LogoutLinkJson	link	String
-field	code.api.v4_0_0.ModeratedAccountJSON400	account_attributes	List[code.api.v3_1_0.AccountAttributeResponseJson]
+field	code.api.v4_0_0.ModeratedAccountJSON400	account_attributes	List[code.api.v3_0_0.AccountAttributeResponseJson]
 field	code.api.v4_0_0.ModeratedAccountJSON400	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v4_0_0.ModeratedAccountJSON400	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
 field	code.api.v4_0_0.ModeratedAccountJSON400	bank_id	String
@@ -2642,7 +2646,7 @@ field	code.api.v4_0_0.ModeratedCoreAccountJsonV400	label	String
 field	code.api.v4_0_0.ModeratedCoreAccountJsonV400	number	String
 field	code.api.v4_0_0.ModeratedCoreAccountJsonV400	product_code	String
 field	code.api.v4_0_0.ModeratedCoreAccountJsonV400	views_basic	List[String]
-field	code.api.v4_0_0.ModeratedFirehoseAccountJsonV400	account_attributes	Option[List[code.api.v3_1_0.AccountAttributeResponseJson]]
+field	code.api.v4_0_0.ModeratedFirehoseAccountJsonV400	account_attributes	Option[List[code.api.v3_0_0.AccountAttributeResponseJson]]
 field	code.api.v4_0_0.ModeratedFirehoseAccountJsonV400	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v4_0_0.ModeratedFirehoseAccountJsonV400	account_rules	List[code.api.v3_0_0.AccountRuleJsonV300]
 field	code.api.v4_0_0.ModeratedFirehoseAccountJsonV400	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
@@ -2788,7 +2792,7 @@ field	code.api.v4_0_0.ResourceDocFragment	requestUrl	String
 field	code.api.v4_0_0.ResourceDocFragment	requestVerb	String
 field	code.api.v4_0_0.ResourceDocFragment	successResponseBody	Option[org.json4s.JValue]
 field	code.api.v4_0_0.RevokedJsonV400	revoked	Boolean
-field	code.api.v4_0_0.SettlementAccountJson	account_attributes	List[code.api.v3_1_0.AccountAttributeResponseJson]
+field	code.api.v4_0_0.SettlementAccountJson	account_attributes	List[code.api.v3_0_0.AccountAttributeResponseJson]
 field	code.api.v4_0_0.SettlementAccountJson	account_id	String
 field	code.api.v4_0_0.SettlementAccountJson	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v4_0_0.SettlementAccountJson	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
@@ -2801,7 +2805,7 @@ field	code.api.v4_0_0.SettlementAccountRequestJson	branch_id	String
 field	code.api.v4_0_0.SettlementAccountRequestJson	label	String
 field	code.api.v4_0_0.SettlementAccountRequestJson	payment_system	String
 field	code.api.v4_0_0.SettlementAccountRequestJson	user_id	String
-field	code.api.v4_0_0.SettlementAccountResponseJson	account_attributes	List[code.api.v3_1_0.AccountAttributeResponseJson]
+field	code.api.v4_0_0.SettlementAccountResponseJson	account_attributes	List[code.api.v3_0_0.AccountAttributeResponseJson]
 field	code.api.v4_0_0.SettlementAccountResponseJson	account_id	String
 field	code.api.v4_0_0.SettlementAccountResponseJson	account_routings	List[com.openbankproject.commons.model.AccountRoutingJsonV121]
 field	code.api.v4_0_0.SettlementAccountResponseJson	balance	com.openbankproject.commons.model.AmountOfMoneyJsonV121
@@ -2834,11 +2838,7 @@ field	code.api.v4_0_0.SystemAccountNotificationWebhookJson	webhook_id	String
 field	code.api.v4_0_0.TransactionAttributeJsonV400	name	String
 field	code.api.v4_0_0.TransactionAttributeJsonV400	type	String
 field	code.api.v4_0_0.TransactionAttributeJsonV400	value	String
-field	code.api.v4_0_0.TransactionAttributeResponseJson	name	String
-field	code.api.v4_0_0.TransactionAttributeResponseJson	transaction_attribute_id	String
-field	code.api.v4_0_0.TransactionAttributeResponseJson	type	String
-field	code.api.v4_0_0.TransactionAttributeResponseJson	value	String
-field	code.api.v4_0_0.TransactionAttributesResponseJson	transaction_attributes	List[code.api.v4_0_0.TransactionAttributeResponseJson]
+field	code.api.v4_0_0.TransactionAttributesResponseJson	transaction_attributes	List[code.api.v3_0_0.TransactionAttributeResponseJson]
 field	code.api.v4_0_0.TransactionBankAccountJson	account_id	String
 field	code.api.v4_0_0.TransactionBankAccountJson	bank_id	String
 field	code.api.v4_0_0.TransactionBankAccountJson	transaction_id	String
@@ -3251,6 +3251,7 @@ field	code.api.v5_0_0.ViewJsonV500	metadata_view	String
 field	code.api.v5_0_0.ViewJsonV500	short_name	String
 field	code.api.v5_0_0.ViewsIdsJsonV500	views	List[code.api.v5_0_0.ViewIdJsonV500]
 field	code.api.v5_0_0.ViewsJsonV500	views	List[code.api.v5_0_0.ViewJsonV500]
+field	code.api.v5_1_0.APITags	tags	List[String]
 field	code.api.v5_1_0.AgentJsonV510	agent_id	String
 field	code.api.v5_1_0.AgentJsonV510	agent_number	String
 field	code.api.v5_1_0.AgentJsonV510	bank_id	String
