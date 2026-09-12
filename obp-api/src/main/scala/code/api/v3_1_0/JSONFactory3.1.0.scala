@@ -43,7 +43,6 @@ import code.api.v2_1_0.{CounterpartyIdJson, CustomerCreditRatingJSON, ResourceUs
 import code.api.v2_2_0._
 import code.api.v3_0_0.{AccountRuleJsonV300, CustomerAttributeResponseJsonV300, JSONFactory300, ViewBasicV300, ViewJsonV300}
 import code.api.v3_0_0.JSONFactory300.{createAccountRoutingsJSON, createAccountRulesJSON}
-import code.api.v5_0_0.HelperInfoJson
 import code.consent.MappedConsent
 import code.entitlement.Entitlement
 import code.loginattempts.BadLoginAttempt
