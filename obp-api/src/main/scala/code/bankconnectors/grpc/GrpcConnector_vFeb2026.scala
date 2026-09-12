@@ -61,7 +61,7 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
   val errorCodeExample = "INTERNAL-OBP-ADAPTER-6001: ..."
 
 //---------------- dynamic start -------------------please don't modify this line
-// ---------- created on 2026-02-27T05:54:48Z
+// ---------- created on 2026-09-12T12:50:48Z
 
   messageDocs += getAdapterInfoDoc
   def getAdapterInfoDoc = MessageDoc(
@@ -2478,7 +2478,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -2643,7 +2649,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -2994,7 +3006,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string"))))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value))))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -3100,7 +3118,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -3272,7 +3296,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     exampleInboundMessage = (
      InBoundCreateTransactionAfterChallengeV210(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
@@ -3357,7 +3387,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -3575,6 +3611,349 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, productCode)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_product", req, callContext)
         response.map(convertToTuple[ProductCommons](callContext))        
+  }
+          
+  messageDocs += createOrUpdateBranchDoc
+  def createOrUpdateBranchDoc = MessageDoc(
+    process = "obp.createOrUpdateBranch",
+    messageFormat = messageFormat,
+    description = "Create Or Update Branch",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateOrUpdateBranch(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      branch= BranchTCommons(branchId=BranchId(branchIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      lobbyString=Some(LobbyString("string")),
+      driveUpString=Some(DriveUpString("string")),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      branchRouting=Some( Routing(scheme=branchRoutingSchemeExample.value,
+      address=branchRoutingAddressExample.value)),
+      lobby=Some( Lobby(monday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      tuesday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      wednesday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      thursday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      friday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      saturday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      sunday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)))),
+      driveUp=Some( DriveUp(monday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      tuesday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      wednesday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      thursday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      friday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      saturday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      sunday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value))),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      accessibleFeatures=Some("string"),
+      branchType=Some(branchTypeExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      phoneNumber=Some(phoneNumberExample.value),
+      isDeleted=Some(true)))
+    ),
+    exampleInboundMessage = (
+     InBoundCreateOrUpdateBranch(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= BranchTCommons(branchId=BranchId(branchIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      lobbyString=Some(LobbyString("string")),
+      driveUpString=Some(DriveUpString("string")),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      branchRouting=Some( Routing(scheme=branchRoutingSchemeExample.value,
+      address=branchRoutingAddressExample.value)),
+      lobby=Some( Lobby(monday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      tuesday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      wednesday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      thursday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      friday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      saturday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)),
+      sunday=List( OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value)))),
+      driveUp=Some( DriveUp(monday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      tuesday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      wednesday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      thursday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      friday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      saturday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value),
+      sunday= OpeningTimes(openingTime=openingTimeExample.value,
+      closingTime=closingTimeExample.value))),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      accessibleFeatures=Some("string"),
+      branchType=Some(branchTypeExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      phoneNumber=Some(phoneNumberExample.value),
+      isDeleted=Some(true)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createOrUpdateBranch(branch: BranchT, callContext: Option[CallContext]): OBPReturnType[Box[BranchT]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateOrUpdateBranch => InBound, OutBoundCreateOrUpdateBranch => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, branch)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_or_update_branch", req, callContext)
+        response.map(convertToTuple[BranchTCommons](callContext))        
+  }
+          
+  messageDocs += createOrUpdateAtmDoc
+  def createOrUpdateAtmDoc = MessageDoc(
+    process = "obp.createOrUpdateAtm",
+    messageFormat = messageFormat,
+    description = "Create Or Update Atm",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundCreateOrUpdateAtm(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atm= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=atmNameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(atmServicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(atmNotesExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(atmLocationCategoriesExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some(atmMinimumWithdrawalExample.value),
+      branchIdentification=Some(atmBranchIdentificationExample.value),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some(atmSiteNameExample.value),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    exampleInboundMessage = (
+     InBoundCreateOrUpdateAtm(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def createOrUpdateAtm(atm: AtmT, callContext: Option[CallContext]): OBPReturnType[Box[AtmT]] = {
+        import com.openbankproject.commons.dto.{InBoundCreateOrUpdateAtm => InBound, OutBoundCreateOrUpdateAtm => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atm)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_create_or_update_atm", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += deleteAtmDoc
+  def deleteAtmDoc = MessageDoc(
+    process = "obp.deleteAtm",
+    messageFormat = messageFormat,
+    description = "Delete Atm",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteAtm(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atm= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=atmNameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(atmServicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(atmNotesExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(atmLocationCategoriesExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some(atmMinimumWithdrawalExample.value),
+      branchIdentification=Some(atmBranchIdentificationExample.value),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some(atmSiteNameExample.value),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteAtm(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteAtm(atm: AtmT, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteAtm => InBound, OutBoundDeleteAtm => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atm)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_atm", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
   }
           
   messageDocs += getBranchDoc
@@ -3824,6 +4203,480 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
         response.map(convertToTuple[AtmTCommons](callContext))        
   }
           
+  messageDocs += updateAtmSupportedLanguagesDoc
+  def updateAtmSupportedLanguagesDoc = MessageDoc(
+    process = "obp.updateAtmSupportedLanguages",
+    messageFormat = messageFormat,
+    description = "Update Atm Supported Languages",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmSupportedLanguages(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      supportedLanguages=supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmSupportedLanguages(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmSupportedLanguages(bankId: BankId, atmId: AtmId, supportedLanguages: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmSupportedLanguages => InBound, OutBoundUpdateAtmSupportedLanguages => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, supportedLanguages)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_supported_languages", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmSupportedCurrenciesDoc
+  def updateAtmSupportedCurrenciesDoc = MessageDoc(
+    process = "obp.updateAtmSupportedCurrencies",
+    messageFormat = messageFormat,
+    description = "Update Atm Supported Currencies",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmSupportedCurrencies(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      supportedCurrencies=supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmSupportedCurrencies(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmSupportedCurrencies(bankId: BankId, atmId: AtmId, supportedCurrencies: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmSupportedCurrencies => InBound, OutBoundUpdateAtmSupportedCurrencies => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, supportedCurrencies)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_supported_currencies", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmAccessibilityFeaturesDoc
+  def updateAtmAccessibilityFeaturesDoc = MessageDoc(
+    process = "obp.updateAtmAccessibilityFeatures",
+    messageFormat = messageFormat,
+    description = "Update Atm Accessibility Features",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmAccessibilityFeatures(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      accessibilityFeatures=accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmAccessibilityFeatures(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmAccessibilityFeatures(bankId: BankId, atmId: AtmId, accessibilityFeatures: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmAccessibilityFeatures => InBound, OutBoundUpdateAtmAccessibilityFeatures => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, accessibilityFeatures)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_accessibility_features", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmServicesDoc
+  def updateAtmServicesDoc = MessageDoc(
+    process = "obp.updateAtmServices",
+    messageFormat = messageFormat,
+    description = "Update Atm Services",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmServices(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      supportedCurrencies=supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmServices(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmServices(bankId: BankId, atmId: AtmId, supportedCurrencies: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmServices => InBound, OutBoundUpdateAtmServices => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, supportedCurrencies)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_services", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmNotesDoc
+  def updateAtmNotesDoc = MessageDoc(
+    process = "obp.updateAtmNotes",
+    messageFormat = messageFormat,
+    description = "Update Atm Notes",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmNotes(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      notes=listExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmNotes(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmNotes(bankId: BankId, atmId: AtmId, notes: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmNotes => InBound, OutBoundUpdateAtmNotes => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, notes)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_notes", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
+  messageDocs += updateAtmLocationCategoriesDoc
+  def updateAtmLocationCategoriesDoc = MessageDoc(
+    process = "obp.updateAtmLocationCategories",
+    messageFormat = messageFormat,
+    description = "Update Atm Location Categories",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundUpdateAtmLocationCategories(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      bankId=BankId(bankIdExample.value),
+      atmId=AtmId(atmIdExample.value),
+      locationCategories=listExample.value.replace("[","").replace("]","").split(",").toList)
+    ),
+    exampleInboundMessage = (
+     InBoundUpdateAtmLocationCategories(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data= AtmTCommons(atmId=AtmId(atmIdExample.value),
+      bankId=BankId(bankIdExample.value),
+      name=nameExample.value,
+      address= Address(line1=line1Example.value,
+      line2=line2Example.value,
+      line3=line3Example.value,
+      city=cityExample.value,
+      county=Some(countyExample.value),
+      state=stateExample.value,
+      postCode=postCodeExample.value,
+      countryCode=countryCodeExample.value),
+      location= Location(latitude=latitudeExample.value.toDouble,
+      longitude=longitudeExample.value.toDouble,
+      date=Some(toDate(dateExample)),
+      user=Some( BasicResourceUser(userId=userIdExample.value,
+      provider=providerExample.value,
+      username=usernameExample.value))),
+      meta=Meta( License(id=licenseIdExample.value,
+      name=licenseNameExample.value)),
+      OpeningTimeOnMonday=Some("string"),
+      ClosingTimeOnMonday=Some("string"),
+      OpeningTimeOnTuesday=Some("string"),
+      ClosingTimeOnTuesday=Some("string"),
+      OpeningTimeOnWednesday=Some("string"),
+      ClosingTimeOnWednesday=Some("string"),
+      OpeningTimeOnThursday=Some("string"),
+      ClosingTimeOnThursday=Some("string"),
+      OpeningTimeOnFriday=Some("string"),
+      ClosingTimeOnFriday=Some("string"),
+      OpeningTimeOnSaturday=Some("string"),
+      ClosingTimeOnSaturday=Some("string"),
+      OpeningTimeOnSunday=Some("string"),
+      ClosingTimeOnSunday=Some("string"),
+      isAccessible=Some(isAccessibleExample.value.toBoolean),
+      locatedAt=Some(locatedAtExample.value),
+      moreInfo=Some(moreInfoExample.value),
+      hasDepositCapability=Some(hasDepositCapabilityExample.value.toBoolean),
+      supportedLanguages=Some(supportedLanguagesExample.value.replace("[","").replace("]","").split(",").toList),
+      services=Some(servicesExample.value.replace("[","").replace("]","").split(",").toList),
+      accessibilityFeatures=Some(accessibilityFeaturesExample.value.replace("[","").replace("]","").split(",").toList),
+      supportedCurrencies=Some(supportedCurrenciesExample.value.replace("[","").replace("]","").split(",").toList),
+      notes=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      locationCategories=Some(listExample.value.replace("[","").replace("]","").split(",").toList),
+      minimumWithdrawal=Some("string"),
+      branchIdentification=Some("string"),
+      siteIdentification=Some(siteIdentification.value),
+      siteName=Some("string"),
+      cashWithdrawalNationalFee=Some(cashWithdrawalNationalFeeExample.value),
+      cashWithdrawalInternationalFee=Some(cashWithdrawalInternationalFeeExample.value),
+      balanceInquiryFee=Some(balanceInquiryFeeExample.value),
+      atmType=Some(atmTypeExample.value),
+      phone=Some(phoneExample.value)))
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def updateAtmLocationCategories(bankId: BankId, atmId: AtmId, locationCategories: List[String], callContext: Option[CallContext]): Future[Box[(AtmT, Option[CallContext])]] = {
+        import com.openbankproject.commons.dto.{InBoundUpdateAtmLocationCategories => InBound, OutBoundUpdateAtmLocationCategories => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bankId, atmId, locationCategories)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_update_atm_location_categories", req, callContext)
+        response.map(convertToTuple[AtmTCommons](callContext))        
+  }
+          
   messageDocs += getAtmsDoc
   def getAtmsDoc = MessageDoc(
     process = "obp.getAtms",
@@ -4061,7 +4914,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4333,7 +5192,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")))
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))))
     ),
     adapterImplementation = Some(AdapterImplementation("- Core", 1))
   )
@@ -4434,7 +5299,13 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
       payment_end_date=Some(toDate(dateExample)),
       payment_execution_Rule=Some("string"),
       payment_frequency=Some("string"),
-      payment_day_of_execution=Some("string")),
+      payment_day_of_execution=Some("string"),
+      user_id=Some("string"),
+      on_behalf_of_user_id=Some("string"),
+      originator=Some( TransactionRequestOriginator(name=nameExample.value,
+      address=addressExample.value,
+      account_routing= TransactionRequestOriginatorAccountRouting(scheme=schemeExample.value,
+      address=addressExample.value)))),
       reasons=Some(List( TransactionRequestReason(code=codeExample.value,
       documentNumber=Some(documentNumberExample.value),
       amount=Some(amountExample.value),
@@ -5697,6 +6568,58 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
         val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, bank, productCode)
         val response: Future[Box[InBound]] = sendRequest[InBound]("obp_get_product_attributes_by_bank_and_code", req, callContext)
         response.map(convertToTuple[List[ProductAttributeCommons]](callContext))        
+  }
+          
+  messageDocs += deleteAtmAttributeDoc
+  def deleteAtmAttributeDoc = MessageDoc(
+    process = "obp.deleteAtmAttribute",
+    messageFormat = messageFormat,
+    description = "Delete Atm Attribute",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteAtmAttribute(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atmAttributeId=atmAttributeIdExample.value)
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteAtmAttribute(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteAtmAttribute(atmAttributeId: String, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteAtmAttribute => InBound, OutBoundDeleteAtmAttribute => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atmAttributeId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_atm_attribute", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
+  }
+          
+  messageDocs += deleteAtmAttributesByAtmIdDoc
+  def deleteAtmAttributesByAtmIdDoc = MessageDoc(
+    process = "obp.deleteAtmAttributesByAtmId",
+    messageFormat = messageFormat,
+    description = "Delete Atm Attributes By Atm Id",
+    outboundTopic = None,
+    inboundTopic = None,
+    exampleOutboundMessage = (
+     OutBoundDeleteAtmAttributesByAtmId(outboundAdapterCallContext=MessageDocsSwaggerDefinitions.outboundAdapterCallContext,
+      atmId=AtmId(atmIdExample.value))
+    ),
+    exampleInboundMessage = (
+     InBoundDeleteAtmAttributesByAtmId(inboundAdapterCallContext=MessageDocsSwaggerDefinitions.inboundAdapterCallContext,
+      status=MessageDocsSwaggerDefinitions.inboundStatus,
+      data=true)
+    ),
+    adapterImplementation = Some(AdapterImplementation("- Core", 1))
+  )
+
+  override def deleteAtmAttributesByAtmId(atmId: AtmId, callContext: Option[CallContext]): OBPReturnType[Box[Boolean]] = {
+        import com.openbankproject.commons.dto.{InBoundDeleteAtmAttributesByAtmId => InBound, OutBoundDeleteAtmAttributesByAtmId => OutBound}  
+        val req = OutBound(callContext.map(_.toOutboundAdapterCallContext).orNull, atmId)
+        val response: Future[Box[InBound]] = sendRequest[InBound]("obp_delete_atm_attributes_by_atm_id", req, callContext)
+        response.map(convertToTuple[Boolean](callContext))        
   }
           
   messageDocs += deleteProductAttributeDoc
@@ -7458,8 +8381,8 @@ trait GrpcConnector_vFeb2026 extends Connector with MdcLoggable {
         response.map(convertToTuple[Boolean](callContext))        
   }
           
-// ---------- created on 2026-02-27T05:54:48Z
-//---------------- dynamic end ---------------------please don't modify this line 
+// ---------- created on 2026-09-12T12:50:48Z
+//---------------- dynamic end ---------------------please don't modify this line  
 
   private val availableOperation = DynamicEntityOperation.values.map(it => s""""$it"""").mkString("[", ", ", "]")
 
