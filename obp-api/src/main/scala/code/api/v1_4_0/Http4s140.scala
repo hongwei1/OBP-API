@@ -13,9 +13,7 @@ import code.api.util.http4s.ResourceDocMiddleware
 import code.api.util.http4s.IdempotencyMiddleware
 import code.api.util.{APIUtil, NewStyle}
 import code.api.v1_2_1.{JSONFactory, SuccessMessage}
-import code.atms.Atms
 import code.bankconnectors.Connector
-import code.branches.Branches
 import code.customer.{CustomerMessages, CustomerX}
 import code.products.Products
 import code.usercustomerlinks.UserCustomerLink
@@ -174,9 +172,10 @@ object Http4s140 {
           for {
             httpParams         <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
             (obpQueryParams, _) <- createQueriesByHttpParamsFuture(httpParams, Some(cc))
-            branches <- Future {
-              Branches.branchesProvider.vend.getBranches(bank.bankId, obpQueryParams)
-                .getOrElse(throw new RuntimeException("No branches available. License may not be set."))
+            // Through Connector so MethodRouting applies: a deployment that routes getBranches to a
+            // remote connector must see the same data from v1.4.0 as from every later version.
+            branches <- Connector.connector.vend.getBranches(bank.bankId, Some(cc), obpQueryParams) map {
+              _.map(_._1).openOr(throw new RuntimeException("No branches available. License may not be set."))
             }
           } yield JSONFactory1_4_0.createBranchesJson(branches)
         }
@@ -218,9 +217,8 @@ object Http4s140 {
           for {
             httpParams         <- NewStyle.function.extractHttpParamsFromUrl(cc.url)
             (obpQueryParams, _) <- createQueriesByHttpParamsFuture(httpParams, Some(cc))
-            atms <- Future {
-              Atms.atmsProvider.vend.getAtms(bank.bankId, obpQueryParams)
-                .getOrElse(throw new RuntimeException("No ATMs available. License may not be set."))
+            atms <- Connector.connector.vend.getAtms(bank.bankId, Some(cc), obpQueryParams) map {
+              _.map(_._1).openOr(throw new RuntimeException("No ATMs available. License may not be set."))
             }
           } yield JSONFactory1_4_0.createAtmsJson(atms)
         }

@@ -3,7 +3,11 @@ package code.api.v1_4_0
 import code.api.util.APIUtil.OAuth._
 import code.api.util.OBPQueryParam
 import code.api.v1_4_0.JSONFactory1_4_0.{BranchJson, BranchesJson}
-import code.branches.{Branches, BranchesProvider}
+import code.bankconnectors.Connector
+import code.branches.MappedBranch
+import net.liftweb.mapper.By
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import code.setup.DefaultUsers
 import com.openbankproject.commons.model._
 
@@ -212,26 +216,6 @@ class BranchesTest extends V140ServerSetup with DefaultUsers {
     None,
     fakeMoreInfo, None, None, None, None, None) // Should not be returned
 
-  // This mock provider is returning same branches for the fake banks
-  val mockConnector = new BranchesProvider {
-    override protected def getBranchesFromProvider(bank: BankId, queryParams: List[OBPQueryParam]): Option[List[BranchT]] = {
-      bank match {
-        // have it return branches even for the bank without a license so we can test the API does not return them
-        case BankWithLicense | BankWithoutLicense=> Some(List(fakeBranch1, fakeBranch2, fakeBranch3))
-        case _ => None
-      }
-    }
-
-    // Mock a badly behaving connector that returns data that doesn't have license.
-    override protected def getBranchFromProvider(bankId: BankId, branchId: BranchId): Option[BranchT] = {
-      branchId match {
-         case BankWithLicense => Some(fakeBranch1)
-         case BankWithoutLicense=> Some(fakeBranch3) // In case the connector returns, the API should guard
-        case _ => None
-      }
-    }
-
-  }
 
   def verifySameData(branch: BranchT, branchJson : BranchJson) = {
     branch.name should equal (branchJson.name)
@@ -252,16 +236,22 @@ class BranchesTest extends V140ServerSetup with DefaultUsers {
   /*
   So we can test the API layer, rather than the connector, use a mock connector.
    */
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    //use the mock connector
-    Branches.branchesProvider.default.set(mockConnector)
+  // ServerSetup.beforeEach wipes the tables and recreates the banks before every scenario, so
+  // rows seeded once per suite would be gone by the first request. Seed per scenario, as the
+  // v3.0.0 suite does.
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    // The endpoint reads through Connector now, so the data has to be in the table the mapped
+    // connector reads, not in a provider mock. The fixtures are declared for BankId("uk"); they
+    // go in under the bank the request asks for. verifySameData does not compare bankId.
+    List(fakeBranch1, fakeBranch2, fakeBranch3).map(_.copy(bankId = BankWithLicense)).foreach { b =>
+      Await.result(Connector.connector.vend.createOrUpdateBranch(b, None), 10.seconds)
+    }
   }
 
-  override def afterAll(): Unit = {
-    super.afterAll()
-    //reset the default connector
-    Branches.branchesProvider.default.set(Branches.buildOne)
+  override def afterEach(): Unit = {
+    MappedBranch.bulkDelete_!!(By(MappedBranch.mBankId, BankWithLicense.value))
+    super.afterEach()
   }
 
   feature("Getting bank branches") {

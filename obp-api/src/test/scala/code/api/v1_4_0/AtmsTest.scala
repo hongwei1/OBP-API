@@ -3,7 +3,11 @@ package code.api.v1_4_0
 import code.api.util.APIUtil.OAuth._
 import code.api.util.OBPQueryParam
 import code.api.v1_4_0.JSONFactory1_4_0.{AtmJson, AtmsJson}
-import code.atms.{Atms, AtmsProvider}
+import code.atms.MappedAtm
+import code.bankconnectors.Connector
+import net.liftweb.mapper.By
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import code.setup.DefaultUsers
 import com.openbankproject.commons.model.{LicenseT, _}
 import net.liftweb.common.Box
@@ -150,34 +154,6 @@ class AtmsTest extends V140ServerSetup with DefaultUsers {
     fakehasDepositCapability,
     fakeSupportedLanguages) // Should not be returned
 
-  // This mock provider is returning same branches for the fake banks
-  val mockConnector = new AtmsProvider {
-    override protected def getAtmsFromProvider(bank: BankId, queryParams: List[OBPQueryParam]): Option[List[AtmT]] = {
-      bank match {
-        // have it return branches even for the bank without a license so we can test the API does not return them
-        case `bankWithLicense` | `bankWithoutLicense`=> Some(List(fakeAtm1, fakeAtm2, fakeAtm3))
-        case _ => None
-      }
-    }
-
-    // Mock a badly behaving connector that returns data that doesn't have license.
-    override protected def getAtmFromProvider(bank: BankId, AtmId: AtmId): Option[AtmT] = {
-      AtmId match {
-         case `bankWithLicense` => Some(fakeAtm1)
-         case `bankWithoutLicense`=> Some(fakeAtm3) // In case the connector returns, the API should guard
-        case _ => None
-      }
-    }
-
-    override def createOrUpdateAtm(atm: AtmT): Box[AtmT] = {
-      Atms.atmsProvider.vend.createOrUpdateAtm(atm)
-    }
-    
-    override def deleteAtm(atm: AtmT): Box[Boolean] = {
-      Atms.atmsProvider.vend.deleteAtm(atm)
-    }
-
-  }
 
   // TODO Extend to more fields
   def verifySameData(atm: AtmT, atmJson : AtmJson) = {
@@ -197,16 +173,21 @@ class AtmsTest extends V140ServerSetup with DefaultUsers {
   /*
   So we can test the API layer, rather than the connector, use a mock connector.
    */
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    //use the mock connector
-    Atms.atmsProvider.default.set(mockConnector)
+  // ServerSetup.beforeEach wipes the tables and recreates the banks before every scenario, so
+  // rows seeded once per suite would be gone by the first request. Seed per scenario, as the
+  // v3.0.0 suite does.
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    // The endpoint reads through Connector now, so the data has to be in the table the mapped
+    // connector reads, not in a provider mock. The fixtures already carry bankWithLicense.
+    List(fakeAtm1, fakeAtm2, fakeAtm3).foreach { a =>
+      Await.result(Connector.connector.vend.createOrUpdateAtm(a, None), 10.seconds)
+    }
   }
 
-  override def afterAll(): Unit = {
-    super.afterAll()
-    //reset the default connector
-    Atms.atmsProvider.default.set(Atms.buildOne)
+  override def afterEach(): Unit = {
+    MappedAtm.bulkDelete_!!(By(MappedAtm.mBankId, bankWithLicense.value))
+    super.afterEach()
   }
 
   feature("Getting bank ATMs") {
