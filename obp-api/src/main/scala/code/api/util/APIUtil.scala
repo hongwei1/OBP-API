@@ -34,7 +34,7 @@ import code.api.Constant._
 import code.api._
 import code.api.util.BerlinGroupVocabulary.{ErrorMessageBG, ErrorMessagesBG}
 import code.api.cache.Caching
-import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
 import code.api.dynamic.entity.helper.DynamicEntityHelper
 import code.api.util.APIUtil.ResourceDoc.{findPathVariableNames, isPathVariable}
 import code.api.util.ApiRole._
@@ -1564,7 +1564,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
 
     def getResourceDocs(operationIds: List[String]): List[ResourceDoc] = {
       logger.trace(s"ResourceDoc operationIdToResourceDoc.size is ${operationIdToResourceDoc.size()}")
-      val dynamicDocs = DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs
+      val dynamicDocs = DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ CompiledEndpoints.docs
       operationIds.collect {
         case operationId if operationIdToResourceDoc.containsKey(operationId) =>
           operationIdToResourceDoc.get(operationId)
@@ -4905,7 +4905,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   // don't need to move.
   lazy val allStaticResourceDocs: List[ResourceDoc] = ResourceDocRegistry.allStaticResourceDocs
 
-  def allDynamicResourceDocs= (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs).toList
+  def allDynamicResourceDocs= (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ CompiledEndpoints.docs).toList
   
   def getAllResourceDocs = allStaticResourceDocs ++ allDynamicResourceDocs
 

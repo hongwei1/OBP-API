@@ -28,7 +28,7 @@ package code.api.dynamic.endpoint
 import org.json4s._
 import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
-import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
 import code.api.util.CustomJsonFormats
 import code.api.util.http4s.Http4sRequestAttributes.EndpointHelpers
 import code.api.util.http4s.{ErrorResponseConverter, Http4sCallContextBuilder, Http4sRequestAttributes}
@@ -116,7 +116,7 @@ object Http4sDynamicEndpoint extends MdcLoggable {
    * `OptionT.none` (fall through the Http4sApp chain).
    */
   private def pieceC(req: Request[IO]): OptionT[IO, Response[IO]] =
-    DynamicEndpoints.findEndpoint(req) match {
+    code.api.util.CompiledEndpoints.find(req) match {
       case None => OptionT.none[IO, Response[IO]]
       case Some(doc) =>
         OptionT.liftF {

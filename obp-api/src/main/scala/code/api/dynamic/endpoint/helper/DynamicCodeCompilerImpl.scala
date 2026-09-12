@@ -1,6 +1,9 @@
 package code.api.dynamic.endpoint.helper
 
-import code.api.util.{DynamicCode, DynamicCodeCompiler, DynamicCodeProblem, DynamicUtil}
+import cats.effect.IO
+import code.api.util.APIUtil.ResourceDoc
+import code.api.util.{CompiledEndpointSource, CompiledEndpoints, DynamicCode, DynamicCodeCompiler, DynamicCodeProblem, DynamicUtil}
+import org.http4s.Request
 import code.api.util.ErrorMessages.ConnectorMethodBodyCompileFail
 import code.bankconnectors.{DynamicConnector, InternalConnector}
 import code.util.Helper.MdcLoggable
@@ -21,7 +24,12 @@ import org.json4s.JValue
  * has always been: it already carries its own 400 and message, and converting it into a Left here
  * would change what the client sees.
  */
-object DynamicCodeCompilerImpl extends DynamicCodeCompiler with MdcLoggable {
+object DynamicCodeCompilerImpl extends DynamicCodeCompiler with CompiledEndpointSource with MdcLoggable {
+
+  // ── CompiledEndpointSource: the endpoints this compiler produced ────────────────────────────
+  override def docs: List[ResourceDoc] = DynamicEndpoints.dynamicResourceDocs
+  override def find(req: Request[IO]): Option[ResourceDoc] = DynamicEndpoints.findEndpoint(req)
+
 
   override def isEnabled: Boolean = DynamicUtil.dynamicCodeExecutionEnabled
 
@@ -67,6 +75,7 @@ object DynamicCodeCompilerImpl extends DynamicCodeCompiler with MdcLoggable {
   /** Called from Boot. Idempotent. */
   def install(): Unit = {
     DynamicCode.install(this)
+    CompiledEndpoints.install(this)
     logger.info(s"Dynamic code compiler installed (allow_user_generated_scala_code=$isEnabled)")
   }
 }
