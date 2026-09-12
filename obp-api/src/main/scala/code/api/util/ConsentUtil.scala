@@ -2,7 +2,7 @@ package code.api.util
 
 import org.json4s._
 import code.accountholders.AccountHolders
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.{ConsentAccessJson, PostConsentJson}
 import code.api.util.APIUtil.{HTTPParam, fullBoxOrException}
 import code.api.util.ApiRole.{canCreateEntitlementAtAnyBank, canCreateEntitlementAtOneBank}
@@ -343,7 +343,7 @@ object Consent extends MdcLoggable {
             ErrorUtil.apiFailureToBox(ErrorMessages.ConsentExpiredIssue, 401)(Some(callContext))
           } else {
             // Then check consent status
-            if (c.apiStandard == ConstantsBG.berlinGroupVersion1.apiStandard &&
+            if (c.apiStandard == BerlinGroupVocabulary.berlinGroupVersion1.apiStandard &&
               c.status.toLowerCase != ConsentStatus.valid.toString) {
               Failure(s"${ErrorMessages.ConsentStatusIssue}${ConsentStatus.valid.toString}.")
             } else if ((c.apiStandard == ApiStandards.obp.toString || c.apiStandard.isBlank) &&
@@ -2472,7 +2472,7 @@ object Consent extends MdcLoggable {
   // read/audit deliberately stay cross-standard; the OBP-hosted authorise ceremony acts on a
   // consent as its own standard, so it is not blocked here.
   val ConsentStandardOBP: String = ApiStandards.obp.toString                  // "obp"
-  val ConsentStandardBG: String = ConstantsBG.berlinGroupVersion1.apiStandard // "BG"
+  val ConsentStandardBG: String = BerlinGroupVocabulary.berlinGroupVersion1.apiStandard // "BG"
   val ConsentStandardUK: String = "UKOpenBanking"
 
   /**
@@ -2639,9 +2639,9 @@ object Consent extends MdcLoggable {
 
   def expireAllPreviousValidBerlinGroupConsents(consent: MappedConsent, updateToStatus: ConsentStatus): Boolean = {
     if(updateToStatus == ConsentStatus.valid &&
-      consent.apiStandard == ConstantsBG.berlinGroupVersion1.apiStandard) {
+      consent.apiStandard == BerlinGroupVocabulary.berlinGroupVersion1.apiStandard) {
       MappedConsent.findAll( // Find all
-          By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard), // Berlin Group
+          By(MappedConsent.mApiStandard, BerlinGroupVocabulary.berlinGroupVersion1.apiStandard), // Berlin Group
           By(MappedConsent.mRecurringIndicator, true), // recurring
           By(MappedConsent.mStatus, ConsentStatus.valid.toString), // and valid consents
           By(MappedConsent.mUserId, consent.userId), // for the same PSU

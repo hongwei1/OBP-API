@@ -1,6 +1,6 @@
 package code.api.util
 
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.berlin.group.v1_3.BgSpecValidation
 import code.api.{APIFailureNewStyle, RequestHeader}
 import code.api.util.APIUtil.{HTTPParam, OBPReturnType, fullBoxOrException}
@@ -42,7 +42,7 @@ object BerlinGroupCheck extends MdcLoggable {
       case authorisationId :: "authorisations" :: consentId :: "consents" :: restOfThePath => true
       case _ => false
     }
-    doesNotRequireConsentId && hasConsentIdId && path.contains(ConstantsBG.berlinGroupVersion1.urlPrefix)
+    doesNotRequireConsentId && hasConsentIdId && path.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix)
   }
 
   private def validateHeaders(
@@ -56,7 +56,7 @@ object BerlinGroupCheck extends MdcLoggable {
     val maybeRequestId: Option[String] = headerMap.get(RequestHeader.`X-Request-ID`.toLowerCase).flatMap(_.values.headOption)
 
     val missingHeaders: List[String] = {
-      if (url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix) && url.endsWith("/consents"))
+      if (url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix) && url.endsWith("/consents"))
         (berlinGroupMandatoryHeaders ++ berlinGroupMandatoryHeaderConsent).filterNot(headerMap.contains)
       else
         berlinGroupMandatoryHeaders.filterNot(headerMap.contains)
@@ -227,7 +227,7 @@ object BerlinGroupCheck extends MdcLoggable {
   }
 
   def validate(body: Box[String], verb: String, url: String, reqHeaders: List[HTTPParam], forwardResult: (Box[User], Option[CallContext])): OBPReturnType[Box[User]] = {
-    if(url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix)) {
+    if(url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix)) {
       validateHeaders(verb, url, reqHeaders, forwardResult) match {
         case (user, _) if user.isDefined || user == Empty => // All good. Chain another check
           // Verify signed request (Berlin Group)

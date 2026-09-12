@@ -29,7 +29,7 @@ package code.util
 
 import code.api.Constant.SYSTEM_OWNER_VIEW_ID
 import code.api.UKOpenBanking.v3_1_0.Http4sUKOBv310AccountAccess
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.berlin.group.v1_3.Http4sBGv13AIS
 import code.api.util._
 import code.api.v4_0_0.{Http4s400, V400ServerSetup}
@@ -39,7 +39,7 @@ import com.openbankproject.commons.util.ApiVersion
 
 class APIUtilHeavyTest extends V400ServerSetup  with PropsReset {
 
-  val bgVersion = ConstantsBG.berlinGroupVersion1.apiShortVersion
+  val bgVersion = BerlinGroupVocabulary.berlinGroupVersion1.apiShortVersion
   
   feature("test APIUtil.versionIsAllowed method") {
     scenario("Test versionIsAllowed with various disabled/enabled version combinations") {

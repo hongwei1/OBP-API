@@ -28,6 +28,24 @@ import net.liftweb.common.Full
 object BerlinGroupVocabulary {
 
   /**
+   * The transaction-status codes a signing basket can carry.
+   *
+   * These are Berlin Group's codes, but the core writes them: MappedSigningBasketProvider stamps
+   * RCVD on create and CANC on cancel. Having that persistence code reach into
+   * code.api.berlin.group for the enumeration is the same inversion this object exists to undo,
+   * so the definition lives here and ConstantsBG aliases it for the standard's own call sites.
+   *
+   * Only these five of Berlin Group's status codes are supported for signing baskets:
+   * RCVD (Received), PATC (PartiallyAcceptedTechnicalCorrect — multiple authentications needed,
+   * some but not all performed, validations successful), ACTC (AcceptedTechnicalValidation),
+   * CANC (Cancelled) and RJCT (Rejected).
+   */
+  object SigningBasketsStatus extends Enumeration {
+    type SigningBasketsStatus = Value
+    val RCVD, PATC, ACTC, CANC, RJCT = Value
+  }
+
+  /**
    * Berlin Group v1.3, with its URL path segment overridden by
    * `berlin_group_version_1_canonical_path` when an installation serves it under a different one.
    */

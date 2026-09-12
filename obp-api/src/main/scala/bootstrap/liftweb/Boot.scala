@@ -43,7 +43,7 @@ import code.api.Constant._
 import code.api.ResourceDocs1_4_0._
 import code.api._
 import code.api.attributedefinition.AttributeDefinition
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.cache.Redis
 import code.api.util.APIUtil.{enableVersionIfAllowed, errorJsonResponse, getPropsValue}
 import code.api.util.ApiRole._

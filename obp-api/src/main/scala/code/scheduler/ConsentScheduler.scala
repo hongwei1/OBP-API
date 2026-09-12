@@ -1,6 +1,6 @@
 package code.scheduler
 
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.util.{APIUtil, Consent}
 import code.consent.{ConsentStatus, MappedConsent}
 import code.util.Helper.MdcLoggable
@@ -71,7 +71,7 @@ object ConsentScheduler extends MdcLoggable {
 
       val outdatedConsents = MappedConsent.findAll(
         By(MappedConsent.mStatus, ConsentStatus.received.toString),
-        By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard),
+        By(MappedConsent.mApiStandard, BerlinGroupVocabulary.berlinGroupVersion1.apiStandard),
         By_<(MappedConsent.updatedAt, SchedulerUtil.someSecondsAgo(seconds))
       )
 
@@ -109,13 +109,13 @@ object ConsentScheduler extends MdcLoggable {
 
       val expiredConsentsLowerCase: List[MappedConsent] = MappedConsent.findAll(
         By(MappedConsent.mStatus, ConsentStatus.valid.toString),
-        By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard),
+        By(MappedConsent.mApiStandard, BerlinGroupVocabulary.berlinGroupVersion1.apiStandard),
         By_<(MappedConsent.mValidUntil, new Date())
       )
 
       val expiredConsentsUpperCase: List[MappedConsent] = MappedConsent.findAll(
         By(MappedConsent.mStatus, ConsentStatus.valid.toString.toUpperCase()), // Handle uppercase as well; should appear only during the transition period
-        By(MappedConsent.mApiStandard, ConstantsBG.berlinGroupVersion1.apiStandard),
+        By(MappedConsent.mApiStandard, BerlinGroupVocabulary.berlinGroupVersion1.apiStandard),
         By_<(MappedConsent.mValidUntil, new Date())
       )
 

@@ -1,6 +1,6 @@
 package code.signingbaskets
 
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.util.MappedUUID
 import com.openbankproject.commons.model.{SigningBasketConsentTrait, SigningBasketContent, SigningBasketPaymentTrait, SigningBasketTrait}
 import net.liftweb.common.Box
@@ -42,7 +42,7 @@ object MappedSigningBasketProvider extends SigningBasketProvider {
                                   ): Box[SigningBasketTrait] = {
     tryo {
       val entity = MappedSigningBasket.create
-      entity.Status(ConstantsBG.SigningBasketsStatus.RCVD.toString)
+      entity.Status(BerlinGroupVocabulary.SigningBasketsStatus.RCVD.toString)
 
       if (entity.validate.isEmpty) {
         entity.saveMe()
@@ -61,7 +61,7 @@ object MappedSigningBasketProvider extends SigningBasketProvider {
 
   override def deleteSigningBasket(id: String): Box[Boolean] = {
     MappedSigningBasket.find(By(MappedSigningBasket.BasketId, id)) map {
-      _.Status(ConstantsBG.SigningBasketsStatus.CANC.toString).save
+      _.Status(BerlinGroupVocabulary.SigningBasketsStatus.CANC.toString).save
     }
   }
 
