@@ -2,17 +2,20 @@ package code.api.v1_4_0
 
 import code.api.util.APIUtil.OAuth._
 import code.api.v1_4_0.JSONFactory1_4_0.{ProductJson, ProductsJson}
-import com.openbankproject.commons.model.Product
-import code.products.{Products, ProductsProvider}
+import code.bankconnectors.Connector
+import code.products.MappedProduct
 import code.setup.{DefaultUsers, ServerSetup}
-import com.openbankproject.commons.model.{BankId, License, Meta, ProductCode}
+import com.openbankproject.commons.model.{BankId, License, Meta, Product, ProductCode}
+import net.liftweb.mapper.By
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class ProductsTest extends ServerSetup with DefaultUsers with V140ServerSetup {
 
   val BankWithLicense = BankId("testBank1")
   val BankWithoutLicense = BankId("testBank2")
 
-  // Have to repeat the constructor parameters from the trait
   // Have to repeat the constructor parameters from the trait
   case class ProductImpl(bankId: BankId,
                         code : ProductCode,
@@ -45,30 +48,8 @@ class ProductsTest extends ServerSetup with DefaultUsers with V140ServerSetup {
   val fakeProduct1 = ProductImpl(BankWithLicense, ProductCode("prod1"), ProductCode(""), "name 1", "cat 1", "family 1", "super family 1", "http://www.example.com/moreinfo1.html", "http://www.example.com/termsAndConditionsUrl1.html","", "", fakeMeta)
   val fakeProduct2 = ProductImpl(BankWithLicense, ProductCode("prod2"), ProductCode(""), "name 2", "cat 1", "family 1", "super family 1", "http://www.example.com/moreinfo2.html", "http://www.example.com/termsAndConditionsUrl2.html", "","", fakeMeta)
 
-  // Should not be returned (no license)
+  // Belongs to the other bank, so it must not show up in BankWithLicense's list
   val fakeProduct3 = ProductImpl(BankWithoutLicense, ProductCode("prod3"), ProductCode(""), "name 3", "cat 1", "family 1", "super family 1", "http://www.example.com/moreinfo3.html", "http://www.example.com/termsAndConditionsUrl3.html", "","", fakeMetaNoLicense)
-
-
-  // This mock provider is returning same branches for the fake banks
-  val mockConnector = new ProductsProvider {
-    override protected def getProductsFromProvider(bank: BankId): Option[List[Product]] = {
-      bank match {
-        // have it return branches even for the bank without a license so we can test the API does not return them
-        case BankWithLicense | BankWithoutLicense=> Some(List(fakeProduct1, fakeProduct2, fakeProduct3))
-        case _ => None
-      }
-    }
-
-    // Mock a badly behaving connector that returns data that doesn't have license.
-    override protected def getProductFromProvider(bank: BankId, code: ProductCode): Option[Product] = {
-      bank match {
-         case BankWithLicense => Some(fakeProduct1)
-         case BankWithoutLicense=> Some(fakeProduct3) // In case the connector returns, the API should guard
-        case _ => None
-      }
-    }
-
-  }
 
   def verifySameData(product: Product, productJson : ProductJson) = {
     product.name should equal (productJson.name)
@@ -83,19 +64,38 @@ class ProductsTest extends ServerSetup with DefaultUsers with V140ServerSetup {
     product.superFamily should equal (productJson.super_family)
   }
 
-  /*
-  So we can test the API layer, rather than the connector, use a mock connector.
-   */
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    //use the mock connector
-    Products.productsProvider.default.set(mockConnector)
+  private def seed(p: Product): Unit =
+    Await.result(
+      Connector.connector.vend.createOrUpdateProduct(
+        bankId = p.bankId.value,
+        code = p.code.value,
+        parentProductCode = Some(p.parentProductCode.value),
+        name = p.name,
+        category = p.category,
+        family = p.family,
+        superFamily = p.superFamily,
+        moreInfoUrl = p.moreInfoUrl,
+        termsAndConditionsUrl = p.termsAndConditionsUrl,
+        details = p.details,
+        description = p.description,
+        metaLicenceId = p.meta.license.id,
+        metaLicenceName = p.meta.license.name,
+        callContext = None
+      ), 10.seconds)
+
+  // The endpoint reads through Connector now, so a ProductsProvider mock would never be consulted:
+  // the data has to be in the table the mapped connector reads. ServerSetup.beforeEach wipes the
+  // tables before every scenario, so seeding has to happen per scenario rather than once per suite
+  // — same as the atms and branches suites.
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    List(fakeProduct1, fakeProduct2, fakeProduct3).foreach(seed)
   }
 
-  override def afterAll(): Unit = {
-    super.afterAll()
-    //reset the default connector
-    Products.productsProvider.default.set(Products.buildOne)
+  override def afterEach(): Unit = {
+    MappedProduct.bulkDelete_!!(By(MappedProduct.mBankId, BankWithLicense.value))
+    MappedProduct.bulkDelete_!!(By(MappedProduct.mBankId, BankWithoutLicense.value))
+    super.afterEach()
   }
 
   feature("Getting bank products") {
@@ -125,11 +125,12 @@ class ProductsTest extends ServerSetup with DefaultUsers with V140ServerSetup {
 
       val responseBody = responseBodyOpt.get
 
-      And("We should get the right products")
+      And("We should get the products of that bank and no other bank's")
       val products = responseBody.products
 
-      // Order of Products in the list is arbitrary
-      products.size should equal(3)
+      // Order of Products in the list is arbitrary. Only this bank's two products are expected:
+      // the third fixture belongs to BankWithoutLicense, and the query is scoped by bank.
+      products.size should equal(2)
       val first = products(0)
       if (first.code == fakeProduct1.code.value) {
         verifySameData(fakeProduct1, first)

@@ -26,14 +26,25 @@ class ConnectorRoutingBypassTest extends FlatSpec with Matchers {
       .getOrElse(throw new IllegalStateException(
         s"cannot locate sources from ${Paths.get("").toAbsolutePath}"))
 
-  private val legitimateCallers = List("atms/", "branches/", "bankconnectors/")
+  private val legitimateCallers = List("atms/", "branches/", "products/", "bankconnectors/")
 
-  private val providerPattern = "\\b(atmsProvider|branchesProvider)\\b".r
+  /**
+   * The sandbox importer is exempt, and deliberately so. Its `productsProvider.getProduct` call is
+   * the pre-flight "does this code already exist for this bank" check of a bulk import whose
+   * *writes* go straight to the mapped store as `Saveable[ProductType]` — not through Connector at
+   * all. Routing only the read would make it ask the remote store a question it then answers by
+   * writing locally, which is worse than the bypass it fixes. Whoever routes the sandbox importer
+   * has to move its writes first; until then this line is consistent with itself.
+   */
+  private val exemptFiles = List("sandbox/OBPDataImport.scala")
 
-  "endpoints" should "reach atms and branches through Connector, not a provider" in {
+  private val providerPattern = "\\b(atmsProvider|branchesProvider|productsProvider)\\b".r
+
+  "endpoints" should "reach atms, branches and products through Connector, not a provider" in {
     val offenders = Files.walk(mainRoot).iterator.asScala
       .filter(p => p.toString.endsWith(".scala"))
       .filterNot(p => legitimateCallers.exists(seg => mainRoot.relativize(p).toString.startsWith(seg)))
+      .filterNot(p => exemptFiles.exists(f => mainRoot.relativize(p).toString.endsWith(f)))
       .flatMap { p =>
         Files.readAllLines(p).asScala.toList.zipWithIndex
           .map { case (l, i) => (i + 1, l) }
@@ -46,6 +57,22 @@ class ConnectorRoutingBypassTest extends FlatSpec with Matchers {
       s"these lines bypass MethodRouting by calling a provider directly:\n${offenders.mkString("\n")}\n" +
       "Go through Connector.connector.vend (or NewStyle) instead, so the routing table decides who answers — ") {
       offenders shouldBe empty
+    }
+  }
+
+  // An exemption nobody re-checks is how a guard rots: if the sandbox importer stops calling the
+  // provider (because its writes moved to Connector too), the exemption must go with it, or the
+  // next bypass added to that file passes unnoticed.
+  it should "keep every exemption earning its place" in {
+    exemptFiles.foreach { f =>
+      val path = mainRoot.resolve(f)
+      withClue(s"$f is exempted from the provider guard but no longer exists — drop the exemption: ") {
+        Files.exists(path) shouldBe true
+      }
+      val stillCalls = Files.readAllLines(path).asScala.exists(l => providerPattern.findFirstIn(l).isDefined)
+      withClue(s"$f is exempted from the provider guard but no longer calls a provider — drop the exemption: ") {
+        stillCalls shouldBe true
+      }
     }
   }
 }

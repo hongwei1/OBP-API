@@ -254,10 +254,19 @@ object Http4s140 {
     val getProducts: HttpRoutes[IO] = HttpRoutes.of[IO] {
       case req @ GET -> `prefixPath` / "banks" / _ / "products" =>
         EndpointHelpers.withBank(req) { (bank, cc) =>
-          Future {
-            val products = Products.productsProvider.vend.getProducts(bank.bankId)
-              .getOrElse(throw new RuntimeException("No products available. License may not be set."))
-            JSONFactory1_4_0.createProductsJson(products)
+          // Through Connector, not Products.productsProvider: a deployment that routes getProducts
+          // to a remote connector would otherwise still serve this version's callers from the local
+          // mapped store, so v1.4.0 and v4.0.0 would disagree about the same bank's products. Same
+          // defect and same fix as getAtms/getBranches above.
+          //
+          // Empty params are what this endpoint always meant: it never filtered. With Nil,
+          // LocalMappedConnector.getProducts reduces to the same MappedProduct.findAll(By(mBankId))
+          // the provider call made, so the mapped case is unchanged — including the empty-list case,
+          // which both paths return as a present-but-empty result rather than a failure.
+          Connector.connector.vend.getProducts(bank.bankId, Nil, Some(cc)) map {
+            case (products, _) =>
+              JSONFactory1_4_0.createProductsJson(
+                products.openOr(throw new RuntimeException("No products available. License may not be set.")))
           }
         }
     }
