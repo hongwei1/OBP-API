@@ -78,10 +78,26 @@ object AbacRuleEngineAccountAccessProvider extends AbacAccountAccessProvider wit
 
   override def clearRuleFromCache(ruleId: String): Unit = AbacRuleEngine.clearRuleFromCache(ruleId)
 
-  /** Called from Boot. Idempotent. */
+  /**
+   * Called from Boot. Idempotent, and survives the rule engine not being there — see
+   * DynamicCodeCompilerImpl.install for why a deployment may have removed the toolbox.
+   *
+   * On failure NOTHING is left installed, so AbacAccountAccess answers Full(false): ABAC grants
+   * no access. That is the fail-closed direction, since ABAC is only ever consulted after the
+   * ordinary view checks have already refused.
+   */
   def install(): Unit = {
-    AbacAccountAccess.install(this)
-    AbacRules.install(this)
-    logger.info("ABAC rule engine installed (account-access seam + management seam)")
+    try {
+      AbacAccountAccess.install(this)
+      AbacRules.install(this)
+      logger.info("ABAC rule engine installed (account-access seam + management seam)")
+    } catch {
+      case e: LinkageError =>
+        AbacAccountAccess.uninstall()
+        AbacRules.uninstall()
+        logger.info(s"ABAC rule engine NOT installed: the toolbox is absent from this deployment " +
+          s"(${e.getClass.getSimpleName}). ABAC grants no account access and the rule-management " +
+          s"endpoints report it as disabled.")
+    }
   }
 }

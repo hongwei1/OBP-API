@@ -20,6 +20,10 @@ object OptionalConnectors {
   def register(name: String, connector: code.bankconnectors.Connector): Unit =
     registered = registered + (name -> connector)
 
+  /** Undo a registration — used when installation fails partway and must not leave the connector
+    * advertised by `Connector.availableConnectors` while being unusable. */
+  def unregister(name: String): Unit = registered = registered - name
+
   /** Test hook. */
   def clear(): Unit = registered = Map.empty
 

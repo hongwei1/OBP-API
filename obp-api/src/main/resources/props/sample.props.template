@@ -161,6 +161,25 @@ long_endpoint_timeout = 55000
 ## without them loses 100% of its metrics), and the ordered shutdown hook.
 #instance.role=all
 
+## Shipping without the Scala compiler
+##
+## Dynamic Resource Docs, Dynamic Message Docs, Connector Methods and ABAC rules are bodies of
+## Scala/JS/Java that a privileged user POSTs and the server compiles at runtime. Setting
+## allow_user_generated_scala_code=false refuses them, but the toolbox is still in the image.
+##
+## On JDK 24+ that matters: the SecurityManager sandbox this code tries to install can no longer
+## be created, and doPrivileged degrades to a pass-through, so there is no enforcement left —
+## holding the relevant entitlement is effectively host RCE. An instance that does not use the
+## feature can remove the toolbox outright:
+##
+##   rm lib/scala-compiler-*.jar        # Scala bodies
+##   rm lib/polyglot-*.jar lib/js-language-*.jar lib/truffle-*.jar lib/regex-*.jar lib/icu4j-*.jar
+##
+## That is about 71 MB of a 294 MB lib/. The instance starts and serves normally; the affected
+## endpoints answer OBP-XXXXX DynamicCodeExecutionDisabled exactly as with the prop off, and the
+## `internal` connector disappears from /system/connectors because it genuinely is not there.
+## Everything else is unaffected. Verified end to end, not only by unit tests.
+
 
 ## Enable user authentication via the connector
 #connector.user.authentication=true
