@@ -179,6 +179,13 @@ long_endpoint_timeout = 55000
 ## endpoints answer OBP-XXXXX DynamicCodeExecutionDisabled exactly as with the prop off, and the
 ## `internal` connector disappears from /system/connectors because it genuinely is not there.
 ## Everything else is unaffected. Verified end to end, not only by unit tests.
+##
+## The two can be combined: run the web instances on a build without the toolbox and keep one
+## instance that has it, routing only the twelve management paths that need a compiler to that
+## one. It can then be scaled to zero whenever nobody is submitting dynamic code. The path list,
+## the ingress rules, and the one thing routing cannot split (ABAC evaluation sits on the
+## account-access authorisation chain, not on an endpoint) are in
+## docs/operations/SPLIT_DEPLOYMENT.md.
 
 
 ## Enable user authentication via the connector
