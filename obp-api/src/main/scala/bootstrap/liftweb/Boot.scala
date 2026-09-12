@@ -282,6 +282,12 @@ class Boot extends MdcLoggable {
     // so skipping the DDL would have silently cost a web instance its graceful shutdown.
     startGrpcServerAndRegisterShutdownHook()
 
+    // ABAC account access is evaluated by a rule engine that compiles user-supplied Scala at
+    // runtime. The core asks through code.api.util.AbacAccountAccess, so the engine can later
+    // live in an optional module; installed here for every role, because any role that serves a
+    // request has to be able to answer the question.
+    code.abacrule.AbacRuleEngineAccountAccessProvider.install()
+
     // Read-only diagnostics: every role reports a misconfiguration it can see, whether or not it
     // is the one that writes the schema.
     ApiWarnings.logWarningsRegardingProperties()

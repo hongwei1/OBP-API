@@ -29,15 +29,12 @@ package code.api.util
 
 import bootstrap.liftweb.CustomDBVendor
 import cats.effect.IO
-import code.abacrule.AbacRuleEngine
 import code.accountholders.AccountHolders
 import code.api.Constant._
 import code.api._
 import code.api.util.BerlinGroupVocabulary.{ErrorMessageBG, ErrorMessagesBG}
 import code.api.cache.Caching
-import code.api.dynamic.endpoint.OBPAPIDynamicEndpoint
 import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
-import code.api.dynamic.entity.OBPAPIDynamicEntity
 import code.api.dynamic.entity.helper.DynamicEntityHelper
 import code.api.util.APIUtil.ResourceDoc.{findPathVariableNames, isPathVariable}
 import code.api.util.ApiRole._
@@ -3541,6 +3538,19 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       }
   }
 
+  /**
+   * The last branch of hasAccountAccess: ABAC may GRANT access the view model refused.
+   *
+   * The two guards stay here rather than moving behind the seam, because they are the core's
+   * policy, not the engine's: the prop says whether this instance lets ABAC widen access at all,
+   * and the role says whether this user may have it widened. Only when both say yes is the rule
+   * engine asked anything — so an instance with the feature off never reaches the seam.
+   *
+   * The engine itself lives behind AbacAccountAccess because it compiles Scala at runtime and is
+   * moving to an optional module. With no engine installed the answer is Full(false): ABAC grants
+   * nothing, which is exactly what allow_abac_account_access=false already means. See
+   * AbacAccountAccess for why that is the fail-closed default in this position.
+   */
   private def checkAbacAccountAccess(
     user: User,
     view: View,
@@ -3550,28 +3560,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     if (!allowAbacAccountAccess) return Full(false)
     if (!hasEntitlement("", user.userId, ApiRole.canExecuteAbacRule)) return Full(false)
 
-    callContext match {
-      case Some(cc) =>
-        try {
-          val futureResult = AbacRuleEngine.executeRulesByPolicyDetailed(
-            policy = ABAC_POLICY_ACCOUNT_ACCESS,
-            authenticatedUserId = user.userId,
-            callContext = cc,
-            bankId = Some(bankIdAccountId.bankId.value),
-            accountId = Some(bankIdAccountId.accountId.value),
-            viewId = Some(view.viewId.value)
-          )
-          Await.result(futureResult, Duration(10, java.util.concurrent.TimeUnit.SECONDS)) match {
-            case Full((true, _)) => Full(true)  // ABAC granted
-            case Full((false, ruleIds)) if ruleIds.nonEmpty =>
-              Failure(s"ABAC rules denied access. Failing rule IDs: ${ruleIds.mkString(", ")}")
-            case _ => Full(false)  // No rules or other issue
-          }
-        } catch {
-          case _: Exception => Full(false)
-        }
-      case None => Full(false)
-    }
+    AbacAccountAccess.grantsAccountAccess(user, view, bankIdAccountId, callContext)
   }
   /**
    * This function check does the user(anonymous or authenticated) have account access
