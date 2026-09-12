@@ -1,6 +1,6 @@
 package code.api.util
 
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.util.APIUtil.ResourceDoc
 import com.openbankproject.commons.util.ApiVersion._
 import com.openbankproject.commons.util.{ApiStandards, ApiVersion, ScannedApiVersion}
@@ -73,7 +73,7 @@ object ResourceDocRegistry {
       ScannedApis.versionMapScannedApis.toSeq
         .collect { case (version: ScannedApiVersion, apis) if !explicit.contains(version) =>
           version -> (() => apis.allResourceDocs.toSeq) }
-        .sortBy(entry => sortKey(code.api.berlin.group.v1_3.OBP_BERLIN_GROUP_1_3_Alias.apiVersion)(entry._1))
+        .sortBy(entry => sortKey(BerlinGroupVocabulary.berlinGroupV13AliasScannedVersion)(entry._1))
         .foldLeft(ListMap.empty[ApiVersion, () => Seq[ResourceDoc]])(_ + _)
     explicit ++ scanned
   }
@@ -85,7 +85,7 @@ object ResourceDocRegistry {
    * then Berlin Group). A standard that is not listed ranks below all of them.
    */
   private val standardPrecedence: List[String] =
-    List(ApiVersion.ukOpenBankingV20.apiStandard, ConstantsBG.berlinGroupVersion1.apiStandard)
+    List(ApiVersion.ukOpenBankingV20.apiStandard, BerlinGroupVocabulary.berlinGroupVersion1.apiStandard)
 
   /** Below every entry of standardPrecedence, whose lowest index is -1 for an unlisted standard. */
   private val derivedStandardRank: Int = -2

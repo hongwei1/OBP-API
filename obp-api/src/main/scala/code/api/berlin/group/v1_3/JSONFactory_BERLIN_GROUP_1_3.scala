@@ -26,8 +26,15 @@ case class JvalueCaseClass(jvalueToCaseclass: JValue)
 
 object JSONFactory_BERLIN_GROUP_1_3 extends CustomJsonFormats with MdcLoggable{
 
-  case class ErrorMessageBG(category: String, code: String, path: Option[String], text: String)
-  case class ErrorMessagesBG(tppMessages: List[ErrorMessageBG])
+  // The Berlin Group error body is built by the CORE too (APIUtil, ErrorResponseConverter decide
+  // between the BG and OBP error shapes by URL), so these two live in
+  // code.api.util.BerlinGroupVocabulary and are aliased here. Aliases, not a move: every existing
+  // `import ...JSONFactory_BERLIN_GROUP_1_3.ErrorMessagesBG` — including twenty-odd test call
+  // sites — keeps working, and the JSON on the wire is field-named, so it is unchanged.
+  type ErrorMessageBG = code.api.util.BerlinGroupVocabulary.ErrorMessageBG
+  val ErrorMessageBG = code.api.util.BerlinGroupVocabulary.ErrorMessageBG
+  type ErrorMessagesBG = code.api.util.BerlinGroupVocabulary.ErrorMessagesBG
+  val ErrorMessagesBG = code.api.util.BerlinGroupVocabulary.ErrorMessagesBG
 
   case class PostSigningBasketJsonV13(
     paymentIds: Option[List[String]],

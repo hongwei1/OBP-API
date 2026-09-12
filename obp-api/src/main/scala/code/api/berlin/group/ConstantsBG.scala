@@ -1,16 +1,15 @@
 package code.api.berlin.group
 
-import code.api.util.APIUtil
-import com.openbankproject.commons.util.ApiVersion.berlinGroupV13
+import code.api.util.BerlinGroupVocabulary
 import com.openbankproject.commons.util.ScannedApiVersion
-import net.liftweb.common.Full
 
 object ConstantsBG {
-  val berlinGroupVersion1: ScannedApiVersion = APIUtil.getPropsValue("berlin_group_version_1_canonical_path") match {
-    case Full(props) => berlinGroupV13.copy(apiShortVersion = props)
-    case _ => berlinGroupV13
-  }
-  val berlinGroupVersion2: ScannedApiVersion = ScannedApiVersion("berlin-group", "BG", "v2")
+  // Defined in code.api.util.BerlinGroupVocabulary and aliased here. The core recognises Berlin
+  // Group URLs and renders Berlin Group error bodies, so it needs these values; having the core
+  // import them from this package made code.api.util and code.api.berlin mutually dependent.
+  // The direction is one way now, and every call site inside the standard still says ConstantsBG.
+  val berlinGroupVersion1: ScannedApiVersion = BerlinGroupVocabulary.berlinGroupVersion1
+  val berlinGroupVersion2: ScannedApiVersion = BerlinGroupVocabulary.berlinGroupVersion2
   object SigningBasketsStatus extends Enumeration {
     type SigningBasketsStatus = Value
     // Only the codes

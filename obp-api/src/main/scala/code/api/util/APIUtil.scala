@@ -33,8 +33,7 @@ import code.abacrule.AbacRuleEngine
 import code.accountholders.AccountHolders
 import code.api.Constant._
 import code.api._
-import code.api.berlin.group.ConstantsBG
-import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.{ErrorMessageBG, ErrorMessagesBG}
+import code.api.util.BerlinGroupVocabulary.{ErrorMessageBG, ErrorMessagesBG}
 import code.api.cache.Caching
 import code.api.dynamic.endpoint.OBPAPIDynamicEndpoint
 import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
@@ -596,7 +595,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     val mirrorByProperties = getPropsValue("mirror_request_headers_to_response", "").split(",").toList.map(_.trim)
 
     val mirrorRequestHeadersToResponse: List[String] =
-      if (callContext.exists(_.url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix))) {
+      if (callContext.exists(_.url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix))) {
         // Berlin Group Specification
         RequestHeader.`X-Request-ID` :: mirrorByProperties
       } else {
@@ -634,10 +633,10 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
 
   def getRequestHeadersBerlinGroup(callContext: Option[CallContextLight]): CustomResponseHeaders = {
     val aspspScaApproach = getPropsValue("berlin_group_aspsp_sca_approach", defaultValue = "redirect")
-    logger.debug(s"ConstantsBG.berlinGroupVersion1.urlPrefix: ${ConstantsBG.berlinGroupVersion1.urlPrefix}")
+    logger.debug(s"BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix: ${BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix}")
     logger.debug(s"callContext.map(_.url): ${callContext.map(_.url)}")
     callContext match {
-      case Some(cc) if cc.url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix) && cc.url.endsWith("/consents") =>
+      case Some(cc) if cc.url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix) && cc.url.endsWith("/consents") =>
         CustomResponseHeaders(List(
           (ResponseHeader.`ASPSP-SCA-Approach`, aspspScaApproach)
         ))
@@ -809,7 +808,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       }
     def composeErrorMessage() = {
       val path = callContextLight.map(_.url).getOrElse("")
-      if (path.contains(ConstantsBG.berlinGroupVersion1.urlPrefix)) {
+      if (path.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix)) {
         val path =
           if(APIUtil.getPropsAsBoolValue("berlin_group_error_message_show_path", defaultValue = true))
             callContextLight.map(_.url)

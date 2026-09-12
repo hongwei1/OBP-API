@@ -2,7 +2,7 @@ package code.api.util.http4s
 
 import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.util.APIUtil
 import code.api.util.http4s.Http4sRequestAttributes
 import code.util.Helper.MdcLoggable
@@ -87,15 +87,15 @@ object Http4sApp extends MdcLoggable {
   // gate at all — so api_disabled_versions / api_enabled_versions could disable every other
   // standard but never Berlin Group, silently. They are gated like everything else now.
   private val bgV2Routes: HttpRoutes[IO] =
-    gate(ConstantsBG.berlinGroupVersion2, code.api.berlin.group.v2.Http4sBGv2.wrappedRoutes)
+    gate(BerlinGroupVocabulary.berlinGroupVersion2, code.api.berlin.group.v2.Http4sBGv2.wrappedRoutes)
   private val bgV13Routes: HttpRoutes[IO] =
-    gate(ConstantsBG.berlinGroupVersion1, code.api.berlin.group.v1_3.Http4sBGv13.wrappedRoutes)
+    gate(BerlinGroupVocabulary.berlinGroupVersion1, code.api.berlin.group.v1_3.Http4sBGv13.wrappedRoutes)
   // The alias is a second URL prefix in front of the same BG v1.3 endpoints, so it needs BOTH to
   // be allowed: disabling BG v1.3 while the alias kept serving those very endpoints would make
   // the disable meaningless.
   private val bgV13AliasRoutes: HttpRoutes[IO] =
     VersionGate.when(
-      APIUtil.versionIsAllowed(ConstantsBG.berlinGroupVersion1) &&
+      APIUtil.versionIsAllowed(BerlinGroupVocabulary.berlinGroupVersion1) &&
         APIUtil.versionIsAllowed(code.api.berlin.group.v1_3.Http4sBGv13Alias.aliasVersion),
       code.api.berlin.group.v1_3.Http4sBGv13Alias.wrappedRoutes)
 
