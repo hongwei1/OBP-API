@@ -72,7 +72,7 @@ else
     HAVE_PY3=0
 fi
 
-# Cross-checkout mutex: the obp-commons `mvn install` writes to the shared ~/.m2.
+# Cross-checkout mutex: the obp-commons / obp-kernel `mvn install` writes to the shared ~/.m2.
 # Multiple checkouts starting this script simultaneously race on that write and can
 # corrupt each other's JARs (torn ZipFile).  We use an atomic mkdir lock to serialise
 # ~/.m2 writes across processes.  The lock is released immediately after the install
@@ -155,7 +155,7 @@ code.api.gateWayloginTest,code.api.OBPRestHelperTest,code.util,code.connector"
 build_s4() {
   local ASSIGNED="$S1 $(echo "$S2" | tr ',' ' ') $(echo "$S3" | tr ',' ' ') $(echo "$S4_BASE" | tr ',' ' ')"
   local ALL_PKGS
-  ALL_PKGS=$(find obp-api/src/test/scala obp-commons/src/test/scala \
+  ALL_PKGS=$(find obp-api/src/test/scala obp-commons/src/test/scala obp-kernel/src/test/scala \
                -name "*.scala" 2>/dev/null \
              | sed 's|.*/test/scala/||; s|/[^/]*\.scala$||; s|/|.|g' \
              | sort -u)
@@ -220,7 +220,7 @@ run_shard() {
     # out of versionMapScannedApis entirely, so ApiVersionUtilsTest's `versions.length shouldBe(21)`
     # sees only 20 (CI green, local red) -- confirmed by reproducing the failure on a clean
     # checkout with this var unset, then reproducing the pass with it set.
-    # -pl obp-commons,obp-api mirrors CI: obp-commons' own util suites run on whichever
+    # -pl obp-commons,obp-kernel,obp-api mirrors CI: obp-commons' own util suites run on whichever
     # shard's filter matches com.openbankproject.* (the shard-4 catch-all); on every other
     # shard the filter matches nothing in obp-commons -> 0 tests there.
     # OBP_TESTS_PORT + OBP_HTTP4S_TEST_PORT carry the two dynamically-allocated free
@@ -247,7 +247,7 @@ run_shard() {
     OBP_ALLOW_USER_GENERATED_SCALA_CODE="true" \
     OBP_BERLIN_GROUP_V1_3_ALIAS_PATH="0.6/v1" \
     OBP_API_INSTANCE_ID="shard_${n}_${port}" \
-    "$TIMEOUT_BIN" 1200 mvn scalatest:test -pl obp-commons,obp-api -DfailIfNoTests=false \
+    "$TIMEOUT_BIN" 1200 mvn scalatest:test -pl obp-commons,obp-kernel,obp-api -DfailIfNoTests=false \
         "-DwildcardSuites=${filter}" \
         > "$log" 2>&1
     local rc=$?
@@ -377,7 +377,7 @@ echo $$ > "$OBC_LOCK/pid"
 # carries no Scala suffix nothing detects the mismatch: the build succeeds and the tests die at run
 # time with ClassNotFoundException: scala.Serializable.
 MAVEN_OPTS="$MVN_OPTS" \
-  mvn install -DskipTests -pl obp-commons -am -q > test-results/parallel/precompile.log 2>&1
+  mvn install -DskipTests -pl obp-commons,obp-kernel -am -q > test-results/parallel/precompile.log 2>&1
 PRECOMPILE_RC=$?
 rm -rf "$OBC_LOCK"
 if [[ $PRECOMPILE_RC -eq 0 ]]; then

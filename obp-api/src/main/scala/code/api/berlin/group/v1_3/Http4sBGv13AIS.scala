@@ -108,7 +108,8 @@ object Http4sBGv13AIS extends MdcLoggable {
             }
           }
           upperLimit = code.api.util.APIUtil.getPropsAsIntValue("berlin_group_frequency_per_day_upper_limit", 4)
-          _ <- booleanToFuture(failMsg = FrequencyPerDayError, cc = callContext) {
+          _ <- booleanToFuture(failMsg = frequencyPerDayError(
+            APIUtil.getPropsAsIntValue("berlin_group_frequency_per_day_upper_limit", 4)), cc = callContext) {
             consentJson.frequencyPerDay > 0 && consentJson.frequencyPerDay <= upperLimit
           }
           _ <- booleanToFuture(failMsg = FrequencyPerDayMustBeOneError, cc = callContext) {

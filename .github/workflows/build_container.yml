@@ -72,6 +72,7 @@ jobs:
           path: |
             obp-api/target/
             obp-commons/target/
+            obp-kernel/target/
 
       - name: Save .jar artifact
         run: |
@@ -246,8 +247,8 @@ jobs:
           # Zinc sees sources newer than classes → full recompile (~215 s wasted).
           # Touching everything in target/ makes all artifact files appear
           # just-downloaded (current time) → newer than sources → Zinc skips.
-          find obp-api/target obp-commons/target -type f -exec touch {} + 2>/dev/null || true
-          echo "Touched $(find obp-api/target obp-commons/target -type f 2>/dev/null | wc -l) files"
+          find obp-api/target obp-commons/target obp-kernel/target -type f -exec touch {} + 2>/dev/null || true
+          echo "Touched $(find obp-api/target obp-commons/target obp-kernel/target -type f 2>/dev/null | wc -l) files"
 
       - name: Install local artifacts into Maven repo
         run: |
@@ -269,6 +270,12 @@ jobs:
           mvn install:install-file \
             -Dfile=obp-commons/target/obp-commons-1.10.1.jar \
             -DpomFile=obp-commons/pom.xml
+          # 3. obp-kernel JAR — the dependency-free API vocabulary (ErrorMessages,
+          #    ApiTag, SortFields). obp-api compiles against it, so the test shards
+          #    cannot resolve com.tesobe:obp-api's classpath without it.
+          mvn install:install-file \
+            -Dfile=obp-kernel/target/obp-kernel-1.10.1.jar \
+            -DpomFile=obp-kernel/pom.xml
 
       - name: Setup props
         run: |
@@ -365,7 +372,7 @@ jobs:
             ASSIGNED="$SHARD1 $SHARD2 $SHARD3 $SHARD4 $SHARD5 $SHARD6 $SHARD7 $SHARD9 ${{ matrix.test_filter }}"
 
             # Discover all packages that contain at least one .scala test file
-            ALL_PKGS=$(find obp-api/src/test/scala obp-commons/src/test/scala \
+            ALL_PKGS=$(find obp-api/src/test/scala obp-commons/src/test/scala obp-kernel/src/test/scala \
                          -name "*.scala" 2>/dev/null \
                        | sed 's|.*/test/scala/||; s|/[^/]*\.scala$||; s|/|.|g' \
                        | sort -u)
@@ -404,7 +411,7 @@ jobs:
           # the compiled-output artifact + touch trick) while still placing
           # test.default.props on the classpath. (Plain goal-only `scalatest:test` skips
           # process-resources → Props init fails → 0 tests but BUILD SUCCESS = false green.)
-          # -pl obp-commons,obp-api: obp-commons' own 5 util suites run on whichever
+          # -pl obp-commons,obp-kernel,obp-api: obp-commons' own 5 util suites run on whichever
           # shard's filter matches com.openbankproject.* (the catch-all shard); on every
           # other shard the filter matches nothing in obp-commons → 0 tests there.
           # timeout 1500: hard-kill after 25 min to prevent Pekko non-daemon threads
@@ -414,7 +421,7 @@ jobs:
           # timeout would abort the step before the rc check below can run.
           set +e
           MAVEN_OPTS="-Xmx3G -Xss2m -XX:MaxMetaspaceSize=1G" \
-            timeout 1500 mvn process-resources scalatest:test -pl obp-commons,obp-api -DfailIfNoTests=false \
+            timeout 1500 mvn process-resources scalatest:test -pl obp-commons,obp-kernel,obp-api -DfailIfNoTests=false \
               -DwildcardSuites="$FILTER" $EXTRA_MVN_ARGS \
             > maven-build-shard${{ matrix.shard }}.log 2>&1
           rc=$?
@@ -493,6 +500,7 @@ jobs:
           path: |
             obp-api/target/surefire-reports/**
             obp-commons/target/surefire-reports/**
+            obp-kernel/target/surefire-reports/**
             **/target/scalatest-reports/**
             **/target/site/surefire-report.html
             **/target/site/surefire-report/*

@@ -84,6 +84,7 @@
 
   <modules>
     <module>obp-commons</module>
+    <module>obp-kernel</module>
     <module>obp-api</module>
   </modules>
 

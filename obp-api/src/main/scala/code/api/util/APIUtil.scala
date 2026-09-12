@@ -143,7 +143,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   val DateWithDay3 = "dd/MM/yyyy"
   val DateWithMinutes = "yyyy-MM-dd'T'HH:mm'Z'"
   val DateWithSeconds = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-  val DateWithMs = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+  val DateWithMs = KernelFormats.DateWithMs
   val DateWithMsAndTimeZoneOffset = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
   // SimpleDateFormat is not thread-safe (parse and format both mutate the internal Calendar).
@@ -2463,9 +2463,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   // check is there a "$" in the input value.
   // eg: MODULE$ is not the useful input.
   // eg2: allFieldsAndValues is just for SwaggerJSONsV220.allFieldsAndValues,it is not useful.
-  def notExstingBaseClass(input: String): Boolean = {
-    !input.contains("$") && !input.equalsIgnoreCase("allFieldsAndValues")
-  }
+  def notExstingBaseClass(input: String): Boolean = KernelReflection.notExstingBaseClass(input)
 
 
   def writeMetricEndpointTiming[R](blockOfCode: => R)(nameOfFunction: String = "")(implicit nameOfConnector: String): R = {

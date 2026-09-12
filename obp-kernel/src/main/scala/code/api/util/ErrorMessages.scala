@@ -1,16 +1,12 @@
 package code.api.util
 
-import org.json4s._
-import code.api.APIFailureNewStyle
-import code.api.util.ApiRole.{CanCreateAnyTransactionRequest, canCreateEntitlementAtAnyBank, canCreateEntitlementAtOneBank}
 import com.openbankproject.commons.model.enums.TransactionRequestStatus._
-import org.json4s.{Extraction, JsonAST}
+import org.json4s.JsonAST
 
 import java.util.Objects
 import java.util.regex.Pattern
 
 object ErrorMessages {
-  import code.api.util.APIUtil._
   // Notes to developers. Please:
   // 1) Follow (the existing) grouping of messages
   // 2) Stick to existing terminology e.g. use "invalid" or "incorrect" rather than "wrong"
@@ -21,13 +17,6 @@ object ErrorMessages {
   // 7) Since the existence of "OBP-..." in a message is used to determine if we should display to a user if display_internal_errors=false, do *not* concatenate internal or core banking system error messages to these strings.
 
 
-  def apiFailureToString(code: Int, message: String, context: Option[CallContext]): String = com.openbankproject.commons.util.JsonAliases.compactRender(
-    Extraction.decompose(
-      APIFailureNewStyle(failMsg = message, failCode = code, context.map(_.toLight))
-    )
-  )
-  def apiFailureToString(code: Int, message: String, context: CallContext): String =
-    apiFailureToString(code, message, Some(context))
 
   // Infrastructure / config level messages (OBP-00XXX)
   val HostnameNotSpecified = "OBP-00001: Hostname not specified. Could not get hostname from Props. Please edit your props file. Here are some example settings: hostname=http://127.0.0.1:8080 or hostname=https://www.example.com"
@@ -139,7 +128,7 @@ object ErrorMessages {
     s"$FilterSortByNotAllowedForEndpoint Endpoint: $endpoint. Value requested: '$requested'. Allowed values: ${allowed.toSeq.sorted.mkString(", ")}."
   val FilterOffersetError = "OBP-10024: wrong value for obp_offset parameter. Please send a positive integer (=>0)!" // was OBP-20024
   val FilterLimitError = "OBP-10025: wrong value for obp_limit parameter. Please send a positive integer (=>1)!" // was OBP-20025
-  val FilterDateFormatError = s"OBP-10026: Failed to parse date string. Please use this format ${DateWithMsFormat.toPattern}!" // OBP-20026
+  val FilterDateFormatError = s"OBP-10026: Failed to parse date string. Please use this format ${KernelFormats.DateWithMs}!" // OBP-20026
   val FilterAnonFormatError = s"OBP-10028: anon parameter can only take two values: TRUE or FALSE!"
   val FilterDurationFormatError = s"OBP-10029: wrong value for `duration` parameter. Please send a positive integer (=>0)!"
   val FilterIsDeletedFormatError = s"OBP-10036: is_deleted parameter can only take two values: TRUE or FALSE!"
@@ -243,7 +232,13 @@ object ErrorMessages {
   val ConsumerIsDisabled = "OBP-20058: Consumer is disabled."
   val CouldNotAssignAccountAccess = "OBP-20059: Could not assign account access. "
   val NoViewReadAccountsBerlinGroup = s"OBP-20060: User does not have access to the view:"
-  val FrequencyPerDayError = s"OBP-20062: Frequency per day must be greater than 0 and less or equal to ${APIUtil.getPropsAsIntValue("berlin_group_frequency_per_day_upper_limit", 4)}"
+  // A def, not a val: the limit comes from berlin_group_frequency_per_day_upper_limit, and reading
+  // a prop while this object initialises is exactly the kind of application dependency the kernel
+  // exists to keep out. Taking it as an argument also fixes a latent bug — as a val the message
+  // captured whatever the prop said at class-init, so a later change to it produced a message that
+  // contradicted the limit actually enforced.
+  def frequencyPerDayError(upperLimit: Int) =
+    s"OBP-20062: Frequency per day must be greater than 0 and less or equal to $upperLimit"
   val FrequencyPerDayMustBeOneError = "OBP-20063: Frequency per day must be equal to 1 in case of one-off access."
 
   val UserIsDeleted = "OBP-20064: The user is deleted!"
@@ -821,7 +816,7 @@ object ErrorMessages {
   val ConsumerKeyIsInvalid = "OBP-35030: The Consumer Key must be alphanumeric. (A-Z, a-z, 0-9)"
   val ConsumerKeyIsToLong = "OBP-35031: The Consumer Key max length <= 512"
   val ConsentHeaderValueInvalid = "OBP-35032: The Consent's Request Header value is not formatted as UUID or JWT."
-  val RolesForbiddenInConsent = s"OBP-35033: Consents cannot contain the following Roles: ${canCreateEntitlementAtAnyBank}."
+  val RolesForbiddenInConsent = s"OBP-35033: Consents cannot contain the following Roles: ${KernelApiRoleNames.CanCreateEntitlementAtAnyBank}."
   val UserAuthContextUpdateRequestAllowedScaMethods = "OBP-35034: Unsupported as SCA method. "
   val ConsentIdClaimMissing = "OBP-35035: The access token is not bound to a Consent. The identity provider must include a consent_id claim in access tokens issued via the consent authorisation flow. "
   val ConsentDoesNotMatchStandard = "OBP-35036: The Consent was created by a different API standard than the endpoint using it. A consent may only be used by endpoints of the standard that created it. "
@@ -891,7 +886,7 @@ object ErrorMessages {
     "The Transaction Request could not be created " +
     "because the login user doesn't have access to the view of the from account " +
     "or the consumer doesn't have the access to the view of the from account " +
-    s"or the login user does not have the `${CanCreateAnyTransactionRequest.toString()}` role " +
+    s"or the login user does not have the `${KernelApiRoleNames.CanCreateAnyTransactionRequest}` role " +
     s"or the view does not have the permission can_add_transaction_request_to_any_account " +
     s"or the view does not have the permission can_add_transaction_request_to_beneficiary."
   val InvalidTransactionRequestCurrency = "OBP-40003: Transaction Request Currency must be the same as From Account Currency."
@@ -1075,7 +1070,7 @@ object ErrorMessages {
   for (
     v <- this.getClass.getDeclaredFields
     //add guard, ignore the SwaggerJSONsV220.this and allFieldsAndValues fields
-    if (APIUtil.notExstingBaseClass(v.getName()))
+    if (KernelReflection.notExstingBaseClass(v.getName()))
   ) yield {
     v.setAccessible(true)
     v.getName() -> v.get(this)
@@ -1214,44 +1209,6 @@ object ErrorMessages {
   def $CounterpartyNotFoundByCounterpartyId = CounterpartyNotFoundByCounterpartyId
 
 
-  def getDuplicatedMessageNumbers = {
-    import scala.meta._
-    val source: Source = new java.io.File("src/main/scala/code/api/util/ErrorMessages.scala").parse[Source].get
 
-    val listOfMessaegeNumbers = source.collect {
-      case obj: Defn.Object if obj.name.value == "ErrorMessages" =>
-        obj.collect {
-          case v: Defn.Val if v.rhs.syntax.startsWith(""""OBP-""") =>
-            val messageNumber = v.rhs.syntax.split(":")
-            messageNumber(0)
-        }
-    }
-    val list = listOfMessaegeNumbers.flatten
-    val duplicatedMessageNumbers = list
-      .groupBy(x => x).map { case (n, occurrences) => n -> occurrences.length } // Compute the number of occurrences of each message number
-      .toList.filter(_._2 > 1) // Make a list with numbers which have more than 1 occurrences
-    duplicatedMessageNumbers
-  }
-
-  def main (args: Array[String]): Unit = {
-    val duplicatedMessageNumbers: List[(String, Int)] = getDuplicatedMessageNumbers
-    duplicatedMessageNumbers.size match {
-      case number if number > 0 =>
-        val msg=
-          """
-
-                ____              ___            __           __                                                                      __
-               / __ \__  ______  / (_)________ _/ /____  ____/ /  ____ ___  ___  ______________ _____ ____     ____  __  ______ ___  / /_  ___  __________
-              / / / / / / / __ \/ / / ___/ __ `/ __/ _ \/ __  /  / __ `__ \/ _ \/ ___/ ___/ __ `/ __ `/ _ \   / __ \/ / / / __ `__ \/ __ \/ _ \/ ___/ ___/
-             / /_/ / /_/ / /_/ / / / /__/ /_/ / /_/  __/ /_/ /  / / / / / /  __(__  |__  ) /_/ / /_/ /  __/  / / / / /_/ / / / / / / /_/ /  __/ /  (__  )
-            /_____/\__,_/ .___/_/_/\___/\__,_/\__/\___/\__,_/  /_/ /_/ /_/\___/____/____/\__,_/\__, /\___/  /_/ /_/\__,_/_/ /_/ /_/_.___/\___/_/  /____/
-                       /_/                                                                    /____/
-
-            """
-        println(msg)
-        println(duplicatedMessageNumbers)
-      case _ =>
-    }
-  }
 
 }
