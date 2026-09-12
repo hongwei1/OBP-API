@@ -65,7 +65,7 @@ object Http4sUKOBv200AIS extends MdcLoggable {
     "UK Open Banking: Get Account List",
     """Reads a list of bank accounts, with balances where required.""",
     EmptyBody,
-    SwaggerDefinitionsJSON.accountsJsonUKOpenBanking_v200,
+    code.api.UKOpenBanking.SwaggerDefinitionsUKOB.accountsJsonUKOpenBanking_v200,
     List(AuthenticatedUserIsRequired, UnknownError),
     List(apiTagUKOpenBanking, apiTagAccount, apiTagPrivateData),
     http4sPartialFunction = Some(getAccountList)
@@ -90,7 +90,7 @@ object Http4sUKOBv200AIS extends MdcLoggable {
     "UK Open Banking: Get Account",
     """Reads a bank account, with balances where required.""",
     EmptyBody,
-    SwaggerDefinitionsJSON.accountsJsonUKOpenBanking_v200,
+    code.api.UKOpenBanking.SwaggerDefinitionsUKOB.accountsJsonUKOpenBanking_v200,
     List(AuthenticatedUserIsRequired, UnknownError),
     List(apiTagUKOpenBanking, apiTagAccount, apiTagPrivateData),
     http4sPartialFunction = Some(getAccount)
@@ -115,7 +115,7 @@ object Http4sUKOBv200AIS extends MdcLoggable {
     "UK Open Banking: Get Balances",
     """Bulk retrieval of balances for all authorised accounts.""",
     EmptyBody,
-    SwaggerDefinitionsJSON.accountBalancesUKV200,
+    code.api.UKOpenBanking.SwaggerDefinitionsUKOB.accountBalancesUKV200,
     List(AuthenticatedUserIsRequired, UnknownError),
     List(apiTagUKOpenBanking, apiTagAccount, apiTagPrivateData),
     http4sPartialFunction = Some(getBalances)
@@ -142,7 +142,7 @@ object Http4sUKOBv200AIS extends MdcLoggable {
     "UK Open Banking: Get Account Balances",
     """An AISP may retrieve the account balance information resource for a specific AccountId.""",
     EmptyBody,
-    SwaggerDefinitionsJSON.accountBalancesUKV200,
+    code.api.UKOpenBanking.SwaggerDefinitionsUKOB.accountBalancesUKV200,
     List(AuthenticatedUserIsRequired, UnknownError),
     List(apiTagUKOpenBanking, apiTagAccount, apiTagPrivateData),
     http4sPartialFunction = Some(getAccountBalances)
@@ -173,7 +173,7 @@ object Http4sUKOBv200AIS extends MdcLoggable {
     "UK Open Banking: Get Account Transactions",
     """Reads account data from a given account addressed by "account-id".""",
     EmptyBody,
-    SwaggerDefinitionsJSON.transactionsJsonUKV200,
+    code.api.UKOpenBanking.SwaggerDefinitionsUKOB.transactionsJsonUKV200,
     List(AuthenticatedUserIsRequired, UnknownError),
     List(apiTagUKOpenBanking, apiTagTransaction, apiTagPrivateData),
     http4sPartialFunction = Some(getAccountTransactions)

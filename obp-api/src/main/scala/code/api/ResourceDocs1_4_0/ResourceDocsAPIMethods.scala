@@ -1226,7 +1226,7 @@ trait ResourceDocsAPIMethods extends MdcLoggable {
           // Format the data as json
           val json = SwaggerJSONFactory.createSwaggerResourceDoc(rdFiltered, requestedApiVersion)
           //Get definitions of objects of success responses
-          val allSwaggerDefinitionCaseClasses = SwaggerDefinitionsJSON.allFields
+          val allSwaggerDefinitionCaseClasses = SwaggerDefinitionsAggregation.forResourceDocs
           val jsonAST = SwaggerJSONFactory.loadDefinitions(rdFiltered, allSwaggerDefinitionCaseClasses)
           // Merge both results and return
           buildSwagger(json, jsonAST)

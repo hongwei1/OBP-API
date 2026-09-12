@@ -4,8 +4,6 @@ import org.json4s._
 import scala.language.implicitConversions
 import code.api.Constant
 import code.api.Constant._
-import code.api.UKOpenBanking.v2_0_0.JSONFactory_UKOpenBanking_200
-import code.api.UKOpenBanking.v2_0_0.JSONFactory_UKOpenBanking_200.{Account, AmountUKOpenBankingJson, AccountBalancesUKV200, AccountInner, AccountList, Accounts, BalanceJsonUKV200, BalanceUKOpenBankingJson, BankTransactionCodeJson, CreditLineJson, DataJsonUKV200, Links, MetaBisJson, MetaInnerJson, TransactionCodeJson, TransactionInnerJson, TransactionsInnerJson, TransactionsJsonUKV200}
 import code.api.util.PractiseEndpointJson
 import code.api.util.APIUtil.{defaultJValue, _}
 import code.api.util.ApiRole._
@@ -555,11 +553,6 @@ object SwaggerDefinitionsJSON {
   )
 
   // UK Open Banking spells the same two members capitalised, so its examples take its own shape.
-  lazy val amountUKOpenBankingJson = AmountUKOpenBankingJson(
-    Amount = "0",
-    Currency = "EUR"
-  )
-
   lazy val transactionRequestTransferToPhone = TransactionRequestTransferToPhone(
     value = amountOfMoneyJsonV121,
     description = "String",
@@ -3801,34 +3794,6 @@ object SwaggerDefinitionsJSON {
   lazy val coreAccountsJsonV300 = CoreAccountsJsonV300(accounts = List(coreAccountJson))
 
 
-  lazy val accountInnerJsonUKOpenBanking_v200 = AccountInner(
-    SchemeName = "SortCodeAccountNumber",
-    Identification = "80200110203345",
-    Name = "Mr Kevin",
-    SecondaryIdentification = Some("00021")
-  )
-
-  lazy val accountJsonUKOpenBanking_v200 = Account(
-    AccountId = "22289",
-    Currency = "GBP",
-    AccountType = "Personal",
-    AccountSubType = "CurrentAccount",
-    Nickname = "Bills",
-    Account = accountInnerJsonUKOpenBanking_v200
-  )
-
-  lazy val accountList = AccountList(List(accountJsonUKOpenBanking_v200))
-  
-  lazy val links =  Links(Self = s"${Constant.HostName}/open-banking/v2.0/accounts/")
-  
-  lazy val metaUK = JSONFactory_UKOpenBanking_200.MetaUK(1) 
-  
-  lazy val accountsJsonUKOpenBanking_v200 = Accounts(
-    Data = accountList,
-    Links = links,
-    Meta = metaUK
-  )
-  
   lazy val accountIdJson = AccountIdJson(
     id = "5995d6a2-01b3-423c-a173-5481df49bdaf"
   )
@@ -4012,82 +3977,6 @@ object SwaggerDefinitionsJSON {
   )
   
   //APIMethods_UKOpenBanking_200 
-  
-  lazy val bankTransactionCodeJson = BankTransactionCodeJson(
-    Code = "ReceivedCreditTransfer",
-    SubCode = "DomesticCreditTransfer"
-  )
-
-  lazy val balanceUKOpenBankingJson = BalanceUKOpenBankingJson(
-    Amount = amountUKOpenBankingJson,
-    CreditDebitIndicator = "Credit",
-    Type = "InterimBooked"
-  )
-
-  lazy val transactionCodeJson = TransactionCodeJson(
-    Code = "Transfer",
-    Issuer = "AlphaBank"
-  )
-  
-  lazy val transactionInnerJson  = TransactionInnerJson(
-    AccountId = accountIdSwagger.value,
-    TransactionId  = "123",
-    TransactionReference = "Ref 1",
-    Amount = amountUKOpenBankingJson,
-    CreditDebitIndicator = "Credit",
-    Status = "Booked",
-    BookingDateTime = DateWithDayExampleObject,
-    ValueDateTime = DateWithDayExampleObject,
-    TransactionInformation = "Cash from Aubrey",
-    BankTransactionCode = bankTransactionCodeJson,
-    ProprietaryBankTransactionCode = transactionCodeJson,
-    Balance = balanceUKOpenBankingJson
-  )
-
-  lazy val transactionsInnerJson =  TransactionsInnerJson(
-    Transaction = List(transactionInnerJson)
-  )
-
-  lazy val metaInnerJson  = MetaInnerJson(
-    TotalPages = 1,
-    FirstAvailableDateTime = DateWithDayExampleObject,
-    LastAvailableDateTime = DateWithDayExampleObject
-  )
-
-  lazy val transactionsJsonUKV200 = TransactionsJsonUKV200(
-    Data = transactionsInnerJson,
-    Links = links.copy(s"${Constant.HostName}/open-banking/v2.0/accounts/22289/transactions/"),
-    Meta = metaInnerJson
-  )
-  
-  lazy val creditLineJson = CreditLineJson(
-    Included = true,
-    Amount = amountUKOpenBankingJson,
-    Type = "Pre-Agreed"
-  )
-  
-  lazy val balanceJsonUK200 = BalanceJsonUKV200(
-    AccountId = "22289",
-    Amount = amountUKOpenBankingJson,
-    CreditDebitIndicator = "Credit",
-    Type = "InterimAvailable",
-    DateTime = DateWithDayExampleObject,
-    CreditLine = List(creditLineJson)
-  )
-  
-  lazy val dataJsonUK200 = DataJsonUKV200(
-    Balance = List(balanceJsonUK200)
-  )
-  
-  lazy val metaBisJson =  MetaBisJson(
-    TotalPages = 1
-  )
-  
-  lazy val accountBalancesUKV200 = AccountBalancesUKV200(
-    Data = dataJsonUK200,
-    Links = links.copy(s"${Constant.HostName}/open-banking/v2.0/accounts/22289/balances/"),
-    Meta = metaBisJson
-  )
   
   lazy val createScopeJson =  CreateScopeJson(bank_id = bankIdExample.value, role_name = "CanGetEntitlementsForAnyUserAtOneBank")
    

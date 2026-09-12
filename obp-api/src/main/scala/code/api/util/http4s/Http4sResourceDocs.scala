@@ -657,8 +657,7 @@ object Http4sResourceDocs extends MdcLoggable {
           val resourceDocJsonList = JSONFactory1_4_0.createResourceDocsJson(resourceDocListFiltered, isVersion4OrHigher = true, None).resource_docs
           val swaggerResourceDoc = code.api.ResourceDocs1_4_0.SwaggerJSONFactory.createSwaggerResourceDoc(resourceDocJsonList, ApiVersion.v3_1_0)
           val allSwaggerDefinitionCaseClasses =
-            code.api.ResourceDocs1_4_0.MessageDocsSwaggerDefinitions.allFields ++
-              code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON.allFields
+            code.api.ResourceDocs1_4_0.SwaggerDefinitionsAggregation.forMessageDocs
           val jsonAST = code.api.ResourceDocs1_4_0.SwaggerJSONFactory.loadDefinitions(resourceDocJsonList, allSwaggerDefinitionCaseClasses)
           val swaggerDocJsonJValue = Extraction.decompose(swaggerResourceDoc)(CustomJsonFormats.formats) merge jsonAST
           Caching.setStaticSwaggerDocCache(cacheKey, json.compactRender(swaggerDocJsonJValue))
