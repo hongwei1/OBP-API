@@ -22,7 +22,7 @@ import com.openbankproject.commons.util.JsonAliases.parse
 import java.text.SimpleDateFormat
 import java.util.Date
 import scala.concurrent.Future
-case class JvalueCaseClass(jvalueToCaseclass: JValue)
+import code.api.util.JvalueCaseClass
 
 object JSONFactory_BERLIN_GROUP_1_3 extends CustomJsonFormats with MdcLoggable{
 

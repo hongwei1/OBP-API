@@ -8,7 +8,7 @@ import code.api.Constant.{SYSTEM_READ_ACCOUNTS_BERLIN_GROUP_VIEW_ID, SYSTEM_READ
 import code.api.berlin.group.ConstantsBG
 import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3._
 import code.api.berlin.group.v1_3.model._
-import code.api.berlin.group.v1_3.{BgSpecValidation, JSONFactory_BERLIN_GROUP_1_3, JvalueCaseClass}
+import code.api.berlin.group.v1_3.{BgSpecValidation, JSONFactory_BERLIN_GROUP_1_3}
 import code.api.RequestHeader
 import code.api.util.APIUtil
 import code.api.util.APIUtil.{EmptyBody, ResourceDoc, UserOrApplication, connectorEmptyResponse, createQueriesByHttpParams, fullBoxOrException, getHttpRequestUrlParam, getSuggestedDefaultScaMethod, mockedDataText, passesPsd2Aisp, unboxFull, unboxFullOrFail}
@@ -38,6 +38,7 @@ import org.http4s.dsl.io._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
+import code.api.util.JvalueCaseClass
 
 object Http4sBGv13AIS extends MdcLoggable {
 

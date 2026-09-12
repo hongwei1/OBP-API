@@ -15,6 +15,7 @@ import com.openbankproject.commons.util.json
 import org.json4s.native.Serialization.write
 import net.liftweb.mapper.By
 import org.scalatest.Tag
+import code.api.util.JvalueCaseClass
 
 class ConfirmationOfFundsServicePIISApiTest extends BerlinGroupServerSetupV1_3 with DefaultUsers {
 

@@ -36,6 +36,7 @@ import org.http4s.dsl.io._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
+import code.api.util.JvalueCaseClass
 
 /**
  * Native http4s aggregator for Berlin Group v1.3 – Payment Initiation Service (PIS).
