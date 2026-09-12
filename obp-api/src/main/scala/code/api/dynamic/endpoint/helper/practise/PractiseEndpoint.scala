@@ -38,11 +38,15 @@ object PractiseEndpoint extends DynamicCompileEndpoint {
 
 
   // all request case classes
-  case class RequestRootJsonClass(name: String, age: Long, hobby: List[String])
+  // Defined in code.api.util.PractiseEndpointJson and aliased here: the core's swagger example
+  // uses RequestRootJsonClass, and this object belongs with the runtime compiler.
+  type RequestRootJsonClass = code.api.util.PractiseEndpointJson.RequestRootJsonClass
+  val RequestRootJsonClass = code.api.util.PractiseEndpointJson.RequestRootJsonClass
 
 
   // all response case classes
-  case class ResponseRootJsonClass(my_user_id: String, name: String, age: Long, hobby: List[String])
+  type ResponseRootJsonClass = code.api.util.PractiseEndpointJson.ResponseRootJsonClass
+  val ResponseRootJsonClass = code.api.util.PractiseEndpointJson.ResponseRootJsonClass
 
   // * is any bankId, if bound to other bankId, just modify this value to correct one
   override val boundBankId = "*"

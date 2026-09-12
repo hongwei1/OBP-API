@@ -17,11 +17,9 @@ import code.api.util.ErrorMessages._
 import code.api.util.ExampleValue._
 import code.api.util.Glossary
 import code.api.util.Glossary._
-import code.api.dynamic.endpoint.helper.practise.PractiseEndpoint
 import code.api.Constant
 import code.api.v2_1_0.ConsumerPostJSON
 import code.api.v3_1_0.ConsentChallengeJsonV310
-import code.api.dynamic.endpoint.helper.practise.PractiseEndpoint
 import code.bankconnectors.LocalMappedConnectorInternal._
 import code.consent.ConsentStatus
 import com.openbankproject.commons.model.enums.{AttributeCategory, AttributeType, UserInvitationPurpose}
@@ -10196,9 +10194,7 @@ object Http4s400 {
         "Create Dynamic Resource Doc endpoint code",
         s"""Create a Dynamic Resource Doc endpoint code.
          |
-         |copy the response and past to ${nameOf(
-          PractiseEndpoint
-        )}, So you can have the benefits of
+         |copy the response and past to PractiseEndpoint, So you can have the benefits of
          |auto compilation and debug
          |""",
         jsonResourceDocFragment,

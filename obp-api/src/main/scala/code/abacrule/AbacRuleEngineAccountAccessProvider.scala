@@ -1,7 +1,7 @@
 package code.abacrule
 
 import code.api.Constant.ABAC_POLICY_ACCOUNT_ACCESS
-import code.api.util.{AbacAccountAccess, AbacAccountAccessProvider, CallContext}
+import code.api.util.{AbacAccountAccess, AbacAccountAccessProvider, AbacRuleEngineProvider, AbacRules, AbacSubject, CallContext}
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.model.{BankIdAccountId, User, View}
 import net.liftweb.common.{Box, Failure, Full}
@@ -25,7 +25,7 @@ import scala.concurrent.duration.Duration
  * unchanged — an engine that throws or hangs must not grant access, and must not take down the
  * request either.
  */
-object AbacRuleEngineAccountAccessProvider extends AbacAccountAccessProvider with MdcLoggable {
+object AbacRuleEngineAccountAccessProvider extends AbacAccountAccessProvider with AbacRuleEngineProvider with MdcLoggable {
 
   private val evaluationTimeout = Duration(10, TimeUnit.SECONDS)
 
@@ -58,9 +58,30 @@ object AbacRuleEngineAccountAccessProvider extends AbacAccountAccessProvider wit
       case None => Full(false)
     }
 
+  // ── AbacRuleEngineProvider: the operator-facing management operations ───────────────────────
+  // Straight delegation; the seam exists so the core does not name AbacRuleEngine, not to change
+  // what these do.
+  override def validateRuleCode(ruleCode: String): scala.concurrent.Future[net.liftweb.common.Box[String]] =
+    AbacRuleEngine.validateRuleCodeAsync(ruleCode)
+
+  override def executeRule(ruleId: String, s: AbacSubject): scala.concurrent.Future[net.liftweb.common.Box[Boolean]] =
+    AbacRuleEngine.executeRule(ruleId, s.authenticatedUserId, s.onBehalfOfUserId, s.userId, s.callContext,
+      s.bankId, s.accountId, s.viewId, s.transactionId, s.transactionRequestId, s.customerId)
+
+  override def executeRulesByPolicy(policy: String, s: AbacSubject): scala.concurrent.Future[net.liftweb.common.Box[Boolean]] =
+    AbacRuleEngine.executeRulesByPolicy(policy, s.authenticatedUserId, s.onBehalfOfUserId, s.userId, s.callContext,
+      s.bankId, s.accountId, s.viewId, s.transactionId, s.transactionRequestId, s.customerId)
+
+  override def executeRulesByPolicyDetailed(policy: String, s: AbacSubject): scala.concurrent.Future[net.liftweb.common.Box[(Boolean, List[String])]] =
+    AbacRuleEngine.executeRulesByPolicyDetailed(policy, s.authenticatedUserId, s.callContext,
+      s.bankId, s.accountId, s.viewId)
+
+  override def clearRuleFromCache(ruleId: String): Unit = AbacRuleEngine.clearRuleFromCache(ruleId)
+
   /** Called from Boot. Idempotent. */
   def install(): Unit = {
     AbacAccountAccess.install(this)
-    logger.info("ABAC account-access rule engine installed")
+    AbacRules.install(this)
+    logger.info("ABAC rule engine installed (account-access seam + management seam)")
   }
 }

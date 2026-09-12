@@ -76,6 +76,9 @@ object DynamicCodeCompilerImpl extends DynamicCodeCompiler with CompiledEndpoint
   def install(): Unit = {
     DynamicCode.install(this)
     CompiledEndpoints.install(this)
+    // The "internal" connector executes Scala the operator uploaded, so it belongs with the
+    // compiler rather than in Connector's fixed map. Registered here; absent without this module.
+    code.api.util.OptionalConnectors.register("internal", InternalConnector.instance)
     logger.info(s"Dynamic code compiler installed (allow_user_generated_scala_code=$isEnabled)")
   }
 }

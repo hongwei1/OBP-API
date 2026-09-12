@@ -114,8 +114,56 @@ class DynamicCodeTest extends FlatSpec with Matchers with BeforeAndAfterEach {
         .getOrElse(throw new IllegalStateException(
           s"cannot locate $rel from ${Paths.get("").toAbsolutePath}")))
 
-  /** Symbols that only exist because something compiles code at runtime. */
-  private val engineSymbols = List("CompiledObjects", "DynamicUtil", "InternalConnector", "DynamicConnector")
+  /** Symbols that only exist because something compiles code at runtime, as whole identifiers —
+    * see the core-wide guard below for why substring matching is not good enough. */
+  private val engineSymbolPattern =
+    ("\\b(" + List("CompiledObjects", "DynamicUtil", "InternalConnector", "DynamicConnector").mkString("|") + ")\\b").r
+
+  it should "keep the runtime compiler out of the core" in {
+    // Wider than the version files: nothing outside the engine's own packages may name a symbol
+    // that only exists because something compiles code at runtime. This is what makes the module
+    // extractable at all — one re-added import anywhere here puts the compiler back on the
+    // required path for every deployment, including the ones that deliberately ship without it.
+    val coreRoots = List("src/main/scala/code", "obp-api/src/main/scala/code")
+      .map(Paths.get(_)).find(Files.isDirectory(_))
+      .getOrElse(throw new IllegalStateException(s"cannot locate sources from ${Paths.get("").toAbsolutePath}"))
+
+    // The engine itself, and the composition root that installs it.
+    val enginePaths = List("api/dynamic/endpoint/helper/", "abacrule/", "dynamicchangerequest/",
+                           "bankconnectors/InternalConnector.scala", "bankconnectors/DynamicConnector.scala",
+                           "bankconnectors/generator/", "api/util/DynamicUtil.scala")
+    // Whole identifiers only. A substring match is worse than no guard: it reports
+    // grantEntitlementsToUseDynamicEndpointsInSpaces, newInternalConnector,
+    // DynamicConnectorMethod.methodBody and even this seam's own AbacRuleEngineProvider — none of
+    // which reference the engine — and a wall of false positives is how a guard gets deleted.
+    val symbolPattern =
+      ("\\b(" + List("DynamicUtil", "CompiledObjects", "DynamicEndpoints", "DynamicCompileEndpoint",
+                     "InternalConnector", "DynamicConnector", "AbacRuleEngine").mkString("|") + ")\\b").r
+
+    val offenders = Files.walk(coreRoots).iterator.asScala
+      .filter(p => p.toString.endsWith(".scala"))
+      .filterNot(p => enginePaths.exists(p.toString.contains))
+      .flatMap { p =>
+        Files.readAllLines(p).asScala.toList.zipWithIndex
+          .map { case (l, i) => (i + 1, l) }
+          .filterNot { case (_, l) => val t = l.trim; t.startsWith("//") || t.startsWith("*") || t.startsWith("/*") || t.startsWith("|") }
+          .collect {
+            // invokeDynamicConnector is a NewStyle service call that merely contains a name;
+            // Glossary quotes the engine inside documentation prose, not code.
+            case (n, l) if symbolPattern.findFirstIn(l).isDefined &&
+                           !p.toString.endsWith("Glossary.scala") =>
+              s"${coreRoots.relativize(p)}:$n: ${l.trim.take(100)}"
+          }
+      }.toList
+
+    withClue(
+      s"these lines put the runtime Scala compiler back on the core's required path:\n" +
+      s"${offenders.mkString("\n")}\n" +
+      s"Go through one of the seams (DynamicCode, CompiledEndpoints, AbacAccountAccess, AbacRules, " +
+      s"OptionalConnectors) instead — " ) {
+      offenders shouldBe empty
+    }
+  }
 
   it should "keep the runtime compiler out of the version files" in {
     val offenders = versionFiles.flatMap { p =>
@@ -125,7 +173,7 @@ class DynamicCodeTest extends FlatSpec with Matchers with BeforeAndAfterEach {
         .collect {
           // NewStyle.function.invokeDynamicConnector merely contains one of the names; it is a
           // call into the service layer, not a reference to the connector object.
-          case (n, l) if engineSymbols.exists(l.contains) && !l.contains("invokeDynamicConnector") =>
+          case (n, l) if engineSymbolPattern.findFirstIn(l).isDefined =>
             s"${p.getFileName}:$n: ${l.trim.take(100)}"
         }
     }

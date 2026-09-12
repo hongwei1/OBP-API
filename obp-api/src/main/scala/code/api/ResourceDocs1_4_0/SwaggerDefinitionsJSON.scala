@@ -6,7 +6,7 @@ import code.api.Constant
 import code.api.Constant._
 import code.api.UKOpenBanking.v2_0_0.JSONFactory_UKOpenBanking_200
 import code.api.UKOpenBanking.v2_0_0.JSONFactory_UKOpenBanking_200.{Account, AmountUKOpenBankingJson, AccountBalancesUKV200, AccountInner, AccountList, Accounts, BalanceJsonUKV200, BalanceUKOpenBankingJson, BankTransactionCodeJson, CreditLineJson, DataJsonUKV200, Links, MetaBisJson, MetaInnerJson, TransactionCodeJson, TransactionInnerJson, TransactionsInnerJson, TransactionsJsonUKV200}
-import code.api.dynamic.endpoint.helper.practise.PractiseEndpoint
+import code.api.util.PractiseEndpointJson
 import code.api.util.APIUtil.{defaultJValue, _}
 import code.api.util.ApiRole._
 import code.api.util.ExampleValue._
@@ -5693,7 +5693,7 @@ object SwaggerDefinitionsJSON {
     messages = List(customerMessageJsonV400)
   )
 
-  lazy val requestRootJsonClass = PractiseEndpoint.RequestRootJsonClass(name = nameExample.value, age=ageExample.value.toLong, Nil)
+  lazy val requestRootJsonClass = PractiseEndpointJson.RequestRootJsonClass(name = nameExample.value, age=ageExample.value.toLong, Nil)
   
   lazy val entitlementJsonV400 = EntitlementJsonV400(
     entitlement_id = entitlementIdExample.value,

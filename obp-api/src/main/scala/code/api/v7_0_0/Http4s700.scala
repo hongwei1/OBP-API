@@ -584,13 +584,13 @@ object Http4s700 {
                   error_message = Some("Rule is not active")
                 ))
               } else {
-                code.abacrule.AbacRuleEngine.executeRule(
-                  ruleId = rule.abacRuleId,
-                  authenticatedUserId = targetUser.userId,
-                  callContext = cc,
-                  bankId  = Some(account.bankId.value),
-                  accountId = Some(account.accountId.value),
-                  viewId  = Some(targetViewIdStr)
+                code.api.util.AbacRules.executeRule(rule.abacRuleId,
+                  code.api.util.AbacSubject(
+                    authenticatedUserId = targetUser.userId,
+                    callContext = cc,
+                    bankId  = Some(account.bankId.value),
+                    accountId = Some(account.accountId.value),
+                    viewId  = Some(targetViewIdStr))
                 ).map {
                   case Full(true)  => JSONFactory700.AbacRuleTraceJsonV700(rule.abacRuleId, rule.ruleName, true, "PASS", None)
                   case Full(false) => JSONFactory700.AbacRuleTraceJsonV700(rule.abacRuleId, rule.ruleName, true, "FAIL", None)
