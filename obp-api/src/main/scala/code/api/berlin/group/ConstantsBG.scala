@@ -1,24 +1,19 @@
 package code.api.berlin.group
 
-import code.api.util.APIUtil
-import com.openbankproject.commons.util.ApiVersion.berlinGroupV13
+import code.api.util.BerlinGroupVocabulary
 import com.openbankproject.commons.util.ScannedApiVersion
-import net.liftweb.common.Full
 
+/**
+ * Aliases for the Berlin Group vocabulary the core also needs.
+ *
+ * The values are defined in code.api.util.BerlinGroupVocabulary: the core recognises Berlin Group
+ * URLs, renders Berlin Group error bodies and persists signing-basket status codes, so it needs
+ * them, and having the core import them from this package made code.api.util and code.api.berlin
+ * mutually dependent. The dependency is one way now — nothing outside this package refers to
+ * ConstantsBG — while every call site inside the standard still reads ConstantsBG.
+ */
 object ConstantsBG {
-  val berlinGroupVersion1: ScannedApiVersion = APIUtil.getPropsValue("berlin_group_version_1_canonical_path") match {
-    case Full(props) => berlinGroupV13.copy(apiShortVersion = props)
-    case _ => berlinGroupV13
-  }
-  val berlinGroupVersion2: ScannedApiVersion = ScannedApiVersion("berlin-group", "BG", "v2")
-  object SigningBasketsStatus extends Enumeration {
-    type SigningBasketsStatus = Value
-    // Only the codes
-    // 1) RCVD (Received),
-    // 2) PATC (PartiallyAcceptedTechnical Correct) The payment initiation needs multiple authentications, where some but not yet all have been performed. Syntactical and semantical validations are successful.,
-    // 3) ACTC (AcceptedTechnicalValidation) ,
-    // 4) CANC (Cancelled) and
-    // 5) RJCT (Rejected) are supported for signing baskets.
-    val RCVD, PATC, ACTC, CANC, RJCT = Value
-  }
+  val berlinGroupVersion1: ScannedApiVersion = BerlinGroupVocabulary.berlinGroupVersion1
+  val berlinGroupVersion2: ScannedApiVersion = BerlinGroupVocabulary.berlinGroupVersion2
+  val SigningBasketsStatus = BerlinGroupVocabulary.SigningBasketsStatus
 }

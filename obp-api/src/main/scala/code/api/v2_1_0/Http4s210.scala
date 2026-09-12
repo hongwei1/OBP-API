@@ -20,9 +20,7 @@ import code.api.v1_3_0.{JSONFactory1_3_0, PhysicalCardJSON, PostPhysicalCardJSON
 import code.api.v1_4_0.JSONFactory1_4_0
 import code.api.v2_0_0.{JSONFactory200, TransactionTypeJsonV200}
 import code.api.v2_1_0.JSONFactory210._
-import code.atms.Atms
 import code.bankconnectors.Connector
-import code.branches.Branches
 import code.consumer.Consumers
 import code.customer.CustomerX
 import code.entitlement.Entitlement
@@ -900,11 +898,9 @@ object Http4s210 {
             _ <- if (!getAtmsIsPublic)
                    code.util.Helper.booleanToFuture(AuthenticatedUserIsRequired, failCode = 401, cc = Some(cc)) { cc.user.isDefined }
                  else Future.unit
-            atm <- Future {
-              unboxFullOrFail(
-                Atms.atmsProvider.vend.getAtm(bank.bankId, AtmId(atmIdStr)),
-                Some(cc), AtmNotFoundByAtmId, 404)
-            }
+            // Through Connector so MethodRouting applies. NewStyle.function.getAtm already answers
+            // AtmNotFoundByAtmId with 404, which is what this endpoint has always returned.
+            (atm, _) <- NewStyle.function.getAtm(bank.bankId, AtmId(atmIdStr), Some(cc))
           } yield JSONFactory1_4_0.createAtmJson(atm)
         }
     }
@@ -936,10 +932,10 @@ object Http4s210 {
             _ <- if (!getBranchesIsPublic)
                    code.util.Helper.booleanToFuture(AuthenticatedUserIsRequired, failCode = 401, cc = Some(cc)) { cc.user.isDefined }
                  else Future.unit
-            branch <- Future {
-              unboxFullOrFail(
-                Branches.branchesProvider.vend.getBranch(bank.bankId, BranchId(branchIdStr)),
-                Some(cc), BranchNotFoundByBranchId, 404)
+            // Through Connector so MethodRouting applies. Not via NewStyle.function.getBranch: that
+            // one answers 400, and this endpoint has always answered 404 for a missing branch.
+            branch <- Connector.connector.vend.getBranch(bank.bankId, BranchId(branchIdStr), Some(cc)) map { box =>
+              unboxFullOrFail(box.map(_._1), Some(cc), BranchNotFoundByBranchId, 404)
             }
           } yield JSONFactory1_4_0.createBranchJson(branch)
         }

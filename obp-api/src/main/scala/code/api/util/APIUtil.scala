@@ -29,16 +29,12 @@ package code.api.util
 
 import bootstrap.liftweb.CustomDBVendor
 import cats.effect.IO
-import code.abacrule.AbacRuleEngine
 import code.accountholders.AccountHolders
 import code.api.Constant._
 import code.api._
-import code.api.berlin.group.ConstantsBG
-import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.{ErrorMessageBG, ErrorMessagesBG}
+import code.api.util.BerlinGroupVocabulary.{ErrorMessageBG, ErrorMessagesBG}
 import code.api.cache.Caching
-import code.api.dynamic.endpoint.OBPAPIDynamicEndpoint
-import code.api.dynamic.endpoint.helper.{DynamicEndpointHelper, DynamicEndpoints}
-import code.api.dynamic.entity.OBPAPIDynamicEntity
+import code.api.dynamic.endpoint.helper.DynamicEndpointHelper
 import code.api.dynamic.entity.helper.DynamicEntityHelper
 import code.api.util.APIUtil.ResourceDoc.{findPathVariableNames, isPathVariable}
 import code.api.util.ApiRole._
@@ -144,7 +140,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   val DateWithDay3 = "dd/MM/yyyy"
   val DateWithMinutes = "yyyy-MM-dd'T'HH:mm'Z'"
   val DateWithSeconds = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-  val DateWithMs = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+  val DateWithMs = KernelFormats.DateWithMs
   val DateWithMsAndTimeZoneOffset = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
   // SimpleDateFormat is not thread-safe (parse and format both mutate the internal Calendar).
@@ -596,7 +592,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     val mirrorByProperties = getPropsValue("mirror_request_headers_to_response", "").split(",").toList.map(_.trim)
 
     val mirrorRequestHeadersToResponse: List[String] =
-      if (callContext.exists(_.url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix))) {
+      if (callContext.exists(_.url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix))) {
         // Berlin Group Specification
         RequestHeader.`X-Request-ID` :: mirrorByProperties
       } else {
@@ -634,10 +630,10 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
 
   def getRequestHeadersBerlinGroup(callContext: Option[CallContextLight]): CustomResponseHeaders = {
     val aspspScaApproach = getPropsValue("berlin_group_aspsp_sca_approach", defaultValue = "redirect")
-    logger.debug(s"ConstantsBG.berlinGroupVersion1.urlPrefix: ${ConstantsBG.berlinGroupVersion1.urlPrefix}")
+    logger.debug(s"BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix: ${BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix}")
     logger.debug(s"callContext.map(_.url): ${callContext.map(_.url)}")
     callContext match {
-      case Some(cc) if cc.url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix) && cc.url.endsWith("/consents") =>
+      case Some(cc) if cc.url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix) && cc.url.endsWith("/consents") =>
         CustomResponseHeaders(List(
           (ResponseHeader.`ASPSP-SCA-Approach`, aspspScaApproach)
         ))
@@ -809,7 +805,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       }
     def composeErrorMessage() = {
       val path = callContextLight.map(_.url).getOrElse("")
-      if (path.contains(ConstantsBG.berlinGroupVersion1.urlPrefix)) {
+      if (path.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix)) {
         val path =
           if(APIUtil.getPropsAsBoolValue("berlin_group_error_message_show_path", defaultValue = true))
             callContextLight.map(_.url)
@@ -1568,7 +1564,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
 
     def getResourceDocs(operationIds: List[String]): List[ResourceDoc] = {
       logger.trace(s"ResourceDoc operationIdToResourceDoc.size is ${operationIdToResourceDoc.size()}")
-      val dynamicDocs = DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs
+      val dynamicDocs = DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ CompiledEndpoints.docs
       operationIds.collect {
         case operationId if operationIdToResourceDoc.containsKey(operationId) =>
           operationIdToResourceDoc.get(operationId)
@@ -2464,9 +2460,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   // check is there a "$" in the input value.
   // eg: MODULE$ is not the useful input.
   // eg2: allFieldsAndValues is just for SwaggerJSONsV220.allFieldsAndValues,it is not useful.
-  def notExstingBaseClass(input: String): Boolean = {
-    !input.contains("$") && !input.equalsIgnoreCase("allFieldsAndValues")
-  }
+  def notExstingBaseClass(input: String): Boolean = KernelReflection.notExstingBaseClass(input)
 
 
   def writeMetricEndpointTiming[R](blockOfCode: => R)(nameOfFunction: String = "")(implicit nameOfConnector: String): R = {
@@ -3544,6 +3538,19 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
       }
   }
 
+  /**
+   * The last branch of hasAccountAccess: ABAC may GRANT access the view model refused.
+   *
+   * The two guards stay here rather than moving behind the seam, because they are the core's
+   * policy, not the engine's: the prop says whether this instance lets ABAC widen access at all,
+   * and the role says whether this user may have it widened. Only when both say yes is the rule
+   * engine asked anything — so an instance with the feature off never reaches the seam.
+   *
+   * The engine itself lives behind AbacAccountAccess because it compiles Scala at runtime and is
+   * moving to an optional module. With no engine installed the answer is Full(false): ABAC grants
+   * nothing, which is exactly what allow_abac_account_access=false already means. See
+   * AbacAccountAccess for why that is the fail-closed default in this position.
+   */
   private def checkAbacAccountAccess(
     user: User,
     view: View,
@@ -3553,28 +3560,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
     if (!allowAbacAccountAccess) return Full(false)
     if (!hasEntitlement("", user.userId, ApiRole.canExecuteAbacRule)) return Full(false)
 
-    callContext match {
-      case Some(cc) =>
-        try {
-          val futureResult = AbacRuleEngine.executeRulesByPolicyDetailed(
-            policy = ABAC_POLICY_ACCOUNT_ACCESS,
-            authenticatedUserId = user.userId,
-            callContext = cc,
-            bankId = Some(bankIdAccountId.bankId.value),
-            accountId = Some(bankIdAccountId.accountId.value),
-            viewId = Some(view.viewId.value)
-          )
-          Await.result(futureResult, Duration(10, java.util.concurrent.TimeUnit.SECONDS)) match {
-            case Full((true, _)) => Full(true)  // ABAC granted
-            case Full((false, ruleIds)) if ruleIds.nonEmpty =>
-              Failure(s"ABAC rules denied access. Failing rule IDs: ${ruleIds.mkString(", ")}")
-            case _ => Full(false)  // No rules or other issue
-          }
-        } catch {
-          case _: Exception => Full(false)
-        }
-      case None => Full(false)
-    }
+    AbacAccountAccess.grantsAccountAccess(user, view, bankIdAccountId, callContext)
   }
   /**
    * This function check does the user(anonymous or authenticated) have account access
@@ -4919,7 +4905,7 @@ object APIUtil extends MdcLoggable with CustomJsonFormats{
   // don't need to move.
   lazy val allStaticResourceDocs: List[ResourceDoc] = ResourceDocRegistry.allStaticResourceDocs
 
-  def allDynamicResourceDocs= (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ DynamicEndpoints.dynamicResourceDocs).toList
+  def allDynamicResourceDocs= (DynamicEntityHelper.doc ++ DynamicEndpointHelper.doc ++ CompiledEndpoints.docs).toList
   
   def getAllResourceDocs = allStaticResourceDocs ++ allDynamicResourceDocs
 

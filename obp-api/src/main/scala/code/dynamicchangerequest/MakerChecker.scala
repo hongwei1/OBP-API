@@ -5,12 +5,9 @@ import java.util.Date
 
 import code.abacrule.{AbacRule, AbacRuleEngine, MappedAbacRuleProvider}
 import code.api.Constant
-import code.api.dynamic.endpoint.helper.CompiledObjects
 import code.api.util.APIUtil.{getPropsAsBoolValue, getPropsAsIntValue, getPropsValue, sha256Hex}
-import code.api.util.DynamicUtil.Validation
 import code.api.util.{CallContext, ErrorMessages}
 import code.api.v6_0_0.{CreateAbacRuleJsonV600, UpdateAbacRuleJsonV600}
-import code.bankconnectors.{DynamicConnector, InternalConnector}
 import code.connectormethod.{ConnectorMethod, ConnectorMethodProvider, JsonConnectorMethod, JsonConnectorMethodMethodBody}
 import code.dynamicMessageDoc.{DynamicMessageDoc, DynamicMessageDocProvider, JsonDynamicMessageDoc}
 import code.dynamicResourceDoc.{DynamicResourceDoc, DynamicResourceDocProvider, JsonDynamicResourceDoc}
@@ -332,9 +329,9 @@ object MakerChecker extends MdcLoggable {
         for {
           body <- parseAs[JsonDynamicResourceDoc](request.proposedPayload)
           _ <- compileBox("dynamic resource doc") {
-            val compiled = CompiledObjects(body.exampleRequestBody, body.successResponseBody, body.methodBody)
-            compiled.validateDependency()
-            Full(compiled)
+            code.api.util.DynamicCode
+              .checkDynamicResourceDoc(body.exampleRequestBody, body.successResponseBody, body.methodBody)
+              .fold(msg => Failure(msg), _ => Full(()))
           }
           saved <- if (operation == CREATE) {
             for {
@@ -360,9 +357,9 @@ object MakerChecker extends MdcLoggable {
         for {
           body <- parseAs[JsonDynamicMessageDoc](request.proposedPayload)
           _ <- compileBox("dynamic message doc") {
-            val fn = DynamicConnector.createFunction(body.programmingLang, body.decodedMethodBody)
-            fn.foreach(Validation.validateDependency(_))
-            fn
+            code.api.util.DynamicCode
+              .checkDynamicMessageDoc(body.programmingLang, body.decodedMethodBody)
+              .fold(msg => Failure(msg), _ => Full(()))
           }
           saved <- if (operation == CREATE) {
             for {
@@ -387,9 +384,9 @@ object MakerChecker extends MdcLoggable {
           body <- parseAs[JsonConnectorMethod](request.proposedPayload)
           _ <- boolBox(p.getByMethodNameWithoutCache(body.methodName).isEmpty, s"${ErrorMessages.ConnectorMethodAlreadyExists} ${body.methodName}")
           _ <- compileBox("connector method") {
-            val fn = InternalConnector.createFunction(body.methodName, body.decodedMethodBody, body.programmingLang)
-            fn.foreach(Validation.validateDependency(_))
-            fn
+            code.api.util.DynamicCode
+              .checkConnectorMethod(body.methodName, body.decodedMethodBody, body.programmingLang)
+              .fold(msg => Failure(msg), _ => Full(()))
           }
           created <- p.create(body, Some(request.requestorUserId))
           id = created.connectorMethodId.getOrElse("")
@@ -400,9 +397,9 @@ object MakerChecker extends MdcLoggable {
           body <- parseAs[JsonConnectorMethodMethodBody](request.proposedPayload)
           existing <- p.getById(request.targetId) ?~! s"${ErrorMessages.ConnectorMethodNotFound} ${request.targetId}"
           _ <- compileBox("connector method") {
-            val fn = InternalConnector.createFunction(existing.methodName, body.decodedMethodBody, body.programmingLang)
-            fn.foreach(Validation.validateDependency(_))
-            fn
+            code.api.util.DynamicCode
+              .checkConnectorMethod(existing.methodName, body.decodedMethodBody, body.programmingLang)
+              .fold(msg => Failure(msg), _ => Full(()))
           }
           _ <- p.update(request.targetId, body.methodBody, body.programmingLang, Some(request.requestorUserId))
           _ <- markApproved(CONNECTOR_METHOD, request.targetId)

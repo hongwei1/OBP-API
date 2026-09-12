@@ -1,6 +1,6 @@
 package code.api.util
 
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.berlin.group.v1_3.Http4sBGv13Alias
 import code.setup.ServerSetup
 import com.openbankproject.commons.util.{ApiStandards, ApiVersion, ScannedApiVersion}
@@ -128,14 +128,14 @@ class ResourceDocRegistryParityTest extends ServerSetup {
       val syntheticAlias = ScannedApiVersion("BG", "BG", "v9")
       val rankOf = ResourceDocRegistry.sortKey(syntheticAlias) _
       withClue("the alias must sort before Berlin Group, i.e. lose the `.toMap` last-wins race ") {
-        rankOf(syntheticAlias) should be < rankOf(ConstantsBG.berlinGroupVersion2)
-        rankOf(syntheticAlias) should be < rankOf(ConstantsBG.berlinGroupVersion1)
+        rankOf(syntheticAlias) should be < rankOf(BerlinGroupVocabulary.berlinGroupVersion2)
+        rankOf(syntheticAlias) should be < rankOf(BerlinGroupVocabulary.berlinGroupVersion1)
       }
       withClue("the alias must also sort before UK Open Banking ") {
         rankOf(syntheticAlias) should be < rankOf(ApiVersion.ukOpenBankingV401)
       }
       withClue("UK must still sort before Berlin Group, so BG keeps the names they share ") {
-        rankOf(ApiVersion.ukOpenBankingV401) should be < rankOf(ConstantsBG.berlinGroupVersion2)
+        rankOf(ApiVersion.ukOpenBankingV401) should be < rankOf(BerlinGroupVocabulary.berlinGroupVersion2)
       }
     }
 

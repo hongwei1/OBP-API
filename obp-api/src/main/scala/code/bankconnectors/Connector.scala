@@ -61,6 +61,11 @@ object Connector extends SimpleInjector {
   // As a top-level value, an object is a singleton.
   // As a member of an enclosing class or as a local value, it behaves exactly like a lazy val.
   // Previously the right hand part was surrounded by Functions.lazyValue function
+  /**
+   * The connectors this build ships. Callers that need "what can this instance actually use"
+   * want `availableConnectors` instead — an optional module can add to the set, and asking the
+   * shipped map alone made `internal` invisible to method-routing validation once it moved out.
+   */
   val nameToConnector: Map[String, Connector] = Map(
     "mapped" -> LocalMappedConnector,
     "akka_vDec2018" -> AkkaConnector_vDec2018,
@@ -72,14 +77,21 @@ object Connector extends SimpleInjector {
     "grpc_vFeb2026" -> GrpcConnector_vFeb2026,
     // this proxy connector only for unit test, can set connector=proxy in test.default.props, but never set it in default.props
     "proxy" -> ConnectorUtils.proxyConnector,
-    // internal is the dynamic connector, the developers can upload the source code and override connector method themselves.
-    "internal" -> InternalConnector.instance
   )
+
+  /**
+   * Every connector this instance can use: the ones OBP ships, plus any an optional module
+   * registered. `internal` is the second kind — it executes Scala the operator uploaded, so it
+   * lives with the runtime compiler and is absent when that module is not deployed. Asking for it
+   * there fails as InvalidConnector, which is accurate: the connector does not exist.
+   */
+  def availableConnectors: Map[String, Connector] =
+    nameToConnector ++ code.api.util.OptionalConnectors.all
 
   def getConnectorInstance(connectorVersion: String): Connector = {
     connectorVersion match {
       case "star" => StarConnector
-      case k => nameToConnector.get(k)
+      case k => availableConnectors.get(k)
         .getOrElse(throw new RuntimeException(s"$InvalidConnector Current Input is $k"))
     }
   }

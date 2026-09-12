@@ -26,7 +26,7 @@ TESOBE (http://www.tesobe.com/)
   */
 package code.concurrency
 
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.bankconnectors.DoobieConsentSchedulerQueries
 import code.consent.{ConsentStatus, MappedConsent}
 import net.liftweb.mapper.By
@@ -63,7 +63,7 @@ class ConcurrentConsentRaceTest extends ConcurrentRaceSetup {
       MappedConsent.create
         .mConsentId(consentId)
         .mStatus(ConsentStatus.valid.toString)
-        .mApiStandard(ConstantsBG.berlinGroupVersion1.apiStandard)
+        .mApiStandard(BerlinGroupVocabulary.berlinGroupVersion1.apiStandard)
         .mValidUntil(new Date(1000L))
         .saveMe()
 
@@ -108,7 +108,7 @@ class ConcurrentConsentRaceTest extends ConcurrentRaceSetup {
       MappedConsent.create
         .mConsentId(consentId)
         .mStatus(ConsentStatus.received.toString)
-        .mApiStandard(ConstantsBG.berlinGroupVersion1.apiStandard)
+        .mApiStandard(BerlinGroupVocabulary.berlinGroupVersion1.apiStandard)
         .saveMe()
 
       When("the scheduler loads the consent into memory (replicating unfinishedBerlinGroupConsents findAll)")

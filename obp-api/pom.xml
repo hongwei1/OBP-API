@@ -28,6 +28,13 @@
       <groupId>com.tesobe</groupId>
       <artifactId>obp-commons</artifactId>
     </dependency>
+    <!-- The dependency-free API vocabulary (error messages, tags, formats). One way only:
+         obp-kernel cannot see obp-api, and the compiler enforces it. See obp-kernel/pom.xml. -->
+    <dependency>
+      <groupId>com.tesobe</groupId>
+      <artifactId>obp-kernel</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- Upgraded from 1.4.14 (EOL branch) to 1.5.18. 1.4.x is end-of-life as of
          2024; 1.5.x is the supported branch and requires Java 11+ (which we target).
@@ -795,6 +802,26 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.4.2</version>
+        <executions>
+          <!-- Publish the test classes as well as the main ones.
+
+               Nothing consumes this yet. It exists because every module that could be split out
+               of obp-api sits ABOVE it (see docs/operations/SPLIT_DEPLOYMENT.md for why), and
+               those modules' own tests need obp-api's test fixtures - code.setup.ServerSetup and
+               its 15 companions - which are only reachable through a test-jar. Without it the
+               tests cannot move with the code they cover, and a module whose tests stayed behind
+               is not really extracted.
+
+               The main jar keeps the executable manifest below; this one deliberately does not
+               get it, because it is consumed as a dependency and never run. -->
+          <execution>
+            <id>test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration combine.self="override"/>
+          </execution>
+        </executions>
         <configuration>
           <archive>
             <manifest>

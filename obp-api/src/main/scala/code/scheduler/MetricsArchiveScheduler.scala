@@ -9,6 +9,7 @@ import code.metrics.{APIMetric, APIMetrics, MappedMetric, MetricArchive, Metrics
 import code.util.Helper.MdcLoggable
 import net.liftweb.common.Full
 import net.liftweb.mapper.{Ascending, By, By_<=, By_>=, MaxRows, OrderBy}
+import net.liftweb.util.Helpers.tryo
 
 import scala.concurrent.duration._
 
@@ -51,25 +52,12 @@ object MetricsArchiveScheduler extends MdcLoggable {
     logger.info("Hello from MetricsArchiveScheduler.start")
 
     logger.info(s"--------- Clean up Jobs ---------")
-    logger.info(s"Delete all Jobs created by api_instance_id=$apiInstanceId")
-    // On boot this instance cannot have a genuinely-running job, so clear any of its
-    // own leftover lock rows (e.g. orphaned by a kill -9 / OOM / container eviction
-    // that bypassed the finally in runOnce). Match on ApiInstanceId, NOT Name — lock
-    // rows store Name=jobName and ApiInstanceId=apiInstanceId, so the old
-    // `By(Name, apiInstanceId)` never matched and a redeploy could not self-heal
-    // (only the 5-day sweep below would, leaving archiving stalled up to 5 days).
-    // Keyed on this instance's own id, so another node's running job is untouched.
-    JobScheduler.findAll(By(JobScheduler.ApiInstanceId, apiInstanceId)).map { i =>
-      logger.info(s"Deleting leftover Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: $apiInstanceId")
-      i
-    }.map(_.delete_!)
-    logger.info(s"Delete all Jobs older than 5 days")
     val fiveDaysAgo: Date = new Date(new Date().getTime - (oneDayInMillis * 5))
-    JobScheduler.findAll(By_<=(JobScheduler.createdAt, fiveDaysAgo)).map { i =>
-      println(s"Job name: ${i.name}, Date: ${i.createdAt}, api_instance_id: ${apiInstanceId}")
-      i
-    }.map(_.delete_!)
-    
+    val (ownLeftovers, agedOut) = JobScheduler.clearStaleLocksAtStartup(apiInstanceId, fiveDaysAgo)
+    logger.info(s"$jobName.start cleared $ownLeftovers leftover lock row(s) of api_instance_id=$apiInstanceId " +
+      s"and $agedOut lock row(s) older than 5 days")
+
+
     scheduler.schedule(
       initialDelay = Duration(intervalInSeconds, TimeUnit.SECONDS),
       interval = Duration(intervalInSeconds, TimeUnit.SECONDS),
@@ -97,41 +85,61 @@ object MetricsArchiveScheduler extends MdcLoggable {
       case Full(job) => // There is an ongoing/hanging job
         logger.info(s"MetricsArchiveScheduler.runOnce skipped due to ongoing job. Job ID: ${job.JobId.get}, started at: ${job.createdAt.get}, api_instance_id: ${job.ApiInstanceId.get}")
         RunSkippedAlreadyInProgress(job.JobId.get, job.ApiInstanceId.get, job.createdAt.get)
-      case _ => // Start a new job
+      case _ => // No lock visible a moment ago — try to take it.
+        // The read above and this acquire are two statements, so another node (or the
+        // scheduler tick racing the manual-trigger endpoint) can take the lock in between.
+        // JobScheduler.tryAcquire closes that window: UniqueIndex(Name) lets exactly one
+        // INSERT through and rejects the rest, and a rejection means we lost the race.
         val uniqueId = generateUUID()
-        val job = JobScheduler.create
-          .JobId(uniqueId)
-          .Name(jobName)
-          .ApiInstanceId(apiInstanceId)
-          .saveMe()
-        logger.info(s"Starting Job ID: $uniqueId")
-        val startedAt = new Date()
-        var rowsMoved = 0
-        var rowsDeleted = 0
-        try {
-          val moveResult = conditionalDeleteMetricsRow()
-          rowsMoved = moveResult.moved
-          rowsDeleted = deleteOutdatedRowsFromMetricsArchive()
-          // A genuine copy failure marks the run NOT successful, with a remark, so the
-          // run log and the diagnostics endpoint surface it instead of silently
-          // leaving rows behind.
-          val runSucceeded = moveResult.failed == 0
-          val remark =
-            if (moveResult.failed > 0) Some(s"${moveResult.failed} metric row(s) failed to copy to the archive and were left in place.")
-            else None
-          val run = MetricsArchiveRun.recordRun(uniqueId, apiInstanceId, startedAt, new Date(),
-            rowsMoved, rowsDeleted, success = runSucceeded, remark)
-          RunCompleted(run)
-        } catch {
-          case e: Exception =>
-            logger.error(s"MetricsArchiveScheduler Job ID: $uniqueId failed", e)
-            val run = MetricsArchiveRun.recordRun(uniqueId, apiInstanceId, startedAt, new Date(),
-              rowsMoved, rowsDeleted, success = false, Some(Option(e.getMessage).getOrElse(e.toString)))
-            RunCompleted(run)
-        } finally {
-          JobScheduler.delete_!(job) // Allow future jobs
-          logger.info(s"End of Job ID: $uniqueId (rows moved to archive: $rowsMoved, outdated archive rows deleted: $rowsDeleted)")
+        JobScheduler.tryAcquire(jobName, apiInstanceId, uniqueId) match {
+          case Full(job) => runWithLock(job, uniqueId)
+          case _ =>
+            // Lost the race. Re-read the winner purely to report it, and only best-effort:
+            // when runOnce is called from the manual-trigger endpoint (a POST, so it runs
+            // inside the request transaction), the rejected INSERT has left that transaction
+            // aborted on PostgreSQL and this read fails too. The skip verdict does not depend
+            // on it — we already know the lock is held.
+            val holder = tryo(JobScheduler.find(By(JobScheduler.Name, jobName))).flatMap(identity)
+            logger.info(s"MetricsArchiveScheduler.runOnce skipped: another instance took the " +
+              s"$jobName lock concurrently (held by api_instance_id: ${holder.map(_.ApiInstanceId.get).getOrElse("unknown")})")
+            RunSkippedAlreadyInProgress(
+              holder.map(_.JobId.get).getOrElse(""),
+              holder.map(_.ApiInstanceId.get).getOrElse(""),
+              holder.map(_.createdAt.get).getOrElse(new Date())
+            )
         }
+    }
+  }
+
+  /** The archive run itself, executed while `job` holds the lock; releases it on the way out. */
+  private def runWithLock(job: JobScheduler, uniqueId: String): RunOutcome = {
+    logger.info(s"Starting Job ID: $uniqueId")
+    val startedAt = new Date()
+    var rowsMoved = 0
+    var rowsDeleted = 0
+    try {
+      val moveResult = conditionalDeleteMetricsRow()
+      rowsMoved = moveResult.moved
+      rowsDeleted = deleteOutdatedRowsFromMetricsArchive()
+      // A genuine copy failure marks the run NOT successful, with a remark, so the
+      // run log and the diagnostics endpoint surface it instead of silently
+      // leaving rows behind.
+      val runSucceeded = moveResult.failed == 0
+      val remark =
+        if (moveResult.failed > 0) Some(s"${moveResult.failed} metric row(s) failed to copy to the archive and were left in place.")
+        else None
+      val run = MetricsArchiveRun.recordRun(uniqueId, apiInstanceId, startedAt, new Date(),
+        rowsMoved, rowsDeleted, success = runSucceeded, remark)
+      RunCompleted(run)
+    } catch {
+      case e: Exception =>
+        logger.error(s"MetricsArchiveScheduler Job ID: $uniqueId failed", e)
+        val run = MetricsArchiveRun.recordRun(uniqueId, apiInstanceId, startedAt, new Date(),
+          rowsMoved, rowsDeleted, success = false, Some(Option(e.getMessage).getOrElse(e.toString)))
+        RunCompleted(run)
+    } finally {
+      JobScheduler.delete_!(job) // Allow future jobs
+      logger.info(s"End of Job ID: $uniqueId (rows moved to archive: $rowsMoved, outdated archive rows deleted: $rowsDeleted)")
     }
   }
 

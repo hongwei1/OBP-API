@@ -6,7 +6,7 @@ import code.api.util.ErrorMessages
 import code.api.util.{Glossary, PegdownOptions}
 import code.api.util.ErrorMessages.MandatoryPropertyIsNotSet
 import code.api.v2_0_0.EntitlementJSONs
-import code.api.v3_0_0.{UserJsonV300, ViewsJSON300}
+import code.api.v3_0_0.{JSONFactory300, UserJsonV300, ViewsJSON300}
 import code.api.v4_0_0.{EnergySource400, HostedAt400, HostedBy400, PostSimpleCounterpartyJson400, UserAgreementJson}
 import code.api.v6_0_0.{EntitlementsJsonV600, JSONFactory600, UserInfoDetailJsonV600, UserV600}
 import code.apiproductsubscription.ApiProductSubscriptionTrait
@@ -16,7 +16,8 @@ import code.customer.CustomerX
 import code.metrics.{MappedMetric, MetricArchive, MetricsArchiveRun, MetricsProps}
 import code.util.Helper.MdcLoggable
 import code.views.Views
-import code.api.v3_1_0.{AccountAttributeResponseJson, JSONFactory310}
+import code.api.v3_1_0.JSONFactory310
+import code.api.v3_0_0.AccountAttributeResponseJson
 import code.dynamicResourceDoc.{DynamicResourceDoc, JsonDynamicResourceDoc}
 import code.connectormethod.{ConnectorMethod, JsonConnectorMethod}
 import code.dynamicMessageDoc.{DynamicMessageDoc, JsonDynamicMessageDoc}
@@ -1525,7 +1526,7 @@ object JSONFactory700 extends MdcLoggable with code.api.util.CustomJsonFormats {
         account.accountId.value,
         account.accountRoutings.map(r => AccountRoutingJsonV121(r.scheme, r.address))
       ),
-      account_attributes = accountAttributes.map(JSONFactory310.createAccountAttributeJson)
+      account_attributes = accountAttributes.map(JSONFactory300.createAccountAttributeJson)
     )
 
   // ─── OPEN_CORRIDOR per-bank broker registry (admin) ────────────────────────

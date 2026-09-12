@@ -36,10 +36,6 @@ import code.api.v1_4_0.JSONFactory1_4_0._
 import code.api.v2_0_0.EntitlementJSONs
 import code.api.v2_0_0.JSONFactory200.{UserJsonV200, UsersJsonV200}
 import code.api.v2_1_0.CustomerCreditRatingJSON
-import code.api.v3_1_0.AccountAttributeResponseJson
-import code.api.v3_1_0.JSONFactory310.createAccountAttributeJson
-import code.api.v4_0_0.JSONFactory400.createTransactionAttributeJson
-import code.api.v4_0_0.TransactionAttributeResponseJson
 import code.atms.Atms.Atm
 import code.branches.Branches.Branch
 import code.entitlement.Entitlement
@@ -585,7 +581,50 @@ case class ModeratedTransactionWithAttributes(
                                                transactionAttributes: List[TransactionAttribute] = List.empty
                                              )
 
+/**
+ * Attribute shapes that v3.0.0 is the first version to expose: they are fields of
+ * ModeratedCoreAccountJsonV300, TransactionJsonV300 and CoreTransactionJsonV300. They used to be
+ * declared in the v3.1.0 and v4.0.0 factories, which made v3.0.0 — the version that publishes
+ * them — depend on two newer ones. Neither name carries a version, so the version that first
+ * puts the shape on the wire owns it; the later versions reuse it in the cascade direction.
+ */
+case class AccountAttributeResponseJson(
+  product_code: String,
+  account_attribute_id: String,
+  name: String,
+  `type`: String,
+  value: String,
+  product_instance_code: Option[String],
+)
+
+case class TransactionAttributeResponseJson(
+  transaction_attribute_id: String,
+  name: String,
+  `type`: String,
+  value: String
+)
+
 object JSONFactory300{
+
+  def createAccountAttributeJson(accountAttribute: AccountAttribute) : AccountAttributeResponseJson = {
+    AccountAttributeResponseJson(
+      product_code = accountAttribute.productCode.value,
+      account_attribute_id = accountAttribute.accountAttributeId,
+      name = accountAttribute.name,
+      `type` = accountAttribute.attributeType.toString,
+      value = accountAttribute.value,
+      product_instance_code = accountAttribute.productInstanceCode
+    )
+  }
+
+  def createTransactionAttributeJson(transactionAttribute: TransactionAttribute) : TransactionAttributeResponseJson = {
+    TransactionAttributeResponseJson(
+      transaction_attribute_id = transactionAttribute.transactionAttributeId,
+      name = transactionAttribute.name,
+      `type` = transactionAttribute.attributeType.toString,
+      value = transactionAttribute.value
+    )
+  }
 
   // There are multiple flavours of markdown. For instance, original markdown emphasises underscores (surrounds _ with (<em>))
   // But we don't want to have to escape underscores (\_) in our documentation

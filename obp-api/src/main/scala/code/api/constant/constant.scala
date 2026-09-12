@@ -36,6 +36,67 @@ object Constant extends MdcLoggable {
     final val limit = 50
   }
 
+  /**
+   * Which slice of `Boot` this JVM performs — the same image and the same jar, run as up to
+   * three different workloads.
+   *
+   * Every JVM used to run all of boot unconditionally: full-schema DDL, both migration passes,
+   * the seed data, and every background scheduler. That is what kept OBP-API pinned to one
+   * replica — a second one is a second concurrent DDL run, and every scheduler doing the same
+   * job twice.
+   *
+   *  - `migrator`  — schema, migrations and seed data, then exit. A one-shot Job that runs
+   *                  before the rest of the deployment (a sync hook / init step).
+   *  - `scheduler` — the background schedulers only. Exactly one replica, recreate on update.
+   *  - `web`       — serves HTTP only: no DDL, no migrations, no schedulers. Scale and roll
+   *                  this one freely.
+   *  - `all`       — everything, i.e. exactly today's behaviour. The default, so an existing
+   *                  deployment that sets nothing keeps working unchanged.
+   *
+   * Overridable by environment variable as `OBP_INSTANCE_ROLE` like every other prop.
+   */
+  object InstanceRole {
+    final val All = "all"
+    final val Migrator = "migrator"
+    final val Scheduler = "scheduler"
+    final val Web = "web"
+
+    final val known = Set(All, Migrator, Scheduler, Web)
+
+    // The four rules below are plain functions of a role name, and the vals that follow apply
+    // them to this JVM's configured role. Kept separate because `value` is resolved once at
+    // class-initialisation time from props: a single JVM can only ever observe one role, so
+    // rules baked into the vals alone would be untestable (the same constraint that forces
+    // PropGatedPublicEndpoint into its own CI shard).
+
+    /** Normalise and validate a configured role name. Throws on anything unrecognised — a typo
+      * must not read as "quietly do none of this work". */
+    def normalise(configured: String): String = {
+      val role = configured.trim.toLowerCase
+      if (!known.contains(role))
+        throw new IllegalArgumentException(
+          s"instance.role='$configured' is not a valid role. Use one of: ${known.toList.sorted.mkString(", ")}. " +
+          s"Leave it unset for '$All', which is the historical single-instance behaviour.")
+      role
+    }
+
+    /** Schemifier, the migration passes and the seed data (default bank, bootstrap users, ...). */
+    def runsMigrationsFor(role: String): Boolean = role == All || role == Migrator
+
+    /** The background schedulers. NOT the metric batch writers — those are per-JVM buffer
+      * flushers fed synchronously by each request, so they must stay wherever HTTP is served. */
+    def runsSchedulersFor(role: String): Boolean = role == All || role == Scheduler
+
+    /** True only for `migrator`: its whole job is done once `Boot.boot` returns, so it exits
+      * instead of binding a port. Every other role stays up. */
+    def exitsAfterBootFor(role: String): Boolean = role == Migrator
+
+    final val value: String = normalise(APIUtil.getPropsValue("instance.role", All))
+    final val runsMigrations: Boolean = runsMigrationsFor(value)
+    final val runsSchedulers: Boolean = runsSchedulersFor(value)
+    final val exitsAfterBoot: Boolean = exitsAfterBootFor(value)
+  }
+
   final val shortEndpointTimeoutInMillis = APIUtil.getPropsAsLongValue(nameOfProperty = "short_endpoint_timeout", 1L * 1000L)
   final val mediumEndpointTimeoutInMillis = APIUtil.getPropsAsLongValue(nameOfProperty = "medium_endpoint_timeout", 7L * 1000L)
   final val longEndpointTimeoutInMillis = APIUtil.getPropsAsLongValue(nameOfProperty = "long_endpoint_timeout", 55L * 1000L)
@@ -48,6 +109,23 @@ object Constant extends MdcLoggable {
 
   final val bgRemoveSignOfAmounts = APIUtil.getPropsAsBoolValue("BG_remove_sign_of_amounts", false)
 
+  /**
+   * This JVM's instance id: `api_instance_id` from props with a fresh UUID appended, unless
+   * that prop ends with the literal string `final`, in which case it is taken verbatim.
+   *
+   * ⚠️ The `final` suffix makes the id SHARED BY EVERY REPLICA, which is not safe with more
+   * than one of them. `MetricsArchiveScheduler.start` and `DataBaseCleanerScheduler.start`
+   * both call `JobScheduler.clearStaleLocksAtStartup(ApiInstanceId, …)` on boot, which
+   * deletes every `jobscheduler` lock row carrying this id — correct when the id is unique
+   * per JVM (only that JVM's own orphans match), but with a shared id a rolling restart
+   * wipes out the lock another pod is holding right now, and that pod's job then runs
+   * alongside whoever takes the freed lock. The same id also becomes the Redis cache
+   * namespace (`getGlobalCacheNamespacePrefix`) and is stamped on every metric row.
+   *
+   * So: use the `final` suffix only for a single-instance deployment, or where a stable id
+   * genuinely matters more than lock safety. The behaviour is left as is because existing
+   * deployments depend on it; this note exists so the trap is visible before it is chosen.
+   */
   final val ApiInstanceId = {
     val apiInstanceIdFromProps = APIUtil.getPropsValue("api_instance_id")
     if(apiInstanceIdFromProps.isDefined){

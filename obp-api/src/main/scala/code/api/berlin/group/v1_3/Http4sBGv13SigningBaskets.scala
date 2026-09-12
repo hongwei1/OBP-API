@@ -28,6 +28,7 @@ import org.http4s.dsl.io._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
+import code.api.util.JvalueCaseClass
 
 object Http4sBGv13SigningBaskets extends MdcLoggable {
 

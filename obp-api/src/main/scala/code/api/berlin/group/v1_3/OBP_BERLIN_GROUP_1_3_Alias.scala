@@ -59,10 +59,7 @@ object OBP_BERLIN_GROUP_1_3_Alias extends OBPRestHelper with MdcLoggable with Sc
    * (doc-less) object win ScannedApis' `.toMap` and blank out /resource-docs/BGv1.3/obp.
    */
   override val apiVersion: ScannedApiVersion =
-    if (berlinGroupV13AliasPath.nonEmpty)
-      ScannedApiVersion(berlinGroupV13AliasPath.head, berlinGroupV13AliasPath.head, berlinGroupV13AliasPath.last)
-    else
-      ScannedApiVersion("", "", "")
+    code.api.util.BerlinGroupVocabulary.berlinGroupV13AliasScannedVersion
 
   val versionStatus: String = ApiVersionStatus.DRAFT.toString
 

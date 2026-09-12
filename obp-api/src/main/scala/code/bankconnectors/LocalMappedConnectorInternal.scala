@@ -4,7 +4,7 @@ import org.json4s._
 import code.accountattribute.AccountAttributeX
 import code.api.ChargePolicy
 import code.api.Constant._
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.berlin.group.v1_3.model.TransactionStatus.mapTransactionStatus
 import code.api.cache.Caching
 import code.api.util.APIUtil._
@@ -183,8 +183,8 @@ object LocalMappedConnectorInternal extends MdcLoggable {
           "", // chargePolicy is not used in BG so far.
           Some(paymentServiceType.toString),
           Some(transactionRequestBody),
-          Some(ConstantsBG.berlinGroupVersion1.apiStandard),
-          Some(ConstantsBG.berlinGroupVersion1.apiShortVersion),
+          Some(BerlinGroupVocabulary.berlinGroupVersion1.apiStandard),
+          Some(BerlinGroupVocabulary.berlinGroupVersion1.apiShortVersion),
           callContext
         )
         transactionRequest

@@ -1,7 +1,11 @@
 package code.scheduler
 
 import code.util.MappedUUID
+import net.liftweb.common.Box
 import net.liftweb.mapper._
+import net.liftweb.util.Helpers.tryo
+
+import java.util.Date
 
 class JobScheduler extends JobSchedulerTrait with LongKeyedMapper[JobScheduler] with IdPK with CreatedUpdated {
 
@@ -15,11 +19,79 @@ class JobScheduler extends JobSchedulerTrait with LongKeyedMapper[JobScheduler] 
   override def jobId: String = JobId.get
   override def name: String = Name.get
   override def apiInstanceId: String = ApiInstanceId.get
-  
+
 }
 
 object JobScheduler extends JobScheduler with LongKeyedMetaMapper[JobScheduler] {
-  override def dbIndexes: List[BaseIndex[JobScheduler]] = UniqueIndex(JobId) :: super.dbIndexes
+  /**
+   * `UniqueIndex(Name)` is what makes this table an actual lock.
+   *
+   * A job takes the lock by INSERTing a row named after itself, so with only
+   * `UniqueIndex(JobId)` (every insert generates a fresh UUID, so it never collides)
+   * "find no row, then create one" was a plain check-then-act race: two JVMs — or two
+   * threads in one JVM — can both see no row and both insert, and both then believe they
+   * hold the lock and run the job concurrently. Single-replica deployments never noticed;
+   * a second replica turns it into duplicated work on the same rows.
+   *
+   * With the index the database arbitrates: exactly one INSERT for a given job name wins
+   * and every other one is rejected, which is precisely the "somebody else got there
+   * first" signal `tryAcquire` reports.
+   */
+  override def dbIndexes: List[BaseIndex[JobScheduler]] =
+    UniqueIndex(JobId) :: UniqueIndex(Name) :: super.dbIndexes
+
+  /**
+   * Take the lock for `jobName`, or report that somebody else holds it.
+   *
+   * `Full(job)` means this caller owns the lock and MUST delete the returned row when the
+   * job finishes (the schedulers do this in a `finally`). Anything else means the caller
+   * must not run the job.
+   *
+   * The insert is wrapped rather than left to throw because losing the race is an expected
+   * outcome here, not an error: `UniqueIndex(Name)` rejecting the INSERT IS the mutual
+   * exclusion, and the rejection has to read as a verdict, not as a crashed scheduler tick.
+   *
+   * Caveat for callers that run inside an HTTP request transaction (PostgreSQL): a rejected
+   * INSERT leaves that transaction aborted, so any statement issued afterwards within the
+   * same transaction fails too. Such callers should read the current lock holder BEFORE
+   * attempting to acquire — `MetricsArchiveScheduler.runOnce` does — and treat a read after
+   * a failed acquire as best-effort.
+   */
+  def tryAcquire(jobName: String, apiInstanceId: String, jobId: String): Box[JobScheduler] =
+    tryo {
+      JobScheduler.create
+        .JobId(jobId)
+        .Name(jobName)
+        .ApiInstanceId(apiInstanceId)
+        .saveMe()
+    }
+
+  /**
+   * Startup self-heal: drop the lock rows this instance cannot possibly still be holding.
+   *
+   * On boot this JVM has no running job, so a row carrying its OWN `api_instance_id` is a
+   * leftover orphaned by a kill -9 / OOM / container eviction that bypassed the `finally`
+   * which normally deletes it. Rows belonging to other instances are left alone — they may
+   * be live locks on another node — except that anything created before `olderThan` is
+   * swept regardless, as a backstop for an instance id that is never coming back.
+   *
+   * Matching is on ApiInstanceId, NOT Name. Lock rows store `Name` = the job name and
+   * `ApiInstanceId` = the instance id, so `By(Name, apiInstanceId)` matches nothing and the
+   * self-heal silently does nothing at all — a redeploy could then not recover, leaving the
+   * job stalled until the 5-day sweep. That bug was fixed once in `MetricsArchiveScheduler`
+   * and left in place in `DataBaseCleanerScheduler`; both now call this single implementation
+   * so the two cannot drift apart again.
+   *
+   * @return (leftovers of this instance removed, aged-out rows removed)
+   */
+  def clearStaleLocksAtStartup(apiInstanceId: String, olderThan: Date): (Int, Int) = {
+    val ownLeftovers = findAll(By(JobScheduler.ApiInstanceId, apiInstanceId))
+    ownLeftovers.foreach(delete_!)
+    // Queried after the deletes above, so the two sets never overlap.
+    val agedOut = findAll(By_<=(JobScheduler.createdAt, olderThan))
+    agedOut.foreach(delete_!)
+    (ownLeftovers.size, agedOut.size)
+  }
 
   /**
    * The most recent scheduler-lock rows, newest first, capped at `limit`.
@@ -39,8 +111,3 @@ object JobScheduler extends JobScheduler with LongKeyedMetaMapper[JobScheduler] 
       case _                            => false
     }
 }
-
-
-
-
-

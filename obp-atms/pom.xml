@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.tesobe</groupId>
+        <artifactId>obp-parent</artifactId>
+        <relativePath>../pom.xml</relativePath>
+        <version>1.10.1</version>
+    </parent>
+    <artifactId>obp-atms</artifactId>
+    <packaging>jar</packaging>
+    <name>Open Bank Project Atms Adapter</name>
+
+    <!--
+      A domain microservice, not a library: the process that owns atm and branch data for a
+      deployment that routes those 19 Connector methods away from the local mapped store.
+      It depends on obp-commons ONLY, for the same reason obp-kernel does: the compiler enforces
+      "this process cannot see obp-api", not a reviewer.
+
+      Wire protocol: it speaks the exact RabbitMQConnector_vOct2024 protocol described in
+      RabbitMQUtils.scala (obp-api) — a single shared queue (default obp_rpc_queue), one message
+      per request with the process name as the AMQP messageId, a reply published to the AMQP
+      replyTo queue with the AMQP correlationId echoed back. It reuses
+      com.openbankproject.commons.util.JsonSerializers.nullTolerateFormats — the exact Formats
+      the core uses to write outbound and read inbound adapter messages — so the two sides never
+      need independent codecs.
+
+      Nothing in this module talks to another connector product (grpc/rest/akka/stored_procedure);
+      it implements one wire format because that is the one this deployment routes atm/branch
+      methods over. A deployment that prefers grpc would need a different adapter, not a flag here.
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>com.tesobe</groupId>
+            <artifactId>obp-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Pinned explicitly: json4s-native_2.13 pulls in scala-library 2.13.7 transitively,
+             older than obp-commons' scala-reflect (${scala.compiler}) expects at runtime — an
+             unpinned build resolves the older one (nearest-wins) and every reflective json4s
+             extraction fails with NoSuchMethodError on MurmurHash3$.caseClassHash. obp-api pins
+             the same dependency for the same reason. -->
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.compiler}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-native_${scala.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>5.22.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.scalactic</groupId>
+            <artifactId>scalactic_${scala.version}</artifactId>
+        </dependency>
+        <!-- Test-only: exercises the real JDBC repos against Postgres-compatibility mode so the
+             SQL is genuinely verified without needing a running Postgres for `mvn test`. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.220</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <forkMode>once</forkMode>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                    <argLine>-Drun.mode=test -XX:MaxMetaspaceSize=512m -Xms512m -Xmx512m</argLine>
+                    <tagsToExclude>code.external</tagsToExclude>
+                    <testFailureIgnore>${maven.test.failure.ignore}</testFailureIgnore>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Populates target/lib with the runtime classpath so the Docker image can be built
+                 as `classes/ + lib/*.jar` without a shaded fat jar (matches how obp-api itself is
+                 packaged — see docs/operations/SPLIT_DEPLOYMENT.md). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-runtime-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

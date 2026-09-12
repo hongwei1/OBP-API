@@ -1,6 +1,8 @@
 method	cancelPaymentV400
 method	checkBankAccountExists
 method	checkCustomerNumberAvailable
+method	checkExternalUserCredentials
+method	checkExternalUserExists
 method	createAccountApplication
 method	createAccountAttributes
 method	createBankAccount
@@ -15,6 +17,9 @@ method	createDirectDebit
 method	createMeeting
 method	createMessage
 method	createOrUpdateAccountAttribute
+method	createOrUpdateAtm
+method	createOrUpdateBankAccountBalance
+method	createOrUpdateBranch
 method	createOrUpdateCardAttribute
 method	createOrUpdateCustomerAttribute
 method	createOrUpdateKycCheck
@@ -34,6 +39,10 @@ method	createTransactionRequestv300
 method	createTransactionRequestv400
 method	createUserAuthContext
 method	createUserAuthContextUpdate
+method	deleteAtm
+method	deleteAtmAttribute
+method	deleteAtmAttributesByAtmId
+method	deleteBankAccountBalance
 method	deleteCustomerAddress
 method	deleteCustomerAttribute
 method	deletePhysicalCardForBank
@@ -45,18 +54,24 @@ method	dynamicEntityProcess
 method	getAccountApplicationById
 method	getAccountAttributeById
 method	getAccountAttributesByAccount
+method	getAccountsHeld
+method	getAccountsHeldByUser
 method	getAdapterInfo
 method	getAllAccountApplication
 method	getAtm
 method	getAtms
 method	getBank
+method	getBankAccountBalanceById
 method	getBankAccountBalances
+method	getBankAccountBalancesByAccountId
 method	getBankAccountByIban
 method	getBankAccountByRouting
 method	getBankAccounts
 method	getBankAccountsBalances
+method	getBankAccountsBalancesByAccountIds
 method	getBankAccountsForUser
 method	getBankAccountsHeld
+method	getBankAttributesByBank
 method	getBanks
 method	getBranch
 method	getBranches
@@ -77,6 +92,7 @@ method	getCounterpartyByCounterpartyId
 method	getCounterpartyByIban
 method	getCounterpartyByIbanAndBankAccountId
 method	getCounterpartyTrait
+method	getCurrentFxRate
 method	getCustomerAddress
 method	getCustomerAttributeById
 method	getCustomerAttributes
@@ -105,6 +121,8 @@ method	getProductCollection
 method	getProductCollectionItem
 method	getProductCollectionItemsTree
 method	getProducts
+method	getRegulatedEntities
+method	getRegulatedEntityByEntityId
 method	getStatusOfCreditCardOrder
 method	getTaxResidence
 method	getTransaction
@@ -127,6 +145,12 @@ method	saveTransactionRequestStatusImpl
 method	saveTransactionRequestTransaction
 method	updateAccountApplicationStatus
 method	updateAccountLabel
+method	updateAtmAccessibilityFeatures
+method	updateAtmLocationCategories
+method	updateAtmNotes
+method	updateAtmServices
+method	updateAtmSupportedCurrencies
+method	updateAtmSupportedLanguages
 method	updateBankAccount
 method	updateCustomerAddress
 method	updateCustomerCreditData
@@ -153,6 +177,12 @@ field	com.openbankproject.commons.dto.InBoundCheckBankAccountExists	status	com.o
 field	com.openbankproject.commons.dto.InBoundCheckCustomerNumberAvailable	data	Boolean
 field	com.openbankproject.commons.dto.InBoundCheckCustomerNumberAvailable	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundCheckCustomerNumberAvailable	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundCheckExternalUserCredentials	data	com.openbankproject.commons.model.InboundExternalUser
+field	com.openbankproject.commons.dto.InBoundCheckExternalUserCredentials	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundCheckExternalUserCredentials	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundCheckExternalUserExists	data	com.openbankproject.commons.model.InboundExternalUser
+field	com.openbankproject.commons.dto.InBoundCheckExternalUserExists	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundCheckExternalUserExists	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundCreateAccountApplication	data	com.openbankproject.commons.model.AccountApplicationCommons
 field	com.openbankproject.commons.dto.InBoundCreateAccountApplication	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundCreateAccountApplication	status	com.openbankproject.commons.model.Status
@@ -195,6 +225,15 @@ field	com.openbankproject.commons.dto.InBoundCreateMessage	status	com.openbankpr
 field	com.openbankproject.commons.dto.InBoundCreateOrUpdateAccountAttribute	data	com.openbankproject.commons.model.AccountAttributeCommons
 field	com.openbankproject.commons.dto.InBoundCreateOrUpdateAccountAttribute	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundCreateOrUpdateAccountAttribute	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateAtm	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateAtm	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateAtm	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateBankAccountBalance	data	com.openbankproject.commons.model.BankAccountBalanceTraitCommons
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateBankAccountBalance	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateBankAccountBalance	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateBranch	data	com.openbankproject.commons.model.BranchTCommons
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateBranch	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundCreateOrUpdateBranch	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundCreateOrUpdateCardAttribute	data	com.openbankproject.commons.model.CardAttributeCommons
 field	com.openbankproject.commons.dto.InBoundCreateOrUpdateCardAttribute	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundCreateOrUpdateCardAttribute	status	com.openbankproject.commons.model.Status
@@ -252,6 +291,18 @@ field	com.openbankproject.commons.dto.InBoundCreateUserAuthContext	status	com.op
 field	com.openbankproject.commons.dto.InBoundCreateUserAuthContextUpdate	data	com.openbankproject.commons.model.UserAuthContextUpdateCommons
 field	com.openbankproject.commons.dto.InBoundCreateUserAuthContextUpdate	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundCreateUserAuthContextUpdate	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundDeleteAtm	data	Boolean
+field	com.openbankproject.commons.dto.InBoundDeleteAtm	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundDeleteAtm	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundDeleteAtmAttribute	data	Boolean
+field	com.openbankproject.commons.dto.InBoundDeleteAtmAttribute	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundDeleteAtmAttribute	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundDeleteAtmAttributesByAtmId	data	Boolean
+field	com.openbankproject.commons.dto.InBoundDeleteAtmAttributesByAtmId	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundDeleteAtmAttributesByAtmId	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundDeleteBankAccountBalance	data	Boolean
+field	com.openbankproject.commons.dto.InBoundDeleteBankAccountBalance	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundDeleteBankAccountBalance	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundDeleteCustomerAddress	data	Boolean
 field	com.openbankproject.commons.dto.InBoundDeleteCustomerAddress	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundDeleteCustomerAddress	status	com.openbankproject.commons.model.Status
@@ -285,6 +336,12 @@ field	com.openbankproject.commons.dto.InBoundGetAccountAttributeById	status	com.
 field	com.openbankproject.commons.dto.InBoundGetAccountAttributesByAccount	data	List[com.openbankproject.commons.model.AccountAttributeCommons]
 field	com.openbankproject.commons.dto.InBoundGetAccountAttributesByAccount	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetAccountAttributesByAccount	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetAccountsHeld	data	List[com.openbankproject.commons.model.BankIdAccountId]
+field	com.openbankproject.commons.dto.InBoundGetAccountsHeld	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetAccountsHeld	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetAccountsHeldByUser	data	List[com.openbankproject.commons.model.BankIdAccountId]
+field	com.openbankproject.commons.dto.InBoundGetAccountsHeldByUser	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetAccountsHeldByUser	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetAdapterInfo	data	com.openbankproject.commons.model.InboundAdapterInfoInternal
 field	com.openbankproject.commons.dto.InBoundGetAdapterInfo	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetAdapterInfo	status	com.openbankproject.commons.model.Status
@@ -300,9 +357,15 @@ field	com.openbankproject.commons.dto.InBoundGetAtms	status	com.openbankproject.
 field	com.openbankproject.commons.dto.InBoundGetBank	data	com.openbankproject.commons.model.BankCommons
 field	com.openbankproject.commons.dto.InBoundGetBank	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBank	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetBankAccountBalanceById	data	com.openbankproject.commons.model.BankAccountBalanceTraitCommons
+field	com.openbankproject.commons.dto.InBoundGetBankAccountBalanceById	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetBankAccountBalanceById	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetBankAccountBalances	data	com.openbankproject.commons.model.AccountBalances
 field	com.openbankproject.commons.dto.InBoundGetBankAccountBalances	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBankAccountBalances	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetBankAccountBalancesByAccountId	data	List[com.openbankproject.commons.model.BankAccountBalanceTraitCommons]
+field	com.openbankproject.commons.dto.InBoundGetBankAccountBalancesByAccountId	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetBankAccountBalancesByAccountId	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetBankAccountByIban	data	com.openbankproject.commons.model.BankAccountCommons
 field	com.openbankproject.commons.dto.InBoundGetBankAccountByIban	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBankAccountByIban	status	com.openbankproject.commons.model.Status
@@ -315,12 +378,18 @@ field	com.openbankproject.commons.dto.InBoundGetBankAccounts	status	com.openbank
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsBalances	data	com.openbankproject.commons.model.AccountsBalances
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsBalances	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsBalances	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetBankAccountsBalancesByAccountIds	data	List[com.openbankproject.commons.model.BankAccountBalanceTraitCommons]
+field	com.openbankproject.commons.dto.InBoundGetBankAccountsBalancesByAccountIds	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetBankAccountsBalancesByAccountIds	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsForUser	data	List[com.openbankproject.commons.model.InboundAccountCommons]
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsForUser	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsForUser	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsHeld	data	List[com.openbankproject.commons.model.AccountHeld]
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsHeld	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBankAccountsHeld	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetBankAttributesByBank	data	List[com.openbankproject.commons.model.BankAttributeTraitCommons]
+field	com.openbankproject.commons.dto.InBoundGetBankAttributesByBank	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetBankAttributesByBank	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetBanks	data	List[com.openbankproject.commons.model.BankCommons]
 field	com.openbankproject.commons.dto.InBoundGetBanks	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetBanks	status	com.openbankproject.commons.model.Status
@@ -381,6 +450,9 @@ field	com.openbankproject.commons.dto.InBoundGetCounterpartyByIbanAndBankAccount
 field	com.openbankproject.commons.dto.InBoundGetCounterpartyTrait	data	com.openbankproject.commons.model.CounterpartyTraitCommons
 field	com.openbankproject.commons.dto.InBoundGetCounterpartyTrait	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetCounterpartyTrait	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetCurrentFxRate	data	com.openbankproject.commons.model.FXRateCommons
+field	com.openbankproject.commons.dto.InBoundGetCurrentFxRate	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetCurrentFxRate	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetCustomerAddress	data	List[com.openbankproject.commons.model.CustomerAddressCommons]
 field	com.openbankproject.commons.dto.InBoundGetCustomerAddress	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetCustomerAddress	status	com.openbankproject.commons.model.Status
@@ -465,6 +537,12 @@ field	com.openbankproject.commons.dto.InBoundGetProductCollectionItemsTree	statu
 field	com.openbankproject.commons.dto.InBoundGetProducts	data	List[com.openbankproject.commons.model.ProductCommons]
 field	com.openbankproject.commons.dto.InBoundGetProducts	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetProducts	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetRegulatedEntities	data	List[com.openbankproject.commons.model.RegulatedEntityTraitCommons]
+field	com.openbankproject.commons.dto.InBoundGetRegulatedEntities	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetRegulatedEntities	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundGetRegulatedEntityByEntityId	data	com.openbankproject.commons.model.RegulatedEntityTraitCommons
+field	com.openbankproject.commons.dto.InBoundGetRegulatedEntityByEntityId	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundGetRegulatedEntityByEntityId	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundGetStatusOfCreditCardOrder	data	List[com.openbankproject.commons.model.CardObjectJson]
 field	com.openbankproject.commons.dto.InBoundGetStatusOfCreditCardOrder	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundGetStatusOfCreditCardOrder	status	com.openbankproject.commons.model.Status
@@ -531,6 +609,24 @@ field	com.openbankproject.commons.dto.InBoundUpdateAccountApplicationStatus	stat
 field	com.openbankproject.commons.dto.InBoundUpdateAccountLabel	data	Boolean
 field	com.openbankproject.commons.dto.InBoundUpdateAccountLabel	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundUpdateAccountLabel	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundUpdateAtmAccessibilityFeatures	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundUpdateAtmAccessibilityFeatures	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundUpdateAtmAccessibilityFeatures	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundUpdateAtmLocationCategories	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundUpdateAtmLocationCategories	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundUpdateAtmLocationCategories	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundUpdateAtmNotes	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundUpdateAtmNotes	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundUpdateAtmNotes	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundUpdateAtmServices	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundUpdateAtmServices	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundUpdateAtmServices	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundUpdateAtmSupportedCurrencies	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundUpdateAtmSupportedCurrencies	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundUpdateAtmSupportedCurrencies	status	com.openbankproject.commons.model.Status
+field	com.openbankproject.commons.dto.InBoundUpdateAtmSupportedLanguages	data	com.openbankproject.commons.model.AtmTCommons
+field	com.openbankproject.commons.dto.InBoundUpdateAtmSupportedLanguages	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
+field	com.openbankproject.commons.dto.InBoundUpdateAtmSupportedLanguages	status	com.openbankproject.commons.model.Status
 field	com.openbankproject.commons.dto.InBoundUpdateBankAccount	data	com.openbankproject.commons.model.BankAccountCommons
 field	com.openbankproject.commons.dto.InBoundUpdateBankAccount	inboundAdapterCallContext	com.openbankproject.commons.model.InboundAdapterCallContext
 field	com.openbankproject.commons.dto.InBoundUpdateBankAccount	status	com.openbankproject.commons.model.Status
@@ -578,6 +674,11 @@ field	com.openbankproject.commons.dto.OutBoundCheckBankAccountExists	outboundAda
 field	com.openbankproject.commons.dto.OutBoundCheckCustomerNumberAvailable	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundCheckCustomerNumberAvailable	customerNumber	String
 field	com.openbankproject.commons.dto.OutBoundCheckCustomerNumberAvailable	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundCheckExternalUserCredentials	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundCheckExternalUserCredentials	password	String
+field	com.openbankproject.commons.dto.OutBoundCheckExternalUserCredentials	username	String
+field	com.openbankproject.commons.dto.OutBoundCheckExternalUserExists	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundCheckExternalUserExists	username	String
 field	com.openbankproject.commons.dto.OutBoundCreateAccountApplication	customerId	Option[String]
 field	com.openbankproject.commons.dto.OutBoundCreateAccountApplication	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundCreateAccountApplication	productCode	com.openbankproject.commons.model.ProductCode
@@ -714,6 +815,16 @@ field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateAccountAttribute	pro
 field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateAccountAttribute	productCode	com.openbankproject.commons.model.ProductCode
 field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateAccountAttribute	productInstanceCode	Option[String]
 field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateAccountAttribute	value	String
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateAtm	atm	com.openbankproject.commons.model.AtmT
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateAtm	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBankAccountBalance	accountId	com.openbankproject.commons.model.AccountId
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBankAccountBalance	balanceAmount	BigDecimal
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBankAccountBalance	balanceId	Option[com.openbankproject.commons.model.BalanceId]
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBankAccountBalance	balanceType	String
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBankAccountBalance	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBankAccountBalance	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBranch	branch	com.openbankproject.commons.model.BranchT
+field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateBranch	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateCardAttribute	bankId	Option[com.openbankproject.commons.model.BankId]
 field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateCardAttribute	cardAttributeId	Option[String]
 field	com.openbankproject.commons.dto.OutBoundCreateOrUpdateCardAttribute	cardAttributeType	com.openbankproject.commons.model.enums.CardAttributeType
@@ -866,6 +977,14 @@ field	com.openbankproject.commons.dto.OutBoundCreateUserAuthContextUpdate	key	St
 field	com.openbankproject.commons.dto.OutBoundCreateUserAuthContextUpdate	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundCreateUserAuthContextUpdate	userId	String
 field	com.openbankproject.commons.dto.OutBoundCreateUserAuthContextUpdate	value	String
+field	com.openbankproject.commons.dto.OutBoundDeleteAtm	atm	com.openbankproject.commons.model.AtmT
+field	com.openbankproject.commons.dto.OutBoundDeleteAtm	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundDeleteAtmAttribute	atmAttributeId	String
+field	com.openbankproject.commons.dto.OutBoundDeleteAtmAttribute	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundDeleteAtmAttributesByAtmId	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundDeleteAtmAttributesByAtmId	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundDeleteBankAccountBalance	balanceId	com.openbankproject.commons.model.BalanceId
+field	com.openbankproject.commons.dto.OutBoundDeleteBankAccountBalance	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundDeleteCustomerAddress	customerAddressId	String
 field	com.openbankproject.commons.dto.OutBoundDeleteCustomerAddress	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundDeleteCustomerAttribute	customerAttributeId	String
@@ -897,6 +1016,11 @@ field	com.openbankproject.commons.dto.OutBoundGetAccountAttributeById	outboundAd
 field	com.openbankproject.commons.dto.OutBoundGetAccountAttributesByAccount	accountId	com.openbankproject.commons.model.AccountId
 field	com.openbankproject.commons.dto.OutBoundGetAccountAttributesByAccount	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundGetAccountAttributesByAccount	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetAccountsHeld	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundGetAccountsHeld	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetAccountsHeld	user	com.openbankproject.commons.model.User
+field	com.openbankproject.commons.dto.OutBoundGetAccountsHeldByUser	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetAccountsHeldByUser	user	com.openbankproject.commons.model.User
 field	com.openbankproject.commons.dto.OutBoundGetAdapterInfo	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetAllAccountApplication	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetAtm	atmId	com.openbankproject.commons.model.AtmId
@@ -910,8 +1034,12 @@ field	com.openbankproject.commons.dto.OutBoundGetAtms	outboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetAtms	toDate	String
 field	com.openbankproject.commons.dto.OutBoundGetBank	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundGetBank	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetBankAccountBalanceById	balanceId	com.openbankproject.commons.model.BalanceId
+field	com.openbankproject.commons.dto.OutBoundGetBankAccountBalanceById	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountBalances	bankIdAccountId	com.openbankproject.commons.model.BankIdAccountId
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountBalances	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetBankAccountBalancesByAccountId	accountId	com.openbankproject.commons.model.AccountId
+field	com.openbankproject.commons.dto.OutBoundGetBankAccountBalancesByAccountId	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountByIban	iban	String
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountByIban	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountByRouting	address	String
@@ -922,11 +1050,15 @@ field	com.openbankproject.commons.dto.OutBoundGetBankAccounts	bankIdAccountIds	L
 field	com.openbankproject.commons.dto.OutBoundGetBankAccounts	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsBalances	bankIdAccountIds	List[com.openbankproject.commons.model.BankIdAccountId]
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsBalances	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetBankAccountsBalancesByAccountIds	accountIds	List[com.openbankproject.commons.model.AccountId]
+field	com.openbankproject.commons.dto.OutBoundGetBankAccountsBalancesByAccountIds	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsForUser	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsForUser	provider	String
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsForUser	username	String
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsHeld	bankIdAccountIds	List[com.openbankproject.commons.model.BankIdAccountId]
 field	com.openbankproject.commons.dto.OutBoundGetBankAccountsHeld	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetBankAttributesByBank	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundGetBankAttributesByBank	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBanks	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetBranch	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundGetBranch	branchId	com.openbankproject.commons.model.BranchId
@@ -1000,6 +1132,10 @@ field	com.openbankproject.commons.dto.OutBoundGetCounterpartyTrait	accountId	com
 field	com.openbankproject.commons.dto.OutBoundGetCounterpartyTrait	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundGetCounterpartyTrait	couterpartyId	String
 field	com.openbankproject.commons.dto.OutBoundGetCounterpartyTrait	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetCurrentFxRate	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundGetCurrentFxRate	fromCurrencyCode	String
+field	com.openbankproject.commons.dto.OutBoundGetCurrentFxRate	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetCurrentFxRate	toCurrencyCode	String
 field	com.openbankproject.commons.dto.OutBoundGetCustomerAddress	customerId	String
 field	com.openbankproject.commons.dto.OutBoundGetCustomerAddress	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetCustomerAttributeById	customerAttributeId	String
@@ -1079,6 +1215,9 @@ field	com.openbankproject.commons.dto.OutBoundGetProductCollectionItemsTree	outb
 field	com.openbankproject.commons.dto.OutBoundGetProducts	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundGetProducts	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
 field	com.openbankproject.commons.dto.OutBoundGetProducts	params	List[com.openbankproject.commons.dto.GetProductsParam]
+field	com.openbankproject.commons.dto.OutBoundGetRegulatedEntities	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetRegulatedEntityByEntityId	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundGetRegulatedEntityByEntityId	regulatedEntityId	String
 field	com.openbankproject.commons.dto.OutBoundGetStatusOfCreditCardOrder	accountId	String
 field	com.openbankproject.commons.dto.OutBoundGetStatusOfCreditCardOrder	bankId	String
 field	com.openbankproject.commons.dto.OutBoundGetStatusOfCreditCardOrder	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
@@ -1171,6 +1310,30 @@ field	com.openbankproject.commons.dto.OutBoundUpdateAccountLabel	accountId	com.o
 field	com.openbankproject.commons.dto.OutBoundUpdateAccountLabel	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.dto.OutBoundUpdateAccountLabel	label	String
 field	com.openbankproject.commons.dto.OutBoundUpdateAccountLabel	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmAccessibilityFeatures	accessibilityFeatures	List[String]
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmAccessibilityFeatures	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmAccessibilityFeatures	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmAccessibilityFeatures	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmLocationCategories	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmLocationCategories	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmLocationCategories	locationCategories	List[String]
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmLocationCategories	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmNotes	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmNotes	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmNotes	notes	List[String]
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmNotes	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmServices	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmServices	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmServices	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmServices	supportedCurrencies	List[String]
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedCurrencies	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedCurrencies	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedCurrencies	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedCurrencies	supportedCurrencies	List[String]
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedLanguages	atmId	com.openbankproject.commons.model.AtmId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedLanguages	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedLanguages	outboundAdapterCallContext	com.openbankproject.commons.model.OutboundAdapterCallContext
+field	com.openbankproject.commons.dto.OutBoundUpdateAtmSupportedLanguages	supportedLanguages	List[String]
 field	com.openbankproject.commons.dto.OutBoundUpdateBankAccount	accountId	com.openbankproject.commons.model.AccountId
 field	com.openbankproject.commons.dto.OutBoundUpdateBankAccount	accountLabel	String
 field	com.openbankproject.commons.dto.OutBoundUpdateBankAccount	accountRoutings	List[com.openbankproject.commons.model.AccountRouting]
@@ -1379,8 +1542,16 @@ field	com.openbankproject.commons.model.Attribute	type	String
 field	com.openbankproject.commons.model.Attribute	value	String
 field	com.openbankproject.commons.model.AuthView	account	com.openbankproject.commons.model.AccountBasic
 field	com.openbankproject.commons.model.AuthView	view	com.openbankproject.commons.model.ViewBasic
+field	com.openbankproject.commons.model.BalanceId	value	String
 field	com.openbankproject.commons.model.BankAccountBalance	balance	com.openbankproject.commons.model.AmountOfMoney
 field	com.openbankproject.commons.model.BankAccountBalance	balanceType	String
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	accountId	com.openbankproject.commons.model.AccountId
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	balanceAmount	BigDecimal
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	balanceId	com.openbankproject.commons.model.BalanceId
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	balanceType	String
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	lastChangeDateTime	Option[java.util.Date]
+field	com.openbankproject.commons.model.BankAccountBalanceTraitCommons	referenceDate	Option[String]
 field	com.openbankproject.commons.model.BankAccountCommons	accountHolder	String
 field	com.openbankproject.commons.model.BankAccountCommons	accountId	com.openbankproject.commons.model.AccountId
 field	com.openbankproject.commons.model.BankAccountCommons	accountRoutings	List[com.openbankproject.commons.model.AccountRouting]
@@ -1395,6 +1566,12 @@ field	com.openbankproject.commons.model.BankAccountCommons	label	String
 field	com.openbankproject.commons.model.BankAccountCommons	lastUpdate	java.util.Date
 field	com.openbankproject.commons.model.BankAccountCommons	name	String
 field	com.openbankproject.commons.model.BankAccountCommons	number	String
+field	com.openbankproject.commons.model.BankAttributeTraitCommons	attributeType	com.openbankproject.commons.model.enums.BankAttributeType.Value
+field	com.openbankproject.commons.model.BankAttributeTraitCommons	bankAttributeId	String
+field	com.openbankproject.commons.model.BankAttributeTraitCommons	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.model.BankAttributeTraitCommons	isActive	Option[Boolean]
+field	com.openbankproject.commons.model.BankAttributeTraitCommons	name	String
+field	com.openbankproject.commons.model.BankAttributeTraitCommons	value	String
 field	com.openbankproject.commons.model.BankCommons	bankId	com.openbankproject.commons.model.BankId
 field	com.openbankproject.commons.model.BankCommons	bankRoutingAddress	String
 field	com.openbankproject.commons.model.BankCommons	bankRoutingScheme	String
@@ -1598,6 +1775,12 @@ field	com.openbankproject.commons.model.DriveUp	thursday	com.openbankproject.com
 field	com.openbankproject.commons.model.DriveUp	tuesday	com.openbankproject.commons.model.OpeningTimes
 field	com.openbankproject.commons.model.DriveUp	wednesday	com.openbankproject.commons.model.OpeningTimes
 field	com.openbankproject.commons.model.DriveUpString	hours	String
+field	com.openbankproject.commons.model.FXRateCommons	bankId	com.openbankproject.commons.model.BankId
+field	com.openbankproject.commons.model.FXRateCommons	conversionValue	Double
+field	com.openbankproject.commons.model.FXRateCommons	effectiveDate	java.util.Date
+field	com.openbankproject.commons.model.FXRateCommons	fromCurrencyCode	String
+field	com.openbankproject.commons.model.FXRateCommons	inverseConversionValue	Double
+field	com.openbankproject.commons.model.FXRateCommons	toCurrencyCode	String
 field	com.openbankproject.commons.model.FromAccountTransfer	mobile_phone_number	String
 field	com.openbankproject.commons.model.FromAccountTransfer	nickname	String
 field	com.openbankproject.commons.model.IbanChecker	details	Option[com.openbankproject.commons.model.IbanDetails]
@@ -1640,6 +1823,16 @@ field	com.openbankproject.commons.model.InboundAdapterInfoInternal	errorCode	Str
 field	com.openbankproject.commons.model.InboundAdapterInfoInternal	git_commit	String
 field	com.openbankproject.commons.model.InboundAdapterInfoInternal	name	String
 field	com.openbankproject.commons.model.InboundAdapterInfoInternal	version	String
+field	com.openbankproject.commons.model.InboundExternalUser	aud	String
+field	com.openbankproject.commons.model.InboundExternalUser	azp	Option[String]
+field	com.openbankproject.commons.model.InboundExternalUser	email	Option[String]
+field	com.openbankproject.commons.model.InboundExternalUser	emailVerified	Option[String]
+field	com.openbankproject.commons.model.InboundExternalUser	exp	String
+field	com.openbankproject.commons.model.InboundExternalUser	iat	String
+field	com.openbankproject.commons.model.InboundExternalUser	iss	String
+field	com.openbankproject.commons.model.InboundExternalUser	name	Option[String]
+field	com.openbankproject.commons.model.InboundExternalUser	sub	String
+field	com.openbankproject.commons.model.InboundExternalUser	userAuthContext	Option[List[com.openbankproject.commons.model.BasicUserAuthContext]]
 field	com.openbankproject.commons.model.InboundStatusMessage	duration	Option[scala.math.BigDecimal]
 field	com.openbankproject.commons.model.InboundStatusMessage	errorCode	String
 field	com.openbankproject.commons.model.InboundStatusMessage	source	String
@@ -1819,6 +2012,22 @@ field	com.openbankproject.commons.model.ProductCommons	name	String
 field	com.openbankproject.commons.model.ProductCommons	parentProductCode	com.openbankproject.commons.model.ProductCode
 field	com.openbankproject.commons.model.ProductCommons	superFamily	String
 field	com.openbankproject.commons.model.ProductCommons	termsAndConditionsUrl	String
+field	com.openbankproject.commons.model.RegulatedEntityAttributeSimple	attributeType	String
+field	com.openbankproject.commons.model.RegulatedEntityAttributeSimple	name	String
+field	com.openbankproject.commons.model.RegulatedEntityAttributeSimple	value	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	attributes	Option[List[com.openbankproject.commons.model.RegulatedEntityAttributeSimple]]
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	certificateAuthorityCaOwnerId	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityAddress	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityCertificatePublicKey	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityCode	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityCountry	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityId	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityName	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityPostCode	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityTownCity	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityType	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	entityWebSite	String
+field	com.openbankproject.commons.model.RegulatedEntityTraitCommons	services	String
 field	com.openbankproject.commons.model.Routing	address	String
 field	com.openbankproject.commons.model.Routing	scheme	String
 field	com.openbankproject.commons.model.SepaCreditTransfers	creditorAccount	com.openbankproject.commons.model.PaymentAccount

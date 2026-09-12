@@ -45,7 +45,7 @@ object FutureUtil {
     val timerTask = new TimerTask() {
       def run() : Unit = {
         p.tryFailure {
-          val error: String = ErrorMessages.apiFailureToString(408, ErrorMessages.requestTimeout, cc.context)
+          val error: String = ApiFailureRenderer.apiFailureToString(408, ErrorMessages.requestTimeout, cc.context)
           new TimeoutException(error)
         }
       }

@@ -139,7 +139,53 @@ long_endpoint_timeout = 55000
 ## Transaction status scheduler delay in seconds.
 ## Retrieves transactionRequest status from south-side connector.
 ## Scheduler will be disabled if delay is not set.
-#transaction_status_scheduler_delay=300
+## NOTE: the name below used to read transaction_status_scheduler_delay, which Boot never reads —
+## the prop it actually looks up is transaction_request_status_scheduler_delay. Anyone who copied
+## the old spelling out of this template had the scheduler silently disabled.
+#transaction_request_status_scheduler_delay=300
+
+## Which slice of boot this instance performs. Same image, same jar, up to three workloads.
+##   all       (default) everything, i.e. the historical single-instance behaviour
+##   migrator  schema + migrations + seed data, then exit. Run it as a one-shot Job BEFORE the
+##             rest of the deployment; it never binds a port.
+##   scheduler the background schedulers only. Exactly ONE replica, and use Recreate, not
+##             RollingUpdate — the jobscheduler lock tolerates an overlap but there is no reason
+##             to create one. Keep it out of the Service.
+##   web       serves HTTP only: no DDL, no migrations, no schedulers. This is the one to scale
+##             and roll.
+## Leaving this unset keeps an existing deployment working exactly as before.
+## An unrecognised value aborts boot rather than silently doing nothing.
+##
+## Two things every role keeps, whatever this is set to: the per-JVM metric batch writers (each
+## request enqueues to an in-process queue drained by their own daemon thread — a web instance
+## without them loses 100% of its metrics), and the ordered shutdown hook.
+#instance.role=all
+
+## Shipping without the Scala compiler
+##
+## Dynamic Resource Docs, Dynamic Message Docs, Connector Methods and ABAC rules are bodies of
+## Scala/JS/Java that a privileged user POSTs and the server compiles at runtime. Setting
+## allow_user_generated_scala_code=false refuses them, but the toolbox is still in the image.
+##
+## On JDK 24+ that matters: the SecurityManager sandbox this code tries to install can no longer
+## be created, and doPrivileged degrades to a pass-through, so there is no enforcement left —
+## holding the relevant entitlement is effectively host RCE. An instance that does not use the
+## feature can remove the toolbox outright:
+##
+##   rm lib/scala-compiler-*.jar        # Scala bodies
+##   rm lib/polyglot-*.jar lib/js-language-*.jar lib/truffle-*.jar lib/regex-*.jar lib/icu4j-*.jar
+##
+## That is about 71 MB of a 294 MB lib/. The instance starts and serves normally; the affected
+## endpoints answer OBP-XXXXX DynamicCodeExecutionDisabled exactly as with the prop off, and the
+## `internal` connector disappears from /system/connectors because it genuinely is not there.
+## Everything else is unaffected. Verified end to end, not only by unit tests.
+##
+## The two can be combined: run the web instances on a build without the toolbox and keep one
+## instance that has it, routing only the twelve management paths that need a compiler to that
+## one. It can then be scaled to zero whenever nobody is submitting dynamic code. The path list,
+## the ingress rules, and the one thing routing cannot split (ABAC evaluation sits on the
+## account-access authorisation chain, not on an endpoint) are in
+## docs/operations/SPLIT_DEPLOYMENT.md.
 
 
 ## Enable user authentication via the connector
@@ -1842,6 +1888,33 @@ user_account_validated_redirect_url =
 # Defines is it user is automatically validated, without SCA flow, after user account created
 # In case is not defined default value is false
 user_account_is_validated = false
+
+# Identifies this OBP instance. Used as the Redis cache namespace, stamped on every
+# metric row, and recorded as the owner of the rows in the `jobscheduler` lock table.
+#
+# What is actually stored is this value with a fresh UUID appended, so each JVM gets a
+# distinct id — UNLESS the value ends with the literal string "final", in which case it
+# is used verbatim (see code.api.Constant.ApiInstanceId). Leave it unset and a bare UUID
+# is generated.
+#
+# ⚠️ Leaving it unset is NOT the safe default it looks like. The two consumers read
+# different things: the lock table and metric rows take code.api.Constant.ApiInstanceId
+# (the UUID above, unique per JVM — correct), but the Redis cache namespace comes from
+# code.api.Constant.getGlobalCacheNamespacePrefix, which re-reads this prop RAW and falls
+# back to the literal string "obp". So an unset value gives every deployment that also
+# leaves it unset the same namespace, "obp_<run.mode>_". Two unrelated OBP deployments
+# pointed at different databases but sharing one Redis then share cache keys, and neither
+# log says anything is wrong — the boot line reads "Global cache namespace prefix:
+# 'obp_prod_'" on both. Set this prop (without a "final" suffix) on every deployment that
+# shares a Redis with another.
+#
+# ⚠️ Do NOT end this value with "final" when running more than one instance. A shared id
+# is not just cosmetic: on boot each instance deletes every `jobscheduler` lock row
+# carrying its own id, to clear locks orphaned by a JVM that died mid-run. With a unique
+# id that only ever touches its own leftovers; with a shared id a rolling restart deletes
+# the lock another pod is holding at that moment, and the job it was protecting then runs
+# in two places at once. A shared id also merges every replica's Redis cache namespace.
+# api_instance_id = my-obp
 
 # Metrics archiving — all defaults below live in code.metrics.MetricsProps; the
 # values shown here MUST match the constants there.

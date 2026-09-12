@@ -187,6 +187,17 @@ object Migration extends MdcLoggable {
         idCol     = "id",
         groupCols = List("mbankid", "muserid", "mrolename")
       )
+      // jobscheduler gained UniqueIndex(Name) so that "find no row, then insert" actually
+      // excludes — see JobScheduler.dbIndexes. Without it two instances could each hold a
+      // lock row for the same job name, and on such a database Schemifier cannot create the
+      // index. Keeping the lowest id per name is the right survivor here too: the row only
+      // records who holds the lock, and the extras are precisely the ones that should never
+      // have been granted it.
+      deduplicateNaturalKeyDups(
+        tableName = "jobscheduler",
+        idCol     = "id",
+        groupCols = List("name")
+      )
     }
 
     /**

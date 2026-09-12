@@ -22,6 +22,7 @@ import org.http4s._
 import org.http4s.dsl.io._
 
 import scala.collection.mutable.ArrayBuffer
+import code.api.util.JvalueCaseClass
 
 object Http4sBGv13PIIS extends MdcLoggable {
 

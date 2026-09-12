@@ -23,6 +23,7 @@ import com.openbankproject.commons.model.{SepaCreditTransfers, SepaCreditTransfe
 import org.json4s.native.Serialization.write
 import net.liftweb.mapper.By
 import org.scalatest.Tag
+import code.api.util.JvalueCaseClass
 
 class PaymentInitiationServicePISApiTest extends BerlinGroupServerSetupV1_3 with DefaultUsers {
 

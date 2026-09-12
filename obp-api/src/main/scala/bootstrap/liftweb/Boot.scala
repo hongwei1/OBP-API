@@ -43,7 +43,7 @@ import code.api.Constant._
 import code.api.ResourceDocs1_4_0._
 import code.api._
 import code.api.attributedefinition.AttributeDefinition
-import code.api.berlin.group.ConstantsBG
+import code.api.util.BerlinGroupVocabulary
 import code.api.cache.Redis
 import code.api.util.APIUtil.{enableVersionIfAllowed, errorJsonResponse, getPropsValue}
 import code.api.util.ApiRole._
@@ -267,131 +267,38 @@ class Boot extends MdcLoggable {
      */
     MapperRules.createForeignKeys_? = (_) => APIUtil.getPropsAsBoolValue("mapper_rules.create_foreign_keys", false)
 
-    // Pre-Schemifier dedup: drop natural-key duplicate rows in mapperaccountholder /
-    // mappedentitlement BEFORE schemifyAll() issues their CREATE UNIQUE INDEX (declared in
-    // MapperAccountHolders / MappedEntitlement dbIndexes). On a long-lived DB that still holds
-    // duplicates the index DDL would otherwise abort boot.
-    //
-    // This MUST stay here and must NOT be moved into Migration.database.executeScripts:
-    //  - both executeScripts passes below run AFTER schemifyAll() (the index is already created
-    //    by then — the "executed before Schemifier" comment on the true-pass is historical), and
-    //  - executeScripts is gated by migration_scripts.* props (off in tests), whereas Schemifier —
-    //    and therefore this dedup — must run ungated in every environment, incl. the H2 test DB.
-    // The method self-guards (skips when the table is absent or has no duplicates), so running it
-    // on every boot is a cheap no-op on fresh/clean/test databases.
-    Migration.database.deduplicateBeforeUniqueIndexSchemify()
-    schemifyAll()
-
-    logger.info("Mapper database info: " + Migration.DbFunction.mapperDatabaseInfo)
-
-    // NOTE: both executeScripts passes below run AFTER schemifyAll() above. The
-    // `startedBeforeSchemifier = true` argument does NOT mean this pass runs before Schemifier — it
-    // marks the existing-DB pass, in which migrations that require post-Schemifier schema skip
-    // themselves (see Migration.executeScripts). The "before Schemifier" wording is historical: the
-    // call once sat before schemifyAll() but was moved ahead of it in 2021 (commit ea4537029).
-    DbFunction.tableExists(ResourceUser) match {
-      case true => // DB already exists
-        Migration.database.executeScripts(startedBeforeSchemifier = true)
-        logger.info("The Mapper database already exists. Running the existing-DB migration pass (post-Schemifier; migrations needing fresh schema skip themselves).")
-      case false => // Fresh DB — its migrations run in the catch-all pass below (after Schemifier)
-        logger.info("The Mapper database is still not created. The scripts are going to be executed AFTER Lift Mapper Schemifier.")
+    // Schema, migrations and seed data — everything that WRITES to the database at boot.
+    // Only a `migrator` (or the default all-in-one) instance does this. Every JVM used to run
+    // it unconditionally, which is what made a second replica a second concurrent DDL run.
+    if (Constant.InstanceRole.runsMigrations) {
+      runSchemaMigrationsAndSeeds()
+    } else {
+      logger.info(s"instance.role=${Constant.InstanceRole.value}: skipping schema, migrations and " +
+        s"seed data — a 'migrator' instance owns those. This JVM reads the schema it finds.")
     }
 
-    // Migration Scripts are used to update the model of OBP-API DB to a latest version.
+    // gRPC + the process's ordered shutdown hook: EVERY role, regardless of the gate above.
+    // These used to be a side effect of schemifyAll() touching ToSchemify's object initialiser,
+    // so skipping the DDL would have silently cost a web instance its graceful shutdown.
+    startGrpcServerAndRegisterShutdownHook()
 
-    // Please note that migration scripts are executed after Lift Mapper Schemifier
-    Migration.database.executeScripts(startedBeforeSchemifier = false)
+    // ABAC account access is evaluated by a rule engine that compiles user-supplied Scala at
+    // runtime. The core asks through code.api.util.AbacAccountAccess, so the engine can later
+    // live in an optional module; installed here for every role, because any role that serves a
+    // request has to be able to answer the question.
+    code.abacrule.AbacRuleEngineAccountAccessProvider.install()
 
-    // Maker/checker for dynamic code: when first enabled, pre-existing code rows get their current
-    // body hash recorded as approved so enabling the feature does not silently disable them.
-    code.dynamicchangerequest.MakerChecker.seedApprovedHashesIfEnabled()
+    // Runtime compilation of user-supplied Dynamic Resource Docs / Message Docs / Connector
+    // Methods. The management endpoints ask through code.api.util.DynamicCode, so the toolbox can
+    // later live in an optional module; without it they answer DynamicCodeExecutionDisabled.
+    code.api.dynamic.endpoint.helper.DynamicCodeCompilerImpl.install()
 
-    // Idempotent seed of country-qualified routing schemes (TZ.MSISDN, bill, utility, etc.).
-    // Toggle off via routing_schemes.seed_defaults_at_boot=false in environments that don't want defaults.
-    code.routingscheme.RoutingSchemeSeed.runIfEnabled()
-
-    // Report which static Glossary Items the database is currently displacing. A developer editing
-    // Glossary.scala has no other way to find out that their text is being overridden.
-    code.api.util.Glossary.logStaticOverrides()
-
-    if (APIUtil.getPropsAsBoolValue("create_system_views_at_boot", true)) {
-      // Create system views
-      val owner = Views.views.vend.getOrCreateSystemView(SYSTEM_OWNER_VIEW_ID).isDefined
-      val auditor = Views.views.vend.getOrCreateSystemView(SYSTEM_AUDITOR_VIEW_ID).isDefined
-      val accountant = Views.views.vend.getOrCreateSystemView(SYSTEM_ACCOUNTANT_VIEW_ID).isDefined
-      val standard = Views.views.vend.getOrCreateSystemView(SYSTEM_STANDARD_VIEW_ID).isDefined
-      val stageOne = Views.views.vend.getOrCreateSystemView(SYSTEM_STAGE_ONE_VIEW_ID).isDefined
-      val manageCustomViews = Views.views.vend.getOrCreateSystemView(SYSTEM_MANAGE_CUSTOM_VIEWS_VIEW_ID).isDefined
-      // Only create Firehose view if they are enabled at instance.
-      val accountFirehose = if (ApiPropsWithAlias.allowAccountFirehose)
-        Views.views.vend.getOrCreateSystemView(SYSTEM_FIREHOSE_VIEW_ID).isDefined
-      else Empty.isDefined
-
-      // The UK Open Banking and Berlin Group views whose can_* sets the code defines
-      // (Constant.SYSTEM_READ_*_VIEW_PERMISSION). Ensured unconditionally rather than through
-      // additional_system_views: the code already depends on them existing. A UK consent naming
-      // ReadTransactionsCredits cannot be granted if that view is absent, and
-      // validateUKConsentPermissions *requires* a direction permission whenever a
-      // transaction-depth one is granted -- so a conforming consent could not be exercised on an
-      // instance whose props predated the view.
-      //
-      // ensureSystemViewUpToDate, not getOrCreateSystemView: the latter returns an existing row
-      // untouched, so a view created by an older version keeps that version's permission set for
-      // good and a tightening in code reaches new installations only. That is how "Detail granted
-      // nothing beyond Basic" and "Balances alone exposed transaction data" survived being fixed.
-      val codeDefinedSystemViews = List(
-        SYSTEM_READ_ACCOUNTS_BASIC_VIEW_ID,
-        SYSTEM_READ_ACCOUNTS_DETAIL_VIEW_ID,
-        SYSTEM_READ_BALANCES_VIEW_ID,
-        SYSTEM_READ_TRANSACTIONS_BASIC_VIEW_ID,
-        SYSTEM_READ_TRANSACTIONS_DEBITS_VIEW_ID,
-        SYSTEM_READ_TRANSACTIONS_CREDITS_VIEW_ID,
-        SYSTEM_READ_TRANSACTIONS_DETAIL_VIEW_ID,
-        SYSTEM_READ_ACCOUNTS_BERLIN_GROUP_VIEW_ID,
-        SYSTEM_READ_BALANCES_BERLIN_GROUP_VIEW_ID
-      )
-      // Default true: a permission set the code tightened must reach the installations that have
-      // the problem, not only fresh ones. An operator who has deliberately hand-tuned these rows
-      // turns it off and takes responsibility for keeping them current.
-      if (APIUtil.getPropsAsBoolValue("system_views.reconcile_permissions_at_boot", true)) {
-        codeDefinedSystemViews.foreach(Views.views.vend.ensureSystemViewUpToDate)
-      } else {
-        logger.warn("system_views.reconcile_permissions_at_boot is false: the UK Open Banking and " +
-          "Berlin Group system views keep whatever permissions they already carry, which may be " +
-          "an older and wider set than this build defines.")
-        codeDefinedSystemViews.foreach(Views.views.vend.getOrCreateSystemView)
-      }
-
-      // The remaining two stay opt-in: nothing in the code requires them to exist, so whether an
-      // instance has them is still the operator's call. Their permission sets ARE code-defined
-      // though, so where they do exist they are kept current the same way -- the prop decides
-      // existence, not whether the code is authoritative about what a view grants.
-      APIUtil.getPropsValue("additional_system_views") match {
-        case Full(value) =>
-          val additionalSystemViewsFromProps = value.split(",").map(_.trim).toList
-          val additionalSystemViews = List(
-            SYSTEM_READ_TRANSACTIONS_BERLIN_GROUP_VIEW_ID,
-            SYSTEM_INITIATE_PAYMENTS_BERLIN_GROUP_VIEW_ID
-          )
-          for {
-            systemView <- additionalSystemViewsFromProps
-            if additionalSystemViews.exists(_ == systemView)
-          } {
-            Views.views.vend.ensureSystemViewUpToDate(systemView)
-          }
-        case _ => // Do nothing
-      }
-
-    }
-
+    // Read-only diagnostics: every role reports a misconfiguration it can see, whether or not it
+    // is the one that writes the schema.
     ApiWarnings.logWarningsRegardingProperties()
     ApiWarnings.customViewNamesCheck()
     ApiWarnings.systemViewNamesCheck()
 
-    //see the notes for this method:
-    createDefaultBankAndDefaultAccountsIfNotExisting()
-
-    createBootstrapSuperUser()
 
     warnAboutSuperAdminUsers()
 
@@ -399,12 +306,7 @@ class Boot extends MdcLoggable {
 
     OAuth2Login.logConfigWarnings()
 
-    createBootstrapOidcOperatorUser()
 
-    createBootstrapOidcOperatorConsumer()
-
-    //launch the scheduler to clean the database from the expired tokens and nonces, 1 hour
-    DataBaseCleanerScheduler.start(intervalInSeconds = 60*60)
 
 //    if (Props.devMode || Props.testMode) {
 //      StoredProceduresMockedData.createOrDropMockedPostgresStoredProcedures()
@@ -599,36 +501,55 @@ class Boot extends MdcLoggable {
       case NonFatal(e) => logger.warn(s"BankAccountCreationListener Exception: $e")
     }
 
-    if ( !APIUtil.getPropsAsLongValue("transaction_request_status_scheduler_delay").isEmpty ) {
-      val delay = APIUtil.getPropsAsLongValue("transaction_request_status_scheduler_delay").openOrThrowException("Incorrect value for transaction_request_status_scheduler_delay, please provide number of seconds.")
-      TransactionRequestStatusScheduler.start(delay)
-    }
-    // Open Corridor: the transactional-outbox relay publishing Interface C messages
-    // (credit notifications + settlement instructions) to the banks' own vhosts.
-    if (APIUtil.getPropsAsBoolValue("open_corridor_enabled", false)) {
-      MessageOutboxRelay.start(APIUtil.getPropsAsLongValue("open_corridor.outbox_relay_interval", 10L))
-    }
-    // Chat: emails users an occasional digest of unread messages (computed at
-    // send time from read markers — see ChatEmailDigestScheduler for why this
-    // is not the transactional message outbox).
-    if (APIUtil.getPropsAsBoolValue("chat.email_digest_enabled", false)) {
-      code.chat.ChatEmailDigestScheduler.start(APIUtil.getPropsAsLongValue("chat.email_digest_tick_seconds", 300L))
-    }
-    APIUtil.getPropsAsLongValue("database_messages_scheduler_interval") match {
-      case Full(i) => DatabaseDriverScheduler.start(i)
-      case _ => // Do not start it
-    }
-    ConsentScheduler.startAll()
-    TransactionScheduler.startAll()
+    // The background schedulers. Only a `scheduler` (or the default all-in-one) instance runs
+    // them: each one is a singleton job guarded by a `jobscheduler` lock row, so N replicas all
+    // starting them means N contenders for every tick — wasted work at best, and for the Open
+    // Corridor outbox relay a duplicate publish of the same settlement instruction.
+    //
+    // Deliberately NOT here: MetricBatchWriter and ConnectorMetricBatchWriter, started further
+    // up. They look like schedulers but are per-JVM buffer flushers — each request enqueues to
+    // an in-process queue that their own daemon thread drains. Moving them to the scheduler role
+    // would leave every web instance filling a queue nobody reads: all metrics lost, heap
+    // growing without bound.
+    if (Constant.InstanceRole.runsSchedulers) {
+      if ( !APIUtil.getPropsAsLongValue("transaction_request_status_scheduler_delay").isEmpty ) {
+        val delay = APIUtil.getPropsAsLongValue("transaction_request_status_scheduler_delay").openOrThrowException("Incorrect value for transaction_request_status_scheduler_delay, please provide number of seconds.")
+        TransactionRequestStatusScheduler.start(delay)
+      }
+      // Open Corridor: the transactional-outbox relay publishing Interface C messages
+      // (credit notifications + settlement instructions) to the banks' own vhosts.
+      if (APIUtil.getPropsAsBoolValue("open_corridor_enabled", false)) {
+        MessageOutboxRelay.start(APIUtil.getPropsAsLongValue("open_corridor.outbox_relay_interval", 10L))
+      }
+      // Chat: emails users an occasional digest of unread messages (computed at
+      // send time from read markers — see ChatEmailDigestScheduler for why this
+      // is not the transactional message outbox).
+      if (APIUtil.getPropsAsBoolValue("chat.email_digest_enabled", false)) {
+        code.chat.ChatEmailDigestScheduler.start(APIUtil.getPropsAsLongValue("chat.email_digest_tick_seconds", 300L))
+      }
+      APIUtil.getPropsAsLongValue("database_messages_scheduler_interval") match {
+        case Full(i) => DatabaseDriverScheduler.start(i)
+        case _ => // Do not start it
+      }
+      ConsentScheduler.startAll()
+      TransactionScheduler.startAll()
 
+      code.metrics.MetricsProps.enableMetricsScheduler match {
+        case true =>
+          // Interval default rationale (599s prime) lives at
+          // MetricsProps.RetainMetricsSchedulerIntervalInSecondsDefault.
+          val interval = code.metrics.MetricsProps.retainMetricsSchedulerIntervalInSeconds
+          MetricsArchiveScheduler.start(intervalInSeconds = interval)
+        case false => // Do not start it
+      }
 
-    code.metrics.MetricsProps.enableMetricsScheduler match {
-      case true =>
-        // Interval default rationale (599s prime) lives at
-        // MetricsProps.RetainMetricsSchedulerIntervalInSecondsDefault.
-        val interval = code.metrics.MetricsProps.retainMetricsSchedulerIntervalInSeconds
-        MetricsArchiveScheduler.start(intervalInSeconds = interval)
-      case false => // Do not start it
+      // Clears expired tokens and nonces once an hour. Had no prop gate at all before the role
+      // split — it was the one scheduler every instance always started.
+      DataBaseCleanerScheduler.start(intervalInSeconds = 60*60)
+    } else {
+      logger.info(s"instance.role=${Constant.InstanceRole.value}: not starting the background " +
+        s"schedulers — a 'scheduler' instance owns those. The per-JVM metric batch writers are " +
+        s"unaffected and still running here.")
     }
 
 
@@ -636,10 +557,187 @@ class Boot extends MdcLoggable {
     // which is no longer reachable (Lift bridge removed in Phase B). Disabled until migrated to http4s.
   }
 
+  /**
+   * Everything in boot that writes to the database: the pre-Schemifier dedup, the schema
+   * itself, both migration passes, and the seeds (default chat room, routing schemes,
+   * system views, default bank and accounts, bootstrap users and consumers).
+   *
+   * Extracted so `instance.role` can gate it as one unit. Read-only diagnostics that used to
+   * be interleaved here (ApiWarnings, the super-admin and email-delivery warnings,
+   * OAuth2Login.logConfigWarnings) deliberately stayed in `boot`: every role should still
+   * report a misconfiguration it can see.
+   */
+  private def runSchemaMigrationsAndSeeds(): Unit = {
+    // Pre-Schemifier dedup: drop natural-key duplicate rows in mapperaccountholder /
+    // mappedentitlement BEFORE schemifyAll() issues their CREATE UNIQUE INDEX (declared in
+    // MapperAccountHolders / MappedEntitlement dbIndexes). On a long-lived DB that still holds
+    // duplicates the index DDL would otherwise abort boot.
+    //
+    // This MUST stay here and must NOT be moved into Migration.database.executeScripts:
+    //  - both executeScripts passes below run AFTER schemifyAll() (the index is already created
+    //    by then — the "executed before Schemifier" comment on the true-pass is historical), and
+    //  - executeScripts is gated by migration_scripts.* props (off in tests), whereas Schemifier —
+    //    and therefore this dedup — must run ungated in every environment, incl. the H2 test DB.
+    // The method self-guards (skips when the table is absent or has no duplicates), so running it
+    // on every boot is a cheap no-op on fresh/clean/test databases.
+    Migration.database.deduplicateBeforeUniqueIndexSchemify()
+    schemifyAll()
+    seedDefaultChatRoom()
+
+    logger.info("Mapper database info: " + Migration.DbFunction.mapperDatabaseInfo)
+
+    // NOTE: both executeScripts passes below run AFTER schemifyAll() above. The
+    // `startedBeforeSchemifier = true` argument does NOT mean this pass runs before Schemifier — it
+    // marks the existing-DB pass, in which migrations that require post-Schemifier schema skip
+    // themselves (see Migration.executeScripts). The "before Schemifier" wording is historical: the
+    // call once sat before schemifyAll() but was moved ahead of it in 2021 (commit ea4537029).
+    DbFunction.tableExists(ResourceUser) match {
+      case true => // DB already exists
+        Migration.database.executeScripts(startedBeforeSchemifier = true)
+        logger.info("The Mapper database already exists. Running the existing-DB migration pass (post-Schemifier; migrations needing fresh schema skip themselves).")
+      case false => // Fresh DB — its migrations run in the catch-all pass below (after Schemifier)
+        logger.info("The Mapper database is still not created. The scripts are going to be executed AFTER Lift Mapper Schemifier.")
+    }
+
+    // Migration Scripts are used to update the model of OBP-API DB to a latest version.
+
+    // Please note that migration scripts are executed after Lift Mapper Schemifier
+    Migration.database.executeScripts(startedBeforeSchemifier = false)
+
+    // Maker/checker for dynamic code: when first enabled, pre-existing code rows get their current
+    // body hash recorded as approved so enabling the feature does not silently disable them.
+    code.dynamicchangerequest.MakerChecker.seedApprovedHashesIfEnabled()
+
+    // Idempotent seed of country-qualified routing schemes (TZ.MSISDN, bill, utility, etc.).
+    // Toggle off via routing_schemes.seed_defaults_at_boot=false in environments that don't want defaults.
+    code.routingscheme.RoutingSchemeSeed.runIfEnabled()
+
+    // Report which static Glossary Items the database is currently displacing. A developer editing
+    // Glossary.scala has no other way to find out that their text is being overridden.
+    code.api.util.Glossary.logStaticOverrides()
+
+    if (APIUtil.getPropsAsBoolValue("create_system_views_at_boot", true)) {
+      // Create system views
+      val owner = Views.views.vend.getOrCreateSystemView(SYSTEM_OWNER_VIEW_ID).isDefined
+      val auditor = Views.views.vend.getOrCreateSystemView(SYSTEM_AUDITOR_VIEW_ID).isDefined
+      val accountant = Views.views.vend.getOrCreateSystemView(SYSTEM_ACCOUNTANT_VIEW_ID).isDefined
+      val standard = Views.views.vend.getOrCreateSystemView(SYSTEM_STANDARD_VIEW_ID).isDefined
+      val stageOne = Views.views.vend.getOrCreateSystemView(SYSTEM_STAGE_ONE_VIEW_ID).isDefined
+      val manageCustomViews = Views.views.vend.getOrCreateSystemView(SYSTEM_MANAGE_CUSTOM_VIEWS_VIEW_ID).isDefined
+      // Only create Firehose view if they are enabled at instance.
+      val accountFirehose = if (ApiPropsWithAlias.allowAccountFirehose)
+        Views.views.vend.getOrCreateSystemView(SYSTEM_FIREHOSE_VIEW_ID).isDefined
+      else Empty.isDefined
+
+      // The UK Open Banking and Berlin Group views whose can_* sets the code defines
+      // (Constant.SYSTEM_READ_*_VIEW_PERMISSION). Ensured unconditionally rather than through
+      // additional_system_views: the code already depends on them existing. A UK consent naming
+      // ReadTransactionsCredits cannot be granted if that view is absent, and
+      // validateUKConsentPermissions *requires* a direction permission whenever a
+      // transaction-depth one is granted -- so a conforming consent could not be exercised on an
+      // instance whose props predated the view.
+      //
+      // ensureSystemViewUpToDate, not getOrCreateSystemView: the latter returns an existing row
+      // untouched, so a view created by an older version keeps that version's permission set for
+      // good and a tightening in code reaches new installations only. That is how "Detail granted
+      // nothing beyond Basic" and "Balances alone exposed transaction data" survived being fixed.
+      val codeDefinedSystemViews = List(
+        SYSTEM_READ_ACCOUNTS_BASIC_VIEW_ID,
+        SYSTEM_READ_ACCOUNTS_DETAIL_VIEW_ID,
+        SYSTEM_READ_BALANCES_VIEW_ID,
+        SYSTEM_READ_TRANSACTIONS_BASIC_VIEW_ID,
+        SYSTEM_READ_TRANSACTIONS_DEBITS_VIEW_ID,
+        SYSTEM_READ_TRANSACTIONS_CREDITS_VIEW_ID,
+        SYSTEM_READ_TRANSACTIONS_DETAIL_VIEW_ID,
+        SYSTEM_READ_ACCOUNTS_BERLIN_GROUP_VIEW_ID,
+        SYSTEM_READ_BALANCES_BERLIN_GROUP_VIEW_ID
+      )
+      // Default true: a permission set the code tightened must reach the installations that have
+      // the problem, not only fresh ones. An operator who has deliberately hand-tuned these rows
+      // turns it off and takes responsibility for keeping them current.
+      if (APIUtil.getPropsAsBoolValue("system_views.reconcile_permissions_at_boot", true)) {
+        codeDefinedSystemViews.foreach(Views.views.vend.ensureSystemViewUpToDate)
+      } else {
+        logger.warn("system_views.reconcile_permissions_at_boot is false: the UK Open Banking and " +
+          "Berlin Group system views keep whatever permissions they already carry, which may be " +
+          "an older and wider set than this build defines.")
+        codeDefinedSystemViews.foreach(Views.views.vend.getOrCreateSystemView)
+      }
+
+      // The remaining two stay opt-in: nothing in the code requires them to exist, so whether an
+      // instance has them is still the operator's call. Their permission sets ARE code-defined
+      // though, so where they do exist they are kept current the same way -- the prop decides
+      // existence, not whether the code is authoritative about what a view grants.
+      APIUtil.getPropsValue("additional_system_views") match {
+        case Full(value) =>
+          val additionalSystemViewsFromProps = value.split(",").map(_.trim).toList
+          val additionalSystemViews = List(
+            SYSTEM_READ_TRANSACTIONS_BERLIN_GROUP_VIEW_ID,
+            SYSTEM_INITIATE_PAYMENTS_BERLIN_GROUP_VIEW_ID
+          )
+          for {
+            systemView <- additionalSystemViewsFromProps
+            if additionalSystemViews.exists(_ == systemView)
+          } {
+            Views.views.vend.ensureSystemViewUpToDate(systemView)
+          }
+        case _ => // Do nothing
+      }
+
+    }
+
+    //see the notes for this method:
+    createDefaultBankAndDefaultAccountsIfNotExisting()
+
+    createBootstrapSuperUser()
+    createBootstrapOidcOperatorUser()
+
+    createBootstrapOidcOperatorConsumer()
+  }
+
+  /** Schema only. The data seeds that used to hang off this method are separate now, so a role
+    * that must not issue DDL can still be given the seeds (and vice versa). */
   def schemifyAll() = {
     Schemifier.schemify(true, Schemifier.infoF _, ToSchemify.models: _*)
-    // Create default system-level "general" chat room (is_open_room = true)
+  }
+
+  /** Create the default system-level "general" chat room (is_open_room = true). Idempotent.
+    * Split out of `schemifyAll` because it is seed data, not schema — gating the DDL used to
+    * silently take this with it. */
+  def seedDefaultChatRoom() = {
     code.chat.ChatRoomTrait.chatRoomProvider.vend.getOrCreateDefaultRoom()
+  }
+
+  /**
+   * Start the gRPC server (when enabled) and register the process's single shutdown hook.
+   *
+   * This used to live in `ToSchemify`'s object initialiser, which ran only as a side effect of
+   * `schemifyAll()` touching `ToSchemify.models`. Graceful shutdown was therefore tied to
+   * whether this JVM happened to run the schema DDL — fine while every JVM did, and exactly
+   * wrong once a role skips it: a `web` instance would lose its ordered shutdown at the moment
+   * rolling updates make ordered shutdown matter. Called explicitly from `boot`, for every role.
+   *
+   * One ORDERED hook, not two concurrent ones: the JVM runs every registered hook thread
+   * concurrently with no ordering guarantee, so a separate DB-close hook could close the pool
+   * while gRPC was still serving an in-flight request against it. Stop gRPC FIRST (which drains
+   * in flight requests), THEN close DB + Redis. Each step is guarded so one failure does not
+   * skip the rest.
+   */
+  def startGrpcServerAndRegisterShutdownHook(): Unit = {
+    val grpcServerOpt: Option[ObpGrpcServer] =
+      if (APIUtil.getPropsAsBoolValue("grpc.server.enabled", false)) {
+        val server = new ObpGrpcServer(code.api.util.BlockingIoExecutionContext.ec)
+        server.start()
+        Some(server)
+      } else None
+
+    Runtime.getRuntime.addShutdownHook(new Thread(() => {
+      grpcServerOpt.foreach { s =>
+        try s.stop() catch { case e: Throwable => logger.warn("gRPC server.stop() failed during shutdown", e) }
+      }
+      try APIUtil.vendor.closeAllConnections_!() catch { case e: Throwable => logger.warn("DB closeAllConnections_!() failed during shutdown", e) }
+      try Redis.jedisPoolDestroy catch { case e: Throwable => logger.warn("Redis jedisPoolDestroy failed during shutdown", e) }
+    }))
   }
 
   /**
@@ -1097,28 +1195,5 @@ object ToSchemify extends MdcLoggable {
     code.chat.ChatEmailDigestState,
     code.chat.Reaction
   )
-
-  // start grpc server
-  // start grpc server (optional)
-  val grpcServerOpt: Option[ObpGrpcServer] =
-    if (APIUtil.getPropsAsBoolValue("grpc.server.enabled", false)) {
-      val server = new ObpGrpcServer(code.api.util.BlockingIoExecutionContext.ec)
-      server.start()
-      Some(server)
-    } else None
-
-  // Single ORDERED shutdown hook (replaces the former two CONCURRENT hooks: the DB/Redis
-  // close that used to sit earlier in boot, and the gRPC stop here). JVM runs every
-  // addShutdownHook thread concurrently with no ordering guarantee, so the old pair could
-  // race: gRPC might still be serving an in-flight request that touches the DB while the
-  // connection pool is being closed. Here we stop gRPC FIRST (drains in-flight requests),
-  // THEN close DB + Redis. Each step is guarded so one failure doesn't skip the rest.
-  Runtime.getRuntime.addShutdownHook(new Thread(() => {
-    grpcServerOpt.foreach { s =>
-      try s.stop() catch { case e: Throwable => logger.warn("gRPC server.stop() failed during shutdown", e) }
-    }
-    try APIUtil.vendor.closeAllConnections_!() catch { case e: Throwable => logger.warn("DB closeAllConnections_!() failed during shutdown", e) }
-    try Redis.jedisPoolDestroy catch { case e: Throwable => logger.warn("Redis jedisPoolDestroy failed during shutdown", e) }
-  }))
 
 }

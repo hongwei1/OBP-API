@@ -10,6 +10,7 @@ import cats.data.{Kleisli, OptionT}
 import cats.effect._
 import code.api.Constant._
 import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
+import code.api.util.DynamicCode
 import code.api.util.APIUtil.{
   DateWithMsExampleString,
   DefaultToDateString,
@@ -60,7 +61,7 @@ import code.api.util.APIUtil.{HTTPParam, createQueriesByHttpParamsFuture, unboxF
 import code.api.util.{ApiVersionUtils, CertificateUtil, CommonsEmailWrapper, RateLimitingUtil}
 import code.api.v2_0_0.{BasicViewJson, JSONFactory200}
 import code.api.v3_0_0.JSONFactory300
-import code.abacrule.{AbacRuleEngine, MappedAbacRuleProvider}
+import code.abacrule.MappedAbacRuleProvider
 import code.api.v3_1_0.PostCustomerNumberJsonV310
 import code.api.v4_0_0.CallLimitPostJsonV400
 import code.api.v5_1_0.UserAttributesResponseJsonV510
@@ -78,7 +79,6 @@ import code.api.v6_0_0.JSONFactory600.UpdateViewJsonV600
 import code.model._
 import code.model.dataAccess.AuthUser
 import code.users.{Users, DoobieUserQueries}
-import code.api.util.DynamicUtil
 import code.util.Helper.SILENCE_IS_GOLDEN
 import com.openbankproject.commons.dto.GetProductsParam
 import code.model.ModeratedTransaction
@@ -1152,7 +1152,7 @@ object Http4s600 {
       case req @ GET -> `prefixPath` / "system" / "connectors" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future.successful {
-            val connectorNames = BankConnector.nameToConnector.keys.toList :+ "star"
+            val connectorNames = BankConnector.availableConnectors.keys.toList :+ "star"
             val connectorInfos = connectorNames.map { name =>
               ConnectorInfoJsonV600(
                 connector_name = name,
@@ -4606,8 +4606,8 @@ object Http4s600 {
               }
             }
           } yield try {
-            code.api.dynamic.endpoint.helper.CompiledObjects(
-              body.exampleRequestBody, body.successResponseBody, body.methodBody).validateDependency()
+            code.api.util.DynamicCode.checkDynamicResourceDoc(
+              body.exampleRequestBody, body.successResponseBody, body.methodBody)
             ValidateDynamicResourceDocSuccessJsonV600(
               valid = true,
               message = "Dynamic Resource Doc method body is valid Scala and uses allowed dependencies.")
@@ -4751,11 +4751,12 @@ object Http4s600 {
             else
               code.users.Users.users.vend.getUsersByUserIdsFuture(abacUserIds).flatMap { users =>
                 Future.sequence(users.map { user =>
-                  code.abacrule.AbacRuleEngine.executeRulesByPolicyDetailed(
-                    policy = ABAC_POLICY_ACCOUNT_ACCESS,
-                    authenticatedUserId = user.userId, callContext = cc,
-                    bankId = Some(bankId.value), accountId = Some(accountId.value),
-                    viewId = Some(viewId.value)
+                  code.api.util.AbacRules.executeRulesByPolicyDetailed(
+                    ABAC_POLICY_ACCOUNT_ACCESS,
+                    code.api.util.AbacSubject(
+                      authenticatedUserId = user.userId, callContext = cc,
+                      bankId = Some(bankId.value), accountId = Some(accountId.value),
+                      viewId = Some(viewId.value))
                   ).map[Option[JSONFactory600.UserWithViewAccessJsonV600]] {
                     case Full((true, _)) => Some(JSONFactory600.UserWithViewAccessJsonV600(
                       user_id = user.userId, username = user.name,
@@ -4962,14 +4963,14 @@ object Http4s600 {
         EndpointHelpers.executeAndRespond(req) { implicit cc =>
           val rawBody = cc.httpBody.getOrElse("")
           for {
-            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
             validateJson <- NewStyle.function.tryons(InvalidJsonFormat, 400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[ValidateAbacRuleJsonV600]
             }
             _ <- NewStyle.function.tryons(AbacRuleCodeEmpty, 400, Some(cc)) {
               validateJson.rule_code.trim.nonEmpty
             }
-            box <- code.abacrule.AbacRuleEngine.validateRuleCodeAsync(validateJson.rule_code)
+            box <- code.api.util.AbacRules.validateRuleCode(validateJson.rule_code)
           } yield box match {
             case Full(msg) => ValidateAbacRuleSuccessJsonV600(valid = true, message = msg): Any
             case Failure(errorMsg, _, _) =>
@@ -5015,12 +5016,13 @@ object Http4s600 {
             ruleBox <- Future(code.abacrule.MappedAbacRuleProvider.getAbacRuleById(ruleId))
             _ <- Future(unboxFullOrFail(ruleBox, Some(cc), s"ABAC Rule not found with ID: $ruleId", 404))
             effectiveUserId = execJson.authenticated_user_id.getOrElse(u.userId)
-            result <- code.abacrule.AbacRuleEngine.executeRule(
-              ruleId = ruleId, authenticatedUserId = effectiveUserId,
-              onBehalfOfUserId = execJson.on_behalf_of_user_id, userId = execJson.user_id,
-              callContext = cc, bankId = execJson.bank_id, accountId = execJson.account_id,
-              viewId = execJson.view_id, transactionId = execJson.transaction_id,
-              transactionRequestId = execJson.transaction_request_id, customerId = execJson.customer_id)
+            result <- code.api.util.AbacRules.executeRule(ruleId,
+              code.api.util.AbacSubject(
+                authenticatedUserId = effectiveUserId,
+                onBehalfOfUserId = execJson.on_behalf_of_user_id, userId = execJson.user_id,
+                callContext = cc, bankId = execJson.bank_id, accountId = execJson.account_id,
+                viewId = execJson.view_id, transactionId = execJson.transaction_id,
+                transactionRequestId = execJson.transaction_request_id, customerId = execJson.customer_id))
               .map {
                 case Full(allowed) => AbacRuleResultJsonV600(result = allowed)
                 case _ => AbacRuleResultJsonV600(result = false)
@@ -5043,12 +5045,13 @@ object Http4s600 {
               else Failure(s"Policy not found: $policy. Available policies: ${Constant.ABAC_POLICIES.mkString(", ")}")
             }.map(unboxFullOrFail(_, Some(cc), s"Invalid ABAC Policy: $policy", 404))
             effectiveUserId = execJson.authenticated_user_id.getOrElse(u.userId)
-            result <- code.abacrule.AbacRuleEngine.executeRulesByPolicy(
-              policy = policy, authenticatedUserId = effectiveUserId,
-              onBehalfOfUserId = execJson.on_behalf_of_user_id, userId = execJson.user_id,
-              callContext = cc, bankId = execJson.bank_id, accountId = execJson.account_id,
-              viewId = execJson.view_id, transactionId = execJson.transaction_id,
-              transactionRequestId = execJson.transaction_request_id, customerId = execJson.customer_id)
+            result <- code.api.util.AbacRules.executeRulesByPolicy(policy,
+              code.api.util.AbacSubject(
+                authenticatedUserId = effectiveUserId,
+                onBehalfOfUserId = execJson.on_behalf_of_user_id, userId = execJson.user_id,
+                callContext = cc, bankId = execJson.bank_id, accountId = execJson.account_id,
+                viewId = execJson.view_id, transactionId = execJson.transaction_id,
+                transactionRequestId = execJson.transaction_request_id, customerId = execJson.customer_id))
               .map {
                 case Full(allowed) => AbacRuleResultJsonV600(result = allowed)
                 case _ => AbacRuleResultJsonV600(result = false)
@@ -5864,13 +5867,13 @@ object Http4s600 {
           val rawBody = cc.httpBody.getOrElse("")
           val user = cc.user.openOrThrowException(AuthenticatedUserIsRequired)
           for {
-            _ <- Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+            _ <- Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
             createJson <- NewStyle.function.tryons(InvalidJsonFormat, 400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[CreateAbacRuleJsonV600]
             }
             _ <- Helper.booleanToFuture("Rule name must not be empty", cc = Some(cc)) { createJson.rule_name.nonEmpty }
             _ <- Helper.booleanToFuture("Rule code must not be empty", cc = Some(cc)) { createJson.rule_code.nonEmpty }
-            _ <- AbacRuleEngine.validateRuleCodeAsync(createJson.rule_code)
+            _ <- code.api.util.AbacRules.validateRuleCode(createJson.rule_code)
               .map(unboxFullOrFail(_, Some(cc), "Invalid ABAC rule code", 400))
             // Maker/checker: a managed instance queues the rule for a second user's approval (202)
             intercepted <- Future(MakerChecker.intercept(
@@ -5928,11 +5931,11 @@ object Http4s600 {
           val rawBody = cc.httpBody.getOrElse("")
           val user = cc.user.openOrThrowException(AuthenticatedUserIsRequired)
           for {
-            _ <- Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+            _ <- Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
             updateJson <- NewStyle.function.tryons(InvalidJsonFormat, 400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[UpdateAbacRuleJsonV600]
             }
-            _ <- AbacRuleEngine.validateRuleCodeAsync(updateJson.rule_code)
+            _ <- code.api.util.AbacRules.validateRuleCode(updateJson.rule_code)
               .map(unboxFullOrFail(_, Some(cc), "Invalid ABAC rule code", 400))
             _ <- Future(MappedAbacRuleProvider.getAbacRuleById(ruleId))
               .map(unboxFullOrFail(_, Some(cc), s"ABAC Rule not found with ID: $ruleId", 404))
@@ -5949,7 +5952,7 @@ object Http4s600 {
                   policy = updateJson.policy, isActive = updateJson.is_active,
                   updatedBy = user.userId
                 )).map(unboxFullOrFail(_, Some(cc), s"Could not update ABAC rule with ID: $ruleId", 400))
-                _ <- Future(AbacRuleEngine.clearRuleFromCache(ruleId))
+                _ <- Future(code.api.util.AbacRules.clearRuleFromCache(ruleId))
               } yield (createAbacRuleJsonV600(rule), 200)
             }
           } yield result
@@ -5974,7 +5977,7 @@ object Http4s600 {
               case None => for {
                 _ <- Future(MappedAbacRuleProvider.deleteAbacRule(ruleId))
                   .map(unboxFullOrFail(_, Some(cc), s"Could not delete ABAC rule with ID: $ruleId", 400))
-                _ <- Future(AbacRuleEngine.clearRuleFromCache(ruleId))
+                _ <- Future(code.api.util.AbacRules.clearRuleFromCache(ruleId))
               } yield ("", 200)
             }
           } yield result

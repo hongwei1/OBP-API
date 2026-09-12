@@ -33,15 +33,32 @@ class ConcurrentBackoffCounterSelfHealTest extends FlatSpec with Matchers {
   private def openFuturesCount(serviceName: String): Int =
     APIUtil.serviceNameCountersMap.getOrDefault(serviceName, (0, 0))._2
 
+  /**
+   * Poll until the counter reaches `expected`, up to `timeout`, and return what it finally was.
+   *
+   * The decrements this suite asserts on happen in a reaper TimerTask and in the wrapped Future's
+   * onComplete — both asynchronous, neither ordered against `Await.result` returning. Sleeping a
+   * fixed amount and then asserting therefore encodes a guess about scheduling latency, and the
+   * guess is wrong exactly when the machine is busy: this suite runs in a four-shard parallel
+   * build, and "no regression when it completes immediately" failed there with count=1 while
+   * passing every time in isolation. Polling waits only as long as it must and fails honestly
+   * when the value genuinely never arrives.
+   */
+  private def awaitCount(serviceName: String, expected: Int, timeout: FiniteDuration): Int = {
+    val deadline = timeout.fromNow
+    while (openFuturesCount(serviceName) != expected && deadline.hasTimeLeft()) Thread.sleep(10)
+    openFuturesCount(serviceName)
+  }
+
   "futureWithLimits" should "self-heal the open-futures counter when the wrapped Future never completes" taggedAs ConcurrencyRace in {
     val serviceName = s"__conc_backoff_selfheal_${UUID.randomUUID.toString.take(8)}"
     val neverCompletes = Promise[Unit]().future
 
     FutureUtil.futureWithLimits(neverCompletes, serviceName, reaperTimeoutMillis = 200)
-    Thread.sleep(600)
 
-    withClue(s"openFuturesCount=${openFuturesCount(serviceName)} after reaper should have fired: ") {
-      openFuturesCount(serviceName) shouldBe 0
+    val counted = awaitCount(serviceName, expected = 0, timeout = 5.seconds)
+    withClue(s"openFuturesCount=$counted after the reaper should have fired: ") {
+      counted shouldBe 0
     }
     APIUtil.canOpenFuture(serviceName) shouldBe true
   }
@@ -51,10 +68,13 @@ class ConcurrentBackoffCounterSelfHealTest extends FlatSpec with Matchers {
     val promise = Promise[String]()
 
     val wrapped = FutureUtil.futureWithLimits(promise.future, serviceName, reaperTimeoutMillis = 200)
-    Thread.sleep(400)
+    // The scenario requires the reaper to have fired BEFORE the Future completes, so wait for its
+    // decrement rather than assuming a sleep outlasted it.
+    awaitCount(serviceName, expected = 0, timeout = 5.seconds) shouldBe 0
     promise.success("late value")
     Await.result(wrapped, 5.seconds)
-    // give the onComplete callback a moment to run after the promise resolved
+    // The onComplete callback runs after Await returns. A second decrement would take the counter
+    // to -1, so settle briefly and assert it did not move at all.
     Thread.sleep(200)
 
     withClue(s"openFuturesCount=${openFuturesCount(serviceName)}: reaper and completion both firing must not double-decrement: ") {
@@ -75,11 +95,11 @@ class ConcurrentBackoffCounterSelfHealTest extends FlatSpec with Matchers {
       case Success(_) => fail("expected the failed Future to propagate its failure")
     }
 
-    withClue(s"openFuturesCount(ok)=${openFuturesCount(serviceNameOk)}: ") {
-      openFuturesCount(serviceNameOk) shouldBe 0
-    }
-    withClue(s"openFuturesCount(fail)=${openFuturesCount(serviceNameFail)}: ") {
-      openFuturesCount(serviceNameFail) shouldBe 0
-    }
+    // Await.result returns when the wrapped Future completes; the decrement happens in its
+    // onComplete, which is scheduled separately. Poll for it instead of racing it.
+    val okCount = awaitCount(serviceNameOk, expected = 0, timeout = 5.seconds)
+    withClue(s"openFuturesCount(ok)=$okCount: ") { okCount shouldBe 0 }
+    val failCount = awaitCount(serviceNameFail, expected = 0, timeout = 5.seconds)
+    withClue(s"openFuturesCount(fail)=$failCount: ") { failCount shouldBe 0 }
   }
 }

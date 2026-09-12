@@ -22,6 +22,13 @@ import scala.concurrent.duration._
  * whose type has no registered publisher goes STICKY (an operator problem,
  * not a retry problem).
  *
+ * At-least-once is the delivery contract, but it is per relay pass, not per
+ * relay: every due row is claimed (`MessageOutbox.claimForRelay`) before it is
+ * published, so a second relay — another replica, or the incoming pod of a
+ * rolling update — cannot publish the same message concurrently. The claim
+ * increments `attempts`, so the terminal saves below only record status, error
+ * and reply; they must not increment it again.
+ *
  * OPEN_CORRIDOR reply handling (locked wire contract §4.2/§4.4):
  *  - transport failure / timeout / broker unregistered → row stays PENDING,
  *    attempts+1 (retried next tick; exponential backoff by attempts).
@@ -86,13 +93,21 @@ object MessageOutboxRelay extends MdcLoggable {
       row.UpdatedAt.get.getTime + backoff.toMillis <= now || row.attempts == 0
     }
     if (due.nonEmpty) logger.debug(s"message outbox relay: ${due.size} row(s) due")
-    due.foreach(relayRow)
+    // Claim each row before publishing it. `pending()` hands the same rows to every relay
+    // that asks, so without this a second relay — another replica, or the incoming pod of a
+    // rolling update — publishes the same message again: for OPEN_CORRIDOR, the same credit
+    // notification and settlement instruction delivered to the bank's vhost twice. The claim
+    // also bumps `attempts`, so none of the terminal saves below increment it again.
+    due.foreach { row =>
+      if (MessageOutbox.claimForRelay(row)) relayRow(row)
+      else logger.debug(s"message outbox row ${row.id.get}: claimed by another relay — skipping this pass")
+    }
   }
 
   def relayRow(row: MessageOutbox): Unit = row.outboxType match {
     case MessageOutbox.TYPE_OPEN_CORRIDOR => relayOpenCorridorRow(row)
     case other =>
-      row.Status(MessageOutbox.STATUS_STICKY).Attempts(row.attempts + 1)
+      row.Status(MessageOutbox.STATUS_STICKY)
         .LastError(s"no publisher registered for outbox_type '$other'").saveMe()
       logger.error(s"message outbox row ${row.id.get}: unknown outbox_type '$other' — STICKY")
   }
@@ -119,20 +134,21 @@ object MessageOutboxRelay extends MdcLoggable {
             else ""
           if (row.operationName == "obp_settlement_instruction" && settlementStatus != "FINAL") {
             // Broadcast but not final — keep polling by redelivery (§4.4).
-            row.Attempts(row.attempts + 1).LastError("").LastReplyJson(replyJson).saveMe()
+            // `attempts` was already incremented by the claim in relayOnePass.
+            row.LastError("").LastReplyJson(replyJson).saveMe()
             logger.info(s"message outbox row ${row.id.get}: settlement ${row.subjectId} status '$settlementStatus' — will re-poll")
           } else {
             row.Status(MessageOutbox.STATUS_DELIVERED).LastError("").LastReplyJson(replyJson).saveMe()
             logger.info(s"message outbox row ${row.id.get}: ${row.operationName} to ${row.targetId} DELIVERED")
           }
         } else if (openCorridorStickyErrorCodes.exists(errorCode.startsWith)) {
-          row.Status(MessageOutbox.STATUS_STICKY).Attempts(row.attempts + 1)
+          row.Status(MessageOutbox.STATUS_STICKY)
             .LastError(errorCode).LastReplyJson(replyJson).saveMe()
           logger.error(s"message outbox row ${row.id.get}: ${row.operationName} to ${row.targetId} " +
             s"STICKY error $errorCode — operator reconciliation required (subject ${row.subjectId})")
         } else {
           // Retryable business failure (e.g. SETTLEMENT-FAILED, CBS-DELIVERY-FAILED).
-          row.Attempts(row.attempts + 1).LastError(errorCode).LastReplyJson(replyJson).saveMe()
+          row.LastError(errorCode).LastReplyJson(replyJson).saveMe()
           logger.warn(s"message outbox row ${row.id.get}: ${row.operationName} to ${row.targetId} " +
             s"replied $errorCode — will retry")
         }
@@ -141,7 +157,7 @@ object MessageOutboxRelay extends MdcLoggable {
           case Failure(msg, _, _) => msg
           case _ => "no reply"
         }
-        row.Attempts(row.attempts + 1).LastError(error.take(2000)).saveMe()
+        row.LastError(error.take(2000)).saveMe()
         logger.warn(s"message outbox row ${row.id.get}: ${row.operationName} to ${row.targetId} " +
           s"transport failure (attempt ${row.attempts}): $error")
     }

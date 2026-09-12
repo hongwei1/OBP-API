@@ -4,8 +4,8 @@ import org.json4s._
 import cats.effect._
 import code.api.APIFailureNewStyle
 import code.api.JsonResponseException
-import code.api.berlin.group.ConstantsBG
-import code.api.berlin.group.v1_3.JSONFactory_BERLIN_GROUP_1_3.{ErrorMessageBG, ErrorMessagesBG}
+import code.api.util.BerlinGroupVocabulary
+import code.api.util.BerlinGroupVocabulary.{ErrorMessageBG, ErrorMessagesBG}
 import code.api.util.APIUtil.JsonResponseExtractor
 import code.api.util.BerlinGroupError
 import code.api.util.ErrorMessages._
@@ -93,7 +93,7 @@ object ErrorResponseConverter {
   }
 
   private def isBerlinGroupRequest(callContext: CallContext): Boolean =
-    callContext.url.contains(ConstantsBG.berlinGroupVersion1.urlPrefix)
+    callContext.url.contains(BerlinGroupVocabulary.berlinGroupVersion1.urlPrefix)
 
   /** Mirror the BG error body from APIUtil.failedJsonResponse for http4s paths. */
   private def toBgErrorBody(statusCode: Int, message: String, callContext: CallContext): String = {

@@ -2,6 +2,7 @@ package code.api.util.http4s
 
 import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
+import code.api.util.BerlinGroupVocabulary
 import code.api.util.APIUtil
 import code.api.util.http4s.Http4sRequestAttributes
 import code.util.Helper.MdcLoggable
@@ -46,8 +47,11 @@ object Http4sApp extends MdcLoggable {
   // Evaluated once at object init, matching Lift's startup-only evaluation in enableVersionIfAllowed.
   // The per-endpoint disable check still runs inside ResourceDocMiddleware for finer-grained Props
   // (api_disabled_endpoints / api_enabled_endpoints).
-  private def gate(version: ScannedApiVersion, routes: HttpRoutes[IO]): HttpRoutes[IO] =
-    if (APIUtil.versionIsAllowed(version)) routes else HttpRoutes.empty[IO]
+  //
+  // The gate itself lives in VersionGate — see there for why `routes` is by name, and why it is
+  // not a private method on this object.
+  private def gate(version: ScannedApiVersion, routes: => HttpRoutes[IO]): HttpRoutes[IO] =
+    VersionGate(version, routes)
 
   private val v121Routes: HttpRoutes[IO] = gate(ApiVersion.v1_2_1, code.api.v1_2_1.Http4s121.wrappedRoutesV121Services)
   private val v130Routes: HttpRoutes[IO] = gate(ApiVersion.v1_3_0, code.api.v1_3_0.Http4s130.wrappedRoutesV130Services)
@@ -78,6 +82,22 @@ object Http4sApp extends MdcLoggable {
   private val ukV20Routes: HttpRoutes[IO] = gate(ApiVersion.ukOpenBankingV20, code.api.UKOpenBanking.v2_0_0.Http4sUKOBv200.wrappedRoutes)
   private val ukV31Routes: HttpRoutes[IO] = gate(ApiVersion.ukOpenBankingV31, code.api.UKOpenBanking.v3_1_0.Http4sUKOBv310.wrappedRoutes)
   private val ukV401Routes: HttpRoutes[IO] = gate(ApiVersion.ukOpenBankingV401, code.api.UKOpenBanking.v4_0_1.Http4sUKOBv401.wrappedRoutes)
+
+  // Berlin Group. These three were referenced straight from the per-request chain below, with no
+  // gate at all — so api_disabled_versions / api_enabled_versions could disable every other
+  // standard but never Berlin Group, silently. They are gated like everything else now.
+  private val bgV2Routes: HttpRoutes[IO] =
+    gate(BerlinGroupVocabulary.berlinGroupVersion2, code.api.berlin.group.v2.Http4sBGv2.wrappedRoutes)
+  private val bgV13Routes: HttpRoutes[IO] =
+    gate(BerlinGroupVocabulary.berlinGroupVersion1, code.api.berlin.group.v1_3.Http4sBGv13.wrappedRoutes)
+  // The alias is a second URL prefix in front of the same BG v1.3 endpoints, so it needs BOTH to
+  // be allowed: disabling BG v1.3 while the alias kept serving those very endpoints would make
+  // the disable meaningless.
+  private val bgV13AliasRoutes: HttpRoutes[IO] =
+    VersionGate.when(
+      APIUtil.versionIsAllowed(BerlinGroupVocabulary.berlinGroupVersion1) &&
+        APIUtil.versionIsAllowed(code.api.berlin.group.v1_3.Http4sBGv13Alias.aliasVersion),
+      code.api.berlin.group.v1_3.Http4sBGv13Alias.wrappedRoutes)
 
   // JSON 404 for all unmatched paths — terminal entry in baseServices.
   private val notFoundCatchAll: HttpRoutes[IO] = HttpRoutes[IO] { req =>
@@ -136,12 +156,12 @@ object Http4sApp extends MdcLoggable {
         .orElse(v600Routes.run(req))
         .orElse(v510Routes.run(req))
         .orElse(v500Routes.run(req))
-        .orElse(code.api.berlin.group.v2.Http4sBGv2.wrappedRoutes.run(req))
+        .orElse(bgV2Routes.run(req))
         .orElse(ukV20Routes.run(req))
         .orElse(ukV31Routes.run(req))
         .orElse(ukV401Routes.run(req))
-        .orElse(code.api.berlin.group.v1_3.Http4sBGv13.wrappedRoutes.run(req))
-        .orElse(code.api.berlin.group.v1_3.Http4sBGv13Alias.wrappedRoutes.run(req))
+        .orElse(bgV13Routes.run(req))
+        .orElse(bgV13AliasRoutes.run(req))
         .orElse(v400Routes.run(req))
         .orElse(v310Routes.run(req))
         .orElse(v300Routes.run(req))

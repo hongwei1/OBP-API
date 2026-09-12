@@ -45,8 +45,8 @@ class SwaggerFactoryUnitTest extends V140ServerSetup with MdcLoggable {
     ) {
       val translateCaseClassToSwaggerFormatString: String =
         SwaggerJSONFactory.translateEntity(
-          SwaggerDefinitionsJSON.accountInnerJsonUKOpenBanking_v200
-            .copy(SecondaryIdentification = Some("1111"))
+          SwaggerDefinitionsJSON.accountAttributeResponseJson
+            .copy(product_instance_code = Some("1111"))
         )
       logger.debug("{" + translateCaseClassToSwaggerFormatString + "}")
       // This optional type should be "1111", should not contain Some(1111)

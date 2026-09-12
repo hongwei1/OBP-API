@@ -28,7 +28,6 @@ package code.api.dynamic.entity
 
 import APIMethodsDynamicEntity.ImplementationsDynamicEntity
 import code.api.OBPRestHelper
-import code.api.dynamic.endpoint.helper.DynamicEndpoints
 import code.api.util.APIUtil
 import code.util.Helper.MdcLoggable
 import com.openbankproject.commons.util.{ApiVersion,ApiVersionStatus}

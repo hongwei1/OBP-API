@@ -139,7 +139,9 @@ object ConnectorBuilderUtil {
     private[this] def paramAnResult = tp.toString
       .replaceAll("""[.\w]+\.(\w+\.([A-Z]+\b|Value)\b)""", "$1") // two times replaceAll to delete package name, but keep enum type name
       .replaceAll("""([.\w]+\.){2,}(\w+\b)""", "$2")
-      .replaceFirst("\\)", "): ")
+      // scala-reflect used to render a method type as "(params)Result" and now renders "(params): Result";
+      // insert the colon only when it is missing, or every signature comes out as "): :".
+      .replaceFirst("\\)(: )?", "): ")
       .replace("cardAttributeType: Value", "cardAttributeType: CardAttributeType.Value") // scala enum is bad for Reflection
       .replace("productAttributeType: Value", "productAttributeType: ProductAttributeType.Value") // scala enum is bad for Reflection
       .replace("accountAttributeType: Value", "accountAttributeType: AccountAttributeType.Value") // scala enum is bad for Reflection
@@ -311,6 +313,17 @@ object ConnectorBuilderUtil {
       "getBranches",
       "getAtm",
       "getAtms",
+      "createOrUpdateAtm",
+      "createOrUpdateBranch",
+      "deleteAtm",
+      "deleteAtmAttribute",
+      "deleteAtmAttributesByAtmId",
+      "updateAtmAccessibilityFeatures",
+      "updateAtmLocationCategories",
+      "updateAtmNotes",
+      "updateAtmServices",
+      "updateAtmSupportedCurrencies",
+      "updateAtmSupportedLanguages",
       "createTransactionAfterChallengev300",
       "makePaymentv300",
       "createTransactionRequestv300",

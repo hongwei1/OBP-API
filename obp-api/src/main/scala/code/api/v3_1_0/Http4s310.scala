@@ -23,6 +23,7 @@ import code.api.util.{APIUtil, CallContext, CustomJsonFormats, NewStyle, OBPBank
 import code.api.v1_2_1.{JSONFactory, RateLimiting}
 import code.api.v2_1_0.{JSONFactory210, PutEnabledJSON}
 import code.api.v3_0_0.{CreateViewJsonV300, JSONFactory300}
+import code.api.v3_0_0.JSONFactory300.createAccountAttributeJson
 import code.api.v3_1_0.JSONFactory310._
 import code.bankconnectors.Connector
 import code.consent.{ConsentStatus, Consents, DoobieConsentQueries, MappedConsent}

@@ -2,7 +2,7 @@ package code.api.v1_4_0
 
 import org.json4s._
 import code.api.Constant.{CREATE_LOCALISED_RESOURCE_DOC_JSON_TTL, LOCALISED_RESOURCE_DOC_PREFIX}
-import code.api.berlin.group.v1_3.JvalueCaseClass
+import code.api.util.JvalueCaseClass
 import code.api.cache.Caching
 import code.api.Constant
 import java.util.Date

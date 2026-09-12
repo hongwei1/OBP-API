@@ -41,7 +41,8 @@ import code.api.v2_1_0._
 import code.api.v2_2_0.CounterpartyMetadataJson
 import code.api.v3_0_0.JSONFactory300._
 import code.api.v3_0_0._
-import code.api.v3_1_0.JSONFactory310.{createAccountAttributeJson, createProductAttributesJson}
+import code.api.v3_1_0.JSONFactory310.createProductAttributesJson
+import code.api.v3_0_0.JSONFactory300.createAccountAttributeJson
 import code.api.v3_1_0._
 import code.apicollection.ApiCollectionTrait
 import code.apicollectionendpoint.ApiCollectionEndpointTrait
@@ -534,13 +535,6 @@ case class TransactionAttributeJsonV400(
   name: String,
   `type`: String,
   value: String,
-)
-
-case class TransactionAttributeResponseJson(
-  transaction_attribute_id: String,
-  name: String,
-  `type`: String,
-  value: String
 )
 
 case class TransactionAttributesResponseJson(
@@ -1484,14 +1478,6 @@ object JSONFactory400 {
     )))
   }
 
-  def createTransactionAttributeJson(transactionAttribute: TransactionAttribute) : TransactionAttributeResponseJson = {
-    TransactionAttributeResponseJson(
-      transaction_attribute_id = transactionAttribute.transactionAttributeId,
-      name = transactionAttribute.name,
-      `type` = transactionAttribute.attributeType.toString,
-      value = transactionAttribute.value
-    )
-  }
   
   def createUserAttributeJson(userAttribute: UserAttribute) : UserAttributeResponseJsonV400 = {
     UserAttributeResponseJsonV400(
