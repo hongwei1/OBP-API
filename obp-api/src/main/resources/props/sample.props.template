@@ -1890,6 +1890,17 @@ user_account_is_validated = false
 # is used verbatim (see code.api.Constant.ApiInstanceId). Leave it unset and a bare UUID
 # is generated.
 #
+# ⚠️ Leaving it unset is NOT the safe default it looks like. The two consumers read
+# different things: the lock table and metric rows take code.api.Constant.ApiInstanceId
+# (the UUID above, unique per JVM — correct), but the Redis cache namespace comes from
+# code.api.Constant.getGlobalCacheNamespacePrefix, which re-reads this prop RAW and falls
+# back to the literal string "obp". So an unset value gives every deployment that also
+# leaves it unset the same namespace, "obp_<run.mode>_". Two unrelated OBP deployments
+# pointed at different databases but sharing one Redis then share cache keys, and neither
+# log says anything is wrong — the boot line reads "Global cache namespace prefix:
+# 'obp_prod_'" on both. Set this prop (without a "final" suffix) on every deployment that
+# shares a Redis with another.
+#
 # ⚠️ Do NOT end this value with "final" when running more than one instance. A shared id
 # is not just cosmetic: on boot each instance deletes every `jobscheduler` lock row
 # carrying its own id, to clear locks orphaned by a JVM that died mid-run. With a unique
