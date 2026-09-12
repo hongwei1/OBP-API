@@ -9,6 +9,7 @@ import code.api.ResourceDocs1_4_0.SwaggerDefinitionsJSON._
 import code.api.v3_1_0.ConsentChallengeJsonV310
 import code.consent.ConsentStatus
 import com.openbankproject.commons.model.enums.{AttributeCategory, AttributeType, UserInvitationPurpose}
+import code.api.util.DynamicCode
 import code.api.util.APIUtil.{EmptyBody, ResourceDoc, _}
 import code.api.util.ApiRole._
 import code.api.util.ApiTag._
@@ -41,7 +42,7 @@ import code.api.v4_0_0.JSONFactory400._
 import code.DynamicData.DynamicData
 import code.api.util.migration.Migration
 import code.dynamicEntity.DynamicEntityCommons
-import code.bankconnectors.{Connector, DynamicConnector, InternalConnector}
+import code.bankconnectors.Connector
 import code.authtypevalidation.JsonAuthTypeValidation
 import code.endpointMapping.EndpointMappingCommons
 import code.entitlement.Entitlement
@@ -49,9 +50,6 @@ import code.model.BankX
 import code.api.JsonResponseException
 import code.api.util.AuthenticationType
 import code.api.util.CommonsEmailWrapper.{EmailContent, sendHtmlEmail}
-import code.api.util.DynamicUtil
-import code.api.util.DynamicUtil.Validation
-import code.api.dynamic.endpoint.helper.CompiledObjects
 import code.api.dynamic.endpoint.helper.practise.DynamicEndpointCodeGenerator
 import code.model.dataAccess.BankAccountCreation
 import code.connectormethod.{JsonConnectorMethod, JsonConnectorMethodMethodBody}
@@ -9312,7 +9310,7 @@ object Http4s400 {
           val cc = req.callContext
           val rawBody = cc.httpBody.getOrElse("")
           for {
-            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
             jsonConnectorMethod <- NewStyle.function.tryons(
               s"$InvalidJsonFormat The Json body should be the ${classOf[JsonConnectorMethod].getSimpleName}",
               400, Some(cc)) {
@@ -9322,16 +9320,11 @@ object Http4s400 {
             _ <- code.util.Helper.booleanToFuture(
               s"$ConnectorMethodAlreadyExists Please use a different method_name(${jsonConnectorMethod.methodName})",
               cc = callContext) { !isExists }
-            connectorMethod = InternalConnector.createFunction(
+            compiled = DynamicCode.checkConnectorMethod(
               jsonConnectorMethod.methodName,
               jsonConnectorMethod.decodedMethodBody,
               jsonConnectorMethod.programmingLang)
-            errorMsg =
-              if (connectorMethod.isEmpty)
-                s"$ConnectorMethodBodyCompileFail ${connectorMethod.asInstanceOf[Failure].msg}"
-              else ""
-            _ <- code.util.Helper.booleanToFuture(errorMsg, cc = callContext) { connectorMethod.isDefined }
-            _ = Validation.validateDependency(connectorMethod.head)
+            _ <- code.util.Helper.booleanToFuture(compiled.left.getOrElse(""), cc = callContext) { compiled.isRight }
             result <- interceptOrApply(CONNECTOR_METHOD, ChangeOp.CREATE, None, 201, cc) {
               NewStyle.function.createJsonConnectorMethod(jsonConnectorMethod, callContext).map(_._1)
             }
@@ -9345,23 +9338,18 @@ object Http4s400 {
           val cc = req.callContext
           val rawBody = cc.httpBody.getOrElse("")
           for {
-            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
             connectorMethodBody <- NewStyle.function.tryons(
               s"$InvalidJsonFormat The Json body should be the ${classOf[JsonConnectorMethod].getSimpleName}",
               400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[JsonConnectorMethodMethodBody]
             }
             (cm, callContext) <- NewStyle.function.getJsonConnectorMethodById(connectorMethodId, Some(cc))
-            connectorMethod = InternalConnector.createFunction(
+            compiled = DynamicCode.checkConnectorMethod(
               cm.methodName,
               connectorMethodBody.decodedMethodBody,
               connectorMethodBody.programmingLang)
-            errorMsg =
-              if (connectorMethod.isEmpty)
-                s"$ConnectorMethodBodyCompileFail ${connectorMethod.asInstanceOf[Failure].msg}"
-              else ""
-            _ <- code.util.Helper.booleanToFuture(errorMsg, cc = callContext) { connectorMethod.isDefined }
-            _ = Validation.validateDependency(connectorMethod.head)
+            _ <- code.util.Helper.booleanToFuture(compiled.left.getOrElse(""), cc = callContext) { compiled.isRight }
             result <- interceptOrApply(CONNECTOR_METHOD, ChangeOp.UPDATE, Some(connectorMethodId), 200, cc) {
               NewStyle.function.updateJsonConnectorMethod(
                 connectorMethodId, connectorMethodBody.methodBody, connectorMethodBody.programmingLang, callContext).map(_._1)
@@ -9534,7 +9522,7 @@ object Http4s400 {
 
     private def compileDynamicResourceDoc(body: JsonDynamicResourceDoc, cc: CallContext): Unit = {
       try {
-        CompiledObjects(body.exampleRequestBody, body.successResponseBody, body.methodBody).validateDependency()
+        DynamicCode.checkDynamicResourceDoc(body.exampleRequestBody, body.successResponseBody, body.methodBody)
       } catch {
         case e: JsonResponseException => throw e
         case e: Exception =>
@@ -9561,7 +9549,7 @@ object Http4s400 {
 
     private def createDynamicResourceDocImpl(bankId: Option[String], rawBody: String, cc: CallContext): Future[(Any, Int)] = {
       for {
-        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
         body <- NewStyle.function.tryons(
           s"$InvalidJsonFormat The Json body should be the ${classOf[JsonDynamicResourceDoc].getSimpleName}",
           400, Some(cc)) {
@@ -9582,7 +9570,7 @@ object Http4s400 {
 
     private def updateDynamicResourceDocImpl(bankId: Option[String], dynamicResourceDocId: String, rawBody: String, cc: CallContext): Future[(Any, Int)] = {
       for {
-        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
         body <- NewStyle.function.tryons(
           s"$InvalidJsonFormat The Json body should be the ${classOf[JsonDynamicResourceDoc].getSimpleName}",
           400, Some(cc)) {
@@ -9870,7 +9858,7 @@ object Http4s400 {
 
     private def createDynamicMessageDocImpl(bankId: Option[String], rawBody: String, cc: CallContext): Future[(Any, Int)] = {
       for {
-        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
         body <- NewStyle.function.tryons(
           s"$InvalidJsonFormat The Json body should be the ${classOf[JsonDynamicMessageDoc].getSimpleName}",
           400, Some(cc)) {
@@ -9880,13 +9868,8 @@ object Http4s400 {
         _ <- code.util.Helper.booleanToFuture(
           s"$DynamicMessageDocAlreadyExists The json body process(${body.process}) already exists",
           cc = callContext) { !exists }
-        connectorMethod = DynamicConnector.createFunction(body.programmingLang, body.decodedMethodBody)
-        errorMsg =
-          if (connectorMethod.isEmpty)
-            s"$ConnectorMethodBodyCompileFail ${connectorMethod.asInstanceOf[Failure].msg}"
-          else ""
-        _ <- code.util.Helper.booleanToFuture(errorMsg, cc = callContext) { connectorMethod.isDefined }
-        _ = Validation.validateDependency(connectorMethod.orNull)
+        compiled = DynamicCode.checkDynamicMessageDoc(body.programmingLang, body.decodedMethodBody)
+        _ <- code.util.Helper.booleanToFuture(compiled.left.getOrElse(""), cc = callContext) { compiled.isRight }
         result <- interceptOrApply(DYNAMIC_MESSAGE_DOC, ChangeOp.CREATE, None, 201, cc) {
           NewStyle.function.createJsonDynamicMessageDoc(bankId, body, callContext).map(_._1)
         }
@@ -9895,19 +9878,14 @@ object Http4s400 {
 
     private def updateDynamicMessageDocImpl(bankId: Option[String], dynamicMessageDocId: String, rawBody: String, cc: CallContext): Future[(Any, Int)] = {
       for {
-        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicUtil.dynamicCodeExecutionEnabled }
+        _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { DynamicCode.isEnabled }
         body <- NewStyle.function.tryons(
           s"$InvalidJsonFormat The Json body should be the ${classOf[JsonDynamicMessageDoc].getSimpleName}",
           400, Some(cc)) {
           com.openbankproject.commons.util.JsonAliases.parse(rawBody).extract[JsonDynamicMessageDoc]
         }
-        connectorMethod = DynamicConnector.createFunction(body.programmingLang, body.decodedMethodBody)
-        errorMsg =
-          if (connectorMethod.isEmpty)
-            s"$ConnectorMethodBodyCompileFail ${connectorMethod.asInstanceOf[Failure].msg}"
-          else ""
-        _ <- code.util.Helper.booleanToFuture(errorMsg, cc = Some(cc)) { connectorMethod.isDefined }
-        _ = Validation.validateDependency(connectorMethod.orNull)
+        compiled = DynamicCode.checkDynamicMessageDoc(body.programmingLang, body.decodedMethodBody)
+        _ <- code.util.Helper.booleanToFuture(compiled.left.getOrElse(""), cc = Some(cc)) { compiled.isRight }
         (_, callContext) <- NewStyle.function.getJsonDynamicMessageDocById(bankId, dynamicMessageDocId, Some(cc))
         result <- interceptOrApply(DYNAMIC_MESSAGE_DOC, ChangeOp.UPDATE, Some(dynamicMessageDocId), 200, cc) {
           NewStyle.function.updateJsonDynamicMessageDoc(

@@ -288,6 +288,11 @@ class Boot extends MdcLoggable {
     // request has to be able to answer the question.
     code.abacrule.AbacRuleEngineAccountAccessProvider.install()
 
+    // Runtime compilation of user-supplied Dynamic Resource Docs / Message Docs / Connector
+    // Methods. The management endpoints ask through code.api.util.DynamicCode, so the toolbox can
+    // later live in an optional module; without it they answer DynamicCodeExecutionDisabled.
+    code.api.dynamic.endpoint.helper.DynamicCodeCompilerImpl.install()
+
     // Read-only diagnostics: every role reports a misconfiguration it can see, whether or not it
     // is the one that writes the schema.
     ApiWarnings.logWarningsRegardingProperties()

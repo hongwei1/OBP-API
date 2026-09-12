@@ -6554,7 +6554,7 @@ object Http4s700 {
         EndpointHelpers.withUser(req) { (u, cc) =>
           import code.api.v7_0_0.JSONFactory700.{DynamicCompileErrorJsonV700, DynamicCompileResultJsonV700, DynamicResourceDocCompileJsonV700}
           for {
-            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { code.api.util.DynamicUtil.dynamicCodeExecutionEnabled }
+            _ <- code.util.Helper.booleanToFuture(DynamicCodeExecutionDisabled, cc = Some(cc)) { code.api.util.DynamicCode.isEnabled }
             _ <- code.util.Helper.booleanToFuture(s"${code.api.util.ErrorMessages.TooManyRequests} at most $dynamicCompileCallsPerMinute dry-run compiles per minute per user", 429, Some(cc)) { allowDynamicCompile(u.userId) }
             body <- NewStyle.function.tryons(s"$InvalidJsonFormat The Json body should be the ${classOf[DynamicResourceDocCompileJsonV700].getSimpleName}", 400, Some(cc)) {
               com.openbankproject.commons.util.JsonAliases.parse(cc.httpBody.getOrElse("")).extract[DynamicResourceDocCompileJsonV700]
@@ -6564,13 +6564,13 @@ object Http4s700 {
             }
             result <- Future {
               val start = System.currentTimeMillis()
-              val problems = scala.util.Try(code.api.dynamic.endpoint.helper.CompiledObjects.compileProblems(body.example_request_body, body.success_response_body, body.method_body)) match {
+              val problems = scala.util.Try(code.api.util.DynamicCode.compileProblems(body.example_request_body, body.success_response_body, body.method_body)) match {
                 case scala.util.Success(ps) => ps
-                case scala.util.Failure(e) => List(code.api.util.DynamicUtil.CompileProblem(0, 0, "ERROR", Option(e.getMessage).getOrElse(e.toString)))
+                case scala.util.Failure(e) => List(code.api.util.DynamicCodeProblem(0, 0, "ERROR", Option(e.getMessage).getOrElse(e.toString)))
               }
               val dependencyError: Option[String] =
                 if (problems.nonEmpty) None
-                else scala.util.Try(code.api.dynamic.endpoint.helper.CompiledObjects(body.example_request_body, body.success_response_body, body.method_body).validateDependency()) match {
+                else scala.util.Try(code.api.util.DynamicCode.checkDynamicResourceDoc(body.example_request_body, body.success_response_body, body.method_body)) match {
                   case scala.util.Success(_) => None
                   case scala.util.Failure(e: code.api.JsonResponseException) => Some(com.openbankproject.commons.util.JsonAliases.compactRender(e.jsonResponse.body))
                   case scala.util.Failure(e) => Some(Option(e.getMessage).getOrElse(e.toString))
@@ -6621,7 +6621,7 @@ object Http4s700 {
       case req @ GET -> `prefixPath` / "management" / "dynamic-code-approval-config" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future.successful(JSONFactory700.DynamicCodeApprovalConfigJsonV700(
-            dynamic_code_execution_enabled = code.api.util.DynamicUtil.dynamicCodeExecutionEnabled,
+            dynamic_code_execution_enabled = code.api.util.DynamicCode.isEnabled,
             requires_approval        = MakerChecker.enabled,
             target_types             = if (MakerChecker.enabled) MakerChecker.managedTargetTypes.toList.sorted else Nil,
             delete_requires_approval = MakerChecker.enabled && MakerChecker.requireApprovalForDelete,
