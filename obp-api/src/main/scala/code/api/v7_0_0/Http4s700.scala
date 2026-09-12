@@ -5410,7 +5410,7 @@ object Http4s700 {
          |    * `check_metric_retention_policy_is_respected` — flags if the oldest live
          |      metric is older than the retention window (move job not keeping up / stopped).
          |    * `check_all_old_metrics_can_be_archived` — always OK; old metric rows with no
-         |      correlation id are now archived with a generated `ORIGINALLY_NOT_SET-<uuid>` id.
+         |      correlation id are now archived with a generated `ORIGINALLY_NOT_SET-{uuid}` id.
          |    * `check_archive_retention_policy_is_respected` — flags if the oldest archived
          |      metric is older than the archive retention (cleanup not keeping up / stopped).
          |    * `check_archive_metrics_is_fresh_enough` — flags if a backlog exists but
