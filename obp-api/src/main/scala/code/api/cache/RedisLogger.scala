@@ -33,6 +33,13 @@ object RedisLogger {
 
   // Performance and reliability improvements
   private val redisLoggingEnabled = APIUtil.getPropsAsBoolValue("redis_logging_enabled", false)
+
+  /**
+   * Whether Redis log shipping is turned on for this instance. Callers that want to skip
+   * building a log message when neither the local logger nor Redis will consume it (e.g.
+   * MdcLoggable) should check this alongside the local logger's isXEnabled.
+   */
+  def isEnabled: Boolean = redisLoggingEnabled
   private val batchSize = APIUtil.getPropsAsIntValue("redis_logging_batch_size", 100)
   private val flushIntervalMs = APIUtil.getPropsAsIntValue("redis_logging_flush_interval_ms", 1000)
   private val maxRetries = APIUtil.getPropsAsIntValue("redis_logging_max_retries", 3)

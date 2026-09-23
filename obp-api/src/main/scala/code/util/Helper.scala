@@ -284,63 +284,87 @@ object Helper extends Loggable {
           s"[$ts] [$thread] [$clazzName] ${msg.toString}"
         }
 
+      // Every level below builds `maskedMsg` by running the message through ~19 regex
+      // passes in SecureLogging.maskSensitive. That cost must only be paid when the
+      // result is actually going to be consumed (by the local logger and/or Redis
+      // shipping) -- not unconditionally on every call site, which is what made this a
+      // hot path under high request volume with DEBUG enabled.
+
       // INFO
       override def info(msg: => AnyRef): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.info(maskedMsg)
-        RedisLogger.logAsync(RedisLogger.LogLevel.INFO, toRedisFormat(maskedMsg))
+        if (underlyingLogger.isInfoEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isInfoEnabled) underlyingLogger.info(maskedMsg)
+          RedisLogger.logAsync(RedisLogger.LogLevel.INFO, toRedisFormat(maskedMsg))
+        }
       }
 
       override def info(msg: => AnyRef, t: => Throwable): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.info(maskedMsg, t)
-        RedisLogger.logAsync(RedisLogger.LogLevel.INFO, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        if (underlyingLogger.isInfoEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isInfoEnabled) underlyingLogger.info(maskedMsg, t)
+          RedisLogger.logAsync(RedisLogger.LogLevel.INFO, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        }
       }
 
       // WARN
       override def warn(msg: => AnyRef): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.warn(maskedMsg)
-        RedisLogger.logAsync(RedisLogger.LogLevel.WARNING, toRedisFormat(maskedMsg))
+        if (underlyingLogger.isWarnEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isWarnEnabled) underlyingLogger.warn(maskedMsg)
+          RedisLogger.logAsync(RedisLogger.LogLevel.WARNING, toRedisFormat(maskedMsg))
+        }
       }
 
       override def warn(msg: => AnyRef, t: Throwable): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.warn(maskedMsg, t)
-        RedisLogger.logAsync(RedisLogger.LogLevel.WARNING, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        if (underlyingLogger.isWarnEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isWarnEnabled) underlyingLogger.warn(maskedMsg, t)
+          RedisLogger.logAsync(RedisLogger.LogLevel.WARNING, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        }
       }
 
       // ERROR
       override def error(msg: => AnyRef): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.error(maskedMsg)
-        RedisLogger.logAsync(RedisLogger.LogLevel.ERROR, toRedisFormat(maskedMsg))
+        if (underlyingLogger.isErrorEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isErrorEnabled) underlyingLogger.error(maskedMsg)
+          RedisLogger.logAsync(RedisLogger.LogLevel.ERROR, toRedisFormat(maskedMsg))
+        }
       }
 
       override def error(msg: => AnyRef, t: Throwable): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.error(maskedMsg, t)
-        RedisLogger.logAsync(RedisLogger.LogLevel.ERROR, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        if (underlyingLogger.isErrorEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isErrorEnabled) underlyingLogger.error(maskedMsg, t)
+          RedisLogger.logAsync(RedisLogger.LogLevel.ERROR, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        }
       }
 
       // DEBUG
       override def debug(msg: => AnyRef): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.debug(maskedMsg)
-        RedisLogger.logAsync(RedisLogger.LogLevel.DEBUG, toRedisFormat(maskedMsg))
+        if (underlyingLogger.isDebugEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isDebugEnabled) underlyingLogger.debug(maskedMsg)
+          RedisLogger.logAsync(RedisLogger.LogLevel.DEBUG, toRedisFormat(maskedMsg))
+        }
       }
 
       override def debug(msg: => AnyRef, t: Throwable): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.debug(maskedMsg, t)
-        RedisLogger.logAsync(RedisLogger.LogLevel.DEBUG, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        if (underlyingLogger.isDebugEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isDebugEnabled) underlyingLogger.debug(maskedMsg, t)
+          RedisLogger.logAsync(RedisLogger.LogLevel.DEBUG, toRedisFormat(maskedMsg) + "\n" + t.toString)
+        }
       }
 
       // TRACE
       override def trace(msg: => AnyRef): Unit = {
-        val maskedMsg = SecureLogging.maskSensitive(msg)
-        underlyingLogger.trace(maskedMsg)
-        RedisLogger.logAsync(RedisLogger.LogLevel.TRACE, toRedisFormat(maskedMsg))
+        if (underlyingLogger.isTraceEnabled || RedisLogger.isEnabled) {
+          val maskedMsg = SecureLogging.maskSensitive(msg)
+          if (underlyingLogger.isTraceEnabled) underlyingLogger.trace(maskedMsg)
+          RedisLogger.logAsync(RedisLogger.LogLevel.TRACE, toRedisFormat(maskedMsg))
+        }
       }
 
       // Delegate enabled checks
