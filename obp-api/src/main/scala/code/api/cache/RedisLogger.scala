@@ -40,6 +40,26 @@ object RedisLogger {
    * MdcLoggable) should check this alongside the local logger's isXEnabled.
    */
   def isEnabled: Boolean = redisLoggingEnabled
+
+  /**
+   * Floor below which levels are not shipped to Redis even when redis_logging_enabled is
+   * true. Defaults to INFO so that turning Redis log shipping on for a deployment doesn't
+   * silently force every DEBUG/TRACE call site (which can be extremely high-volume) to pay
+   * the cost of formatting and masking a message it would otherwise skip. Set to TRACE to
+   * restore the old "ship everything" behaviour.
+   */
+  private val redisLoggingMinLevel: LogLevel.LogLevel =
+    LogLevel.valueOf(APIUtil.getPropsValue("redis_logging_min_level", "INFO"))
+
+  /**
+   * Whether a message at this level should be shipped to Redis right now. Combines the
+   * on/off switch with the minimum-level floor above. Callers that only want to know "is
+   * Redis shipping on at all" (e.g. to decide whether to enable a config UI) should keep
+   * using `isEnabled`; callers deciding whether to build+ship a specific message should use
+   * this instead.
+   */
+  def shouldShip(level: LogLevel.LogLevel): Boolean =
+    redisLoggingEnabled && level != LogLevel.ALL && level.id >= redisLoggingMinLevel.id
   private val batchSize = APIUtil.getPropsAsIntValue("redis_logging_batch_size", 100)
   private val flushIntervalMs = APIUtil.getPropsAsIntValue("redis_logging_flush_interval_ms", 1000)
   private val maxRetries = APIUtil.getPropsAsIntValue("redis_logging_max_retries", 3)
@@ -155,7 +175,7 @@ object RedisLogger {
    * Returns a Future[Unit], failures are handled gracefully.
    */
   def logAsync(level: LogLevel.LogLevel, message: String): Future[Unit] = {
-    if (!redisLoggingEnabled) {
+    if (!shouldShip(level)) {
       return Future.successful(())
     }
 

@@ -1874,6 +1874,13 @@ ethereum.rpc.url=http://127.0.0.1:8545
 ## Enable Redis logging (true/false)
 redis_logging_enabled = false
 
+## Lowest level shipped to Redis when redis_logging_enabled is true (TRACE/DEBUG/INFO/WARNING/ERROR).
+## Defaults to INFO so enabling Redis log shipping doesn't also force every DEBUG/TRACE call site
+## (which can be extremely high-volume) to pay the cost of formatting and masking a message that
+## would otherwise be skipped locally. Set to DEBUG or TRACE only when you actually want that volume
+## shipped, e.g. temporarily while investigating an issue.
+redis_logging_min_level = INFO
+
 ## Batch size for sending logs to Redis
 ## Smaller batch size reduces latency for logging critical messages.
 redis_logging_batch_size = 50
