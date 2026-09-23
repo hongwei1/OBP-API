@@ -1911,6 +1911,21 @@ redis_logging_warning_queue_max_entries = 1000   # Max WARNING messages
 redis_logging_error_queue_max_entries = 1000     # Max ERROR messages
 redis_logging_all_queue_max_entries = 1000       # Max ALL messages
 
+
+
+##########################################################
+#                   MDC Logging Dispatch                #
+##########################################################
+## Number of threads used to run secret-masking (SecureLogging.maskSensitive) and the local/
+## Redis log write itself, once a call to logger.debug/info/warn/error/trace has determined
+## the message will actually be consumed. This work used to run inline on whatever thread
+## called the logger, including http4s/cats-effect fiber-managed threads -- CPU-bound work
+## that doesn't yield can trip the runtime's own fiber-starvation detector the same way real
+## blocking I/O would, and its response (spinning up more worker/blocker threads that are
+## never reclaimed) was a contributing factor in a real incident. Keep this small; it's meant
+## to decouple from the calling thread, not to parallelize heavy logging.
+mdc_logging_dispatch_thread_pool_size = 2
+
 ## Optional: Circuit breaker reset interval (ms)
 ## How long before retrying after circuit breaker opens. Default 60s.
 redis_logging_circuit_breaker_reset_ms = 60000
