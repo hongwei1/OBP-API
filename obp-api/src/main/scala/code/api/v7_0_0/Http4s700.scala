@@ -208,7 +208,7 @@ object Http4s700 {
     // Convention: val → resourceDocs +=, never the other way around.
 
     // Route: GET /obp/v7.0.0/root
-    val root: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val root: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "root" =>
         val responseJson = convertAnyToJsonString(
           JSONFactory700.getApiInfoJSON(implementedInApiVersion, versionStatus)
@@ -260,7 +260,7 @@ object Http4s700 {
     //   v3: { id, ..., views: [ { id, ... } ] }
     //   v7: { account_id, ..., views: [ { view_id, ... } ] }
 
-    val corePrivateAccountsAllBanks: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val corePrivateAccountsAllBanks: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "accounts" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -344,7 +344,7 @@ object Http4s700 {
       else
         "On this instance, self-service bank creation is currently disabled."
 
-    val createMyBank: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createMyBank: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "my" / "banks" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -442,7 +442,7 @@ object Http4s700 {
       http4sPartialFunction = Some(createMyBank)
     )
 
-    val getMyBanks: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyBanks: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "banks" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -487,7 +487,7 @@ object Http4s700 {
     )
 
     // Category: withUserDelete (user auth, 204 No Content)
-    val deleteEntitlement: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteEntitlement: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "entitlements" / entitlementId =>
         EndpointHelpers.withUserDelete(req) { (_, cc) =>
           Entitlement.entitlement.vend.getEntitlementById(entitlementId) match {
@@ -513,7 +513,7 @@ object Http4s700 {
     )
 
     // Category: withUserAndBodyCreated (user auth, body parsing, 201 Created)
-    val addEntitlement: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val addEntitlement: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "users" / userId / "entitlements" =>
         EndpointHelpers.withUserAndBodyCreated[CreateEntitlementJSON, AnyRef](req) { (user, body, cc) =>
           for {
@@ -578,7 +578,7 @@ object Http4s700 {
     // purpose: the middleware's VIEW_ID validation runs an access check on the
     // CALLING user, which is wrong for a diagnostic that asks about ANOTHER user.
     // The caller's authority comes from CanGetAccountAccessTrace.
-    val getAccountAccessTrace: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getAccountAccessTrace: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / _ / "accounts" / _ / "views" / targetViewIdStr / "users" / targetUserIdStr / "account-access-trace" =>
         EndpointHelpers.withBankAccount(req) { (_, account, cc) =>
           val bankIdAccountId = BankIdAccountId(account.bankId, account.accountId)
@@ -739,7 +739,7 @@ object Http4s700 {
     // Route: GET /obp/v7.0.0/public/consent-config
     // Anonymous: operator-published policy that TPPs/agents need to know before issuing
     // a consent. The /public prefix marks client-facing config that needs no authentication.
-    val getConsentsConfig: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getConsentsConfig: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "public" / "consent-config" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future.successful(JSONFactory700.ConsentsConfigJsonV700(
@@ -774,7 +774,7 @@ object Http4s700 {
     // Answers "which Consumer am I?" for whoever is calling: a logged-in User (via their Consumer) or an
     // Application on its own (client_credentials or a Consumer-Key). No Role: a caller may always learn
     // its own identity. Unlike GET /obp/v6.0.0/consumers/current it carries no rate limits or call counters.
-    val getCurrentConsumerIdentity: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getCurrentConsumerIdentity: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "consumers" / "current" / "identity" =>
         EndpointHelpers.executeFuture(req) {
           implicit val cc: CallContext = req.callContext
@@ -817,7 +817,7 @@ object Http4s700 {
     // Route: GET /obp/v7.0.0/consumers/current/scopes
     // The Roles the calling Consumer holds as Scopes. No Role, like the identity above: a service may always
     // learn what it has been granted, so its status page can say which Scopes it still needs.
-    val getCurrentConsumerScopes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getCurrentConsumerScopes: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "consumers" / "current" / "scopes" =>
         EndpointHelpers.executeFuture(req) {
           implicit val cc: CallContext = req.callContext
@@ -860,7 +860,7 @@ object Http4s700 {
     // As v4.0.0's, with two differences: bank_id may be SYS, the system space of Dynamic Entities, where
     // the Definition and Record Roles live (v4.0.0 refuses it as an unknown bank); and the duplicate check
     // looks the Scope up by the Consumer's primary key, the key Scopes are stored under.
-    val addScope: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val addScope: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "consumers" / consumerId / "scopes" =>
         EndpointHelpers.withUserAndBodyCreated[code.api.v3_0_0.CreateScopeJson, AnyRef](req) { (user, body, cc) =>
           for {
@@ -918,7 +918,7 @@ object Http4s700 {
     // Anonymous: clients need the policy before they hold credentials, to validate
     // a proposed password locally during signup or password reset. The /public
     // prefix marks client-facing config that needs no authentication.
-    val getPasswordPolicy: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getPasswordPolicy: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "public" / "password-config" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future.successful(JSONFactory700.passwordPoliciesJsonV700)
@@ -961,7 +961,7 @@ object Http4s700 {
     // (links to non-whitelisted hosts stay inert text) before and regardless
     // of authentication. The /public prefix marks client-facing config that
     // needs no authentication.
-    val getChatConfig: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getChatConfig: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "public" / "chat-config" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future(JSONFactory700.ChatConfigJsonV700(
@@ -999,7 +999,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/api/error-messages
-    val getErrorMessages: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getErrorMessages: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "api" / "error-messages" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future.successful(ListResult("error_messages", JSONFactory700.errorMessagesCatalog))
@@ -1036,7 +1036,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/api/tags
-    val getApiTags: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getApiTags: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "api" / "tags" =>
         EndpointHelpers.executeAndRespond(req) { _ =>
           Future.successful(JSONFactory700.createApiTagsJsonV700(allResourceDocs.toList))
@@ -1075,7 +1075,7 @@ object Http4s700 {
     // ── Phase 1 batch 2 ─────────────────────────────────────────────────────
 
     // Route: GET /obp/v7.0.0/users/user-id/USER_ID
-    val getUserByUserId: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getUserByUserId: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "users" / "user-id" / userId =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           for {
@@ -1142,7 +1142,7 @@ object Http4s700 {
     // v7 signature change over v6: the response carries the user's own mobile phone
     // fields (number, is_validated flag, validated date) stored on ResourceUser —
     // distinct from the bank-scoped mobile_phone_number on Customer (KYC data).
-    val getCurrentUser: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getCurrentUser: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "users" / "current" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -1214,7 +1214,7 @@ object Http4s700 {
     private val mobilePhoneNumberRegex = """\+?[0-9\-\s().]{5,50}"""
 
     // Route: PUT /obp/v7.0.0/my/user/mobile-phone-number
-    val updateMyMobilePhoneNumber: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateMyMobilePhoneNumber: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "my" / "user" / "mobile-phone-number" =>
         EndpointHelpers.withUserAndBody[JSONFactory700.PutMyMobilePhoneNumberJsonV700, JSONFactory700.MyMobilePhoneNumberJsonV700](req) { (user, body, cc) =>
           for {
@@ -1272,7 +1272,7 @@ object Http4s700 {
     // stored on the ResourceUser as unverified (is_validated=false, no validated
     // date) — verification is a separate flow. Password policy, duplicate-username
     // check, validation email and default entitlements are shared with v6.
-    val createUser: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createUser: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "users" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -1354,7 +1354,7 @@ object Http4s700 {
     // Route: GET /obp/v7.0.0/my/metrics
     // Same fetch path as GET /management/metrics (APIMetrics.getMetricsFromHttpParams)
     // with the user filter locked to the logged-in user.
-    val getMyMetrics: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyMetrics: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "metrics" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -1445,7 +1445,7 @@ object Http4s700 {
 
     // ─── getTopUsers ──────────────────────────────────────────────────────────────
 
-    val getTopUsers: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getTopUsers: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "metrics" / "top-users" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           for {
@@ -1523,7 +1523,7 @@ object Http4s700 {
 
     // ─── getTopConsumers ──────────────────────────────────────────────────────────
 
-    val getTopConsumers: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getTopConsumers: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "metrics" / "top-consumers" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           for {
@@ -1604,7 +1604,7 @@ object Http4s700 {
     // ── Trading Endpoints ──────────────────────────────────────────────────
 
     // Route: POST /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/trading/offers
-    val createTradingOffer: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createTradingOffer: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "trading" / "offers" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.CreateOfferRequestJson, JSONFactory700.TradingOfferJson](req) { (user, createOfferJson, cc) =>
           for {
@@ -1697,7 +1697,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/trading/offers/OFFER_ID
-    val getTradingOffer: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getTradingOffer: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "trading" / "offers" / offerId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -1749,7 +1749,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/trading/offers
-    val getTradingOffers: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getTradingOffers: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "trading" / "offers" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           // Extract query parameters
@@ -1825,7 +1825,7 @@ object Http4s700 {
     )
 
     // Route: DELETE /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/trading/offers/OFFER_ID
-    val cancelTradingOffer: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val cancelTradingOffer: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "trading" / "offers" / offerId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -1864,7 +1864,7 @@ object Http4s700 {
     // ── Market Endpoints (Phase 2) ─────────────────────────────────────────
 
     // Route: POST /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/orders
-    val createMarketOrder: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createMarketOrder: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "orders" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.CreateMarketOrderRequestJson, JSONFactory700.MarketOrderJson](req) { (user, createOrderJson, cc) =>
           for {
@@ -1945,7 +1945,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/orders/ORDER_ID
-    val getMarketOrder: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMarketOrder: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "orders" / orderId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -1993,7 +1993,7 @@ object Http4s700 {
     )
 
     // Route: DELETE /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/orders/ORDER_ID
-    val cancelMarketOrder: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val cancelMarketOrder: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "orders" / orderId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -2043,7 +2043,7 @@ object Http4s700 {
     )
 
     // Route: POST /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/matches
-    val createMarketMatch: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createMarketMatch: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "matches" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.CreateMarketMatchRequestJson, JSONFactory700.MarketMatchJson](req) { (user, createMatchJson, cc) =>
           for {
@@ -2113,7 +2113,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/trades/TRADE_ID
-    val getMarketTrade: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMarketTrade: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "trades" / tradeId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -2160,7 +2160,7 @@ object Http4s700 {
     )
 
     // Route: POST /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/settlements
-    val requestSettlement: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val requestSettlement: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "settlements" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.RequestSettlementJson, JSONFactory700.SettlementJson](req) { (user, requestJson, cc) =>
           for {
@@ -2288,7 +2288,7 @@ object Http4s700 {
 //    )
 
     // Route: POST /obp/v7.0.0/banks/BANK_ID/accounts/ACCOUNT_ID/views/VIEW_ID/market/withdrawals
-    val requestWithdrawal: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val requestWithdrawal: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / bankId / "accounts" / accountId / "views" / viewId / "market" / "withdrawals" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.RequestWithdrawalJson, JSONFactory700.WithdrawalJson](req) { (user, withdrawalJson, cc) =>
           for {
@@ -2626,7 +2626,7 @@ object Http4s700 {
       message_id: String
     )
 
-    val createTestEmail: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createTestEmail: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "self-test-emails" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -2821,7 +2821,7 @@ object Http4s700 {
       }
     }
 
-    val createValidationEmail: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createValidationEmail: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "users" / "validation-emails" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -2960,7 +2960,7 @@ object Http4s700 {
     private val ValidOrganisationVisibilities = Set("public", "unlisted", "private")
     private val OrganisationIdRegex          = "^[a-zA-Z0-9._-]{2,64}$".r
 
-    val createOrganisation: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createOrganisation: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "organisations" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.PostOrganisationJsonV700, JSONFactory700.OrganisationJsonV700](req) { (user, body, cc) =>
           for {
@@ -3031,7 +3031,7 @@ object Http4s700 {
       http4sPartialFunction = Some(createOrganisation)
     )
 
-    val getOrganisations: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getOrganisations: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "organisations" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -3074,7 +3074,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getOrganisations)
     )
 
-    val getOrganisation: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getOrganisation: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "organisations" / organisationId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -3116,7 +3116,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getOrganisation)
     )
 
-    val updateOrganisation: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateOrganisation: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "organisations" / organisationId =>
         EndpointHelpers.withUserAndBody[JSONFactory700.PutOrganisationJsonV700, JSONFactory700.OrganisationJsonV700](req) { (_, body, cc) =>
           for {
@@ -3172,7 +3172,7 @@ object Http4s700 {
       http4sPartialFunction = Some(updateOrganisation)
     )
 
-    val deleteOrganisation: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteOrganisation: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "organisations" / organisationId =>
         EndpointHelpers.withUserDelete(req) { (_, cc) =>
           for {
@@ -3214,7 +3214,7 @@ object Http4s700 {
     // matches path segments by '/', not by '.', so "TZ.MSISDN" is a single
     // segment.
 
-    val createRoutingScheme: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createRoutingScheme: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "routing-schemes" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.PostRoutingSchemeJsonV700, JSONFactory700.RoutingSchemeJsonV700](req) { (user, body, cc) =>
           for {
@@ -3309,7 +3309,7 @@ object Http4s700 {
       http4sPartialFunction = Some(createRoutingScheme)
     )
 
-    val getRoutingSchemes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getRoutingSchemes: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "routing-schemes" =>
         EndpointHelpers.executeAndRespond(req) { cc =>
           val q = req.uri.query.params
@@ -3360,7 +3360,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getRoutingSchemes)
     )
 
-    val getRoutingScheme: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getRoutingScheme: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "routing-schemes" / schemeName =>
         EndpointHelpers.executeAndRespond(req) { cc =>
           for {
@@ -3398,7 +3398,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getRoutingScheme)
     )
 
-    val updateRoutingScheme: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateRoutingScheme: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "routing-schemes" / schemeName =>
         EndpointHelpers.withUserAndBody[JSONFactory700.PutRoutingSchemeJsonV700, JSONFactory700.RoutingSchemeJsonV700](req) { (_, body, cc) =>
           for {
@@ -3476,7 +3476,7 @@ object Http4s700 {
       http4sPartialFunction = Some(updateRoutingScheme)
     )
 
-    val deleteRoutingScheme: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteRoutingScheme: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "routing-schemes" / schemeName =>
         EndpointHelpers.withUserDelete(req) { (_, cc) =>
           for {
@@ -3512,7 +3512,7 @@ object Http4s700 {
     // notification webhook was permanent for everyone, by every route: the provider's delete
     // methods existed but nothing called them. These are that missing half.
 
-    val deleteSystemAccountNotificationWebhook: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteSystemAccountNotificationWebhook: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "web-hooks" / "account" / "notifications" / "on-create-transaction" / webhookId =>
         EndpointHelpers.withUserDelete(req) { (_, cc) =>
           val provider = code.webhook.SystemAccountNotificationWebhookTrait.systemAccountNotificationWebhook.vend
@@ -3547,7 +3547,7 @@ object Http4s700 {
       http4sPartialFunction = Some(deleteSystemAccountNotificationWebhook)
     )
 
-    val deleteBankAccountNotificationWebhook: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteBankAccountNotificationWebhook: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "banks" / _ / "web-hooks" / "account" / "notifications" / "on-create-transaction" / webhookId =>
         EndpointHelpers.withUserAndBankDelete(req) { (_, bank, cc) =>
           val provider = code.webhook.BankAccountNotificationWebhookTrait.bankAccountNotificationWebhook.vend
@@ -3587,7 +3587,7 @@ object Http4s700 {
       http4sPartialFunction = Some(deleteBankAccountNotificationWebhook)
     )
 
-    val getBankSupportedRoutingSchemes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getBankSupportedRoutingSchemes: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / _ / "supported-routing-schemes" =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           for {
@@ -3624,7 +3624,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getBankSupportedRoutingSchemes)
     )
 
-    val putBankSupportedRoutingScheme: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val putBankSupportedRoutingScheme: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "banks" / _ / "supported-routing-schemes" / schemeName =>
         EndpointHelpers.withUserAndBankAndBody[JSONFactory700.PutBankSupportedRoutingSchemeJsonV700, JSONFactory700.BankSupportedRoutingSchemeJsonV700](req) { (_, bank, body, cc) =>
           for {
@@ -3735,7 +3735,7 @@ object Http4s700 {
         }
       } else Future.unit
 
-    val getGlossary: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getGlossary: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "api" / "glossary" =>
         EndpointHelpers.executeAndRespond(req) { cc =>
           val q = req.uri.query.params
@@ -3844,7 +3844,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getGlossary)
     )
 
-    val getGlossaryItem: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getGlossaryItem: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "api" / "glossary" / titleSegment =>
         EndpointHelpers.executeAndRespond(req) { cc =>
           val expanded = !req.uri.query.params.get("expanded").map(_.trim.toLowerCase).contains("false")
@@ -3905,7 +3905,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getGlossaryItem)
     )
 
-    val createGlossaryItem: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createGlossaryItem: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "api" / "glossary" =>
         EndpointHelpers.withUserAndBodyCreated[JSONFactory700.PostGlossaryItemJsonV700, JSONFactory700.GlossaryItemJsonV700](req) { (user, body, cc) =>
           // A json null extracts to a null String rather than failing, so guard before trimming.
@@ -3977,7 +3977,7 @@ object Http4s700 {
       http4sPartialFunction = Some(createGlossaryItem)
     )
 
-    val updateGlossaryItem: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateGlossaryItem: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "api" / "glossary" / titleSegment =>
         EndpointHelpers.withUserAndBody[JSONFactory700.PutGlossaryItemJsonV700, JSONFactory700.GlossaryItemJsonV700](req) { (_, body, cc) =>
           for {
@@ -4032,7 +4032,7 @@ object Http4s700 {
       http4sPartialFunction = Some(updateGlossaryItem)
     )
 
-    val deleteGlossaryItem: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteGlossaryItem: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "api" / "glossary" / titleSegment =>
         EndpointHelpers.withUserDelete(req) { (_, cc) =>
           for {
@@ -4081,7 +4081,7 @@ object Http4s700 {
     private val PayeeLookupValidCategories: Set[String] = Set("ACCOUNT", "BILL", "UTILITY")
     private val PayeeLookupTtlSeconds: Long = 600 // 10 minutes
 
-    val createPayeeLookup: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createPayeeLookup: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" / _ / _ / "payees" / "lookup" =>
         EndpointHelpers.withViewAndBodyCreated[JSONFactory700.PostPayeeLookupJsonV700, JSONFactory700.PayeeLookupResponseJsonV700](req) { (user, bankAccount, _, body, cc) =>
           for {
@@ -4197,7 +4197,7 @@ object Http4s700 {
     // into the existing v400 payment pipeline so the standard transaction-request
     // response shape is preserved.
 
-    val createTransactionRequestMobileWallet: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createTransactionRequestMobileWallet: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" / _ / _ / "transaction-request-types" / "MOBILE_WALLET" / "transaction-requests" =>
         EndpointHelpers.withViewAndBodyCreated[JSONFactory700.TransactionRequestBodyMobileWalletJsonV700, JSONFactory700.TransactionRequestWithChargeMobileWalletJsonV700](req) { (user, fromAccount, view, body, cc) =>
           val countryCode = body.country_code.getOrElse("TZ")
@@ -4336,7 +4336,7 @@ object Http4s700 {
     // payment.
     val UtilityValidCategories: Set[String] = Set("UTILITY", "BILL")
 
-    val createTransactionRequestUtility: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createTransactionRequestUtility: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" / _ / _ / "transaction-request-types" / "UTILITY" / "transaction-requests" =>
         EndpointHelpers.withViewAndBodyCreated[JSONFactory700.TransactionRequestBodyUtilityJsonV700, JSONFactory700.TransactionRequestWithChargeUtilityJsonV700](req) { (user, fromAccount, view, body, cc) =>
           val callCtx = Some(cc)
@@ -4503,7 +4503,7 @@ object Http4s700 {
     // trusted system actor, gated by canCreateUtilityVendResult. Returns 200.
     // System path: a flat /utility-payments/UTILITY_TRANSACTION_REQUEST_ID segment avoids
     // ACCOUNT_ID/VIEW_ID middleware resolution (the rail has no view on the payer's account).
-    val createUtilityVendResult: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createUtilityVendResult: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "utility-payments" / trIdStr / "vend-result" =>
         EndpointHelpers.withUserAndBody[JSONFactory700.PostUtilityVendResultJsonV700, JSONFactory700.UtilityVendResultResponseJsonV700](req) { (_, body, cc) =>
           val callCtx = Some(cc)
@@ -4615,7 +4615,7 @@ object Http4s700 {
     // side-car on the TR row and surfaced on the v7 response. Lives natively at
     // v7 (rather than bridging to v4) because only v7's response shape carries
     // the originator block.
-    val createTransactionRequestOpenCorridor: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createTransactionRequestOpenCorridor: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" / _ / _ / "transaction-request-types" / "OPEN_CORRIDOR_PROMISE" / "transaction-requests" =>
         EndpointHelpers.withViewAndBodyCreated[JSONFactory700.TransactionRequestBodyOpenCorridorJsonV700, JSONFactory700.TransactionRequestWithChargeOpenCorridorJsonV700](req) { (user, fromAccount, view, body, cc) =>
           val callCtx = Some(cc)
@@ -4715,7 +4715,7 @@ object Http4s700 {
     // here. OBP-API stores them as Transaction Request attributes on the PENDING
     // promise TR and later relays the evidence to the beneficiary bank inside
     // obp_credit_notification. The evidence is opaque to OBP-API.
-    val attachOpenCorridorPromise: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val attachOpenCorridorPromise: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" / _ / "transaction-requests" / transactionRequestIdStr / "open-corridor" / "promise" if transactionRequestIdStr.nonEmpty =>
         EndpointHelpers.withUserAndBankAndBodyCreated[JSONFactory700.PostOpenCorridorPromiseJsonV700, JSONFactory700.OpenCorridorPromiseJsonV700](req) { (user, bank, body, cc) =>
           for {
@@ -4776,7 +4776,7 @@ object Http4s700 {
     // Read/repair access to the generic transactional outbox. The relay retries
     // transient failures itself; STICKY rows wait here for a human.
 
-    val getMessageOutbox: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMessageOutbox: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "message-outbox" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           scala.concurrent.Future {
@@ -4795,7 +4795,7 @@ object Http4s700 {
         }
     }
 
-    val retryMessageOutboxRow: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val retryMessageOutboxRow: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "message-outbox" / outboxIdStr / "retry" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           import code.messageoutbox.MessageOutbox
@@ -4946,14 +4946,14 @@ object Http4s700 {
       } yield JSONFactory700.createAccountJsonV700(ownerId, bankAccount, accountAttributes)
     }
 
-    val createAccountV700: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createAccountV700: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" =>
         EndpointHelpers.withUserAndBankAndBodyCreated[JSONFactory700.CreateAccountRequestJsonV700, JSONFactory700.CreateAccountResponseJsonV700](req) { (user, bank, body, cc) =>
           createAccountCommon(user, bank, body, None, cc)
         }
     }
 
-    val createAccountWithIdV700: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createAccountWithIdV700: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "banks" / _ / "accounts" / accountIdStr =>
         EndpointHelpers.withUserAndBankAndBodyCreated[JSONFactory700.CreateAccountRequestJsonV700, JSONFactory700.CreateAccountResponseJsonV700](req) { (user, bank, body, cc) =>
           createAccountCommon(user, bank, body, Some(accountIdStr), cc)
@@ -5042,7 +5042,7 @@ object Http4s700 {
     // bank's Bank Node consumes on its own vhost, so Interface C publishing needs
     // the bank's broker coordinates. Passwords are write-only (never echoed).
 
-    val setAmqpBankBroker: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val setAmqpBankBroker: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "banks" / _ / "amqp-broker" =>
         EndpointHelpers.withUserAndBankAndBody[JSONFactory700.PostAmqpBankBrokerJsonV700, JSONFactory700.AmqpBankBrokerJsonV700](req) { (_, bank, body, cc) =>
           for {
@@ -5061,7 +5061,7 @@ object Http4s700 {
         }
     }
 
-    val getAmqpBankBroker: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getAmqpBankBroker: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / _ / "amqp-broker" =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           scala.concurrent.Future {
@@ -5078,7 +5078,7 @@ object Http4s700 {
         }
     }
 
-    val deleteAmqpBankBroker: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteAmqpBankBroker: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "banks" / _ / "amqp-broker" =>
         EndpointHelpers.withUserAndBankDelete(req) { (_, bank, cc) =>
           scala.concurrent.Future {
@@ -5169,7 +5169,7 @@ object Http4s700 {
     // transaction (transactional outbox; the relay publishes them).
     // The URL bank is one side of the pair; CanSettleOpenCorridor is bank-scoped
     // and checked there, so a bank can only settle corridors it is party to.
-    val createOpenCorridorSettlement: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createOpenCorridorSettlement: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "open-corridor" / "settlements" =>
         EndpointHelpers.withUserAndBankAndBodyCreated[JSONFactory700.PostOpenCorridorSettlementJsonV700, JSONFactory700.OpenCorridorSettleResultJsonV700](req) { (user, bank, body, cc) =>
           for {
@@ -5240,7 +5240,7 @@ object Http4s700 {
     // covered promise; returns exempt) and enqueues ONE settlement instruction
     // with purpose=PLATFORM_FEE — creditor is the PLATFORM's settlement
     // account. The bank's node pays it in ADA like any settlement.
-    val createOpenCorridorFeeSettlement: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createOpenCorridorFeeSettlement: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "open-corridor" / "fee-settlements" =>
         EndpointHelpers.withUserAndBankAndBodyCreated[JSONFactory700.PostOpenCorridorFeeSettlementJsonV700, code.opencorridorfees.OpenCorridorFeeSweepResultJsonV700](req) { (_, bank, body, cc) =>
           for {
@@ -5291,7 +5291,7 @@ object Http4s700 {
     // The settlement resource's read side: ledger fields from the
     // OPEN_CORRIDOR_SETTLEMENT TR, rail status from the settlement-instruction
     // outbox row (the node's last reply — redelivery doubles as the poll).
-    val getOpenCorridorSettlement: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getOpenCorridorSettlement: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / _ / "open-corridor" / "settlements" / settlementId =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           for {
@@ -5360,7 +5360,7 @@ object Http4s700 {
     // do not abort the whole batch — matches how real CBS bulk processing
     // behaves. See BulkPaymentHandler for the orchestration.
 
-    val createTransactionRequestBulk: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createTransactionRequestBulk: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "accounts" / _ / _ / "transaction-request-types" / "BULK" / "transaction-requests" =>
         EndpointHelpers.withViewAndBodyCreated[JSONFactory700.TransactionRequestBodyBulkJsonV700, JSONFactory700.BulkTransactionRequestResponseJsonV700](req) { (user, fromAccount, view, body, cc) =>
           val callCtx = Some(cc)
@@ -5552,7 +5552,7 @@ object Http4s700 {
     // Each successful invocation is audit-logged at INFO level with the
     // calling user_id and the reset view_id; this is a high-impact admin
     // action and we want a trace of who reset what.
-    val factoryResetSystemView: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val factoryResetSystemView: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "system-views" / viewIdStr / "factory-reset" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           val viewId = ViewId(viewIdStr)
@@ -5629,7 +5629,7 @@ object Http4s700 {
     // `metric` and `metricarchive` tables, then runs integrity checks that
     // surface whether MetricsArchiveScheduler is keeping each table inside its
     // configured retention window. Intended for use from the API Manager.
-    val getMetricsDiagnostics: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMetricsDiagnostics: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "system" / "diagnostics" / "metrics" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future {
@@ -5696,7 +5696,7 @@ object Http4s700 {
     // retention props, and records the run in the `metricsarchiverun` log.
     // The run executes synchronously and may take a while for large backlogs
     // (it moves up to `retain_metrics_move_limit` rows).
-    val triggerMetricsArchiveRun: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val triggerMetricsArchiveRun: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "system" / "diagnostics" / "metrics" / "run" =>
         EndpointHelpers.withUser(req) { (user, _) =>
           Future {
@@ -5757,7 +5757,7 @@ object Http4s700 {
     // when the job finishes — so in healthy operation this is empty. Any row here
     // is a currently-running job or a stale lock left by a dead JVM; `age_seconds`
     // tells them apart, and the row can be cleared with the DELETE route below.
-    val getSchedulerJobs: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getSchedulerJobs: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "system" / "scheduler" / "job-locks" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future {
@@ -5802,7 +5802,7 @@ object Http4s700 {
     // Clear a scheduler lock row by its job id. Use this to release a stale lock
     // left by a dead JVM so the job (e.g. metrics archiving) can run again.
     // Idempotent — returns 204 even if the row is already gone.
-    val deleteSchedulerJob: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteSchedulerJob: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "management" / "system" / "scheduler" / "job-locks" / jobId =>
         EndpointHelpers.withUserDelete(req) { (_, _) =>
           Future { code.scheduler.JobScheduler.deleteByJobId(jobId); () }
@@ -5845,7 +5845,7 @@ object Http4s700 {
     // hits Outcome.Errored → rollback.  Used by Http4s700TransactionTest to verify
     // that data written inside a failed request is never committed.
     if (net.liftweb.util.Props.testMode) {
-      val testRollbackEndpoint: HttpRoutes[IO] = HttpRoutes.of[IO] {
+      val testRollbackEndpoint: Http4sRoute = Http4sRoute {
         case req @ POST -> `prefixPath` / "test" / "rollback-check" =>
           val cc = req.callContext
           cc.user.toOption match {
@@ -5879,7 +5879,7 @@ object Http4s700 {
     // object. Create/update/delete stay on v4. Roles mirror the v4 GET roles.
     // ═══════════════════════════════════════════════════════════════════════════
 
-    val getDynamicResourceDocsProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicResourceDocsProvenance: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-resource-docs" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           Future(code.dynamicResourceDoc.DynamicResourceDoc.findAll())
@@ -5906,7 +5906,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getDynamicResourceDocsProvenance)
     )
 
-    val getDynamicResourceDocProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicResourceDocProvenance: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-resource-docs" / dynamicResourceDocId =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           Future(code.dynamicResourceDoc.DynamicResourceDoc.find(
@@ -5937,7 +5937,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getDynamicResourceDocProvenance)
     )
 
-    val getConnectorMethodsProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getConnectorMethodsProvenance: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "connector-methods" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           Future(code.connectormethod.ConnectorMethod.findAll())
@@ -5964,7 +5964,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getConnectorMethodsProvenance)
     )
 
-    val getConnectorMethodProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getConnectorMethodProvenance: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "connector-methods" / connectorMethodId =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           Future(code.connectormethod.ConnectorMethod.find(
@@ -5995,7 +5995,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getConnectorMethodProvenance)
     )
 
-    val getDynamicMessageDocsProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicMessageDocsProvenance: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-message-docs" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           Future(code.dynamicMessageDoc.DynamicMessageDoc.findAll())
@@ -6022,7 +6022,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getDynamicMessageDocsProvenance)
     )
 
-    val getDynamicMessageDocProvenance: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicMessageDocProvenance: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-message-docs" / dynamicMessageDocId =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           Future(code.dynamicMessageDoc.DynamicMessageDoc.find(
@@ -6084,7 +6084,7 @@ object Http4s700 {
         .map(JSONFactory700.createApiProductSubscriptionsJsonV700)
 
     // Route: POST /obp/v7.0.0/banks/BANK_ID/api-products/API_PRODUCT_CODE/subscriptions (201)
-    val createApiProductSubscription: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createApiProductSubscription: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "banks" / _ / "api-products" / apiProductCode / "subscriptions" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -6152,7 +6152,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: GET /obp/v7.0.0/my/api-product-subscriptions
-    val getMyApiProductSubscriptions: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyApiProductSubscriptions: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "api-product-subscriptions" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -6185,7 +6185,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/my/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID
-    val getMyApiProductSubscription: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyApiProductSubscription: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "api-product-subscriptions" / apiProductSubscriptionId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -6220,7 +6220,7 @@ object Http4s700 {
     )
 
     // Route: PUT /obp/v7.0.0/my/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID/status
-    val updateMyApiProductSubscriptionStatus: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateMyApiProductSubscriptionStatus: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "my" / "api-product-subscriptions" / apiProductSubscriptionId / "status" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           val rawBody = cc.httpBody.getOrElse("")
@@ -6263,7 +6263,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/banks/BANK_ID/api-products/API_PRODUCT_CODE/subscriptions
-    val getApiProductSubscriptionsByProduct: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getApiProductSubscriptionsByProduct: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / _ / "api-products" / apiProductCode / "subscriptions" =>
         EndpointHelpers.withUserAndBank(req) { (_, bank, cc) =>
           for {
@@ -6294,7 +6294,7 @@ object Http4s700 {
     )
 
     // Route: GET /obp/v7.0.0/management/consumers/CONSUMER_ID/api-product-subscriptions
-    val getConsumerApiProductSubscriptions: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getConsumerApiProductSubscriptions: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "consumers" / consumerId / "api-product-subscriptions" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           val role = ApiRole.canGetApiProductSubscriptionAtOneBank
@@ -6347,7 +6347,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: GET /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID
-    val getApiProductSubscription: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getApiProductSubscription: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -6381,7 +6381,7 @@ object Http4s700 {
 
     // Route: PUT /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID/status
     // The one write a billing adapter makes.
-    val updateApiProductSubscriptionStatus: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateApiProductSubscriptionStatus: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId / "status" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           val rawBody = cc.httpBody.getOrElse("")
@@ -6423,7 +6423,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: DELETE /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID
-    val deleteApiProductSubscription: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteApiProductSubscription: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId =>
         EndpointHelpers.withUserDelete(req) { (user, cc) =>
           for {
@@ -6462,7 +6462,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: POST /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID/attribute (201)
-    val createApiProductSubscriptionAttribute: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createApiProductSubscriptionAttribute: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId / "attribute" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -6501,7 +6501,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: PUT /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID/attributes/API_PRODUCT_SUBSCRIPTION_ATTRIBUTE_ID
-    val updateApiProductSubscriptionAttribute: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val updateApiProductSubscriptionAttribute: Http4sRoute = Http4sRoute {
       case req @ PUT -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId / "attributes" / attributeId =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           val rawBody = cc.httpBody.getOrElse("")
@@ -6541,7 +6541,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: GET /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID/attributes
-    val getApiProductSubscriptionAttributes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getApiProductSubscriptionAttributes: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId / "attributes" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
@@ -6572,7 +6572,7 @@ object Http4s700 {
     ).disableAutoValidateRoles()
 
     // Route: DELETE /obp/v7.0.0/management/api-product-subscriptions/API_PRODUCT_SUBSCRIPTION_ID/attributes/API_PRODUCT_SUBSCRIPTION_ATTRIBUTE_ID
-    val deleteApiProductSubscriptionAttribute: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deleteApiProductSubscriptionAttribute: Http4sRoute = Http4sRoute {
       case req @ DELETE -> `prefixPath` / "management" / "api-product-subscriptions" / apiProductSubscriptionId / "attributes" / attributeId =>
         EndpointHelpers.withUserDelete(req) { (user, cc) =>
           for {
@@ -6682,7 +6682,7 @@ object Http4s700 {
         |Approval is system level. Dynamic code runs in the shared JVM, so a bank-level artefact is approved by the same system-level checker; there are no bank-level change request endpoints.
         |""".stripMargin
 
-    val createDynamicChangeRequest: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val createDynamicChangeRequest: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-change-requests" =>
         EndpointHelpers.executeFutureCreated(req) {
           implicit val cc: CallContext = req.callContext
@@ -6740,7 +6740,7 @@ object Http4s700 {
       http4sPartialFunction = Some(createDynamicChangeRequest)
     )
 
-    val getDynamicChangeRequests: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicChangeRequests: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-change-requests" =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           val q = req.uri.query.multiParams
@@ -6771,7 +6771,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getDynamicChangeRequests)
     )
 
-    val getMyDynamicChangeRequests: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyDynamicChangeRequests: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "dynamic-change-requests" =>
         EndpointHelpers.withUser(req) { (u, cc) =>
           Future(changeRequestProvider.getByRequestorUserId(u.userId).map(MakerChecker.expireIfDue))
@@ -6808,7 +6808,7 @@ object Http4s700 {
       if (q.size() >= dynamicCompileCallsPerMinute) false else { q.addLast(now); true }
     }
 
-    val compileDynamicResourceDoc: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val compileDynamicResourceDoc: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-resource-docs" / "compile" =>
         EndpointHelpers.withUser(req) { (u, cc) =>
           import code.api.v7_0_0.JSONFactory700.{DynamicCompileErrorJsonV700, DynamicCompileResultJsonV700, DynamicResourceDocCompileJsonV700}
@@ -6913,7 +6913,7 @@ object Http4s700 {
     // Route: POST /obp/v7.0.0/management/dynamic-resource-docs/explain
     // For the author of a Dynamic Query: the statements it would run (SQL with ? for values) and the access
     // it needs, for the requesting User or for an anonymous caller. Reads no record.
-    val explainDynamicQuery: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val explainDynamicQuery: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-resource-docs" / "explain" =>
         EndpointHelpers.withUser(req) { (u, cc) =>
           import code.api.v7_0_0.JSONFactory700.{DynamicQueryExplainJsonV700, createDynamicQueryExplanationJsonV700}
@@ -6979,7 +6979,7 @@ object Http4s700 {
     // Route: GET /obp/v7.0.0/management/dynamic-code-approval-config
     // Lets a client (the API Manager create/edit pages) tell the maker up front whether a write will be
     // applied or queued for approval. Authenticated, no role: any user who can create an artefact needs this.
-    val getDynamicCodeApprovalConfig: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicCodeApprovalConfig: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-code-approval-config" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future.successful(JSONFactory700.DynamicCodeApprovalConfigJsonV700(
@@ -7017,7 +7017,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getDynamicCodeApprovalConfig)
     )
 
-    val getDynamicChangeRequest: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getDynamicChangeRequest: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "dynamic-change-requests" / changeRequestId if changeRequestId.nonEmpty =>
         EndpointHelpers.withUser(req) { (_, cc) =>
           loadChangeRequest(changeRequestId, cc).map(JSONFactory700.createDynamicChangeRequestJsonV700)
@@ -7042,7 +7042,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getDynamicChangeRequest)
     )
 
-    val approveDynamicChangeRequest: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val approveDynamicChangeRequest: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-change-requests" / changeRequestId / "approval" if changeRequestId.nonEmpty =>
         EndpointHelpers.withUser(req) { (u, cc) =>
           implicit val c: CallContext = cc
@@ -7076,7 +7076,7 @@ object Http4s700 {
       http4sPartialFunction = Some(approveDynamicChangeRequest)
     )
 
-    val rejectDynamicChangeRequest: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val rejectDynamicChangeRequest: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-change-requests" / changeRequestId / "rejection" if changeRequestId.nonEmpty =>
         EndpointHelpers.withUser(req) { (u, cc) =>
           implicit val c: CallContext = cc
@@ -7109,7 +7109,7 @@ object Http4s700 {
       http4sPartialFunction = Some(rejectDynamicChangeRequest)
     )
 
-    val withdrawDynamicChangeRequest: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val withdrawDynamicChangeRequest: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-change-requests" / changeRequestId / "withdrawal" if changeRequestId.nonEmpty =>
         EndpointHelpers.withUser(req) { (u, cc) =>
           implicit val c: CallContext = cc
@@ -7166,7 +7166,7 @@ object Http4s700 {
 
     private val deactivationExample = changeRequestExample.copy(operation = "DEACTIVATE", status = "APPROVED", target_id = "0d1c9e3c-6c2b-4c1e-9a53-2d5b2f0d7f22", request_path = "", proposed_payload = Extraction.decompose(Map("is_active" -> false)), checker_user_id = code.api.util.ExampleValue.userIdExample.value, actioned_at = APIUtil.DateWithMsExampleString)
 
-    val deactivateDynamicResourceDoc: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deactivateDynamicResourceDoc: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-resource-docs" / dynamicResourceDocId / "deactivation" if dynamicResourceDocId.nonEmpty =>
         deactivateArtefact(req, DYNAMIC_RESOURCE_DOC, dynamicResourceDocId)
     }
@@ -7185,7 +7185,7 @@ object Http4s700 {
       http4sPartialFunction = Some(deactivateDynamicResourceDoc)
     )
 
-    val deactivateConnectorMethod: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deactivateConnectorMethod: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "connector-methods" / connectorMethodId / "deactivation" if connectorMethodId.nonEmpty =>
         deactivateArtefact(req, CONNECTOR_METHOD, connectorMethodId)
     }
@@ -7204,7 +7204,7 @@ object Http4s700 {
       http4sPartialFunction = Some(deactivateConnectorMethod)
     )
 
-    val deactivateDynamicMessageDoc: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deactivateDynamicMessageDoc: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "dynamic-message-docs" / dynamicMessageDocId / "deactivation" if dynamicMessageDocId.nonEmpty =>
         deactivateArtefact(req, DYNAMIC_MESSAGE_DOC, dynamicMessageDocId)
     }
@@ -7223,7 +7223,7 @@ object Http4s700 {
       http4sPartialFunction = Some(deactivateDynamicMessageDoc)
     )
 
-    val deactivateAbacRule: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val deactivateAbacRule: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "management" / "abac-rules" / abacRuleId / "deactivation" if abacRuleId.nonEmpty =>
         deactivateArtefact(req, ABAC_RULE, abacRuleId)
     }
@@ -7260,7 +7260,7 @@ object Http4s700 {
     // ─── getConsumerRateLimits ─────────────────────────────────────────────
     // Every per-consumer rate limit row on the instance, so an operator can see what overrides the
     // consumer limiter's defaults without opening each consumer. Per-consumer reads stay in v5.1.0 / v6.0.0.
-    lazy val getConsumerRateLimits: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    lazy val getConsumerRateLimits: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "rate-limits" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           for {
@@ -7304,7 +7304,7 @@ object Http4s700 {
     )
 
     // ─── getRateLimiterConfig ──────────────────────────────────────────────
-    lazy val getRateLimiterConfig: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    lazy val getRateLimiterConfig: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "management" / "rate-limiter-config" =>
         EndpointHelpers.withUser(req) { (_, _) =>
           Future(JSONFactory700.createRateLimitersJsonV700())
@@ -7368,7 +7368,7 @@ object Http4s700 {
       code.users.Users.users.vend
         .attributedUserId(userId, code.users.UserReference.UserCustomerLink_UserId).openOr(userId)
 
-    val getMyCustomersAtBank: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyCustomersAtBank: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "banks" / _ / "my" / "customers" =>
         EndpointHelpers.withUserAndBank(req) { (user, bank, cc) =>
           for {
@@ -7405,7 +7405,7 @@ object Http4s700 {
       http4sPartialFunction = Some(getMyCustomersAtBank)
     )
 
-    val getMyCustomers: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    val getMyCustomers: Http4sRoute = Http4sRoute {
       case req @ GET -> `prefixPath` / "my" / "customers" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           val callerIsConsentUser = user.isConsentUser
@@ -7476,9 +7476,14 @@ object Http4s700 {
     // The asset registry: the currencies, metals, accounting units, crypto assets and bank-issued assets amounts are held in.
     resourceDocs ++= Http4s700Assets.resourceDocs
 
+    // The order in which the routes are tried. ResourceDocMiddleware selects the doc of the first
+    // route that serves a request, so it is given this same list: the doc that validates a request
+    // is the doc of the route that runs it.
+    val orderedResourceDocs: ArrayBuffer[ResourceDoc] =
+      resourceDocs.sortBy(rd => -rd.requestUrl.split("/").count(_.nonEmpty))
+
     val allRoutes: HttpRoutes[IO] = {
-      val sorted = resourceDocs
-        .sortBy(rd => -rd.requestUrl.split("/").count(_.nonEmpty))
+      val sorted = orderedResourceDocs
         .flatMap(_.http4sPartialFunction)
         .map(_.routes)
       sorted.foldLeft(HttpRoutes.empty[IO]) { (acc, route) =>
@@ -7491,23 +7496,20 @@ object Http4s700 {
     // before the idempotency scope key is computed; on a cache hit the inner
     // routes (and any DB transaction) are skipped.
     val allRoutesWithMiddleware: HttpRoutes[IO] =
-      ResourceDocMiddleware.apply(resourceDocs)(IdempotencyMiddleware(allRoutes))
+      ResourceDocMiddleware.apply(orderedResourceDocs, routes => IdempotencyMiddleware(routes))(IdempotencyMiddleware(allRoutes))
   }
 
   // ─── path-rewriting bridge: /obp/v7.0.0/… → /obp/v6.0.0/… ─────────────
-  // Catches v7.0.0 paths with NO matching v7 ResourceDoc and forwards them to
-  // Http4s600 (which has all 243 v6.0.0 endpoints). Paths that DO have a v7
-  // ResourceDoc are intentionally excluded: if the middleware returned
+  // Catches v7.0.0 paths that NO v7 route serves and forwards them to
+  // Http4s600 (which has all 243 v6.0.0 endpoints). Paths that a v7 route DOES
+  // serve are intentionally excluded: if the middleware returned
   // OptionT.none for such a path (e.g. api_disabled_endpoints), the bridge must
-  // not silently re-serve them from v6. The index is built lazily from the same
-  // resourceDocs buffer that the middleware uses, so it stays in sync.
-  private lazy val v7ResourceDocIndex: ResourceDocMatcher.ResourceDocIndex =
-    ResourceDocMatcher.buildIndex(resourceDocs)
-
+  // not silently re-serve them from v6. "Served by a v7 route" is asked of the
+  // routes themselves, through the same ordered docs the middleware selects from.
   private val v700ToV600Bridge: HttpRoutes[IO] = Kleisli[HttpF, Request[IO], Response[IO]] { req =>
     val rawPath = req.uri.path.renderString
     if (rawPath.startsWith("/obp/v7.0.0/") &&
-        ResourceDocMatcher.findResourceDoc(req.method.name, req.uri.path, v7ResourceDocIndex).isEmpty) {
+        ResourceDocMatcher.selectByRoute(req, Implementations7_0_0.orderedResourceDocs).isEmpty) {
       val rewritten = rawPath.replaceFirst("/obp/v7\\.0\\.0/", "/obp/v6.0.0/")
       val newUri = req.uri.withPath(Uri.Path.unsafeFromString(rewritten))
       code.api.v6_0_0.Http4s600.wrappedRoutesV600Services.run(req.withUri(newUri))
