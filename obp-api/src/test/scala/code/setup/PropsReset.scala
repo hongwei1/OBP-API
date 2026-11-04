@@ -162,12 +162,21 @@ trait PropsReset extends BeforeAndAfterAll with BeforeAndAfterEach {
     writeLockedProviders(current.filterNot(PropsReset.isOwned))
   }
 
+  // lockedProviders is a lazy val: its field stays null until the accessor first runs, and the accessor then
+  // computes the value, overwriting whatever had been written to the field. So the accessor runs before the field
+  // is read or written. Otherwise, in a JVM where nothing has looked up a prop yet, reading the field gives null
+  // and a value written to it is lost on the first lookup.
+  private def initialiseLockedProviders(): Unit =
+    Props.getClass.getMethod("net$liftweb$util$Props$$lockedProviders").invoke(Props)
+
   private def getLockedProviders: List[Map[String, String]] = {
+    initialiseLockedProviders()
     FieldUtils.readDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", true)
       .asInstanceOf[List[Map[String, String]]]
   }
 
   private def writeLockedProviders(value: List[Map[String, String]]): Unit = {
+    initialiseLockedProviders()
     FieldUtils.writeDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", value, true)
   }
 
