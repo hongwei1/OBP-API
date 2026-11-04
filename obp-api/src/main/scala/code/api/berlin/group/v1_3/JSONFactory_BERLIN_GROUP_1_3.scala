@@ -692,18 +692,18 @@ object JSONFactory_BERLIN_GROUP_1_3 extends CustomJsonFormats with MdcLoggable{
 
     getPropsValue("psu_authentication_method") match {
       case Full("redirection") =>
-        val scaRedirectUrlPattern = getPropsValue("psu_authentication_method_sca_redirect_url")
-          .openOr(MissingPropsValueAtThisInstance + "psu_authentication_method_sca_redirect_url")
-        val scaRedirectUrl =
-          if(scaRedirectUrlPattern.contains("PLACEHOLDER"))
-            scaRedirectUrlPattern.replace("PLACEHOLDER", consent.consentId)
+        // Without psu_authentication_method_sca_redirect_url there is no page to send the PSU to, so the link is left out.
+        val scaRedirectUrl = getPropsValue("psu_authentication_method_sca_redirect_url").toOption.filter(_.trim.nonEmpty).map { pattern =>
+          if (pattern.contains("PLACEHOLDER"))
+            pattern.replace("PLACEHOLDER", consent.consentId)
           else
-            s"$scaRedirectUrlPattern/${consent.consentId}"
+            s"$pattern/${consent.consentId}"
+        }
         PostConsentResponseJson(
           consentId = consent.consentId,
           consentStatus = consent.status.toLowerCase(),
           _links = ConsentLinksV13(
-            scaRedirect = Some(Href(s"$scaRedirectUrl")),
+            scaRedirect = scaRedirectUrl.map(Href(_)),
             status = Some(Href(s"/${ConstantsBG.berlinGroupVersion1.apiShortVersion}/consents/${consent.consentId}/status")),
             // TODO Introduce a working link
             // scaStatus = Some(Href(s"/${ConstantsBG.berlinGroupVersion1.apiShortVersion}/consents/${consent.consentId}/authorisations/AUTHORISATIONID")),
