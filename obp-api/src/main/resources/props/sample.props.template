@@ -969,7 +969,7 @@ super_admin_user_ids=USER_ID1,USER_ID2,
 # Black List of Versions
 # Since December 2025 we are removing older versions of OBP standards by default. Note any endpoints defined in these versions are still
 # available via calling v5.1.0 or v6.0.0. We're doing this so API Explorer (II) loads faster etc.
-#api_disabled_versions=["OBPv1.2.1,OBPv1.3.0,OBPv1.4.0,OBPv2.0.0,OBPv2.1.0,OBPv2.2.0,OBPv3.0.0,OBPv3.1.0,OBPv4.0.0,OBPv5.0.0"]
+#api_disabled_versions=[OBPv1.2.1,OBPv1.3.0,OBPv1.4.0,OBPv2.0.0,OBPv2.1.0,OBPv2.2.0,OBPv3.0.0,OBPv3.1.0,OBPv4.0.0,OBPv5.0.0]
 
 # 2) Present here OR this entry must be empty:
 # Note the default is empty, not the example here.
