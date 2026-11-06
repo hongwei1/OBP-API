@@ -117,6 +117,11 @@ object PropsReset {
   private[setup] def registerOwned(m: Map[String, String]): Unit = ownedMaps.add(m)
 
   private[setup] def isOwned(m: Map[String, String]): Boolean = ownedMaps.contains(m)
+
+  // Scala names the lazy val's backing field and its accessor alike. Held here rather than in the trait: a trait's
+  // vals are not yet set while an earlier trait in a suite's linearisation runs its body, and that body may call
+  // setPropsValues.
+  private[setup] val LockedProvidersName = "net$liftweb$util$Props$$lockedProviders"
 }
 
 trait PropsReset extends BeforeAndAfterAll with BeforeAndAfterEach {
@@ -162,13 +167,22 @@ trait PropsReset extends BeforeAndAfterAll with BeforeAndAfterEach {
     writeLockedProviders(current.filterNot(PropsReset.isOwned))
   }
 
+  // lockedProviders is a lazy val: its field stays null until the accessor first runs, and the accessor then
+  // computes the value, overwriting whatever had been written to the field. So the accessor runs before the field
+  // is read or written. Otherwise, in a JVM where nothing has looked up a prop yet, reading the field gives null
+  // and a value written to it is lost on the first lookup.
+  private def initialiseLockedProviders(): Unit =
+    Props.getClass.getMethod(PropsReset.LockedProvidersName).invoke(Props)
+
   private def getLockedProviders: List[Map[String, String]] = {
-    FieldUtils.readDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", true)
+    initialiseLockedProviders()
+    FieldUtils.readDeclaredField(Props, PropsReset.LockedProvidersName, true)
       .asInstanceOf[List[Map[String, String]]]
   }
 
   private def writeLockedProviders(value: List[Map[String, String]]): Unit = {
-    FieldUtils.writeDeclaredField(Props, "net$liftweb$util$Props$$lockedProviders", value, true)
+    initialiseLockedProviders()
+    FieldUtils.writeDeclaredField(Props, PropsReset.LockedProvidersName, value, true)
   }
 
   def setPropsValues(keyValues: (String, String)*): Unit = {

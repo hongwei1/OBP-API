@@ -148,4 +148,42 @@ class JSONFactory_BERLIN_GROUP_1_3Test extends FeatureSpec with Matchers with Gi
       )) should not include "OBP-00010"
     }
   }
+
+  feature("createPostConsentResponseJson builds the scaRedirect link of a consent under redirection") {
+    def consentResponse(consentId: String) = {
+      val consent = code.consent.MappedConsent.create.mConsentId(consentId).mStatus("received")
+      JSONFactory_BERLIN_GROUP_1_3.createPostConsentResponseJson(consent)
+    }
+    def scaRedirectOf(consentId: String): JValue =
+      Extraction.decompose(consentResponse(consentId)._links) \ "scaRedirect" \ "href"
+
+    scenario("a URL without PLACEHOLDER gets the consent id appended once") {
+      setPropsValues(
+        "psu_authentication_method" -> "redirection",
+        "psu_authentication_method_sca_redirect_url" -> "https://psu.example/consent")
+      scaRedirectOf("c1") shouldBe JString("https://psu.example/consent/c1")
+    }
+
+    scenario("a URL with PLACEHOLDER gets the consent id in its place and nowhere else") {
+      setPropsValues(
+        "psu_authentication_method" -> "redirection",
+        "psu_authentication_method_sca_redirect_url" -> "https://psu.example/confirm?CONSENT_ID=PLACEHOLDER")
+      scaRedirectOf("c1") shouldBe JString("https://psu.example/confirm?CONSENT_ID=c1")
+    }
+
+    scenario("a blank psu_authentication_method_sca_redirect_url gives no scaRedirect link") {
+      setPropsValues(
+        "psu_authentication_method" -> "redirection",
+        "psu_authentication_method_sca_redirect_url" -> "  ")
+      scaRedirectOf("c1") shouldBe JNothing
+    }
+
+    scenario("without psu_authentication_method_sca_redirect_url there is no scaRedirect link and no error text") {
+      setPropsValues("psu_authentication_method" -> "redirection")
+      scaRedirectOf("c1") shouldBe JNothing
+      compactRender(Extraction.decompose(consentResponse("c1"))) should not include "OBP-00010"
+      // The status link does not depend on the redirect page, so it is still given.
+      Extraction.decompose(consentResponse("c1")._links) \ "status" \ "href" shouldBe JString(s"/${code.api.berlin.group.ConstantsBG.berlinGroupVersion1.apiShortVersion}/consents/c1/status")
+    }
+  }
 }
