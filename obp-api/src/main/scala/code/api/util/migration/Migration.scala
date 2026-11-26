@@ -51,13 +51,13 @@ import scala.collection.mutable.HashMap
  *
  * Postgres refuses `ALTER COLUMN ... TYPE` on a column a view references:
  * `ERROR: cannot alter type of a column used by a view or rule`. This is the recurring "schema drift"
- * that aborts boot. It bites whenever a view (e.g. `v_account_access_with_views`, `v_consent`,
+ * that aborts boot. It bites whenever a view (e.g. `v_consent`,
  * `v_metric`) pins a column that a migration — or Lift Schemifier matching a changed model field width —
  * wants to alter.
  *
  * DO NOT fix this by dropping all views on boot/migrate: in a multi-node deployment another node may be
  * live and querying those views, so a global drop (even transient) errors the serving node.
- * `v_account_access_with_views` and `v_consent` are read by live code.
+ * `v_consent` is read by live code.
  *
  * DO: when you add a migration that alters a column a view references, make that single `runOnce`
  * migration do, as one unit (Postgres DDL is transactional, so other nodes never see the view missing):
@@ -188,6 +188,7 @@ object Migration extends MdcLoggable {
       migrateMetricAuthType(startedBeforeSchemifier)
       migrateMetricCertificateTrust(startedBeforeSchemifier)
       dropFastFirehoseAccountsViews(startedBeforeSchemifier)
+      dropAccountAccessWithViewsView(startedBeforeSchemifier)
       alterDynamicResourceDocBodyFieldsLength()
       alterDynamicResourceDocTextFieldsLength()
       alterDynamicDataIdLength()
@@ -197,6 +198,26 @@ object Migration extends MdcLoggable {
       renameOrganisationsToTenants(startedBeforeSchemifier)
       markSelfServiceBanks(startedBeforeSchemifier)
       ensureConsentViewExists()
+    }
+
+    /**
+     * Every step Boot runs before schemifyAll(), in order.
+     *
+     * Each step reshapes existing data so that a unique index Schemifier is about to create can be
+     * built over it. They run ungated and on every boot, so each one guards itself and is a cheap
+     * no-op on a fresh or already clean database. See the call site in Boot for why none of them
+     * may move into executeScripts.
+     */
+    def prepareSchemaBeforeSchemifier(): Unit = {
+      deduplicateBeforeUniqueIndexSchemify()
+      // Same reasoning, for the Dynamic Entity tables: their unique indexes are becoming
+      // space-scoped, which needs the system level rows off SQL NULL and the superseded
+      // single-column indexes dropped, both before Schemifier issues the new index DDL.
+      prepareDynamicEntitySpaceScopedIndexes()
+      // A consent table from before consents had their own reference id: every row needs one
+      // before the unique index on consent_reference_id is created, which SQL Server refuses
+      // over more than one NULL.
+      MigrationOfConsentReferenceIdUuid.prepareBeforeSchemifier()
     }
 
     /**
@@ -725,6 +746,18 @@ object Migration extends MdcLoggable {
       }
     }
     
+    private def dropAccountAccessWithViewsView(startedBeforeSchemifier: Boolean): Boolean = {
+      if(startedBeforeSchemifier == true) {
+        logger.warn(s"Migration.database.dropAccountAccessWithViewsView(true) cannot be run before Schemifier.")
+        true
+      } else {
+        val name = nameOf(dropAccountAccessWithViewsView(startedBeforeSchemifier))
+        runOnce(name) {
+          MigrationOfAccountAccessWithViewsView.dropAccountAccessWithViewsView(name)
+        }
+      }
+    }
+
     private def alterUserAuthContextColumnKeyAndValueLength(startedBeforeSchemifier: Boolean): Boolean = {
       if(startedBeforeSchemifier == true) {
         logger.warn(s"Migration.database.alterUserAuthContextColumnKeyAndValueLength(true) cannot be run before Schemifier.")
@@ -1238,6 +1271,27 @@ object Migration extends MdcLoggable {
               case _ => check()
             }
           check()
+        }
+      }
+    }
+
+    /**
+      * Whether `tableName` has a column called `columnName`, ignoring case. Asks for the columns
+      * of that one table, under the name as given and in upper case, since H2 and Oracle store
+      * unquoted names in upper case.
+      */
+    def columnExistsByName(tableName: String, columnName: String): Boolean = {
+      DB.use(net.liftweb.util.DefaultConnectionIdentifier) { conn =>
+        val md = conn.getMetaData
+        val schema = getDefaultSchemaName(conn)
+        List(tableName, tableName.toUpperCase).distinct.exists { name =>
+          using(md.getColumns(null, schema, name, null)) { rs =>
+            def check(): Boolean =
+              if (!rs.next) false
+              else if (rs.getString(4).equalsIgnoreCase(columnName)) true
+              else check()
+            check()
+          }
         }
       }
     }

@@ -340,6 +340,8 @@ object ApiRole extends MdcLoggable{
   lazy val canUpdateConsumerCertificate = CanUpdateConsumerCertificate()
   case class CanUpdateConsumerName(requiresBankId: Boolean = false) extends ApiRole
   lazy val canUpdateConsumerName = CanUpdateConsumerName()
+  case class CanUpdateConsumerGrantTypes(requiresBankId: Boolean = false) extends ApiRole
+  lazy val canUpdateConsumerGrantTypes = CanUpdateConsumerGrantTypes()
 
   case class CanCreateConsumer (requiresBankId: Boolean = false) extends ApiRole
   lazy val canCreateConsumer = CanCreateConsumer()
@@ -1577,6 +1579,15 @@ object ApiRole extends MdcLoggable{
   lazy val canGetGroupsAtAllBanks = CanGetGroupsAtAllBanks()
   case class CanGetGroupsAtOneBank(requiresBankId: Boolean = true) extends ApiRole
   lazy val canGetGroupsAtOneBank = CanGetGroupsAtOneBank()
+
+  // Organisation roles for staff, held at the Organisation's bank_id: the bank that administers it, or SYS.
+  // Not CanCreateOrganisation, CanGetOrganisation or CanUpdateOrganisation: the Tenant migration renames those.
+  case class CanCreateOrganisationAtOneBank(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canCreateOrganisationAtOneBank = CanCreateOrganisationAtOneBank()
+  case class CanGetOrganisationAtOneBank(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canGetOrganisationAtOneBank = CanGetOrganisationAtOneBank()
+  case class CanUpdateOrganisationStatusAtOneBank(requiresBankId: Boolean = true) extends ApiRole
+  lazy val canUpdateOrganisationStatusAtOneBank = CanUpdateOrganisationStatusAtOneBank()
 
   // Tenant management roles. A Tenant belongs to no bank, so these are system Roles.
   case class CanCreateTenant(requiresBankId: Boolean = false) extends ApiRole

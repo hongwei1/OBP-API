@@ -314,6 +314,10 @@ object MappedConsumersProvider extends ConsumersProvider with MdcLoggable {
     }
   }
 
+  override def updateConsumerGrantTypes(id: Long, grantTypes: List[String]): Future[Box[Consumer]] = Future {
+    Consumer.find(By(Consumer.id, id)).flatMap(c => tryo(c.grantTypes(grantTypes.mkString(",")).saveMe()))
+  }
+
   def updateConsumerCallLimitsRemote(id: Long,
                                         perSecond: Option[String],
                                         perMinute: Option[String],
@@ -630,6 +634,11 @@ class Consumer extends LongKeyedMapper[Consumer] with CreatedUpdated{
     override def validations = validUri(this) _ :: super.validations
   }
   object createdByUserId extends MappedString(this, 36)
+  // The Organisation that owns this Consumer, or empty for a personal Consumer owned by its creator alone.
+  // See code.organisation.ConsumerOwnership.
+  object organisationId extends MappedString(this, 36) {
+    override def defaultValue = ""
+  }
 
   object perSecondCallLimit extends MappedLong(this) {
     override def defaultValue: Long = APIUtil.getPropsAsLongValue("rate_limiting_per_second", -1)
@@ -653,6 +662,9 @@ class Consumer extends LongKeyedMapper[Consumer] with CreatedUpdated{
   // FAPI 1.0 Advanced: URL where this client publishes its JWKS, used to verify
   // signed request objects and private_key_jwt client assertions (OBP-OIDC).
   object jwksUri extends MappedString(this, 500)
+  // The OAuth2 grant types (and direct_login) this Consumer allows, comma separated, set by an administrator.
+  // Empty: not set, every way of calling works as before. See code.consumer.ConsumerGrantTypes.
+  object grantTypes extends MappedString(this, 250)
   object company extends MappedString(this, 100) {
     override def displayName = "Company:"
   }

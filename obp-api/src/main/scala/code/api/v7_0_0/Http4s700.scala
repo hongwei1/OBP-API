@@ -123,13 +123,12 @@ object Http4s700 {
    *
    * Pattern: Add nameOf(Implementations{version}.endpointName) :: with a comment explaining why
    *
-   * NOTE: Currently empty - no v7-specific exclusions have been identified yet.
-   * As v7.0.0 introduces endpoints with different URL patterns than previous versions,
-   * add those old endpoint names here with explanatory comments.
+   * An excluded endpoint is also not served at v7.0.0: the bridge to v6.0.0 does not pass on a request that one
+   * of them would serve (see excludedRouteIndex), so it gets a 404.
    */
   lazy val excludeEndpoints: List[String] =
-    // Add exclusions here when v7.0.0 replaces old endpoints with different URLs
-    // Example: nameOf(Implementations3_0_0.getUserByUsername) :: // v7.0.0 uses /providers/:provider/users/:username
+    // v7.0.0 has POST /my/accounts/account-routing-regex-query instead: it searches only the caller's own accounts
+    nameOf(code.api.v4_0_0.Http4s400.Implementations4_0_0.getAccountsByAccountRoutingRegex) ::
     Nil
 
   /**
@@ -534,6 +533,44 @@ object Http4s700 {
       http4sPartialFunction = Some(deleteEntitlement)
     )
 
+    // Route: DELETE /obp/v7.0.0/banks/BANK_ID/entitlements/ENTITLEMENT_ID (204)
+    // The one place CanDeleteEntitlementAtOneBank is checked: someone who manages Roles at one bank can take
+    // them away there, without the power to delete Entitlements at every bank.
+    val deleteEntitlementAtOneBank: Http4sRoute = Http4sRoute {
+      case req @ DELETE -> `prefixPath` / "banks" / _ / "entitlements" / entitlementId =>
+        EndpointHelpers.withUserAndBankDelete(req) { (_, bank, cc) =>
+          for {
+            entitlement <- Future(Entitlement.entitlement.vend.getEntitlementById(entitlementId)
+              .filter(_.bankId == bank.bankId.value))
+              .map(unboxFullOrFail(_, Some(cc), s"$EntitlementNotFound Current ENTITLEMENT_ID($entitlementId) at BANK_ID(${bank.bankId.value}).", 404))
+            _ <- Future(Entitlement.entitlement.vend.deleteEntitlement(Some(entitlement)))
+          } yield ()
+        }
+    }
+
+    resourceDocs += ResourceDoc(
+      implementedInApiVersion,
+      nameOf(deleteEntitlementAtOneBank),
+      "DELETE",
+      "/banks/BANK_ID/entitlements/ENTITLEMENT_ID",
+      "Delete Entitlement at One Bank",
+      s"""Delete an Entitlement held at the bank BANK_ID. The Entitlement must be at that bank: one at another
+        |bank, or a system Entitlement, answers 404 here.
+        |
+        |You need CanDeleteEntitlementAtOneBank at BANK_ID, or CanDeleteEntitlementAtAnyBank. So someone who
+        |manages the Roles at one bank can take them away there, without the power to delete Entitlements at
+        |every bank. To delete any Entitlement, use Delete Entitlement.
+        |
+        |${userAuthenticationMessage(true)}
+        |""".stripMargin,
+      EmptyBody,
+      EmptyBody,
+      List($AuthenticatedUserIsRequired, UserHasMissingRoles, BankNotFound, EntitlementNotFound, UnknownError),
+      apiTagEntitlement :: apiTagRole :: Nil,
+      Some(List(ApiRole.canDeleteEntitlementAtOneBank, canDeleteEntitlementAtAnyBank)),
+      http4sPartialFunction = Some(deleteEntitlementAtOneBank)
+    )
+
     // Category: withUserAndBodyCreated (user auth, body parsing, 201 Created)
     val addEntitlement: Http4sRoute = Http4sRoute {
       case req @ POST -> `prefixPath` / "users" / userId / "entitlements" =>
@@ -832,7 +869,6 @@ object Http4s700 {
       List(ApplicationNotIdentified, UnknownError),
       apiTagConsumer :: apiTagApi :: Nil,
       None,
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(getCurrentConsumerIdentity)
     )
 
@@ -870,7 +906,6 @@ object Http4s700 {
       List($AuthenticatedUserIsRequired, UserHasMissingRoles, UnknownError),
       apiTagConsumer :: Nil,
       Some(List(ApiRole.canGetConsumers)),
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(getConsumers)
     )
 
@@ -1101,7 +1136,6 @@ object Http4s700 {
       List(ApplicationNotIdentified, UnknownError),
       apiTagConsumer :: apiTagScope :: apiTagApi :: Nil,
       None,
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(getCurrentConsumerScopes)
     )
 
@@ -4404,7 +4438,10 @@ object Http4s700 {
       List($AuthenticatedUserIsRequired, InvalidJsonFormat,
            PayeeLookupIdentifierTypeNotRegistered, MobileWalletInvalidMsisdn,
            PayeeLookupExpiredOrNotFound, PayeeLookupMismatch,
-           MobileWalletDestinationNotFound, MobileWalletPaymentError, UnknownError),
+           MobileWalletDestinationNotFound,
+           // NotPositiveAmount: the connector refuses an amount that is not above zero, so a payer cannot pull money from the wallet.
+           NotPositiveAmount,
+           MobileWalletPaymentError, UnknownError),
       apiTagTransactionRequest :: apiTagPayee :: Nil,
       None,
       http4sPartialFunction = Some(createTransactionRequestMobileWallet)
@@ -4577,7 +4614,10 @@ object Http4s700 {
       List($AuthenticatedUserIsRequired, InvalidJsonFormat,
            PayeeLookupIdentifierTypeNotRegistered, UtilityIdentifierTypeWrongCategory,
            UtilityInvalidIdentifier, PayeeLookupExpiredOrNotFound, PayeeLookupMismatch,
-           UtilityDestinationNotFound, UtilityPaymentError, UnknownError),
+           UtilityDestinationNotFound,
+           // NotPositiveAmount: the connector refuses an amount that is not above zero, so a payer cannot pull money from the biller.
+           NotPositiveAmount,
+           UtilityPaymentError, UnknownError),
       apiTagTransactionRequest :: apiTagPayee :: Nil,
       None,
       http4sPartialFunction = Some(createTransactionRequestUtility)
@@ -4799,10 +4839,12 @@ object Http4s700 {
       ),
       List($AuthenticatedUserIsRequired, OpenCorridorDisabled, InvalidJsonFormat, InvalidJsonValue,
            CounterpartyBeneficiaryPermit, InvalidChargePolicy,
-           InsufficientAuthorisationToCreateTransactionRequest, UnknownError),
+           InsufficientAuthorisationToCreateTransactionRequest,
+           // NotPositiveAmount: the connector refuses an amount that is not above zero, so a negative promise is never netted.
+           NotPositiveAmount,
+           UnknownError),
       apiTagTransactionRequest :: Nil,
       None,
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(createTransactionRequestOpenCorridor)
     )
 
@@ -4851,7 +4893,7 @@ object Http4s700 {
         |as a Scope at BANK_ID and calls as itself, such as the bank's Bank Node with an OAuth2 client-credentials token.
         |Such a token gives the application a User of its own (provider obp-oidc#client), so `reported_by_user_id` is
         |the application's own User when it acted, or the person's when a person did.
-        |A person calling through a Consumer that holds the Scope still needs their own Entitlement (authMode UserXORApplication).
+        |A person calling through a Consumer that holds the Scope still needs their own Entitlement.
         |
         |Authentication is Required.""".stripMargin,
       openCorridorPromiseBodyExample,
@@ -4872,7 +4914,6 @@ object Http4s700 {
            OpenCorridorPromiseEvidenceConflict, TransactionRequestLockFailed, UnknownError),
       apiTagTransactionRequest :: Nil,
       Some(List(canAttachOpenCorridorPromise)),
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(attachOpenCorridorPromise)
     )
 
@@ -5388,7 +5429,7 @@ object Http4s700 {
         |
         |**Who may call it.** A person with the Role CanSettleOpenCorridor at BANK_ID, or an application whose Consumer holds it
         |as a Scope at BANK_ID and calls as itself, such as the bank's Bank Node with an OAuth2 client-credentials token.
-        |A person calling through a Consumer that holds the Scope still needs their own Entitlement (authMode UserXORApplication).
+        |A person calling through a Consumer that holds the Scope still needs their own Entitlement.
         |
         |Authentication is Required.""".stripMargin,
       JSONFactory700.PostOpenCorridorSettlementJsonV700(other_bank_id = "ke.01.kcs", currency = "KES"),
@@ -5409,7 +5450,6 @@ object Http4s700 {
            $BankNotFound, AmqpBankBrokerNotConfigured, OpenCorridorSettlementAddressMissing, UnknownError),
       apiTagTransactionRequest :: Nil,
       Some(List(canSettleOpenCorridor)),
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(createOpenCorridorSettlement)
     )
 
@@ -5450,7 +5490,7 @@ object Http4s700 {
         |
         |**Who may call it.** A person with the Role CanSettleOpenCorridor at BANK_ID, or an application whose Consumer holds it
         |as a Scope at BANK_ID and calls as itself, such as the bank's Bank Node with an OAuth2 client-credentials token.
-        |A person calling through a Consumer that holds the Scope still needs their own Entitlement (authMode UserXORApplication).
+        |A person calling through a Consumer that holds the Scope still needs their own Entitlement.
         |
         |Authentication is Required.""".stripMargin,
       JSONFactory700.PostOpenCorridorFeeSettlementJsonV700(currency = "KES"),
@@ -5467,7 +5507,6 @@ object Http4s700 {
            $BankNotFound, AmqpBankBrokerNotConfigured, OpenCorridorSettlementAddressMissing, UnknownError),
       apiTagTransactionRequest :: Nil,
       Some(List(canSettleOpenCorridor)),
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(createOpenCorridorFeeSettlement)
     )
 
@@ -5506,7 +5545,7 @@ object Http4s700 {
         |
         |**Who may call it.** A person with the Role CanSettleOpenCorridor at BANK_ID, or an application whose Consumer holds it
         |as a Scope at BANK_ID and calls as itself, such as the bank's Bank Node with an OAuth2 client-credentials token.
-        |A person calling through a Consumer that holds the Scope still needs their own Entitlement (authMode UserXORApplication).
+        |A person calling through a Consumer that holds the Scope still needs their own Entitlement.
         |
         |Authentication is Required.""".stripMargin,
       EmptyBody,
@@ -5536,7 +5575,6 @@ object Http4s700 {
            OpenCorridorSettlementNotFound, UnknownError),
       apiTagTransactionRequest :: Nil,
       Some(List(canSettleOpenCorridor)),
-      authMode = UserXORApplication,
       http4sPartialFunction = Some(getOpenCorridorSettlement)
     )
 
@@ -5723,6 +5761,9 @@ object Http4s700 {
       List($AuthenticatedUserIsRequired, InvalidJsonFormat,
            BulkPaymentsArrayEmpty, BulkPaymentsArrayTooLarge,
            BulkPaymentCurrencyMismatch, BulkDuplicateEndToEndId,
+           // NotPositiveAmount: an item amount that is not a number above zero refuses the batch.
+           // InvalidNumber: the declared total does not equal the sum of the items.
+           NotPositiveAmount, InvalidNumber,
            BulkBatchReferenceAlreadyUsed, BulkPaymentTransactionRequestError,
            UnknownError),
       apiTagTransactionRequest :: Nil,
@@ -6247,7 +6288,7 @@ object Http4s700 {
 
     // ─── API Product Subscriptions (see docs/API_PRODUCT_SUBSCRIPTION_PLAN.md) ──────────────────
     // Rule zero: a developer never needs a role for their own consumers; ownership
-    // (Consumer.createdByUserId == caller) is checked here. Roles are checked at the PRODUCT's
+    // (the Consumer's creator, or a member of its Organisation: ConsumerOwnership) is checked here. Roles are checked at the PRODUCT's
     // bank (…AtOneBank); a billing adapter serving several banks is granted the role at each.
     // Docs for the management endpoints declare their roles for the catalog but disable auto
     // validation, because the bank is the subscription's bank, not a BANK_ID in the path.
@@ -6256,8 +6297,9 @@ object Http4s700 {
     private def apiProductAttributeValue(attributes: List[code.apiproductattribute.ApiProductAttributeTrait], name: String): Option[String] =
       attributes.find(a => a.name.equalsIgnoreCase(name) && a.isActive.getOrElse(true)).map(_.value.trim.toLowerCase)
 
+    // The Consumer's creator, or a member of the Organisation it belongs to: see ConsumerOwnership.
     private def userOwnsConsumer(consumer: code.model.Consumer, userId: String): Boolean =
-      Option(consumer.createdByUserId.get).exists(_ == userId)
+      code.organisation.ConsumerOwnership.canActFor(consumer, userId)
 
     private def userOwnsSubscription(subscription: ApiProductSubscriptionTrait, userId: String): Future[Boolean] =
       code.consumer.Consumers.consumers.vend.getConsumerByConsumerIdFuture(subscription.consumerId)
@@ -6347,7 +6389,7 @@ object Http4s700 {
       case req @ GET -> `prefixPath` / "my" / "api-product-subscriptions" =>
         EndpointHelpers.withUser(req) { (user, cc) =>
           for {
-            consumers <- code.consumer.Consumers.consumers.vend.getConsumersByUserIdFuture(user.userId)
+            consumers <- code.organisation.ConsumerOwnership.consumersFor(user.userId)
             (subscriptions, _) <- NewStyle.function.getApiProductSubscriptionsByConsumerIds(consumers.map(_.consumerId.get), Some(cc))
             json <- subscriptionsWithAttributesJson(subscriptions, cc)
           } yield json
@@ -7692,6 +7734,9 @@ object Http4s700 {
     // Platform Apps: the Consumers this installation runs as part of its own deployment, and the Scopes they need.
     resourceDocs ++= Http4s700PlatformApps.resourceDocs
 
+    // Consumer grant types: how people and the application itself may call through a Consumer.
+    resourceDocs ++= Http4s700ConsumerGrantTypes.resourceDocs
+
     // Domain APIs: a space's Dynamic Entities and Dynamic Resource Docs published under a base path of its own.
     resourceDocs ++= Http4s700DomainApis.resourceDocs
 
@@ -7719,6 +7764,10 @@ object Http4s700 {
     // Tenants: the customers of the operator of this instance.
     resourceDocs ++= Http4s700Tenants.resourceDocs
 
+    // Organisations: a company or team that owns Consumers, and the /my/consumers endpoints its members and a
+    // Consumer's creator use.
+    resourceDocs ++= Http4s700Organisations.resourceDocs
+
     // What an OIDC provider reads from OBP-API to finish signing a User in for a Consumer.
     resourceDocs ++= Http4s700OpenIdConnect.resourceDocs
 
@@ -7730,6 +7779,9 @@ object Http4s700 {
 
     // Customers at a bank, each with its Customer Attributes, filtered by Customer Attributes.
     resourceDocs ++= Http4s700Customers.resourceDocs
+
+    // The caller's own accounts whose account routing matches a pattern.
+    resourceDocs ++= Http4s700MyAccounts.resourceDocs
 
     // The order in which the routes are tried. ResourceDocMiddleware selects the doc of the first
     // route that serves a request, so it is given this same list: the doc that validates a request
@@ -7764,10 +7816,25 @@ object Http4s700 {
   private lazy val v7RouteIndex: ResourceDocMatcher.RouteIndex =
     ResourceDocMatcher.buildRouteIndex(Implementations7_0_0.orderedResourceDocs)
 
+  // The older endpoints v7.0.0 does not serve (excludeEndpoints), each under its own version.
+  private lazy val excludedDocs: List[ResourceDoc] = {
+    val names = excludeEndpoints.toSet
+    code.api.util.http4s.Http4sResourceDocAggregation.v600.filter(doc => names.contains(doc.partialFunctionName)).toList
+  }
+  private lazy val excludedRouteIndex: ResourceDocMatcher.RouteIndex = ResourceDocMatcher.buildRouteIndex(excludedDocs)
+  private lazy val excludedVersions: List[String] = excludedDocs.map(_.implementedInApiVersion.apiShortVersion).distinct
+
+  // True when the request, sent to an excluded endpoint's own version, would be served by that endpoint
+  private def isExcluded(req: Request[IO], rawPath: String): Boolean =
+    excludedVersions.exists { version =>
+      val there = rawPath.replaceFirst("/obp/v7\\.0\\.0/", s"/obp/$version/")
+      ResourceDocMatcher.selectByRoute(req.withUri(req.uri.withPath(Uri.Path.unsafeFromString(there))), excludedRouteIndex).nonEmpty
+    }
+
   private val v700ToV600Bridge: HttpRoutes[IO] = Kleisli[HttpF, Request[IO], Response[IO]] { req =>
     val rawPath = req.uri.path.renderString
     if (rawPath.startsWith("/obp/v7.0.0/") &&
-        ResourceDocMatcher.selectByRoute(req, v7RouteIndex).isEmpty) {
+        ResourceDocMatcher.selectByRoute(req, v7RouteIndex).isEmpty && !isExcluded(req, rawPath)) {
       val rewritten = rawPath.replaceFirst("/obp/v7\\.0\\.0/", "/obp/v6.0.0/")
       val newUri = req.uri.withPath(Uri.Path.unsafeFromString(rewritten))
       code.api.v6_0_0.Http4s600.wrappedRoutesV600Services.run(req.withUri(newUri))
