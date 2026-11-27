@@ -79,6 +79,8 @@ sqlcmd() {
 run_sql_file() {
   # $1 database, $2 SQL file; the rest is passed to sqlcmd (e.g. -v NAME=value).
   local db="$1" file="$2"; shift 2
+  # unique-keys.sql is included by other files with :r, so it goes into the container as well.
+  docker cp "$HERE/unique-keys.sql" "$MSSQL_CONTAINER:/tmp/unique-keys.sql" >/dev/null
   docker cp "$file" "$MSSQL_CONTAINER:/tmp/$(basename "$file")" >/dev/null
   sqlcmd -d "$db" -I -W -s '|' "$@" -i "/tmp/$(basename "$file")"
 }
@@ -182,7 +184,7 @@ fi
 
 JETTY_RUNNER="$CACHE_DIR/jetty-runner-$JETTY_RUNNER_VERSION.jar"
 if [ ! -f "$JETTY_RUNNER" ]; then
-  curl -fsSL -o "$JETTY_RUNNER" \
+  curl -fsSL --proto '=https' --tlsv1.2 -o "$JETTY_RUNNER" \
     "https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-runner/$JETTY_RUNNER_VERSION/jetty-runner-$JETTY_RUNNER_VERSION.jar"
 fi
 

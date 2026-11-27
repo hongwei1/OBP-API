@@ -27,29 +27,9 @@
 
 SET NOCOUNT ON;
 
-IF OBJECT_ID('tempdb..#unique_keys') IS NOT NULL DROP TABLE #unique_keys;
 IF OBJECT_ID('tempdb..#candidates') IS NOT NULL DROP TABLE #candidates;
 
--- Unique keys (not primary keys) of both schemas: table, and its columns sorted by name.
-CREATE TABLE #unique_keys (db sysname, tbl sysname, cols nvarchar(4000));
-
-INSERT INTO #unique_keys (db, tbl, cols)
-SELECT 'reference', t.name, STRING_AGG(CAST(c.name AS nvarchar(4000)), ',') WITHIN GROUP (ORDER BY c.name)
-FROM [$(REFERENCE_DB)].sys.indexes i
-JOIN [$(REFERENCE_DB)].sys.tables t ON t.object_id = i.object_id
-JOIN [$(REFERENCE_DB)].sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0
-JOIN [$(REFERENCE_DB)].sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
-WHERE i.is_unique = 1 AND i.is_primary_key = 0
-GROUP BY t.name, i.index_id;
-
-INSERT INTO #unique_keys (db, tbl, cols)
-SELECT 'upgrade', t.name, STRING_AGG(CAST(c.name AS nvarchar(4000)), ',') WITHIN GROUP (ORDER BY c.name)
-FROM sys.indexes i
-JOIN sys.tables t ON t.object_id = i.object_id
-JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0
-JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
-WHERE i.is_unique = 1 AND i.is_primary_key = 0
-GROUP BY t.name, i.index_id;
+:r /tmp/unique-keys.sql
 
 CREATE TABLE #candidates (id int IDENTITY, tbl sysname, cols nvarchar(4000), reason nvarchar(400));
 
