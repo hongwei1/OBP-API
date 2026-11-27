@@ -20,7 +20,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(git -C "$HERE" rev-parse --show-toplevel)"
+REPO="${REPO:-$(git -C "$HERE" rev-parse --show-toplevel)}"
 
 FROM_REF="${1:-${FROM_REF:-b6c783b3d99a6d48697eb8ef986f8948f646e63e}}"
 TO_REF="${2:-${TO_REF:-HEAD}}"
