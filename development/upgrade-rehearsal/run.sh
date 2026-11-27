@@ -137,14 +137,26 @@ checkout() {
   git -C "$2" checkout -q --detach "$1"
 }
 
+build() {
+  # $1 source directory, $2 JDK home, $3 log file. A failed dependency download leaves a marker
+  # in the local Maven repository, and Maven does not try that dependency again until -U says so,
+  # so a failed build is tried once more with -U.
+  local attempt
+  for attempt in 1 2; do
+    ( cd "$1" && JAVA_HOME="$2" PATH="$2/bin:$PATH" MAVEN_OPTS="-Xmx3G -Xss2m -XX:MaxMetaspaceSize=1G" \
+        mvn -B $([ "$attempt" = 2 ] && echo -U) clean package -Pprod -DskipTests -Dmaven.test.skip=true ) \
+      >> "$3" 2>&1 && return 0
+    [ "$attempt" = 1 ] && log "Build in $1 failed; trying once more with -U"
+  done
+  return 1
+}
+
 FROM_WAR="$CACHE_DIR/from-$FROM_SHA/obp-api.war"
 if [ ! -f "$FROM_WAR" ]; then
   log "Building FROM (older build, a WAR file)"
   checkout "$FROM_SHA" "$WORK_DIR/src-from"
   t=$SECONDS
-  ( cd "$WORK_DIR/src-from" && JAVA_HOME="$JAVA_HOME_FROM" PATH="$JAVA_HOME_FROM/bin:$PATH" \
-      MAVEN_OPTS="-Xmx3G -Xss2m -XX:MaxMetaspaceSize=1G" \
-      mvn -B clean package -Pprod -DskipTests -Dmaven.test.skip=true ) > "$LOG_DIR/build-from.log" 2>&1 \
+  build "$WORK_DIR/src-from" "$JAVA_HOME_FROM" "$LOG_DIR/build-from.log" \
     || fail "the FROM build failed, see build-from.log"
   mkdir -p "$(dirname "$FROM_WAR")"
   cp "$(ls "$WORK_DIR"/src-from/obp-api/target/obp-api-*.war | head -1)" "$FROM_WAR"
@@ -158,9 +170,7 @@ if [ ! -f "$TO_JAR_DIR/obp-api.jar" ]; then
   log "Building TO (newer build, a jar with its lib directory)"
   checkout "$TO_SHA" "$WORK_DIR/src-to"
   t=$SECONDS
-  ( cd "$WORK_DIR/src-to" && JAVA_HOME="$JAVA_HOME_TO" PATH="$JAVA_HOME_TO/bin:$PATH" \
-      MAVEN_OPTS="-Xmx3G -Xss2m -XX:MaxMetaspaceSize=1G" \
-      mvn -B clean package -Pprod -DskipTests -Dmaven.test.skip=true ) > "$LOG_DIR/build-to.log" 2>&1 \
+  build "$WORK_DIR/src-to" "$JAVA_HOME_TO" "$LOG_DIR/build-to.log" \
     || fail "the TO build failed, see build-to.log"
   rm -rf "$TO_JAR_DIR" && mkdir -p "$TO_JAR_DIR"
   cp "$WORK_DIR/src-to/obp-api/target/obp-api.jar" "$TO_JAR_DIR/"
