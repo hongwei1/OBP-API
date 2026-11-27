@@ -107,9 +107,7 @@ cleanup() {
   if [ "$KEEP_CONTAINERS" != "true" ]; then
     docker rm -f "$MSSQL_CONTAINER" "$REDIS_CONTAINER" >/dev/null 2>&1 || true
   fi
-  for wt in "$WORK_DIR/src-from" "$WORK_DIR/src-to"; do
-    [ -d "$wt" ] && git -C "$REPO" worktree remove --force "$wt" >/dev/null 2>&1 || true
-  done
+  rm -rf "$WORK_DIR/src-from" "$WORK_DIR/src-to"
   [ -d "$LOG_DIR" ] && redact_logs
   log "Finished in $((SECONDS - START_SECONDS))s with exit code $status. Logs: $LOG_DIR"
   exit $status
@@ -132,10 +130,11 @@ log "SQL Server image $MSSQL_IMAGE"
 # ---------------------------------------------------------------------------------------------
 
 checkout() {
-  # $1 commit, $2 directory
-  [ -d "$2" ] && git -C "$REPO" worktree remove --force "$2" >/dev/null 2>&1 || true
+  # $1 commit, $2 directory. A clone that shares this repository's objects, not a linked worktree:
+  # the git plugins of the builds use JGit, which cannot read a linked worktree's .git file.
   rm -rf "$2"
-  git -C "$REPO" worktree add --detach "$2" "$1" >/dev/null
+  git clone -q --shared --no-checkout "$REPO" "$2"
+  git -C "$2" checkout -q --detach "$1"
 }
 
 FROM_WAR="$CACHE_DIR/from-$FROM_SHA/obp-api.war"
@@ -215,6 +214,17 @@ migration_scripts.enabled=$3
 migration_scripts.execute_all=$3
 EOF
   chmod 600 "$1/production.default.props"
+  # The same settings as OBP_* environment variables, which every build reads before its props
+  # file: the newer build reads hostname before Boot has found the props directory.
+  grep -v '^#' "$1/production.default.props" | grep '=' | while IFS='=' read -r key value; do
+    printf 'OBP_%s=%s\n' "$(printf '%s' "$key" | tr '.' '_' | tr '[:lower:]' '[:upper:]')" "$value"
+  done > "$1/env"
+  chmod 600 "$1/env"
+}
+
+props_env() {
+  # $1 props directory. Prints the environment variables written by write_props, one per line.
+  cat "$1/env"
 }
 
 wait_for_root() {
@@ -223,6 +233,11 @@ wait_for_root() {
   while [ $((SECONDS - started)) -lt "$BOOT_TIMEOUT" ]; do
     if ! kill -0 "$APP_PID" 2>/dev/null; then
       log "$1 exited before it answered on its root endpoint"
+      return 1
+    fi
+    # A failed Boot can leave the JVM running without a server; do not wait for the timeout.
+    if grep -qE 'Exception in thread "main"' "$2"; then
+      log "$1 failed during Boot: $(grep -m1 -E 'SQLServerException|Caused by' "$2" | cut -c1-300)"
       return 1
     fi
     code="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$API_PORT/obp/v4.0.0/root" || true)"
@@ -240,7 +255,9 @@ boot_from() {
   # $1 database
   local props="$WORK_DIR/props-from"
   write_props "$props" "$1" false
-  ( cd "$WORK_DIR" && exec "$JAVA_HOME_FROM/bin/java" -Xmx2G -Xss8m \
+  local -a vars=(); local line   # a read loop, not mapfile: macOS ships bash 3.2
+  while IFS= read -r line; do vars+=("$line"); done < <(props_env "$props")
+  ( cd "$WORK_DIR" && exec env "${vars[@]}" "$JAVA_HOME_FROM/bin/java" -Xmx2G -Xss8m \
       -Drun.mode=production -Dprops.resource.dir="$props/" \
       -jar "$JETTY_RUNNER" --port "$API_PORT" "$FROM_WAR" ) > "$LOG_DIR/boot-from.log" 2>&1 &
   APP_PID=$!
@@ -250,7 +267,9 @@ boot_to() {
   # $1 database, $2 log file name
   local props="$WORK_DIR/props-to-$1"
   write_props "$props" "$1" true
-  ( cd "$TO_JAR_DIR" && exec "$JAVA_HOME_TO/bin/java" -Xmx2G -Xss8m \
+  local -a vars=(); local line   # a read loop, not mapfile: macOS ships bash 3.2
+  while IFS= read -r line; do vars+=("$line"); done < <(props_env "$props")
+  ( cd "$TO_JAR_DIR" && exec env "${vars[@]}" "$JAVA_HOME_TO/bin/java" -Xmx2G -Xss8m \
       --add-opens java.base/java.lang=ALL-UNNAMED \
       --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
       --add-opens java.base/java.io=ALL-UNNAMED \
