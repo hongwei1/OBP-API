@@ -97,6 +97,8 @@ duplicates for the new index either.
 `.github/workflows/upgrade_rehearsal_sqlserver.yml` runs the same script. Start it from the Actions
 tab with `from_ref`, `to_ref` (empty means the commit it runs on) and `mssql_image`. With
 `expect: fail` it checks the opposite: it passes when the rehearsal catches a build that is known
-to break the upgrade. A pull request that changes the migrations, `Boot.scala` or the rehearsal
-also starts it. A unique index added in a model file does not, so start it by hand for such a
-change. The logs are uploaded as the `rehearsal-logs-<commit>` artifact.
+to break the upgrade. A pull request also starts it when it changes the migrations, `Boot.scala`
+or the rehearsal, or adds or changes an index or a NOT NULL column in a model file. A short first
+job reads the diff to decide, so other pull requests skip the two builds. A change it cannot see,
+such as a migration that rewrites values in another file, needs a run started by hand. The logs
+are uploaded as the `rehearsal-logs-<commit>` artifact.
