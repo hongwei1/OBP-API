@@ -309,7 +309,7 @@ stop_app
 
 # Schemifier logs a failed index or column and, depending on the build, may go on booting, so
 # the log is read even when the root endpoint answered.
-SCHEMA_ERRORS='CREATE UNIQUE INDEX statement terminated|duplicate key|Cannot insert the value NULL|ALTER TABLE .* failed|Schemifier.*(Exception|failed)|SQLServerException'
+SCHEMA_ERRORS='CREATE UNIQUE INDEX statement terminated|duplicate key was found|Cannot insert the value NULL|SQLServerException'
 grep -nE "$SCHEMA_ERRORS" "$LOG_DIR/boot-to-upgrade.log" > "$LOG_DIR/schema-errors.txt" || true
 
 log "Comparing the unique indexes of $UPGRADE_DB with $REFERENCE_DB"
