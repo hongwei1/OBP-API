@@ -310,6 +310,12 @@ run_sql_file "$UPGRADE_DB" "$HERE/seed-dirty-data.sql" -v REFERENCE_DB="$REFEREN
 grep -E '^(CANDIDATE|SEEDED|SKIPPED)' "$LOG_DIR/seed.txt" | tee -a "$LOG_DIR/rehearsal.log" || true
 grep -q '^SEEDED' "$LOG_DIR/seed.txt" || fail "nothing was seeded, so the rehearsal would test nothing"
 
+# Rows for migrations that rewrite stored values, which the schema comparison cannot find.
+log "Adding the rows of the known cases"
+run_sql_file "$UPGRADE_DB" "$HERE/seed-known-cases.sql" \
+  > "$LOG_DIR/seed-known-cases.txt" 2>&1 || { cat "$LOG_DIR/seed-known-cases.txt"; fail "seeding the known cases failed, see seed-known-cases.txt"; }
+grep -E '^(SEEDED|SKIPPED)' "$LOG_DIR/seed-known-cases.txt" | tee -a "$LOG_DIR/rehearsal.log" || true
+
 # 4. The upgrade.
 log "Booting TO on $UPGRADE_DB, with migration scripts enabled"
 boot_to "$UPGRADE_DB" boot-to-upgrade.log

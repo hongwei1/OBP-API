@@ -29,6 +29,13 @@ existing deployment is upgraded. The rehearsal finds them before then.
    string, `0` for a number or a boolean, and NULL for a date. So the rows look like rows the
    older build wrote, and a failure points at the newer build rather than at the seed.
 
+   `seed-known-cases.sql` then adds rows for migrations that rewrite values already stored. The
+   schemas cannot show these: a migration that renames a value can make two rows equal under a
+   unique index that already exists, and only the migration's code says which values it renames.
+   So these cases are written by hand, one per migration. The first is the Dynamic Entity Role
+   rename, where several old Role names become one new name. When you write a migration that
+   rewrites a column of a unique key, add a case for it.
+
    The list comes from the schemas, not from a list written by hand, so a unique index added by a
    later change is covered without editing the rehearsal.
 6. It boots the newer build on `obp_upgrade` with `migration_scripts.enabled=true` and
@@ -75,6 +82,7 @@ Settings, all optional:
 |---|---|
 | `rehearsal.log` | What was done, with timings, the seeded tables and the result |
 | `seed.txt` | `CANDIDATE`, `SEEDED` and `SKIPPED` lines from the seeding |
+| `seed-known-cases.txt` | `SEEDED` and `SKIPPED` lines from the hand-written cases |
 | `boot-from.log`, `boot-to-reference.log`, `boot-to-upgrade.log` | Output of the three boots |
 | `schema-errors.txt` | Schema errors found in `boot-to-upgrade.log` |
 | `check-schema.txt` | `MISSING` lines, or a single `OK` line |
