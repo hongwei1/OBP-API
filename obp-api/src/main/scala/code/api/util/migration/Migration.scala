@@ -140,6 +140,7 @@ object Migration extends MdcLoggable {
       populateAzpAndSubFieldsAtConsumerTable()
       populateTableBankAccountRouting()
       populateSettlementBankAccounts()
+      copyAccountNumberRoutingsIntoNumberField()
       alterColumnStatusAtTableMappedConsent()
       alterColumnDetailsAtTableTransactionRequest()
       deleteDuplicatedRowsInTheTableUserAuthContext(startedBeforeSchemifier)
@@ -606,6 +607,12 @@ object Migration extends MdcLoggable {
       val name = nameOf(populateTableBankAccountRouting)
       runOnce(name) {
         MigrationOfAccountRoutings.populate(name)
+      }
+    }
+    private def copyAccountNumberRoutingsIntoNumberField(): Boolean = {
+      val name = nameOf(copyAccountNumberRoutingsIntoNumberField)
+      runOnce(name) {
+        MigrationOfAccountNumbers.copyRoutingNumbersIntoNumberField(name)
       }
     }
     private def populateSettlementBankAccounts(): Boolean = {
