@@ -31,6 +31,7 @@ import code.api.util.APIUtil
 import code.api.util.migration.MigrationOfDynamicEntityRoleNames
 import code.entitlement.MappedEntitlement
 import code.group.Group
+import code.migration.MigrationScriptLog
 import code.setup.ServerSetup
 import net.liftweb.mapper.By
 import org.scalatest.Tag
@@ -191,6 +192,96 @@ class DynamicEntityRoleRenameMigrationTest extends ServerSetup {
       val other = reloadGroup(otherRoleName)
       other.ListOfRoles.get should equal("CanDeleteDynamicEntityDefinition,CanGetAnyUser")
       other.BankId.get should equal("")
+    }
+  }
+
+  // Two stored grants can have the same successor, and the successor can already be stored, for
+  // example after an earlier run of the migration that stopped part way. The unique index on
+  // (bank id, user id, role name) then refuses the rename, and the boot that runs the migration
+  // stopped there. Each scenario uses its own user, so the rows of one cannot meet those of another.
+
+  private def entitlementsOf(user: String): List[MappedEntitlement] =
+    MappedEntitlement.findAll(By(MappedEntitlement.mUserId, user))
+
+  private def grant(user: String, bankId: String, roleName: String): Long =
+    MappedEntitlement.create.mBankId(bankId).mUserId(user).mRoleName(roleName)
+      .mEntitlementId(APIUtil.generateUUID()).saveMe().id.get
+
+  private def remark(migrationName: String): String =
+    MigrationScriptLog.find(By(MigrationScriptLog.Name, migrationName)).map(_.Remark.get).openOr("")
+
+  private val isSqlServer = APIUtil.getPropsValue("db.driver").openOr("").contains("sqlserver")
+
+  feature("The Dynamic Entity Role rename migration when two grants end up as one") {
+
+    scenario("the Record pass keeps one grant where a System twin, a plain Role and the new name meet", RoleRenameMigration) {
+      val user = s"collide-record-${APIUtil.generateUUID().take(8)}"
+      val entity = s"TESTING_$suffix"
+      Given("a user holding the System twin and the plain Role at the empty bank id, which both become one Role at SYS")
+      val twin = grant(user, "", s"CanGetDynamicEntity_System$entity")
+      val plain = grant(user, "", s"CanGetDynamicEntity_$entity")
+      And("holding a Role whose new name is already stored at SYS, as an earlier, interrupted run leaves it")
+      val alreadyRenamed = grant(user, DYNAMIC_ENTITY_SYSTEM_LEVEL_BANK_ID, s"CanCreateDynamicEntityRecord_$entity")
+      val notYetRenamed = grant(user, "", s"CanCreateDynamicEntity_System$entity")
+      And("holding a bank level Role whose new name is already stored at the same bank")
+      val bankRenamed = grant(user, "bank_one", s"CanDeleteDynamicEntityRecord_$entity")
+      val bankOld = grant(user, "bank_one", s"CanDeleteDynamicEntity_$entity")
+
+      When("the Record pass runs")
+      val migrationName = s"roleRenameCollision_$suffix"
+      MigrationOfDynamicEntityRoleNames.renameEverywhere(migrationName) should equal(true)
+
+      Then("the user holds each new Role once, at its space")
+      entitlementsOf(user).map(e => (e.mBankId.get, e.mRoleName.get)).sorted should equal(List(
+        (DYNAMIC_ENTITY_SYSTEM_LEVEL_BANK_ID, s"CanCreateDynamicEntityRecord_$entity"),
+        (DYNAMIC_ENTITY_SYSTEM_LEVEL_BANK_ID, s"CanGetDynamicEntityRecord_$entity"),
+        ("bank_one", s"CanDeleteDynamicEntityRecord_$entity")
+      ).sorted)
+
+      And("a grant already under its new name is kept, and of two old grants the one with the lower id is kept")
+      entitlementsOf(user).map(_.id.get).sorted should equal(List(math.min(twin, plain), alreadyRenamed, bankRenamed).sorted)
+      List(math.max(twin, plain), notYetRenamed, bankOld).foreach(id => entitlementsOf(user).map(_.id.get) should not contain id)
+
+      And("the migration log says which grants were merged")
+      remark(migrationName) should include("merged 3 row(s)")
+    }
+
+    scenario("the Definition pass keeps one grant where several old Roles and the new name meet", RoleRenameMigration) {
+      val user = s"collide-definition-${APIUtil.generateUUID().take(8)}"
+      Given("a user holding the System and the BankLevel create Role at the empty bank id, which both become one Role at SYS")
+      val systemLevel = grant(user, "", "CanCreateSystemLevelDynamicEntity")
+      val bankLevel = grant(user, "", "CanCreateBankLevelDynamicEntity")
+      And("holding a bank level Role whose new name is already stored at that bank")
+      val alreadyRenamed = grant(user, "bank_one", "CanUpdateDynamicEntityDefinition")
+      val notYetRenamed = grant(user, "bank_one", "CanUpdateBankLevelDynamicEntity")
+
+      When("the Definition pass runs")
+      val migrationName = s"definitionRoleRenameCollision_$suffix"
+      MigrationOfDynamicEntityRoleNames.renameDefinitionRolesEverywhere(migrationName) should equal(true)
+
+      Then("the user holds each new Role once, at its space")
+      entitlementsOf(user).map(e => (e.mBankId.get, e.mRoleName.get)).sorted should equal(List(
+        (DYNAMIC_ENTITY_SYSTEM_LEVEL_BANK_ID, "CanCreateDynamicEntityDefinition"),
+        ("bank_one", "CanUpdateDynamicEntityDefinition")
+      ).sorted)
+      entitlementsOf(user).map(_.id.get).sorted should equal(List(math.min(systemLevel, bankLevel), alreadyRenamed).sorted)
+      entitlementsOf(user).map(_.id.get) should not contain notYetRenamed
+
+      And("the migration log says which grants were merged")
+      remark(migrationName) should include("merged 2 row(s)")
+    }
+
+    scenario("names that differ only in case meet where the database compares them without case", RoleRenameMigration) {
+      val user = s"collide-case-${APIUtil.generateUUID().take(8)}"
+      Given("an old Role whose new name differs only in case from one already stored at SYS")
+      grant(user, DYNAMIC_ENTITY_SYSTEM_LEVEL_BANK_ID, s"CanGetDynamicEntityRecord_CASE$suffix")
+      grant(user, "", s"CanGetDynamicEntity_Systemcase$suffix")
+
+      When("the Record pass runs")
+      MigrationOfDynamicEntityRoleNames.renameEverywhere(s"roleRenameCaseCollision_$suffix") should equal(true)
+
+      Then("SQL Server, whose unique index ignores case, keeps one grant; a database that compares case keeps both")
+      entitlementsOf(user).size should equal(if (isSqlServer) 1 else 2)
     }
   }
 }
