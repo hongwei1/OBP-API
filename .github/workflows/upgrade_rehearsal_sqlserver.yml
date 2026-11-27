@@ -107,8 +107,10 @@ jobs:
       TO_REF: ${{ inputs.to_ref }}
       MSSQL_IMAGE: ${{ inputs.mssql_image || 'mcr.microsoft.com/mssql/server:2017-CU20-ubuntu' }}
       EXPECT: ${{ inputs.expect || 'pass' }}
-      WORK_DIR: ${{ github.workspace }}/../upgrade-rehearsal
     steps:
+      # Outside the checkout, which the script clones from; upload-artifact refuses a path with '..'.
+      - run: echo "WORK_DIR=$RUNNER_TEMP/upgrade-rehearsal" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -160,13 +162,17 @@ jobs:
             grep -E 'CANDIDATE|SEEDED|SKIPPED|MISSING|OK\||answered|PASS|FAIL|built in|Finished' "$WORK_DIR/logs/rehearsal.log" || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          # Name each missing index or column, and each schema error, as an annotation on the run.
-          grep -h '^MISSING|' "$WORK_DIR/logs/check-schema.txt" 2>/dev/null | while IFS='|' read -r _ kind table cols; do
-            echo "::error title=Upgrade rehearsal::$kind on $table ($cols) is missing after the upgrade"
-          done || true
-          head -5 "$WORK_DIR/logs/schema-errors.txt" 2>/dev/null | while read -r line; do
-            echo "::error title=Upgrade rehearsal boot log::${line:0:400}"
-          done || true
+          # Name what failed as annotations on the run. When the boot failed, its error is the cause
+          # and the missing indexes after it are only its consequence, so only the error is named.
+          if [ -s "$WORK_DIR/logs/schema-errors.txt" ]; then
+            grep -m3 -E 'SQLServerException|Caused by' "$WORK_DIR/logs/schema-errors.txt" | while read -r line; do
+              echo "::error title=Upgrade rehearsal boot log::${line:0:400}"
+            done || true
+          else
+            grep -h '^MISSING|' "$WORK_DIR/logs/check-schema.txt" 2>/dev/null | head -20 | while IFS='|' read -r _ kind table cols; do
+              echo "::error title=Upgrade rehearsal::$kind on $table ($cols) is missing after the upgrade"
+            done || true
+          fi
           if [ "$EXPECT" = pass ] && [ "$status" != 0 ]; then
             echo "::error::The upgrade rehearsal failed. See the rehearsal-logs artifact."
             exit 1
