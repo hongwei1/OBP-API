@@ -31,6 +31,26 @@ on:
         default: 'pass'
         type: choice
         options: ['pass', 'fail']
+  # Lets another workflow run the rehearsal, for example a release workflow, or several
+  # rehearsals with different refs at once.
+  workflow_call:
+    inputs:
+      from_ref:
+        type: string
+        required: false
+        default: ''
+      to_ref:
+        type: string
+        required: false
+        default: ''
+      mssql_image:
+        type: string
+        required: false
+        default: 'mcr.microsoft.com/mssql/server:2017-CU20-ubuntu'
+      expect:
+        type: string
+        required: false
+        default: 'pass'
   pull_request:
     paths:
       - 'obp-api/src/main/scala/**'
