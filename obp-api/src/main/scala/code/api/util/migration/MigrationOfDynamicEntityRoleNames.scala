@@ -172,6 +172,18 @@ object MigrationOfDynamicEntityRoleNames {
   /** Rename the Definition Roles in every store. */
   def renameDefinitionRolesEverywhere(name: String): Boolean = run(name, definitionPass)
 
+  /**
+   * The key the unique index on an Entitlement's (bank id, user id, role name) compares. SQL Server
+   * and MySQL compare text with their default collation, which ignores case and trailing spaces, so
+   * two names that differ only there are one key to them; the other databases compare text as it is.
+   */
+  private def entitlementKey(bankId: String, userId: String, roleName: String): (String, String, String) = {
+    val driver = APIUtil.getPropsValue("db.driver").openOr("").toLowerCase
+    val ignoresCase = driver.contains("sqlserver") || driver.contains("mysql")
+    def normalise(text: String): String = if (ignoresCase) text.replaceAll("\\s+$", "").toLowerCase else text
+    (normalise(bankId), normalise(userId), normalise(roleName))
+  }
+
   private def run(name: String, pass: RenamePass): Boolean = {
     val startDate = System.currentTimeMillis()
     val report = scala.collection.mutable.ListBuffer[String]()
@@ -201,12 +213,53 @@ object MigrationOfDynamicEntityRoleNames {
       report += s"$label: renamed $renamed row(s)$orphanNote"
     }
 
+    // Entitlements have a unique index on (bank id, user id, role name), and two stored grants can
+    // have the same successor: a System twin and its plain Role, the System and BankLevel variant of
+    // a Definition Role, or an old grant whose successor is already stored, as a run that stopped
+    // part way leaves it. Renaming the second of them would break the index and stop the boot, so it
+    // is deleted instead: the user keeps the grant the kept row carries. Rows are visited by id, so
+    // of two old grants the one with the lower id is kept, and a grant already under its new name is
+    // always kept.
     if (DbFunction.tableExists(MappedEntitlement)) {
-      val rows = MappedEntitlement.findAll()
-      renameRows("Entitlements", rows.map(row =>
-        (row.mRoleName.get, row.mBankId.get,
-          (n: String) => { row.mRoleName(n); () },
-          (b: String) => { row.mBankId(b).save; () })))
+      val rows = MappedEntitlement.findAll().sortBy(_.id.get)
+      val orphaned = scala.collection.mutable.ListBuffer[String]()
+      val merged = scala.collection.mutable.ListBuffer[String]()
+      var renamed = 0
+
+      /** Where a row goes: its new name and bank id, or None when it stays as it is. */
+      def destination(row: MappedEntitlement): Option[(String, String)] = {
+        val (roleName, bankId) = (row.mRoleName.get, row.mBankId.get)
+        if (rolesWithNoSuccessor.contains(roleName)) { orphaned += roleName; None }
+        else pass.renameOf(roleName, bankId.isEmpty)
+          .map(newName => (newName, newBankId(roleName, bankId)))
+          .filterNot(_ == (roleName, bankId))
+      }
+      val moves = rows.map(row => row -> destination(row))
+      val taken = scala.collection.mutable.Set[(String, String, String)](
+        moves.collect { case (row, None) => entitlementKey(row.mBankId.get, row.mUserId.get, row.mRoleName.get) }: _*)
+
+      moves.foreach {
+        case (row, Some((newName, newBank))) =>
+          val key = entitlementKey(newBank, row.mUserId.get, newName)
+          if (taken.contains(key)) {
+            merged += s"id ${row.id.get} (${row.mRoleName.get} at '${row.mBankId.get}', user ${row.mUserId.get}) " +
+              s"deleted, $newName at '$newBank' is already held"
+            row.delete_!
+          } else {
+            row.mRoleName(newName).mBankId(newBank).save
+            taken += key
+            renamed += 1
+          }
+        case _ =>
+      }
+      val orphanNote =
+        if (orphaned.isEmpty) ""
+        else s"; left alone because they authorised every bank and have no single successor: " +
+          orphaned.groupBy(identity).map { case (n, all) => s"$n x${all.size}" }.mkString(", ")
+      val mergedNote =
+        if (merged.isEmpty) ""
+        else s"; merged ${merged.size} row(s) into a grant the user already holds: ${merged.mkString("; ")}"
+      report += s"Entitlements: renamed $renamed row(s)$mergedNote$orphanNote"
     }
 
     if (DbFunction.tableExists(MappedEntitlementRequest)) {
