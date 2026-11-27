@@ -20,9 +20,14 @@ existing deployment is upgraded. The rehearsal finds them before then.
 4. It boots the newer build on a second empty database, `obp_reference`, which gets the schema the
    newer build creates from scratch.
 5. `seed-dirty-data.sql` compares the two schemas. For each table that exists in the older schema:
-   - If the table gets a new unique index, it adds two rows with the same key. Where the key
-     columns can be NULL, it also adds two rows with NULL keys.
+   - If the table gets a new unique index, it adds two rows with the same key. A key column that
+     the newer build adds is NULL in both rows, as in every row an older build wrote, and SQL
+     Server counts two NULLs as a duplicate.
    - If the table gets a new NOT NULL column, it adds two rows.
+
+   The other columns get the values Lift Mapper writes when it is not given one: `''` for a
+   string, `0` for a number or a boolean, and NULL for a date. So the rows look like rows the
+   older build wrote, and a failure points at the newer build rather than at the seed.
 
    The list comes from the schemas, not from a list written by hand, so a unique index added by a
    later change is covered without editing the rehearsal.

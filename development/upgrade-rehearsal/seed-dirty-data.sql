@@ -6,15 +6,19 @@
 --
 --   * A table that exists in the older schema and gets a unique index there that it does not
 --     already have. Two rows are added with the same values in the index columns that already
---     exist. A column the newer build adds is NULL in both rows, which SQL Server's unique index
---     also counts as a duplicate. Where those columns can be NULL, two more rows are added with
---     NULL in all of them.
+--     exist. A column the newer build adds is NULL in both rows, as it is in every row an older
+--     build wrote, and SQL Server's unique index counts two NULLs as a duplicate.
 --   * A table that exists in the older schema and gets a NOT NULL column it does not have, or
 --     a column that becomes NOT NULL. Two rows are added, which have no value for that column.
 --
--- Every other column is left NULL, except a column that is NOT NULL or belongs to another unique
--- index, which gets a value of its type. Each pair is inserted in its own transaction. When the
--- older schema already refuses the duplicate, the pair is rolled back and reported as SKIPPED.
+-- The rows look like rows the older build wrote. Lift Mapper writes '' for a string it was not
+-- given, 0 for a number or a boolean, and NULL for a date, so every column outside the key gets
+-- that value. A column of another unique index gets a different value in each row. NULL is not
+-- written into a column the older build already had, because that build did not write NULL
+-- there, and a NULL there would test the newer build against rows no deployment holds.
+--
+-- Each pair is inserted in its own transaction. When the older schema already refuses the
+-- duplicate, the pair is rolled back and reported as SKIPPED.
 --
 -- Output lines, one per table and key:
 --   CANDIDATE|<table>|<columns>|<reason>
@@ -72,8 +76,8 @@ SELECT 'CANDIDATE|' + tbl + '|' + cols + '|' + reason FROM #candidates ORDER BY 
 
 -- Seed each candidate.
 DECLARE @id int = 0, @tbl sysname, @cols nvarchar(4000), @reason nvarchar(400);
-DECLARE @columns nvarchar(max), @values nvarchar(max), @null_values nvarchar(max), @sql nvarchar(max);
-DECLARE @key_count int, @nullable_key_count int, @unsupported nvarchar(max);
+DECLARE @columns nvarchar(max), @values nvarchar(max), @sql nvarchar(max);
+DECLARE @key_count int, @unsupported nvarchar(max);
 
 WHILE 1 = 1
 BEGIN
@@ -96,8 +100,8 @@ BEGIN
   ), valued AS (
     SELECT name, is_key, is_nullable,
       CASE
-        -- The same value in both rows: the key columns, and NOT NULL columns of no other unique index.
-        WHEN is_key = 1 OR (is_nullable = 0 AND in_unique_index = 0) THEN
+        -- The same value in both rows: the key columns.
+        WHEN is_key = 1 THEN
           CASE
             WHEN type_name IN ('char','varchar','text') THEN 'LEFT(''rehearsal'', ' + CAST(CASE WHEN max_length = -1 OR type_name = 'text' THEN 9 ELSE max_length END AS varchar(10)) + ')'
             WHEN type_name IN ('nchar','nvarchar','ntext') THEN 'LEFT(N''rehearsal'', ' + CAST(CASE WHEN max_length = -1 OR type_name = 'ntext' THEN 9 ELSE max_length / 2 END AS varchar(10)) + ')'
@@ -114,6 +118,16 @@ BEGIN
             WHEN type_name IN ('date','datetime','datetime2','smalldatetime','datetimeoffset') THEN 'DATEADD(second, ABS(CHECKSUM(NEWID())) % 100000000, ''2000-01-01'')'
             WHEN type_name = 'uniqueidentifier' THEN 'NEWID()'
           END
+        -- Every other column: the value Lift Mapper writes when it was not given one.
+        ELSE
+          CASE
+            WHEN type_name IN ('char','varchar','text','nchar','nvarchar','ntext') THEN ''''''
+            WHEN type_name IN ('bigint','int','smallint','tinyint','decimal','numeric','float','real','money','smallmoney','bit') THEN '0'
+            WHEN type_name = 'uniqueidentifier' THEN 'NEWID()'
+            WHEN is_nullable = 1 THEN NULL
+            WHEN type_name IN ('date','datetime','datetime2','smalldatetime','datetimeoffset') THEN '''2020-01-01'''
+            WHEN type_name IN ('binary','varbinary','image') THEN '0x'
+          END
       END AS value_sql,
       type_name
     FROM cols
@@ -121,9 +135,7 @@ BEGIN
   SELECT
     @columns = STRING_AGG(CAST(QUOTENAME(name) AS nvarchar(max)), ', ') WITHIN GROUP (ORDER BY name),
     @values = STRING_AGG(CAST(value_sql AS nvarchar(max)), ', ') WITHIN GROUP (ORDER BY name),
-    @null_values = STRING_AGG(CAST(CASE WHEN is_key = 1 THEN 'NULL' ELSE value_sql END AS nvarchar(max)), ', ') WITHIN GROUP (ORDER BY name),
     @key_count = SUM(is_key),
-    @nullable_key_count = SUM(CASE WHEN is_key = 1 AND is_nullable = 1 THEN 1 ELSE 0 END),
     @unsupported = STRING_AGG(CASE WHEN value_sql IS NULL AND (is_key = 1 OR is_nullable = 0) THEN name + ' ' + type_name END, ', ')
   FROM valued
   WHERE value_sql IS NOT NULL OR is_key = 1 OR is_nullable = 0;
@@ -151,21 +163,4 @@ BEGIN
     IF @@TRANCOUNT > 0 ROLLBACK;
     SELECT 'SKIPPED|' + @tbl + '|' + @cols + '|the older schema refuses it: ' + ERROR_MESSAGE();
   END CATCH;
-
-  -- The same with the key columns NULL, where they can be.
-  IF @key_count > 0 AND @nullable_key_count = @key_count
-  BEGIN
-    SET @sql = N'INSERT INTO ' + QUOTENAME(@tbl) + N' (' + @columns + N') VALUES (' + @null_values + N'); '
-             + N'INSERT INTO ' + QUOTENAME(@tbl) + N' (' + @columns + N') VALUES (' + @null_values + N');';
-    BEGIN TRY
-      BEGIN TRANSACTION;
-      EXEC sp_executesql @sql;
-      COMMIT;
-      SELECT 'SEEDED|' + @tbl + '|' + @cols + '|2 rows with NULL in every key column';
-    END TRY
-    BEGIN CATCH
-      IF @@TRANCOUNT > 0 ROLLBACK;
-      SELECT 'SKIPPED|' + @tbl + '|' + @cols + '|NULL keys: the older schema refuses it: ' + ERROR_MESSAGE();
-    END CATCH;
-  END;
 END;
