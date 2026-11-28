@@ -1,0 +1,192 @@
+name: Upgrade rehearsal on SQL Server
+
+# Boots an older build on SQL Server, adds rows the newer build cannot index as they are, and
+# boots the newer build on that database. See development/upgrade-rehearsal/README.md.
+#
+# It builds two versions of OBP-API, so it does not run on every push. It runs when started by
+# hand, and on a pull request that changes the boot-time migrations or Boot.scala, or that adds or
+# changes an index or a NOT NULL column in a model (the `detect` job decides).
+#
+# The older build defaults to the repository variable UPGRADE_REHEARSAL_BASELINE_REF, which names
+# the previous release. Move it when a release is made. Without it, a fixed older build is used.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_ref:
+        description: 'Older build to upgrade from (commit, branch or tag; empty: the previous release)'
+        required: false
+        default: ''
+      to_ref:
+        description: 'Newer build to upgrade to (empty: the commit this workflow runs on)'
+        required: false
+        default: ''
+      mssql_image:
+        description: 'SQL Server image'
+        required: true
+        default: 'mcr.microsoft.com/mssql/server:2017-CU20-ubuntu'
+      expect:
+        description: 'Expected outcome. "fail" checks that the rehearsal catches a build known to break the upgrade.'
+        required: true
+        default: 'pass'
+        type: choice
+        options: ['pass', 'fail']
+  # Lets another workflow run the rehearsal, for example a release workflow, or several
+  # rehearsals with different refs at once.
+  workflow_call:
+    inputs:
+      from_ref:
+        type: string
+        required: false
+        default: ''
+      to_ref:
+        type: string
+        required: false
+        default: ''
+      mssql_image:
+        type: string
+        required: false
+        default: 'mcr.microsoft.com/mssql/server:2017-CU20-ubuntu'
+      expect:
+        type: string
+        required: false
+        default: 'pass'
+  pull_request:
+    paths:
+      - 'obp-api/src/main/scala/**'
+      - 'development/upgrade-rehearsal/**'
+      - '.github/workflows/upgrade_rehearsal_sqlserver.yml'
+
+concurrency:
+  group: upgrade-rehearsal-${{ github.ref }}-${{ inputs.to_ref }}
+  cancel-in-progress: false
+
+jobs:
+  # A pull request needs the rehearsal only when it can change the schema an upgrade meets. This
+  # job reads the diff, which takes seconds, so most pull requests skip the two builds.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.diff.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          if [ "${{ github.event_name }}" != pull_request ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          files="$(git diff --name-only "$base...$head")"
+          reasons=""
+          if printf '%s\n' "$files" | grep -qE '^(obp-api/src/main/scala/code/api/util/migration/|obp-api/src/main/scala/bootstrap/liftweb/Boot\.scala|development/upgrade-rehearsal/|\.github/workflows/upgrade_rehearsal_sqlserver\.yml)'; then
+            reasons="migrations, Boot.scala or the rehearsal changed"
+          fi
+          # Added or removed lines that declare indexes or NOT NULL columns of a mapped model.
+          if git diff -U0 "$base...$head" -- 'obp-api/src/main/scala/**.scala' \
+               | grep -E '^[+-][^+-]' | grep -qE 'UniqueIndex|dbIndexes|dbNotNull_\?|MappedUniqueId|dbTableName'; then
+            reasons="${reasons:+$reasons; }a model's indexes or NOT NULL columns changed"
+          fi
+          if [ -n "$reasons" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "Upgrade rehearsal runs: $reasons" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Upgrade rehearsal skipped: no schema-related change" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  rehearse:
+    needs: detect
+    if: needs.detect.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      FROM_REF: ${{ inputs.from_ref || vars.UPGRADE_REHEARSAL_BASELINE_REF || 'b6c783b3d99a6d48697eb8ef986f8948f646e63e' }}
+      TO_REF: ${{ inputs.to_ref }}
+      MSSQL_IMAGE: ${{ inputs.mssql_image || 'mcr.microsoft.com/mssql/server:2017-CU20-ubuntu' }}
+      EXPECT: ${{ inputs.expect || 'pass' }}
+    steps:
+      # Outside the checkout, which the script clones from; upload-artifact refuses a path with '..'.
+      - run: echo "WORK_DIR=$RUNNER_TEMP/upgrade-rehearsal" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve the two commits
+        id: refs
+        run: |
+          resolve() {
+            # A commit, a tag, a branch of this repository, or anything `git fetch origin` can get.
+            local ref="$1"
+            git rev-parse --verify -q "$ref^{commit}" \
+              || git rev-parse --verify -q "origin/$ref^{commit}" \
+              || { git fetch -q origin "$ref" && git rev-parse --verify FETCH_HEAD; }
+          }
+          from_sha="$(resolve "$FROM_REF")"
+          to_sha="$(resolve "${TO_REF:-$GITHUB_SHA}")"
+          echo "from=$from_sha" >> "$GITHUB_OUTPUT"
+          echo "to=$to_sha" >> "$GITHUB_OUTPUT"
+          echo "FROM $FROM_REF = $from_sha, TO ${TO_REF:-$GITHUB_SHA} = $to_sha, expected outcome: $EXPECT" >> "$GITHUB_STEP_SUMMARY"
+
+      # The older build needs JDK 11 and the newer one JDK 25. setup-java exports the home of each
+      # as JAVA_HOME_11_X64 and JAVA_HOME_25_X64, which the script reads.
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Cache the older build
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.WORK_DIR }}/cache/from-${{ steps.refs.outputs.from }}
+          key: upgrade-rehearsal-from-${{ steps.refs.outputs.from }}
+
+      - name: Run the rehearsal
+        id: rehearsal
+        run: |
+          set +e
+          development/upgrade-rehearsal/run.sh "${{ steps.refs.outputs.from }}" "${{ steps.refs.outputs.to }}"
+          status=$?
+          set -e
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          {
+            echo '```'
+            grep -E 'CANDIDATE|SEEDED|SKIPPED|MISSING|OK\||answered|PASS|FAIL|built in|Finished' "$WORK_DIR/logs/rehearsal.log" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Name what failed as annotations on the run. When the boot failed, its error is the cause
+          # and the missing indexes after it are only its consequence, so only the error is named.
+          if [ -s "$WORK_DIR/logs/schema-errors.txt" ]; then
+            grep -m3 -E 'SQLServerException|Caused by' "$WORK_DIR/logs/schema-errors.txt" | while read -r line; do
+              echo "::error title=Upgrade rehearsal boot log::${line:0:400}"
+            done || true
+          else
+            grep -h '^MISSING|' "$WORK_DIR/logs/check-schema.txt" 2>/dev/null | head -20 | while IFS='|' read -r _ kind table cols; do
+              echo "::error title=Upgrade rehearsal::$kind on $table ($cols) is missing after the upgrade"
+            done || true
+          fi
+          if [ "$EXPECT" = pass ] && [ "$status" != 0 ]; then
+            echo "::error::The upgrade rehearsal failed. See the rehearsal-logs artifact."
+            exit 1
+          fi
+          if [ "$EXPECT" = fail ] && [ "$status" = 0 ]; then
+            echo "::error::The rehearsal passed, but this run expected it to catch a broken upgrade."
+            exit 1
+          fi
+          echo "Outcome matches the expected one: $EXPECT"
+
+      - name: Upload the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rehearsal-logs-${{ steps.refs.outputs.to }}
+          path: ${{ env.WORK_DIR }}/logs/
+          retention-days: 14
